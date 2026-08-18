@@ -1,0 +1,67 @@
+@use "tokens" as t;
+
+@mixin mono-label {
+  font-family: var(--font-mono);
+  font-size: t.$font-size-xs;
+  letter-spacing: t.$tracking-widest;
+  text-transform: uppercase;
+}
+
+@mixin focus-ring {
+  outline: none;
+  border-color: t.$color-focus;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+@mixin input-base {
+  width: 100%;
+  padding: t.$space-3 t.$space-4;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+  transition:
+    border-color t.$duration-fast t.$ease-standard,
+    box-shadow t.$duration-fast t.$ease-standard;
+
+  &::placeholder {
+    color: t.$color-ink-faint;
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+@mixin button-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: t.$space-2;
+  padding: t.$space-3 t.$space-6;
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  letter-spacing: t.$tracking-widest;
+  text-transform: uppercase;
+  border-radius: t.$radius-sm;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition:
+    background-color t.$duration-fast t.$ease-standard,
+    transform t.$duration-fast t.$ease-standard,
+    opacity t.$duration-fast t.$ease-standard;
+
+  &:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}

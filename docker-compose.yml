@@ -1,0 +1,25 @@
+# Binx Portal Docker Setup
+
+name: binxportal
+services:
+  # Binx API DB
+  db:
+    image: postgres:16-alpine
+    container_name: Binx-API-DB
+    environment:
+      POSTGRES_USER: binxapi
+      POSTGRES_PASSWORD: binxapi
+      POSTGRES_DB: binxportal
+    ports:
+      - "5432:5432"
+    volumes:
+      - binx-api-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U binxapi -d binxportal"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+# Volumes
+volumes:
+  binx-api-db-data:

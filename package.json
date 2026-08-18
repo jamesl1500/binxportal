@@ -1,0 +1,17 @@
+{
+  "name": "binxportal",
+  "version": "1.0.0",
+  "private": true,
+  "description": "",
+  "scripts": {
+    "dev:web": "pnpm --filter binx-web dev",
+    "dev:mobile": "pnpm --filter binx-mobile start",
+    "build:web": "pnpm --filter binx-web build",
+    "lint": "pnpm -r lint",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.18.2"
+}
