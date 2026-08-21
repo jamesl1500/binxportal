@@ -1,0 +1,46 @@
+@use "../../../../styles/tokens" as t;
+
+.header {
+  margin-bottom: t.$space-8;
+}
+
+.eyebrow {
+  display: block;
+  margin-bottom: t.$space-2;
+  font-family: var(--font-mono);
+  font-size: t.$font-size-xs;
+  letter-spacing: t.$tracking-widest;
+  text-transform: uppercase;
+  color: t.$color-ink-soft;
+}
+
+.title {
+  margin: 0 0 t.$space-2;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-2xl;
+  color: t.$color-ink;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+}
+
+.footer {
+  margin-top: t.$space-8;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+  text-align: center;
+}
+
+.link {
+  color: t.$color-ink;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+
+  &:hover {
+    color: t.$color-ink-soft;
+  }
+}

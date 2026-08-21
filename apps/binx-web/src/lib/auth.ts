@@ -8,7 +8,8 @@
  * @module apps/binx-web/src/lib/auth.ts
  * @author Binx.io
  */
-import { cookies } from "next/headers";
+import axios from "axios";
+import { cookies, headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { api } from "@/lib/api";
 
@@ -24,6 +25,33 @@ import { api } from "@/lib/api";
 export interface TokenPair {
   access_token: string;
   refresh_token: string;
+}
+
+/** Error carrying the upstream binx-api HTTP status, so route handlers can propagate it. */
+export class AuthApiError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+  ) {
+    super(message);
+    this.name = "AuthApiError";
+  }
+}
+
+/** FastAPI's `detail` is either a plain string (HTTPException) or a list of pydantic validation errors (422). */
+function extractDetailMessage(data: unknown, fallback: string): string {
+  const detail = (data as { detail?: unknown } | undefined)?.detail;
+
+  if (typeof detail === "string") return detail;
+
+  if (Array.isArray(detail)) {
+    const messages = detail
+      .map((entry) => (entry && typeof entry === "object" && "msg" in entry ? String(entry.msg) : null))
+      .filter((msg): msg is string => Boolean(msg));
+    if (messages.length > 0) return messages.join(" ");
+  }
+
+  return fallback;
 }
 
 /**
@@ -80,6 +108,58 @@ const baseCookieOptions = {
   sameSite: "lax" as const,
   path: "/",
 };
+
+/** Resolves this app's own origin so Server Actions can call our `/api/auth/*` routes. */
+export async function getInternalBaseUrl(): Promise<string> {
+  const headerList = await headers();
+  const host = headerList.get("x-forwarded-host") ?? headerList.get("host") ?? "localhost:3000";
+  const protocol = headerList.get("x-forwarded-proto") ?? (process.env.NODE_ENV === "production" ? "https" : "http");
+  return `${protocol}://${host}`;
+}
+
+/**
+ * Copies raw `Set-Cookie` header strings from an internal API call onto the
+ * current request's cookies. Needed because calling our own Route Handler
+ * (via `fetch()` or the `api` axios instance) runs it in an isolated request
+ * context — its `cookies().set()` calls land on that nested response, not on
+ * the Server Action's response, so they must be forwarded by hand.
+ */
+export async function forwardSetCookies(setCookieHeaders: string[] | undefined): Promise<void> {
+  if (!setCookieHeaders || setCookieHeaders.length === 0) return;
+
+  const cookieStore = await cookies();
+
+  for (const header of setCookieHeaders) {
+    const [pair, ...attributes] = header.split(";").map((part) => part.trim());
+    const separatorIndex = pair.indexOf("=");
+    const name = pair.slice(0, separatorIndex);
+    const value = pair.slice(separatorIndex + 1);
+
+    const options: Parameters<typeof cookieStore.set>[2] = {};
+    for (const attribute of attributes) {
+      const [rawKey, rawValue] = attribute.split("=");
+      switch (rawKey.toLowerCase()) {
+        case "max-age":
+          options.maxAge = Number(rawValue);
+          break;
+        case "path":
+          options.path = rawValue;
+          break;
+        case "samesite":
+          options.sameSite = rawValue?.toLowerCase() as "lax" | "strict" | "none";
+          break;
+        case "httponly":
+          options.httpOnly = true;
+          break;
+        case "secure":
+          options.secure = true;
+          break;
+      }
+    }
+
+    cookieStore.set(name, decodeURIComponent(value), options);
+  }
+}
 
 /** Persists a fresh token pair from login/refresh into httpOnly cookies. */
 export async function setAuthCookies(
@@ -209,10 +289,18 @@ export async function login(
   email: string,
   password: string,
 ): Promise<CurrentUser> {
-  const { data } = await api.post<TokenPair>("/auth/login", {
-    email,
-    password,
-  });
+  let data: TokenPair;
+
+  try {
+    ({ data } = await api.post<TokenPair>("/auth/login", { email, password }));
+  } catch (error) {
+    // Surface binx-api's actual reason (e.g. "Incorrect email or password") instead
+    // of axios's generic "Request failed with status code 401".
+    if (axios.isAxiosError(error) && error.response) {
+      throw new AuthApiError(extractDetailMessage(error.response.data, "Unable to sign in"), error.response.status);
+    }
+    throw error;
+  }
 
   if( !data || !data.access_token || !data.refresh_token) {
     throw new Error("Login failed: Invalid response from server");
@@ -228,6 +316,94 @@ export async function login(
   }
 
   return user;
+}
+
+export interface SignupInput {
+  userName: string;
+  email: string;
+  fullName: string;
+  password: string;
+}
+
+/**
+ * signup
+ *
+ * Creates a new account via binx-api. Unlike `login`, this does not issue
+ * tokens — binx-api requires email verification before the account can sign
+ * in, so no session cookies are set here.
+ *
+ * @function signup
+ * @throws {AuthApiError} - Thrown with binx-api's reason (e.g. "Email already registered").
+ */
+export async function signup({ userName, email, fullName, password }: SignupInput): Promise<string> {
+  try {
+    const { data } = await api.post<{ message: string }>("/auth/signup", {
+      user_name: userName,
+      email,
+      full_name: fullName,
+      password,
+    });
+    return data.message;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new AuthApiError(
+        extractDetailMessage(error.response.data, "Unable to create account"),
+        error.response.status,
+      );
+    }
+    throw error;
+  }
+}
+
+/**
+ * requestPasswordReset
+ *
+ * Asks binx-api to send a password-reset email. Always resolves (binx-api
+ * intentionally returns a generic success message whether or not the email
+ * exists, to avoid leaking account existence).
+ *
+ * @function requestPasswordReset
+ * @throws {AuthApiError} - Thrown if binx-api rejects the request outright (e.g. malformed email).
+ */
+export async function requestPasswordReset(email: string): Promise<string> {
+  try {
+    const { data } = await api.post<{ message: string }>("/auth/forgot-password", { email });
+    return data.message;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new AuthApiError(
+        extractDetailMessage(error.response.data, "Unable to process your request"),
+        error.response.status,
+      );
+    }
+    throw error;
+  }
+}
+
+/**
+ * resetPassword
+ *
+ * Exchanges a password-reset token (from the emailed link) for a new password.
+ *
+ * @function resetPassword
+ * @throws {AuthApiError} - Thrown with binx-api's reason (e.g. "Invalid or expired token").
+ */
+export async function resetPassword(token: string, newPassword: string): Promise<string> {
+  try {
+    const { data } = await api.post<{ message: string }>("/auth/reset-password", {
+      token,
+      new_password: newPassword,
+    });
+    return data.message;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new AuthApiError(
+        extractDetailMessage(error.response.data, "Unable to reset password"),
+        error.response.status,
+      );
+    }
+    throw error;
+  }
 }
 
 /**

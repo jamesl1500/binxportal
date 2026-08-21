@@ -13,7 +13,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 
-import { login } from "@/lib/auth";
+import { AuthApiError, login } from "@/lib/auth";
 
 /**
  * POST /api/auth/login
@@ -27,26 +27,33 @@ import { login } from "@/lib/auth";
  * @returns {Promise<NextResponse>} - A response indicating the result of the login attempt.
  */
 export async function POST(req: NextRequest) {
-  const { email, password } = await req.json();
+  let email: string | undefined;
+  let password: string | undefined;
+
+  try {
+    ({ email, password } = await req.json());
+  } catch {
+    return NextResponse.json({ message: "Invalid JSON body" }, { status: 400 });
+  }
+
+  if (!email || !password) {
+    return NextResponse.json({ message: "Email and password are required" }, { status: 400 });
+  }
 
   try {
     const user = await login(email, password);
-    
-    if(!user) {
-      return NextResponse.json(
-        { message: "Login succeeded but current user could not be fetched" },
-        { status: 500 }
-      );
+
+    return NextResponse.json({ message: "Login successful", user }, { status: 200 });
+  } catch (error) {
+    // Propagate the upstream binx-api status (401 bad credentials, 403 unverified, etc.)
+    // instead of masking every failure as 401.
+    if (error instanceof AuthApiError) {
+      return NextResponse.json({ message: error.message }, { status: error.status });
     }
 
-    // Return response
-    const res = NextResponse.json({ message: "Login successful", user });
-
-    return res;
-  } catch (error) {
     return NextResponse.json(
-      { message: "Invalid credentials", error: error instanceof Error ? error.message : "Unknown error" },
-      { status: 401 }
+      { message: "Login failed", error: error instanceof Error ? error.message : "Unknown error" },
+      { status: 500 },
     );
   }
 }

@@ -1,0 +1,71 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-5;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: t.$space-4;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+}
+
+.label {
+  @include m.mono-label;
+  color: t.$color-ink-soft;
+}
+
+.input {
+  @include m.input-base;
+
+  &[aria-invalid="true"] {
+    border-color: t.$color-danger;
+  }
+}
+
+.error {
+  margin: 0;
+  font-size: t.$font-size-xs;
+  color: t.$color-danger;
+}
+
+.formError {
+  margin: 0;
+  padding: t.$space-3;
+  font-size: t.$font-size-sm;
+  color: t.$color-danger;
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-radius: t.$radius-sm;
+}
+
+.formSuccess {
+  margin: 0;
+  padding: t.$space-3;
+  font-size: t.$font-size-sm;
+  color: #15803d;
+  background: rgba(21, 128, 61, 0.08);
+  border: 1px solid rgba(21, 128, 61, 0.2);
+  border-radius: t.$radius-sm;
+}
+
+.submit {
+  @include m.button-base;
+  width: 100%;
+  margin-top: t.$space-2;
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+}

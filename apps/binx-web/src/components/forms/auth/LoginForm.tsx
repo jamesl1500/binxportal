@@ -20,14 +20,33 @@ import { useLoginPreferencesStore } from "@/stores/use-login-preferences-store";
 
 import styles from "./LoginForm.module.scss";
 
+/**
+ * Login Schema
+ * 
+ * This schema defines the validation rules for the login form using Zod. 
+ * It ensures that the email is a valid email address, 
+ * the password is at least 8 characters long, and the rememberMe 
+ * field is a boolean.
+ * 
+ * @constant {z.ZodObject} loginSchema - The Zod schema for validating login form inputs.
+ */
 const loginSchema = z.object({
-  email: z.string().min(1, "Email is required").email("Enter a valid email address"),
+  email: z.email("Enter a valid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   rememberMe: z.boolean(),
 });
 
 type LoginValues = z.infer<typeof loginSchema>;
 
+/**
+ * LoginForm Component
+ * 
+ * This component renders a login form that allows users to enter their email,
+ * password, and an option to remember their email for future logins. It uses react-hook-form for form state management and validation, and zustand for managing the remembered email state.
+ * 
+ * @component
+ * @returns {JSX.Element} - The rendered login form component.
+ */
 const LoginForm = () => {
   const rememberedEmail = useLoginPreferencesStore((state) => state.rememberedEmail);
   const setRememberedEmail = useLoginPreferencesStore((state) => state.setRememberedEmail);

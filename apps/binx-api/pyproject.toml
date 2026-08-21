@@ -10,6 +10,8 @@ requires-python = ">=3.13"
 dependencies = [
     "alembic>=1.19.1",
     "asyncpg>=0.31.0",
+    # passlib 1.7.4 (unmaintained) probes bcrypt.__about__, which bcrypt>=4.1 removed.
+    "bcrypt<4.1",
     "fastapi>=0.141.1",
     "passlib[bcrypt]>=1.7.4",
     "pydantic-settings>=2.15.0",

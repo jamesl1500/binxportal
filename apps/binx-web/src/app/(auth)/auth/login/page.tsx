@@ -35,7 +35,7 @@ const AuthLoginPage = async () => {
 
       <p className={styles.footer}>
         Don&apos;t have an account?{" "}
-        <Link href="/signup" className={styles.link}>
+        <Link href="/auth/signup" className={styles.link}>
           Create one
         </Link>
       </p>
