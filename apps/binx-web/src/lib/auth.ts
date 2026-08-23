@@ -420,35 +420,53 @@ export async function logout(): Promise<void> {
 }
 
 /**
- * Verify Email
+ * getEmailVerificationTarget
  *
- * This function verifies a user's email address using a verification token.
- * It sends a POST request to the binx-api with the provided token.
- * If the verification is successful, it returns true; otherwise, it returns false.
+ * Looks up the account a verification token belongs to WITHOUT consuming it,
+ * so the verify-email page can preview the account's email and confirm the
+ * token is valid before the user actually clicks "Verify Email".
+ *
+ * @function getEmailVerificationTarget
+ * @param {string} token - The verification token from the emailed link.
+ * @returns {Promise<string>} The email address the token belongs to.
+ * @throws {AuthApiError} - Thrown if the token is missing/invalid/expired.
+ */
+export async function getEmailVerificationTarget(token: string): Promise<string> {
+  try {
+    const { data } = await api.get<{ email: string }>("/auth/verify-email", { params: { token } });
+    return data.email;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new AuthApiError(
+        extractDetailMessage(error.response.data, "Invalid or expired verification link"),
+        error.response.status,
+      );
+    }
+    throw error;
+  }
+}
+
+/**
+ * verifyEmail
+ *
+ * Exchanges an email-verification token (from the emailed link) for an
+ * activated account.
  *
  * @function verifyEmail
  * @param {string} token - The verification token sent to the user's email.
- * @returns {Promise<boolean>} - True if the email was successfully verified, otherwise false.
- * @throws {Error} - Throws an error if the verification request fails.
+ * @throws {AuthApiError} - Thrown with binx-api's reason (e.g. "Invalid or expired token").
  */
-export async function verifyEmail(token: string): Promise<boolean> {
+export async function verifyEmail(token: string): Promise<string> {
   try {
-    if (token === undefined || token === null || token === "") {
-      throw new Error("Token is required for email verification");
-    }
-
-    const response = await api.post("/auth/verify-email", { token });
-
-    if (response.status !== 200) {
-      throw new Error(
-        `Email verification failed with status: ${response.status}`,
+    const { data } = await api.post<{ message: string }>("/auth/verify-email", { token });
+    return data.message;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new AuthApiError(
+        extractDetailMessage(error.response.data, "Unable to verify email"),
+        error.response.status,
       );
     }
-
-    return true;
-  } catch {
-    throw new Error(
-      "Email verification failed. Please check the token and try again.",
-    );
+    throw error;
   }
 }

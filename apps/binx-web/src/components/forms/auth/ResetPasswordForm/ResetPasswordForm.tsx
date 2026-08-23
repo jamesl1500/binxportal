@@ -5,7 +5,7 @@
  * react-hook-form + zod for validation, `resetPasswordAction` server action
  * for the actual request (see lib/auth.ts).
  *
- * @module apps/binx-web/src/components/forms/auth/ResetPasswordForm.tsx
+ * @module apps/binx-web/src/components/forms/auth/ResetPasswordForm/ResetPasswordForm.tsx
  * @author Binx.io
  */
 "use client";

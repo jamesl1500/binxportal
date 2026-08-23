@@ -5,7 +5,7 @@
  * remembering the last-used email, and the `loginAction` server action for
  * the actual authentication call (see lib/auth.ts).
  *
- * @module apps/binx-web/src/components/forms/auth/LoginForm.tsx
+ * @module apps/binx-web/src/components/forms/auth/LoginForm/LoginForm.tsx
  * @author Binx.io
  */
 "use client";

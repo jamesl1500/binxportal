@@ -6,21 +6,21 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from binx_api.core.security import hash_password
 from binx_api.modules.users.models import User
 
-
+# Get user by ID
 async def get_user_by_id(db: AsyncSession, user_id: uuid.UUID) -> User | None:
     return await db.get(User, user_id)
 
-
+# Get user by email
 async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
     result = await db.execute(select(User).where(User.email == email))
     return result.scalar_one_or_none()
 
-
+# Get user by user name
 async def get_user_by_user_name(db: AsyncSession, user_name: str) -> User | None:
     result = await db.execute(select(User).where(User.user_name == user_name))
     return result.scalar_one_or_none()
 
-
+# Create a new user
 async def create_user(db: AsyncSession, *, user_name: str, email: str, full_name: str, password: str) -> User:
     user = User(
         user_name=user_name,

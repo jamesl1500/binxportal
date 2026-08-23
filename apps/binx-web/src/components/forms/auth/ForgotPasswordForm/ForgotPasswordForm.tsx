@@ -5,7 +5,7 @@
  * zod for validation, `forgotPasswordAction` server action for the actual
  * request (see lib/auth.ts).
  *
- * @module apps/binx-web/src/components/forms/auth/ForgotPasswordForm.tsx
+ * @module apps/binx-web/src/components/forms/auth/ForgotPasswordForm/ForgotPasswordForm.tsx
  * @author Binx.io
  */
 "use client";

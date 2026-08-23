@@ -16,7 +16,7 @@ const AuthDefaultPage = async () => {
   if (user) {
     redirect("/dashboard");
   } else {
-    redirect("/login");
+    redirect("/auth/login");
   }
 };
 

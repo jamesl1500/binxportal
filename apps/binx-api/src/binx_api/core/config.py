@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     refresh_token_expire_days: int = 30
     email_verification_token_expire_hours: int = 24
     password_reset_token_expire_minutes: int = 30
+    
     # Base URL of the staff portal frontend, used to build links in emails
     frontend_url: str = "http://localhost:3000"
 

@@ -11,7 +11,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getCurrentUser } from "@/lib/auth";
-import SignupForm from "@/components/forms/auth/SignupForm";
+import SignupForm from "@/components/forms/auth/SignupForm/SignupForm";
 
 import styles from "./page.module.scss";
 

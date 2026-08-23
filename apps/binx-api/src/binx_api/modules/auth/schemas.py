@@ -43,6 +43,10 @@ class VerifyEmailRequest(BaseModel):
     token: str
 
 
+class VerifyEmailTokenInfo(BaseModel):
+    email: EmailStr
+
+
 class ResendVerificationRequest(BaseModel):
     email: EmailStr
 

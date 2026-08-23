@@ -1,10 +1,16 @@
-@use "../../../styles/tokens" as t;
-@use "../../../styles/mixins" as m;
+@use "../../../../styles/tokens" as t;
+@use "../../../../styles/mixins" as m;
 
 .form {
   display: flex;
   flex-direction: column;
   gap: t.$space-5;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: t.$space-4;
 }
 
 .field {

@@ -6,7 +6,7 @@
  * binx-api requires email verification, so on success this shows a
  * confirmation message instead of redirecting.
  *
- * @module apps/binx-web/src/components/forms/auth/SignupForm.tsx
+ * @module apps/binx-web/src/components/forms/auth/SignupForm/SignupForm.tsx
  * @author Binx.io
  */
 "use client";

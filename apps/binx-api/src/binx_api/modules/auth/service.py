@@ -43,15 +43,20 @@ async def _issue_token(db: AsyncSession, user: User, purpose: TokenPurpose) -> s
 
 
 async def _consume_token(db: AsyncSession, raw_token: str, purpose: TokenPurpose) -> AuthToken:
+    record = await _peek_token(db, raw_token, purpose)
+    record.used_at = datetime.now(timezone.utc)
+    await db.commit()
+    return record
+
+
+async def _peek_token(db: AsyncSession, raw_token: str, purpose: TokenPurpose) -> AuthToken:
+    """Looks up a token without consuming it, e.g. to preview who it belongs to."""
     result = await db.execute(
         select(AuthToken).where(AuthToken.token_hash == hash_token(raw_token), AuthToken.purpose == purpose)
     )
     record = result.scalar_one_or_none()
     if record is None or record.used_at is not None or record.expires_at < datetime.now(timezone.utc):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid or expired token")
-
-    record.used_at = datetime.now(timezone.utc)
-    await db.commit()
     return record
 
 
@@ -87,6 +92,13 @@ async def verify_email(db: AsyncSession, raw_token: str) -> User:
     user.is_verified = True
     await db.commit()
     return user
+
+
+async def get_email_verification_target(db: AsyncSession, raw_token: str) -> User:
+    """Resolves the account a verification token belongs to without consuming it, so the
+    verify-email page can preview the email before the user actually confirms."""
+    record = await _peek_token(db, raw_token, TokenPurpose.EMAIL_VERIFICATION)
+    return await _get_user_or_404(db, record.user_id)
 
 
 async def resend_verification(db: AsyncSession, email: str) -> None:

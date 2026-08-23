@@ -13,6 +13,7 @@ from binx_api.modules.auth.schemas import (
     SignupResponse,
     TokenPair,
     VerifyEmailRequest,
+    VerifyEmailTokenInfo,
 )
 from binx_api.modules.users.schemas import UserRead
 
@@ -37,6 +38,12 @@ async def login(db: DbSession, data: LoginRequest) -> TokenPair:
 @router.post("/refresh", response_model=TokenPair)
 async def refresh_token(db: DbSession, data: RefreshRequest) -> TokenPair:
     return await service.refresh(db, data.refresh_token)
+
+
+@router.get("/verify-email", response_model=VerifyEmailTokenInfo)
+async def get_verify_email_info(db: DbSession, token: str) -> VerifyEmailTokenInfo:
+    user = await service.get_email_verification_target(db, token)
+    return VerifyEmailTokenInfo(email=user.email)
 
 
 @router.post("/verify-email", response_model=MessageResponse)

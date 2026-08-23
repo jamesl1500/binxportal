@@ -9,7 +9,7 @@
  */
 import Link from "next/link";
 
-import ResetPasswordForm from "@/components/forms/auth/ResetPasswordForm";
+import ResetPasswordForm from "@/components/forms/auth/ResetPasswordForm/ResetPasswordForm";
 
 import styles from "./page.module.scss";
 

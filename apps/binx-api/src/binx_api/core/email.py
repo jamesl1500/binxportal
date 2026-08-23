@@ -12,6 +12,8 @@ def send_email(*, to: str, subject: str, body: str) -> None:
 
 
 def send_verification_email(*, to: str, token: str) -> None:
+    # The frontend looks the account's email up from the token via GET
+    # /auth/verify-email, so only the token needs to be in the link.
     link = f"{settings.frontend_url}/verify-email?token={token}"
     send_email(to=to, subject="Verify your Binx Portal account", body=f"Click to verify your account: {link}")
 

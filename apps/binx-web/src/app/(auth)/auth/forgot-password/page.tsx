@@ -8,7 +8,7 @@
  */
 import Link from "next/link";
 
-import ForgotPasswordForm from "@/components/forms/auth/ForgotPasswordForm";
+import ForgotPasswordForm from "@/components/forms/auth/ForgotPasswordForm/ForgotPasswordForm";
 
 import styles from "./page.module.scss";
 
