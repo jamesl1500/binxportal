@@ -2,7 +2,7 @@ import uuid
 from datetime import UTC, datetime, timedelta
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from binx_api.core.config import get_settings
@@ -31,8 +31,19 @@ _PURPOSE_TTL = {
 }
 
 
+async def _prune_stale_tokens(db: AsyncSession) -> None:
+    """Opportunistic housekeeping: drop rows whose usefulness is long gone
+    (expired for over a day). Cheap, runs on the same commit as the fresh
+    token below, and keeps ``auth_tokens`` from growing without bound. A
+    used-but-unexpired refresh row is left alone — it's what replay detection
+    in ``refresh()`` reads."""
+    cutoff = datetime.now(UTC) - timedelta(days=1)
+    await db.execute(delete(AuthToken).where(AuthToken.expires_at < cutoff))
+
+
 async def _issue_token(db: AsyncSession, user: User, purpose: TokenPurpose, *, new_email: str | None = None) -> str:
     raw_token = generate_opaque_token()
+    await _prune_stale_tokens(db)
     db.add(
         AuthToken(
             user_id=user.id,
@@ -47,8 +58,16 @@ async def _issue_token(db: AsyncSession, user: User, purpose: TokenPurpose, *, n
 
 
 async def _consume_token(db: AsyncSession, raw_token: str, purpose: TokenPurpose) -> AuthToken:
+    """Marks a single-use token spent. The UPDATE is guarded on ``used_at IS
+    NULL`` so two requests racing the same token can't both win."""
     record = await _peek_token(db, raw_token, purpose)
-    record.used_at = datetime.now(UTC)
+    result = await db.execute(
+        update(AuthToken)
+        .where(AuthToken.id == record.id, AuthToken.used_at.is_(None))
+        .values(used_at=datetime.now(UTC))
+    )
+    if result.rowcount != 1:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid or expired token")
     await db.commit()
     return record
 
@@ -78,10 +97,12 @@ async def _create_token_pair(db: AsyncSession, user: User) -> TokenPair:
 
 
 async def signup(db: AsyncSession, *, user_name: str, email: str, full_name: str, password: str) -> User:
-    if await get_user_by_email(db, email) is not None:
-        raise HTTPException(status.HTTP_409_CONFLICT, "Email already registered")
-    if await get_user_by_user_name(db, user_name) is not None:
-        raise HTTPException(status.HTTP_409_CONFLICT, "Username already taken")
+    # One generic message whether the email or the username collided — telling
+    # an unauthenticated caller *which* one is taken hands them an account-
+    # enumeration oracle. (The unique constraints on both columns are the real
+    # guard; this check is just for a friendlier error than a raw IntegrityError.)
+    if await get_user_by_email(db, email) is not None or await get_user_by_user_name(db, user_name) is not None:
+        raise HTTPException(status.HTTP_409_CONFLICT, "That email or username is already registered")
 
     user = await create_user(db, user_name=user_name, email=email, full_name=full_name, password=password)
 
@@ -143,10 +164,17 @@ async def refresh(db: AsyncSession, raw_refresh_token: str) -> TokenPair:
 
     # Rotation with a small reuse-grace window: a token that was just used is
     # still honoured (concurrent requests from the same session), but one used
-    # longer ago is a genuine replay and rejected.
+    # longer ago is a genuine replay. On replay we don't just reject this
+    # request — we revoke *every* refresh token for the account, so whether it
+    # was the attacker or the real user who replayed, both are forced to log
+    # in again and the stolen token becomes worthless.
     if record.used_at is not None:
         grace = timedelta(seconds=settings.refresh_token_reuse_grace_seconds)
         if now - record.used_at > grace:
+            await db.execute(
+                delete(AuthToken).where(AuthToken.user_id == record.user_id, AuthToken.purpose == TokenPurpose.REFRESH)
+            )
+            await db.commit()
             raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid or expired token")
     else:
         record.used_at = now

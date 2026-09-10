@@ -21,8 +21,8 @@ import styles from "./ResetPasswordForm.module.scss";
 
 const resetPasswordSchema = z
   .object({
-    password: z.string().min(8, "Password must be at least 8 characters"),
-    confirmPassword: z.string().min(8, "Please confirm your password"),
+    password: z.string().min(12, "Use at least 12 characters"),
+    confirmPassword: z.string().min(1, "Please confirm your password"),
   })
   .refine((values) => values.password === values.confirmPassword, {
     message: "Passwords do not match",

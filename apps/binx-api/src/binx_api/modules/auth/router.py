@@ -1,6 +1,7 @@
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Request, status
 
 from binx_api.core.dependencies import CurrentUser, DbSession
+from binx_api.core.rate_limit import limiter
 from binx_api.core.security import create_ws_ticket
 from binx_api.modules.auth import service
 from binx_api.modules.auth.schemas import (
@@ -27,7 +28,8 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/signup", response_model=SignupResponse, status_code=status.HTTP_201_CREATED)
-async def signup(db: DbSession, data: SignupRequest) -> SignupResponse:
+@limiter.limit("10/hour")
+async def signup(request: Request, db: DbSession, data: SignupRequest) -> SignupResponse:
     user = await service.signup(
         db, user_name=data.user_name, email=data.email, full_name=data.full_name, password=data.password
     )
@@ -37,7 +39,8 @@ async def signup(db: DbSession, data: SignupRequest) -> SignupResponse:
 
 
 @router.post("/login", response_model=TokenPair)
-async def login(db: DbSession, data: LoginRequest) -> TokenPair:
+@limiter.limit("10/minute")
+async def login(request: Request, db: DbSession, data: LoginRequest) -> TokenPair:
     return await service.login(db, data.email, data.password)
 
 
@@ -53,25 +56,29 @@ async def get_verify_email_info(db: DbSession, token: str) -> VerifyEmailTokenIn
 
 
 @router.post("/verify-email", response_model=VerifyEmailResponse)
-async def verify_email(db: DbSession, data: VerifyEmailRequest) -> VerifyEmailResponse:
+@limiter.limit("20/hour")
+async def verify_email(request: Request, db: DbSession, data: VerifyEmailRequest) -> VerifyEmailResponse:
     tokens = await service.verify_email(db, data.token)
     return VerifyEmailResponse(message="Email verified successfully.", **tokens.model_dump())
 
 
 @router.post("/resend-verification", response_model=MessageResponse)
-async def resend_verification(db: DbSession, data: ResendVerificationRequest) -> MessageResponse:
+@limiter.limit("5/hour")
+async def resend_verification(request: Request, db: DbSession, data: ResendVerificationRequest) -> MessageResponse:
     await service.resend_verification(db, data.email)
     return MessageResponse(message="If that account exists, a verification email has been sent.")
 
 
 @router.post("/forgot-password", response_model=MessageResponse)
-async def forgot_password(db: DbSession, data: ForgotPasswordRequest) -> MessageResponse:
+@limiter.limit("5/hour")
+async def forgot_password(request: Request, db: DbSession, data: ForgotPasswordRequest) -> MessageResponse:
     await service.request_password_reset(db, data.email)
     return MessageResponse(message="If that account exists, a password reset email has been sent.")
 
 
 @router.post("/reset-password", response_model=MessageResponse)
-async def reset_password(db: DbSession, data: ResetPasswordRequest) -> MessageResponse:
+@limiter.limit("20/hour")
+async def reset_password(request: Request, db: DbSession, data: ResetPasswordRequest) -> MessageResponse:
     await service.reset_password(db, data.token, data.new_password)
     return MessageResponse(message="Password reset successfully.")
 

@@ -91,6 +91,9 @@ jobs:
       JWT_SECRET: ci-secret-not-for-production
       NEXT_PUBLIC_API_URL: http://localhost:8000/
       NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      # The E2E suite logs in and out many times from one IP — the auth rate
+      # limiter (its own pytest coverage lives in binx-api) would make it flaky.
+      RATE_LIMIT_ENABLED: "false"
     steps:
       - uses: actions/checkout@v4
 

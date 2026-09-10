@@ -25,7 +25,9 @@ class AuthToken(Base):
     # Only the hash is stored; the raw token is only ever seen by the recipient of the email/response
     token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     purpose: Mapped[TokenPurpose] = mapped_column(Enum(TokenPurpose, name="token_purpose"))
-    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    # Indexed for the opportunistic "delete rows expired > 1 day" sweep in
+    # auth/service.py::_prune_stale_tokens.
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 

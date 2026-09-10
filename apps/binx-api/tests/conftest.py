@@ -49,6 +49,10 @@ _TEST_DATABASE_URL = os.environ.get(
 os.environ["DATABASE_URL"] = _TEST_DATABASE_URL
 os.environ.setdefault("JWT_SECRET", "test-secret-not-for-production")
 os.environ.setdefault("FRONTEND_URL", "http://frontend.test")
+# The auth-endpoint rate limiter is off by default under test so unrelated
+# tests can hammer /auth/login without tripping each other. The one test that
+# exercises it (tests/e2e/test_auth_flow.py::TestRateLimiting) flips it on.
+os.environ.setdefault("RATE_LIMIT_ENABLED", "false")
 
 import pytest  # noqa: E402
 from httpx import ASGITransport, AsyncClient  # noqa: E402

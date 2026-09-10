@@ -1,7 +1,10 @@
 import logging
 
 from fastapi import FastAPI
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
+from binx_api.core.rate_limit import limiter
 from binx_api.modules.activity.router import router as activity_router
 from binx_api.modules.agencies.router import router as agencies_router
 from binx_api.modules.ai.router import router as ai_router
@@ -26,6 +29,11 @@ logging.basicConfig(level=logging.INFO)
 
 def create_app() -> FastAPI:
     app = FastAPI(title="Binx API")
+
+    # Rate limiting — the @limiter.limit decorators in modules/auth/router.py
+    # need the limiter on app.state, and a handler to turn a breach into 429.
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
     # API Ops
     app.include_router(ops_router)

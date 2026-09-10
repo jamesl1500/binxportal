@@ -95,18 +95,27 @@ beforeEach(() => {
 });
 
 describe("getInternalBaseUrl", () => {
-  // Behind a reverse proxy / load balancer, the real host/protocol the
-  // browser used are carried in x-forwarded-* headers, not `host`.
-  it("prefers x-forwarded-host/proto when present", async () => {
+  // A configured origin wins and the (spoofable) host headers are ignored —
+  // this is what a real deployment must set.
+  it("uses APP_ORIGIN / NEXT_PUBLIC_SITE_URL verbatim, ignoring the host header", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://app.binx.example/");
+    mockHeaderMap.set("x-forwarded-host", "evil.example.com");
+
+    await expect(getInternalBaseUrl()).resolves.toBe("https://app.binx.example");
+
+    vi.unstubAllEnvs();
+  });
+
+  // With nothing configured (local dev), fall back to the request headers.
+  // Behind a proxy the real host/proto arrive in x-forwarded-*.
+  it("prefers x-forwarded-host/proto when nothing is configured", async () => {
     mockHeaderMap.set("x-forwarded-host", "app.example.com");
     mockHeaderMap.set("x-forwarded-proto", "https");
 
     await expect(getInternalBaseUrl()).resolves.toBe("https://app.example.com");
   });
 
-  // Locally (no proxy in front of `next dev`), only the plain `host` header
-  // is available, and we assume http since NODE_ENV isn't "production" in tests.
-  it("falls back to host header and http in development", async () => {
+  it("falls back to the host header and http in development", async () => {
     mockHeaderMap.set("host", "localhost:3000");
 
     await expect(getInternalBaseUrl()).resolves.toBe("http://localhost:3000");

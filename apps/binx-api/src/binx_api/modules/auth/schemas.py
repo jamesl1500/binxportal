@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field
 
+from binx_api.core.security import Password
 from binx_api.modules.users.schemas import UserRead
 
 
@@ -7,7 +8,7 @@ class SignupRequest(BaseModel):
     user_name: str = Field(min_length=3, max_length=255)
     email: EmailStr
     full_name: str
-    password: str = Field(min_length=8, max_length=128)
+    password: Password
 
 
 class SignupResponse(BaseModel):
@@ -36,7 +37,7 @@ class ForgotPasswordRequest(BaseModel):
 
 class ResetPasswordRequest(BaseModel):
     token: str
-    new_password: str = Field(min_length=8, max_length=128)
+    new_password: Password
 
 
 class VerifyEmailRequest(BaseModel):

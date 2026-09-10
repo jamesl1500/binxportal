@@ -19,6 +19,12 @@ class Settings(BaseSettings):
     # after this window is still rejected — see auth/service.py's refresh().
     refresh_token_reuse_grace_seconds: int = 30
 
+    # Per-client rate limiting on the auth endpoints (login / signup / password
+    # reset / verification resend). Storage is in-process — fine for a single
+    # instance; front with Redis (limits[async-redis]) before scaling out. The
+    # test suite pins this off; the rate-limit test flips it back on.
+    rate_limit_enabled: bool = True
+
     # Base URL of the staff portal frontend, used to build links in emails
     frontend_url: str = "http://localhost:3000"
 

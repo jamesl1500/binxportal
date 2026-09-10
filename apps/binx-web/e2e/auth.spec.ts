@@ -9,7 +9,7 @@ test.describe("authentication", () => {
     await page.goto("/auth/signup");
     await page.getByRole("button", { name: /create account/i }).click();
     await expect(page.getByText(/full name is required/i)).toBeVisible();
-    await expect(page.getByText(/at least 8 characters/i).first()).toBeVisible();
+    await expect(page.getByText(/at least 12 characters/i).first()).toBeVisible();
     await expect(page).toHaveURL(/\/auth\/signup$/);
   });
 

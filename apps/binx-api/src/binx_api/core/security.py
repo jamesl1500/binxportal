@@ -1,10 +1,11 @@
 import hashlib
 import secrets
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import Annotated, Any
 
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+from pydantic import AfterValidator, Field
 
 from binx_api.core.config import get_settings
 
@@ -54,6 +55,39 @@ def decode_ws_ticket(token: str) -> str | None:
     if payload.get("type") != "ws" or "sub" not in payload:
         return None
     return str(payload["sub"])
+
+
+# A short blocklist of the passwords that show up at the very top of every
+# breach corpus. Not a substitute for a real check (zxcvbn / a HIBP range
+# query) — just enough that a 12-char minimum can't be satisfied with
+# "password12345" or "123456789012". Compared case-insensitively.
+_COMMON_PASSWORDS = frozenset(
+    (
+        "password password12 password123 password1234 password12345 passw0rd123 "
+        "p@ssw0rd123 p@ssword1234 welcome123456 welcome1234 123456789012 1234567890123 "
+        "12345678901234 0123456789012 qwertyuiop123 qwerty1234567 asdfghjkl1234 1qaz2wsx3edc "
+        "iloveyou12345 letmein123456 administrator1 changeme12345 changemenow12 trustno123456 "
+        "sunshine12345 princess12345 football12345 baseball12345 monkey1234567 dragon1234567 "
+        "superman12345 batman1234567 michael123456 abc1234567890 aaaaaaaaaaaa test123456789 "
+        "temp123456789 letmein1234 secret1234567"
+    ).split()
+)
+
+
+def is_common_password(password: str) -> bool:
+    """True for passwords on the top-of-every-breach-list blocklist."""
+    return password.lower() in _COMMON_PASSWORDS
+
+
+def _reject_common_password(value: str) -> str:
+    if is_common_password(value):
+        raise ValueError("This password is too common — pick something less guessable")
+    return value
+
+
+# The password policy, as a Pydantic field type: a 12-character floor plus the
+# breach-list blocklist. Reused by signup, password reset, and change-password.
+Password = Annotated[str, Field(min_length=12, max_length=128), AfterValidator(_reject_common_password)]
 
 
 def generate_opaque_token() -> str:

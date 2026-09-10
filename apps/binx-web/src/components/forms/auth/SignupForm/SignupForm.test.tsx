@@ -23,8 +23,8 @@ async function fillValidForm(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText("Full name"), "A B");
   await user.type(screen.getByLabelText("Username"), "user123");
   await user.type(screen.getByLabelText("Email"), "a@b.com");
-  await user.type(screen.getByLabelText("Password"), "password123");
-  await user.type(screen.getByLabelText("Confirm password"), "password123");
+  await user.type(screen.getByLabelText("Password"), "str0ng-pass-phrase");
+  await user.type(screen.getByLabelText("Confirm password"), "str0ng-pass-phrase");
 }
 
 describe("SignupForm", () => {
@@ -38,8 +38,8 @@ describe("SignupForm", () => {
     await user.type(screen.getByLabelText("Full name"), "A B");
     await user.type(screen.getByLabelText("Username"), "user123");
     await user.type(screen.getByLabelText("Email"), "a@b.com");
-    await user.type(screen.getByLabelText("Password"), "password123");
-    await user.type(screen.getByLabelText("Confirm password"), "different123");
+    await user.type(screen.getByLabelText("Password"), "str0ng-pass-phrase");
+    await user.type(screen.getByLabelText("Confirm password"), "different-pass-phrase");
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
     expect(await screen.findByText("Passwords do not match")).toBeInTheDocument();
@@ -59,7 +59,7 @@ describe("SignupForm", () => {
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
     expect(await screen.findByText("Account created. Check your email to verify your address.")).toBeInTheDocument();
-    expect(mockedSignupAction).toHaveBeenCalledWith("user123", "a@b.com", "A B", "password123");
+    expect(mockedSignupAction).toHaveBeenCalledWith("user123", "a@b.com", "A B", "str0ng-pass-phrase");
   });
 
   it("shows the server error on failure", async () => {

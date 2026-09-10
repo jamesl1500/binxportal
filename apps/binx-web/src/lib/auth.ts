@@ -112,8 +112,18 @@ const baseCookieOptions = {
   path: "/",
 };
 
-/** Resolves this app's own origin so Server Actions can call our `/api/auth/*` routes. */
+/**
+ * Resolves this app's own origin so Server Actions can call our `/api/auth/*`
+ * routes. In any real deployment set `NEXT_PUBLIC_SITE_URL` (or `APP_ORIGIN`) —
+ * it's used verbatim and the request's `Host` / `X-Forwarded-Host` headers are
+ * ignored, so a spoofed host header can't redirect an internal call (which
+ * carries the login credentials / tokens) to an attacker's server. The header
+ * fallback only applies when nothing is configured, i.e. local dev.
+ */
 export async function getInternalBaseUrl(): Promise<string> {
+  const configured = process.env.APP_ORIGIN ?? process.env.NEXT_PUBLIC_SITE_URL;
+  if (configured) return configured.replace(/\/$/, "");
+
   const headerList = await headers();
   const host = headerList.get("x-forwarded-host") ?? headerList.get("host") ?? "localhost:3000";
   const protocol = headerList.get("x-forwarded-proto") ?? (process.env.NODE_ENV === "production" ? "https" : "http");

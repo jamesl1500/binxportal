@@ -21,8 +21,8 @@ describe("ResetPasswordForm", () => {
     const user = userEvent.setup();
     render(<ResetPasswordForm token="token123" />);
 
-    await user.type(screen.getByLabelText("New password"), "password123");
-    await user.type(screen.getByLabelText("Confirm new password"), "different123");
+    await user.type(screen.getByLabelText("New password"), "str0ng-pass-phrase");
+    await user.type(screen.getByLabelText("Confirm new password"), "different-pass-phrase");
     await user.click(screen.getByRole("button", { name: /reset password/i }));
 
     expect(await screen.findByText("Passwords do not match")).toBeInTheDocument();
