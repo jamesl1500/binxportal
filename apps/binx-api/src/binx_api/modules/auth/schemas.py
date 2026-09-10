@@ -43,6 +43,10 @@ class VerifyEmailRequest(BaseModel):
     token: str
 
 
+class VerifyEmailResponse(TokenPair):
+    message: str
+
+
 class VerifyEmailTokenInfo(BaseModel):
     email: EmailStr
 
@@ -54,3 +58,22 @@ class ResendVerificationRequest(BaseModel):
 class MessageResponse(BaseModel):
     message: str
 
+
+class RequestEmailChangeRequest(BaseModel):
+    current_password: str
+    new_email: EmailStr
+
+
+class ConfirmEmailChangeRequest(BaseModel):
+    token: str
+
+
+class EmailChangeTokenInfo(BaseModel):
+    new_email: EmailStr
+
+
+class WsTicketResponse(BaseModel):
+    """A short-lived token the browser passes on the websocket handshake —
+    see core/security.py's create_ws_ticket."""
+
+    ticket: str

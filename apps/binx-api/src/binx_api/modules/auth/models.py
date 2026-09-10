@@ -12,10 +12,11 @@ class TokenPurpose(str, enum.Enum):
     EMAIL_VERIFICATION = "email_verification"
     PASSWORD_RESET = "password_reset"
     REFRESH = "refresh"
+    EMAIL_CHANGE = "email_change"
 
 
 class AuthToken(Base):
-    """Opaque, single-use tokens for email verification, password reset, and refresh."""
+    """Opaque, single-use tokens for email verification, password reset, refresh, and email change."""
 
     __tablename__ = "auth_tokens"
 
@@ -27,3 +28,8 @@ class AuthToken(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    # Only set for EMAIL_CHANGE tokens: the address being switched to, staged
+    # here (rather than on the user row) so the change only takes effect once
+    # this token is confirmed.
+    new_email: Mapped[str | None] = mapped_column(String(255), default=None)

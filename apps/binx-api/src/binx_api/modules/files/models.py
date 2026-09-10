@@ -1,11 +1,11 @@
 # File models
 import uuid
 
-from datetime import datetime
-from sqlalchemy import DateTime, String, func, Uuid
+from sqlalchemy import String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column
 
 from binx_api.core.database import Base
+
 
 class File(Base):
     __tablename__ = "files"
@@ -30,4 +30,3 @@ class File(Base):
 
     # File owner (user ID)
     owner_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
-

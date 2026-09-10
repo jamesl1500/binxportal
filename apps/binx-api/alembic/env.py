@@ -5,12 +5,21 @@ from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
 from alembic import context
-
 from binx_api.core.config import get_settings
 from binx_api.core.database import Base
-from binx_api.tenancy import models as tenancy_models  # noqa: F401
-from binx_api.modules.users import models as users_models  # noqa: F401
+from binx_api.modules.activity import models as activity_models  # noqa: F401
+from binx_api.modules.agencies import models as agencies_models  # noqa: F401
+from binx_api.modules.ai import models as ai_models  # noqa: F401
 from binx_api.modules.auth import models as auth_models  # noqa: F401
+from binx_api.modules.billing import models as billing_models  # noqa: F401
+from binx_api.modules.boards import models as boards_models  # noqa: F401
+from binx_api.modules.client_portal import models as client_portal_models  # noqa: F401
+from binx_api.modules.invoicing import models as invoicing_models  # noqa: F401
+from binx_api.modules.leads import models as leads_models  # noqa: F401
+from binx_api.modules.messaging import models as messaging_models  # noqa: F401
+from binx_api.modules.notifications import models as notifications_models  # noqa: F401
+from binx_api.modules.projects import models as projects_models  # noqa: F401
+from binx_api.modules.users import models as users_models  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -89,4 +98,3 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
-

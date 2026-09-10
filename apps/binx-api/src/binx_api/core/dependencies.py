@@ -34,7 +34,7 @@ async def get_current_user(
     try:
         user_id = uuid.UUID(payload["sub"])
     except ValueError:
-        raise credentials_error
+        raise credentials_error from None
 
     user = await get_user_by_id(db, user_id)
     if user is None or not user.is_active:
@@ -54,4 +54,3 @@ def require_role(*roles: str):
         return current_user
 
     return dependency
-

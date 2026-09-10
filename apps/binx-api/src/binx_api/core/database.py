@@ -11,15 +11,20 @@ settings = get_settings()
 engine = create_async_engine(settings.database_url, echo=False)
 async_session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
+
 # Base class for all models
 class Base(DeclarativeBase):
     created_at = mapped_column(DateTime(timezone=True), server_default=text("CURRENT_TIMESTAMP"))
-    updated_at = mapped_column(DateTime(timezone=True), server_default=text("CURRENT_TIMESTAMP"), onupdate=text("CURRENT_TIMESTAMP"))
+    updated_at = mapped_column(
+        DateTime(timezone=True), server_default=text("CURRENT_TIMESTAMP"), onupdate=text("CURRENT_TIMESTAMP")
+    )
     pass
 
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
+
+async def get_db() -> AsyncGenerator[AsyncSession]:
     async with async_session_factory() as session:
         yield session
+
 
 # DB status
 async def is_db_connected() -> bool:

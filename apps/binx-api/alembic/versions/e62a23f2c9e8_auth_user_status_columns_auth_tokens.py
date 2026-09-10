@@ -58,4 +58,8 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_auth_tokens_user_id'), table_name='auth_tokens')
     op.drop_index(op.f('ix_auth_tokens_token_hash'), table_name='auth_tokens')
     op.drop_table('auth_tokens')
+    # SQLAlchemy creates the enum type alongside the table but doesn't drop it
+    # with the table — without this an `upgrade` after a full `downgrade` fails
+    # with "type token_purpose already exists".
+    op.execute('DROP TYPE IF EXISTS token_purpose')
     # ### end Alembic commands ###

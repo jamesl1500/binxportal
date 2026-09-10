@@ -1,6 +1,6 @@
 import hashlib
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from jose import JWTError, jwt
@@ -21,7 +21,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 def create_access_token(subject: str, extra_claims: dict[str, Any] | None = None) -> str:
-    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.access_token_expire_minutes)
+    expire = datetime.now(UTC) + timedelta(minutes=settings.access_token_expire_minutes)
     payload: dict[str, Any] = {"sub": subject, "exp": expire}
     if extra_claims:
         payload.update(extra_claims)
@@ -33,6 +33,27 @@ def decode_access_token(token: str) -> dict[str, Any] | None:
         return jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
     except JWTError:
         return None
+
+
+def create_ws_ticket(subject: str) -> str:
+    """A short-lived, single-purpose token the browser trades for a websocket
+    connection. It carries ``type: "ws"`` so it can never be used as an access
+    token, and expires in seconds — long enough to open one socket, not long
+    enough to be worth stealing. See auth/router.py's ``/auth/ws-ticket``."""
+    expire = datetime.now(UTC) + timedelta(seconds=settings.ws_ticket_expire_seconds)
+    payload = {"sub": subject, "exp": expire, "type": "ws"}
+    return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
+
+
+def decode_ws_ticket(token: str) -> str | None:
+    """Returns the subject (user id) of a valid, unexpired ws ticket, or None."""
+    try:
+        payload = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
+    except JWTError:
+        return None
+    if payload.get("type") != "ws" or "sub" not in payload:
+        return None
+    return str(payload["sub"])
 
 
 def generate_opaque_token() -> str:

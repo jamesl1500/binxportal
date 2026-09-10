@@ -9,6 +9,7 @@ authors = [
 requires-python = ">=3.13"
 dependencies = [
     "alembic>=1.19.1",
+    "anthropic>=0.71.0",
     "asyncpg>=0.31.0",
     # passlib 1.7.4 (unmaintained) probes bcrypt.__about__, which bcrypt>=4.1 removed.
     "bcrypt<4.1",
@@ -24,6 +25,7 @@ dependencies = [
 
 [project.scripts]
 binx-api = "binx_api:main"
+binx-api-seed-e2e = "binx_api.scripts.seed_e2e:main"
 
 [build-system]
 requires = ["uv_build>=0.12.3,<0.13.0"]
@@ -34,4 +36,79 @@ dev = [
     "httpx>=0.28.1",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
+    "pytest-cov>=7.0.0",
+    "ruff>=0.14.0",
 ]
+
+
+# --- Test runner -----------------------------------------------------------
+# asyncio_mode = "auto" lets every `async def test_*` run without a per-test
+# @pytest.mark.asyncio marker. All fixtures and tests share one event loop for
+# the whole session (loop_scope/fixture_loop_scope = "session") so a
+# session-scoped async engine stays valid across every test — the default
+# function-scoped loop would tear its connection pool down between tests.
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+addopts = "-ra --strict-markers --strict-config"
+markers = [
+    "unit: pure-logic tests with no database or network (tests/unit)",
+    "integration: service-layer tests against a real Postgres test database (tests/integration)",
+    "e2e: full-stack tests through the ASGI app over HTTP (tests/e2e)",
+    "migrations: Alembic upgrade/downgrade round-trip checks (tests/migrations)",
+]
+# Treat warnings from our own code as failures, but let known third-party
+# deprecation noise (passlib's `crypt` shim on 3.13, etc.) through.
+filterwarnings = [
+    "error",
+    "ignore::DeprecationWarning:passlib",
+    "ignore::DeprecationWarning:pkg_resources",
+    "default::DeprecationWarning:botocore",
+]
+
+[tool.coverage.run]
+source = ["binx_api"]
+branch = true
+omit = ["*/alembic/*"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+# The lazily-wired "future plan" stubs and defensive branches aren't worth
+# gaming the number for — exclude the obvious ones.
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "\\.\\.\\.$",
+]
+
+
+# --- Lint & format -------------------------------------------------------
+# Ruff covers both. Line length matches the existing codebase (~120). The
+# generated Alembic migration scripts keep their own style, so they're
+# excluded from linting (but still formatted).
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+extend-exclude = ["alembic/versions"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # import sorting
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+]
+# B008: FastAPI's Depends()/File() in defaults is the framework's own idiom.
+# UP042: the str+Enum -> StrEnum rewrite would change how the auth token enum
+#        serialises; not worth the risk for a cosmetic win.
+ignore = ["B008", "UP042"]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests lean on assert and re-export fixtures; that's expected there.
+"tests/**" = ["F401", "F811"]
