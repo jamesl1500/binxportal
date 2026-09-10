@@ -16,6 +16,7 @@ import axios from "axios";
 import { redirect } from "next/navigation";
 
 import { forwardSetCookies, getInternalBaseUrl } from "@/lib/auth";
+import { resolveHome } from "@/lib/portal";
 
 /**
  * LoginActionResult
@@ -41,5 +42,6 @@ export async function loginAction(email: string, password: string): Promise<Logi
     return { error: "Unable to sign in" };
   }
 
-  redirect("/dashboard");
+  // Staff land on the dashboard, client contacts on the portal.
+  redirect(await resolveHome());
 }

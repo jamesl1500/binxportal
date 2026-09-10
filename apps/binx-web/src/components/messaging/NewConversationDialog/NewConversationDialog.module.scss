@@ -1,0 +1,123 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.trigger {
+  @include m.button-base;
+  gap: t.$space-2;
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+}
+
+.plusIcon {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(10, 10, 11, 0.4);
+  transition: opacity t.$duration-fast t.$ease-standard;
+
+  &[data-starting-style],
+  &[data-ending-style] {
+    opacity: 0;
+  }
+}
+
+.dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 60;
+  width: calc(100vw - #{t.$space-8});
+  max-width: 30rem;
+  max-height: calc(100vh - #{t.$space-12});
+  overflow-y: auto;
+  padding: t.$space-6;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  box-shadow: 0 24px 48px rgba(10, 10, 11, 0.2);
+  outline: none;
+  transform: translate(-50%, -50%);
+  transition:
+    opacity t.$duration-fast t.$ease-standard,
+    transform t.$duration-fast t.$ease-standard;
+
+  &[data-starting-style],
+  &[data-ending-style] {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.96);
+  }
+}
+
+.dialogTitle {
+  margin: 0 0 t.$space-2;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-ink;
+}
+
+.dialogDescription {
+  margin: 0 0 t.$space-5;
+  font-size: t.$font-size-sm;
+  line-height: 1.5;
+  color: t.$color-ink-soft;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-4;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+}
+
+.label {
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  color: t.$color-ink-soft;
+}
+
+.input {
+  @include m.input-base;
+}
+
+.textarea {
+  @include m.input-base;
+  resize: vertical;
+  min-height: 3rem;
+  font-family: inherit;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: t.$space-3;
+}
+
+.cancel {
+  @include m.button-base;
+  background: t.$color-surface;
+}
+
+.submit {
+  @include m.button-base;
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+}

@@ -1,0 +1,229 @@
+@use "../../../../styles/tokens" as t;
+@use "../../../../styles/mixins" as m;
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-5;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: t.$space-4;
+}
+
+.search {
+  @include m.input-base;
+  width: 16rem;
+  max-width: 100%;
+}
+
+.addRow {
+  display: flex;
+  gap: t.$space-2;
+}
+
+.select {
+  @include m.input-base;
+  width: auto;
+  min-width: 12rem;
+  cursor: pointer;
+}
+
+.add {
+  @include m.button-base;
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  overflow: hidden;
+}
+
+.headCell {
+  padding: t.$space-3 t.$space-4;
+  @include m.mono-label;
+  text-align: left;
+  color: t.$color-ink-faint;
+  border-bottom: 1px solid t.$color-border;
+}
+
+.headCell.sortable {
+  padding: 0;
+}
+
+.sortButton {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-1;
+  width: 100%;
+  padding: t.$space-3 t.$space-4;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: t.$color-ink-faint;
+  background: none;
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    color: t.$color-ink;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.sortIcon {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.row {
+  border-bottom: 1px solid t.$color-border;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.cell {
+  padding: t.$space-4;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+  vertical-align: middle;
+}
+
+.person {
+  display: flex;
+  align-items: center;
+  gap: t.$space-3;
+}
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  color: t.$color-accent-foreground;
+  background: t.$color-accent;
+  border-radius: t.$radius-sm;
+}
+
+.name {
+  margin: 0;
+  font-weight: 600;
+  color: t.$color-ink;
+}
+
+.contactDetail {
+  color: t.$color-ink-soft;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.muted {
+  color: t.$color-ink-faint;
+}
+
+.roleControl {
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+}
+
+.roleDot {
+  width: 0.625rem;
+  height: 0.625rem;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid t.$color-border;
+}
+
+.roleSelect {
+  @include m.input-base;
+  width: auto;
+  min-width: 9rem;
+  padding: t.$space-2 t.$space-3;
+  cursor: pointer;
+}
+
+.removeButton {
+  padding: t.$space-2 t.$space-3;
+  font-size: t.$font-size-xs;
+  color: t.$color-danger;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: rgba(220, 38, 38, 0.08);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.emptyState {
+  padding: t.$space-10 t.$space-6;
+  text-align: center;
+  background: t.$color-surface;
+  border: 1px dashed t.$color-border;
+  border-radius: t.$radius-md;
+}
+
+.emptyTitle {
+  margin: 0 0 t.$space-2;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-ink;
+}
+
+.emptyText {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+}
+
+.hint {
+  margin: 0;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+}
+
+.error {
+  margin: 0;
+  padding: t.$space-3;
+  font-size: t.$font-size-sm;
+  color: t.$color-danger;
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-radius: t.$radius-sm;
+}

@@ -1,0 +1,38 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.wrap {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px t.$space-2;
+  font-family: var(--font-mono);
+  font-size: t.$font-size-xs;
+  letter-spacing: t.$tracking-wide;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+
+  &:focus-within {
+    @include m.focus-ring;
+  }
+}
+
+.select {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  padding-right: t.$space-3;
+}
+
+.pill {
+  display: inline-block;
+  padding: 2px t.$space-3;
+  font-family: var(--font-mono);
+  font-size: t.$font-size-xs;
+  letter-spacing: t.$tracking-wide;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+}

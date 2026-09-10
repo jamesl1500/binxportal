@@ -1,0 +1,132 @@
+@use "../../../../styles/tokens" as t;
+@use "../../../../styles/mixins" as m;
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-5;
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  overflow: hidden;
+}
+
+.row {
+  border-bottom: 1px solid t.$color-border;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.info {
+  padding: t.$space-4 t.$space-5;
+  vertical-align: top;
+}
+
+.label {
+  margin: 0 0 t.$space-1;
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  color: t.$color-ink;
+}
+
+.description {
+  margin: 0;
+  font-size: t.$font-size-xs;
+  line-height: 1.5;
+  color: t.$color-ink-soft;
+}
+
+.control {
+  width: 9rem;
+  padding: t.$space-4 t.$space-5;
+  text-align: right;
+  vertical-align: top;
+}
+
+.select {
+  width: 100%;
+  padding: t.$space-2 t.$space-3;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 2.25rem;
+  height: 1.25rem;
+  padding: 2px;
+  background: t.$color-border-strong;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color t.$duration-fast t.$ease-standard;
+
+  &[data-checked] {
+    background: t.$color-accent;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.thumb {
+  width: 1rem;
+  height: 1rem;
+  background: t.$color-surface;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(10, 10, 11, 0.2);
+  transition: transform t.$duration-fast t.$ease-standard;
+
+  [data-checked] > & {
+    transform: translateX(1rem);
+  }
+}
+
+.formError {
+  margin: 0;
+  padding: t.$space-3;
+  font-size: t.$font-size-sm;
+  color: t.$color-danger;
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-radius: t.$radius-sm;
+}
+
+.formSuccess {
+  margin: 0;
+  padding: t.$space-3;
+  font-size: t.$font-size-sm;
+  color: #15803d;
+  background: rgba(21, 128, 61, 0.08);
+  border: 1px solid rgba(21, 128, 61, 0.2);
+  border-radius: t.$radius-sm;
+}
+
+.submit {
+  @include m.button-base;
+  align-self: flex-start;
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+}

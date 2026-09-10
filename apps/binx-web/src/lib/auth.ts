@@ -39,7 +39,7 @@ export class AuthApiError extends Error {
 }
 
 /** FastAPI's `detail` is either a plain string (HTTPException) or a list of pydantic validation errors (422). */
-function extractDetailMessage(data: unknown, fallback: string): string {
+export function extractDetailMessage(data: unknown, fallback: string): string {
   const detail = (data as { detail?: unknown } | undefined)?.detail;
 
   if (typeof detail === "string") return detail;
@@ -69,9 +69,12 @@ export interface CurrentUser {
   user_name: string;
   email: string;
   full_name: string;
+  summary: string | null;
   role: string;
   is_active: boolean;
   is_verified: boolean;
+  phone_number: string | null;
+  job_title: string | null;
 }
 
 /**
@@ -450,20 +453,85 @@ export async function getEmailVerificationTarget(token: string): Promise<string>
  * verifyEmail
  *
  * Exchanges an email-verification token (from the emailed link) for an
- * activated account.
+ * activated, signed-in account. binx-api issues a fresh token pair on
+ * successful verification, so — like `login()` — this stores session
+ * cookies before returning, letting the caller drop straight into onboarding
+ * without a separate sign-in step.
  *
  * @function verifyEmail
  * @param {string} token - The verification token sent to the user's email.
  * @throws {AuthApiError} - Thrown with binx-api's reason (e.g. "Invalid or expired token").
  */
 export async function verifyEmail(token: string): Promise<string> {
+  let data: TokenPair & { message: string };
+
   try {
-    const { data } = await api.post<{ message: string }>("/auth/verify-email", { token });
-    return data.message;
+    ({ data } = await api.post<TokenPair & { message: string }>("/auth/verify-email", { token }));
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new AuthApiError(
         extractDetailMessage(error.response.data, "Unable to verify email"),
+        error.response.status,
+      );
+    }
+    throw error;
+  }
+
+  if (!data || !data.access_token || !data.refresh_token) {
+    throw new Error("Verification failed: Invalid response from server");
+  }
+
+  await setAuthCookies(data, null);
+  return data.message;
+}
+
+/**
+ * getEmailChangeTarget
+ *
+ * Looks up the pending new email address for an email-change confirmation
+ * token WITHOUT consuming it, so the confirm-email page can preview it
+ * before the user actually clicks "Confirm".
+ *
+ * @function getEmailChangeTarget
+ * @param {string} token - The confirmation token from the emailed link.
+ * @returns {Promise<string>} The pending new email address.
+ * @throws {AuthApiError} - Thrown if the token is missing/invalid/expired.
+ */
+export async function getEmailChangeTarget(token: string): Promise<string> {
+  try {
+    const { data } = await api.get<{ new_email: string }>("/auth/confirm-email", { params: { token } });
+    return data.new_email;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new AuthApiError(
+        extractDetailMessage(error.response.data, "Invalid or expired confirmation link"),
+        error.response.status,
+      );
+    }
+    throw error;
+  }
+}
+
+/**
+ * confirmEmailChange
+ *
+ * Exchanges an email-change confirmation token (from the emailed link) for
+ * the completed change. Unlike `verifyEmail`, this doesn't issue a new
+ * session — the confirming browser may not even be the one that's signed
+ * in — so there are no cookies to set here.
+ *
+ * @function confirmEmailChange
+ * @param {string} token - The confirmation token sent to the new email address.
+ * @throws {AuthApiError} - Thrown with binx-api's reason (e.g. "Invalid or expired token").
+ */
+export async function confirmEmailChange(token: string): Promise<string> {
+  try {
+    const { data } = await api.post<{ message: string }>("/auth/confirm-email", { token });
+    return data.message;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new AuthApiError(
+        extractDetailMessage(error.response.data, "Unable to confirm email change"),
         error.response.status,
       );
     }

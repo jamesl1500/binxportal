@@ -7,8 +7,16 @@
  * @author Binx.io
  */
 import React from "react";
+import type { Metadata } from "next";
+
+import Link from "next/link";
 
 import styles from "./layout.module.scss";
+
+export const metadata: Metadata = {
+  title: { default: "Sign in", template: "%s · Binx" },
+  robots: { index: false, follow: false },
+};
 
 const FEATURES = [
   {

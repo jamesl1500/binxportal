@@ -1,0 +1,30 @@
+@use "../../../styles/tokens" as t;
+
+.badge {
+  display: inline-block;
+  padding: 2px t.$space-3;
+  font-family: var(--font-mono);
+  font-size: t.$font-size-xs;
+  letter-spacing: t.$tracking-wide;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+  color: t.$color-ink-soft;
+
+  &[data-tone="high"] {
+    color: #0f9d58;
+    border-color: color-mix(in srgb, #0f9d58 40%, transparent);
+  }
+
+  &[data-tone="mid"] {
+    color: #d9822b;
+    border-color: color-mix(in srgb, #d9822b 40%, transparent);
+  }
+
+  &[data-tone="low"] {
+    color: t.$color-ink-soft;
+  }
+
+  &[data-tone="none"] {
+    color: t.$color-ink-faint;
+  }
+}

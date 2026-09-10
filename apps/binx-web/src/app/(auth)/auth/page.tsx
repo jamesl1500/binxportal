@@ -7,8 +7,11 @@
  * @module apps/binx-web/src/app/(auth)/auth/page.tsx
  * @author Binx.io
  */
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
+
+export const metadata: Metadata = { title: "Sign in" };
 
 const AuthDefaultPage = async () => {
   const user = await getCurrentUser();

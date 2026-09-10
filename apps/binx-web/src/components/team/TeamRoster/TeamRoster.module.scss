@@ -1,0 +1,227 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-5;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: t.$space-3;
+}
+
+.search {
+  @include m.input-base;
+  max-width: 22rem;
+}
+
+.chips {
+  display: flex;
+  gap: t.$space-1;
+}
+
+.chip {
+  padding: t.$space-2 t.$space-3;
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  color: t.$color-ink-soft;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+  transition:
+    color t.$duration-fast t.$ease-standard,
+    background-color t.$duration-fast t.$ease-standard;
+
+  &:hover {
+    color: t.$color-ink;
+  }
+
+  &[data-active="true"] {
+    color: t.$color-accent-foreground;
+    background: t.$color-accent;
+    border-color: t.$color-accent;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.tableScroll {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  overflow: hidden;
+}
+
+.headCell {
+  padding: 0;
+  text-align: left;
+  border-bottom: 1px solid t.$color-border;
+}
+
+.sortButton {
+  @include m.mono-label;
+  width: 100%;
+  padding: t.$space-3 t.$space-5;
+  color: t.$color-ink-faint;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    color: t.$color-ink-soft;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.row {
+  border-bottom: 1px solid t.$color-border;
+  cursor: pointer;
+  transition: background-color t.$duration-fast t.$ease-standard;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: t.$color-paper;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.cell {
+  padding: t.$space-4 t.$space-5;
+  vertical-align: middle;
+}
+
+.muted {
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+  white-space: nowrap;
+}
+
+.person {
+  display: flex;
+  align-items: center;
+  gap: t.$space-3;
+}
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  color: t.$color-accent-foreground;
+  background: t.$color-accent;
+  border-radius: 50%;
+}
+
+.name {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  color: t.$color-ink;
+}
+
+.verified {
+  color: t.$color-accent;
+}
+
+.youBadge {
+  padding: 1px t.$space-2;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: t.$tracking-wider;
+  text-transform: uppercase;
+  color: t.$color-ink-soft;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+}
+
+.sub {
+  margin: 2px 0 0;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+}
+
+.title {
+  color: t.$color-ink-faint;
+}
+
+.email {
+  margin: 2px 0 0;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+}
+
+.roleSelect {
+  padding: t.$space-2 t.$space-3;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.roleBadge {
+  display: inline-block;
+  padding: t.$space-1 t.$space-3;
+  font-family: var(--font-mono);
+  font-size: t.$font-size-xs;
+  letter-spacing: t.$tracking-wide;
+  color: t.$color-ink-soft;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+
+  &[data-role="owner"] {
+    color: t.$color-ink;
+    border-color: t.$color-border-strong;
+  }
+}
+
+.empty {
+  margin: 0;
+  padding: t.$space-6;
+  text-align: center;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-faint;
+}

@@ -1,0 +1,388 @@
+@use "../../../../styles/tokens" as t;
+@use "../../../../styles/mixins" as m;
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-4;
+}
+
+.error {
+  margin: 0;
+  padding: t.$space-3;
+  font-size: t.$font-size-sm;
+  color: t.$color-danger;
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-radius: t.$radius-sm;
+}
+
+.board {
+  display: flex;
+  align-items: flex-start;
+  gap: t.$space-4;
+  overflow-x: auto;
+  padding-bottom: t.$space-2;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: 18rem;
+  padding: t.$space-3;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  transition:
+    border-color t.$duration-fast t.$ease-standard,
+    background-color t.$duration-fast t.$ease-standard;
+
+  &[data-dragover="true"] {
+    border-color: t.$color-accent;
+    background: color-mix(in srgb, t.$color-accent 8%, t.$color-paper);
+  }
+}
+
+.columnHeader {
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+  margin-bottom: t.$space-3;
+  padding: t.$space-1 0;
+  border-bottom: 1px solid t.$color-border;
+}
+
+.columnName {
+  flex: 1;
+  min-width: 0;
+  padding: t.$space-1 t.$space-2;
+  overflow: hidden;
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: t.$color-ink;
+  background: none;
+  border: none;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(10, 10, 11, 0.04);
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.renameInput {
+  @include m.input-base;
+  flex: 1;
+  min-width: 0;
+  padding: t.$space-1 t.$space-2;
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+}
+
+.columnCount {
+  @include m.mono-label;
+  letter-spacing: normal;
+  color: t.$color-ink-faint;
+}
+
+.columnDelete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+  color: t.$color-ink-faint;
+  background: none;
+  border: none;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  svg {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+
+  &:hover:not(:disabled) {
+    color: t.$color-danger;
+    background: rgba(220, 38, 38, 0.08);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+  padding: t.$space-3;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+  cursor: grab;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &[data-dragging="true"] {
+    opacity: 0.4;
+  }
+}
+
+.cardTitle {
+  padding: 0;
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  text-align: left;
+  color: t.$color-ink;
+  background: none;
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.cardDescription {
+  margin: 0;
+  font-size: t.$font-size-xs;
+  line-height: 1.5;
+  color: t.$color-ink-soft;
+}
+
+.cardTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-1;
+}
+
+.cardTag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.0625rem t.$space-1;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+}
+
+.cardMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-2;
+}
+
+.cardDue,
+.cardAssignee,
+.cardBadge {
+  @include m.mono-label;
+  letter-spacing: normal;
+  padding: 0.125rem t.$space-2;
+  color: t.$color-ink-soft;
+  background: t.$color-paper;
+  border-radius: t.$radius-sm;
+}
+
+.cardBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+
+  svg {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+}
+
+.cardDelete {
+  padding: t.$space-1 t.$space-2;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+  background: none;
+  border: none;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover:not(:disabled) {
+    color: t.$color-danger;
+    background: rgba(220, 38, 38, 0.08);
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.addTaskTrigger,
+.addListTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-1;
+  margin-top: t.$space-2;
+  padding: t.$space-2;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+  background: none;
+  border: none;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  svg {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+
+  &:hover {
+    color: t.$color-ink;
+    background: rgba(10, 10, 11, 0.04);
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.addTaskForm,
+.addListForm {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+  margin-top: t.$space-2;
+}
+
+.addTaskInput {
+  @include m.input-base;
+  padding: t.$space-2;
+  font-size: t.$font-size-sm;
+}
+
+.addTaskActions {
+  display: flex;
+  gap: t.$space-2;
+}
+
+.addTaskSubmit {
+  @include m.button-base;
+  padding: t.$space-1 t.$space-3;
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+}
+
+.addTaskCancel {
+  padding: t.$space-1 t.$space-3;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+  background: none;
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    color: t.$color-ink;
+  }
+}
+
+.addListColumn {
+  flex-shrink: 0;
+  width: 14rem;
+}
+
+// --- Inline task editor ---
+
+.editCard {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+  padding: t.$space-3;
+  background: t.$color-surface;
+  border: 1px solid t.$color-focus;
+  border-radius: t.$radius-sm;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.editTitle {
+  @include m.input-base;
+  padding: t.$space-2;
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+}
+
+.editDescription {
+  @include m.input-base;
+  padding: t.$space-2;
+  font-size: t.$font-size-xs;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.editRow {
+  display: flex;
+  gap: t.$space-2;
+}
+
+.editDate,
+.editAssignee {
+  @include m.input-base;
+  flex: 1;
+  min-width: 0;
+  padding: t.$space-1 t.$space-2;
+  font-size: t.$font-size-xs;
+}
+
+.editActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: t.$space-2;
+}
+
+.editSave {
+  @include m.button-base;
+  padding: t.$space-1 t.$space-3;
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+}
+
+.editCancel {
+  padding: t.$space-1 t.$space-3;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+  background: none;
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    color: t.$color-ink;
+  }
+}

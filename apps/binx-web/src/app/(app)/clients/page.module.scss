@@ -1,0 +1,37 @@
+@use "../../../styles/tokens" as t;
+
+.eyebrow {
+  display: block;
+  margin-bottom: t.$space-2;
+  font-family: var(--font-mono);
+  font-size: t.$font-size-xs;
+  letter-spacing: t.$tracking-widest;
+  text-transform: uppercase;
+  color: t.$color-ink-soft;
+}
+
+.title {
+  margin: 0 0 t.$space-2;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-2xl;
+  color: t.$color-ink;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: t.$space-4;
+  margin-bottom: t.$space-8;
+}
+
+.tableWrapper {
+  margin-top: t.$space-2;
+}

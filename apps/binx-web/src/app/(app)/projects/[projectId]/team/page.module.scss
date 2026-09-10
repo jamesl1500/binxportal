@@ -1,0 +1,18 @@
+@use "../../../../../styles/tokens" as t;
+
+.section {
+  margin-bottom: t.$space-10;
+}
+
+.sectionTitle {
+  margin: 0 0 t.$space-1;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-ink;
+}
+
+.sectionSubtitle {
+  margin: 0 0 t.$space-5;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+}

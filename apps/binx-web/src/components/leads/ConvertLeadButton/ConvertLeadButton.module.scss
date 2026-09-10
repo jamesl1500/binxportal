@@ -1,0 +1,54 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+}
+
+.blurb {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+}
+
+.confirmRow {
+  display: flex;
+  gap: t.$space-2;
+}
+
+.convert {
+  @include m.button-base;
+  align-self: flex-start;
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+}
+
+.cancel {
+  @include m.button-base;
+  background: none;
+  color: t.$color-ink-soft;
+  border-color: t.$color-border;
+
+  &:hover:not(:disabled) {
+    color: t.$color-ink;
+  }
+}
+
+.done {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+}
+
+.link {
+  font-weight: 600;
+  color: t.$color-ink;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

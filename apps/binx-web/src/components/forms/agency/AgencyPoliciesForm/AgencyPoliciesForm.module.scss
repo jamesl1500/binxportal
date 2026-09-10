@@ -1,0 +1,51 @@
+@use "../../../../styles/tokens" as t;
+@use "../../../../styles/mixins" as m;
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-5;
+  max-width: 44rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+}
+
+.label {
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  color: t.$color-ink;
+}
+
+.textarea {
+  @include m.input-base;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.6;
+}
+
+.error {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-danger;
+}
+
+.success {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: #15803d;
+}
+
+.submit {
+  @include m.button-base;
+  align-self: flex-start;
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+}

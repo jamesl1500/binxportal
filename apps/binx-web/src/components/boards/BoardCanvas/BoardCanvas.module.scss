@@ -1,0 +1,474 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 24rem);
+  min-height: 30rem;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  overflow: hidden;
+  background: t.$color-paper;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+  padding: t.$space-2 t.$space-3;
+  border-bottom: 1px solid t.$color-border;
+  background: t.$color-surface;
+}
+
+.tool {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-2;
+  padding: t.$space-2 t.$space-3;
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  color: t.$color-ink;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  svg {
+    width: 0.85rem;
+    height: 0.85rem;
+  }
+
+  &:hover {
+    border-color: t.$color-border-strong;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.divider {
+  width: 1px;
+  align-self: stretch;
+  background: t.$color-border;
+  margin: 0 t.$space-1;
+}
+
+.zoomButton {
+  display: inline-flex;
+  padding: t.$space-1;
+  color: t.$color-ink-soft;
+  background: transparent;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  svg {
+    width: 0.8rem;
+    height: 0.8rem;
+  }
+
+  &:hover {
+    color: t.$color-ink;
+  }
+}
+
+.zoomLevel {
+  min-width: 2.75rem;
+  text-align: center;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+}
+
+.status {
+  margin-left: auto;
+  @include m.mono-label;
+  font-size: 0.5625rem;
+  color: t.$color-ink-faint;
+
+  &[data-status="open"] {
+    color: #0f9d58;
+  }
+}
+
+.surface {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  background-image: radial-gradient(circle, color-mix(in srgb, t.$color-ink 12%, transparent) 1px, transparent 1px);
+  background-size: 24px 24px;
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.world {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+}
+
+.empty {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 22rem;
+  text-align: center;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-faint;
+  pointer-events: none;
+}
+
+// ---- Cards ------------------------------------------------------------
+
+.item {
+  position: absolute;
+  border: 1px solid color-mix(in srgb, t.$color-ink 8%, transparent);
+  border-radius: t.$radius-md;
+  box-shadow:
+    0 1px 2px rgba(10, 10, 11, 0.05),
+    0 8px 24px rgba(10, 10, 11, 0.06);
+  cursor: grab;
+  user-select: none;
+  // visible so the like chips, toolbar and resize handle sit just outside the
+  // card edge. The note body / image clip themselves (border-radius: inherit).
+  overflow: visible;
+  transition:
+    box-shadow t.$duration-fast t.$ease-standard,
+    transform t.$duration-fast t.$ease-standard;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &:hover:not([data-selected="true"]) {
+    box-shadow:
+      0 1px 2px rgba(10, 10, 11, 0.06),
+      0 12px 30px rgba(10, 10, 11, 0.1);
+  }
+
+  &[data-selected="true"] {
+    box-shadow:
+      0 0 0 2px t.$color-accent,
+      0 1px 2px rgba(10, 10, 11, 0.06),
+      0 16px 38px rgba(10, 10, 11, 0.16);
+  }
+
+  // A hairline accent stripe marks a card the client added.
+  &[data-author="client"]::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    z-index: 1;
+    width: 3px;
+    border-radius: t.$radius-md 0 0 t.$radius-md;
+    background: t.$color-accent;
+    pointer-events: none;
+  }
+
+  &[data-type="image"] {
+    background: t.$color-surface;
+  }
+}
+
+.noteText,
+.noteInput {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: t.$space-4;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: #1f2937;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow: auto;
+  border-radius: inherit;
+  scrollbar-width: thin;
+}
+
+.noteText[data-empty="true"] {
+  color: color-mix(in srgb, #1f2937 42%, transparent);
+  font-style: italic;
+}
+
+.noteInput {
+  border: none;
+  background: transparent;
+  resize: none;
+  outline: none;
+  font-family: inherit;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: inherit;
+}
+
+// ---- Likes (reaction chips, shown above the card at any time) --------
+
+.reactionPills {
+  position: absolute;
+  left: 0;
+  bottom: 100%;
+  margin-bottom: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  cursor: default;
+  animation: board-pop t.$duration-fast t.$ease-standard;
+}
+
+.reactionPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: t.$color-ink-soft;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: 999px;
+  box-shadow: 0 1px 3px rgba(10, 10, 11, 0.1);
+  cursor: pointer;
+  transition:
+    border-color t.$duration-fast t.$ease-standard,
+    background-color t.$duration-fast t.$ease-standard;
+
+  span {
+    font-size: 0.8125rem;
+    line-height: 1;
+  }
+
+  &:hover {
+    border-color: t.$color-border-strong;
+  }
+
+  &[data-mine="true"] {
+    border-color: t.$color-accent;
+    background: color-mix(in srgb, t.$color-accent 10%, t.$color-surface);
+    color: t.$color-ink;
+  }
+}
+
+// ---- Selected-card floating toolbar ---------------------------------
+
+.itemBar {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+  width: max-content;
+  padding: 4px 6px;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  box-shadow:
+    0 1px 2px rgba(10, 10, 11, 0.08),
+    0 12px 30px rgba(10, 10, 11, 0.16);
+  cursor: default;
+  animation: board-rise t.$duration-fast t.$ease-standard;
+}
+
+.barDivider {
+  width: 1px;
+  align-self: stretch;
+  margin: 2px 0;
+  background: t.$color-border;
+}
+
+// Author label — a faint tag pinned to the card's top-right, revealed on
+// hover or select so a resting board stays clean.
+.authorTag {
+  position: absolute;
+  right: 0;
+  bottom: 100%;
+  margin-bottom: 6px;
+  max-width: 12rem;
+  padding: 2px 8px;
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: t.$color-ink-soft;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: 999px;
+  box-shadow: 0 1px 3px rgba(10, 10, 11, 0.1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(2px);
+  transition:
+    opacity t.$duration-fast t.$ease-standard,
+    transform t.$duration-fast t.$ease-standard;
+
+  &[data-client="true"] {
+    color: t.$color-ink;
+    font-weight: 600;
+    border-color: t.$color-accent;
+  }
+
+  .item:hover &,
+  .item[data-selected="true"] & {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.reactionPicker {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.reactionChoice {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  font-size: 0.95rem;
+  line-height: 1;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+  transition:
+    background-color t.$duration-fast t.$ease-standard,
+    transform t.$duration-fast t.$ease-standard;
+
+  &:hover {
+    background: t.$color-paper;
+    transform: translateY(-1px);
+  }
+
+  &[data-mine="true"] {
+    border-color: t.$color-accent;
+    background: color-mix(in srgb, t.$color-accent 12%, transparent);
+  }
+}
+
+.commentButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 8px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: t.$color-ink-soft;
+  background: transparent;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+  transition:
+    border-color t.$duration-fast t.$ease-standard,
+    color t.$duration-fast t.$ease-standard;
+
+  svg {
+    width: 0.8125rem;
+    height: 0.8125rem;
+  }
+
+  &[data-has="true"] {
+    color: t.$color-ink;
+    border-color: t.$color-border-strong;
+  }
+
+  &:hover {
+    color: t.$color-ink;
+    border-color: t.$color-border-strong;
+  }
+}
+
+.swatches {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.swatch {
+  width: 15px;
+  height: 15px;
+  border-radius: t.$radius-sm;
+  border: 1px solid rgba(10, 10, 11, 0.12);
+  cursor: pointer;
+  padding: 0;
+  transition:
+    transform t.$duration-fast t.$ease-standard,
+    box-shadow t.$duration-fast t.$ease-standard;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(10, 10, 11, 0.16);
+  }
+}
+
+.itemDelete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: t.$color-ink-faint;
+  background: transparent;
+  border: none;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+  transition:
+    color t.$duration-fast t.$ease-standard,
+    background-color t.$duration-fast t.$ease-standard;
+
+  svg {
+    width: 0.8125rem;
+    height: 0.8125rem;
+  }
+
+  &:hover {
+    color: t.$color-danger;
+    background: color-mix(in srgb, t.$color-danger 10%, transparent);
+  }
+}
+
+.resizeHandle {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  width: 12px;
+  height: 12px;
+  border-radius: t.$radius-sm;
+  background: t.$color-surface;
+  border: 1.5px solid t.$color-accent;
+  box-shadow: 0 1px 3px rgba(10, 10, 11, 0.22);
+  cursor: nwse-resize;
+}
+
+@keyframes board-pop {
+  from {
+    opacity: 0;
+    transform: translateY(3px) scale(0.96);
+  }
+}
+
+@keyframes board-rise {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}

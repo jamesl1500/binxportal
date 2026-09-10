@@ -1,0 +1,64 @@
+@use "../styles/tokens" as t;
+@use "../styles/mixins" as m;
+
+.root {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: t.$space-6;
+  background: t.$color-paper;
+
+  @media (min-width: 640px) {
+    padding: t.$space-12;
+  }
+}
+
+.content {
+  width: 100%;
+  max-width: 28rem;
+  text-align: center;
+}
+
+.code {
+  margin: 0 0 t.$space-4;
+  font-family: var(--font-mono);
+  font-size: clamp(3.5rem, 10vw, 6rem);
+  line-height: 1;
+  letter-spacing: t.$tracking-wide;
+  color: t.$color-ink-faint;
+}
+
+.title {
+  margin: 0 0 t.$space-3;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-2xl;
+  color: t.$color-ink;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  line-height: 1.6;
+  color: t.$color-ink-soft;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: t.$space-4;
+  margin-top: t.$space-8;
+}
+
+.action {
+  @include m.button-base;
+  text-decoration: none;
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+
+  &:hover {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+}

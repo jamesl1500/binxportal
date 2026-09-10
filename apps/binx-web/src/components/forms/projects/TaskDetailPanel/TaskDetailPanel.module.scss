@@ -1,0 +1,752 @@
+@use "../../../../styles/tokens" as t;
+@use "../../../../styles/mixins" as m;
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(10, 10, 11, 0.4);
+
+  &[data-starting-style],
+  &[data-ending-style] {
+    opacity: 0;
+  }
+
+  transition: opacity t.$duration-base t.$ease-standard;
+}
+
+.panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 61;
+  display: flex;
+  flex-direction: column;
+  width: min(28rem, 100vw);
+  height: 100dvh;
+  overflow-y: auto;
+  background: t.$color-surface;
+  border-left: 1px solid t.$color-border;
+  box-shadow: -8px 0 24px rgba(10, 10, 11, 0.12);
+  outline: none;
+
+  &[data-starting-style],
+  &[data-ending-style] {
+    opacity: 0;
+    transform: translateX(1rem);
+  }
+
+  transition:
+    opacity t.$duration-base t.$ease-standard,
+    transform t.$duration-base t.$ease-standard;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: t.$space-5 t.$space-6;
+  border-bottom: 1px solid t.$color-border;
+}
+
+.eyebrow {
+  @include m.mono-label;
+  color: t.$color-ink-soft;
+}
+
+.closeButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  color: t.$color-ink-soft;
+  background: none;
+  border: none;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  &:hover {
+    color: t.$color-ink;
+    background: rgba(10, 10, 11, 0.04);
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.detailsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: t.$space-4;
+}
+
+.detailsHeading {
+  margin: 0;
+  @include m.mono-label;
+  color: t.$color-ink-soft;
+}
+
+.editButton {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-1;
+  padding: t.$space-1 t.$space-2;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+  background: none;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  svg {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+
+  &:hover {
+    color: t.$color-ink;
+    background: rgba(10, 10, 11, 0.04);
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.readonly {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-4;
+}
+
+.readonlyTitle {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-xl;
+  color: t.$color-ink;
+}
+
+.readonlyDescription {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  line-height: 1.5;
+  color: t.$color-ink;
+  white-space: pre-wrap;
+}
+
+.metaList {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+  margin: 0;
+}
+
+.metaItem {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-1;
+}
+
+.metaValue {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+}
+
+.emptyInline {
+  color: t.$color-ink-faint;
+}
+
+.tagChips,
+.tagPicker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-2;
+}
+
+.tagChip,
+.tagToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-2;
+  padding: t.$space-1 t.$space-2;
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  color: t.$color-ink-soft;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+}
+
+.tagToggle {
+  cursor: pointer;
+
+  &[data-active="false"] {
+    color: t.$color-ink-faint;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.tagDot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+}
+
+.detailsForm {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-4;
+}
+
+.titleInput {
+  padding: t.$space-2 0;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-xl;
+  color: t.$color-ink;
+  background: none;
+  border: none;
+  border-bottom: 1px solid transparent;
+
+  &:focus-visible {
+    outline: none;
+    border-bottom-color: t.$color-focus;
+  }
+}
+
+.descriptionInput {
+  @include m.input-base;
+  font-family: inherit;
+  font-size: t.$font-size-sm;
+  resize: vertical;
+}
+
+.fieldRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: t.$space-4;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+}
+
+.fieldLabel {
+  @include m.mono-label;
+  color: t.$color-ink-soft;
+}
+
+.fieldInput {
+  @include m.input-base;
+  font-size: t.$font-size-sm;
+  cursor: pointer;
+}
+
+.error {
+  margin: 0;
+  padding: t.$space-3;
+  font-size: t.$font-size-sm;
+  color: t.$color-danger;
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-radius: t.$radius-sm;
+}
+
+.formActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: t.$space-3;
+}
+
+.saveButton {
+  @include m.button-base;
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+}
+
+.cancelButton {
+  padding: t.$space-2 t.$space-3;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+  background: none;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    color: t.$color-ink;
+    background: rgba(10, 10, 11, 0.04);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.deleteButton {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-1;
+  margin-left: auto;
+  padding: t.$space-2 t.$space-3;
+  font-size: t.$font-size-xs;
+  color: t.$color-danger;
+  background: none;
+  border: none;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  &:hover:not(:disabled) {
+    background: rgba(220, 38, 38, 0.08);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.section {
+  padding: t.$space-6;
+  border-bottom: 1px solid t.$color-border;
+}
+
+.sectionTitle {
+  margin: 0 0 t.$space-3;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-base;
+  color: t.$color-ink;
+}
+
+// --- Tabbed activity area (Comments / Files) ---
+
+.tabArea {
+  display: flex;
+  flex-direction: column;
+}
+
+.tabs {
+  display: flex;
+  gap: t.$space-1;
+  padding: t.$space-3 t.$space-6 0;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-2;
+  padding: t.$space-2 t.$space-3;
+  font: inherit;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition:
+    color t.$duration-fast t.$ease-standard,
+    border-color t.$duration-fast t.$ease-standard;
+
+  &:hover {
+    color: t.$color-ink;
+  }
+
+  &[aria-selected="true"] {
+    font-weight: 600;
+    color: t.$color-ink;
+    border-bottom-color: t.$color-ink;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.tabCount {
+  @include m.mono-label;
+  letter-spacing: normal;
+  color: t.$color-ink-faint;
+
+  [aria-selected="true"] & {
+    color: t.$color-ink-soft;
+  }
+}
+
+.tabPanel {
+  padding: t.$space-6;
+  border-top: 1px solid t.$color-border;
+  margin-top: -1px;
+}
+
+.emptyText {
+  margin: 0 0 t.$space-3;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-faint;
+}
+
+// --- Files ---
+
+.fileList {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+  margin: 0 0 t.$space-3;
+  padding: 0;
+  list-style: none;
+}
+
+.fileRow {
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+  padding: t.$space-2 t.$space-3;
+  background: t.$color-paper;
+  border-radius: t.$radius-sm;
+  border: 1px solid t.$color-border-strong;
+}
+
+.fileLink {
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+  flex: 1;
+  min-width: 0;
+  color: t.$color-ink;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.fileIcon {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+  color: t.$color-ink-soft;
+}
+
+.fileName {
+  overflow: hidden;
+  font-size: t.$font-size-sm;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fileMeta {
+  @include m.mono-label;
+  letter-spacing: normal;
+  flex-shrink: 0;
+  color: t.$color-ink-faint;
+}
+
+.fileDelete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+  color: t.$color-ink-faint;
+  background: none;
+  border: none;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  svg {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+
+  &:hover:not(:disabled) {
+    color: t.$color-danger;
+    background: rgba(220, 38, 38, 0.08);
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.uploadTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-2;
+  padding: t.$space-2 t.$space-3;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+  background: t.$color-paper;
+  border: 1px dashed t.$color-border-strong;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  &:hover {
+    color: t.$color-ink;
+  }
+}
+
+.uploadInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+}
+
+.uploadHint {
+  margin: t.$space-2 0 0;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+}
+
+// --- Comments ---
+
+.commentList {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+  margin: 0 0 t.$space-4;
+  padding: 0;
+  list-style: none;
+}
+
+.commentRow {
+  padding: t.$space-3;
+  background: t.$color-paper;
+  border-radius: t.$radius-sm;
+  border: 1px solid t.$color-border-strong;
+}
+
+.commentHeader {
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+  margin-bottom: t.$space-1;
+}
+
+.commentAuthor {
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  color: t.$color-ink;
+}
+
+.clientBadge {
+  @include m.mono-label;
+  letter-spacing: normal;
+  padding: 0.0625rem t.$space-1;
+  color: t.$color-accent-foreground;
+  background: t.$color-accent;
+  border-radius: t.$radius-sm;
+}
+
+.commentTimestamp {
+  flex: 1;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+}
+
+.commentDelete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  color: t.$color-ink-faint;
+  background: none;
+  border: none;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  svg {
+    width: 0.6875rem;
+    height: 0.6875rem;
+  }
+
+  &:hover {
+    color: t.$color-danger;
+    background: rgba(220, 38, 38, 0.08);
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.commentBody {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  line-height: 1.5;
+  color: t.$color-ink;
+  white-space: pre-wrap;
+}
+
+.commentAttachment {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-2;
+  margin-top: t.$space-2;
+  padding: t.$space-1 t.$space-2;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+  text-decoration: none;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+
+  &:hover {
+    color: t.$color-ink;
+    border-color: t.$color-ink-faint;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.commentAttachmentIcon {
+  width: 0.75rem;
+  height: 0.75rem;
+  flex-shrink: 0;
+}
+
+.commentAttachmentName {
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.commentAttachmentSize {
+  color: t.$color-ink-faint;
+}
+
+.commentForm {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+}
+
+.commentFormActions {
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+}
+
+.commentAttach {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-1;
+  padding: t.$space-2 t.$space-3;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+  max-width: 12rem;
+
+  svg {
+    width: 0.875rem;
+    height: 0.875rem;
+    flex-shrink: 0;
+  }
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &:hover {
+    color: t.$color-ink;
+    background: rgba(10, 10, 11, 0.04);
+  }
+}
+
+.commentAttachClear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  color: t.$color-ink-faint;
+  background: none;
+  border: none;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  &:hover {
+    color: t.$color-danger;
+    background: rgba(220, 38, 38, 0.08);
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.commentInput {
+  @include m.input-base;
+  font-family: inherit;
+  font-size: t.$font-size-sm;
+  resize: vertical;
+}
+
+.commentSubmit {
+  @include m.button-base;
+  margin-left: auto;
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+}

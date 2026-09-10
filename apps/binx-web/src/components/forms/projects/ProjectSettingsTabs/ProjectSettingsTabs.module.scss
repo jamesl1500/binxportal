@@ -1,0 +1,115 @@
+@use "../../../../styles/tokens" as t;
+@use "../../../../styles/mixins" as m;
+
+.layout {
+  display: grid;
+  grid-template-columns: 12rem 1fr;
+  gap: t.$space-8;
+  align-items: start;
+
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr;
+    gap: t.$space-5;
+  }
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-1;
+  position: sticky;
+  top: t.$space-6;
+
+  @media (max-width: 720px) {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding-bottom: t.$space-3;
+    border-bottom: 1px solid t.$color-border;
+  }
+}
+
+.navItem {
+  padding: t.$space-2 t.$space-3;
+  font: inherit;
+  font-size: t.$font-size-sm;
+  text-align: left;
+  color: t.$color-ink-soft;
+  background: none;
+  border: none;
+  border-left: 2px solid transparent;
+  border-radius: 0 t.$radius-sm t.$radius-sm 0;
+  cursor: pointer;
+  transition: color t.$duration-fast t.$ease-standard, background-color t.$duration-fast t.$ease-standard;
+
+  &:hover {
+    color: t.$color-ink;
+    background: rgba(10, 10, 11, 0.04);
+  }
+
+  &[data-active="true"] {
+    font-weight: 600;
+    color: t.$color-ink;
+    border-left-color: t.$color-ink;
+    background: rgba(10, 10, 11, 0.04);
+  }
+
+  &[data-danger="true"] {
+    color: t.$color-danger;
+
+    &[data-active="true"] {
+      border-left-color: t.$color-danger;
+      background: rgba(220, 38, 38, 0.06);
+    }
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+
+  @media (max-width: 720px) {
+    border-left: none;
+    border-bottom: 2px solid transparent;
+    border-radius: t.$radius-sm t.$radius-sm 0 0;
+
+    &[data-active="true"] {
+      border-left-color: transparent;
+      border-bottom-color: t.$color-ink;
+    }
+
+    &[data-danger="true"][data-active="true"] {
+      border-bottom-color: t.$color-danger;
+    }
+  }
+}
+
+.panel {
+  min-width: 0;
+}
+
+.sectionTitle {
+  margin: 0 0 t.$space-1;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-ink;
+}
+
+.sectionSubtitle {
+  margin: 0 0 t.$space-5;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+}
+
+.dangerZone {
+  padding: t.$space-6;
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  border-radius: t.$radius-md;
+  background: rgba(220, 38, 38, 0.03);
+}
+
+.dangerZoneTitle {
+  margin: 0 0 t.$space-1;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-danger;
+}

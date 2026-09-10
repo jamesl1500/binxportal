@@ -7,20 +7,24 @@
  * @module apps/binx-web/src/app/(auth)/auth/login/page.tsx
  * @author Binx.io
  */
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getCurrentUser } from "@/lib/auth";
+import { resolveHome } from "@/lib/portal";
 import LoginForm from "@/components/forms/auth/LoginForm/LoginForm";
 
 import styles from "./page.module.scss";
 
+export const metadata: Metadata = { title: "Sign in" };
+
 const AuthLoginPage = async () => {
   const user = await getCurrentUser();
 
-  // Check if logged in
+  // Already signed in — send staff to the dashboard, clients to the portal.
   if (user) {
-    redirect("/dashboard");
+    redirect(await resolveHome());
   }
 
   return (

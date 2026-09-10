@@ -1,0 +1,31 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-2;
+}
+
+.label {
+  @include m.mono-label;
+  color: t.$color-ink-faint;
+}
+
+.select {
+  padding: t.$space-1 t.$space-3;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+  }
+}

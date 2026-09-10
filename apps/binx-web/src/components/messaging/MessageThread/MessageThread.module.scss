@@ -1,0 +1,409 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.thread {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  border-left: 1px solid t.$color-border;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: t.$space-3;
+  padding: t.$space-4;
+  border-bottom: 1px solid t.$color-border;
+}
+
+.headerMain {
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-ink;
+}
+
+.renameInput {
+  @include m.input-base;
+  font-size: t.$font-size-base;
+}
+
+.participants {
+  margin: t.$space-1 0 0;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menuTrigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  background: t.$color-surface;
+  cursor: pointer;
+  color: t.$color-ink-soft;
+  flex-shrink: 0;
+
+  &:hover {
+    color: t.$color-ink;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+.menuPositioner {
+  z-index: 70;
+}
+
+.menuPopup {
+  min-width: 12rem;
+  padding: t.$space-1;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  box-shadow: 0 12px 32px rgba(10, 10, 11, 0.16);
+}
+
+.menuItem {
+  display: flex;
+  width: 100%;
+  padding: t.$space-2 t.$space-3;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+  user-select: none;
+
+  &[data-highlighted] {
+    background: t.$color-paper;
+  }
+
+  &.danger {
+    color: t.$color-danger;
+  }
+}
+
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: t.$space-4;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+}
+
+.loadOlder {
+  align-self: center;
+  padding: t.$space-1 t.$space-3;
+  margin-bottom: t.$space-2;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  border-radius: 999px;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    color: t.$color-ink;
+  }
+}
+
+.loading {
+  margin: auto;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-faint;
+}
+
+.dayDivider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: t.$space-3 0;
+
+  span {
+    @include m.mono-label;
+    font-size: 0.5625rem;
+    color: t.$color-ink-faint;
+    background: t.$color-surface;
+    padding: 0 t.$space-2;
+  }
+
+  border-top: 1px solid t.$color-border;
+  position: relative;
+
+  span {
+    position: relative;
+    top: -0.6rem;
+  }
+}
+
+.systemMessage {
+  margin: t.$space-1 0;
+  text-align: center;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+}
+
+.message {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: t.$space-1 0;
+
+  &[data-grouped="true"] {
+    margin-top: -0.25rem;
+  }
+
+  &[data-pending="true"] {
+    opacity: 0.6;
+  }
+
+  &:hover .rowActions {
+    opacity: 1;
+  }
+
+  // The signed-in user's own messages: right-aligned, with a darker bubble.
+  &[data-mine="true"] {
+    align-items: flex-end;
+
+    .body,
+    .deleted {
+      background: color-mix(in srgb, #{t.$color-ink} 13%, #{t.$color-surface});
+    }
+
+    .attachments {
+      justify-content: flex-end;
+    }
+
+    .rowActions {
+      right: auto;
+      left: 0;
+    }
+  }
+}
+
+.messageMeta {
+  display: flex;
+  align-items: baseline;
+  gap: t.$space-2;
+  margin-top: t.$space-2;
+}
+
+.sender {
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  color: t.$color-ink;
+}
+
+.timestamp {
+  @include m.mono-label;
+  font-size: 0.5625rem;
+  color: t.$color-ink-faint;
+}
+
+.body {
+  margin: t.$space-1 0 0;
+  max-width: min(80%, 40rem);
+  padding: t.$space-2 t.$space-3;
+  font-size: t.$font-size-sm;
+  line-height: 1.55;
+  color: t.$color-ink;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: color-mix(in srgb, #{t.$color-ink} 5%, #{t.$color-surface});
+  border-radius: t.$radius-md;
+}
+
+.edited {
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+}
+
+.mention {
+  padding: 0 0.15em;
+  border-radius: t.$radius-sm;
+  font-weight: 600;
+  color: t.$color-ink;
+  background: color-mix(in srgb, #{t.$color-accent} 16%, transparent);
+}
+
+.deleted {
+  margin: t.$space-1 0 0;
+  max-width: min(80%, 40rem);
+  padding: t.$space-2 t.$space-3;
+  font-size: t.$font-size-sm;
+  font-style: italic;
+  color: t.$color-ink-faint;
+  background: color-mix(in srgb, #{t.$color-ink} 5%, #{t.$color-surface});
+  border-radius: t.$radius-md;
+}
+
+.attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-2;
+  margin-top: t.$space-2;
+}
+
+.rowActions {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  gap: t.$space-1;
+  opacity: 0;
+  transition: opacity t.$duration-fast t.$ease-standard;
+
+  button {
+    display: inline-flex;
+    padding: t.$space-1;
+    background: t.$color-surface;
+    border: 1px solid t.$color-border;
+    border-radius: t.$radius-sm;
+    cursor: pointer;
+    color: t.$color-ink-faint;
+
+    &:hover {
+      color: t.$color-ink;
+    }
+
+    svg {
+      width: 0.8rem;
+      height: 0.8rem;
+    }
+  }
+}
+
+.editBox {
+  margin-top: t.$space-1;
+  width: 100%;
+}
+
+.editTextarea {
+  @include m.input-base;
+  width: 100%;
+  resize: vertical;
+  font-family: inherit;
+  font-size: t.$font-size-sm;
+}
+
+.editActions {
+  display: flex;
+  gap: t.$space-2;
+  margin-top: t.$space-2;
+
+  button {
+    font-size: t.$font-size-xs;
+    padding: t.$space-1 t.$space-2;
+    border: 1px solid t.$color-border;
+    border-radius: t.$radius-sm;
+    background: t.$color-surface;
+    cursor: pointer;
+
+    &:last-child {
+      background: t.$color-accent;
+      color: t.$color-accent-foreground;
+      border-color: t.$color-accent;
+    }
+  }
+}
+
+.typing {
+  margin: 0;
+  font-size: t.$font-size-xs;
+  font-style: italic;
+  color: t.$color-ink-faint;
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(10, 10, 11, 0.4);
+}
+
+.dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 60;
+  width: calc(100vw - #{t.$space-8});
+  max-width: 28rem;
+  padding: t.$space-6;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  box-shadow: 0 24px 48px rgba(10, 10, 11, 0.2);
+  outline: none;
+  transform: translate(-50%, -50%);
+}
+
+.dialogTitle {
+  margin: 0 0 t.$space-4;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+}
+
+.dialogActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: t.$space-3;
+  margin-top: t.$space-4;
+
+  button {
+    @include m.button-base;
+  }
+}
+
+.dialogCancel {
+  background: t.$color-surface;
+}
+
+.dialogSubmit {
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+}
+
+.participantManageList {
+  margin: t.$space-4 0 0;
+  padding: t.$space-3 0 0;
+  border-top: 1px solid t.$color-border;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: t.$space-1 0;
+    font-size: t.$font-size-sm;
+
+    button {
+      font-size: t.$font-size-xs;
+      color: t.$color-danger;
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+  }
+}

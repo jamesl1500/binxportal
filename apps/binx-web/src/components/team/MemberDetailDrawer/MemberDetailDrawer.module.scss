@@ -1,0 +1,331 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(10, 10, 11, 0.4);
+  transition: opacity t.$duration-base t.$ease-standard;
+
+  &[data-starting-style],
+  &[data-ending-style] {
+    opacity: 0;
+  }
+}
+
+.panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 61;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+  width: min(30rem, 100vw);
+  height: 100dvh;
+  overflow-y: auto;
+  padding-bottom: t.$space-10;
+  background: t.$color-surface;
+  border-left: 1px solid t.$color-border;
+  box-shadow: -8px 0 24px rgba(10, 10, 11, 0.12);
+  outline: none;
+  transition:
+    opacity t.$duration-base t.$ease-standard,
+    transform t.$duration-base t.$ease-standard;
+
+  &[data-starting-style],
+  &[data-ending-style] {
+    opacity: 0;
+    transform: translateX(1rem);
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: t.$space-5 t.$space-6;
+  border-bottom: 1px solid t.$color-border;
+}
+
+.eyebrow {
+  @include m.mono-label;
+  color: t.$color-ink-soft;
+}
+
+.closeButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  color: t.$color-ink-soft;
+  background: none;
+  border: none;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  &:hover {
+    color: t.$color-ink;
+    background: rgba(10, 10, 11, 0.04);
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.identity {
+  display: flex;
+  gap: t.$space-4;
+  padding: t.$space-5 t.$space-6;
+}
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  flex-shrink: 0;
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  color: t.$color-accent-foreground;
+  background: t.$color-accent;
+  border-radius: 50%;
+}
+
+.name {
+  margin: 0 0 t.$space-1;
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-ink;
+}
+
+.youBadge {
+  padding: 1px t.$space-2;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: t.$tracking-wider;
+  text-transform: uppercase;
+  color: t.$color-ink-soft;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+}
+
+.verified {
+  color: t.$color-accent;
+  font-size: t.$font-size-sm;
+}
+
+.handle {
+  margin: 0 0 t.$space-2;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+}
+
+.roleBadge {
+  display: inline-block;
+  padding: t.$space-1 t.$space-3;
+  font-family: var(--font-mono);
+  font-size: t.$font-size-xs;
+  letter-spacing: t.$tracking-wide;
+  color: t.$color-ink-soft;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+
+  &[data-role="owner"] {
+    color: t.$color-ink;
+    border-color: t.$color-border-strong;
+  }
+}
+
+.section {
+  padding: t.$space-5 t.$space-6;
+  border-top: 1px solid t.$color-border;
+}
+
+.sectionTitle {
+  margin: 0 0 t.$space-3;
+  @include m.mono-label;
+  color: t.$color-ink-soft;
+}
+
+.bio {
+  margin: 0 0 t.$space-4;
+  font-size: t.$font-size-sm;
+  line-height: 1.6;
+  color: t.$color-ink;
+}
+
+.empty {
+  margin: 0 0 t.$space-4;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-faint;
+}
+
+.metaList {
+  margin: 0;
+  display: grid;
+  gap: t.$space-3;
+}
+
+.metaItem {
+  display: flex;
+  justify-content: space-between;
+  gap: t.$space-4;
+}
+
+.metaLabel {
+  margin: 0;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+}
+
+.metaValue {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+  text-align: right;
+}
+
+.detailsForm {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-4;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+}
+
+.fieldLabel {
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  color: t.$color-ink-soft;
+}
+
+.input {
+  @include m.input-base;
+}
+
+.textarea {
+  @include m.input-base;
+  resize: vertical;
+  min-height: 4.5rem;
+  font-family: inherit;
+}
+
+.roleSelect {
+  padding: t.$space-2 t.$space-3;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.hint {
+  margin: t.$space-2 0 0;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+}
+
+.saveButton {
+  @include m.button-base;
+  align-self: flex-start;
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+}
+
+.confirmRow {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+}
+
+.confirmText {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+}
+
+.confirmActions {
+  display: flex;
+  gap: t.$space-2;
+}
+
+.removeTrigger,
+.removeButton {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-2;
+  padding: t.$space-2 t.$space-3;
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  color: t.$color-danger;
+  background: transparent;
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+  transition: background-color t.$duration-fast t.$ease-standard;
+
+  svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  &:hover:not(:disabled) {
+    background: rgba(220, 38, 38, 0.08);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.cancelButton {
+  padding: t.$space-2 t.$space-3;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+  background: transparent;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}

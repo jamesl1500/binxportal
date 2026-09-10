@@ -1,0 +1,140 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.notConfigured {
+  max-width: 32rem;
+  padding: t.$space-4;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-5;
+  max-width: 44rem;
+}
+
+.progressBlock {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+}
+
+.progressHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: t.$space-4;
+}
+
+.progressLabel {
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+}
+
+.progressPercent {
+  @include m.mono-label;
+  color: t.$color-ink-soft;
+
+  &[data-over="true"] {
+    color: t.$color-danger;
+  }
+}
+
+.progressTrack {
+  height: 0.5rem;
+  background: t.$color-border;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: t.$color-accent;
+  transition: width t.$duration-base t.$ease-standard;
+
+  &[data-over="true"] {
+    background: t.$color-danger;
+  }
+}
+
+.overBudgetNote {
+  margin: 0;
+  font-size: t.$font-size-xs;
+  color: t.$color-danger;
+}
+
+.todayLine {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+
+  strong {
+    color: t.$color-ink;
+  }
+}
+
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+}
+
+.table {
+  width: 100%;
+  min-width: 32rem;
+  border-collapse: collapse;
+  font-size: t.$font-size-sm;
+
+  th {
+    padding: t.$space-3 t.$space-4;
+    @include m.mono-label;
+    font-size: 0.625rem;
+    color: t.$color-ink-soft;
+    text-align: left;
+    background: t.$color-paper;
+    border-bottom: 1px solid t.$color-border;
+  }
+
+  td {
+    padding: t.$space-3 t.$space-4;
+    color: t.$color-ink;
+    border-bottom: 1px solid t.$color-border;
+    white-space: nowrap;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+.empty {
+  color: t.$color-ink-faint;
+  white-space: normal;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 2px t.$space-2;
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  text-transform: capitalize;
+  border-radius: t.$radius-sm;
+  color: t.$color-ink-soft;
+  background: t.$color-paper;
+
+  &[data-status="ok"] {
+    color: #15803d;
+    background: rgba(21, 128, 61, 0.1);
+  }
+
+  &[data-status="error"],
+  &[data-status="blocked"] {
+    color: t.$color-danger;
+    background: rgba(220, 38, 38, 0.08);
+  }
+}

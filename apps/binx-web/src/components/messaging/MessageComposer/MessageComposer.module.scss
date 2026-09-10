@@ -1,0 +1,175 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.composer {
+  border-top: 1px solid t.$color-border;
+  padding: t.$space-3 t.$space-4;
+  background: t.$color-surface;
+  transition: background-color t.$duration-fast t.$ease-standard;
+
+  &[data-dragover="true"] {
+    background: rgba(59, 130, 246, 0.06);
+  }
+}
+
+.attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-2;
+  margin: 0 0 t.$space-2;
+  padding: 0;
+  list-style: none;
+}
+
+.attachment {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-2;
+  padding: t.$space-1 t.$space-2;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+  font-size: t.$font-size-xs;
+  max-width: 14rem;
+}
+
+.attachmentName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachmentRemove {
+  display: inline-flex;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: t.$color-ink-faint;
+
+  svg {
+    width: 0.8rem;
+    height: 0.8rem;
+  }
+
+  &:hover {
+    color: t.$color-ink;
+  }
+}
+
+.inputRow {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: t.$space-2;
+}
+
+.mentionMenu {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  z-index: 20;
+  width: min(20rem, 100%);
+  margin: 0 0 t.$space-2;
+  padding: t.$space-1;
+  list-style: none;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  box-shadow: 0 12px 32px rgba(10, 10, 11, 0.16);
+}
+
+.mentionOption {
+  display: flex;
+  align-items: baseline;
+  gap: t.$space-2;
+  width: 100%;
+  padding: t.$space-2 t.$space-3;
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  &[data-active="true"] {
+    background: t.$color-paper;
+  }
+}
+
+.mentionName {
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+}
+
+.mentionHandle {
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+}
+
+.textarea {
+  flex: 1;
+  resize: none;
+  min-height: 2.25rem;
+  max-height: 10rem;
+  padding: t.$space-2 t.$space-3;
+  font: inherit;
+  font-size: t.$font-size-sm;
+  line-height: 1.5;
+  color: t.$color-ink;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+
+  &:focus {
+    outline: none;
+    border-color: t.$color-border-strong;
+  }
+}
+
+.attachButton,
+.sendButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  background: t.$color-surface;
+  cursor: pointer;
+  color: t.$color-ink-soft;
+  transition:
+    color t.$duration-fast t.$ease-standard,
+    border-color t.$duration-fast t.$ease-standard;
+
+  svg {
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+
+  &:hover:not(:disabled) {
+    color: t.$color-ink;
+    border-color: t.$color-border-strong;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.sendButton {
+  background: t.$color-accent;
+  border-color: t.$color-accent;
+  color: t.$color-accent-foreground;
+
+  &:hover:not(:disabled) {
+    color: t.$color-accent-foreground;
+    opacity: 0.9;
+  }
+}

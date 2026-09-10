@@ -7,11 +7,14 @@
  * @module apps/binx-web/src/app/(auth)/auth/reset-password/page.tsx
  * @author Binx.io
  */
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import ResetPasswordForm from "@/components/forms/auth/ResetPasswordForm/ResetPasswordForm";
 
 import styles from "./page.module.scss";
+
+export const metadata: Metadata = { title: "Set a new password" };
 
 interface ResetPasswordPageProps {
   searchParams: Promise<{ token?: string }>;

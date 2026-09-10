@@ -1,0 +1,657 @@
+@use "../../styles/tokens" as t;
+@use "../../styles/mixins" as m;
+
+// ---- Shell ----------------------------------------------------------
+
+.shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: t.$color-paper;
+  color: t.$color-ink;
+}
+
+.main {
+  flex: 1;
+}
+
+// ---- Layout primitives --------------------------------------------
+
+.container {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding-left: t.$space-6;
+  padding-right: t.$space-6;
+}
+
+.narrow {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding-left: t.$space-6;
+  padding-right: t.$space-6;
+}
+
+.section {
+  padding-top: t.$space-20;
+  padding-bottom: t.$space-20;
+}
+
+.sectionTight {
+  padding-top: t.$space-12;
+  padding-bottom: t.$space-12;
+}
+
+.sectionDark {
+  background: t.$color-panel;
+  color: t.$color-panel-foreground;
+
+  .step {
+    border-top-color: color-mix(in srgb, t.$color-panel-foreground 55%, transparent);
+  }
+
+  .stepIndex {
+    color: color-mix(in srgb, t.$color-panel-foreground 55%, transparent);
+  }
+
+  .stepTitle {
+    color: t.$color-panel-foreground;
+  }
+
+  .stepText {
+    color: t.$color-panel-muted;
+  }
+}
+
+.divider {
+  border: 0;
+  border-top: 1px solid t.$color-border;
+}
+
+// ---- Type ---------------------------------------------------------
+
+.eyebrow {
+  display: inline-block;
+  margin-bottom: t.$space-4;
+  @include m.mono-label;
+  color: t.$color-ink-faint;
+}
+
+.eyebrowOnDark {
+  color: color-mix(in srgb, t.$color-panel-foreground 55%, transparent);
+}
+
+.h1 {
+  margin: 0 0 t.$space-5;
+  font-family: var(--font-heading);
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+}
+
+.h2 {
+  margin: 0 0 t.$space-4;
+  font-family: var(--font-heading);
+  font-size: clamp(1.875rem, 4vw, 2.75rem);
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+}
+
+.h3 {
+  margin: 0 0 t.$space-2;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-xl;
+  line-height: 1.15;
+}
+
+.lead {
+  margin: 0;
+  font-size: clamp(1.0625rem, 2vw, 1.25rem);
+  line-height: 1.6;
+  color: t.$color-ink-soft;
+}
+
+.leadOnDark {
+  color: t.$color-panel-muted;
+}
+
+.sectionHead {
+  max-width: 40rem;
+  margin-bottom: t.$space-12;
+}
+
+.prose {
+  max-width: 42rem;
+
+  p {
+    margin: 0 0 t.$space-5;
+    font-size: t.$font-size-base;
+    line-height: 1.75;
+    color: t.$color-ink-soft;
+  }
+
+  h2 {
+    margin: t.$space-10 0 t.$space-3;
+    font-family: var(--font-heading);
+    font-size: t.$font-size-xl;
+    color: t.$color-ink;
+  }
+}
+
+// ---- Buttons ----------------------------------------------------
+
+.btnRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-3;
+}
+
+.btnPrimary,
+.btnGhost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: t.$space-2;
+  padding: t.$space-3 t.$space-6;
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  border-radius: t.$radius-sm;
+  text-decoration: none;
+  transition:
+    opacity t.$duration-fast t.$ease-standard,
+    border-color t.$duration-fast t.$ease-standard;
+
+  svg {
+    width: 0.9rem;
+    height: 0.9rem;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.btnPrimary {
+  color: t.$color-accent-foreground;
+  background: t.$color-accent;
+  border: 1px solid t.$color-accent;
+
+  &:hover {
+    opacity: 0.88;
+  }
+}
+
+.btnGhost {
+  color: t.$color-ink;
+  background: transparent;
+  border: 1px solid t.$color-border-strong;
+
+  &:hover {
+    border-color: t.$color-ink;
+  }
+}
+
+// ---- Hero -------------------------------------------------------
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  padding-top: t.$space-20;
+  padding-bottom: t.$space-20;
+}
+
+.heroGlow {
+  position: absolute;
+  inset: -30% -10% auto 40%;
+  height: 32rem;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.14), transparent 70%);
+  filter: blur(12px);
+}
+
+.heroInner {
+  position: relative;
+  max-width: 48rem;
+}
+
+.heroActions {
+  margin-top: t.$space-8;
+}
+
+.heroNote {
+  margin-top: t.$space-4;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+}
+
+// ---- Logo / trust strip --------------------------------------
+
+.trust {
+  padding: t.$space-10 t.$space-6;
+  border-top: 1px solid t.$color-border;
+  border-bottom: 1px solid t.$color-border;
+}
+
+.trustLabel {
+  @include m.mono-label;
+  font-size: 0.625rem;
+  color: t.$color-ink-faint;
+  text-align: center;
+}
+
+.trustRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-8;
+  justify-content: center;
+  align-items: center;
+  margin-top: t.$space-5;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-ink-faint;
+}
+
+// ---- Feature grid --------------------------------------------
+
+.grid {
+  display: grid;
+  gap: t.$space-4;
+  grid-template-columns: 1fr;
+
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (min-width: 960px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.gridTwo {
+  display: grid;
+  gap: t.$space-4;
+  grid-template-columns: 1fr;
+
+  @media (min-width: 800px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+  padding: t.$space-6;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  transition:
+    border-color t.$duration-fast t.$ease-standard,
+    transform t.$duration-fast t.$ease-standard;
+
+  &:hover {
+    border-color: t.$color-border-strong;
+    transform: translateY(-2px);
+  }
+}
+
+.cardIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin-bottom: t.$space-2;
+  color: t.$color-ink;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+
+  svg {
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: t.$font-size-base;
+  font-weight: 600;
+  color: t.$color-ink;
+}
+
+.cardText {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  line-height: 1.6;
+  color: t.$color-ink-soft;
+}
+
+// ---- Steps -----------------------------------------------------
+
+.steps {
+  display: grid;
+  gap: t.$space-8;
+  grid-template-columns: 1fr;
+  counter-reset: step;
+
+  @media (min-width: 800px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.step {
+  padding-top: t.$space-5;
+  border-top: 2px solid t.$color-ink;
+}
+
+.stepIndex {
+  @include m.mono-label;
+  color: t.$color-ink-faint;
+}
+
+.stepTitle {
+  margin: t.$space-3 0 t.$space-2;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-ink;
+}
+
+.stepText {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  line-height: 1.6;
+  color: t.$color-ink-soft;
+}
+
+// ---- Split feature rows -------------------------------------
+
+.split {
+  display: grid;
+  gap: t.$space-8;
+  align-items: center;
+  grid-template-columns: 1fr;
+  padding: t.$space-12 0;
+  border-bottom: 1px solid t.$color-border;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+
+  @media (min-width: 900px) {
+    grid-template-columns: 1fr 1fr;
+    gap: t.$space-16;
+  }
+}
+
+.splitAlt {
+  @media (min-width: 900px) {
+    .splitMedia {
+      order: -1;
+    }
+  }
+}
+
+.splitBody {
+  max-width: 30rem;
+}
+
+.splitList {
+  margin: t.$space-4 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+
+  li {
+    position: relative;
+    padding-left: t.$space-5;
+    font-size: t.$font-size-sm;
+    line-height: 1.6;
+    color: t.$color-ink-soft;
+
+    &::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.55em;
+      width: 6px;
+      height: 6px;
+      border-radius: 1px;
+      background: t.$color-ink;
+    }
+  }
+}
+
+.splitMedia {
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  background: t.$color-surface;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top left;
+  }
+}
+
+// ---- Pricing -------------------------------------------------
+
+.priceGrid {
+  display: grid;
+  gap: t.$space-4;
+  grid-template-columns: 1fr;
+
+  @media (min-width: 720px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (min-width: 1040px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.priceCard {
+  display: flex;
+  flex-direction: column;
+  padding: t.$space-6;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+
+  &[data-featured="true"] {
+    border-color: t.$color-ink;
+    box-shadow: 0 1px 0 t.$color-ink;
+  }
+}
+
+.priceName {
+  margin: 0;
+  @include m.mono-label;
+  color: t.$color-ink-soft;
+}
+
+.priceTag {
+  margin: t.$space-3 0 t.$space-1;
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  line-height: 1;
+  color: t.$color-ink;
+}
+
+.pricePer {
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+}
+
+.priceBlurb {
+  margin: t.$space-3 0 t.$space-5;
+  font-size: t.$font-size-sm;
+  line-height: 1.6;
+  color: t.$color-ink-soft;
+}
+
+.priceList {
+  margin: 0 0 t.$space-6;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+
+  li {
+    position: relative;
+    padding-left: t.$space-5;
+    font-size: t.$font-size-sm;
+    line-height: 1.5;
+    color: t.$color-ink-soft;
+
+    &::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.5em;
+      width: 6px;
+      height: 6px;
+      border-radius: 1px;
+      background: t.$color-ink;
+    }
+  }
+}
+
+.priceCta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: auto;
+  padding: t.$space-3 t.$space-4;
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  border-radius: t.$radius-sm;
+  text-decoration: none;
+  color: t.$color-ink;
+  background: transparent;
+  border: 1px solid t.$color-border-strong;
+  transition: border-color t.$duration-fast t.$ease-standard;
+
+  &:hover {
+    border-color: t.$color-ink;
+  }
+
+  &[data-featured="true"] {
+    color: t.$color-accent-foreground;
+    background: t.$color-accent;
+    border-color: t.$color-accent;
+
+    &:hover {
+      opacity: 0.88;
+    }
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+// ---- FAQ ----------------------------------------------------
+
+.faq {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid t.$color-border;
+}
+
+.faqItem {
+  padding: t.$space-6 0;
+  border-bottom: 1px solid t.$color-border;
+}
+
+.faqQ {
+  margin: 0 0 t.$space-2;
+  font-size: t.$font-size-base;
+  font-weight: 600;
+  color: t.$color-ink;
+}
+
+.faqA {
+  margin: 0;
+  max-width: 46rem;
+  font-size: t.$font-size-sm;
+  line-height: 1.65;
+  color: t.$color-ink-soft;
+}
+
+// ---- Contact ----------------------------------------------
+
+.contactGrid {
+  display: grid;
+  gap: t.$space-8;
+  grid-template-columns: 1fr;
+
+  @media (min-width: 800px) {
+    grid-template-columns: 1.2fr 1fr;
+    gap: t.$space-16;
+  }
+}
+
+.contactCard {
+  padding: t.$space-6;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+}
+
+.contactRow {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-1;
+  padding: t.$space-4 0;
+  border-bottom: 1px solid t.$color-border;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+.contactLabel {
+  @include m.mono-label;
+  color: t.$color-ink-faint;
+}
+
+.contactValue {
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+
+  a {
+    color: inherit;
+  }
+}
+
+// ---- Stat band ------------------------------------------
+
+.statRow {
+  display: grid;
+  gap: t.$space-8;
+  grid-template-columns: 1fr;
+  text-align: center;
+
+  @media (min-width: 700px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.statNum {
+  font-family: var(--font-heading);
+  font-size: 2.5rem;
+  line-height: 1;
+  color: t.$color-ink;
+}
+
+.statLabel {
+  margin-top: t.$space-2;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+}

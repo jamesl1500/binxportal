@@ -1,0 +1,227 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-2;
+  max-width: 12rem;
+  padding: t.$space-2 t.$space-3;
+  font: inherit;
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  color: t.$color-ink;
+  background: none;
+  border: none;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+  transition: background-color t.$duration-fast t.$ease-standard;
+
+  &:hover,
+  &[data-open] {
+    background: rgba(10, 10, 11, 0.04);
+  }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.6;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mark,
+.markFallback {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+  border-radius: t.$radius-sm;
+  object-fit: contain;
+}
+
+.markFallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: t.$color-ink-soft;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+}
+
+.chevron {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+  transition: transform t.$duration-fast t.$ease-standard;
+
+  [data-open] > & {
+    transform: rotate(180deg);
+  }
+}
+
+.positioner {
+  z-index: 50;
+  outline: none;
+}
+
+.popup {
+  min-width: 14rem;
+  padding: t.$space-2;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  box-shadow: 0 8px 24px rgba(10, 10, 11, 0.12);
+  outline: none;
+
+  &[data-starting-style],
+  &[data-ending-style] {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+
+  transition: opacity t.$duration-fast t.$ease-standard, transform t.$duration-fast t.$ease-standard;
+}
+
+.groupLabel {
+  @include m.mono-label;
+  padding: t.$space-2 t.$space-3 t.$space-1;
+  color: t.$color-ink-faint;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: t.$space-3;
+  padding: t.$space-2 t.$space-3;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+  outline: none;
+
+  &[data-highlighted] {
+    background: rgba(10, 10, 11, 0.06);
+  }
+}
+
+.orgName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  color: t.$color-ink;
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.separator {
+  height: 1px;
+  margin: t.$space-2 t.$space-1;
+  background: t.$color-border;
+}
+
+.createItem {
+  justify-content: flex-start;
+  color: t.$color-ink-soft;
+}
+
+.plusIcon {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+}
+
+.error {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: t.$space-1;
+  padding: t.$space-1 t.$space-2;
+  font-size: t.$font-size-xs;
+  color: t.$color-danger;
+  white-space: nowrap;
+  background: t.$color-surface;
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-radius: t.$radius-sm;
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(10, 10, 11, 0.4);
+
+  &[data-starting-style],
+  &[data-ending-style] {
+    opacity: 0;
+  }
+
+  transition: opacity t.$duration-fast t.$ease-standard;
+}
+
+.dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 60;
+  width: calc(100vw - #{t.$space-8});
+  max-width: 26rem;
+  padding: t.$space-6;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  box-shadow: 0 24px 48px rgba(10, 10, 11, 0.2);
+  outline: none;
+  transform: translate(-50%, -50%);
+
+  &[data-starting-style],
+  &[data-ending-style] {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.96);
+  }
+
+  transition: opacity t.$duration-fast t.$ease-standard, transform t.$duration-fast t.$ease-standard;
+}
+
+.dialogTitle {
+  margin: 0 0 t.$space-2;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-ink;
+}
+
+.dialogDescription {
+  margin: 0 0 t.$space-5;
+  font-size: t.$font-size-sm;
+  line-height: 1.5;
+  color: t.$color-ink-soft;
+}

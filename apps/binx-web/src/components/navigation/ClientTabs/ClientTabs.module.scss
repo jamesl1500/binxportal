@@ -1,0 +1,55 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: t.$space-1;
+  border-bottom: 1px solid t.$color-border;
+  overflow-x: auto;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-2;
+  padding: t.$space-3 t.$space-4;
+  margin-bottom: -1px;
+  font-size: t.$font-size-sm;
+  white-space: nowrap;
+  color: t.$color-ink-soft;
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  transition:
+    color t.$duration-fast t.$ease-standard,
+    border-color t.$duration-fast t.$ease-standard;
+
+  &:hover {
+    color: t.$color-ink;
+  }
+
+  &[data-active="true"] {
+    font-weight: 600;
+    color: t.$color-ink;
+    border-bottom-color: t.$color-ink;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.125rem;
+  height: 1.125rem;
+  padding: 0 0.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: t.$color-accent-foreground;
+  background: t.$color-accent;
+  border-radius: 999px;
+}

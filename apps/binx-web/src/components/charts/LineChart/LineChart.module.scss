@@ -1,0 +1,93 @@
+@use "../../../styles/tokens" as t;
+
+.figure {
+  position: relative;
+  margin: 0;
+  color: t.$color-ink;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  touch-action: none;
+}
+
+.axis {
+  stroke: t.$color-border;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.area {
+  pointer-events: none;
+}
+
+.line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.crosshair {
+  stroke: t.$color-ink-faint;
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.marker {
+  fill: t.$color-surface;
+  stroke: currentColor;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.tick {
+  fill: t.$color-ink-faint;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.tooltip {
+  position: absolute;
+  top: -0.25rem;
+  transform: translate(-50%, -100%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: t.$space-2 t.$space-3;
+  white-space: nowrap;
+  background: t.$color-panel;
+  border-radius: t.$radius-sm;
+  pointer-events: none;
+}
+
+.tooltipLabel {
+  font-family: var(--font-mono);
+  font-size: t.$font-size-xs;
+  letter-spacing: t.$tracking-wide;
+  text-transform: uppercase;
+  color: t.$color-panel-muted;
+}
+
+.tooltipValue {
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  color: t.$color-panel-foreground;
+}
+
+.empty {
+  margin: 0;
+  padding: t.$space-8 0;
+  text-align: center;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-faint;
+}

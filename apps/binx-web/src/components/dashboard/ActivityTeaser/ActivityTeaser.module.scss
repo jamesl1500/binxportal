@@ -1,0 +1,66 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  overflow: hidden;
+}
+
+.row {
+  display: flex;
+  gap: t.$space-3;
+  padding: t.$space-3 t.$space-4;
+  border-bottom: 1px solid t.$color-border;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: t.$color-accent-foreground;
+  background: t.$color-accent;
+  border-radius: 50%;
+}
+
+.body {
+  min-width: 0;
+}
+
+.summary {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+}
+
+.time {
+  @include m.mono-label;
+  font-size: 0.5625rem;
+  color: t.$color-ink-faint;
+}
+
+.empty {
+  margin: 0;
+  padding: t.$space-6;
+  text-align: center;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-faint;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+}

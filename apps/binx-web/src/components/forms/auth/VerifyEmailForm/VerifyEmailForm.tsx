@@ -32,26 +32,18 @@ interface VerifyEmailFormProps {
 const VerifyEmailForm = ({ token, email }: VerifyEmailFormProps) => {
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const handleVerify = () => {
     setFormError(null);
-    setSuccessMessage(null);
 
     startTransition(async () => {
       const result = await verifyEmailAction(token);
 
       if (result.error) {
         setFormError(result.error);
-      } else if (result.message) {
-        setSuccessMessage(result.message);
       }
     });
   };
-
-  if (successMessage) {
-    return <p className={styles.formSuccess}>{successMessage}</p>;
-  }
 
   return (
     <div className={styles.form}>

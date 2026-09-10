@@ -1,0 +1,215 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-6;
+}
+
+.tableScroll {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  overflow: hidden;
+}
+
+.headCell {
+  @include m.mono-label;
+  padding: t.$space-3 t.$space-5;
+  color: t.$color-ink-faint;
+  text-align: left;
+  border-bottom: 1px solid t.$color-border;
+}
+
+.row {
+  border-bottom: 1px solid t.$color-border;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.cell {
+  padding: t.$space-4 t.$space-5;
+  vertical-align: middle;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+}
+
+.muted {
+  color: t.$color-ink-soft;
+  white-space: nowrap;
+}
+
+.emailText {
+  font-weight: 600;
+}
+
+.linkRow {
+  display: block;
+  margin-top: t.$space-2;
+  max-width: 22rem;
+  overflow-x: auto;
+}
+
+.linkText {
+  font-family: var(--font-mono);
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+  white-space: nowrap;
+}
+
+.roleBadge {
+  display: inline-block;
+  padding: t.$space-1 t.$space-3;
+  font-family: var(--font-mono);
+  font-size: t.$font-size-xs;
+  letter-spacing: t.$tracking-wide;
+  color: t.$color-ink-soft;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+}
+
+.expiredBadge {
+  display: inline-block;
+  padding: t.$space-1 t.$space-2;
+  font-family: var(--font-mono);
+  font-size: t.$font-size-xs;
+  color: t.$color-danger;
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-radius: t.$radius-sm;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-2;
+}
+
+.actionButton,
+.revokeButton {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-1;
+  padding: t.$space-2 t.$space-3;
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  background: transparent;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+  transition: background-color t.$duration-fast t.$ease-standard;
+
+  svg {
+    width: 0.8125rem;
+    height: 0.8125rem;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.actionButton {
+  color: t.$color-ink-soft;
+
+  &:hover:not(:disabled) {
+    color: t.$color-ink;
+    background: t.$color-paper;
+  }
+}
+
+.revokeButton {
+  color: t.$color-danger;
+  border-color: rgba(220, 38, 38, 0.3);
+
+  &:hover:not(:disabled) {
+    background: rgba(220, 38, 38, 0.08);
+  }
+}
+
+.history {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+}
+
+.historyToggle {
+  align-self: flex-start;
+  padding: t.$space-2 t.$space-3;
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  color: t.$color-ink-soft;
+  background: transparent;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  &:hover {
+    color: t.$color-ink;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.historyBody {
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  background: t.$color-surface;
+}
+
+.historyList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.historyItem {
+  display: flex;
+  align-items: center;
+  gap: t.$space-3;
+  padding: t.$space-3 t.$space-5;
+  font-size: t.$font-size-sm;
+  border-bottom: 1px solid t.$color-border;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.historyStatus {
+  font-family: var(--font-mono);
+  font-size: t.$font-size-xs;
+  letter-spacing: t.$tracking-wide;
+
+  &[data-status="accepted"] {
+    color: t.$color-ink;
+  }
+
+  &[data-status="revoked"] {
+    color: t.$color-danger;
+  }
+}
+
+.empty {
+  margin: 0;
+  padding: t.$space-5;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-faint;
+}

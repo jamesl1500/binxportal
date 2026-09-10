@@ -1,0 +1,17 @@
+@use "../../styles/tokens" as t;
+
+.root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: t.$color-paper;
+}
+
+.content {
+  flex: 1;
+  padding: t.$space-8 t.$space-6;
+
+  @media (min-width: 640px) {
+    padding: t.$space-12;
+  }
+}

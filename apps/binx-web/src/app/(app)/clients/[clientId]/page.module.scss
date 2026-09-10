@@ -1,0 +1,125 @@
+@use "../../../../styles/tokens" as t;
+@use "../../../../styles/mixins" as m;
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-6;
+}
+
+.fakeNote {
+  margin: 0;
+  padding: t.$space-3 t.$space-4;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+  background: t.$color-paper;
+  border: 1px dashed t.$color-border;
+  border-radius: t.$radius-sm;
+}
+
+.panel {
+  @include m.card-base;
+  padding: t.$space-6;
+}
+
+.panelHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: t.$space-2;
+  margin-bottom: t.$space-5;
+}
+
+.panelTitle {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-base;
+  color: t.$color-ink;
+}
+
+.panelMeta {
+  @include m.mono-label;
+  color: t.$color-ink-faint;
+}
+
+.panelLink {
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+  text-decoration: none;
+
+  &:hover {
+    color: t.$color-ink;
+    text-decoration: underline;
+  }
+}
+
+.donutRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: t.$space-6;
+}
+
+.empty {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-faint;
+}
+
+.messageList {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.messageRow {
+  padding: t.$space-4 0;
+  border-top: 1px solid t.$color-border;
+
+  &:first-child {
+    border-top: none;
+    padding-top: 0;
+  }
+
+  &[data-unread="true"] .messageSubject {
+    font-weight: 700;
+  }
+}
+
+.messageMeta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: t.$space-2;
+  margin-bottom: t.$space-1;
+}
+
+.messageFrom {
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  color: t.$color-ink;
+}
+
+.messageTime {
+  @include m.mono-label;
+  font-size: 0.625rem;
+  color: t.$color-ink-faint;
+}
+
+.messageSubject {
+  margin: 0 0 t.$space-1;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+}
+
+.messagePreview {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+}

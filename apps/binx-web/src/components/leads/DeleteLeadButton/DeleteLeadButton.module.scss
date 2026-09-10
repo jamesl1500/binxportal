@@ -1,0 +1,58 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: t.$space-2;
+}
+
+.prompt {
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+}
+
+.trigger,
+.delete,
+.cancel {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-2;
+  padding: t.$space-2 t.$space-3;
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  svg {
+    width: 0.85rem;
+    height: 0.85rem;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.trigger,
+.delete {
+  color: t.$color-danger;
+  background: transparent;
+  border: 1px solid rgba(220, 38, 38, 0.3);
+
+  &:hover:not(:disabled) {
+    background: rgba(220, 38, 38, 0.08);
+  }
+}
+
+.cancel {
+  color: t.$color-ink-soft;
+  background: transparent;
+  border: 1px solid t.$color-border;
+}

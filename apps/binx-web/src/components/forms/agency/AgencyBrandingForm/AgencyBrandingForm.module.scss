@@ -1,0 +1,84 @@
+@use "../../../../styles/tokens" as t;
+@use "../../../../styles/mixins" as m;
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-6;
+  max-width: 40rem;
+}
+
+.images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-8;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-4;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+}
+
+.label {
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  color: t.$color-ink-soft;
+}
+
+.input {
+  @include m.input-base;
+}
+
+.colorRow {
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+}
+
+.swatch {
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+  background: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.clearColor {
+  @include m.button-base;
+  font-size: t.$font-size-xs;
+  padding: t.$space-1 t.$space-2;
+  background: t.$color-surface;
+}
+
+.error {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-danger;
+}
+
+.success {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: #15803d;
+}
+
+.submit {
+  @include m.button-base;
+  align-self: flex-start;
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+}

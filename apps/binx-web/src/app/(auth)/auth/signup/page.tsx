@@ -7,6 +7,7 @@
  * @module apps/binx-web/src/app/(auth)/auth/signup/page.tsx
  * @author Binx.io
  */
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -14,6 +15,8 @@ import { getCurrentUser } from "@/lib/auth";
 import SignupForm from "@/components/forms/auth/SignupForm/SignupForm";
 
 import styles from "./page.module.scss";
+
+export const metadata: Metadata = { title: "Create your account" };
 
 const AuthSignupPage = async () => {
   const user = await getCurrentUser();

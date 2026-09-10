@@ -1,0 +1,411 @@
+/**
+ * portal.ts
+ *
+ * Server-only helpers for the client portal — authenticated calls to
+ * binx-api's `/portal/*` endpoints. A client contact holds a normal Binx
+ * account; these calls are scoped server-side to the one AgencyClient they're
+ * a contact for (see binx-api's require_client_contact).
+ *
+ * @module apps/binx-web/src/lib/portal.ts
+ * @author Binx.io
+ */
+import axios from "axios";
+
+import { api } from "@/lib/api";
+import { getMyAgencies } from "@/lib/agencies";
+import { AuthApiError, extractDetailMessage, getAccessToken } from "@/lib/auth";
+import type { Board, BoardComment, BoardItem, BoardItemPatch } from "@/lib/boards-client";
+import type { BoardReactions, CreateBoardItemInput } from "@/lib/boards";
+import type { InvoiceDetail, Invoice as StaffInvoice } from "@/lib/invoicing";
+import type { Conversation, ConversationDetail, Message } from "@/lib/messaging-client";
+
+export type PortalInvoice = StaffInvoice;
+export type PortalInvoiceDetail = InvoiceDetail;
+export type { Conversation, ConversationDetail, Message };
+
+export interface PortalAgency {
+  id: string;
+  name: string;
+  has_logo: boolean;
+  logo_version: string | null;
+  brand_color: string | null;
+}
+
+export interface PortalClientRef {
+  id: string;
+  name: string;
+}
+
+export interface PortalContact {
+  id: string;
+  user_id: string;
+  full_name: string;
+  email: string;
+  title: string | null;
+  is_primary: boolean;
+}
+
+export interface PortalContext {
+  agency: PortalAgency;
+  client: PortalClientRef;
+  contact: PortalContact;
+  memberships: { agency: PortalAgency; client: PortalClientRef }[];
+}
+
+export interface PortalProgress {
+  total_tasks: number;
+  done_tasks: number;
+  percent: number;
+}
+
+export interface PortalProject {
+  id: string;
+  name: string;
+  status: string;
+  description: string | null;
+  start_date: string | null;
+  due_date: string | null;
+  progress: PortalProgress;
+}
+
+export interface PortalBoardColumn {
+  name: string;
+  position: number;
+  task_count: number;
+}
+
+export interface PortalProjectDetail extends PortalProject {
+  columns: PortalBoardColumn[];
+}
+
+export interface PortalInvitationPreview {
+  agency_name: string;
+  client_name: string;
+  invited_by_name: string;
+  email: string;
+}
+
+async function authHeader(): Promise<{ Authorization: string }> {
+  const accessToken = await getAccessToken();
+  if (!accessToken) {
+    throw new AuthApiError("Not authenticated", 401);
+  }
+  return { Authorization: `Bearer ${accessToken}` };
+}
+
+function rethrow(error: unknown, fallback: string): never {
+  if (axios.isAxiosError(error) && error.response) {
+    throw new AuthApiError(extractDetailMessage(error.response.data, fallback), error.response.status);
+  }
+  throw error;
+}
+
+/**
+ * getPortalContext
+ *
+ * The signed-in user's portal membership (agency + client + contact), or
+ * `null` when they aren't a client contact at all — the routing layer uses
+ * that to decide between `/portal` and `/dashboard`.
+ */
+export async function getPortalContext(): Promise<PortalContext | null> {
+  let headers: { Authorization: string };
+  try {
+    headers = await authHeader();
+  } catch {
+    return null;
+  }
+  try {
+    const { data } = await api.get<PortalContext>("/portal/context", { headers });
+    return data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response && [401, 403].includes(error.response.status)) {
+      return null;
+    }
+    rethrow(error, "Unable to load your portal");
+  }
+}
+
+export async function getPortalProjects(): Promise<PortalProject[]> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.get<PortalProject[]>("/portal/projects", { headers });
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to load projects");
+  }
+}
+
+export async function getPortalProject(projectId: string): Promise<PortalProjectDetail> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.get<PortalProjectDetail>(`/portal/projects/${projectId}`, { headers });
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to load this project");
+  }
+}
+
+export async function getPortalInvoices(): Promise<PortalInvoice[]> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.get<PortalInvoice[]>("/portal/invoices", { headers });
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to load invoices");
+  }
+}
+
+export async function getPortalInvoice(invoiceId: string): Promise<PortalInvoiceDetail> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.get<PortalInvoiceDetail>(`/portal/invoices/${invoiceId}`, { headers });
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to load this invoice");
+  }
+}
+
+/** Stub payment — records the full balance and flips the invoice to paid. */
+export async function payPortalInvoice(invoiceId: string): Promise<PortalInvoiceDetail> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.post<PortalInvoiceDetail>(
+      `/portal/invoices/${invoiceId}/pay`,
+      undefined,
+      { headers },
+    );
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to record the payment");
+  }
+}
+
+export async function getPortalConversations(): Promise<Conversation[]> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.get<Conversation[]>("/portal/conversations", { headers });
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to load messages");
+  }
+}
+
+export async function getPortalConversation(conversationId: string): Promise<ConversationDetail> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.get<ConversationDetail>(`/portal/conversations/${conversationId}`, { headers });
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to load this conversation");
+  }
+}
+
+export async function getPortalMessages(
+  conversationId: string,
+  options: { limit?: number; before?: string } = {},
+): Promise<Message[]> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.get<Message[]>(`/portal/conversations/${conversationId}/messages`, {
+      headers,
+      params: { limit: options.limit ?? 50, before: options.before },
+    });
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to load messages");
+  }
+}
+
+export async function sendPortalMessage(conversationId: string, body: string): Promise<Message> {
+  const headers = await authHeader();
+  const form = new FormData();
+  form.append("body", body);
+  try {
+    const { data } = await api.post<Message>(`/portal/conversations/${conversationId}/messages`, form, {
+      headers: { ...headers, "Content-Type": undefined },
+    });
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to send your message");
+  }
+}
+
+export async function markPortalConversationRead(conversationId: string): Promise<void> {
+  const headers = await authHeader();
+  try {
+    await api.post(`/portal/conversations/${conversationId}/read`, undefined, { headers });
+  } catch (error) {
+    rethrow(error, "Unable to update read state");
+  }
+}
+
+// ---- Collaboration canvas ----
+// The same board the agency team edits — full collaboration. Mirrors
+// lib/boards.ts against the portal-scoped endpoints.
+
+function canvasBase(projectId: string): string {
+  return `/portal/projects/${projectId}/canvas`;
+}
+
+export async function getPortalBoard(projectId: string): Promise<Board> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.get<Board>(canvasBase(projectId), { headers });
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to load the canvas");
+  }
+}
+
+export async function createPortalBoardItem(projectId: string, input: CreateBoardItemInput): Promise<BoardItem> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.post<BoardItem>(`${canvasBase(projectId)}/items`, input, { headers });
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to add the card");
+  }
+}
+
+export async function updatePortalBoardItem(
+  projectId: string,
+  itemId: string,
+  patch: BoardItemPatch,
+): Promise<BoardItem> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.patch<BoardItem>(`${canvasBase(projectId)}/items/${itemId}`, patch, { headers });
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to update the card");
+  }
+}
+
+export async function deletePortalBoardItem(projectId: string, itemId: string): Promise<void> {
+  const headers = await authHeader();
+  try {
+    await api.delete(`${canvasBase(projectId)}/items/${itemId}`, { headers });
+  } catch (error) {
+    rethrow(error, "Unable to delete the card");
+  }
+}
+
+export async function uploadPortalBoardImage(
+  projectId: string,
+  file: File,
+  placement: { x: number; y: number; width?: number; height?: number },
+): Promise<BoardItem> {
+  const headers = await authHeader();
+  const form = new FormData();
+  form.append("file", file);
+  try {
+    const { data } = await api.post<BoardItem>(`${canvasBase(projectId)}/images`, form, {
+      headers: { ...headers, "Content-Type": undefined },
+      params: placement,
+    });
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to upload the image");
+  }
+}
+
+export async function togglePortalBoardReaction(
+  projectId: string,
+  itemId: string,
+  kind: string,
+): Promise<BoardReactions> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.post<BoardReactions>(
+      `${canvasBase(projectId)}/items/${itemId}/reactions`,
+      { kind },
+      { headers },
+    );
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to react");
+  }
+}
+
+export async function getPortalBoardComments(projectId: string, itemId: string): Promise<BoardComment[]> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.get<BoardComment[]>(`${canvasBase(projectId)}/items/${itemId}/comments`, { headers });
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to load comments");
+  }
+}
+
+export async function addPortalBoardComment(
+  projectId: string,
+  itemId: string,
+  body: string,
+): Promise<BoardComment> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.post<BoardComment>(
+      `${canvasBase(projectId)}/items/${itemId}/comments`,
+      { body },
+      { headers },
+    );
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to add the comment");
+  }
+}
+
+export async function deletePortalBoardComment(
+  projectId: string,
+  itemId: string,
+  commentId: string,
+): Promise<void> {
+  const headers = await authHeader();
+  try {
+    await api.delete(`${canvasBase(projectId)}/items/${itemId}/comments/${commentId}`, { headers });
+  } catch (error) {
+    rethrow(error, "Unable to delete the comment");
+  }
+}
+
+// ---- Invitation (onboarding) ----
+
+export async function previewPortalInvitation(token: string): Promise<PortalInvitationPreview> {
+  try {
+    const { data } = await api.get<PortalInvitationPreview>("/portal/invitations/preview", {
+      params: { token },
+    });
+    return data;
+  } catch (error) {
+    rethrow(error, "This invitation link is invalid or has expired");
+  }
+}
+
+export async function acceptPortalInvitation(token: string): Promise<PortalContext> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.post<PortalContext>(
+      "/portal/invitations/accept",
+      { token },
+      { headers },
+    );
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to accept this invitation");
+  }
+}
+
+/**
+ * resolveHome
+ *
+ * Where a signed-in user belongs: staff (an agency member) → `/dashboard`;
+ * a client contact → `/portal`; neither → onboarding. Used by the login
+ * redirect and the two layout guards so the split lives in one place.
+ */
+export async function resolveHome(): Promise<"/dashboard" | "/portal" | "/onboarding/one"> {
+  const agencies = await getMyAgencies().catch(() => []);
+  if (agencies.length > 0) return "/dashboard";
+  const portal = await getPortalContext();
+  if (portal) return "/portal";
+  return "/onboarding/one";
+}

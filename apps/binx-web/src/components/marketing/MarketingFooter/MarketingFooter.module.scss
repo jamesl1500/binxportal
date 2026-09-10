@@ -1,0 +1,95 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.footer {
+  border-top: 1px solid t.$color-border;
+  background: t.$color-surface;
+}
+
+.inner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-10;
+  justify-content: space-between;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: t.$space-12 t.$space-6;
+}
+
+.brandBlock {
+  max-width: 18rem;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-2;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-ink;
+}
+
+.brandMark {
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: t.$radius-sm;
+  background: t.$color-ink;
+}
+
+.blurb {
+  margin: t.$space-3 0 0;
+  font-size: t.$font-size-sm;
+  line-height: 1.6;
+  color: t.$color-ink-soft;
+}
+
+.columns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-10;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+}
+
+.columnHeading {
+  margin: 0 0 t.$space-1;
+  @include m.mono-label;
+  color: t.$color-ink-faint;
+}
+
+.columnLink {
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+  text-decoration: none;
+
+  &:hover {
+    color: t.$color-ink;
+  }
+}
+
+.legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-4;
+  justify-content: space-between;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: t.$space-5 t.$space-6;
+  border-top: 1px solid t.$color-border;
+  @include m.mono-label;
+  font-size: 0.625rem;
+  color: t.$color-ink-faint;
+}
+
+.legalLink {
+  color: t.$color-ink-faint;
+  text-decoration: none;
+
+  &:hover {
+    color: t.$color-ink-soft;
+  }
+}

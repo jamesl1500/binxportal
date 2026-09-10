@@ -1,0 +1,73 @@
+@use "../../../../../styles/tokens" as t;
+@use "../../../../../styles/mixins" as m;
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-6;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: t.$space-3;
+  margin-bottom: 0;
+}
+
+.newButton {
+  @include m.button-base;
+  gap: t.$space-2;
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+  text-decoration: none;
+
+  svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  &:hover {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+}
+
+.title {
+  margin: 0 0 t.$space-1;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-ink;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+}
+
+.panel {
+  @include m.card-base;
+  padding: t.$space-6;
+}
+
+.panelHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: t.$space-2;
+  margin-bottom: t.$space-5;
+}
+
+.panelTitle {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-base;
+  color: t.$color-ink;
+}
+
+.panelMeta {
+  @include m.mono-label;
+  color: t.$color-ink-faint;
+}

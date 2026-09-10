@@ -1,0 +1,172 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-4;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-2;
+}
+
+.filter {
+  padding: t.$space-2 t.$space-3;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  &:hover {
+    color: t.$color-ink;
+  }
+
+  &[data-active="true"] {
+    font-weight: 600;
+    color: t.$color-accent-foreground;
+    background: t.$color-accent;
+    border-color: t.$color-accent;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.tableScroll {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  overflow: hidden;
+}
+
+.headCell {
+  padding: 0;
+  text-align: left;
+  border-bottom: 1px solid t.$color-border;
+}
+
+.sortButton {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-1;
+  width: 100%;
+  padding: t.$space-3 t.$space-4;
+  @include m.mono-label;
+  color: t.$color-ink-faint;
+  background: none;
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    color: t.$color-ink;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.sortIcon {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.row {
+  border-bottom: 1px solid t.$color-border;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: t.$color-paper;
+  }
+}
+
+.cell {
+  padding: t.$space-4;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+  vertical-align: middle;
+}
+
+.nowrap {
+  white-space: nowrap;
+  color: t.$color-ink-soft;
+}
+
+.number {
+  font-family: var(--font-mono);
+  font-size: t.$font-size-xs;
+  color: t.$color-ink;
+  text-decoration: none;
+  font-weight: 600;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.amount {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.due {
+  @include m.mono-label;
+  font-size: 0.5625rem;
+  color: t.$color-ink-faint;
+  white-space: nowrap;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem t.$space-2;
+  @include m.mono-label;
+  font-size: 0.625rem;
+  color: t.$color-ink-soft;
+  background: t.$color-paper;
+  border-radius: t.$radius-sm;
+
+  &[data-status="paid"] {
+    color: #15803d;
+    background: rgba(21, 128, 61, 0.1);
+  }
+
+  &[data-status="overdue"] {
+    color: t.$color-danger;
+    background: rgba(220, 38, 38, 0.1);
+  }
+
+  &[data-status="partial"],
+  &[data-status="sent"] {
+    color: #b45309;
+    background: rgba(180, 83, 9, 0.1);
+  }
+
+  &[data-status="void"] {
+    color: t.$color-ink-faint;
+    text-decoration: line-through;
+  }
+}
+
+.empty {
+  margin: 0;
+  padding: t.$space-6;
+  text-align: center;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-faint;
+}

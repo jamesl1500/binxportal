@@ -1,0 +1,55 @@
+@use "../../../styles/tokens" as t;
+
+.inbox {
+  display: grid;
+  grid-template-columns: minmax(17rem, 22rem) 1fr;
+  // Embedded use (project/client Messages tabs): size against the viewport,
+  // leaving room for the app header + that page's own header and tab nav.
+  height: calc(100dvh - 12rem);
+  min-height: 22rem;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  overflow: hidden;
+  background: t.$color-surface;
+
+  // Top-level /messages route: the layout shell already pins the height.
+  &[data-fill="true"] {
+    height: 100%;
+    min-height: 0;
+  }
+
+  @media (max-width: 820px) {
+    grid-template-columns: 1fr;
+
+    // On narrow screens show one pane at a time.
+    &[data-has-thread="true"] .listPane {
+      display: none;
+    }
+
+    &[data-has-thread="false"] .threadPane {
+      display: none;
+    }
+  }
+}
+
+.listPane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.threadPane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.placeholder {
+  margin: auto;
+  padding: t.$space-8;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-faint;
+  text-align: center;
+}

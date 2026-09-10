@@ -1,0 +1,122 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.root {
+  display: grid;
+  grid-template-columns: 1fr;
+  min-height: 100dvh;
+  background: t.$color-paper;
+
+  @media (min-width: 1024px) {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  }
+}
+
+.panel {
+  position: relative;
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  padding: t.$space-12;
+  background: t.$color-panel;
+  color: t.$color-panel-foreground;
+
+  @media (min-width: 1024px) {
+    display: flex;
+  }
+}
+
+.panelGlow {
+  position: absolute;
+  inset: -20% -20% auto auto;
+  width: 28rem;
+  height: 28rem;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.35), transparent 70%);
+  filter: blur(10px);
+}
+
+.brand {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  letter-spacing: t.$tracking-wide;
+}
+
+.brandMark {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: t.$radius-sm;
+  background: t.$color-panel-foreground;
+}
+
+.headline {
+  position: relative;
+  max-width: 26rem;
+  margin: 0 0 t.$space-10;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-3xl;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.features {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-6;
+  margin: 0;
+  padding: t.$space-10 0 0;
+  list-style: none;
+  border-top: 1px solid t.$color-panel-border;
+}
+
+.feature {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr;
+  gap: t.$space-4;
+}
+
+.featureIndex {
+  @include m.mono-label;
+  color: t.$color-panel-muted;
+}
+
+.featureTitle {
+  margin: 0 0 t.$space-1;
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+}
+
+.featureText {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  line-height: 1.5;
+  color: t.$color-panel-muted;
+}
+
+.footnote {
+  position: relative;
+  @include m.mono-label;
+  color: t.$color-panel-muted;
+}
+
+.content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: t.$space-6;
+
+  @media (min-width: 640px) {
+    padding: t.$space-12;
+  }
+}
+
+.card {
+  width: 100%;
+  max-width: 26rem;
+}

@@ -1,0 +1,61 @@
+@use "../../../../styles/tokens" as t;
+@use "../../../../styles/mixins" as m;
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-5;
+}
+
+.summary {
+  margin: 0;
+  padding: t.$space-5;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+}
+
+.summaryRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: t.$space-4;
+
+  & + & {
+    margin-top: t.$space-3;
+  }
+}
+
+.summaryLabel {
+  @include m.mono-label;
+  color: t.$color-ink-faint;
+}
+
+.summaryValue {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  color: t.$color-ink;
+  text-align: right;
+}
+
+.formError {
+  margin: 0;
+  padding: t.$space-3;
+  font-size: t.$font-size-sm;
+  color: t.$color-danger;
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-radius: t.$radius-sm;
+}
+
+.submit {
+  @include m.button-base;
+  width: 100%;
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+}

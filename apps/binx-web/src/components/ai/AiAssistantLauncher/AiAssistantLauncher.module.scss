@@ -1,0 +1,31 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.trigger {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  color: t.$color-ink-soft;
+  background: none;
+  border: none;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+  transition: color t.$duration-fast t.$ease-standard, background-color t.$duration-fast t.$ease-standard;
+
+  &:hover {
+    color: t.$color-ink;
+    background: rgba(10, 10, 11, 0.04);
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.icon {
+  width: 1.15rem;
+  height: 1.15rem;
+}

@@ -1,0 +1,58 @@
+@use "../../../../styles/tokens" as t;
+@use "../../../../styles/mixins" as m;
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: t.$space-2;
+}
+
+.compactWrapper {
+  display: inline-flex;
+  flex-direction: column;
+  gap: t.$space-1;
+}
+
+.archiveButton {
+  @include m.button-base;
+  padding: t.$space-2 t.$space-4;
+  background: none;
+  border: 1px solid t.$color-border;
+  color: t.$color-ink-soft;
+
+  .compactWrapper & {
+    padding: t.$space-1 t.$space-3;
+    font-size: 10px;
+  }
+
+  &:hover:not(:disabled) {
+    color: t.$color-danger;
+    border-color: rgba(220, 38, 38, 0.4);
+    background: rgba(220, 38, 38, 0.04);
+  }
+}
+
+.restoreButton {
+  @include m.button-base;
+  padding: t.$space-2 t.$space-4;
+  background: none;
+  border: 1px solid t.$color-border;
+  color: t.$color-ink-soft;
+
+  .compactWrapper & {
+    padding: t.$space-1 t.$space-3;
+    font-size: 10px;
+  }
+
+  &:hover:not(:disabled) {
+    color: t.$color-ink;
+    border-color: t.$color-ink;
+    background: rgba(10, 10, 11, 0.04);
+  }
+}
+
+.error {
+  font-size: t.$font-size-xs;
+  color: t.$color-danger;
+}

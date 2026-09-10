@@ -1,0 +1,202 @@
+@use "../../../../styles/tokens" as t;
+@use "../../../../styles/mixins" as m;
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-5;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: t.$space-4;
+}
+
+.tabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: t.$space-1;
+  padding: t.$space-1;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-2;
+  padding: t.$space-2 t.$space-3;
+  font: inherit;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+  background: none;
+  border: none;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color t.$duration-fast t.$ease-standard, color t.$duration-fast t.$ease-standard;
+
+  &:hover {
+    color: t.$color-ink;
+  }
+
+  &[aria-selected="true"] {
+    color: t.$color-ink;
+    background: t.$color-surface;
+    box-shadow: 0 1px 2px rgba(10, 10, 11, 0.08);
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.tabCount {
+  @include m.mono-label;
+  letter-spacing: normal;
+  color: t.$color-ink-faint;
+
+  [aria-selected="true"] & {
+    color: t.$color-ink-soft;
+  }
+}
+
+.search {
+  @include m.input-base;
+  width: 16rem;
+  max-width: 100%;
+}
+
+.tableScroll {
+  @include m.table-scroll;
+  border-radius: t.$radius-md;
+}
+
+.table {
+  width: 100%;
+  min-width: 38rem;
+  border-collapse: separate;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  overflow: hidden;
+}
+
+.headCell {
+  padding: t.$space-3 t.$space-4;
+  @include m.mono-label;
+  text-align: left;
+  color: t.$color-ink-faint;
+  border-bottom: 1px solid t.$color-border;
+}
+
+.row {
+  border-bottom: 1px solid t.$color-border;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.cell {
+  padding: t.$space-4;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+  vertical-align: top;
+}
+
+.projectLink {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+
+  &:hover .name {
+    text-decoration: underline;
+  }
+}
+
+.name {
+  margin: 0;
+  font-weight: 600;
+  color: t.$color-ink;
+}
+
+.description {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-width: 28rem;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: t.$space-1 t.$space-2;
+  @include m.mono-label;
+  letter-spacing: normal;
+  color: t.$color-ink-faint;
+  background: t.$color-paper;
+  border-radius: t.$radius-sm;
+
+  &[data-status="active"] {
+    color: #15803d;
+    background: rgba(21, 128, 61, 0.08);
+  }
+
+  &[data-status="planning"] {
+    color: #1d4ed8;
+    background: rgba(29, 78, 216, 0.08);
+  }
+
+  &[data-status="on_hold"] {
+    color: #b45309;
+    background: rgba(180, 83, 9, 0.08);
+  }
+
+  &[data-status="completed"] {
+    color: t.$color-ink-soft;
+    background: t.$color-paper;
+  }
+
+  &[data-status="archived"] {
+    color: t.$color-ink-faint;
+    background: t.$color-paper;
+  }
+}
+
+.timeline {
+  white-space: nowrap;
+  color: t.$color-ink-soft;
+}
+
+.noDates {
+  color: t.$color-ink-faint;
+}
+
+.emptyState {
+  padding: t.$space-10 t.$space-6;
+  text-align: center;
+  background: t.$color-surface;
+  border: 1px dashed t.$color-border;
+  border-radius: t.$radius-md;
+}
+
+.emptyTitle {
+  margin: 0 0 t.$space-2;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-ink;
+}
+
+.emptyText {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+}

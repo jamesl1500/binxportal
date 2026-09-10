@@ -6,11 +6,14 @@
  * @module apps/binx-web/src/app/(auth)/auth/forgot-password/page.tsx
  * @author Binx.io
  */
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import ForgotPasswordForm from "@/components/forms/auth/ForgotPasswordForm/ForgotPasswordForm";
 
 import styles from "./page.module.scss";
+
+export const metadata: Metadata = { title: "Reset your password" };
 
 const ForgotPasswordPage = () => {
   return (

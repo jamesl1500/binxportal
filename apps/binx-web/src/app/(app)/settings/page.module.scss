@@ -1,0 +1,98 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.eyebrow {
+  display: block;
+  margin-bottom: t.$space-2;
+  font-family: var(--font-mono);
+  font-size: t.$font-size-xs;
+  letter-spacing: t.$tracking-widest;
+  text-transform: uppercase;
+  color: t.$color-ink-soft;
+}
+
+.title {
+  margin: 0 0 t.$space-2;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-2xl;
+  color: t.$color-ink;
+}
+
+.subtitle {
+  margin: 0 0 t.$space-6;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+}
+
+.section {
+  margin-top: t.$space-10;
+  padding-top: t.$space-8;
+  border-top: 1px solid t.$color-border;
+
+  &:first-of-type {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+  }
+}
+
+.sectionTitle {
+  margin: 0 0 t.$space-1;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-ink;
+}
+
+.sectionSubtitle {
+  margin: 0 0 t.$space-5;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+}
+
+.readonlyList {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-4;
+  max-width: 28rem;
+  margin: 0;
+}
+
+.readonlyRow {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-1;
+}
+
+.readonlyLabel {
+  @include m.mono-label;
+  color: t.$color-ink-soft;
+}
+
+.readonlyValue {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+}
+
+.policyBody {
+  margin: 0;
+  max-width: 44rem;
+  font-size: t.$font-size-sm;
+  line-height: 1.7;
+  color: t.$color-ink;
+  white-space: pre-line;
+}
+
+.dangerZone {
+  padding: t.$space-6;
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  border-radius: t.$radius-md;
+  background: rgba(220, 38, 38, 0.03);
+}
+
+.dangerZoneTitle {
+  margin: 0 0 t.$space-1;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-danger;
+}

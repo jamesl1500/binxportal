@@ -1,0 +1,74 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.band {
+  padding: t.$space-16 t.$space-6;
+  background: t.$color-panel;
+  color: t.$color-panel-foreground;
+}
+
+.inner {
+  max-width: 42rem;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.heading {
+  margin: 0 0 t.$space-3;
+  font-family: var(--font-heading);
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.sub {
+  margin: 0 auto t.$space-8;
+  max-width: 32rem;
+  font-size: t.$font-size-base;
+  line-height: 1.6;
+  color: t.$color-panel-muted;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-3;
+  justify-content: center;
+}
+
+.primary,
+.secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: t.$space-3 t.$space-6;
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  border-radius: t.$radius-sm;
+  text-decoration: none;
+  transition: opacity t.$duration-fast t.$ease-standard;
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.primary {
+  color: t.$color-ink;
+  background: t.$color-panel-foreground;
+  border: 1px solid t.$color-panel-foreground;
+
+  &:hover {
+    opacity: 0.9;
+  }
+}
+
+.secondary {
+  color: t.$color-panel-foreground;
+  background: transparent;
+  border: 1px solid t.$color-panel-border;
+
+  &:hover {
+    border-color: t.$color-panel-muted;
+  }
+}

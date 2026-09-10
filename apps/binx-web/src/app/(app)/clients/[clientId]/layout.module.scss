@@ -1,0 +1,63 @@
+@use "../../../../styles/tokens" as t;
+@use "../../../../styles/mixins" as m;
+
+.backLink {
+  display: inline-block;
+  margin-bottom: t.$space-6;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+  text-decoration: none;
+
+  &:hover {
+    color: t.$color-ink;
+    text-decoration: underline;
+  }
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: t.$space-4;
+  margin-bottom: t.$space-6;
+}
+
+.eyebrow {
+  display: block;
+  margin-bottom: t.$space-2;
+  @include m.mono-label;
+  color: t.$color-ink-soft;
+}
+
+.title {
+  margin: 0 0 t.$space-2;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-2xl;
+  color: t.$color-ink;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: t.$space-2 t.$space-3;
+  @include m.mono-label;
+  color: t.$color-ink-faint;
+  background: t.$color-paper;
+  border-radius: t.$radius-sm;
+
+  &[data-active="true"] {
+    color: #15803d;
+    background: rgba(21, 128, 61, 0.08);
+  }
+}
+
+.content {
+  margin-top: t.$space-8;
+}

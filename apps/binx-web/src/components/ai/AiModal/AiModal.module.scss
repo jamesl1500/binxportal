@@ -1,0 +1,287 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgba(10, 10, 11, 0.4);
+
+  &[data-starting-style],
+  &[data-ending-style] {
+    opacity: 0;
+  }
+
+  transition: opacity t.$duration-fast t.$ease-standard;
+}
+
+.dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 70;
+  display: flex;
+  width: min(52rem, calc(100vw - #{t.$space-8}));
+  height: min(36rem, calc(100vh - #{t.$space-12}));
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  box-shadow: 0 24px 48px rgba(10, 10, 11, 0.2);
+  outline: none;
+  overflow: hidden;
+  transform: translate(-50%, -50%);
+
+  &[data-starting-style],
+  &[data-ending-style] {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.97);
+  }
+
+  transition: opacity t.$duration-fast t.$ease-standard, transform t.$duration-fast t.$ease-standard;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 15rem;
+  flex-shrink: 0;
+  padding: t.$space-4;
+  background: t.$color-paper;
+  border-right: 1px solid t.$color-border;
+}
+
+.newChat {
+  @include m.button-base;
+  justify-content: flex-start;
+  gap: t.$space-2;
+  margin-bottom: t.$space-3;
+  padding: t.$space-2 t.$space-3;
+  font-size: t.$font-size-xs;
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+
+  &:hover {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+}
+
+.newChatIcon {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.conversationList {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-1;
+  overflow-y: auto;
+}
+
+.sidebarEmpty {
+  margin: t.$space-3 t.$space-2;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+}
+
+.conversationRow {
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+  padding: t.$space-2 t.$space-3;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+  transition: background-color t.$duration-fast t.$ease-standard;
+
+  &:hover {
+    background: rgba(10, 10, 11, 0.05);
+  }
+
+  &[data-active="true"] {
+    background: rgba(10, 10, 11, 0.08);
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.conversationTitle {
+  flex: 1;
+  overflow: hidden;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.deleteButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  color: t.$color-ink-faint;
+  background: none;
+  border: none;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity t.$duration-fast t.$ease-standard, color t.$duration-fast t.$ease-standard;
+
+  svg {
+    width: 0.8rem;
+    height: 0.8rem;
+  }
+
+  .conversationRow:hover &,
+  &:focus-visible {
+    opacity: 1;
+  }
+
+  &:hover {
+    color: t.$color-danger;
+  }
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  padding: t.$space-5 t.$space-5 t.$space-4;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-ink;
+}
+
+.titleIcon {
+  width: 1.1rem;
+  height: 1.1rem;
+  color: t.$color-accent;
+}
+
+.description {
+  margin: t.$space-1 0 t.$space-4;
+  font-size: t.$font-size-xs;
+  line-height: 1.5;
+  color: t.$color-ink-soft;
+}
+
+.thread {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+  flex: 1;
+  overflow-y: auto;
+  padding-right: t.$space-1;
+}
+
+.threadEmpty {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: t.$space-4;
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-faint;
+  text-align: center;
+}
+
+.suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+  width: 100%;
+  max-width: 24rem;
+}
+
+.suggestion {
+  padding: t.$space-2 t.$space-4;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+  transition: border-color t.$duration-fast t.$ease-standard, color t.$duration-fast t.$ease-standard;
+
+  &:hover {
+    color: t.$color-ink;
+    border-color: t.$color-border-strong;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.bubbleRow {
+  display: flex;
+
+  &[data-role="user"] {
+    justify-content: flex-end;
+  }
+
+  &[data-role="assistant"] {
+    justify-content: flex-start;
+  }
+}
+
+.bubble {
+  max-width: 80%;
+  padding: t.$space-3 t.$space-4;
+  font-size: t.$font-size-sm;
+  line-height: 1.6;
+  white-space: pre-line;
+  border-radius: t.$radius-md;
+
+  &[data-role="user"] {
+    color: #fff;
+    background: color-mix(in srgb, #{t.$color-ink} 92%, black);
+    border-bottom-right-radius: t.$radius-sm;
+  }
+
+  &[data-role="assistant"] {
+    color: t.$color-ink;
+    background: t.$color-paper;
+    border: 1px solid t.$color-border;
+    border-bottom-left-radius: t.$radius-sm;
+  }
+
+  &[data-thinking="true"] {
+    color: t.$color-ink-faint;
+    font-style: italic;
+  }
+}
+
+.composer {
+  display: flex;
+  gap: t.$space-2;
+  margin-top: t.$space-4;
+}
+
+.composerInput {
+  @include m.input-base;
+  flex: 1;
+}
+
+.composerSubmit {
+  @include m.button-base;
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+}

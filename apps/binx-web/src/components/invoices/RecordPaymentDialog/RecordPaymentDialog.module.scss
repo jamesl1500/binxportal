@@ -1,0 +1,78 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(10, 10, 11, 0.4);
+}
+
+.dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 60;
+  width: calc(100vw - #{t.$space-8});
+  max-width: 26rem;
+  padding: t.$space-6;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  box-shadow: 0 24px 48px rgba(10, 10, 11, 0.2);
+  outline: none;
+  transform: translate(-50%, -50%);
+}
+
+.title {
+  margin: 0 0 t.$space-1;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-ink;
+}
+
+.description {
+  margin: 0 0 t.$space-4;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-1;
+}
+
+.label {
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  color: t.$color-ink-soft;
+}
+
+.input {
+  @include m.input-base;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: t.$space-3;
+  margin-top: t.$space-2;
+}
+
+.cancel {
+  @include m.button-base;
+  background: t.$color-surface;
+}
+
+.submit {
+  @include m.button-base;
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+}

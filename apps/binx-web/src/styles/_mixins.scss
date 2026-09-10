@@ -1,5 +1,7 @@
 @use "tokens" as t;
 
+// Shared style primitives. Consumed via `@use "…/mixins" as m;`.
+
 @mixin mono-label {
   font-family: var(--font-mono);
   font-size: t.$font-size-xs;
@@ -32,6 +34,22 @@
   &:focus-visible {
     @include focus-ring;
   }
+}
+
+// Wrap a wide <table> in a horizontal scroller so it never forces the page
+// itself to scroll sideways on a narrow screen. Put this on a <div> that is
+// the table's only parent; keep a sensible `min-width` on the table.
+@mixin table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+@mixin card-base {
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-lg;
+  box-shadow: 0 1px 2px rgba(10, 10, 11, 0.04);
 }
 
 @mixin button-base {

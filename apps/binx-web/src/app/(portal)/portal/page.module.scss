@@ -1,0 +1,150 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-8;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-1;
+}
+
+.eyebrow {
+  @include m.mono-label;
+  color: t.$color-ink-soft;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-2xl;
+  color: t.$color-ink;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-4;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-ink;
+}
+
+.link {
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  color: t.$color-ink-soft;
+  text-decoration: none;
+
+  &:hover {
+    color: t.$color-ink;
+  }
+}
+
+.empty {
+  margin: 0;
+  padding: t.$space-6;
+  text-align: center;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-faint;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+}
+
+.projectList,
+.invoiceList {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.projectRow {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+  padding: t.$space-4 t.$space-5;
+  text-decoration: none;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+
+  &:hover {
+    border-color: t.$color-border-strong;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.projectName {
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  color: t.$color-ink;
+}
+
+.invoiceRow {
+  display: flex;
+  align-items: center;
+  gap: t.$space-4;
+  padding: t.$space-3 t.$space-5;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+  text-decoration: none;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+
+  &:hover {
+    border-color: t.$color-border-strong;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.invoiceStatus {
+  @include m.mono-label;
+  font-size: 0.5625rem;
+  color: t.$color-ink-soft;
+
+  &[data-status="overdue"] {
+    color: t.$color-danger;
+  }
+
+  &[data-status="paid"] {
+    color: t.$color-ink-faint;
+  }
+}
+
+.invoiceAmount {
+  margin-left: auto;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+  white-space: nowrap;
+}

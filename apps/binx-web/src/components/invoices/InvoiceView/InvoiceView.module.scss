@@ -1,0 +1,237 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.invoice {
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  padding: t.$space-10;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-8;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: t.$space-6;
+  flex-wrap: wrap;
+}
+
+.number {
+  margin: 0 0 t.$space-2;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-2xl;
+  color: t.$color-ink;
+}
+
+.status {
+  display: inline-flex;
+  padding: 0.125rem t.$space-2;
+  @include m.mono-label;
+  font-size: 0.625rem;
+  color: t.$color-ink-soft;
+  background: t.$color-paper;
+  border-radius: t.$radius-sm;
+  border: 1px solid t.$color-border;
+
+  &[data-status="paid"] {
+    color: #15803d;
+    background: rgba(21, 128, 61, 0.1);
+  }
+  &[data-status="overdue"] {
+    color: t.$color-danger;
+    background: rgba(220, 38, 38, 0.1);
+  }
+  &[data-status="partial"],
+  &[data-status="sent"] {
+    color: #b45309;
+    background: rgba(180, 83, 9, 0.1);
+  }
+  &[data-status="void"] {
+    text-decoration: line-through;
+    color: t.$color-ink-faint;
+  }
+}
+
+.meta {
+  margin: 0;
+  display: flex;
+  gap: t.$space-6;
+  flex-wrap: wrap;
+
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: t.$space-1;
+  }
+
+  dt {
+    @include m.mono-label;
+    font-size: 0.5625rem;
+    color: t.$color-ink-faint;
+  }
+
+  dd {
+    margin: 0;
+    font-size: t.$font-size-sm;
+    color: t.$color-ink;
+  }
+}
+
+.parties {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: t.$space-6;
+
+  @media (max-width: 560px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.partyLabel,
+.sectionLabel {
+  margin: 0 0 t.$space-2;
+  @include m.mono-label;
+  font-size: 0.5625rem;
+  color: t.$color-ink-faint;
+}
+
+.partyName {
+  margin: 0 0 t.$space-1;
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  color: t.$color-ink;
+}
+
+.partyLine {
+  margin: 0;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+  white-space: pre-line;
+}
+
+.lineTable {
+  width: 100%;
+  border-collapse: collapse;
+
+  th {
+    padding: t.$space-2 t.$space-3;
+    @include m.mono-label;
+    font-size: 0.5625rem;
+    color: t.$color-ink-faint;
+    text-align: left;
+    border-bottom: 1px solid t.$color-border;
+  }
+
+  td {
+    padding: t.$space-3;
+    font-size: t.$font-size-sm;
+    color: t.$color-ink;
+    border-bottom: 1px solid t.$color-border;
+  }
+}
+
+.numCol {
+  text-align: right !important;
+  white-space: nowrap;
+}
+
+.noLines {
+  text-align: center !important;
+  color: t.$color-ink-faint;
+}
+
+.totals {
+  margin: 0 0 0 auto;
+  width: min(20rem, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+
+  div {
+    display: flex;
+    justify-content: space-between;
+    font-size: t.$font-size-sm;
+    color: t.$color-ink-soft;
+  }
+
+  dt,
+  dd {
+    margin: 0;
+  }
+}
+
+.grandTotal {
+  padding-top: t.$space-2;
+  border-top: 1px solid t.$color-border;
+
+  dt,
+  dd {
+    font-weight: 700;
+    font-size: t.$font-size-base !important;
+    color: t.$color-ink !important;
+  }
+}
+
+.balance {
+  dt,
+  dd {
+    font-weight: 700;
+    color: t.$color-ink !important;
+  }
+}
+
+.payments {
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    display: grid;
+    grid-template-columns: 8rem 8rem 1fr auto;
+    gap: t.$space-3;
+    padding: t.$space-2 0;
+    font-size: t.$font-size-xs;
+    color: t.$color-ink-soft;
+    border-bottom: 1px solid t.$color-border;
+  }
+}
+
+.paymentRef {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.paymentAmount {
+  font-weight: 600;
+  color: t.$color-ink;
+  white-space: nowrap;
+}
+
+.notes {
+  p {
+    margin: 0;
+    font-size: t.$font-size-sm;
+    color: t.$color-ink;
+    white-space: pre-line;
+    line-height: 1.6;
+  }
+}
+
+// Print: the invoice, nothing else.
+@media print {
+  :global(header),
+  :global(nav) {
+    display: none !important;
+  }
+
+  .invoice {
+    border: none;
+    padding: 0;
+  }
+}

@@ -1,0 +1,35 @@
+@use "../../../../../styles/tokens" as t;
+@use "../../../../../styles/mixins" as m;
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: t.$space-4;
+  margin-bottom: t.$space-6;
+}
+
+.title {
+  margin: 0 0 t.$space-1;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-ink;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+}
+
+.newLink {
+  @include m.button-base;
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+  text-decoration: none;
+
+  &:hover {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+}

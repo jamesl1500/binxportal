@@ -1,0 +1,72 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+}
+
+.search {
+  @include m.input-base;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 14rem;
+  overflow-y: auto;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: t.$space-3;
+  padding: t.$space-2 t.$space-3;
+  cursor: pointer;
+  border-bottom: 1px solid t.$color-border;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: t.$color-paper;
+  }
+
+  input {
+    flex-shrink: 0;
+  }
+}
+
+.optionText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.optionName {
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  color: t.$color-ink;
+}
+
+.optionMeta {
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.empty {
+  margin: 0;
+  padding: t.$space-2 t.$space-3;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-faint;
+}

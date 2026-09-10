@@ -1,0 +1,229 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+/* ---- list page ---- */
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: t.$space-4;
+  margin-bottom: t.$space-6;
+}
+
+.eyebrow {
+  display: block;
+  margin-bottom: t.$space-2;
+  font-family: var(--font-mono);
+  font-size: t.$font-size-xs;
+  letter-spacing: t.$tracking-widest;
+  text-transform: uppercase;
+  color: t.$color-ink-soft;
+}
+
+.title {
+  margin: 0 0 t.$space-2;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-2xl;
+  color: t.$color-ink;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+}
+
+.headerActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: t.$space-3;
+}
+
+.stats {
+  margin-bottom: t.$space-8;
+}
+
+/* ---- detail: AI analysis card ---- */
+
+.aiMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-2;
+  align-items: center;
+}
+
+.fitChip {
+  @include m.mono-label;
+  font-size: 0.5625rem;
+  padding: 0.15rem t.$space-2;
+  border-radius: t.$radius-sm;
+  border: 1px solid t.$color-border;
+  color: t.$color-ink-soft;
+}
+
+.aiBlock {
+  margin: 0;
+}
+
+.aiBlockLabel {
+  @include m.mono-label;
+  font-size: 0.5625rem;
+  color: t.$color-ink-faint;
+  margin: 0 0 t.$space-2;
+}
+
+.talkingPoints {
+  margin: 0;
+  padding-left: t.$space-5;
+  font-size: t.$font-size-sm;
+  line-height: 1.6;
+  color: t.$color-ink;
+
+  li {
+    margin-bottom: t.$space-1;
+  }
+}
+
+.nextStep {
+  margin: 0;
+  padding: t.$space-3 t.$space-4;
+  font-size: t.$font-size-sm;
+  line-height: 1.5;
+  color: t.$color-ink;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+}
+
+/* ---- detail page ---- */
+
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-6;
+}
+
+.back {
+  align-self: flex-start;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+  text-decoration: none;
+
+  &:hover {
+    color: t.$color-ink;
+  }
+}
+
+.detailHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: t.$space-4;
+}
+
+.headerMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: t.$space-3;
+  margin-top: t.$space-3;
+}
+
+.source {
+  @include m.mono-label;
+  font-size: 0.5625rem;
+  color: t.$color-ink-faint;
+}
+
+.grid {
+  display: grid;
+  gap: t.$space-6;
+
+  @media (min-width: 960px) {
+    grid-template-columns: 1fr 20rem;
+    align-items: start;
+  }
+}
+
+.mainCol,
+.sideCol {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-6;
+  min-width: 0;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-4;
+  padding: t.$space-5 t.$space-6;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+}
+
+.card.danger {
+  border-color: rgba(220, 38, 38, 0.25);
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: t.$space-3;
+}
+
+.cardTitle {
+  margin: 0;
+  @include m.mono-label;
+  color: t.$color-ink-soft;
+}
+
+.aiSummary {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  line-height: 1.6;
+  color: t.$color-ink;
+}
+
+.muted {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-faint;
+}
+
+.snapshot {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+
+  div {
+    display: flex;
+    justify-content: space-between;
+    gap: t.$space-4;
+  }
+
+  dt {
+    @include m.mono-label;
+    font-size: 0.5625rem;
+    color: t.$color-ink-faint;
+  }
+
+  dd {
+    margin: 0;
+    font-size: t.$font-size-sm;
+    color: t.$color-ink;
+    text-align: right;
+    word-break: break-word;
+
+    a {
+      color: t.$color-ink;
+    }
+  }
+}

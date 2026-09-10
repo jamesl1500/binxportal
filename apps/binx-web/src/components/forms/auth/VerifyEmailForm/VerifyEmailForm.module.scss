@@ -48,16 +48,6 @@
   border-radius: t.$radius-sm;
 }
 
-.formSuccess {
-  margin: 0;
-  padding: t.$space-3;
-  font-size: t.$font-size-sm;
-  color: #15803d;
-  background: rgba(21, 128, 61, 0.08);
-  border: 1px solid rgba(21, 128, 61, 0.2);
-  border-radius: t.$radius-sm;
-}
-
 .submit {
   @include m.button-base;
   width: 100%;

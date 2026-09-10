@@ -1,0 +1,221 @@
+@use "../../../../styles/tokens" as t;
+@use "../../../../styles/mixins" as m;
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-5;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: t.$space-4;
+}
+
+.search {
+  @include m.input-base;
+  width: 16rem;
+  max-width: 100%;
+}
+
+.uploadTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-2;
+  padding: t.$space-2 t.$space-4;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  &:hover {
+    color: t.$color-ink;
+    background: rgba(10, 10, 11, 0.04);
+  }
+}
+
+.uploadInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  overflow: hidden;
+}
+
+.headCell {
+  padding: t.$space-3 t.$space-4;
+  @include m.mono-label;
+  text-align: left;
+  color: t.$color-ink-faint;
+  border-bottom: 1px solid t.$color-border;
+}
+
+.headCell.sortable {
+  padding: 0;
+}
+
+.sortButton {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-1;
+  width: 100%;
+  padding: t.$space-3 t.$space-4;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: t.$color-ink-faint;
+  background: none;
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    color: t.$color-ink;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.sortIcon {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.row {
+  border-bottom: 1px solid t.$color-border;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.cell {
+  padding: t.$space-4;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+  vertical-align: middle;
+}
+
+.nowrap {
+  white-space: nowrap;
+  color: t.$color-ink-soft;
+}
+
+.name {
+  display: block;
+  font-weight: 600;
+  color: t.$color-ink;
+  word-break: break-word;
+}
+
+.sourceBadge {
+  display: inline-block;
+  margin-top: t.$space-1;
+  @include m.mono-label;
+  letter-spacing: normal;
+  color: t.$color-ink-faint;
+}
+
+.muted {
+  color: t.$color-ink-faint;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: t.$space-1;
+}
+
+.download,
+.delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  color: t.$color-ink-faint;
+  background: none;
+  border: none;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+  text-decoration: none;
+
+  svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.download:hover {
+  color: t.$color-ink;
+  background: rgba(10, 10, 11, 0.04);
+}
+
+.delete:hover:not(:disabled) {
+  color: t.$color-danger;
+  background: rgba(220, 38, 38, 0.08);
+}
+
+.delete:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.emptyState {
+  padding: t.$space-10 t.$space-6;
+  text-align: center;
+  background: t.$color-surface;
+  border: 1px dashed t.$color-border;
+  border-radius: t.$radius-md;
+}
+
+.emptyTitle {
+  margin: 0 0 t.$space-2;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-ink;
+}
+
+.emptyText {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+}
+
+.error {
+  margin: 0;
+  padding: t.$space-3;
+  font-size: t.$font-size-sm;
+  color: t.$color-danger;
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-radius: t.$radius-sm;
+}

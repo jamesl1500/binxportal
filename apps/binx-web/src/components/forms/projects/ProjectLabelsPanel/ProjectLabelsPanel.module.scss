@@ -1,0 +1,171 @@
+@use "../../../../styles/tokens" as t;
+@use "../../../../styles/mixins" as m;
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-4;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: t.$space-3;
+  padding: t.$space-3;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+}
+
+.labelChip {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-2;
+  padding: t.$space-1 t.$space-3;
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  background: t.$color-surface;
+  border: 1px solid;
+  border-radius: t.$radius-sm;
+}
+
+.labelDot {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+}
+
+.rowActions,
+.editActions {
+  display: flex;
+  align-items: center;
+  gap: t.$space-1;
+  flex-shrink: 0;
+}
+
+.iconButton,
+.iconDanger,
+.iconConfirm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  color: t.$color-ink-faint;
+  background: none;
+  border: none;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  &:hover:not(:disabled) {
+    color: t.$color-ink;
+    background: rgba(10, 10, 11, 0.04);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.iconDanger:hover:not(:disabled) {
+  color: t.$color-danger;
+  background: rgba(220, 38, 38, 0.08);
+}
+
+.iconConfirm {
+  color: t.$color-accent-foreground;
+  background: t.$color-accent;
+
+  &:hover:not(:disabled) {
+    color: t.$color-accent-foreground;
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+}
+
+.addForm,
+.editForm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: t.$space-3;
+}
+
+.editForm {
+  flex: 1;
+}
+
+.input {
+  @include m.input-base;
+  width: auto;
+  min-width: 12rem;
+  flex: 1;
+}
+
+.colorPicker {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: t.$space-1;
+}
+
+.swatch {
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+
+  &[data-selected="true"] {
+    border-color: t.$color-ink;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.addButton {
+  @include m.button-base;
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+}
+
+.emptyText {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-faint;
+}
+
+.error {
+  margin: 0;
+  padding: t.$space-3;
+  font-size: t.$font-size-sm;
+  color: t.$color-danger;
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-radius: t.$radius-sm;
+}
