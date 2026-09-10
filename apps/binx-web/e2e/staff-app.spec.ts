@@ -1,0 +1,72 @@
+/**
+ * staff-app.spec.ts — the authenticated staff area, driven with the seeded
+ * demo agency. Uses the `staffPage` fixture (pre-signed-in storage state).
+ */
+import { test, expect } from "./fixtures";
+import { DEMO } from "./fixtures";
+
+test.describe("staff app", () => {
+  test("dashboard shows the agency roll-up", async ({ staffPage }) => {
+    await staffPage.goto("/dashboard");
+    await expect(staffPage.getByRole("navigation", { name: "Primary" })).toBeVisible();
+    await expect(staffPage.getByText(/active projects/i).first()).toBeVisible();
+  });
+
+  test("primary nav reaches each top-level section", async ({ staffPage }) => {
+    await staffPage.goto("/dashboard");
+    const nav = staffPage.getByRole("navigation", { name: "Primary" });
+    for (const [label, url, heading] of [
+      ["Clients", /\/clients$/, /your clients/i],
+      ["Projects", /\/projects$/, /your projects/i],
+      ["Leads", /\/leads$/, /your pipeline/i],
+    ] as const) {
+      await nav.getByRole("link", { name: label }).click();
+      await expect(staffPage).toHaveURL(url);
+      await expect(staffPage.getByRole("heading", { level: 1, name: heading })).toBeVisible();
+    }
+    await nav.getByRole("link", { name: "Messages" }).click();
+    await expect(staffPage).toHaveURL(/\/messages$/);
+    await expect(staffPage.getByText(/conversation|no messages|inbox/i).first()).toBeVisible();
+  });
+
+  test("the Manage menu reaches invoices", async ({ staffPage }) => {
+    await staffPage.goto("/dashboard");
+    await staffPage.getByRole("navigation", { name: "Primary" }).getByRole("button", { name: "Manage" }).click();
+    await staffPage.getByRole("menuitem", { name: "Invoices" }).click();
+    await expect(staffPage).toHaveURL(/\/invoices$/);
+  });
+
+  test("clients list shows the seeded client and opens its record", async ({ staffPage }) => {
+    await staffPage.goto("/clients");
+    await expect(staffPage.getByRole("heading", { name: /your clients/i })).toBeVisible();
+    await staffPage.getByRole("link", { name: DEMO.clientName }).click();
+    await expect(staffPage.getByRole("heading", { name: DEMO.clientName })).toBeVisible();
+  });
+
+  test("the seeded project opens its board with tasks", async ({ staffPage }) => {
+    await staffPage.goto("/projects");
+    await staffPage.getByRole("link", { name: DEMO.projectName }).click();
+    await expect(staffPage.getByRole("heading", { name: DEMO.projectName })).toBeVisible();
+    await staffPage
+      .getByRole("navigation", { name: "Project" })
+      .getByRole("link", { name: "Board", exact: true })
+      .click();
+    await expect(staffPage).toHaveURL(/\/board$/);
+    await expect(staffPage.getByText("Homepage wireframe")).toBeVisible();
+  });
+
+  test("invoices list shows the issued invoice and its total", async ({ staffPage }) => {
+    await staffPage.goto("/invoices");
+    await expect(staffPage.getByRole("heading", { name: /invoices/i })).toBeVisible();
+    // 2,800.00 + 4,200.00 + 18 * 125.00 = 9,250.00
+    await expect(staffPage.getByRole("cell", { name: "$9,250.00", exact: true })).toBeVisible();
+  });
+
+  test("settings pages load", async ({ staffPage }) => {
+    for (const path of ["/settings/general", "/settings/invoicing", "/settings/plan"]) {
+      const res = await staffPage.goto(path);
+      expect(res?.status()).toBeLessThan(400);
+      await expect(staffPage.getByRole("heading", { level: 1 })).toBeVisible();
+    }
+  });
+});

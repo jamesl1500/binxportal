@@ -40,26 +40,17 @@ describe("VerifyEmailForm", () => {
 
   // Clicking the button calls verifyEmailAction with ONLY the token — no
   // email field is submitted, since binx-api's /auth/verify-email endpoint
-  // doesn't need or accept one.
+  // doesn't need or accept one. On success the action itself redirects into
+  // onboarding (see verify-email/actions.ts), so there's no in-component
+  // success state to render here.
   it("calls verifyEmailAction with just the token on click", async () => {
-    mockedVerifyEmailAction.mockResolvedValueOnce({ message: "Email verified successfully." });
+    mockedVerifyEmailAction.mockResolvedValueOnce({});
     const user = userEvent.setup();
     render(<VerifyEmailForm token="test-token" email="valid@example.com" />);
 
     await user.click(screen.getByRole("button", { name: /verify email/i }));
 
     expect(mockedVerifyEmailAction).toHaveBeenCalledWith("test-token");
-  });
-
-  it("replaces the form with the success message", async () => {
-    mockedVerifyEmailAction.mockResolvedValueOnce({ message: "Email verified successfully." });
-    const user = userEvent.setup();
-    render(<VerifyEmailForm token="test-token" email="valid@example.com" />);
-
-    await user.click(screen.getByRole("button", { name: /verify email/i }));
-
-    expect(await screen.findByText("Email verified successfully.")).toBeInTheDocument();
-    expect(screen.queryByLabelText("Email")).not.toBeInTheDocument();
   });
 
   it("shows the server error for an invalid or expired token", async () => {

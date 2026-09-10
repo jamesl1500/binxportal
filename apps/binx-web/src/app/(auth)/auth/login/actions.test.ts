@@ -8,6 +8,11 @@ vi.mock("@/lib/auth", () => ({
   forwardSetCookies: vi.fn(async () => undefined),
 }));
 
+// resolveHome decides where a signed-in user lands; default to the dashboard.
+vi.mock("@/lib/portal", () => ({
+  resolveHome: vi.fn(async () => "/dashboard"),
+}));
+
 // Next's real redirect() throws a special "NEXT_REDIRECT" error internally
 // that the framework catches further up to actually perform the navigation.
 // We mimic that "redirect = throw" behavior with our own sentinel error so we

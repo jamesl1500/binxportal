@@ -49,12 +49,21 @@ vi.mock("@/lib/api", () => ({
 import { api } from "@/lib/api";
 import {
   AuthApiError,
+  clearAuthCookies,
+  confirmEmailChange,
+  forwardSetCookies,
   getCurrentUser,
+  getEmailChangeTarget,
+  getEmailVerificationTarget,
   getInternalBaseUrl,
+  getRefreshToken,
   login,
+  logout,
+  refreshSession,
   requestPasswordReset,
   resetPassword,
   signup,
+  verifyEmail,
 } from "@/lib/auth";
 
 // `vi.mocked` just gives us back the same object with TypeScript types that
@@ -234,6 +243,129 @@ describe("resetPassword", () => {
       message: "Invalid or expired token",
       status: 400,
     });
+  });
+});
+
+describe("getEmailChangeTarget", () => {
+  it("resolves with the pending new email address", async () => {
+    mockedApi.get.mockResolvedValueOnce({ data: { new_email: "new@example.com" } });
+
+    await expect(getEmailChangeTarget("token123")).resolves.toBe("new@example.com");
+    expect(mockedApi.get).toHaveBeenCalledWith("/auth/confirm-email", { params: { token: "token123" } });
+  });
+
+  it("throws AuthApiError for an invalid or expired token", async () => {
+    mockedApi.get.mockRejectedValueOnce(axiosError(400, "Invalid or expired token"));
+
+    await expect(getEmailChangeTarget("bad-token")).rejects.toMatchObject({
+      message: "Invalid or expired token",
+      status: 400,
+    });
+  });
+});
+
+describe("confirmEmailChange", () => {
+  it("resolves with the success message", async () => {
+    mockedApi.post.mockResolvedValueOnce({ data: { message: "Email address updated." } });
+
+    await expect(confirmEmailChange("token123")).resolves.toBe("Email address updated.");
+    expect(mockedApi.post).toHaveBeenCalledWith("/auth/confirm-email", { token: "token123" });
+  });
+
+  it("throws AuthApiError for an invalid or expired token", async () => {
+    mockedApi.post.mockRejectedValueOnce(axiosError(400, "Invalid or expired token"));
+
+    await expect(confirmEmailChange("bad-token")).rejects.toMatchObject({
+      message: "Invalid or expired token",
+      status: 400,
+    });
+  });
+});
+
+describe("cookie helpers", () => {
+  it("forwardSetCookies copies parsed Set-Cookie headers onto the request jar", async () => {
+    await forwardSetCookies([
+      "binx_access_token=abc; Path=/; HttpOnly; SameSite=Lax; Max-Age=1800",
+      "binx_refresh_token=def; Path=/; Secure",
+    ]);
+    expect(cookieJar.get("binx_access_token")?.value).toBe("abc");
+    expect(cookieJar.get("binx_refresh_token")?.value).toBe("def");
+  });
+
+  it("forwardSetCookies is a no-op for an empty / missing list", async () => {
+    await forwardSetCookies(undefined);
+    await forwardSetCookies([]);
+    expect(cookieJar.size).toBe(0);
+  });
+
+  it("clearAuthCookies deletes both session cookies", async () => {
+    cookieJar.set("binx_access_token", { value: "a" });
+    cookieJar.set("binx_refresh_token", { value: "r" });
+    await clearAuthCookies();
+    expect(cookieJar.size).toBe(0);
+  });
+
+  it("getRefreshToken reads the refresh cookie", async () => {
+    cookieJar.set("binx_refresh_token", { value: "rt-123" });
+    await expect(getRefreshToken()).resolves.toBe("rt-123");
+  });
+
+  it("logout clears the session", async () => {
+    cookieJar.set("binx_access_token", { value: "a" });
+    await logout();
+    expect(cookieJar.get("binx_access_token")).toBeUndefined();
+  });
+});
+
+describe("refreshSession", () => {
+  it("returns false when there is no refresh token", async () => {
+    await expect(refreshSession()).resolves.toBe(false);
+    expect(mockedApi.post).not.toHaveBeenCalled();
+  });
+
+  it("exchanges the refresh token and stores the new pair", async () => {
+    cookieJar.set("binx_refresh_token", { value: "old-rt" });
+    mockedApi.post.mockResolvedValueOnce({ data: { access_token: "new-at", refresh_token: "new-rt" } });
+
+    await expect(refreshSession()).resolves.toBe(true);
+    expect(mockedApi.post).toHaveBeenCalledWith("/auth/refresh", { refresh_token: "old-rt" });
+    expect(cookieJar.get("binx_access_token")?.value).toBe("new-at");
+    expect(cookieJar.get("binx_refresh_token")?.value).toBe("new-rt");
+  });
+
+  it("clears the session and returns false when the refresh is rejected", async () => {
+    cookieJar.set("binx_access_token", { value: "at" });
+    cookieJar.set("binx_refresh_token", { value: "dead-rt" });
+    mockedApi.post.mockRejectedValueOnce(axiosError(401, "Refresh token reuse detected"));
+
+    await expect(refreshSession()).resolves.toBe(false);
+    expect(cookieJar.size).toBe(0);
+  });
+});
+
+describe("email verification", () => {
+  it("getEmailVerificationTarget previews the account's email", async () => {
+    mockedApi.get.mockResolvedValueOnce({ data: { email: "new@example.com" } });
+    await expect(getEmailVerificationTarget("tok")).resolves.toBe("new@example.com");
+    expect(mockedApi.get).toHaveBeenCalledWith("/auth/verify-email", { params: { token: "tok" } });
+  });
+
+  it("getEmailVerificationTarget throws AuthApiError for a bad token", async () => {
+    mockedApi.get.mockRejectedValueOnce(axiosError(400, "Invalid or expired verification link"));
+    await expect(getEmailVerificationTarget("bad")).rejects.toMatchObject({ status: 400 });
+  });
+
+  it("verifyEmail stores the returned session and returns the message", async () => {
+    mockedApi.post.mockResolvedValueOnce({
+      data: { access_token: "at", refresh_token: "rt", message: "Email verified" },
+    });
+    await expect(verifyEmail("tok")).resolves.toBe("Email verified");
+    expect(cookieJar.get("binx_access_token")?.value).toBe("at");
+  });
+
+  it("verifyEmail throws AuthApiError for an invalid token", async () => {
+    mockedApi.post.mockRejectedValueOnce(axiosError(400, "Invalid or expired token"));
+    await expect(verifyEmail("bad")).rejects.toMatchObject({ message: "Invalid or expired token", status: 400 });
   });
 });
 

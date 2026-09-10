@@ -1,0 +1,142 @@
+# CI for the web frontend (apps/binx-web).
+#
+# Three jobs, cheapest-to-fail first:
+#
+#   lint   eslint                                     (no services, seconds)
+#   unit   vitest run --coverage, threshold-enforced  (jsdom, no services)
+#   e2e    Playwright against the real Next.js app + binx-api + Postgres,
+#          with a seeded demo dataset (binx-api-seed-e2e)
+#
+# The e2e job mirrors binx-api-ci.yml's Postgres service + uv setup so the
+# API it boots behaves exactly like local dev.
+
+name: binx-web CI
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - "apps/binx-web/**"
+      - "apps/binx-api/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/binx-web-ci.yml"
+  pull_request:
+    paths:
+      - "apps/binx-web/**"
+      - "apps/binx-api/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/binx-web-ci.yml"
+
+concurrency:
+  group: binx-web-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: apps/binx-web
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+        working-directory: .
+      - run: pnpm lint
+
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+        working-directory: .
+      - name: Unit tests + coverage
+        run: pnpm test:coverage
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: binx-web-coverage
+          path: apps/binx-web/coverage
+          if-no-files-found: ignore
+
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: binxapi
+          POSTGRES_PASSWORD: binxapi
+          POSTGRES_DB: binxportal
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U binxapi"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql+asyncpg://binxapi:binxapi@127.0.0.1:5432/binxportal
+      JWT_SECRET: ci-secret-not-for-production
+      NEXT_PUBLIC_API_URL: http://localhost:8000/
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - run: pnpm install --frozen-lockfile
+        working-directory: .
+
+      - name: Sync API deps
+        working-directory: apps/binx-api
+        run: uv sync --frozen --all-groups
+
+      - name: Migrate + seed
+        working-directory: apps/binx-api
+        run: |
+          uv run alembic upgrade head
+          uv run binx-api-seed-e2e
+
+      - name: Start binx-api
+        working-directory: apps/binx-api
+        run: uv run binx-api &
+
+      - name: Wait for binx-api
+        run: |
+          for i in $(seq 1 60); do
+            curl -sf http://localhost:8000/ops/ready && break
+            sleep 1
+          done
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium webkit
+
+      - name: E2E tests
+        run: pnpm test:e2e
+
+      - name: Upload report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/binx-web/playwright-report
+          if-no-files-found: ignore
