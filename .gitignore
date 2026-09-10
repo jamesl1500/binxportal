@@ -20,3 +20,16 @@ build/
 .venv/
 __pycache__/
 *.pyc
+
+# Test / coverage artifacts
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.pytest_cache/
+.ruff_cache/
+junit*.xml
+
+# Locally-stored uploads (apps/binx-api/uploads/... — see core/config.py's
+# project_upload_dir). Swap for object storage before this matters in prod.
+uploads/

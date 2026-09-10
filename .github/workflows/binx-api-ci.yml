@@ -1,0 +1,148 @@
+# CI for the Python backend (apps/binx-api).
+#
+# Three jobs, cheapest-to-fail first:
+#
+#   lint        ruff check + ruff format --check   (no services, seconds)
+#   migrations  alembic upgrade->downgrade->upgrade against a fresh DB,
+#               plus `alembic check` for model/migration drift
+#   test        the full pytest suite (unit + integration + e2e + migrations)
+#               against a real Postgres, with coverage
+#
+# `migrations` and `test` share an identical Postgres service definition and
+# the same TEST_DATABASE_URL so behaviour matches local dev (see
+# apps/binx-api/tests/README.md).
+
+name: binx-api CI
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - "apps/binx-api/**"
+      - ".github/workflows/binx-api-ci.yml"
+  pull_request:
+    paths:
+      - "apps/binx-api/**"
+      - ".github/workflows/binx-api-ci.yml"
+
+# One in-flight run per ref; a new push cancels the previous.
+concurrency:
+  group: binx-api-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: apps/binx-api
+
+env:
+  # asyncpg URL used by the test suite and the Alembic round-trip test. Host
+  # is 127.0.0.1 because the jobs run on the runner, not inside the service
+  # container's network.
+  TEST_DATABASE_URL: postgresql+asyncpg://binxapi:binxapi@127.0.0.1:5432/binxportal_test
+  JWT_SECRET: ci-secret-not-for-production
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Sync dependencies
+        run: uv sync --frozen --all-groups
+
+      - name: ruff check
+        run: uv run ruff check --output-format=github .
+
+      - name: ruff format --check
+        run: uv run ruff format --check .
+
+  migrations:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: binxapi
+          POSTGRES_PASSWORD: binxapi
+          POSTGRES_DB: binxportal_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U binxapi"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Sync dependencies
+        run: uv sync --frozen --all-groups
+
+      # Fresh DB -> head -> base -> head, in a real subprocess, exactly what a
+      # deploy runs. DATABASE_URL (not TEST_*) is what alembic/env.py reads.
+      - name: Alembic round-trip
+        env:
+          DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
+        run: |
+          uv run alembic upgrade head
+          uv run alembic downgrade base
+          uv run alembic upgrade head
+
+      # Fails if the ORM models have drifted from the migration scripts.
+      - name: Alembic drift check
+        env:
+          DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
+        run: uv run alembic check
+
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: binxapi
+          POSTGRES_PASSWORD: binxapi
+          POSTGRES_DB: binxportal_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U binxapi"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Sync dependencies
+        run: uv sync --frozen --all-groups
+
+      - name: pytest
+        run: >-
+          uv run pytest
+          --cov=binx_api --cov-report=term-missing --cov-report=xml
+          --junitxml=junit.xml
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: binx-api-coverage
+          path: |
+            apps/binx-api/coverage.xml
+            apps/binx-api/junit.xml
+          if-no-files-found: ignore
