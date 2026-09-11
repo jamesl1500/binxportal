@@ -4,8 +4,23 @@ import * as iam from "aws-cdk-lib/aws-iam";
 import { Construct } from "constructs";
 
 export interface CiCdStackProps extends cdk.StackProps {
-  /** "<owner>/<repo>", scopes the OIDC trust policy to this repo only. */
-  readonly githubRepo: string;
+  /**
+   * The GitHub Actions OIDC subject this role trusts, in full. Repos created
+   * after 2026-07-15 get GitHub's *immutable* subject-claim format —
+   * `repo:OWNER@OWNER_ID/REPO@REPO_ID:ref:refs/heads/BRANCH` — not the older
+   * `repo:OWNER/REPO:ref:...` still shown in most docs/examples. Using the
+   * plain name-based form here silently fails with "Not authorized to
+   * perform sts:AssumeRoleWithWebIdentity" for any repo created after that
+   * date, with nothing in the trust policy itself hinting why — confirmed
+   * this the hard way via CloudTrail (`lookup-events
+   * --lookup-attributes AttributeKey=EventName,AttributeValue=AssumeRoleWithWebIdentity`),
+   * which showed the actual token's subject on a rejected call. See
+   * https://github.blog/changelog/2026-04-23-immutable-subject-claims-for-github-actions-oidc-tokens/
+   * — get this exact string from that same CloudTrail lookup (or a
+   * `permissions: id-token: write` debug step that echoes the token's
+   * `sub`) for any new repo, don't assume the short `owner/repo` form.
+   */
+  readonly githubSubject: string;
   /** ARN of the GitHub Actions OIDC provider already registered in this
    * account (`aws iam list-open-id-connect-providers`) — imported, not
    * created, since IAM rejects a second provider for the same URL. */
@@ -74,7 +89,7 @@ export class CiCdStack extends cdk.Stack {
             "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
           },
           StringLike: {
-            "token.actions.githubusercontent.com:sub": `repo:${props.githubRepo}:ref:refs/heads/master`,
+            "token.actions.githubusercontent.com:sub": props.githubSubject,
           },
         },
         "sts:AssumeRoleWithWebIdentity",

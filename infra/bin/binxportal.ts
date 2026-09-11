@@ -19,7 +19,12 @@ const DOMAIN_NAME = "binxportal.com";
 // The one instance this whole app wraps — created by hand, not by CDK. See
 // ComputeStack's docstring for why an ec2.Instance L2 construct isn't used.
 const INSTANCE_ID = "i-025b868d7d0487155";
-const GITHUB_REPO = "jamesl1500/binxportal";
+// binxportal (repo id 1338674349, owner jamesl1500 id 18580223) was created
+// after GitHub's 2026-07-15 immutable-subject-claims rollout, so its OIDC
+// tokens use the new `OWNER@OWNER_ID/REPO@REPO_ID` form, not plain
+// `OWNER/REPO` — see CiCdStackProps.githubSubject's docstring for how this
+// exact string was obtained (CloudTrail, not the GitHub docs' example).
+const GITHUB_SUBJECT = "repo:jamesl1500@18580223/binxportal@1338674349:ref:refs/heads/master";
 // Already exists in this account (confirmed via `aws iam
 // list-open-id-connect-providers` before writing this) — CDK must import
 // it, not create a second one for the same URL (IAM rejects duplicates).
@@ -30,7 +35,7 @@ const app = new cdk.App();
 const cicd = new CiCdStack(app, "BinxportalCiCd", {
   env,
   description: "ECR repos + the GitHub Actions OIDC deploy role for binxportal",
-  githubRepo: GITHUB_REPO,
+  githubSubject: GITHUB_SUBJECT,
   githubOidcProviderArn: GITHUB_OIDC_PROVIDER_ARN,
   instanceId: INSTANCE_ID,
 });
