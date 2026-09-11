@@ -9,6 +9,11 @@
 # infra/lib/cicd-stack.ts for the IAM role this assumes and infra/lib/compute-stack.ts
 # for the SSM instance profile that has to be attached to the box first
 # (one-time manual step — see that stack's CfnOutput).
+#
+# No secrets stored in this repo's GitHub settings, either — the one
+# build-time secret it needs (NEXT_SERVER_ACTIONS_ENCRYPTION_KEY) comes from
+# AWS Secrets Manager (binxportal/app), the same place deploy/redeploy.sh
+# gets everything the box needs at deploy time. See infra/lib/secrets-stack.ts.
 
 name: Deploy
 
@@ -57,6 +62,18 @@ jobs:
       - id: ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: Fetch the server-actions encryption key from Secrets Manager
+        # File-based (secret-files, not secrets), so the value only ever
+        # touches a local file on this ephemeral runner — never a workflow
+        # expression, env var, or log line. binxportal/app is the single
+        # source of truth for every production secret (see
+        # infra/lib/secrets-stack.ts) — nothing is a GitHub secret anymore.
+        run: |
+          aws secretsmanager get-secret-value --secret-id binxportal/app --region "$AWS_REGION" \
+            --query SecretString --output text \
+            | jq -r '.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY' > /tmp/next_actions_key
+          chmod 600 /tmp/next_actions_key
+
       - id: tags
         run: |
           sha=${GITHUB_SHA::12}
@@ -91,10 +108,15 @@ jobs:
             NEXT_PUBLIC_SITE_URL=https://binxportal.com
           # Same key on every build so an in-flight form submit against the
           # outgoing container doesn't fail post-deploy — see the Dockerfile.
-          secrets: |
-            next_actions_key=${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}
+          # File-based, from the step above — never a workflow expression.
+          secret-files: |
+            next_actions_key=/tmp/next_actions_key
           cache-from: type=gha,scope=binx-web
           cache-to: type=gha,mode=max,scope=binx-web
+
+      - name: Clean up the fetched secret file
+        if: always()
+        run: rm -f /tmp/next_actions_key
 
   deploy:
     needs: build-and-push

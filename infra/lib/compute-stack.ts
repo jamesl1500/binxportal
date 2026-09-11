@@ -2,6 +2,7 @@ import * as cdk from "aws-cdk-lib";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
 import * as ecr from "aws-cdk-lib/aws-ecr";
 import * as iam from "aws-cdk-lib/aws-iam";
+import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import { Construct } from "constructs";
 
 export interface ComputeStackProps extends cdk.StackProps {
@@ -9,6 +10,8 @@ export interface ComputeStackProps extends cdk.StackProps {
   readonly instanceId: string;
   /** Granted pull access from the instance's new IAM role. */
   readonly ecrRepositories: ecr.IRepository[];
+  /** Granted read access — deploy/redeploy.sh fetches this to build .env. */
+  readonly appSecret: secretsmanager.ISecret;
 }
 
 /**
@@ -53,6 +56,7 @@ export class ComputeStack extends cdk.Stack {
     for (const repo of props.ecrRepositories) {
       repo.grantPull(this.instanceRole);
     }
+    props.appSecret.grantRead(this.instanceRole);
 
     const instanceProfile = new iam.CfnInstanceProfile(this, "InstanceProfile", {
       instanceProfileName: "binxportal-ec2",

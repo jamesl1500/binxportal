@@ -1,6 +1,7 @@
 import * as cdk from "aws-cdk-lib";
 import * as ecr from "aws-cdk-lib/aws-ecr";
 import * as iam from "aws-cdk-lib/aws-iam";
+import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import { Construct } from "constructs";
 
 export interface CiCdStackProps extends cdk.StackProps {
@@ -27,6 +28,8 @@ export interface CiCdStackProps extends cdk.StackProps {
   readonly githubOidcProviderArn: string;
   /** The EC2 instance deploys land on, so SendCommand can be scoped to it. */
   readonly instanceId: string;
+  /** Granted read access — the build step fetches NEXT_SERVER_ACTIONS_ENCRYPTION_KEY from it. */
+  readonly appSecret: secretsmanager.ISecret;
 }
 
 /**
@@ -121,6 +124,10 @@ export class CiCdStack extends cdk.Stack {
         resources: [this.apiRepository.repositoryArn, this.webRepository.repositoryArn],
       }),
     );
+
+    // NEXT_SERVER_ACTIONS_ENCRYPTION_KEY (build-time, not deploy-time — see
+    // SecretsStack's docstring) comes from the same secret the box reads.
+    props.appSecret.grantRead(this.deployRole);
 
     // Deploy step: no SSH, ever — a deploy is a `send-command` running
     // deploy/redeploy.sh on the box via SSM (see .github/workflows/deploy.yml

@@ -146,8 +146,12 @@ cost/complexity tradeoff against ECS Fargate + RDS + ElastiCache.
 
 - `DnsStack` — the `binxportal.com` Route 53 hosted zone + A records
 - `ComputeStack` — an Elastic IP (so DNS survives a stop/start) and an IAM
-  role (SSM Session Manager access + ECR pull) attached to the instance
+  role (SSM Session Manager access, ECR pull, and Secrets Manager read)
+  attached to the instance
 - `CiCdStack` — the two ECR repos and the GitHub Actions OIDC deploy role
+  (which also gets Secrets Manager read — the build needs one secret from it)
+- `SecretsStack` — the single Secrets Manager entry (`binxportal/app`) every
+  production secret lives in; see "Environment variables" below
 - `BackupStack` — daily EBS snapshots (the only backup now that Postgres is
   self-hosted, not RDS)
 
@@ -155,18 +159,24 @@ cost/complexity tradeoff against ECS Fargate + RDS + ElastiCache.
 push to `master`):
 
 1. Authenticate to AWS via OIDC — no stored AWS keys in the repo.
-2. Build both images (`apps/binx-api/Dockerfile`, `apps/binx-web/Dockerfile`)
+2. Fetch `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` from Secrets Manager (a
+   file-based buildx secret — the value never appears in a workflow
+   expression or log line).
+3. Build both images (`apps/binx-api/Dockerfile`, `apps/binx-web/Dockerfile`)
    and push to ECR, tagged `:latest` and `:sha-<short-sha>`.
-3. `aws ssm send-command` runs `deploy/redeploy.sh` on the instance — pulls
-   the new images and `docker compose up -d`. No SSH, ever; the box's SSH
-   port stays closed to CI, reachable only from an allow-listed IP for a
-   human.
+4. `aws ssm send-command` runs `deploy/redeploy.sh` on the instance. No SSH,
+   ever; the box's SSH port stays closed to CI, reachable only from an
+   allow-listed IP for a human.
 
-`deploy/redeploy.sh` only recreates `api`/`web` — `db`, `redis`, and `caddy`
-are untouched unless their own images change, so the deploy never touches
-the named volumes holding Postgres data, uploaded files, Redis, or Caddy's
-certs. **Never run `docker compose -f docker-compose.prod.yml down -v`** —
-that's the one command that would delete them.
+`deploy/redeploy.sh` itself: fetches the whole `binxportal/app` secret from
+Secrets Manager and regenerates `/opt/binxportal/.env` from it (plus the two
+non-secret `API_IMAGE`/`WEB_IMAGE` lines, computed inline) — nothing is
+hand-placed on the box anymore — then pulls and recreates only `api`/`web`.
+`db`, `redis`, and `caddy` are untouched unless their own images change, so
+a deploy never touches the named volumes holding Postgres data, uploaded
+files, Redis, or Caddy's certs. **Never run `docker compose -f
+docker-compose.prod.yml down -v`** — that's the one command that would
+delete them.
 
 ### Manual / one-off operations
 

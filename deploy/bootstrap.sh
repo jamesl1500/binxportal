@@ -6,7 +6,7 @@ set -euo pipefail
 
 echo "==> Installing Docker Engine + Compose plugin"
 sudo apt-get update -y
-sudo apt-get install -y ca-certificates curl
+sudo apt-get install -y ca-certificates curl jq
 sudo install -m 0755 -d /etc/apt/keyrings
 sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
 sudo chmod a+r /etc/apt/keyrings/docker.asc
@@ -38,14 +38,17 @@ cat <<'MSG'
 1. Copy docker-compose.prod.yml, deploy/Caddyfile, and deploy/redeploy.sh
    from the repo into /opt/binxportal (matching layout: Caddyfile under
    /opt/binxportal/deploy/).
-2. Copy .env.prod.example to /opt/binxportal/.env and fill in real values
-   (POSTGRES_PASSWORD, JWT_SECRET, ANTHROPIC_API_KEY, the two ECR image
-   URIs — see infra CDK output for the exact repo URIs).
-3. Log out and back in (or `newgrp docker`) so the docker group membership
+2. Log out and back in (or `newgrp docker`) so the docker group membership
    takes effect.
-4. `cd /opt/binxportal && aws ecr get-login-password --region us-east-2 | \
-     docker login --username AWS --password-stdin <account>.dkr.ecr.us-east-2.amazonaws.com`
-5. `docker compose -f docker-compose.prod.yml pull && docker compose -f docker-compose.prod.yml up -d`
+3. `bash /opt/binxportal/deploy/redeploy.sh` — that's the whole first
+   deploy. No `.env` to hand-place: it fetches POSTGRES_PASSWORD,
+   JWT_SECRET, and ANTHROPIC_API_KEY from Secrets Manager
+   (`binxportal/app` — see infra/lib/secrets-stack.ts) and regenerates
+   `.env` itself, every time, using the instance's own IAM role. That
+   secret has to already exist with real values before this step — see
+   DEVELOPER.md's "Environment variables" section for how to set/update
+   it (`aws secretsmanager put-secret-value`, never by hand-editing a
+   file on the box).
 
 From then on, every push to master runs deploy/redeploy.sh on this box via
 SSM automatically — see .github/workflows/deploy.yml.

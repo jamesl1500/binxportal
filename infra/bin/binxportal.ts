@@ -6,6 +6,7 @@ import { BackupStack } from "../lib/backup-stack";
 import { CiCdStack } from "../lib/cicd-stack";
 import { ComputeStack } from "../lib/compute-stack";
 import { DnsStack } from "../lib/dns-stack";
+import { SecretsStack } from "../lib/secrets-stack";
 
 // Everything targets the account/region the existing EC2 instance already
 // lives in (see the plan's exploration notes — found via `aws sts
@@ -32,12 +33,18 @@ const GITHUB_OIDC_PROVIDER_ARN = "arn:aws:iam::574247905173:oidc-provider/token.
 
 const app = new cdk.App();
 
+const secrets = new SecretsStack(app, "BinxportalSecrets", {
+  env,
+  description: "The single Secrets Manager entry holding every production secret",
+});
+
 const cicd = new CiCdStack(app, "BinxportalCiCd", {
   env,
   description: "ECR repos + the GitHub Actions OIDC deploy role for binxportal",
   githubSubject: GITHUB_SUBJECT,
   githubOidcProviderArn: GITHUB_OIDC_PROVIDER_ARN,
   instanceId: INSTANCE_ID,
+  appSecret: secrets.secret,
 });
 
 const compute = new ComputeStack(app, "BinxportalCompute", {
@@ -45,6 +52,7 @@ const compute = new ComputeStack(app, "BinxportalCompute", {
   description: "Elastic IP + SSM access role for the existing binxportal EC2 instance",
   instanceId: INSTANCE_ID,
   ecrRepositories: [cicd.apiRepository, cicd.webRepository],
+  appSecret: secrets.secret,
 });
 
 new DnsStack(app, "BinxportalDns", {
