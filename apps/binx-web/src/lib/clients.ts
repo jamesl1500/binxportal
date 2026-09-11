@@ -13,24 +13,10 @@ import axios from "axios";
 import { cache } from "react";
 
 import { api } from "@/lib/api";
+import type { Schemas } from "@/lib/api-types";
 import { AuthApiError, extractDetailMessage, getAccessToken } from "@/lib/auth";
 
-export interface AgencyClient {
-  id: string;
-  agency_id: string;
-  name: string;
-  slug: string;
-  is_active: boolean;
-  primary_contact_name: string | null;
-  primary_contact_email: string | null;
-  primary_contact_phone: string | null;
-  website: string | null;
-  notes: string | null;
-  /** The invoice "bill to" block; billing_email falls back to primary_contact_email when null. */
-  billing_email?: string | null;
-  billing_address?: string | null;
-  created_at: string;
-}
+export type AgencyClient = Schemas["AgencyClientRead"];
 
 /** Fields the create/edit form submits. Contact details are all optional — a client can be jotted down with just a name. */
 export interface ClientDetailsInput {
@@ -231,28 +217,11 @@ export async function deleteAgencyClient(agencyId: string, clientId: string): Pr
 // ---- Client portal contacts ----
 
 /** Someone on the client's side with `/portal` access to this client. */
-export interface ClientContact {
-  id: string;
-  user_id: string;
-  full_name: string;
-  email: string;
-  title: string | null;
-  is_primary: boolean;
-  joined_at: string;
-}
+export type ClientContact = Schemas["ClientContactRead"];
 
-export interface ClientContactInvitation {
-  id: string;
-  client_id: string;
-  agency_id: string;
-  email: string;
+export type ClientContactInvitation = Omit<Schemas["ClientInvitationRead"], "status"> & {
   status: "pending" | "accepted" | "revoked";
-  invited_by_name: string;
-  created_at: string;
-  expires_at: string;
-  is_expired: boolean;
-  accept_url?: string | null;
-}
+};
 
 function contactError(error: unknown, fallback: string): never {
   if (axios.isAxiosError(error) && error.response) {

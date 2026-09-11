@@ -13,15 +13,13 @@
 import axios from "axios";
 
 import { api } from "@/lib/api";
+import type { Schemas } from "@/lib/api-types";
 import { AuthApiError, extractDetailMessage, getAccessToken } from "@/lib/auth";
 import type { Board, BoardComment, BoardItem, BoardItemPatch, BoardItemType } from "@/lib/boards-client";
 
 export type { Board, BoardComment, BoardItem, BoardItemPatch, BoardItemType };
 
-export interface BoardReactions {
-  reactions: Record<string, number>;
-  my_reactions: string[];
-}
+export type BoardReactions = Schemas["BoardReactionsRead"];
 
 export interface CreateBoardItemInput {
   type: BoardItemType;

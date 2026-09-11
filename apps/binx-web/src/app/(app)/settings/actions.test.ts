@@ -63,6 +63,7 @@ describe("updateAgencyAction", () => {
       name: "New Name",
       slug: "acme-agency",
       role: "owner",
+      has_logo: false,
     });
 
     await expect(updateAgencyAction(agencyId, "New Name")).resolves.toEqual({});

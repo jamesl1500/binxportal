@@ -45,6 +45,8 @@ const client = {
   primary_contact_phone: null,
   website: null,
   notes: null,
+  billing_email: null,
+  billing_address: null,
   created_at: "2026-01-01T00:00:00Z",
 };
 

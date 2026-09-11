@@ -43,8 +43,8 @@ const mockedSetCurrentAgencyId = vi.mocked(setCurrentAgencyId);
 const mockedCreateAgency = vi.mocked(createAgency);
 
 const agencies = [
-  { id: "aaaaaaaa-1111-1111-1111-111111111111", name: "Acme Agency", slug: "acme-agency", role: "owner" as const },
-  { id: "bbbbbbbb-2222-2222-2222-222222222222", name: "Widgets Co", slug: "widgets-co", role: "member" as const },
+  { id: "aaaaaaaa-1111-1111-1111-111111111111", name: "Acme Agency", slug: "acme-agency", role: "owner" as const, has_logo: false },
+  { id: "bbbbbbbb-2222-2222-2222-222222222222", name: "Widgets Co", slug: "widgets-co", role: "member" as const, has_logo: false },
 ];
 
 beforeEach(() => {

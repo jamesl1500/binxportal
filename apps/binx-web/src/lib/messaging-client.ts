@@ -10,71 +10,28 @@
  * @author Binx.io
  */
 
+import type { Schemas } from "@/lib/api-types";
+
 /** Keep in sync with binx-api's `message_upload_max_bytes` (core/config.py). */
 export const MESSAGE_UPLOAD_MAX_BYTES = 25 * 1024 * 1024;
 
 export type ConversationKind = "direct" | "group";
 export type MessageType = "user" | "system";
 
-export interface MessageAttachment {
-  id: string;
-  message_id: string;
-  file_name: string;
-  mime_type: string;
-  size: number;
-  uploaded_by_name: string | null;
-  created_at: string;
-}
+export type MessageAttachment = Schemas["MessageAttachmentRead"];
 
-export interface Message {
-  id: string;
-  conversation_id: string;
-  sender_id: string | null;
-  /** "user" today; "client" reserved for a future client portal — see binx-api's SENDER_CLIENT. */
+// The API types `sender_kind` / `message_type` / `kind` as plain strings; the
+// narrower unions are kept so the UI's exhaustive checks still hold.
+export type Message = Omit<Schemas["MessageRead"], "sender_kind" | "message_type"> & {
   sender_kind: "user" | "client";
-  sender_name: string;
   message_type: MessageType;
-  body: string;
-  attachments: MessageAttachment[];
-  edited_at: string | null;
-  deleted_at: string | null;
-  created_at: string;
-}
+};
 
-export interface ConversationParticipant {
-  user_id: string;
-  full_name: string;
-  /** The @handle used to mention this person in a message. */
-  user_name: string;
-  email: string;
-  job_title: string | null;
-  is_muted: boolean;
-  last_read_at: string | null;
-  left_at: string | null;
-}
+export type ConversationParticipant = Schemas["ParticipantRead"];
 
-export interface Conversation {
-  id: string;
-  agency_id: string;
-  kind: ConversationKind;
-  /** Resolved for display — the other person's name for a direct conversation. */
-  title: string;
-  client_id: string | null;
-  client_name: string | null;
-  project_id: string | null;
-  project_name: string | null;
-  participant_names: string[];
-  participant_count: number;
-  is_muted: boolean;
-  unread_count: number;
-  last_message_preview: string | null;
-  last_message_at: string | null;
-  created_at: string;
-}
+export type Conversation = Omit<Schemas["ConversationRead"], "kind"> & { kind: ConversationKind };
 
-export interface ConversationDetail extends Conversation {
-  participants: ConversationParticipant[];
-}
+export type ConversationDetail = Omit<Schemas["ConversationDetailRead"], "kind"> & { kind: ConversationKind };
 
 /** A realtime event pushed over the messaging websocket (see binx-api's realtime.py). */
 export interface MessagingEvent {

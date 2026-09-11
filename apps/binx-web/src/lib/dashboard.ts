@@ -11,25 +11,11 @@
 import axios from "axios";
 
 import { api } from "@/lib/api";
+import type { Schemas } from "@/lib/api-types";
 import { AuthApiError, extractDetailMessage, getAccessToken } from "@/lib/auth";
 
-export interface MyTask {
-  id: string;
-  title: string;
-  due_date: string | null;
-  project_id: string;
-  project_name: string;
-  client_name: string;
-  list_name: string;
-  overdue: boolean;
-}
-
-export interface MyWork {
-  tasks: MyTask[];
-  total_open: number;
-  overdue_count: number;
-  due_soon_count: number;
-}
+export type MyTask = Schemas["MyTaskRead"];
+export type MyWork = Schemas["MyWorkRead"];
 
 export async function getMyWork(agencyId: string): Promise<MyWork> {
   const accessToken = await getAccessToken();

@@ -11,22 +11,13 @@
  * @author Binx.io
  */
 
+import type { Schemas } from "@/lib/api-types";
+
 export type PlanKey = "free" | "starter" | "pro" | "scale";
 
 export const PLAN_ORDER: PlanKey[] = ["free", "starter", "pro", "scale"];
 
-export interface PlanLimits {
-  key: string;
-  name: string;
-  price_cents_month: number;
-  max_owned_agencies: number | null;
-  max_clients: number | null;
-  max_active_projects: number | null;
-  max_leads: number | null;
-  max_team_members: number | null;
-  ai_monthly_budget_cents: number;
-  ai_daily_user_cap: number;
-}
+export type PlanLimits = Schemas["PlanLimitsRead"];
 
 export function formatPlanPrice(cents: number): string {
   if (cents === 0) return "Free";

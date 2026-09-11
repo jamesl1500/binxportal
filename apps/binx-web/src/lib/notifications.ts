@@ -12,31 +12,16 @@
 import axios from "axios";
 
 import { api } from "@/lib/api";
+import type { Schemas } from "@/lib/api-types";
 import { AuthApiError, extractDetailMessage, getAccessToken } from "@/lib/auth";
 import type { NotificationCategory } from "@/lib/notifications-client";
 
 export type { NotificationCategory } from "@/lib/notifications-client";
 export { NOTIFICATION_CATEGORY_META } from "@/lib/notifications-client";
 
-export interface AppNotification {
-  id: string;
-  agency_id: string | null;
-  category: NotificationCategory;
-  event_type: string;
-  title: string;
-  body: string | null;
-  /** A frontend-relative path to open when the row is clicked. */
-  link: string | null;
-  actor_name: string | null;
-  read_at: string | null;
-  created_at: string;
-}
+export type AppNotification = Omit<Schemas["NotificationRead"], "category"> & { category: NotificationCategory };
 
-export interface NotificationPage {
-  items: AppNotification[];
-  unread_count: number;
-  has_more: boolean;
-}
+export type NotificationPage = Omit<Schemas["NotificationListRead"], "items"> & { items: AppNotification[] };
 
 async function authHeader(): Promise<{ Authorization: string }> {
   const accessToken = await getAccessToken();

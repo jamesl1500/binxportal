@@ -12,6 +12,7 @@ import axios from "axios";
 import { cookies, headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { api } from "@/lib/api";
+import type { Schemas } from "@/lib/api-types";
 
 /**
  * TokenPair
@@ -64,18 +65,7 @@ export function extractDetailMessage(data: unknown, fallback: string): string {
  *
  * @interface CurrentUser
  */
-export interface CurrentUser {
-  id: string;
-  user_name: string;
-  email: string;
-  full_name: string;
-  summary: string | null;
-  role: string;
-  is_active: boolean;
-  is_verified: boolean;
-  phone_number: string | null;
-  job_title: string | null;
-}
+export type CurrentUser = Schemas["UserRead"];
 
 /**
  * Access and refresh token cookie names.

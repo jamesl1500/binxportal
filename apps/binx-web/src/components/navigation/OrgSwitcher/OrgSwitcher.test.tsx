@@ -33,8 +33,8 @@ const mockedSwitchAgencyAction = vi.mocked(switchAgencyAction);
 const mockedCreateAgencyAction = vi.mocked(createAgencyAction);
 
 const agencies: AgencyRead[] = [
-  { id: "aaaaaaaa-1111-1111-1111-111111111111", name: "Acme Agency", slug: "acme-agency", role: "owner" },
-  { id: "bbbbbbbb-2222-2222-2222-222222222222", name: "Widgets Co", slug: "widgets-co", role: "member" },
+  { id: "aaaaaaaa-1111-1111-1111-111111111111", name: "Acme Agency", slug: "acme-agency", role: "owner", has_logo: false },
+  { id: "bbbbbbbb-2222-2222-2222-222222222222", name: "Widgets Co", slug: "widgets-co", role: "member", has_logo: false },
 ];
 
 beforeEach(() => {
@@ -108,7 +108,7 @@ describe("OrgSwitcher", () => {
 
   it("creates a new agency and refreshes the route on success", async () => {
     mockedCreateAgencyAction.mockResolvedValueOnce({
-      agency: { id: "cccccccc-3333-3333-3333-333333333333", name: "New Co", slug: "new-co", role: "owner" },
+      agency: { id: "cccccccc-3333-3333-3333-333333333333", name: "New Co", slug: "new-co", role: "owner", has_logo: false },
     });
     const user = userEvent.setup();
     render(<OrgSwitcher agencies={agencies} currentAgency={agencies[0]} />);

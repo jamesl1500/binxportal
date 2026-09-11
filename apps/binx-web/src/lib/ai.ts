@@ -14,20 +14,13 @@
 import axios from "axios";
 
 import { api } from "@/lib/api";
+import type { Schemas } from "@/lib/api-types";
 import { AuthApiError, extractDetailMessage, getAccessToken } from "@/lib/auth";
 import type { AiFeature, AiUsageStatus } from "@/lib/ai-client";
 
 export type { AiFeature, AiUsageStatus };
 
-export interface AiSettings {
-  is_enabled: boolean;
-  monthly_budget_cents: number;
-  daily_user_request_cap: number;
-  configured: boolean;
-  /** The current plan's ceilings — settings can go lower but not higher. */
-  plan_monthly_budget_cents: number;
-  plan_daily_user_cap: number;
-}
+export type AiSettings = Schemas["AiSettingsRead"];
 
 export interface AiSettingsInput {
   isEnabled: boolean;
@@ -35,44 +28,18 @@ export interface AiSettingsInput {
   dailyUserRequestCap: number;
 }
 
-export interface AiUsageEvent {
-  id: string;
+export type AiUsageEvent = Omit<Schemas["AiUsageEventRead"], "feature" | "status"> & {
   feature: AiFeature;
-  model: string;
-  input_tokens: number;
-  output_tokens: number;
-  cost_cents: number;
   status: AiUsageStatus;
-  error_message: string | null;
-  user_name: string | null;
-  created_at: string;
-}
+};
 
-export interface AiUsageSummary {
-  configured: boolean;
-  is_enabled: boolean;
-  monthly_budget_cents: number;
-  month_spent_cents: number;
-  daily_user_request_cap: number;
-  today_request_count: number;
-  plan_monthly_budget_cents: number;
-  plan_daily_user_cap: number;
+export type AiUsageSummary = Omit<Schemas["AiUsageSummaryRead"], "recent_events"> & {
   recent_events: AiUsageEvent[];
-}
+};
 
-export interface AiConversation {
-  id: string;
-  title: string | null;
-  created_at: string;
-  updated_at: string | null;
-}
+export type AiConversation = Schemas["AiConversationRead"];
 
-export interface AiMessage {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  created_at: string;
-}
+export type AiMessage = Omit<Schemas["AiMessageRead"], "role"> & { role: "user" | "assistant" };
 
 async function authHeader(): Promise<{ Authorization: string }> {
   const accessToken = await getAccessToken();

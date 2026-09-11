@@ -33,6 +33,8 @@ const existingClient: AgencyClient = {
   primary_contact_phone: "555-0100",
   website: "https://acme.example",
   notes: "Prefers email over calls.",
+  billing_email: null,
+  billing_address: null,
   created_at: "2026-01-01T00:00:00Z",
 };
 

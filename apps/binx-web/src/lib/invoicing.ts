@@ -16,6 +16,7 @@
 import axios from "axios";
 
 import { api } from "@/lib/api";
+import type { Schemas } from "@/lib/api-types";
 import { AuthApiError, extractDetailMessage, getAccessToken } from "@/lib/auth";
 import {
   deriveDisplayStatus,
@@ -56,21 +57,7 @@ function apiError(error: unknown, fallback: string): AuthApiError | unknown {
 
 // ---- Types ----
 
-export interface BillingSettings {
-  agency_id: string;
-  legal_name: string | null;
-  address: string | null;
-  tax_id: string | null;
-  contact_email: string | null;
-  currency: string;
-  invoice_prefix: string;
-  next_invoice_number: number;
-  number_padding: number;
-  default_due_days: number;
-  default_tax_rate_percent: string;
-  payment_instructions: string | null;
-  default_notes: string | null;
-}
+export type BillingSettings = Schemas["BillingSettingsRead"];
 
 export interface BillingSettingsInput {
   legalName: string | null;
@@ -87,80 +74,25 @@ export interface BillingSettingsInput {
   defaultNotes: string | null;
 }
 
-export interface Invoice {
-  id: string;
-  agency_id: string;
-  client_id: string;
-  client_name: string;
-  project_id: string | null;
-  project_name: string | null;
-  number: string;
+// The API types `status` / `display_status` as plain strings; the narrower
+// unions from lib/money.ts are kept so exhaustive `switch`es still check.
+export type Invoice = Omit<Schemas["InvoiceRead"], "status" | "display_status"> & {
   status: InvoiceStatus;
   display_status: InvoiceDisplayStatus;
-  currency: string;
-  issue_date: string;
-  due_date: string;
-  subtotal_cents: number;
-  discount_cents: number;
-  tax_cents: number;
-  total_cents: number;
-  amount_paid_cents: number;
-  amount_due_cents: number;
-  created_at: string;
-}
+};
 
-export interface InvoiceLineItem {
-  id: string;
-  position: number;
-  description: string;
-  quantity: string;
-  unit_price_cents: number;
-  amount_cents: number;
-}
+export type InvoiceLineItem = Schemas["LineItemRead"];
 
-export interface InvoicePayment {
-  id: string;
-  invoice_id: string;
-  amount_cents: number;
-  paid_on: string;
-  method: string;
-  reference: string | null;
-  recorded_by_name: string | null;
-  created_at: string;
-}
+export type InvoicePayment = Schemas["PaymentRead"];
 
-export interface InvoiceParty {
-  name: string | null;
-  address: string | null;
-  email: string | null;
-  tax_id?: string | null;
-}
+export type InvoiceParty = Schemas["InvoiceParty"];
 
-export interface InvoiceDetail extends Invoice {
-  discount_amount_cents: number | null;
-  discount_percent: string | null;
-  tax_rate_percent: string;
-  notes: string | null;
-  payment_instructions: string | null;
-  issued_at: string | null;
-  voided_at: string | null;
-  from: InvoiceParty;
-  bill_to: InvoiceParty;
-  line_items: InvoiceLineItem[];
-  payments: InvoicePayment[];
-}
+export type InvoiceDetail = Omit<Schemas["InvoiceDetailRead"], "status" | "display_status"> & {
+  status: InvoiceStatus;
+  display_status: InvoiceDisplayStatus;
+};
 
-export interface InvoiceSummary {
-  outstanding_cents: number;
-  overdue_cents: number;
-  paid_this_year_cents: number;
-  lifetime_billed_cents: number;
-  average_invoice_cents: number;
-  draft_count: number;
-  open_count: number;
-  overdue_count: number;
-  monthly_paid: TimePoint[];
-}
+export type InvoiceSummary = Schemas["InvoiceSummaryRead"];
 
 export interface LineItemInput {
   description: string;

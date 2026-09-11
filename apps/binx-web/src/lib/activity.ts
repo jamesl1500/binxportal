@@ -13,28 +13,19 @@
 import axios from "axios";
 
 import { api } from "@/lib/api";
+import type { Schemas } from "@/lib/api-types";
 import { AuthApiError, extractDetailMessage, getAccessToken } from "@/lib/auth";
 import type { ActivityCategory } from "@/lib/activity-client";
 
 export type { ActivityCategory } from "@/lib/activity-client";
 export { ACTIVITY_CATEGORY_META, AGENCY_ACTIVITY_CATEGORIES } from "@/lib/activity-client";
 
-export interface ActivityEntry {
-  id: string;
+export type ActivityEntry = Omit<Schemas["ActivityLogRead"], "category" | "visibility"> & {
   category: ActivityCategory;
-  event_type: string;
   visibility: "team" | "admin";
-  summary: string;
-  actor_name: string | null;
-  target_type: string | null;
-  target_name: string | null;
-  created_at: string;
-}
+};
 
-export interface ActivityPage {
-  items: ActivityEntry[];
-  has_more: boolean;
-}
+export type ActivityPage = Omit<Schemas["ActivityLogListRead"], "items"> & { items: ActivityEntry[] };
 
 async function authHeader(): Promise<{ Authorization: string }> {
   const accessToken = await getAccessToken();

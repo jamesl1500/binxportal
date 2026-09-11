@@ -11,6 +11,7 @@
 import axios from "axios";
 
 import { api } from "@/lib/api";
+import type { Schemas } from "@/lib/api-types";
 import { AuthApiError, CurrentUser, extractDetailMessage, getAccessToken } from "@/lib/auth";
 
 export interface UpdateProfileInput {
@@ -66,18 +67,7 @@ export async function updateCurrentUserProfile({
  *
  * @interface NotificationSettings
  */
-export interface NotificationSettings {
-  email_product_updates: boolean;
-  email_client_activity: boolean;
-  email_team_mentions: boolean;
-  email_weekly_digest: boolean;
-  email_security_alerts: boolean;
-  /** In-app notification toggles — one per notification category. */
-  inapp_team: boolean;
-  inapp_invoicing: boolean;
-  inapp_projects: boolean;
-  inapp_messages: boolean;
-}
+export type NotificationSettings = Schemas["NotificationSettingsRead"];
 
 /**
  * PrivacySettings
@@ -86,13 +76,9 @@ export interface NotificationSettings {
  *
  * @interface PrivacySettings
  */
-export interface PrivacySettings {
+export type PrivacySettings = Omit<Schemas["PrivacySettingsRead"], "profile_visibility"> & {
   profile_visibility: "team" | "private";
-  show_email_to_team: boolean;
-  show_phone_to_team: boolean;
-  activity_status_visible: boolean;
-  analytics_opt_out: boolean;
-}
+};
 
 async function authHeader(): Promise<{ Authorization: string }> {
   const accessToken = await getAccessToken();

@@ -12,7 +12,7 @@ import CreateAgencyForm from "./CreateAgencyForm";
 
 const mockedCreateAgencyAction = vi.mocked(createAgencyAction);
 
-const newAgency = { id: "cccccccc-3333-3333-3333-333333333333", name: "New Co", slug: "new-co", role: "owner" as const };
+const newAgency = { id: "cccccccc-3333-3333-3333-333333333333", name: "New Co", slug: "new-co", role: "owner" as const, has_logo: false };
 
 beforeEach(() => {
   vi.clearAllMocks();

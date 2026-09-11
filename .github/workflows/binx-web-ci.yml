@@ -48,6 +48,10 @@ jobs:
       - run: pnpm install --frozen-lockfile
         working-directory: .
       - run: pnpm lint
+      - name: API types match the committed schema
+        run: |
+          pnpm gen:api
+          git diff --exit-code src/lib/api-schema.d.ts
 
   unit:
     runs-on: ubuntu-latest

@@ -15,6 +15,7 @@ import { cookies } from "next/headers";
 import { cache } from "react";
 
 import { api } from "@/lib/api";
+import type { Schemas } from "@/lib/api-types";
 import { AuthApiError, extractDetailMessage, getAccessToken } from "@/lib/auth";
 import { agencyImageUrl, type AgencyImageKind } from "@/lib/agencies-client";
 
@@ -24,42 +25,11 @@ export type { AgencyImageKind };
 /** The caller's membership role within a given agency — distinct from their global account role. */
 export type AgencyRole = "owner" | "admin" | "member";
 
-export interface AgencyRead {
-  id: string;
-  name: string;
-  slug: string;
-  /** The signed-in user's role in THIS agency (not a property of the agency itself). */
-  role: AgencyRole;
-  /** Whether the agency has a logo, and a cache-bust token for its `<img>` src (always sent by binx-api). */
-  has_logo?: boolean;
-  logo_version?: string | null;
-}
+/** The signed-in user's agency + their role in it. */
+export type AgencyRead = Omit<Schemas["AgencyRead"], "role"> & { role: AgencyRole };
 
 /** The general agency profile — branding, about/contact, socials, policies. */
-export interface AgencyProfile {
-  agency_id: string;
-  tagline: string | null;
-  brand_color: string | null;
-  about: string | null;
-  founded_year: number | null;
-  headquarters: string | null;
-  contact_email: string | null;
-  contact_phone: string | null;
-  website: string | null;
-  address: string | null;
-  linkedin_url: string | null;
-  twitter_url: string | null;
-  instagram_url: string | null;
-  facebook_url: string | null;
-  terms_of_service: string | null;
-  privacy_policy: string | null;
-  working_policy: string | null;
-  cancellation_policy: string | null;
-  has_logo: boolean;
-  has_cover: boolean;
-  logo_version: string | null;
-  cover_version: string | null;
-}
+export type AgencyProfile = Schemas["AgencyProfileRead"];
 
 /** Every editable profile field — the settings forms submit the full set each save. */
 export type AgencyProfileInput = Partial<
@@ -350,29 +320,7 @@ export async function deleteAgencyImage(agencyId: string, kind: AgencyImageKind)
 
 // ---- Members ----
 
-export interface AgencyMember {
-  id: string;
-  agency_id: string;
-  user_id: string;
-  role: AgencyRole;
-  full_name: string;
-  user_name: string;
-  /** Null when the member hides their email and the caller isn't an owner/admin. */
-  email: string | null;
-  /** Their personal/global title (User.job_title). */
-  job_title: string | null;
-  /** What they do at THIS agency (AgencyMember.title) — owner/admin editable. */
-  title: string | null;
-  /** Null when hidden by the member's privacy settings. */
-  phone: string | null;
-  bio: string | null;
-  is_verified: boolean;
-  /** Last sign-in; null when the member hides their activity. */
-  last_active_at: string | null;
-  joined_at: string;
-  /** Internal notes — only populated for owner/admin callers, `null` otherwise. */
-  admin_notes: string | null;
-}
+export type AgencyMember = Omit<Schemas["AgencyMemberRead"], "role"> & { role: AgencyRole };
 
 /**
  * getAgencyMembers
@@ -489,20 +437,10 @@ export type AgencyInvitationStatus = "pending" | "accepted" | "revoked";
 /** Roles an invite can grant. Deliberately excludes "owner" — see binx-api's AgencyInvitationCreate. */
 export type InvitableAgencyRole = "admin" | "member";
 
-export interface AgencyInvitation {
-  id: string;
-  agency_id: string;
-  email: string;
+export type AgencyInvitation = Omit<Schemas["AgencyInvitationRead"], "role" | "status"> & {
   role: InvitableAgencyRole;
   status: AgencyInvitationStatus;
-  invited_by_name: string;
-  created_at: string;
-  expires_at: string;
-  /** Past its `expires_at` while still pending — the backend derives this. */
-  is_expired: boolean;
-  /** The full accept link — only present on create / resend responses (the raw token is never stored). */
-  accept_url?: string | null;
-}
+};
 
 /**
  * getAgencyInvitations
@@ -622,12 +560,9 @@ export async function revokeAgencyInvitation(agencyId: string, invitationId: str
   }
 }
 
-export interface AgencyInvitationPreview {
-  agency_name: string;
+export type AgencyInvitationPreview = Omit<Schemas["AgencyInvitationPreview"], "role"> & {
   role: InvitableAgencyRole;
-  invited_by_name: string;
-  email: string;
-}
+};
 
 /**
  * previewAgencyInvitation

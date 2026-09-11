@@ -29,6 +29,8 @@ const acme: AgencyClient = {
   primary_contact_phone: "555-0100",
   website: "https://acme.example",
   notes: null,
+  billing_email: null,
+  billing_address: null,
   created_at: "2026-01-01T00:00:00Z",
 };
 
@@ -43,6 +45,8 @@ const widgets: AgencyClient = {
   primary_contact_phone: null,
   website: null,
   notes: null,
+  billing_email: null,
+  billing_address: null,
   created_at: "2026-02-01T00:00:00Z",
 };
 

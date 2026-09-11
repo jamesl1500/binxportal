@@ -36,6 +36,7 @@ describe("acceptInviteAction", () => {
       name: "Acme Agency",
       slug: "acme-agency",
       role: "member",
+      has_logo: false,
     });
 
     await expect(acceptInviteAction("raw-token")).rejects.toThrow("REDIRECT:/dashboard");

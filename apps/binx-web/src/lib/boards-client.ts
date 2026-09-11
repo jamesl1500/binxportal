@@ -10,6 +10,8 @@
  * @author Binx.io
  */
 
+import type { Schemas } from "@/lib/api-types";
+
 /** Keep in sync with binx-api's boards/models.py BOARD_ITEM_TYPES. */
 export type BoardItemType = "note" | "image";
 
@@ -43,23 +45,17 @@ export interface BoardItem {
   comment_count: number;
 }
 
-export interface BoardComment {
-  id: string;
-  item_id: string;
+export type BoardComment = Omit<Schemas["BoardCommentRead"], "author_kind"> & {
   author_kind: "agency" | "client";
-  author_user_id: string | null;
-  author_name: string;
-  body: string;
-  created_at: string;
-}
+};
 
 /** The fixed reaction set — keep in sync with binx-api's REACTION_KINDS. */
 export const REACTION_EMOJI: string[] = ["👍", "❤️", "🎉", "👀", "🚀"];
 
-export interface Board {
-  board_id: string;
-  items: BoardItem[];
-}
+// `BoardItem` (above) stays hand-written — the canvas store depends on
+// `content` being the discriminated union and on `reactions` always being
+// present, both of which the generated `BoardItemRead` widens.
+export type Board = Omit<Schemas["BoardRead"], "items"> & { items: BoardItem[] };
 
 /** A patch the canvas sends on drag / resize / edit — every field optional. */
 export interface BoardItemPatch {

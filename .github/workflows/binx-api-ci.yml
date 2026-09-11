@@ -61,6 +61,12 @@ jobs:
       - name: ruff format --check
         run: uv run ruff format --check .
 
+      # openapi.json is committed (the web app generates its types from it).
+      - name: OpenAPI schema is up to date
+        run: |
+          uv run binx-api-openapi
+          git diff --exit-code openapi.json
+
   migrations:
     runs-on: ubuntu-latest
     services:

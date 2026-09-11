@@ -14,6 +14,7 @@ import axios from "axios";
 import { cache } from "react";
 
 import { api } from "@/lib/api";
+import type { Schemas } from "@/lib/api-types";
 import { AuthApiError, extractDetailMessage, getAccessToken } from "@/lib/auth";
 import {
   getProjectFileDownloadUrl,
@@ -29,20 +30,7 @@ import {
 export { getProjectFileDownloadUrl, getTaskFileDownloadUrl, PROJECT_STATUS_LABELS, PROJECT_STATUSES };
 export type { ProjectStatus };
 
-export interface Project {
-  id: string;
-  agency_id: string;
-  client_id: string;
-  client_name: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  status: ProjectStatus;
-  start_date: string | null;
-  due_date: string | null;
-  member_count: number;
-  created_at: string;
-}
+export type Project = Omit<Schemas["ProjectRead"], "status"> & { status: ProjectStatus };
 
 /** Fields the create/edit form submits. */
 export interface ProjectDetailsInput {
@@ -54,61 +42,15 @@ export interface ProjectDetailsInput {
   dueDate: string | null;
 }
 
-export interface ProjectMember {
-  id: string;
-  project_id: string;
-  user_id: string;
-  full_name: string;
-  email: string;
-  job_title: string | null;
-  /** Custom, purely descriptive project role (e.g. "Project Manager") — see ProjectRole. Null if unassigned. */
-  role_id: string | null;
-  role_name: string | null;
-  role_color: string | null;
-}
-
-/** A custom, per-project label for what a member does (e.g. "Project Manager", "Web Developer"). */
-export interface ProjectRole {
-  id: string;
-  project_id: string;
-  name: string;
-  color: string;
-}
-
+export type ProjectMember = Schemas["ProjectMemberRead"];
+/** A custom, per-project label for what a member does (e.g. "Project Manager"). */
+export type ProjectRole = Schemas["ProjectRoleRead"];
 /** A custom, per-project label for categorizing tasks (e.g. "Bug", "Design"). */
-export interface ProjectTag {
-  id: string;
-  project_id: string;
-  name: string;
-  color: string;
-}
-
-export interface TaskList {
-  id: string;
-  project_id: string;
-  name: string;
-  position: number;
-}
-
-export interface Task {
-  id: string;
-  project_id: string;
-  list_id: string;
-  title: string;
-  description: string | null;
-  position: number;
-  due_date: string | null;
-  assignee_id: string | null;
-  assignee_name: string | null;
-  comment_count: number;
-  file_count: number;
-  tags: ProjectTag[];
-}
-
+export type ProjectTag = Schemas["ProjectTagRead"];
+export type TaskList = Schemas["TaskListRead"];
+export type Task = Schemas["TaskRead"];
 /** One kanban column plus its cards, in display order — what getProjectBoard returns per column. */
-export interface BoardColumn extends TaskList {
-  tasks: Task[];
-}
+export type BoardColumn = Schemas["TaskListWithTasksRead"];
 
 /** Fields the task create/edit form submits. */
 export interface TaskDetailsInput {
@@ -119,23 +61,7 @@ export interface TaskDetailsInput {
   assigneeId: string | null;
 }
 
-export interface ProjectFile {
-  id: string;
-  project_id: string;
-  file_name: string;
-  mime_type: string;
-  size: number;
-  uploaded_by_name: string | null;
-  /**
-   * Set when this row is the project-level mirror of a file attached to a
-   * task (binx-api's ProjectFile.source_task_file_id). The Files table badges
-   * these with the task name and blocks deleting them there — they're removed
-   * by detaching them from the task.
-   */
-  source_task_id: string | null;
-  source_task_title: string | null;
-  created_at: string;
-}
+export type ProjectFile = Schemas["ProjectFileRead"];
 
 async function authHeader(): Promise<{ Authorization: string }> {
   const accessToken = await getAccessToken();
@@ -635,22 +561,9 @@ export async function deleteProjectFile(agencyId: string, projectId: string, fil
 // "client" reserved), so the UI (and this layer) doesn't need to change
 // shape when that lands; see AUTHOR_CLIENT in binx-api's projects/models.py.
 
-export interface TaskComment {
-  id: string;
-  task_id: string;
+export type TaskComment = Omit<Schemas["TaskCommentRead"], "author_type"> & {
   author_type: "agency_member" | "client";
-  author_user_id: string | null;
-  author_name: string;
-  body: string;
-  /**
-   * The one file the comment carries, or null. binx-api stores it as an
-   * ordinary task file, so it also appears on the task's Files tab and in the
-   * project-wide Files list, and downloads through the task-file route
-   * (`getTaskFileDownloadUrl`).
-   */
-  attachment: TaskFile | null;
-  created_at: string;
-}
+};
 
 /**
  * getTaskComments
@@ -745,15 +658,7 @@ export async function deleteTaskComment(
 // binx-api's projects/service.py — unlike project-level files, which accept
 // anything.
 
-export interface TaskFile {
-  id: string;
-  task_id: string;
-  file_name: string;
-  mime_type: string;
-  size: number;
-  uploaded_by_name: string | null;
-  created_at: string;
-}
+export type TaskFile = Schemas["TaskFileRead"];
 
 /**
  * getTaskFiles

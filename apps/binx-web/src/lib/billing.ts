@@ -13,25 +13,14 @@
 import axios from "axios";
 
 import { api } from "@/lib/api";
+import type { Schemas } from "@/lib/api-types";
 import { AuthApiError, extractDetailMessage, getAccessToken } from "@/lib/auth";
 import type { PlanLimits } from "@/lib/billing-client";
 
 export type { PlanLimits };
 
-export interface PlanUsage {
-  clients: number;
-  active_projects: number;
-  leads: number;
-  team_members: number;
-}
-
-export interface Subscription {
-  plan: string;
-  status: string;
-  limits: PlanLimits;
-  usage: PlanUsage;
-  plan_order: string[];
-}
+export type PlanUsage = Schemas["PlanUsageRead"];
+export type Subscription = Schemas["SubscriptionRead"];
 
 async function authHeader(): Promise<{ Authorization: string }> {
   const accessToken = await getAccessToken();

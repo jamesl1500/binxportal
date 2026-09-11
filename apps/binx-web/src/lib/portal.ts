@@ -13,6 +13,7 @@ import axios from "axios";
 
 import { api } from "@/lib/api";
 import { getMyAgencies } from "@/lib/agencies";
+import type { Schemas } from "@/lib/api-types";
 import { AuthApiError, extractDetailMessage, getAccessToken } from "@/lib/auth";
 import type { Board, BoardComment, BoardItem, BoardItemPatch } from "@/lib/boards-client";
 import type { BoardReactions, CreateBoardItemInput } from "@/lib/boards";
@@ -23,67 +24,16 @@ export type PortalInvoice = StaffInvoice;
 export type PortalInvoiceDetail = InvoiceDetail;
 export type { Conversation, ConversationDetail, Message };
 
-export interface PortalAgency {
-  id: string;
-  name: string;
-  has_logo: boolean;
-  logo_version: string | null;
-  brand_color: string | null;
-}
+export type PortalAgency = Schemas["PortalAgencyRead"];
+export type PortalClientRef = Schemas["PortalClientRead"];
+export type PortalContact = Schemas["PortalContactRead"];
+export type PortalContext = Schemas["PortalContextRead"];
+export type PortalProgress = Schemas["PortalProgress"];
+export type PortalProject = Schemas["PortalProjectRead"];
+export type PortalBoardColumn = Schemas["PortalBoardColumn"];
+export type PortalProjectDetail = Schemas["PortalProjectDetailRead"];
 
-export interface PortalClientRef {
-  id: string;
-  name: string;
-}
-
-export interface PortalContact {
-  id: string;
-  user_id: string;
-  full_name: string;
-  email: string;
-  title: string | null;
-  is_primary: boolean;
-}
-
-export interface PortalContext {
-  agency: PortalAgency;
-  client: PortalClientRef;
-  contact: PortalContact;
-  memberships: { agency: PortalAgency; client: PortalClientRef }[];
-}
-
-export interface PortalProgress {
-  total_tasks: number;
-  done_tasks: number;
-  percent: number;
-}
-
-export interface PortalProject {
-  id: string;
-  name: string;
-  status: string;
-  description: string | null;
-  start_date: string | null;
-  due_date: string | null;
-  progress: PortalProgress;
-}
-
-export interface PortalBoardColumn {
-  name: string;
-  position: number;
-  task_count: number;
-}
-
-export interface PortalProjectDetail extends PortalProject {
-  columns: PortalBoardColumn[];
-}
-
-export interface PortalInvitationPreview {
-  agency_name: string;
-  client_name: string;
-  invited_by_name: string;
-  email: string;
-}
+export type PortalInvitationPreview = Schemas["ClientInvitationPreview"];
 
 async function authHeader(): Promise<{ Authorization: string }> {
   const accessToken = await getAccessToken();
