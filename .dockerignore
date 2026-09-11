@@ -1,0 +1,22 @@
+# Keeps the Docker build context (and every COPY <dir> in
+# apps/binx-api/Dockerfile / apps/binx-web/Dockerfile) from dragging in local
+# dev state. Without this, `COPY apps/binx-web ./apps/binx-web` would copy
+# the host's own node_modules over the one `pnpm install` just built cleanly
+# inside the image, corrupting it.
+**/node_modules
+**/.venv
+**/.next
+**/.turbo
+**/__pycache__
+**/*.pyc
+**/dist
+**/build
+**/coverage
+**/playwright-report
+**/test-results
+**/uploads
+.git
+.github
+.vscode
+*.md
+!apps/binx-api/README.md

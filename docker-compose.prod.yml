@@ -1,0 +1,106 @@
+# Production stack for the single EC2 instance. Lives at /opt/binxportal on
+# the box, alongside a `.env` file (not committed — see .env.prod.example)
+# holding the real secrets.
+#
+# SAFETY: never run `docker compose -f docker-compose.prod.yml down -v` — the
+# `-v` drops the named volumes below, which is the only copy of the
+# database, uploaded files, Redis data, and Caddy's TLS certs. Deploys are
+# always `pull` + `up -d` (see deploy/redeploy.sh); `down` (without `-v`) is
+# fine for a full stack restart, since named volumes outlive `down`.
+
+name: binxportal
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: binxapi
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env}
+      POSTGRES_DB: binxportal
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U binxapi -d binxportal"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # No auth/port published — only reachable from other containers on this
+    # compose network. Used today for rate-limit counters (core/rate_limit.py);
+    # see AGENTS/SECURITY notes on modules/messaging/realtime.py for the
+    # Redis pub/sub rework that would be needed if this ever scales past one
+    # api instance.
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    image: ${API_IMAGE:?set in .env, e.g. <account>.dkr.ecr.<region>.amazonaws.com/binx-api:latest}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://binxapi:${POSTGRES_PASSWORD:?set in .env}@db:5432/binxportal
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET:?set in .env}
+      FRONTEND_URL: https://binxportal.com
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # Local-disk upload dirs land on the named `uploads` volume below —
+      # survives container replacement, backed up by the EBS snapshot plan
+      # (see infra/lib/backup-stack.ts) alongside the db/redis volumes.
+      PROJECT_UPLOAD_DIR: /data/uploads/projects
+      MESSAGE_UPLOAD_DIR: /data/uploads/messages
+      AGENCY_UPLOAD_DIR: /data/uploads/agencies
+    volumes:
+      - uploads:/data/uploads
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/ops/ready')"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
+
+  web:
+    image: ${WEB_IMAGE:?set in .env, e.g. <account>.dkr.ecr.<region>.amazonaws.com/binx-web:latest}
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      # NEXT_PUBLIC_* are already baked into this image at build time (see
+      # apps/binx-web/Dockerfile) — APP_ORIGIN is the one thing binx-web
+      # actually reads at runtime, for building absolute links server-side.
+      APP_ORIGIN: https://binxportal.com
+      NODE_ENV: production
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - api
+      - web
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  db-data:
+  redis-data:
+  uploads:
+  caddy-data:
+  caddy-config:

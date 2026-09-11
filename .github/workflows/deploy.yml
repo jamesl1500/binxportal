@@ -1,0 +1,136 @@
+# Builds both images and deploys them to the single binxportal EC2 instance.
+#
+# Runs on every push to master that touches app code or the deploy config —
+# relies on branch protection requiring binx-api CI / binx-web CI to have
+# passed before a PR can merge, rather than re-running those suites here.
+#
+# No SSH: authenticates to AWS via OIDC (no stored AWS keys), pushes to ECR,
+# then triggers deploy/redeploy.sh ON THE BOX via SSM Send-Command. See
+# infra/lib/cicd-stack.ts for the IAM role this assumes and infra/lib/compute-stack.ts
+# for the SSM instance profile that has to be attached to the box first
+# (one-time manual step — see that stack's CfnOutput).
+
+name: Deploy
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "apps/binx-api/**"
+      - "apps/binx-web/**"
+      - "pnpm-lock.yaml"
+      - "docker-compose.prod.yml"
+      - "deploy/**"
+      - ".dockerignore"
+      - ".github/workflows/deploy.yml"
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-2
+  # Fixed by infra/lib/cicd-stack.ts's `roleName` — not a secret (only
+  # assumable by a GitHub Actions OIDC token whose `sub` claim matches this
+  # exact repo + branch, per that stack's trust policy).
+  DEPLOY_ROLE_ARN: arn:aws:iam::574247905173:role/binxportal-github-deploy
+  INSTANCE_ID: i-025b868d7d0487155
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    outputs:
+      api-image: ${{ steps.tags.outputs.api-image }}
+      web-image: ${{ steps.tags.outputs.web-image }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - id: tags
+        run: |
+          sha=${GITHUB_SHA::12}
+          echo "api-image=${{ steps.ecr.outputs.registry }}/binx-api:sha-$sha" >> "$GITHUB_OUTPUT"
+          echo "web-image=${{ steps.ecr.outputs.registry }}/binx-web:sha-$sha" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build + push binx-api
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/binx-api/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.tags.outputs.api-image }}
+            ${{ steps.ecr.outputs.registry }}/binx-api:latest
+          cache-from: type=gha,scope=binx-api
+          cache-to: type=gha,mode=max,scope=binx-api
+
+      - name: Build + push binx-web
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/binx-web/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.tags.outputs.web-image }}
+            ${{ steps.ecr.outputs.registry }}/binx-web:latest
+          build-args: |
+            NEXT_PUBLIC_API_URL=https://api.binxportal.com/
+            NEXT_PUBLIC_SITE_URL=https://binxportal.com
+          # Same key on every build so an in-flight form submit against the
+          # outgoing container doesn't fail post-deploy — see the Dockerfile.
+          secrets: |
+            next_actions_key=${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}
+          cache-from: type=gha,scope=binx-web
+          cache-to: type=gha,mode=max,scope=binx-web
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Redeploy on the instance via SSM
+        run: |
+          command_id=$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name "AWS-RunShellScript" \
+            --parameters 'commands=["bash /opt/binxportal/deploy/redeploy.sh"]' \
+            --comment "deploy ${GITHUB_SHA::12}" \
+            --query "Command.CommandId" --output text)
+          echo "SSM command: $command_id"
+
+          for _ in $(seq 1 30); do
+            status=$(aws ssm get-command-invocation \
+              --command-id "$command_id" --instance-id "$INSTANCE_ID" \
+              --query "Status" --output text 2>/dev/null || echo "Pending")
+            [ "$status" != "Pending" ] && [ "$status" != "InProgress" ] && break
+            sleep 5
+          done
+
+          echo "--- stdout ---"
+          aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" \
+            --query "StandardOutputContent" --output text
+          echo "--- stderr ---"
+          aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" \
+            --query "StandardErrorContent" --output text
+
+          if [ "$status" != "Success" ]; then
+            echo "::error::redeploy.sh finished with status $status"
+            exit 1
+          fi

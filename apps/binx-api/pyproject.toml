@@ -19,6 +19,9 @@ dependencies = [
     "pydantic[email]>=2.13.4",
     "python-jose[cryptography]>=3.5.0",
     "python-multipart>=0.0.32",
+    # Only imported by `limits` (slowapi's dependency) when REDIS_URL is set —
+    # see core/rate_limit.py. Unused, harmless dead weight otherwise.
+    "redis>=5.0.0",
     "slowapi>=0.1.10",
     "sqlalchemy>=2.0.52",
     "uvicorn[standard]>=0.52.3",

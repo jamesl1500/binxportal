@@ -1,0 +1,38 @@
+# CI for the CDK infra app (infra/) — a compile + synth check only. `cdk
+# synth` needs no AWS credentials (none of these stacks use context lookups
+# like `fromLookup`), so this job stays secret-free.
+
+name: infra CI
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - "infra/**"
+      - ".github/workflows/infra-ci.yml"
+  pull_request:
+    paths:
+      - "infra/**"
+      - ".github/workflows/infra-ci.yml"
+
+concurrency:
+  group: infra-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: infra
+
+jobs:
+  synth:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: infra/package-lock.json
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npx cdk synth --quiet

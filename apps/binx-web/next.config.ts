@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Emits `.next/standalone` — only the node_modules actually used, traced
+  // per-route — instead of shipping the whole workspace. That's what the
+  // production Dockerfile copies into the final image; see apps/binx-web/Dockerfile.
+  output: "standalone",
   reactCompiler: true,
   experimental: {
     serverActions: {

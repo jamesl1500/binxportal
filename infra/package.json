@@ -1,0 +1,28 @@
+{
+  "name": "binxportal-infra",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AWS CDK app provisioning the surroundings for the existing binxportal EC2 instance — Route 53, ECR, the GitHub Actions deploy role, and EBS backups. See ../README-deploy.md.",
+  "bin": {
+    "binxportal": "bin/binxportal.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "synth": "cdk synth",
+    "diff": "cdk diff",
+    "deploy": "cdk deploy --all",
+    "test": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "aws-cdk": "^2.1141.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.269.0",
+    "constructs": "^10.8.1",
+    "source-map-support": "^0.5.21"
+  }
+}

@@ -24,6 +24,12 @@ class Settings(BaseSettings):
     # instance; front with Redis (limits[async-redis]) before scaling out. The
     # test suite pins this off; the rate-limit test flips it back on.
     rate_limit_enabled: bool = True
+    # When set, the Limiter (core/rate_limit.py) stores counters here instead
+    # of in-process memory — e.g. "redis://redis:6379/0" for the Redis
+    # container in docker-compose.prod.yml. Unset (the default) keeps the
+    # in-process store, which is correct as long as only one API process is
+    # running.
+    redis_url: str | None = None
 
     # Base URL of the staff portal frontend, used to build links in emails
     frontend_url: str = "http://localhost:3000"

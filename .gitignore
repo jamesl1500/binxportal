@@ -16,6 +16,7 @@ build/
 .env
 .env.*
 !.env.example
+!.env.prod.example
 
 .venv/
 __pycache__/
@@ -31,5 +32,11 @@ htmlcov/
 junit*.xml
 
 # Locally-stored uploads (apps/binx-api/uploads/... — see core/config.py's
-# project_upload_dir). Swap for object storage before this matters in prod.
+# project_upload_dir). In prod this is a named Docker volume on the EC2
+# instance, not this path — see docker-compose.prod.yml.
 uploads/
+
+# CDK
+infra/cdk.out/
+
+.deploy-tmp/

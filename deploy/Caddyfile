@@ -1,0 +1,13 @@
+# Reverse proxy + automatic TLS for both apps on the single EC2 instance.
+# Caddy requests/renews Let's Encrypt certs for each host block below on its
+# own — no ACM, no ALB. Requires ports 80 (ACME HTTP-01 challenge + redirect)
+# and 443 to be reachable from the internet, which they already are on this
+# instance's security group.
+
+api.binxportal.com {
+	reverse_proxy api:8000
+}
+
+binxportal.com, www.binxportal.com {
+	reverse_proxy web:3000
+}
