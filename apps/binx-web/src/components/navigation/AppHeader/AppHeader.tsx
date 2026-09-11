@@ -20,6 +20,7 @@ import { Menu } from "@base-ui/react/menu";
 import { ChevronDown } from "lucide-react";
 
 import { logoutAction } from "@/app/(app)/actions";
+import BinxMark from "@/components/BinxMark/BinxMark";
 import type { CurrentUser } from "@/lib/auth";
 import type { AgencyRead } from "@/lib/agencies";
 import type { AppNotification } from "@/lib/notifications";
@@ -86,7 +87,7 @@ const AppHeader = ({
       <div className={styles.left}>
         <div className={styles.workspace}>
           <Link href="/dashboard" className={styles.brand}>
-            <span className={styles.brandMark} aria-hidden="true" />
+            <BinxMark className={styles.brandMark} />
             Binx
           </Link>
 

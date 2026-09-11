@@ -54,7 +54,7 @@ services:
       DATABASE_URL: postgresql+asyncpg://binxapi:${POSTGRES_PASSWORD:?set in .env}@db:5432/binxportal
       REDIS_URL: redis://redis:6379/0
       JWT_SECRET: ${JWT_SECRET:?set in .env}
-      FRONTEND_URL: https://binxportal.com
+      FRONTEND_URL: https://www.binxportal.com
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       # Local-disk upload dirs land on the named `uploads` volume below —
       # survives container replacement, backed up by the EBS snapshot plan
@@ -81,7 +81,7 @@ services:
       # NEXT_PUBLIC_* are already baked into this image at build time (see
       # apps/binx-web/Dockerfile) — APP_ORIGIN is the one thing binx-web
       # actually reads at runtime, for building absolute links server-side.
-      APP_ORIGIN: https://binxportal.com
+      APP_ORIGIN: https://www.binxportal.com
       NODE_ENV: production
 
   caddy:

@@ -25,7 +25,25 @@ async function expectNoHorizontalScroll(page: import("@playwright/test").Page): 
   ).toBeLessThanOrEqual(overflow.clientWidth + 1);
 }
 
-const PUBLIC_PAGES = ["/", "/features", "/pricing", "/about", "/contact", "/auth/login", "/auth/signup"];
+const PUBLIC_PAGES = [
+  "/",
+  "/features",
+  "/pricing",
+  "/about",
+  "/contact",
+  "/auth/login",
+  "/auth/signup",
+  "/alternatives/dubsado",
+  "/alternatives/honeybook",
+  "/alternatives/copilot-assembly",
+  "/alternatives/bloom",
+  "/compare/notion-stripe-drive",
+  "/for/design-studios",
+  "/for/marketing-teams",
+  "/for/branding-agencies",
+  "/for/freelance-collectives",
+  "/free-client-portal",
+];
 
 for (const size of [PHONE, TABLET]) {
   test.describe(`public pages @ ${size.width}px`, () => {

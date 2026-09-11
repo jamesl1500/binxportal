@@ -105,7 +105,7 @@ jobs:
             ${{ steps.ecr.outputs.registry }}/binx-web:latest
           build-args: |
             NEXT_PUBLIC_API_URL=https://api.binxportal.com/
-            NEXT_PUBLIC_SITE_URL=https://binxportal.com
+            NEXT_PUBLIC_SITE_URL=https://www.binxportal.com
           # Same key on every build so an in-flight form submit against the
           # outgoing container doesn't fail post-deploy — see the Dockerfile.
           # File-based, from the step above — never a workflow expression.

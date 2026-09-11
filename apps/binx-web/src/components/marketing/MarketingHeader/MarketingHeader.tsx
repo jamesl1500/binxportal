@@ -16,6 +16,7 @@ import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 
 import { MARKETING_NAV, SITE } from "@/lib/site";
+import BinxMark from "@/components/BinxMark/BinxMark";
 
 import styles from "./MarketingHeader.module.scss";
 
@@ -27,7 +28,7 @@ const MarketingHeader = () => {
     <header className={styles.header}>
       <div className={styles.inner}>
         <Link href="/" className={styles.brand} onClick={() => setOpen(false)}>
-          <span className={styles.brandMark} aria-hidden="true" />
+          <BinxMark className={styles.brandMark} />
           {SITE.name}
         </Link>
 

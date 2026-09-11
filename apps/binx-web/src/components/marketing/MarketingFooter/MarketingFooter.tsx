@@ -9,7 +9,8 @@
  */
 import Link from "next/link";
 
-import { SITE } from "@/lib/site";
+import { SEO_LANDING_PAGES, SITE } from "@/lib/site";
+import BinxMark from "@/components/BinxMark/BinxMark";
 
 import styles from "./MarketingFooter.module.scss";
 
@@ -22,6 +23,13 @@ const COLUMNS: { heading: string; links: { href: string; label: string }[] }[] =
       { href: "/auth/signup", label: "Get started" },
       { href: "/auth/login", label: "Sign in" },
     ],
+  },
+  {
+    heading: "Compare",
+    // Not in the primary nav (it'd clutter the header) — these SEO landing
+    // pages still need to be reachable by a real link, not just the
+    // sitemap, so a crawler actually finds and credits them.
+    links: [...SEO_LANDING_PAGES],
   },
   {
     heading: "Company",
@@ -45,7 +53,7 @@ const MarketingFooter = () => {
       <div className={styles.inner}>
         <div className={styles.brandBlock}>
           <div className={styles.brand}>
-            <span className={styles.brandMark} aria-hidden="true" />
+            <BinxMark className={styles.brandMark} />
             {SITE.name}
           </div>
           <p className={styles.blurb}>{SITE.tagline}</p>

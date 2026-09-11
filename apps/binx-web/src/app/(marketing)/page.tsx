@@ -12,7 +12,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, CalendarCheck, FolderOpen, LayoutGrid, Receipt, Sparkles, Users } from "lucide-react";
 
-import { SITE } from "@/lib/site";
+import { SITE, USE_CASE_PAGES } from "@/lib/site";
 import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 
 import styles from "./marketing.module.scss";
@@ -105,10 +105,11 @@ const HomePage = () => {
       <div className={styles.trust}>
         <p className={styles.trustLabel}>Built for the way small agencies actually work</p>
         <div className={styles.trustRow}>
-          <span>Design studios</span>
-          <span>Marketing teams</span>
-          <span>Branding agencies</span>
-          <span>Freelance collectives</span>
+          {USE_CASE_PAGES.map((page) => (
+            <Link key={page.href} href={page.href} className={styles.trustLink}>
+              {page.label}
+            </Link>
+          ))}
         </div>
       </div>
 

@@ -14,6 +14,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { getCurrentUser } from "@/lib/auth";
+import { SITE } from "@/lib/site";
 
 import styles from "./layout.module.scss";
 
@@ -73,7 +74,9 @@ const OnboardingLayout = async ({ children }: { children: React.ReactNode }) => 
           </ol>
         </div>
 
-        <p className={styles.footnote}>&copy; {new Date().getFullYear()} Binx.io</p>
+        <p className={styles.footnote}>
+          &copy; {new Date().getFullYear()} {SITE.legalName}
+        </p>
       </aside>
 
       <div className={styles.content}>

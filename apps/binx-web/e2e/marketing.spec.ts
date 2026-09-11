@@ -21,6 +21,18 @@ test.describe("marketing site", () => {
     { path: "/pricing", heading: "Plans that grow with the agency" },
     { path: "/about", heading: "Built for the agencies" },
     { path: "/contact", heading: "Talk to a human" },
+    // SEO landing pages (alternatives / comparison / use-case / free-portal) —
+    // not in the primary nav, but still real pages that need to load.
+    { path: "/alternatives/dubsado", heading: "Dubsado alternative" },
+    { path: "/alternatives/honeybook", heading: "HoneyBook alternative" },
+    { path: "/alternatives/copilot-assembly", heading: "client portal, plus everything" },
+    { path: "/alternatives/bloom", heading: "Bloom alternative" },
+    { path: "/compare/notion-stripe-drive", heading: "real competitor" },
+    { path: "/for/design-studios", heading: "Review work with clients" },
+    { path: "/for/marketing-teams", heading: "Run every client" },
+    { path: "/for/branding-agencies", heading: "brand engagement deserves" },
+    { path: "/for/freelance-collectives", heading: "Shared clients" },
+    { path: "/free-client-portal", heading: "Actually free" },
   ];
 
   for (const { path, heading } of pages) {

@@ -44,8 +44,7 @@
 .brandMark {
   width: 1.5rem;
   height: 1.5rem;
-  border-radius: t.$radius-sm;
-  background: t.$color-ink;
+  flex-shrink: 0;
 }
 
 .divider {

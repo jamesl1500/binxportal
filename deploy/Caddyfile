@@ -8,6 +8,13 @@ api.binxportal.com {
 	reverse_proxy api:8000
 }
 
-binxportal.com, www.binxportal.com {
+# www is canonical (see lib/site.ts's SITE_URL / NEXT_PUBLIC_SITE_URL) — the
+# apex 301s there instead of serving the same content twice, so search
+# engines see one URL per page, not two.
+binxportal.com {
+	redir https://www.binxportal.com{uri} permanent
+}
+
+www.binxportal.com {
 	reverse_proxy web:3000
 }

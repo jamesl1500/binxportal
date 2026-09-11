@@ -250,6 +250,16 @@
   color: t.$color-ink-faint;
 }
 
+.trustLink {
+  color: inherit;
+  text-decoration: none;
+
+  &:hover {
+    color: t.$color-ink;
+    text-decoration: underline;
+  }
+}
+
 // ---- Feature grid --------------------------------------------
 
 .grid {

@@ -9,7 +9,7 @@
  */
 import type { MetadataRoute } from "next";
 
-import { MARKETING_NAV, SITE_URL } from "@/lib/site";
+import { MARKETING_NAV, SEO_LANDING_PAGES, SITE_URL, USE_CASE_PAGES } from "@/lib/site";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const lastModified = new Date();
@@ -21,6 +21,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified,
       changeFrequency: "monthly" as const,
       priority: item.href === "/pricing" ? 0.9 : 0.7,
+    })),
+    ...[...SEO_LANDING_PAGES, ...USE_CASE_PAGES].map((item) => ({
+      url: `${SITE_URL}${item.href}`,
+      lastModified,
+      changeFrequency: "monthly" as const,
+      priority: 0.6,
     })),
   ];
 }

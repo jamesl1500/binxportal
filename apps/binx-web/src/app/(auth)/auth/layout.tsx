@@ -9,6 +9,8 @@
 import React from "react";
 import type { Metadata } from "next";
 
+import { SITE } from "@/lib/site";
+
 import styles from "./layout.module.scss";
 
 export const metadata: Metadata = {
@@ -61,7 +63,9 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
           </ol>
         </div>
 
-        <p className={styles.footnote}>&copy; {new Date().getFullYear()} Binx.io</p>
+        <p className={styles.footnote}>
+          &copy; {new Date().getFullYear()} {SITE.legalName}
+        </p>
       </aside>
 
       <div className={styles.content}>

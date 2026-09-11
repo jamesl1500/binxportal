@@ -16,7 +16,7 @@ export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3
 
 export const SITE = {
   name: "Binx",
-  legalName: "Binx.io",
+  legalName: "Binx",
   /** ~55 chars — used as the homepage <title>. */
   title: "Binx — the operating system for creative agencies",
   tagline: "Run the whole agency from one place.",
@@ -26,7 +26,7 @@ export const SITE = {
   url: SITE_URL,
   ogImageAlt: "Binx — the operating system for creative agencies",
   twitter: "@binxhq",
-  email: "hello@binx.io",
+  email: "hello@binxportal.com",
   keywords: [
     "agency management software",
     "creative agency operations",
@@ -44,4 +44,26 @@ export const MARKETING_NAV = [
   { href: "/pricing", label: "Pricing" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
+] as const;
+
+/**
+ * SEO landing pages (alternative/comparison/use-case pages) — deliberately
+ * not in MARKETING_NAV (they'd clutter the header), but still real pages
+ * that belong in the sitemap and get linked from the footer and homepage.
+ */
+export const SEO_LANDING_PAGES = [
+  { href: "/alternatives/dubsado", label: "Dubsado alternative" },
+  { href: "/alternatives/honeybook", label: "HoneyBook alternative" },
+  { href: "/alternatives/copilot-assembly", label: "Copilot & Assembly alternative" },
+  { href: "/alternatives/bloom", label: "Bloom.io alternative" },
+  { href: "/compare/notion-stripe-drive", label: "vs. Notion + Stripe + Drive" },
+  { href: "/free-client-portal", label: "Free client portal" },
+] as const;
+
+/** The four segments named on the homepage trust bar — each gets its own use-case page. */
+export const USE_CASE_PAGES = [
+  { href: "/for/design-studios", label: "Design studios" },
+  { href: "/for/marketing-teams", label: "Marketing teams" },
+  { href: "/for/branding-agencies", label: "Branding agencies" },
+  { href: "/for/freelance-collectives", label: "Freelance collectives" },
 ] as const;
