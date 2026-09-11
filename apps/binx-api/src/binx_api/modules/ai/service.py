@@ -35,6 +35,7 @@ from binx_api.modules.ai.models import (
     ROLE_USER,
     AiConversation,
     AiConversationMessage,
+    DashboardBriefing,
 )
 from binx_api.modules.dashboard import service as dashboard_service
 from binx_api.modules.invoicing import service as invoicing_service
@@ -320,6 +321,35 @@ async def generate_dashboard_briefing(db: AsyncSession, agency: Agency, user: Us
         fast=True,
     )
     return result.text
+
+
+async def get_dashboard_briefing(db: AsyncSession, agency: Agency, user: User, *, force: bool = False) -> str:
+    """Cache-aware wrapper around ``generate_dashboard_briefing`` — one row
+    per (agency, member, UTC day) in ``dashboard_briefings``. The dashboard
+    page used to call Claude fresh on every render; this is what makes the
+    second-and-later load in a day free, instant, and silent against the
+    agency's AI budget. ``force=True`` (the Refresh button) regenerates and
+    overwrites today's row regardless of whether one already exists."""
+    today = datetime.now(UTC).date()
+    existing = (
+        await db.execute(
+            select(DashboardBriefing).where(
+                DashboardBriefing.agency_id == agency.id,
+                DashboardBriefing.user_id == user.id,
+                DashboardBriefing.briefing_date == today,
+            )
+        )
+    ).scalar_one_or_none()
+    if existing is not None and not force:
+        return existing.content
+
+    text = await generate_dashboard_briefing(db, agency, user)
+    if existing is not None:
+        existing.content = text
+    else:
+        db.add(DashboardBriefing(agency_id=agency.id, user_id=user.id, briefing_date=today, content=text))
+    await db.commit()
+    return text
 
 
 # ---- Project summary ---------------------------------------------------

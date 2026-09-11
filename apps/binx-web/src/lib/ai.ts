@@ -94,10 +94,22 @@ export async function getAiUsage(agencyId: string): Promise<AiUsageSummary> {
   }
 }
 
-export async function getAiBriefing(agencyId: string): Promise<string> {
+/**
+ * getAiBriefing
+ *
+ * The dashboard's AI briefing — cached server-side per (agency, member, UTC
+ * day), so a plain call here is free and instant after the first one today.
+ * Pass `force: true` (the card's Refresh button) to regenerate.
+ *
+ * @function getAiBriefing
+ */
+export async function getAiBriefing(agencyId: string, force = false): Promise<string> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<{ briefing: string }>(`/agencies/${agencyId}/ai/briefing`, { headers });
+    const { data } = await api.get<{ briefing: string }>(`/agencies/${agencyId}/ai/briefing`, {
+      headers,
+      params: { refresh: force || undefined },
+    });
     return data.briefing;
   } catch (error) {
     rethrow(error, "Unable to generate a briefing");

@@ -96,6 +96,24 @@ describe("getAiBriefing", () => {
     mockedApi.get.mockRejectedValueOnce(axiosError(429, "This agency's $20.00 monthly AI budget is used up."));
     await expect(getAiBriefing("a1")).rejects.toMatchObject({ status: 429 });
   });
+
+  it("omits the refresh param by default (cache-first)", async () => {
+    mockedApi.get.mockResolvedValueOnce({ data: { briefing: "Cached." } });
+    await getAiBriefing("a1");
+    expect(mockedApi.get).toHaveBeenCalledWith(
+      "/agencies/a1/ai/briefing",
+      expect.objectContaining({ params: { refresh: undefined } }),
+    );
+  });
+
+  it("sends refresh=true when force is passed (the Refresh button)", async () => {
+    mockedApi.get.mockResolvedValueOnce({ data: { briefing: "Regenerated." } });
+    await getAiBriefing("a1", true);
+    expect(mockedApi.get).toHaveBeenCalledWith(
+      "/agencies/a1/ai/briefing",
+      expect.objectContaining({ params: { refresh: true } }),
+    );
+  });
 });
 
 describe("generateProjectSummary / generateInvoiceReminder", () => {

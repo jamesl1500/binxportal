@@ -168,6 +168,59 @@ class TestGenerateDrafts:
         text = await ai_service.generate_dashboard_briefing(db_session, agency, owner)
         assert text == "Here's your briefing."
 
+
+class TestDashboardBriefingCache:
+    async def test_second_call_same_day_does_not_hit_the_model(
+        self, db_session, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _configure(monkeypatch)
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        # Only one scripted response — a second call to _call_anthropic would
+        # raise "ran out of scripted responses", so this also proves the cache
+        # hit skips the AI call entirely, not just that the text matches.
+        monkeypatch.setattr(ai_client, "_call_anthropic", _sequenced(_text_message("Today's briefing.")))
+
+        first = await ai_service.get_dashboard_briefing(db_session, agency, owner)
+        second = await ai_service.get_dashboard_briefing(db_session, agency, owner)
+
+        assert first == "Today's briefing."
+        assert second == "Today's briefing."
+
+    async def test_force_regenerates_and_overwrites_todays_row(
+        self, db_session, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _configure(monkeypatch)
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        monkeypatch.setattr(ai_client, "_call_anthropic", _sequenced(_text_message("First version.")))
+        first = await ai_service.get_dashboard_briefing(db_session, agency, owner)
+        assert first == "First version."
+
+        monkeypatch.setattr(ai_client, "_call_anthropic", _sequenced(_text_message("Refreshed version.")))
+        refreshed = await ai_service.get_dashboard_briefing(db_session, agency, owner, force=True)
+        assert refreshed == "Refreshed version."
+
+        # A plain (non-forced) call afterward should see the refreshed row,
+        # not fall back to the first one or call the model again.
+        cached = await ai_service.get_dashboard_briefing(db_session, agency, owner)
+        assert cached == "Refreshed version."
+
+    async def test_briefing_is_scoped_per_user(self, db_session, monkeypatch: pytest.MonkeyPatch) -> None:
+        _configure(monkeypatch)
+        owner = await make_user(db_session)
+        other = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        monkeypatch.setattr(
+            ai_client, "_call_anthropic", _sequenced(_text_message("For owner."), _text_message("For other."))
+        )
+
+        for_owner = await ai_service.get_dashboard_briefing(db_session, agency, owner)
+        for_other = await ai_service.get_dashboard_briefing(db_session, agency, other)
+
+        assert for_owner == "For owner."
+        assert for_other == "For other."
+
     async def test_project_summary_returns_model_text(self, db_session, monkeypatch: pytest.MonkeyPatch) -> None:
         _configure(monkeypatch)
         owner = await make_user(db_session)

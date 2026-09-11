@@ -8088,6 +8088,18 @@
               "title": "Agency Id",
               "type": "string"
             }
+          },
+          {
+            "description": "Regenerate today's briefing even if one is already cached",
+            "in": "query",
+            "name": "refresh",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "Regenerate today's briefing even if one is already cached",
+              "title": "Refresh",
+              "type": "boolean"
+            }
           }
         ],
         "responses": {

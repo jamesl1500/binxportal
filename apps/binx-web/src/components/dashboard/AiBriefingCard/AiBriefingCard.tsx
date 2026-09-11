@@ -1,11 +1,14 @@
 /**
  * AiBriefingCard.tsx
  *
- * A short, AI-written summary of what needs attention today — generated on
- * mount via `getAiBriefingAction`, with a manual "Refresh" button. Renders a
- * clean, static message instead of an error state when AI isn't configured
- * for this environment (a 503 from `check_budget_and_rate`), since that's an
- * expected, permanent state in some deployments rather than a bug.
+ * A short, AI-written summary of what needs attention today — loaded on
+ * mount via `getAiBriefingAction`. The API caches this per (agency, member,
+ * day), so mounting the card again later the same day is free and instant;
+ * the "Refresh" button passes `force: true` to actually regenerate it.
+ * Renders a clean, static message instead of an error state when AI isn't
+ * configured for this environment (a 503 from `check_budget_and_rate`),
+ * since that's an expected, permanent state in some deployments rather than
+ * a bug.
  *
  * @module apps/binx-web/src/components/dashboard/AiBriefingCard/AiBriefingCard.tsx
  * @author Binx.io
@@ -31,10 +34,10 @@ const AiBriefingCard = ({ agencyId }: AiBriefingCardProps) => {
   const [briefing, setBriefing] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const load = async () => {
+  const load = async (force = false) => {
     setStatus("loading");
     setError(null);
-    const result = await getAiBriefingAction(agencyId);
+    const result = await getAiBriefingAction(agencyId, force);
     if (result.briefing) {
       setBriefing(result.briefing);
       setStatus("ready");
@@ -73,7 +76,12 @@ const AiBriefingCard = ({ agencyId }: AiBriefingCardProps) => {
           <Sparkles className={styles.eyebrowIcon} aria-hidden="true" />
           AI briefing
         </span>
-        <button type="button" className={styles.refresh} onClick={() => void load()} disabled={status === "loading"}>
+        <button
+          type="button"
+          className={styles.refresh}
+          onClick={() => void load(true)}
+          disabled={status === "loading"}
+        >
           {status === "loading" ? "Thinking…" : "Refresh"}
         </button>
       </div>

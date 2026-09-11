@@ -19,9 +19,9 @@ export interface AiBriefingActionResult {
   briefing?: string;
 }
 
-export async function getAiBriefingAction(agencyId: string): Promise<AiBriefingActionResult> {
+export async function getAiBriefingAction(agencyId: string, force = false): Promise<AiBriefingActionResult> {
   try {
-    return { briefing: await getAiBriefing(agencyId) };
+    return { briefing: await getAiBriefing(agencyId, force) };
   } catch (error) {
     if (error instanceof AuthApiError) {
       return { error: error.message, notConfigured: error.status === 503 };

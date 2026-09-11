@@ -22,7 +22,8 @@ describe("AiBriefingCard", () => {
     render(<AiBriefingCard agencyId="a1" />);
 
     expect(await screen.findByText("You have 2 overdue invoices.")).toBeInTheDocument();
-    expect(mockedGetBriefing).toHaveBeenCalledWith("a1");
+    // Mount loads cache-first — no forced regeneration.
+    expect(mockedGetBriefing).toHaveBeenCalledWith("a1", false);
   });
 
   it("renders a clean message when AI isn't configured, with no error styling", async () => {
@@ -52,5 +53,7 @@ describe("AiBriefingCard", () => {
 
     expect(await screen.findByText("Second briefing.")).toBeInTheDocument();
     expect(mockedGetBriefing).toHaveBeenCalledTimes(2);
+    // Refresh must force regeneration, not just re-read the same cached day.
+    expect(mockedGetBriefing).toHaveBeenNthCalledWith(2, "a1", true);
   });
 });

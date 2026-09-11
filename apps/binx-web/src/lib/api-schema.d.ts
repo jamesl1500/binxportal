@@ -5307,7 +5307,10 @@ export interface operations {
     };
     get_ai_briefing_agencies__agency_id__ai_briefing_get: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Regenerate today's briefing even if one is already cached */
+                refresh?: boolean;
+            };
             header?: never;
             path: {
                 agency_id: string;

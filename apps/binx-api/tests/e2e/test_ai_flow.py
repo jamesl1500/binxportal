@@ -129,6 +129,40 @@ class TestBriefing:
         assert usage["recent_events"][0]["feature"] == "dashboard_briefing"
         assert usage["recent_events"][0]["status"] == "ok"
 
+    async def test_a_second_load_the_same_day_is_served_from_cache(
+        self, client, team, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        agency, owner, _member = team
+        h = auth_headers(owner)
+        _configure(monkeypatch)
+        _stub_reply(monkeypatch, "First look at today.")
+
+        first = await client.get(f"/agencies/{agency.id}/ai/briefing", headers=h)
+        assert first.json() == {"briefing": "First look at today."}
+
+        # The stub would happily answer again, but a plain GET shouldn't ask
+        # it to — same text back, and no second usage event logged.
+        _stub_reply(monkeypatch, "This should never be returned.")
+        second = await client.get(f"/agencies/{agency.id}/ai/briefing", headers=h)
+        assert second.json() == {"briefing": "First look at today."}
+
+        usage = (await client.get(f"/agencies/{agency.id}/ai/usage", headers=h)).json()
+        assert usage["today_request_count"] == 1
+
+    async def test_refresh_query_param_regenerates(self, client, team, monkeypatch: pytest.MonkeyPatch) -> None:
+        agency, owner, _member = team
+        h = auth_headers(owner)
+        _configure(monkeypatch)
+        _stub_reply(monkeypatch, "First look at today.")
+        await client.get(f"/agencies/{agency.id}/ai/briefing", headers=h)
+
+        _stub_reply(monkeypatch, "Refreshed.")
+        refreshed = await client.get(f"/agencies/{agency.id}/ai/briefing?refresh=true", headers=h)
+        assert refreshed.json() == {"briefing": "Refreshed."}
+
+        usage = (await client.get(f"/agencies/{agency.id}/ai/usage", headers=h)).json()
+        assert usage["today_request_count"] == 2
+
 
 class TestConversations:
     async def test_full_thread_lifecycle(self, client, team, db_session, monkeypatch: pytest.MonkeyPatch) -> None:

@@ -2,7 +2,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy import func, select
 
 from binx_api.core.config import get_settings
@@ -127,9 +127,14 @@ async def get_ai_usage(db: DbSession, agency_and_role: AnyMember, current_user: 
 
 
 @router.get("/briefing", response_model=AiBriefingRead)
-async def get_ai_briefing(db: DbSession, current_user: CurrentUser, agency_and_role: AnyMember) -> AiBriefingRead:
+async def get_ai_briefing(
+    db: DbSession,
+    current_user: CurrentUser,
+    agency_and_role: AnyMember,
+    refresh: bool = Query(default=False, description="Regenerate today's briefing even if one is already cached"),
+) -> AiBriefingRead:
     agency, _role = agency_and_role
-    text = await service.generate_dashboard_briefing(db, agency, current_user)
+    text = await service.get_dashboard_briefing(db, agency, current_user, force=refresh)
     return AiBriefingRead(briefing=text)
 
 

@@ -1,6 +1,7 @@
 import uuid
+from datetime import date
 
-from sqlalchemy import ForeignKey, Integer, String, Uuid
+from sqlalchemy import Date, ForeignKey, Integer, String, Text, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column
 
 from binx_api.core.database import Base
@@ -98,3 +99,21 @@ class AiConversationMessage(Base):
     )
     role: Mapped[str] = mapped_column(String(10))
     content: Mapped[str] = mapped_column(String(8192))
+
+
+# One cached briefing per (agency, member, day) — see
+# ai/service.py::get_dashboard_briefing. The dashboard used to call Claude
+# fresh on every page load; this is what makes the second-and-later load in
+# a day free and instant. `briefing_date` is a UTC calendar day, matching
+# AgencyAiSettings.daily_user_request_cap's reset convention.
+class DashboardBriefing(Base):
+    __tablename__ = "dashboard_briefings"
+    __table_args__ = (
+        UniqueConstraint("agency_id", "user_id", "briefing_date", name="uq_dashboard_briefings_agency_user_date"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    agency_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("agencies.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    briefing_date: Mapped[date] = mapped_column(Date)
+    content: Mapped[str] = mapped_column(Text)
