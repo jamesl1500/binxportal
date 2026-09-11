@@ -1,15 +1,26 @@
-"""Integration tests for ``binx_api.modules.dashboard.service.my_work`` — the
-cross-project "assigned to me, not done" task rollup."""
+"""Integration tests for the dashboard module's aggregation reads:
+``service.my_work`` (cross-project "assigned to me, not done" tasks) and
+``service.overview`` (the Overview tab's single-call rollup)."""
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 import pytest
 
+from binx_api.modules.activity.service import log_agency_activity
 from binx_api.modules.dashboard import service
+from binx_api.modules.invoicing.service import issue_invoice
 from binx_api.modules.projects.service import get_project_board
-from tests.factories import add_agency_member, make_agency, make_project, make_task, make_user
+from tests.factories import (
+    add_agency_member,
+    make_agency,
+    make_conversation,
+    make_invoice,
+    make_project,
+    make_task,
+    make_user,
+)
 
 pytestmark = pytest.mark.integration
 
@@ -89,3 +100,73 @@ class TestMyWork:
         result = await service.my_work(db_session, agency.id, me.id)
         assert result.tasks == []
         assert result.total_open == 0
+
+
+class TestOverview:
+    async def test_composes_every_section(self, db_session) -> None:
+        owner = await make_user(db_session)
+        me = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        await add_agency_member(db_session, agency=agency, user=me, role="member")
+
+        active_project = await make_project(db_session, agency=agency, created_by=owner, status="active")
+        on_hold_project = await make_project(db_session, agency=agency, created_by=owner, status="on_hold")
+
+        task = await make_task(db_session, project=active_project, title="Assigned to me")
+        task.assignee_id = me.id
+
+        invoice = await make_invoice(db_session, agency=agency, created_by=owner)
+        await issue_invoice(db_session, invoice, issued_by=owner)
+        invoice.due_date = date.today() - timedelta(days=3)
+
+        await log_agency_activity(
+            db_session, agency.id, category="team", event_type="member_joined", summary="Someone joined", actor=owner
+        )
+
+        conversation = await make_conversation(
+            db_session, agency=agency, creator=owner, others=[me], initial_message="Hello team"
+        )
+        await db_session.commit()
+
+        overview = await service.overview(db_session, agency, me, viewer_is_admin=False)
+
+        assert overview.projects_total == 2
+        assert overview.projects_active == 1
+        assert [p.id for p in overview.on_hold_projects] == [on_hold_project.id]
+
+        assert overview.clients_total >= 1
+
+        assert overview.invoice_summary.overdue_count == 1
+        assert len(overview.overdue_invoices) == 1
+        assert overview.overdue_invoices[0].id == invoice.id
+
+        assert overview.unread_messages == 1
+        assert conversation.id is not None  # sanity: conversation was created
+
+        assert overview.my_work.total_open == 1
+        assert overview.my_work.tasks[0].title == "Assigned to me"
+
+        # Other service calls above (create_project, create_invoice, ...) log
+        # their own activity too — just check ours made it into the rollup,
+        # capped at RECENT_ACTIVITY_LIMIT.
+        assert len(overview.recent_activity) <= service.RECENT_ACTIVITY_LIMIT
+        assert "Someone joined" in {entry.summary for entry in overview.recent_activity}
+
+    async def test_caps_on_hold_and_overdue_lists(self, db_session) -> None:
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+
+        for i in range(service.ON_HOLD_PROJECTS_LIMIT + 2):
+            await make_project(db_session, agency=agency, created_by=owner, name=f"On hold {i}", status="on_hold")
+        for _i in range(service.OVERDUE_INVOICES_LIMIT + 2):
+            invoice = await make_invoice(db_session, agency=agency, created_by=owner)
+            await issue_invoice(db_session, invoice, issued_by=owner)
+            invoice.due_date = date.today() - timedelta(days=1)
+        await db_session.commit()
+
+        overview = await service.overview(db_session, agency, owner, viewer_is_admin=True)
+
+        assert overview.projects_total == service.ON_HOLD_PROJECTS_LIMIT + 2
+        assert len(overview.on_hold_projects) == service.ON_HOLD_PROJECTS_LIMIT
+        assert len(overview.overdue_invoices) == service.OVERDUE_INVOICES_LIMIT
+        assert overview.invoice_summary.overdue_count == service.OVERDUE_INVOICES_LIMIT + 2

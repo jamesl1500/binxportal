@@ -580,6 +580,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agencies/{agency_id}/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Dashboard Overview */
+        get: operations["dashboard_overview_agencies__agency_id__dashboard_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agencies/{agency_id}/invitations": {
         parameters: {
             query?: never;
@@ -3398,6 +3415,32 @@ export interface components {
             project_id?: string | null;
             /** Title */
             title?: string | null;
+        };
+        /**
+         * DashboardRead
+         * @description One-shot aggregate for the Overview tab — replaces what used to be 7
+         *     separate agency-scoped requests (projects, clients, invoice summary,
+         *     overdue invoices, activity, unread count, my work) with a single call.
+         */
+        DashboardRead: {
+            /** Clients Active */
+            clients_active: number;
+            /** Clients Total */
+            clients_total: number;
+            invoice_summary: components["schemas"]["InvoiceSummaryRead"];
+            my_work: components["schemas"]["MyWorkRead"];
+            /** On Hold Projects */
+            on_hold_projects: components["schemas"]["ProjectRead"][];
+            /** Overdue Invoices */
+            overdue_invoices: components["schemas"]["InvoiceRead"][];
+            /** Projects Active */
+            projects_active: number;
+            /** Projects Total */
+            projects_total: number;
+            /** Recent Activity */
+            recent_activity: components["schemas"]["ActivityLogRead"][];
+            /** Unread Messages */
+            unread_messages: number;
         };
         /** DeleteAccountRequest */
         DeleteAccountRequest: {
@@ -6572,6 +6615,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AgencyProfileRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dashboard_overview_agencies__agency_id__dashboard_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardRead"];
                 };
             };
             /** @description Validation Error */

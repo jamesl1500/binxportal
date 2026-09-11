@@ -13,13 +13,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getCurrentAgencyContext } from "@/lib/agencies";
-import { getAgencyClients } from "@/lib/clients";
-import { getMyWork } from "@/lib/dashboard";
+import { getDashboard } from "@/lib/dashboard";
 import { formatMoneyCents } from "@/lib/money";
-import { getInvoices, getInvoiceSummary } from "@/lib/invoicing";
-import { getUnreadMessageCount } from "@/lib/messaging";
-import { getAgencyActivity } from "@/lib/activity";
-import { getAgencyProjects } from "@/lib/projects";
 import ClientStatGrid, { type ClientStat } from "@/components/clients/ClientStatGrid/ClientStatGrid";
 import AiBriefingCard from "@/components/dashboard/AiBriefingCard/AiBriefingCard";
 import AttentionCard from "@/components/dashboard/AttentionCard/AttentionCard";
@@ -35,38 +30,37 @@ const DashboardOverviewPage = async () => {
   }
   const agencyId = currentAgency.id;
 
-  const [projects, summary, overdueInvoices, activity, clients, unreadMessages, myWork] = await Promise.all([
-    getAgencyProjects(agencyId),
-    getInvoiceSummary(agencyId),
-    getInvoices(agencyId, { status: "overdue" }),
-    getAgencyActivity(agencyId, { limit: 6 }),
-    getAgencyClients(agencyId),
-    getUnreadMessageCount(agencyId),
-    getMyWork(agencyId).catch(() => ({ tasks: [], total_open: 0, overdue_count: 0, due_soon_count: 0 })),
-  ]);
+  const overview = await getDashboard(agencyId);
+  const {
+    on_hold_projects: onHoldProjects,
+    overdue_invoices: overdueInvoices,
+    recent_activity: activity,
+    my_work: myWork,
+  } = overview;
 
   const currency = "USD";
-  const activeProjects = projects.filter((project) => project.status === "active").length;
-  const onHoldProjects = projects.filter((project) => project.status === "on_hold");
-  const activeClients = clients.filter((client) => client.is_active).length;
 
   const stats: ClientStat[] = [
-    { label: "Active projects", value: String(activeProjects), hint: `${projects.length} total` },
+    {
+      label: "Active projects",
+      value: String(overview.projects_active),
+      hint: `${overview.projects_total} total`,
+    },
     {
       label: "Outstanding",
-      value: formatMoneyCents(summary.outstanding_cents, currency),
-      hint: `${summary.open_count} open`,
-      tone: summary.outstanding_cents > 0 ? "warn" : "positive",
+      value: formatMoneyCents(overview.invoice_summary.outstanding_cents, currency),
+      hint: `${overview.invoice_summary.open_count} open`,
+      tone: overview.invoice_summary.outstanding_cents > 0 ? "warn" : "positive",
     },
     {
       label: "Overdue",
-      value: formatMoneyCents(summary.overdue_cents, currency),
-      hint: `${summary.overdue_count} invoice${summary.overdue_count === 1 ? "" : "s"}`,
-      tone: summary.overdue_cents > 0 ? "warn" : "positive",
+      value: formatMoneyCents(overview.invoice_summary.overdue_cents, currency),
+      hint: `${overview.invoice_summary.overdue_count} invoice${overview.invoice_summary.overdue_count === 1 ? "" : "s"}`,
+      tone: overview.invoice_summary.overdue_cents > 0 ? "warn" : "positive",
     },
-    { label: "Active clients", value: String(activeClients), hint: `${clients.length} total` },
+    { label: "Active clients", value: String(overview.clients_active), hint: `${overview.clients_total} total` },
     { label: "My open tasks", value: String(myWork.total_open), hint: `${myWork.overdue_count} overdue` },
-    { label: "Unread messages", value: String(unreadMessages) },
+    { label: "Unread messages", value: String(overview.unread_messages) },
   ];
 
   return (
@@ -96,7 +90,7 @@ const DashboardOverviewPage = async () => {
               View all
             </Link>
           </div>
-          <ActivityTeaser entries={activity.items} />
+          <ActivityTeaser entries={activity} />
         </section>
       </div>
 

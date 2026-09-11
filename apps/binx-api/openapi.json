@@ -3073,6 +3073,72 @@
         "title": "ConversationUpdate",
         "type": "object"
       },
+      "DashboardRead": {
+        "description": "One-shot aggregate for the Overview tab \u2014 replaces what used to be 7\nseparate agency-scoped requests (projects, clients, invoice summary,\noverdue invoices, activity, unread count, my work) with a single call.",
+        "properties": {
+          "clients_active": {
+            "title": "Clients Active",
+            "type": "integer"
+          },
+          "clients_total": {
+            "title": "Clients Total",
+            "type": "integer"
+          },
+          "invoice_summary": {
+            "$ref": "#/components/schemas/InvoiceSummaryRead"
+          },
+          "my_work": {
+            "$ref": "#/components/schemas/MyWorkRead"
+          },
+          "on_hold_projects": {
+            "items": {
+              "$ref": "#/components/schemas/ProjectRead"
+            },
+            "title": "On Hold Projects",
+            "type": "array"
+          },
+          "overdue_invoices": {
+            "items": {
+              "$ref": "#/components/schemas/InvoiceRead"
+            },
+            "title": "Overdue Invoices",
+            "type": "array"
+          },
+          "projects_active": {
+            "title": "Projects Active",
+            "type": "integer"
+          },
+          "projects_total": {
+            "title": "Projects Total",
+            "type": "integer"
+          },
+          "recent_activity": {
+            "items": {
+              "$ref": "#/components/schemas/ActivityLogRead"
+            },
+            "title": "Recent Activity",
+            "type": "array"
+          },
+          "unread_messages": {
+            "title": "Unread Messages",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "projects_total",
+          "projects_active",
+          "on_hold_projects",
+          "clients_total",
+          "clients_active",
+          "invoice_summary",
+          "overdue_invoices",
+          "unread_messages",
+          "my_work",
+          "recent_activity"
+        ],
+        "title": "DashboardRead",
+        "type": "object"
+      },
       "DeleteAccountRequest": {
         "properties": {
           "current_password": {
@@ -10423,6 +10489,54 @@
         "summary": "Upload Cover",
         "tags": [
           "agencies"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/dashboard": {
+      "get": {
+        "operationId": "dashboard_overview_agencies__agency_id__dashboard_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Dashboard Overview",
+        "tags": [
+          "dashboard"
         ]
       }
     },
