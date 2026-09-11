@@ -136,7 +136,14 @@ export class CiCdStack extends cdk.Stack {
         actions: ["ssm:SendCommand"],
         resources: [
           instanceArn,
-          cdk.Arn.format({ service: "ssm", resource: "document", resourceName: "AWS-RunShellScript" }, this),
+          // AWS-owned public documents (Owner: "Amazon") live under an EMPTY
+          // account segment — arn:aws:ssm:us-east-2::document/AWS-RunShellScript,
+          // not .../574247905173:document/... Confirmed via `aws ssm
+          // list-documents --filters Key=Name,Values=AWS-RunShellScript`
+          // (Owner: Amazon) after this exact mismatch caused a live
+          // AccessDeniedException on ssm:SendCommand — cdk.Arn.format
+          // defaults `account` to the stack's own account otherwise.
+          cdk.Arn.format({ service: "ssm", resource: "document", resourceName: "AWS-RunShellScript", account: "" }, this),
         ],
       }),
     );
