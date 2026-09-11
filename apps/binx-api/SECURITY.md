@@ -39,4 +39,3 @@ item lands or a new one is found.
 | Low | **JWT `iss` / `aud` / `jti`** | Access tokens carry only `sub` / `exp` / `type` / `role`. Add issuer+audience; a `jti` + denylist would allow pre-expiry revocation (currently a compromised access token is valid for its full 30 min). |
 | Low | **CAPTCHA / proof-of-work on signup** | Nothing stops scripted account creation beyond the 10/hr IP limit. |
 | Low | **2FA (TOTP)** | Not started. |
-| — | **Pre-existing Alembic drift** | `alembic check` flags `users.created_at` (removed from the model, still in the schema) and several unnamed unique constraints. Predates this work; needs a decision (drop the column, or restore it) before the migrations CI job can go green. |

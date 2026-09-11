@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String, Uuid
+from sqlalchemy import DateTime, ForeignKey, String, Uuid, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from binx_api.core.database import Base
@@ -28,6 +28,11 @@ class User(Base):
 
     # Users will be identified by a UUID, which is more secure than an integer ID
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+
+    # Overrides Base.created_at (which is nullable by default — no `Mapped[]`
+    # annotation to infer NOT NULL from) to match an existing NOT NULL
+    # constraint on this column from an earlier migration.
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("CURRENT_TIMESTAMP"))
 
     # User name
     user_name: Mapped[str] = mapped_column(String(255), unique=True, index=True)
