@@ -9,14 +9,37 @@ vi.mock("@/app/(app)/clients/actions", () => ({
   uploadClientLogoAction: vi.fn(),
   removeClientLogoAction: vi.fn(),
 }));
+// Exposes trigger buttons so the closures ClientBrandingForm passes as
+// onUpload/onRemove (which build the FormData and call the real actions)
+// are actually exercised, not just defined.
 vi.mock("@/components/forms/agency/ImageUploadField/ImageUploadField", () => ({
-  default: ({ label }: { label: string }) => <div>image-field:{label}</div>,
+  default: ({
+    label,
+    onUpload,
+    onRemove,
+  }: {
+    label: string;
+    onUpload: (file: File) => Promise<{ error?: string }>;
+    onRemove: () => Promise<{ error?: string }>;
+  }) => (
+    <div>
+      image-field:{label}
+      <button onClick={() => onUpload(new File(["x"], "f.png", { type: "image/png" }))}>trigger-upload</button>
+      <button onClick={() => onRemove()}>trigger-remove</button>
+    </div>
+  ),
 }));
 
-import { updateClientBrandingAction } from "@/app/(app)/clients/actions";
+import {
+  removeClientLogoAction,
+  updateClientBrandingAction,
+  uploadClientLogoAction,
+} from "@/app/(app)/clients/actions";
 import ClientBrandingForm from "./ClientBrandingForm";
 
 const mocked = vi.mocked(updateClientBrandingAction);
+const mockedUpload = vi.mocked(uploadClientLogoAction);
+const mockedRemove = vi.mocked(removeClientLogoAction);
 const branding = {
   client_id: "c1",
   primary_color: "#112233",
@@ -50,6 +73,16 @@ describe("ClientBrandingForm", () => {
     expect(mocked).not.toHaveBeenCalled();
   });
 
+  it("rejects a non-hex accent colour before calling the action", async () => {
+    render(<ClientBrandingForm agencyId="a1" clientId="c1" branding={branding} />);
+    const colorText = screen.getByLabelText("Accent colour");
+    await userEvent.clear(colorText);
+    await userEvent.type(colorText, "green");
+    await userEvent.click(screen.getByRole("button", { name: "Save branding" }));
+    expect(screen.getByText(/accent colour must be a hex value/i)).toBeInTheDocument();
+    expect(mocked).not.toHaveBeenCalled();
+  });
+
   it("saves trimmed values and shows the confirmation", async () => {
     render(<ClientBrandingForm agencyId="a1" clientId="c1" branding={branding} />);
     await userEvent.click(screen.getByRole("button", { name: "Save branding" }));
@@ -75,5 +108,19 @@ describe("ClientBrandingForm", () => {
     render(<ClientBrandingForm agencyId="a1" clientId="c1" branding={branding} />);
     await userEvent.click(screen.getByRole("button", { name: "Save branding" }));
     expect(await screen.findByText("Nope")).toBeInTheDocument();
+  });
+
+  it("uploads the logo via the wired-up action, building the form data", async () => {
+    mockedUpload.mockResolvedValueOnce({} as never);
+    render(<ClientBrandingForm agencyId="a1" clientId="c1" branding={branding} />);
+    await userEvent.click(screen.getByRole("button", { name: "trigger-upload" }));
+    expect(mockedUpload).toHaveBeenCalledWith("a1", "c1", expect.any(FormData));
+  });
+
+  it("removes the logo via the wired-up action", async () => {
+    mockedRemove.mockResolvedValueOnce({} as never);
+    render(<ClientBrandingForm agencyId="a1" clientId="c1" branding={branding} />);
+    await userEvent.click(screen.getByRole("button", { name: "trigger-remove" }));
+    expect(mockedRemove).toHaveBeenCalledWith("a1", "c1");
   });
 });

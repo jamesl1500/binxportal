@@ -1,11 +1,15 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockedPathname = vi.fn(() => "/portal");
 vi.mock("next/navigation", () => ({ usePathname: () => mockedPathname() }));
 vi.mock("@/app/(app)/actions", () => ({ logoutAction: vi.fn() }));
 
+import { logoutAction } from "@/app/(app)/actions";
 import PortalHeader from "./PortalHeader";
+
+const mockedLogout = vi.mocked(logoutAction);
 
 beforeEach(() => {
   mockedPathname.mockReturnValue("/portal");
@@ -61,5 +65,22 @@ describe("PortalHeader", () => {
 
     const logo = screen.getByRole("img", { name: /Pixel Forge logo/i });
     expect(logo).toHaveAttribute("src", "/api/portal/logo?v=abc123");
+  });
+
+  it("signs out when the Sign out button is clicked", async () => {
+    mockedLogout.mockResolvedValueOnce(undefined as never);
+    const user = userEvent.setup();
+    render(
+      <PortalHeader
+        agencyName="Pixel Forge"
+        clientName="Northwind"
+        contactName="Casey"
+        hasLogo={false}
+        logoVersion={null}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Sign out" }));
+    expect(mockedLogout).toHaveBeenCalled();
   });
 });
