@@ -8,8 +8,10 @@
  */
 import React from "react";
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { SITE } from "@/lib/site";
+import BinxMark from "@/components/BinxMark/BinxMark";
 
 import styles from "./layout.module.scss";
 
@@ -42,10 +44,10 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
       <aside className={styles.panel}>
         <div className={styles.panelGlow} aria-hidden="true" />
 
-        <div className={styles.brand}>
-          <span className={styles.brandMark} aria-hidden="true" />
-          Binx
-        </div>
+        <Link href="/" className={styles.brand}>
+          <BinxMark className={styles.brandMark} />
+          {SITE.name}
+        </Link>
 
         <div>
           <h1 className={styles.headline}>Everything your team needs, in one place.</h1>

@@ -42,17 +42,18 @@
   display: flex;
   align-items: center;
   gap: t.$space-2;
+  width: fit-content;
   font-family: var(--font-heading);
   font-size: t.$font-size-lg;
   letter-spacing: t.$tracking-wide;
+  color: inherit;
+  text-decoration: none;
 }
 
 .brandMark {
   width: 1.5rem;
   height: 1.5rem;
-  border-radius: t.$radius-sm;
-  background: t.$color-panel-foreground;
-  display: block;
+  flex-shrink: 0;
 }
 
 .headline {
