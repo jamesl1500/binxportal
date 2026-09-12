@@ -21,6 +21,9 @@ export interface DnsStackProps extends cdk.StackProps {
  * from here.
  */
 export class DnsStack extends cdk.Stack {
+  /** Exposed so other stacks (EmailStack's SES DKIM/MAIL FROM records) can add to this same zone. */
+  public readonly zone: route53.HostedZone;
+
   constructor(scope: Construct, id: string, props: DnsStackProps) {
     super(scope, id, props);
 
@@ -28,6 +31,7 @@ export class DnsStack extends cdk.Stack {
       zoneName: props.domainName,
       comment: "binxportal.com — the single EC2 instance behind this app",
     });
+    this.zone = zone;
 
     new route53.ARecord(this, "ApexRecord", {
       zone,

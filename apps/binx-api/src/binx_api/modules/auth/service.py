@@ -119,7 +119,7 @@ async def signup(
     # An invalid/expired one is simply a dead link once they land back on
     # /auth/portal-invite, where previewPortalInvitation already surfaces
     # that error; nothing here needs to know or care.
-    send_verification_email(to=user.email, token=token, portal_invite_token=portal_invite_token)
+    await send_verification_email(to=user.email, token=token, portal_invite_token=portal_invite_token)
     return user
 
 
@@ -143,7 +143,7 @@ async def resend_verification(db: AsyncSession, email: str) -> None:
     if user is None or user.is_verified:
         return
     token = await _issue_token(db, user, TokenPurpose.EMAIL_VERIFICATION)
-    send_verification_email(to=user.email, token=token)
+    await send_verification_email(to=user.email, token=token)
 
 
 async def login(db: AsyncSession, email: str, password: str) -> TokenPair:
@@ -203,7 +203,7 @@ async def request_password_reset(db: AsyncSession, email: str) -> None:
     if user is None:
         return
     token = await _issue_token(db, user, TokenPurpose.PASSWORD_RESET)
-    send_password_reset_email(to=user.email, token=token)
+    await send_password_reset_email(to=user.email, token=token)
 
 
 async def reset_password(db: AsyncSession, raw_token: str, new_password: str) -> None:
@@ -226,7 +226,7 @@ async def request_email_change(db: AsyncSession, user: User, *, current_password
         raise HTTPException(status.HTTP_409_CONFLICT, "Email already registered")
 
     token = await _issue_token(db, user, TokenPurpose.EMAIL_CHANGE, new_email=new_email)
-    send_email_change_email(to=new_email, token=token)
+    await send_email_change_email(to=new_email, token=token)
     await activity_service.log_account_activity(
         db, user, event_type="email_change_requested", summary=f"Requested an email change to {new_email}"
     )

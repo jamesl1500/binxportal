@@ -12,6 +12,16 @@ export interface ComputeStackProps extends cdk.StackProps {
   readonly ecrRepositories: ecr.IRepository[];
   /** Granted read access — deploy/redeploy.sh fetches this to build .env. */
   readonly appSecret: secretsmanager.ISecret;
+  /**
+   * Granted ses:SendEmail/SendRawEmail. Plain ARN strings (built from the
+   * known account/region/domain — see bin/binxportal.ts), not a reference to
+   * EmailStack's own construct: EmailStack already depends on DnsStack,
+   * which depends on this stack's Elastic IP, so granting the other
+   * direction (this stack -> EmailStack) would create a cycle. The ARN
+   * format is SES's own stable, documented shape, not something that needs
+   * the actual resource to resolve it.
+   */
+  readonly sesIdentityArns: string[];
 }
 
 /**
@@ -57,6 +67,13 @@ export class ComputeStack extends cdk.Stack {
       repo.grantPull(this.instanceRole);
     }
     props.appSecret.grantRead(this.instanceRole);
+
+    this.instanceRole.addToPolicy(
+      new iam.PolicyStatement({
+        actions: ["ses:SendEmail", "ses:SendRawEmail"],
+        resources: props.sesIdentityArns,
+      }),
+    );
 
     const instanceProfile = new iam.CfnInstanceProfile(this, "InstanceProfile", {
       instanceProfileName: "binxportal-ec2",

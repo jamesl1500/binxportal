@@ -98,6 +98,16 @@ class Settings(BaseSettings):
     # invoicing/service.py::start_invoice_checkout.
     stripe_application_fee_bps: int = 0
 
+    # --- Email (Amazon SES) --------------------------------------------------
+    # Unset (the default — every dev/test environment) means email is cleanly
+    # off: core/email.py logs instead of sending, same pattern as
+    # anthropic_api_key/stripe_secret_key above. Set in production via a plain
+    # (non-secret) env var — see docker-compose.prod.yml.
+    ses_from_email: str | None = None
+    # Explicit rather than relying on boto3's IMDS region auto-detection,
+    # which isn't guaranteed across botocore versions/configs.
+    aws_region: str = "us-east-2"
+
 
 @lru_cache
 def get_settings() -> Settings:

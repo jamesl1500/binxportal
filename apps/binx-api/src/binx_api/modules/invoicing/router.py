@@ -265,7 +265,7 @@ async def issue_invoice(
         assert client is not None
         recipient = client.billing_email or client.primary_contact_email
         if recipient:
-            send_invoice_issued_email(
+            await send_invoice_issued_email(
                 to=recipient,
                 agency_name=agency.name,
                 invoice_number=invoice.number,

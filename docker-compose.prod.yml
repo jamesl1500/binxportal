@@ -56,6 +56,14 @@ services:
       JWT_SECRET: ${JWT_SECRET:?set in .env}
       FRONTEND_URL: https://www.binxportal.com
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # Amazon SES — not a secret (just a verified sending address + the
+      # region), so it's a plain literal here rather than routed through
+      # Secrets Manager. boto3 gets its actual AWS credentials from the
+      # instance's own IAM role (infra/lib/compute-stack.ts's SES grant), not
+      # from any env var. Unset would fall back to console-logging emails —
+      # never actually unset in production, since this line is a literal.
+      SES_FROM_EMAIL: "Binx Portal <noreply@mail.binxportal.com>"
+      AWS_REGION: us-east-2
       # Local-disk upload dirs land on the named `uploads` volume below —
       # survives container replacement, backed up by the EBS snapshot plan
       # (see infra/lib/backup-stack.ts) alongside the db/redis volumes.

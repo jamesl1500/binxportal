@@ -6,6 +6,7 @@ import { BackupStack } from "../lib/backup-stack";
 import { CiCdStack } from "../lib/cicd-stack";
 import { ComputeStack } from "../lib/compute-stack";
 import { DnsStack } from "../lib/dns-stack";
+import { EmailStack } from "../lib/email-stack";
 import { SecretsStack } from "../lib/secrets-stack";
 
 // Everything targets the account/region the existing EC2 instance already
@@ -17,6 +18,9 @@ const env: cdk.Environment = {
 };
 
 const DOMAIN_NAME = "binxportal.com";
+// Kept separate from the root domain so a sending-reputation problem never
+// touches binxportal.com's own DNS/web presence — see EmailStack's docstring.
+const MAIL_DOMAIN = "mail.binxportal.com";
 // The one instance this whole app wraps — created by hand, not by CDK. See
 // ComputeStack's docstring for why an ec2.Instance L2 construct isn't used.
 const INSTANCE_ID = "i-025b868d7d0487155";
@@ -47,19 +51,34 @@ const cicd = new CiCdStack(app, "BinxportalCiCd", {
   appSecret: secrets.secret,
 });
 
+// SES identity ARNs are a stable, documented shape
+// (arn:aws:ses:<region>:<account>:identity/<name>) — built as a plain string
+// so ComputeStack's grant doesn't need to reference EmailStack's own
+// construct, which would create a cyclic stack dependency (EmailStack ->
+// DnsStack -> ComputeStack -> EmailStack). See ComputeStackProps.sesIdentityArns.
+const SES_IDENTITY_ARN = `arn:aws:ses:${env.region}:${env.account}:identity/${MAIL_DOMAIN}`;
+
 const compute = new ComputeStack(app, "BinxportalCompute", {
   env,
   description: "Elastic IP + SSM access role for the existing binxportal EC2 instance",
   instanceId: INSTANCE_ID,
   ecrRepositories: [cicd.apiRepository, cicd.webRepository],
   appSecret: secrets.secret,
+  sesIdentityArns: [SES_IDENTITY_ARN],
 });
 
-new DnsStack(app, "BinxportalDns", {
+const dns = new DnsStack(app, "BinxportalDns", {
   env,
   description: "Route 53 hosted zone + records for binxportal.com",
   domainName: DOMAIN_NAME,
   targetIpAddress: compute.elasticIp.attrPublicIp,
+});
+
+new EmailStack(app, "BinxportalEmail", {
+  env,
+  description: "SES sending identity for mail.binxportal.com + the DNS records it needs",
+  mailDomain: MAIL_DOMAIN,
+  hostedZone: dns.zone,
 });
 
 new BackupStack(app, "BinxportalBackup", {

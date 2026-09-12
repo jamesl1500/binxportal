@@ -370,7 +370,7 @@ async def create_invitation(
     invitation, raw_token = await service.create_invitation(
         db, agency, email=data.email, role=data.role, invited_by=current_user
     )
-    send_agency_invitation_email(
+    await send_agency_invitation_email(
         to=data.email, agency_name=agency.name, inviter_name=current_user.full_name, token=raw_token
     )
     await activity_service.log_agency_activity(
@@ -391,7 +391,7 @@ async def resend_invitation(
     agency, _role = agency_and_role
     invitation = await service.get_agency_invitation_or_404(db, agency.id, invitation_id)
     invitation, raw_token = await service.resend_invitation(db, agency, invitation, invited_by=current_user)
-    send_agency_invitation_email(
+    await send_agency_invitation_email(
         to=invitation.email, agency_name=agency.name, inviter_name=current_user.full_name, token=raw_token
     )
     await activity_service.log_agency_activity(
@@ -663,7 +663,7 @@ async def invite_client_contact(
     invitation, raw_token = await portal_service.create_client_invitation(
         db, agency, client, email=data.email, invited_by=current_user
     )
-    send_client_invitation_email(
+    await send_client_invitation_email(
         to=data.email,
         agency_name=agency.name,
         client_name=client.name,
@@ -703,7 +703,7 @@ async def resend_client_contact_invitation(
     invitation, raw_token = await portal_service.resend_client_invitation(
         db, agency, client, invitation, invited_by=current_user
     )
-    send_client_invitation_email(
+    await send_client_invitation_email(
         to=invitation.email,
         agency_name=agency.name,
         client_name=client.name,

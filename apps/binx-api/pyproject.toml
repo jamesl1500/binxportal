@@ -13,6 +13,10 @@ dependencies = [
     "asyncpg>=0.31.0",
     # passlib 1.7.4 (unmaintained) probes bcrypt.__about__, which bcrypt>=4.1 removed.
     "bcrypt<4.1",
+    # Sends real email via SES when SES_FROM_EMAIL is set (core/email.py) —
+    # the sync SES call runs in a thread (asyncio.to_thread), so no
+    # async-native AWS SDK is needed.
+    "boto3>=1.42.0",
     "fastapi>=0.141.1",
     "passlib[bcrypt]>=1.7.4",
     "pydantic-settings>=2.15.0",
