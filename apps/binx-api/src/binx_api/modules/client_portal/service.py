@@ -18,7 +18,11 @@ from binx_api.core.security import generate_opaque_token, hash_token
 from binx_api.modules.activity import service as activity_service
 from binx_api.modules.activity.models import CATEGORY_CLIENTS
 from binx_api.modules.agencies.models import Agency, AgencyClient
-from binx_api.modules.agencies.service import _image_version, get_or_create_agency_profile
+from binx_api.modules.agencies.service import (
+    _image_version,
+    get_or_create_agency_profile,
+    get_or_create_client_branding,
+)
 from binx_api.modules.client_portal.models import (
     CONTACT_INVITATION_ACCEPTED,
     CONTACT_INVITATION_PENDING,
@@ -361,5 +365,27 @@ async def portal_project_detail(db: AsyncSession, project: Project) -> tuple[Por
     return await _project_progress(db, project.id)
 
 
-def portal_client_read(client: AgencyClient) -> PortalClientRead:
-    return PortalClientRead(id=client.id, name=client.name)
+async def portal_client_read(db: AsyncSession, client: AgencyClient) -> PortalClientRead:
+    branding = await get_or_create_client_branding(db, client)
+    return PortalClientRead(
+        id=client.id,
+        name=client.name,
+        has_logo=branding.logo_storage_path is not None,
+        logo_version=_image_version(branding.logo_storage_path),
+        primary_color=branding.primary_color,
+        accent_color=branding.accent_color,
+        welcome_message=branding.welcome_message,
+    )
+
+
+async def portal_logo_path(db: AsyncSession, agency: Agency, client: AgencyClient) -> tuple[str, str] | None:
+    """The (storage_path, mime_type) for the client's own logo, or the
+    agency's own as a fallback — whichever `GET /portal/logo` should stream.
+    None when neither is set."""
+    branding = await get_or_create_client_branding(db, client)
+    if branding.logo_storage_path:
+        return branding.logo_storage_path, branding.logo_mime_type or "image/png"
+    profile = await get_or_create_agency_profile(db, agency)
+    if profile.logo_storage_path:
+        return profile.logo_storage_path, profile.logo_mime_type or "image/png"
+    return None

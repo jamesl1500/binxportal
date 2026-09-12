@@ -74,10 +74,12 @@
   text-decoration: none;
   border-radius: t.$radius-sm;
   transition: color t.$duration-fast t.$ease-standard, background-color t.$duration-fast t.$ease-standard;
+  border: 1px solid transparent;
 
   &:hover {
     color: t.$color-ink;
     background: rgba(10, 10, 11, 0.04);
+    border: 1px solid rgba(10, 10, 11, 0.08);
   }
 
   &[data-active] {

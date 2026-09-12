@@ -3,19 +3,10 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
-vi.mock("@/app/(app)/settings/actions", () => ({
-  uploadAgencyImageAction: vi.fn(),
-  removeAgencyImageAction: vi.fn(),
-}));
 const toastError = vi.fn();
 vi.mock("sonner", () => ({ toast: { error: (...a: unknown[]) => toastError(...a) } }));
 
-import { removeAgencyImageAction, uploadAgencyImageAction } from "@/app/(app)/settings/actions";
-
 import ImageUploadField from "./ImageUploadField";
-
-const mockedUpload = vi.mocked(uploadAgencyImageAction);
-const mockedRemove = vi.mocked(removeAgencyImageAction);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -23,14 +14,15 @@ beforeEach(() => {
 
 describe("ImageUploadField", () => {
   it("rejects a non-image with a toast and no upload", async () => {
+    const onUpload = vi.fn();
     render(
       <ImageUploadField
-        agencyId="a1"
-        kind="logo"
         label="Logo"
         hasImage={false}
-        version={null}
+        imageUrl="/api/agencies/a1/logo"
         aspect="square"
+        onUpload={onUpload}
+        onRemove={vi.fn()}
       />,
     );
 
@@ -40,44 +32,45 @@ describe("ImageUploadField", () => {
     fireEvent.drop(zone, { dataTransfer: { files: [file] } });
 
     expect(toastError).toHaveBeenCalled();
-    expect(mockedUpload).not.toHaveBeenCalled();
+    expect(onUpload).not.toHaveBeenCalled();
   });
 
   it("uploads a valid image", async () => {
-    mockedUpload.mockResolvedValueOnce({ profile: undefined });
+    const onUpload = vi.fn().mockResolvedValueOnce({});
     const user = userEvent.setup();
     const { container } = render(
       <ImageUploadField
-        agencyId="a1"
-        kind="cover"
         label="Cover"
         hasImage={false}
-        version={null}
+        imageUrl="/api/agencies/a1/cover"
         aspect="wide"
+        onUpload={onUpload}
+        onRemove={vi.fn()}
       />,
     );
 
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
-    await user.upload(input, new File(["bytes"], "cover.png", { type: "image/png" }));
+    const file = new File(["bytes"], "cover.png", { type: "image/png" });
+    await user.upload(input, file);
 
-    expect(mockedUpload).toHaveBeenCalledWith("a1", "cover", expect.any(FormData));
+    expect(onUpload).toHaveBeenCalledWith(file);
   });
 
   it("removes an existing image", async () => {
-    mockedRemove.mockResolvedValueOnce({ profile: undefined });
+    const onRemove = vi.fn().mockResolvedValueOnce({});
     const user = userEvent.setup();
     render(
       <ImageUploadField
-        agencyId="a1"
-        kind="logo"
         label="Logo"
         hasImage
-        version="abc"
+        imageUrl="/api/agencies/a1/logo?v=abc"
         aspect="square"
+        onUpload={vi.fn()}
+        onRemove={onRemove}
       />,
     );
 
     await user.click(screen.getByRole("button", { name: /remove/i }));
-    expect(mockedRemove).toHaveBeenCalledWith("a1", "logo");
+    expect(onRemove).toHaveBeenCalled();
   });
 });

@@ -324,3 +324,66 @@ export async function removeClientContact(
     contactError(error, "Unable to remove the contact");
   }
 }
+
+// ---- Portal branding ----
+
+export type ClientBranding = Schemas["ClientBrandingRead"];
+
+/** Every editable branding field — the form submits the full set each save, same as AgencyProfileInput. */
+export type ClientBrandingInput = Partial<Omit<ClientBranding, "client_id" | "has_logo" | "logo_version">>;
+
+export async function getClientBranding(agencyId: string, clientId: string): Promise<ClientBranding> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.get<ClientBranding>(`/agencies/${agencyId}/clients/${clientId}/branding`, { headers });
+    return data;
+  } catch (error) {
+    contactError(error, "Unable to load branding");
+  }
+}
+
+export async function updateClientBranding(
+  agencyId: string,
+  clientId: string,
+  input: ClientBrandingInput,
+): Promise<ClientBranding> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.patch<ClientBranding>(
+      `/agencies/${agencyId}/clients/${clientId}/branding`,
+      input,
+      { headers },
+    );
+    return data;
+  } catch (error) {
+    contactError(error, "Unable to update branding");
+  }
+}
+
+export async function uploadClientLogo(agencyId: string, clientId: string, file: File): Promise<ClientBranding> {
+  const headers = await authHeader();
+  const formData = new FormData();
+  formData.append("file", file);
+  try {
+    const { data } = await api.put<ClientBranding>(
+      `/agencies/${agencyId}/clients/${clientId}/branding/logo`,
+      formData,
+      { headers: { ...headers, "Content-Type": undefined } },
+    );
+    return data;
+  } catch (error) {
+    contactError(error, "Unable to upload the logo");
+  }
+}
+
+export async function removeClientLogo(agencyId: string, clientId: string): Promise<ClientBranding> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.delete<ClientBranding>(`/agencies/${agencyId}/clients/${clientId}/branding/logo`, {
+      headers,
+    });
+    return data;
+  } catch (error) {
+    contactError(error, "Unable to remove the logo");
+  }
+}

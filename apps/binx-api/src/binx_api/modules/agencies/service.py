@@ -24,6 +24,7 @@ from binx_api.modules.agencies.models import (
     AgencyInvitation,
     AgencyMember,
     AgencyProfile,
+    ClientPortalBranding,
 )
 from binx_api.modules.billing import service as billing_service
 from binx_api.modules.notifications import service as notifications_service
@@ -256,6 +257,69 @@ async def clear_agency_image(db: AsyncSession, agency: Agency, *, kind: str) -> 
     if old_path:
         _unlink_quietly(old_path)
     return profile
+
+
+# ---- Client portal branding ------------------------------------------
+
+
+async def get_or_create_client_branding(db: AsyncSession, client: AgencyClient) -> ClientPortalBranding:
+    result = await db.execute(select(ClientPortalBranding).where(ClientPortalBranding.client_id == client.id))
+    branding = result.scalar_one_or_none()
+    if branding is None:
+        branding = ClientPortalBranding(client_id=client.id)
+        db.add(branding)
+        await db.commit()
+        await db.refresh(branding)
+    return branding
+
+
+# Partial patch — only the fields the request actually sent (see
+# ClientBrandingUpdate / update_agency_profile's matching pattern).
+async def update_client_branding(db: AsyncSession, client: AgencyClient, *, data: dict) -> ClientPortalBranding:
+    branding = await get_or_create_client_branding(db, client)
+    for field, value in data.items():
+        setattr(branding, field, value)
+    await db.commit()
+    await db.refresh(branding)
+    return branding
+
+
+# Storage layout: {agency_upload_dir}/clients/{client_id}/logo_{uuid}{ext} —
+# nested under the existing agency upload dir rather than a new settings
+# field. Reuses the agency image validation/extension helpers, which are
+# already generic (not agency-specific).
+async def save_client_logo(
+    db: AsyncSession, client: AgencyClient, *, content: bytes, mime_type: str
+) -> ClientPortalBranding:
+    _validate_agency_image(content, mime_type)
+    branding = await get_or_create_client_branding(db, client)
+    old_path = branding.logo_storage_path
+
+    upload_dir = Path(settings.agency_upload_dir) / "clients" / str(client.id)
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    stored_path = upload_dir / f"logo_{uuid.uuid4().hex}{_IMAGE_EXTENSIONS[mime_type]}"
+    stored_path.write_bytes(content)
+
+    branding.logo_storage_path = str(stored_path)
+    branding.logo_mime_type = mime_type
+    await db.commit()
+    await db.refresh(branding)
+
+    if old_path and old_path != str(stored_path):
+        _unlink_quietly(old_path)
+    return branding
+
+
+async def clear_client_logo(db: AsyncSession, client: AgencyClient) -> ClientPortalBranding:
+    branding = await get_or_create_client_branding(db, client)
+    old_path = branding.logo_storage_path
+    branding.logo_storage_path = None
+    branding.logo_mime_type = None
+    await db.commit()
+    await db.refresh(branding)
+    if old_path:
+        _unlink_quietly(old_path)
+    return branding
 
 
 # ---- Members ----
@@ -708,6 +772,7 @@ async def set_client_active(db: AsyncSession, client: AgencyClient, *, is_active
 # taking them with it — caught and turned into a message pointing at the
 # actual next step.
 async def delete_client(db: AsyncSession, client: AgencyClient) -> None:
+    client_id = client.id
     await db.delete(client)
     try:
         await db.commit()
@@ -717,3 +782,6 @@ async def delete_client(db: AsyncSession, client: AgencyClient) -> None:
             status.HTTP_409_CONFLICT,
             "This client still has projects or invoices — reassign or delete those first",
         ) from None
+    # ClientPortalBranding cascades in the DB; only its uploaded logo file
+    # (if any) needs a manual cleanup, same as delete_agency's images.
+    shutil.rmtree(Path(settings.agency_upload_dir) / "clients" / str(client_id), ignore_errors=True)

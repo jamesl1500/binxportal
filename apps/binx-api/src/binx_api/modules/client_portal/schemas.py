@@ -22,6 +22,15 @@ class PortalAgencyRead(BaseModel):
 class PortalClientRead(BaseModel):
     id: uuid.UUID
     name: str
+    # This client's own portal branding, layered over the agency's — see
+    # agencies.service::get_or_create_client_branding. None of these being set
+    # is the normal case; the portal falls back to PortalAgencyRead's own
+    # brand_color/logo (and the app default beyond that).
+    has_logo: bool = False
+    logo_version: str | None = None
+    primary_color: str | None = None
+    accent_color: str | None = None
+    welcome_message: str | None = None
 
 
 class PortalContactRead(BaseModel):

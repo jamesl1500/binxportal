@@ -22,6 +22,8 @@ interface PortalHeaderProps {
   agencyName: string;
   clientName: string;
   contactName: string;
+  hasLogo: boolean;
+  logoVersion: string | null;
 }
 
 const TABS = [
@@ -31,7 +33,7 @@ const TABS = [
   { href: "/portal/messages", label: "Messages" },
 ];
 
-const PortalHeader = ({ agencyName, clientName, contactName }: PortalHeaderProps) => {
+const PortalHeader = ({ agencyName, clientName, contactName, hasLogo, logoVersion }: PortalHeaderProps) => {
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
 
@@ -41,8 +43,18 @@ const PortalHeader = ({ agencyName, clientName, contactName }: PortalHeaderProps
     <header className={styles.header}>
       <div className={styles.inner}>
         <div className={styles.brand}>
-          <span className={styles.agency}>{agencyName}</span>
-          <span className={styles.client}>{clientName} portal</span>
+          {hasLogo && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              className={styles.logo}
+              src={`/api/portal/logo${logoVersion ? `?v=${encodeURIComponent(logoVersion)}` : ""}`}
+              alt={`${agencyName} logo`}
+            />
+          )}
+          <div className={styles.brandText}>
+            <span className={styles.agency}>{agencyName}</span>
+            <span className={styles.client}>{clientName} portal</span>
+          </div>
         </div>
 
         <nav className={styles.nav} aria-label="Client portal">

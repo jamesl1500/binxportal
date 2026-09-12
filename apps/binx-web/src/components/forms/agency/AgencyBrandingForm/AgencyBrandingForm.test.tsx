@@ -4,7 +4,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const refresh = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
-vi.mock("@/app/(app)/settings/actions", () => ({ updateAgencyProfileAction: vi.fn() }));
+vi.mock("@/app/(app)/settings/actions", () => ({
+  updateAgencyProfileAction: vi.fn(),
+  uploadAgencyImageAction: vi.fn(),
+  removeAgencyImageAction: vi.fn(),
+}));
 vi.mock("@/components/forms/agency/ImageUploadField/ImageUploadField", () => ({
   default: ({ label }: { label: string }) => <div>image-field:{label}</div>,
 }));

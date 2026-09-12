@@ -1,11 +1,12 @@
 /**
  * ImageUploadField.tsx
  *
- * A single image slot for the agency logo or cover: shows the current image
- * (or an empty drop zone), a file picker + drag-and-drop, client-side
- * type/size checks, and a "Remove" control. Uploads and removals go straight
- * to their server actions and then `router.refresh()` so the header / switcher
- * pick up the change.
+ * A single image slot: shows the current image (or an empty drop zone), a
+ * file picker + drag-and-drop, client-side type/size checks, and a "Remove"
+ * control. The caller owns where the image lives — it hands this component
+ * the URL to display and the upload/remove actions to call, then
+ * `router.refresh()`s on success. Used for the agency's logo/cover
+ * (AgencyBrandingForm) and a client's own portal logo (ClientBrandingForm).
  *
  * @module apps/binx-web/src/components/forms/agency/ImageUploadField/ImageUploadField.tsx
  * @author Binx.io
@@ -17,32 +18,23 @@ import { useRouter } from "next/navigation";
 import { ImageUp, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { agencyImageUrl, AGENCY_IMAGE_MAX_BYTES, AGENCY_IMAGE_MIME_TYPES, type AgencyImageKind } from "@/lib/agencies-client";
-import { removeAgencyImageAction, uploadAgencyImageAction } from "@/app/(app)/settings/actions";
+import { AGENCY_IMAGE_MAX_BYTES, AGENCY_IMAGE_MIME_TYPES } from "@/lib/agencies-client";
 
 import styles from "./ImageUploadField.module.scss";
 
 interface ImageUploadFieldProps {
-  agencyId: string;
-  kind: AgencyImageKind;
   label: string;
   hint?: string;
   hasImage: boolean;
-  version: string | null;
+  imageUrl: string;
   aspect: "square" | "wide";
+  onUpload: (file: File) => Promise<{ error?: string }>;
+  onRemove: () => Promise<{ error?: string }>;
 }
 
 const MAX_MB = AGENCY_IMAGE_MAX_BYTES / (1024 * 1024);
 
-const ImageUploadField = ({
-  agencyId,
-  kind,
-  label,
-  hint,
-  hasImage,
-  version,
-  aspect,
-}: ImageUploadFieldProps) => {
+const ImageUploadField = ({ label, hint, hasImage, imageUrl, aspect, onUpload, onRemove }: ImageUploadFieldProps) => {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -57,11 +49,9 @@ const ImageUploadField = ({
       toast.error(`Images must be ${MAX_MB}MB or smaller`);
       return;
     }
-    const formData = new FormData();
-    formData.append("file", file);
     setBusy(true);
     try {
-      const result = await uploadAgencyImageAction(agencyId, kind, formData);
+      const result = await onUpload(file);
       if (result.error) toast.error(result.error);
       else router.refresh();
     } finally {
@@ -72,7 +62,7 @@ const ImageUploadField = ({
   const remove = async () => {
     setBusy(true);
     try {
-      const result = await removeAgencyImageAction(agencyId, kind);
+      const result = await onRemove();
       if (result.error) toast.error(result.error);
       else router.refresh();
     } finally {
@@ -103,7 +93,7 @@ const ImageUploadField = ({
       >
         {hasImage ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img className={styles.preview} src={agencyImageUrl(agencyId, kind, version)} alt={`${label} preview`} />
+          <img className={styles.preview} src={imageUrl} alt={`${label} preview`} />
         ) : (
           <span className={styles.placeholder}>
             <ImageUp aria-hidden="true" />

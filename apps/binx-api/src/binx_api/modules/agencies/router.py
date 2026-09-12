@@ -35,6 +35,8 @@ from binx_api.modules.agencies.schemas import (
     AgencyProfileUpdate,
     AgencyRead,
     AgencyUpdate,
+    ClientBrandingRead,
+    ClientBrandingUpdate,
 )
 from binx_api.modules.client_portal import service as portal_service
 from binx_api.modules.client_portal.schemas import (
@@ -87,6 +89,17 @@ def _profile_read(profile: AgencyProfile) -> AgencyProfileRead:
         has_cover=profile.cover_storage_path is not None,
         logo_version=service._image_version(profile.logo_storage_path),
         cover_version=service._image_version(profile.cover_storage_path),
+    )
+
+
+def _client_branding_read(branding) -> ClientBrandingRead:
+    return ClientBrandingRead(
+        client_id=branding.client_id,
+        primary_color=branding.primary_color,
+        accent_color=branding.accent_color,
+        welcome_message=branding.welcome_message,
+        has_logo=branding.logo_storage_path is not None,
+        logo_version=service._image_version(branding.logo_storage_path),
     )
 
 
@@ -525,6 +538,58 @@ async def delete_client(
         target_type="client",
         target_name=client_name,
     )
+
+
+# --- Client portal branding ---
+# Owner/admin only for writes (same split as permanent deletion above); any
+# member can view. The client's own portal contacts consume the same data
+# read-only through GET /portal/context and /portal/logo (client_portal module).
+
+
+@router.get("/{agency_id}/clients/{client_id}/branding", response_model=ClientBrandingRead)
+async def read_client_branding(db: DbSession, client_id: uuid.UUID, agency_and_role: AnyMember) -> ClientBrandingRead:
+    agency, _role = agency_and_role
+    client = await service.get_client_or_404(db, agency.id, client_id)
+    branding = await service.get_or_create_client_branding(db, client)
+    return _client_branding_read(branding)
+
+
+@router.patch("/{agency_id}/clients/{client_id}/branding", response_model=ClientBrandingRead)
+async def update_client_branding(
+    db: DbSession, client_id: uuid.UUID, data: ClientBrandingUpdate, agency_and_role: AgencyAndRole
+) -> ClientBrandingRead:
+    agency, _role = agency_and_role
+    client = await service.get_client_or_404(db, agency.id, client_id)
+    fields = data.model_dump(exclude_unset=True)
+    branding = await service.update_client_branding(db, client, data=fields)
+    return _client_branding_read(branding)
+
+
+@router.put("/{agency_id}/clients/{client_id}/branding/logo", response_model=ClientBrandingRead)
+async def upload_client_logo(
+    db: DbSession, client_id: uuid.UUID, agency_and_role: AgencyAndRole, file: Annotated[UploadFile, File()]
+) -> ClientBrandingRead:
+    agency, _role = agency_and_role
+    client = await service.get_client_or_404(db, agency.id, client_id)
+    branding = await service.save_client_logo(db, client, content=await file.read(), mime_type=file.content_type or "")
+    return _client_branding_read(branding)
+
+
+@router.delete("/{agency_id}/clients/{client_id}/branding/logo", response_model=ClientBrandingRead)
+async def delete_client_logo(db: DbSession, client_id: uuid.UUID, agency_and_role: AgencyAndRole) -> ClientBrandingRead:
+    agency, _role = agency_and_role
+    client = await service.get_client_or_404(db, agency.id, client_id)
+    return _client_branding_read(await service.clear_client_logo(db, client))
+
+
+@router.get("/{agency_id}/clients/{client_id}/branding/logo")
+async def download_client_logo(db: DbSession, client_id: uuid.UUID, agency_and_role: AnyMember):
+    agency, _role = agency_and_role
+    client = await service.get_client_or_404(db, agency.id, client_id)
+    branding = await service.get_or_create_client_branding(db, client)
+    if not branding.logo_storage_path:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No logo set")
+    return FileResponse(path=branding.logo_storage_path, media_type=branding.logo_mime_type or "image/png")
 
 
 # --- Client portal contacts ---

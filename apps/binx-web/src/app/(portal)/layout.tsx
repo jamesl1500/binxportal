@@ -36,9 +36,26 @@ const PortalLayout = async ({ children }: { children: React.ReactNode }) => {
     redirect("/dashboard");
   }
 
+  // A client's own branding overrides the agency's; unset falls back to the
+  // agency's own AgencyProfile brand_color/logo, then the app default — see
+  // client_portal/service.py::portal_client_read / portal_logo_path.
+  const primaryColor = context.client.primary_color ?? context.agency.brand_color ?? undefined;
+  const accentColor = context.client.accent_color ?? undefined;
+  const hasLogo = context.client.has_logo || context.agency.has_logo;
+  const logoVersion = (context.client.has_logo ? context.client.logo_version : context.agency.logo_version) ?? null;
+
   return (
-    <div className={styles.root}>
-      <PortalHeader agencyName={context.agency.name} clientName={context.client.name} contactName={user.full_name} />
+    <div
+      className={styles.root}
+      style={{ "--portal-primary": primaryColor, "--portal-accent": accentColor } as React.CSSProperties}
+    >
+      <PortalHeader
+        agencyName={context.agency.name}
+        clientName={context.client.name}
+        contactName={user.full_name}
+        hasLogo={hasLogo}
+        logoVersion={logoVersion}
+      />
       <main className={styles.content}>{children}</main>
       <Toaster position="bottom-right" richColors />
     </div>

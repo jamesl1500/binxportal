@@ -15,7 +15,12 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import type { AgencyProfile } from "@/lib/agencies";
-import { updateAgencyProfileAction } from "@/app/(app)/settings/actions";
+import { agencyImageUrl } from "@/lib/agencies-client";
+import {
+  removeAgencyImageAction,
+  updateAgencyProfileAction,
+  uploadAgencyImageAction,
+} from "@/app/(app)/settings/actions";
 import ImageUploadField from "@/components/forms/agency/ImageUploadField/ImageUploadField";
 
 import styles from "./AgencyBrandingForm.module.scss";
@@ -63,22 +68,30 @@ const AgencyBrandingForm = ({ agencyId, profile }: AgencyBrandingFormProps) => {
     <div className={styles.wrapper}>
       <div className={styles.images}>
         <ImageUploadField
-          agencyId={agencyId}
-          kind="logo"
           label="Logo"
           hint="Square works best. Shows in the top nav and the agency switcher."
           hasImage={profile.has_logo}
-          version={profile.logo_version}
+          imageUrl={agencyImageUrl(agencyId, "logo", profile.logo_version)}
           aspect="square"
+          onUpload={(file) => {
+            const formData = new FormData();
+            formData.append("file", file);
+            return uploadAgencyImageAction(agencyId, "logo", formData);
+          }}
+          onRemove={() => removeAgencyImageAction(agencyId, "logo")}
         />
         <ImageUploadField
-          agencyId={agencyId}
-          kind="cover"
           label="Cover photo"
           hint="A wide banner image for the agency."
           hasImage={profile.has_cover}
-          version={profile.cover_version}
+          imageUrl={agencyImageUrl(agencyId, "cover", profile.cover_version)}
           aspect="wide"
+          onUpload={(file) => {
+            const formData = new FormData();
+            formData.append("file", file);
+            return uploadAgencyImageAction(agencyId, "cover", formData);
+          }}
+          onRemove={() => removeAgencyImageAction(agencyId, "cover")}
         />
       </div>
 

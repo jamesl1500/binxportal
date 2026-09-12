@@ -348,6 +348,43 @@ export interface paths {
         patch: operations["update_client_agencies__agency_id__clients__client_id__patch"];
         trace?: never;
     };
+    "/agencies/{agency_id}/clients/{client_id}/branding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Client Branding */
+        get: operations["read_client_branding_agencies__agency_id__clients__client_id__branding_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Client Branding */
+        patch: operations["update_client_branding_agencies__agency_id__clients__client_id__branding_patch"];
+        trace?: never;
+    };
+    "/agencies/{agency_id}/clients/{client_id}/branding/logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download Client Logo */
+        get: operations["download_client_logo_agencies__agency_id__clients__client_id__branding_logo_get"];
+        /** Upload Client Logo */
+        put: operations["upload_client_logo_agencies__agency_id__clients__client_id__branding_logo_put"];
+        post?: never;
+        /** Delete Client Logo */
+        delete: operations["delete_client_logo_agencies__agency_id__clients__client_id__branding_logo_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agencies/{agency_id}/clients/{client_id}/contacts": {
         parameters: {
             query?: never;
@@ -2321,6 +2358,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/portal/logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download Portal Logo */
+        get: operations["download_portal_logo_portal_logo_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/portal/projects": {
         parameters: {
             query?: never;
@@ -3376,6 +3430,11 @@ export interface components {
             /** File */
             file: string;
         };
+        /** Body_upload_client_logo_agencies__agency_id__clients__client_id__branding_logo_put */
+        Body_upload_client_logo_agencies__agency_id__clients__client_id__branding_logo_put: {
+            /** File */
+            file: string;
+        };
         /** Body_upload_cover_agencies__agency_id__cover_put */
         Body_upload_cover_agencies__agency_id__cover_put: {
             /** File */
@@ -3426,6 +3485,39 @@ export interface components {
         CheckoutSessionRead: {
             /** Checkout Url */
             checkout_url: string;
+        };
+        /**
+         * ClientBrandingRead
+         * @description A client's own portal branding — colors, welcome message, and whether
+         *     a logo is set. Storage paths are never exposed; the frontend fetches the
+         *     logo's bytes through GET .../branding/logo (staff) or GET /portal/logo
+         *     (the client's own portal), same rule as AgencyProfileRead.
+         */
+        ClientBrandingRead: {
+            /** Accent Color */
+            accent_color: string | null;
+            /**
+             * Client Id
+             * Format: uuid
+             */
+            client_id: string;
+            /** Has Logo */
+            has_logo: boolean;
+            /** Logo Version */
+            logo_version: string | null;
+            /** Primary Color */
+            primary_color: string | null;
+            /** Welcome Message */
+            welcome_message: string | null;
+        };
+        /** ClientBrandingUpdate */
+        ClientBrandingUpdate: {
+            /** Accent Color */
+            accent_color?: string | null;
+            /** Primary Color */
+            primary_color?: string | null;
+            /** Welcome Message */
+            welcome_message?: string | null;
         };
         /** ClientContactInvitationCreate */
         ClientContactInvitationCreate: {
@@ -4556,13 +4648,26 @@ export interface components {
         };
         /** PortalClientRead */
         PortalClientRead: {
+            /** Accent Color */
+            accent_color?: string | null;
+            /**
+             * Has Logo
+             * @default false
+             */
+            has_logo: boolean;
             /**
              * Id
              * Format: uuid
              */
             id: string;
+            /** Logo Version */
+            logo_version?: string | null;
             /** Name */
             name: string;
+            /** Primary Color */
+            primary_color?: string | null;
+            /** Welcome Message */
+            welcome_message?: string | null;
         };
         /** PortalContactRead */
         PortalContactRead: {
@@ -6192,6 +6297,174 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AgencyClientRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_client_branding_agencies__agency_id__clients__client_id__branding_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                client_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientBrandingRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_client_branding_agencies__agency_id__clients__client_id__branding_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                client_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClientBrandingUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientBrandingRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_client_logo_agencies__agency_id__clients__client_id__branding_logo_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                client_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_client_logo_agencies__agency_id__clients__client_id__branding_logo_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                client_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_client_logo_agencies__agency_id__clients__client_id__branding_logo_put"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientBrandingRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_client_logo_agencies__agency_id__clients__client_id__branding_logo_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                client_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientBrandingRead"];
                 };
             };
             /** @description Validation Error */
@@ -11196,6 +11469,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_portal_logo_portal_logo_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
         };

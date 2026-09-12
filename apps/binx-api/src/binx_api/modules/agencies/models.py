@@ -123,6 +123,28 @@ class AgencyProfile(Base):
     cover_mime_type: Mapped[str | None] = mapped_column(String(255), default=None)
 
 
+# White-labeling for one client's portal: their own colors, logo, and a
+# custom welcome message — overriding the agency's own AgencyProfile
+# branding when set (see client_portal/service.py::portal_client_read, which
+# falls back to the agency's brand_color/logo when a client hasn't set its
+# own). One row per client, created lazily on first access, same pattern as
+# AgencyProfile above.
+class ClientPortalBranding(Base):
+    __tablename__ = "client_portal_branding"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    client_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("agency_clients.id", ondelete="CASCADE"), unique=True, index=True
+    )
+
+    primary_color: Mapped[str | None] = mapped_column(String(7), default=None)  # "#0a0a0b"
+    accent_color: Mapped[str | None] = mapped_column(String(7), default=None)
+    welcome_message: Mapped[str | None] = mapped_column(String(500), default=None)
+
+    logo_storage_path: Mapped[str | None] = mapped_column(String(1024), default=None)
+    logo_mime_type: Mapped[str | None] = mapped_column(String(255), default=None)
+
+
 # An outstanding (or resolved) invite for someone to join an agency. Unlike
 # AgencyMember, the invitee doesn't need an existing account yet — they're
 # identified by email until the invite is accepted, at which point an

@@ -16,11 +16,17 @@ import { redirect } from "next/navigation";
 import { AuthApiError } from "@/lib/auth";
 import {
   AgencyClient,
+  ClientBranding,
+  ClientBrandingInput,
   ClientDetailsInput,
   createAgencyClient,
   deleteAgencyClient,
+  getClientBranding,
+  removeClientLogo,
   setAgencyClientActive,
   updateAgencyClient,
+  updateClientBranding,
+  uploadClientLogo,
 } from "@/lib/clients";
 
 export interface CreateClientActionResult {
@@ -100,4 +106,62 @@ export async function deleteClientAction(agencyId: string, clientId: string): Pr
   }
 
   redirect("/clients");
+}
+
+// ---- Portal branding ----
+
+export interface ClientBrandingActionResult {
+  error?: string;
+  branding?: ClientBranding;
+}
+
+function brandingError(error: unknown, fallback: string): ClientBrandingActionResult {
+  if (error instanceof AuthApiError) {
+    return { error: error.message };
+  }
+  return { error: fallback };
+}
+
+export async function getClientBrandingAction(agencyId: string, clientId: string): Promise<ClientBrandingActionResult> {
+  try {
+    return { branding: await getClientBranding(agencyId, clientId) };
+  } catch (error) {
+    return brandingError(error, "Unable to load branding");
+  }
+}
+
+export async function updateClientBrandingAction(
+  agencyId: string,
+  clientId: string,
+  input: ClientBrandingInput,
+): Promise<ClientBrandingActionResult> {
+  try {
+    return { branding: await updateClientBranding(agencyId, clientId, input) };
+  } catch (error) {
+    return brandingError(error, "Unable to update branding");
+  }
+}
+
+export async function uploadClientLogoAction(
+  agencyId: string,
+  clientId: string,
+  formData: FormData,
+): Promise<ClientBrandingActionResult> {
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "No file selected" };
+  }
+  try {
+    return { branding: await uploadClientLogo(agencyId, clientId, file) };
+  } catch (error) {
+    return brandingError(error, "Unable to upload the logo");
+  }
+}
+
+export async function removeClientLogoAction(agencyId: string, clientId: string): Promise<ClientBrandingActionResult> {
+  try {
+    return { branding: await removeClientLogo(agencyId, clientId) };
+  } catch (error) {
+    return brandingError(error, "Unable to remove the logo");
+  }
 }

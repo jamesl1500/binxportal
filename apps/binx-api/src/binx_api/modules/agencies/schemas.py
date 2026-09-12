@@ -158,6 +158,29 @@ class AgencyClientUpdate(BaseModel):
     billing_address: str | None = Field(default=None, max_length=2048)
 
 
+class ClientBrandingRead(BaseModel):
+    """A client's own portal branding — colors, welcome message, and whether
+    a logo is set. Storage paths are never exposed; the frontend fetches the
+    logo's bytes through GET .../branding/logo (staff) or GET /portal/logo
+    (the client's own portal), same rule as AgencyProfileRead."""
+
+    client_id: uuid.UUID
+    primary_color: str | None
+    accent_color: str | None
+    welcome_message: str | None
+    has_logo: bool
+    logo_version: str | None
+
+
+class ClientBrandingUpdate(BaseModel):
+    # A true partial patch (model_dump(exclude_unset=True) on the router
+    # side) — same rule as AgencyProfileUpdate. Sending a field explicitly as
+    # null clears it back to inheriting the agency's own branding.
+    primary_color: str | None = Field(default=None, pattern="^#[0-9a-fA-F]{6}$")
+    accent_color: str | None = Field(default=None, pattern="^#[0-9a-fA-F]{6}$")
+    welcome_message: str | None = Field(default=None, max_length=500)
+
+
 class AgencyClientStatusUpdate(BaseModel):
     is_active: bool
 

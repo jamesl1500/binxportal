@@ -47,7 +47,9 @@ const PortalOverviewPage = async () => {
       <header className={styles.header}>
         <span className={styles.eyebrow}>Welcome</span>
         <h1 className={styles.title}>{context?.client.name}</h1>
-        <p className={styles.subtitle}>Your projects, invoices and messages with {context?.agency.name}.</p>
+        <p className={styles.subtitle}>
+          {context?.client.welcome_message || `Your projects, invoices and messages with ${context?.agency.name}.`}
+        </p>
       </header>
 
       <ClientStatGrid stats={stats} />

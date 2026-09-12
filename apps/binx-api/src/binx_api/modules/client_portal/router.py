@@ -74,12 +74,14 @@ async def _context(db: DbSession, user: CurrentUser) -> PortalContextRead:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "This account has no client portal access")
     agency, client, contact = memberships[0]
     membership_reads = [
-        PortalMembershipRead(agency=await service.portal_agency_read(db, ag), client=service.portal_client_read(cl))
+        PortalMembershipRead(
+            agency=await service.portal_agency_read(db, ag), client=await service.portal_client_read(db, cl)
+        )
         for ag, cl, _c in memberships
     ]
     return PortalContextRead(
         agency=await service.portal_agency_read(db, agency),
-        client=service.portal_client_read(client),
+        client=await service.portal_client_read(db, client),
         contact=PortalContactRead(
             id=contact.id,
             user_id=user.id,
@@ -256,6 +258,16 @@ async def download_board_image(db: DbSession, membership: PortalContext, project
     project = await service.get_portal_project_or_404(db, client.id, project_id)
     file_record = await projects_service.get_project_file_or_404(db, project.id, file_id)
     return FileResponse(path=file_record.storage_path, filename=file_record.file_name, media_type=file_record.mime_type)
+
+
+@router.get("/logo")
+async def download_portal_logo(db: DbSession, membership: PortalContext):
+    agency, client, _contact = membership
+    resolved = await service.portal_logo_path(db, agency, client)
+    if resolved is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No logo set")
+    path, mime_type = resolved
+    return FileResponse(path=path, media_type=mime_type)
 
 
 async def _portal_item(db, client_id: uuid.UUID, project_id: uuid.UUID, item_id: uuid.UUID):
