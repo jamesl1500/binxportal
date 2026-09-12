@@ -14,7 +14,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { getPortalConversations } from "@/lib/portal";
 import PortalMessages from "@/components/portal/PortalMessages/PortalMessages";
 
-import styles from "../page.module.scss";
+import sharedStyles from "../page.module.scss";
+import styles from "./page.module.scss";
 
 export const metadata: Metadata = { title: "Messages" };
 
@@ -26,10 +27,10 @@ const PortalMessagesPage = async () => {
 
   return (
     <div className={styles.page}>
-      <header className={styles.header}>
-        <span className={styles.eyebrow}>Messages</span>
-        <h1 className={styles.title}>Messages</h1>
-        <p className={styles.subtitle}>Talk to your account team.</p>
+      <header className={sharedStyles.header}>
+        <span className={sharedStyles.eyebrow}>Messages</span>
+        <h1 className={sharedStyles.title}>Messages</h1>
+        <p className={sharedStyles.subtitle}>Talk to your account team.</p>
       </header>
       <PortalMessages conversations={conversations} currentUserId={user.id} />
     </div>

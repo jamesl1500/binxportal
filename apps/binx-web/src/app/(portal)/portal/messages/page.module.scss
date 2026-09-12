@@ -1,0 +1,14 @@
+@use "../../../../styles/tokens" as t;
+
+// Distinct from the shared ../page.module.scss's .page — this one fills
+// exactly the space (portal)/layout.module.scss's .content actually has
+// (which is itself now a real bound, not a guess), so PortalMessages's own
+// flex:1 pane fills the rest and scrolls internally instead of the whole
+// page growing past the viewport.
+.page {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: t.$space-6;
+}

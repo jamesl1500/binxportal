@@ -4,7 +4,11 @@
 .wrap {
   display: grid;
   grid-template-columns: minmax(15rem, 20rem) 1fr;
-  height: calc(100dvh - 14rem);
+  // Fills whatever height the page wrapper actually has left (see
+  // messages/page.module.scss) instead of guessing the viewport minus a
+  // fixed chrome height — the guess broke whenever the portal header wrapped
+  // to two lines or the page's own padding changed at a breakpoint.
+  flex: 1;
   min-height: 24rem;
   border: 1px solid t.$color-border;
   border-radius: t.$radius-md;
@@ -60,7 +64,9 @@
 
   &[data-active="true"] {
     background: t.$color-paper;
-    box-shadow: inset 2px 0 0 t.$color-ink;
+    // Falls back to the app's own ink color when no client/agency brand
+    // color is set — see --portal-primary in (portal)/layout.tsx.
+    box-shadow: inset 2px 0 0 var(--portal-primary, #{t.$color-ink});
   }
 }
 
@@ -221,12 +227,12 @@
 
 .send {
   @include m.button-base;
-  background: t.$color-accent;
+  background: var(--portal-primary, #{t.$color-accent});
   color: t.$color-accent-foreground;
   align-self: stretch;
 
   &:hover:not(:disabled) {
-    background: color-mix(in srgb, t.$color-accent 85%, white);
+    background: color-mix(in srgb, var(--portal-primary, #{t.$color-accent}) 85%, white);
   }
 }
 

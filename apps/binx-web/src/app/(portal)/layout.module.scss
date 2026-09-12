@@ -3,12 +3,22 @@
 .root {
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  // A true bound (not min-height) so a page that wants to fill it exactly —
+  // the messages page's own .page, see messages/page.module.scss — has
+  // something real to flex against instead of guessing the viewport minus a
+  // hardcoded chrome height. Pages taller than the viewport still scroll
+  // normally; it's just .root doing the scrolling now instead of the
+  // document, which is visually identical.
+  height: 100dvh;
+  overflow-y: auto;
   background: t.$color-paper;
 }
 
 .content {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   width: 100%;
   max-width: 72rem;
   margin: 0 auto;

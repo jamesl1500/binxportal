@@ -36,4 +36,28 @@ test.describe("client portal branding", () => {
     await clientPage.goto("/portal");
     await expect(clientPage.getByText(message)).toBeVisible();
   });
+
+  test("a primary color set by staff colors the client's own portal", async ({ staffPage, clientPage }) => {
+    await staffPage.goto("/clients");
+    await staffPage.getByRole("link", { name: DEMO.clientName }).click();
+    await staffPage.getByRole("link", { name: "Settings" }).click();
+    await staffPage.getByRole("button", { name: "Branding" }).click();
+
+    const primaryColor = staffPage.getByLabel("Primary colour", { exact: true });
+    await primaryColor.fill("#1d4ed8");
+    await staffPage.getByRole("button", { name: "Save branding" }).click();
+    await expect(staffPage.getByText("Branding saved.")).toBeVisible();
+
+    await clientPage.goto("/portal");
+    // Set once on the portal root (see (portal)/layout.tsx) as a CSS custom
+    // property and consumed everywhere the portal picks up branding — the
+    // progress bar fill, the Pay button, the active nav tab, etc. Checking
+    // the seeded project's progress bar proves the whole chain, not just
+    // that the property exists somewhere.
+    const fillColor = await clientPage
+      .locator('[class*="fill"]')
+      .first()
+      .evaluate((el) => getComputedStyle(el).backgroundColor);
+    expect(fillColor).toBe("rgb(29, 78, 216)");
+  });
 });

@@ -57,7 +57,9 @@
   text-decoration: none;
 
   &:hover {
-    color: t.$color-ink;
+    // Falls back to the app's own ink color when no client/agency brand
+    // color is set — see --portal-primary in (portal)/layout.tsx.
+    color: var(--portal-primary, #{t.$color-ink});
   }
 }
 
@@ -93,7 +95,9 @@
   border-radius: t.$radius-md;
 
   &:hover {
-    border-color: t.$color-border-strong;
+    // Falls back to the app's own default when no client/agency accent
+    // color is set — see --portal-accent in (portal)/layout.tsx.
+    border-color: var(--portal-accent, #{t.$color-border-strong});
   }
 
   &:focus-visible {
@@ -120,7 +124,7 @@
   border-radius: t.$radius-md;
 
   &:hover {
-    border-color: t.$color-border-strong;
+    border-color: var(--portal-accent, #{t.$color-border-strong});
   }
 
   &:focus-visible {

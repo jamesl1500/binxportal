@@ -34,6 +34,23 @@ test.describe("client portal", () => {
     await expect(clientPage.getByRole("paragraph").filter({ hasText: reply })).toBeVisible();
   });
 
+  // The messages pane used to size itself off a guessed "viewport minus a
+  // fixed chrome height" — wrong whenever the portal header actually
+  // rendered taller than the guess, which pushed the container past the
+  // bottom of the screen and made the whole page scroll instead of just the
+  // conversation list/thread panes. Now the layout is a real flex-fill
+  // chain, so the document itself should never need to scroll here.
+  test("the messages page fills the viewport without the page itself scrolling", async ({ clientPage }) => {
+    await clientPage.goto("/portal/messages");
+    await clientPage.getByRole("link", { name: /Northlight/ }).first().click();
+    await expect(clientPage.getByPlaceholder("Write a message…")).toBeVisible();
+
+    const overflowsPage = await clientPage.evaluate(
+      () => document.documentElement.scrollHeight > document.documentElement.clientHeight + 1,
+    );
+    expect(overflowsPage).toBe(false);
+  });
+
   test("the client cannot reach the staff app", async ({ clientPage }) => {
     await clientPage.goto("/dashboard");
     await expect(clientPage).toHaveURL(/\/portal/);

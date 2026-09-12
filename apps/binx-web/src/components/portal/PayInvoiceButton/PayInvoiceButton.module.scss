@@ -10,11 +10,13 @@
 .button {
   @include m.button-base;
   align-self: flex-start;
-  background: t.$color-accent;
+  // Falls back to the app's own accent when no client/agency brand color is
+  // set — see the --portal-primary custom property set in (portal)/layout.tsx.
+  background: var(--portal-primary, #{t.$color-accent});
   color: t.$color-accent-foreground;
 
   &:hover:not(:disabled) {
-    background: color-mix(in srgb, t.$color-accent 85%, white);
+    background: color-mix(in srgb, var(--portal-primary, #{t.$color-accent}) 85%, white);
   }
 }
 
