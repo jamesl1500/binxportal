@@ -1,6 +1,7 @@
 import re
 import uuid
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from fastapi import HTTPException, status
 from sqlalchemy import func, select
@@ -32,6 +33,9 @@ from binx_api.modules.projects.models import (
     ProjectTaskTagLink,
 )
 from binx_api.modules.users.models import User
+
+if TYPE_CHECKING:
+    from binx_api.modules.ai.service import TaskListSuggestion
 
 settings = get_settings()
 
@@ -539,6 +543,31 @@ async def create_task_list(db: AsyncSession, project: Project, *, name: str) -> 
     await db.commit()
     await db.refresh(task_list)
     return task_list
+
+
+# Writes an AI-suggested starter board (ai/service.py::suggest_project_tasks)
+# in one transaction: every list and its tasks, appended after any existing
+# lists (same position math create_task_list/create_task use individually),
+# one commit at the end rather than looping the single-item functions above
+# (which each commit on their own) — mirrors how create_project's
+# DEFAULT_TASK_LISTS seeding already builds multiple rows before one commit.
+async def bulk_create_board(db: AsyncSession, project: Project, *, lists: "list[TaskListSuggestion]") -> None:
+    position = await _list_count(db, project.id)
+    for list_index, list_suggestion in enumerate(lists):
+        task_list = ProjectTaskList(project_id=project.id, name=list_suggestion.name, position=position + list_index)
+        db.add(task_list)
+        await db.flush()  # populate task_list.id before creating its tasks
+        for task_index, task_suggestion in enumerate(list_suggestion.tasks):
+            db.add(
+                ProjectTask(
+                    project_id=project.id,
+                    list_id=task_list.id,
+                    title=task_suggestion.title,
+                    description=task_suggestion.description,
+                    position=task_index,
+                )
+            )
+    await db.commit()
 
 
 async def get_task_list_or_404(db: AsyncSession, project_id: uuid.UUID, list_id: uuid.UUID) -> ProjectTaskList:

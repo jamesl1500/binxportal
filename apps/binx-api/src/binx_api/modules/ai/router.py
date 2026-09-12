@@ -1,8 +1,10 @@
+import json
 import uuid
 from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy import func, select
 
 from binx_api.core.config import get_settings
@@ -183,6 +185,41 @@ async def send_conversation_message(
     # before returning, so the last message is always the reply just made.
     messages = await service.list_conversation_messages(db, conversation.id)
     return AiMessageRead.model_validate(messages[-1], from_attributes=True)
+
+
+def _sse(payload: dict) -> str:
+    return f"data: {json.dumps(payload)}\n\n"
+
+
+@router.post("/conversations/{conversation_id}/messages/stream")
+async def stream_conversation_message(
+    db: DbSession,
+    conversation_id: uuid.UUID,
+    data: AiMessageCreate,
+    current_user: CurrentUser,
+    agency_and_role: AnyMember,
+) -> StreamingResponse:
+    """Same request as ``POST .../messages``, but the reply streams in as
+    Server-Sent Events instead of arriving all at once. Once streaming
+    starts the HTTP status/headers are already sent, so an error mid-stream
+    can't become an HTTP error response — it's relayed as an in-band
+    ``{"type": "error"}`` event instead, and the generator ends there
+    (no ``done`` event follows an ``error``)."""
+    agency, _role = agency_and_role
+    conversation = await service.get_conversation_or_404(db, agency.id, current_user.id, conversation_id)
+
+    async def event_stream():
+        try:
+            async for chunk in service.assistant_reply_stream(
+                db, conversation, agency, actor=current_user, user_message=data.message
+            ):
+                yield _sse({"type": "delta", "text": chunk})
+            yield _sse({"type": "done"})
+        except Exception as exc:  # must never crash the stream silently — always tell the client
+            message = exc.detail if hasattr(exc, "detail") else "Something went wrong generating that reply."
+            yield _sse({"type": "error", "message": str(message)})
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
 @router.delete("/conversations/{conversation_id}", status_code=status.HTTP_204_NO_CONTENT)

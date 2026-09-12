@@ -13,9 +13,12 @@
 export type AiFeature =
   | "lead_analysis"
   | "lead_generation"
+  | "lead_followup"
   | "dashboard_briefing"
   | "project_summary"
+  | "project_tasks"
   | "invoice_reminder"
+  | "message_reply"
   | "assistant";
 
 export type AiUsageStatus = "ok" | "error" | "blocked";
@@ -23,9 +26,12 @@ export type AiUsageStatus = "ok" | "error" | "blocked";
 export const AI_FEATURE_LABEL: Record<AiFeature, string> = {
   lead_analysis: "Lead analysis",
   lead_generation: "Lead prospector",
+  lead_followup: "Lead follow-up",
   dashboard_briefing: "Dashboard briefing",
   project_summary: "Project summary",
+  project_tasks: "Project task setup",
   invoice_reminder: "Invoice reminder",
+  message_reply: "Message reply draft",
   assistant: "Ask AI",
 };
 

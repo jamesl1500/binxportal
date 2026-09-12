@@ -9,6 +9,7 @@ real network call.
 
 from __future__ import annotations
 
+import asyncio
 import dataclasses
 from types import SimpleNamespace
 
@@ -354,3 +355,301 @@ async def _async_return(value):
 
 async def _async_raise(fn):
     fn()
+
+
+class TestBuildKwargs:
+    def test_cache_system_false_sends_plain_string_system(self) -> None:
+        kwargs = ai_client._build_kwargs(
+            model="claude-opus-5",
+            system="hello",
+            messages=[],
+            max_tokens=10,
+            effort="low",
+            tools=None,
+            response_format=None,
+            fast=False,
+            cache_system=False,
+        )
+        assert kwargs["system"] == "hello"
+        assert "cache_control" not in kwargs
+
+    def test_cache_system_true_sends_list_shaped_system_with_breakpoint(self) -> None:
+        kwargs = ai_client._build_kwargs(
+            model="claude-opus-5",
+            system="hello",
+            messages=[],
+            max_tokens=10,
+            effort="low",
+            tools=[{"name": "x"}],
+            response_format=None,
+            fast=False,
+            cache_system=True,
+        )
+        # A breakpoint on the last system block caches tools rendered before
+        # it too — no separate marker needed on the tool list.
+        assert kwargs["system"] == [{"type": "text", "text": "hello", "cache_control": {"type": "ephemeral"}}]
+        assert kwargs["cache_control"] == {"type": "ephemeral"}
+        assert kwargs["tools"] == [{"name": "x"}]
+
+
+class TestCacheSystemThroughComplete:
+    async def test_default_sends_plain_string_system(self, db_session, monkeypatch: pytest.MonkeyPatch) -> None:
+        _configure(monkeypatch)
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        captured: dict = {}
+
+        async def _capture(**kwargs):
+            captured.update(kwargs)
+            return _fake_message()
+
+        monkeypatch.setattr(ai_client, "_call_anthropic", _capture)
+        await ai_client.complete(
+            db_session,
+            agency.id,
+            owner.id,
+            feature=FEATURE_ASSISTANT,
+            system="s",
+            messages=[{"role": "user", "content": "hi"}],
+            max_tokens=100,
+        )
+        assert captured["system"] == "s"
+        assert "cache_control" not in captured
+
+    async def test_cache_system_true_is_passed_through_to_the_request(
+        self, db_session, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _configure(monkeypatch)
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        captured: dict = {}
+
+        async def _capture(**kwargs):
+            captured.update(kwargs)
+            return _fake_message()
+
+        monkeypatch.setattr(ai_client, "_call_anthropic", _capture)
+        await ai_client.complete(
+            db_session,
+            agency.id,
+            owner.id,
+            feature=FEATURE_ASSISTANT,
+            system="s",
+            messages=[{"role": "user", "content": "hi"}],
+            max_tokens=100,
+            cache_system=True,
+        )
+        assert captured["system"] == [{"type": "text", "text": "s", "cache_control": {"type": "ephemeral"}}]
+        assert captured["cache_control"] == {"type": "ephemeral"}
+
+
+class TestLock:
+    async def test_lock_serializes_db_sections_but_not_the_network_call(
+        self, db_session, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Reproduces the exact hazard leads/service.py's bulk analysis needs
+        guarded against: several concurrent complete() calls sharing one
+        AsyncSession. Without the lock, concurrent awaited DB operations on
+        one AsyncSession raise a real IllegalStateChangeError; with it, the
+        network calls should still overlap (the actual speedup) while the
+        DB-touching sections never do."""
+        _configure(monkeypatch)
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        lock = asyncio.Lock()
+
+        network_in_flight = 0
+        max_concurrent_network = 0
+
+        async def _slow_network(**kwargs):
+            nonlocal network_in_flight, max_concurrent_network
+            network_in_flight += 1
+            max_concurrent_network = max(max_concurrent_network, network_in_flight)
+            await asyncio.sleep(0.05)
+            network_in_flight -= 1
+            return _fake_message()
+
+        monkeypatch.setattr(ai_client, "_call_anthropic", _slow_network)
+
+        real_log_event = ai_client._log_event
+        db_in_flight = 0
+        max_concurrent_db = 0
+
+        async def _tracked_log_event(*args, **kwargs):
+            nonlocal db_in_flight, max_concurrent_db
+            db_in_flight += 1
+            max_concurrent_db = max(max_concurrent_db, db_in_flight)
+            await asyncio.sleep(0.02)
+            result = await real_log_event(*args, **kwargs)
+            db_in_flight -= 1
+            return result
+
+        monkeypatch.setattr(ai_client, "_log_event", _tracked_log_event)
+
+        async def _one_call():
+            return await ai_client.complete(
+                db_session,
+                agency.id,
+                owner.id,
+                feature=FEATURE_ASSISTANT,
+                system="s",
+                messages=[{"role": "user", "content": "hi"}],
+                max_tokens=100,
+                lock=lock,
+            )
+
+        await asyncio.gather(*(_one_call() for _ in range(3)))
+
+        assert max_concurrent_network > 1, "network calls should have overlapped under the lock"
+        assert max_concurrent_db == 1, "DB-touching sections must never overlap on one shared session"
+
+        events = await _events(db_session, agency.id)
+        assert len(events) == 3
+        assert all(e.status == STATUS_OK for e in events)
+
+    async def test_no_lock_is_unaffected(self, db_session, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Every other call site passes lock=None (the default) — confirms
+        that path still behaves exactly like before this parameter existed."""
+        _configure(monkeypatch)
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        monkeypatch.setattr(ai_client, "_call_anthropic", lambda **kwargs: _async_return(_fake_message(text="ok")))
+
+        result = await ai_client.complete(
+            db_session,
+            agency.id,
+            owner.id,
+            feature=FEATURE_ASSISTANT,
+            system="s",
+            messages=[{"role": "user", "content": "hi"}],
+            max_tokens=100,
+        )
+        assert result.text == "ok"
+
+
+class _FakeAsyncStreamManager:
+    """A fake ``AsyncMessageStreamManager`` — enough surface for
+    complete_stream() to drive: async-context-manager, ``text_stream``
+    (an async iterator), and ``get_final_message()``."""
+
+    def __init__(self, deltas: list[str], final_message: object) -> None:
+        self._deltas = deltas
+        self._final_message = final_message
+
+    async def __aenter__(self) -> _FakeAsyncStreamManager:
+        return self
+
+    async def __aexit__(self, *exc_info: object) -> bool:
+        return False
+
+    @property
+    def text_stream(self):
+        async def _gen():
+            for delta in self._deltas:
+                yield delta
+
+        return _gen()
+
+    async def get_final_message(self):
+        return self._final_message
+
+
+class _FakeFailingStreamManager:
+    """A fake stream whose ``text_stream`` raises partway through — for
+    testing complete_stream()'s error mapping."""
+
+    def __init__(self, exc: Exception) -> None:
+        self._exc = exc
+
+    async def __aenter__(self) -> _FakeFailingStreamManager:
+        return self
+
+    async def __aexit__(self, *exc_info: object) -> bool:
+        return False
+
+    @property
+    def text_stream(self):
+        async def _gen():
+            if False:  # pragma: no cover - makes this a generator function
+                yield
+            raise self._exc
+
+        return _gen()
+
+
+class TestCompleteStream:
+    async def test_yields_deltas_then_turn_complete_and_logs_ok(
+        self, db_session, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _configure(monkeypatch)
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        final = _fake_message(text="hello world", input_tokens=1000, output_tokens=200)
+        monkeypatch.setattr(
+            ai_client, "_stream_anthropic", lambda **kwargs: _FakeAsyncStreamManager(["hello", " world"], final)
+        )
+
+        events = [
+            event
+            async for event in ai_client.complete_stream(
+                db_session,
+                agency.id,
+                owner.id,
+                feature=FEATURE_ASSISTANT,
+                system="s",
+                messages=[{"role": "user", "content": "hi"}],
+                max_tokens=100,
+            )
+        ]
+
+        assert events[0] == ai_client.TextDelta(text="hello")
+        assert events[1] == ai_client.TextDelta(text=" world")
+        assert isinstance(events[2], ai_client.TurnComplete)
+        assert events[2].message is final
+
+        logged = await _events(db_session, agency.id)
+        assert len(logged) == 1
+        assert logged[0].status == STATUS_OK
+        assert logged[0].cost_cents == 1  # same pricing math as complete()
+
+    async def test_blocked_raises_before_streaming_starts(self, db_session) -> None:
+        # The autouse fixture leaves the key unset -> AiNotConfigured.
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+
+        with pytest.raises(HTTPException) as exc_info:
+            async for _ in ai_client.complete_stream(
+                db_session,
+                agency.id,
+                owner.id,
+                feature=FEATURE_ASSISTANT,
+                system="s",
+                messages=[{"role": "user", "content": "hi"}],
+                max_tokens=100,
+            ):
+                pass
+        assert exc_info.value.status_code == 503
+
+    async def test_error_mid_stream_is_logged_and_mapped(self, db_session, monkeypatch: pytest.MonkeyPatch) -> None:
+        _configure(monkeypatch)
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        exc = _fake_error(anthropic.RateLimitError, status_code=429)
+        monkeypatch.setattr(ai_client, "_stream_anthropic", lambda **kwargs: _FakeFailingStreamManager(exc))
+
+        with pytest.raises(HTTPException) as exc_info:
+            async for _ in ai_client.complete_stream(
+                db_session,
+                agency.id,
+                owner.id,
+                feature=FEATURE_ASSISTANT,
+                system="s",
+                messages=[{"role": "user", "content": "hi"}],
+                max_tokens=100,
+            ):
+                pass
+        assert exc_info.value.status_code == 429
+
+        events = await _events(db_session, agency.id)
+        assert len(events) == 1
+        assert events[0].status == STATUS_ERROR

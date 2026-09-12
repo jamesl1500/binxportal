@@ -13,6 +13,8 @@ network call in the suite.
 from __future__ import annotations
 
 import uuid
+from asyncio import Lock
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
@@ -31,8 +33,9 @@ settings = get_settings()
 
 # USD cents per 1,000,000 tokens. Kept in sync with the claude-api skill's
 # pricing table — see the AI settings memory for the full source table.
-# cache_creation reads at ~1.25x the input rate, cache_read at ~0.1x; nothing
-# sets cache_control today, so those only matter once caching is added later.
+# cache_creation reads at ~1.25x the input rate, cache_read at ~0.1x — only
+# nonzero when a call passes cache_system=True (see _build_kwargs); every
+# other call's cache_creation/cache_read tokens are always 0.
 _PRICING_CENTS_PER_MTOK: dict[str, dict[str, int]] = {
     "claude-opus-5": {"input": 500, "output": 2500},
     "claude-fable-5": {"input": 1000, "output": 5000},
@@ -63,6 +66,28 @@ class CompletionResult:
     text: str
 
 
+@dataclass
+class TextDelta:
+    """One chunk of assistant text, yielded by :func:`complete_stream` as it
+    arrives."""
+
+    text: str
+
+
+@dataclass
+class TurnComplete:
+    """The terminal event :func:`complete_stream` yields once its stream
+    finishes — carries the full ``Message`` (usage, stop_reason, content),
+    mirroring what :func:`complete` returns as ``CompletionResult.message``.
+    An async generator can't ``return`` a value the way a sync generator's
+    ``StopIteration.value`` can, so the final message rides as the last
+    yielded item instead."""
+
+    message: Message
+
+
+StreamEvent = TextDelta | TurnComplete
+
 _client: anthropic.AsyncAnthropic | None = None
 
 
@@ -74,9 +99,19 @@ def _get_client() -> anthropic.AsyncAnthropic:
 
 
 async def _call_anthropic(**kwargs: Any) -> Message:
-    """Thin, monkeypatchable wrapper around the one real network call this
-    module makes. Nothing else should import ``anthropic`` directly."""
+    """Thin, monkeypatchable wrapper around the one real non-streaming
+    network call this module makes. Nothing else should import ``anthropic``
+    directly."""
     return await _get_client().messages.create(**kwargs)
+
+
+def _stream_anthropic(**kwargs: Any) -> anthropic.lib.streaming.AsyncMessageStreamManager:
+    """Thin, monkeypatchable wrapper around the one real streaming network
+    call this module makes — mirrors ``_call_anthropic``. Returns the async
+    context manager directly (``messages.stream(...)`` isn't itself
+    awaitable); the caller does ``async with _stream_anthropic(**kwargs) as
+    stream:``."""
+    return _get_client().messages.stream(**kwargs)
 
 
 def _pricing_for(model: str) -> dict[str, int]:
@@ -250,6 +285,67 @@ async def _log_event(
     await db.commit()
 
 
+class _NoOpLock:
+    """A do-nothing async context manager — used in place of a real
+    ``asyncio.Lock`` when no lock was given, so call sites never need an
+    ``if lock:`` branch. Safe to share one instance across concurrent
+    ``async with`` blocks since it guards nothing."""
+
+    async def __aenter__(self) -> None:
+        return None
+
+    async def __aexit__(self, *exc_info: object) -> bool:
+        return False
+
+
+_NO_OP_LOCK = _NoOpLock()
+
+
+async def _log_locked(
+    lock: Lock | None, db: AsyncSession, agency_id: uuid.UUID, user_id: uuid.UUID | None, **kwargs: Any
+) -> None:
+    async with lock or _NO_OP_LOCK:
+        await _log_event(db, agency_id, user_id, **kwargs)
+
+
+def _build_kwargs(
+    *,
+    model: str,
+    system: str,
+    messages: list[dict[str, Any]],
+    max_tokens: int,
+    effort: str,
+    tools: list[dict[str, Any]] | None,
+    response_format: dict[str, Any] | None,
+    fast: bool,
+    cache_system: bool,
+) -> dict[str, Any]:
+    output_config: dict[str, Any] = {} if fast else {"effort": effort}
+    if response_format is not None:
+        output_config["format"] = response_format
+
+    system_param: str | list[dict[str, Any]] = system
+    kwargs: dict[str, Any] = {"model": model, "max_tokens": max_tokens, "messages": messages}
+    if cache_system:
+        # An explicit breakpoint on the system block — per Anthropic's
+        # documented render order (tools -> system -> messages), this caches
+        # any `tools` passed in the same call too, no separate marker needed.
+        # Paired with top-level automatic caching for the growing
+        # conversation tail — Anthropic's documented "robust combination for
+        # agent loops" (one explicit breakpoint on the static prefix, plus
+        # automatic caching for the tail).
+        system_param = [{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}]
+        kwargs["cache_control"] = {"type": "ephemeral"}
+    kwargs["system"] = system_param
+    if not fast:
+        kwargs["thinking"] = {"type": "adaptive"}
+    if output_config:
+        kwargs["output_config"] = output_config
+    if tools:
+        kwargs["tools"] = tools
+    return kwargs
+
+
 async def complete(
     db: AsyncSession,
     agency_id: uuid.UUID,
@@ -263,6 +359,8 @@ async def complete(
     tools: list[dict[str, Any]] | None = None,
     response_format: dict[str, Any] | None = None,
     fast: bool = False,
+    cache_system: bool = False,
+    lock: Lock | None = None,
 ) -> CompletionResult:
     """``fast=True`` routes the call through ``settings.ai_fast_model`` (a
     cheaper/quicker model) instead of the default ``settings.ai_model`` —
@@ -273,117 +371,84 @@ async def complete(
     and ``output_config.effort`` outright (400 "not supported")  — unlike
     Opus/Sonnet/Fable 5, they were never adaptive-thinking models. So a fast
     call omits ``thinking`` and ``effort`` entirely; ``response_format`` (not
-    used by any fast-tier feature today, but kept general) still applies."""
+    used by any fast-tier feature today, but kept general) still applies.
+
+    ``cache_system=True`` caches the system+tools prefix (see
+    ``_build_kwargs``) — only worth it for a prefix resent many times, which
+    today is just the Ask AI assistant's tool loop; every other feature's
+    prefix is far under the per-model cache minimum, so this defaults off.
+
+    ``lock`` serializes this function's two DB-touching sections (the budget
+    check and usage logging) without holding the network call under it —
+    lets ``leads/service.py``'s bulk analysis run several Claude calls
+    concurrently on one shared ``AsyncSession`` (unsafe for true concurrent
+    DB access) while still parallelizing the actual (slow) network I/O.
+    ``None`` (every other call site) means no locking, unchanged from before
+    this parameter existed."""
     model = settings.ai_fast_model if fast else settings.ai_model
 
-    try:
-        await check_budget_and_rate(db, agency_id, user_id)
-    except (AiNotConfigured, AiBudgetExceeded) as exc:
-        await _log_event(
-            db,
-            agency_id,
-            user_id,
-            feature=feature,
-            model=model,
-            status_=STATUS_BLOCKED,
-            error_message=str(exc.detail),
+    async def _log_error(exc: Exception) -> None:
+        await _log_locked(
+            lock, db, agency_id, user_id, feature=feature, model=model, status_=STATUS_ERROR, error_message=str(exc)
         )
-        raise
 
-    output_config: dict[str, Any] = {} if fast else {"effort": effort}
-    if response_format is not None:
-        output_config["format"] = response_format
+    async with lock or _NO_OP_LOCK:
+        try:
+            await check_budget_and_rate(db, agency_id, user_id)
+        except (AiNotConfigured, AiBudgetExceeded) as exc:
+            await _log_event(
+                db,
+                agency_id,
+                user_id,
+                feature=feature,
+                model=model,
+                status_=STATUS_BLOCKED,
+                error_message=str(exc.detail),
+            )
+            raise
 
-    kwargs: dict[str, Any] = {
-        "model": model,
-        "max_tokens": max_tokens,
-        "system": system,
-        "messages": messages,
-    }
-    if not fast:
-        kwargs["thinking"] = {"type": "adaptive"}
-    if output_config:
-        kwargs["output_config"] = output_config
-    if tools:
-        kwargs["tools"] = tools
+    kwargs = _build_kwargs(
+        model=model,
+        system=system,
+        messages=messages,
+        max_tokens=max_tokens,
+        effort=effort,
+        tools=tools,
+        response_format=response_format,
+        fast=fast,
+        cache_system=cache_system,
+    )
 
     try:
         message = await _call_anthropic(**kwargs)
     except anthropic.BadRequestError as exc:
-        await _log_event(
-            db,
-            agency_id,
-            user_id,
-            feature=feature,
-            model=model,
-            status_=STATUS_ERROR,
-            error_message=str(exc),
-        )
+        await _log_error(exc)
         raise HTTPException(status.HTTP_502_BAD_GATEWAY, "The AI request failed.") from exc
     except (anthropic.AuthenticationError, anthropic.PermissionDeniedError) as exc:
-        await _log_event(
-            db,
-            agency_id,
-            user_id,
-            feature=feature,
-            model=model,
-            status_=STATUS_ERROR,
-            error_message=str(exc),
-        )
+        await _log_error(exc)
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "AI isn't configured correctly.") from exc
     except anthropic.NotFoundError as exc:
-        await _log_event(
-            db,
-            agency_id,
-            user_id,
-            feature=feature,
-            model=model,
-            status_=STATUS_ERROR,
-            error_message=str(exc),
-        )
+        await _log_error(exc)
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "AI isn't configured correctly.") from exc
     except anthropic.RateLimitError as exc:
-        await _log_event(
-            db,
-            agency_id,
-            user_id,
-            feature=feature,
-            model=model,
-            status_=STATUS_ERROR,
-            error_message=str(exc),
-        )
+        await _log_error(exc)
         raise HTTPException(
             status.HTTP_429_TOO_MANY_REQUESTS, "AI is rate-limited right now — try again shortly."
         ) from exc
     except anthropic.APIStatusError as exc:
-        await _log_event(
-            db,
-            agency_id,
-            user_id,
-            feature=feature,
-            model=model,
-            status_=STATUS_ERROR,
-            error_message=str(exc),
-        )
+        await _log_error(exc)
         if exc.status_code >= 500:
             raise HTTPException(
                 status.HTTP_502_BAD_GATEWAY, "AI is temporarily unavailable — try again shortly."
             ) from exc
         raise HTTPException(status.HTTP_502_BAD_GATEWAY, "The AI request failed.") from exc
     except anthropic.APIConnectionError as exc:
-        await _log_event(
-            db,
-            agency_id,
-            user_id,
-            feature=feature,
-            model=model,
-            status_=STATUS_ERROR,
-            error_message=str(exc),
-        )
+        await _log_error(exc)
         raise HTTPException(status.HTTP_502_BAD_GATEWAY, "AI is temporarily unavailable — try again shortly.") from exc
 
     cost = _cost_cents(model, message.usage)
-    await _log_event(
+    await _log_locked(
+        lock,
         db,
         agency_id,
         user_id,
@@ -395,3 +460,112 @@ async def complete(
         output_tokens=message.usage.output_tokens,
     )
     return CompletionResult(message=message, text=_extract_text(message))
+
+
+async def complete_stream(
+    db: AsyncSession,
+    agency_id: uuid.UUID,
+    user_id: uuid.UUID | None,
+    *,
+    feature: str,
+    system: str,
+    messages: list[dict[str, Any]],
+    max_tokens: int,
+    effort: str = "medium",
+    tools: list[dict[str, Any]] | None = None,
+    response_format: dict[str, Any] | None = None,
+    fast: bool = False,
+    cache_system: bool = False,
+    lock: Lock | None = None,
+) -> AsyncIterator[StreamEvent]:
+    """Streaming counterpart to :func:`complete` for one Claude call — same
+    budget check, error mapping, and cost logging (parameters mean exactly
+    what they mean there), but yields :class:`TextDelta` events as the reply
+    is generated instead of returning one final :class:`CompletionResult`.
+    Always ends by yielding a :class:`TurnComplete` carrying the full
+    ``Message`` once the underlying stream finishes, for the caller to
+    continue an agentic loop (check ``stop_reason``) or persist the result —
+    see the docstring on ``TurnComplete`` for why it rides as an event
+    instead of a return value.
+
+    Only one Claude call per invocation, same as ``complete()`` — a
+    multi-turn/tool loop calls this repeatedly, it doesn't loop internally.
+    """
+    model = settings.ai_fast_model if fast else settings.ai_model
+
+    async def _log_error(exc: Exception) -> None:
+        await _log_locked(
+            lock, db, agency_id, user_id, feature=feature, model=model, status_=STATUS_ERROR, error_message=str(exc)
+        )
+
+    async with lock or _NO_OP_LOCK:
+        try:
+            await check_budget_and_rate(db, agency_id, user_id)
+        except (AiNotConfigured, AiBudgetExceeded) as exc:
+            await _log_event(
+                db,
+                agency_id,
+                user_id,
+                feature=feature,
+                model=model,
+                status_=STATUS_BLOCKED,
+                error_message=str(exc.detail),
+            )
+            raise
+
+    kwargs = _build_kwargs(
+        model=model,
+        system=system,
+        messages=messages,
+        max_tokens=max_tokens,
+        effort=effort,
+        tools=tools,
+        response_format=response_format,
+        fast=fast,
+        cache_system=cache_system,
+    )
+
+    try:
+        async with _stream_anthropic(**kwargs) as stream:
+            async for text in stream.text_stream:
+                yield TextDelta(text=text)
+            message = await stream.get_final_message()
+    except anthropic.BadRequestError as exc:
+        await _log_error(exc)
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, "The AI request failed.") from exc
+    except (anthropic.AuthenticationError, anthropic.PermissionDeniedError) as exc:
+        await _log_error(exc)
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "AI isn't configured correctly.") from exc
+    except anthropic.NotFoundError as exc:
+        await _log_error(exc)
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "AI isn't configured correctly.") from exc
+    except anthropic.RateLimitError as exc:
+        await _log_error(exc)
+        raise HTTPException(
+            status.HTTP_429_TOO_MANY_REQUESTS, "AI is rate-limited right now — try again shortly."
+        ) from exc
+    except anthropic.APIStatusError as exc:
+        await _log_error(exc)
+        if exc.status_code >= 500:
+            raise HTTPException(
+                status.HTTP_502_BAD_GATEWAY, "AI is temporarily unavailable — try again shortly."
+            ) from exc
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, "The AI request failed.") from exc
+    except anthropic.APIConnectionError as exc:
+        await _log_error(exc)
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, "AI is temporarily unavailable — try again shortly.") from exc
+
+    cost = _cost_cents(model, message.usage)
+    await _log_locked(
+        lock,
+        db,
+        agency_id,
+        user_id,
+        feature=feature,
+        model=model,
+        status_=STATUS_OK,
+        cost_cents=cost,
+        input_tokens=message.usage.input_tokens,
+        output_tokens=message.usage.output_tokens,
+    )
+    yield TurnComplete(message=message)

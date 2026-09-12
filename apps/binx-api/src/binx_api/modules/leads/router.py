@@ -9,6 +9,7 @@ from binx_api.modules.agencies.dependencies import require_agency_role
 from binx_api.modules.agencies.models import ROLE_ADMIN, ROLE_MEMBER, ROLE_OWNER, Agency
 from binx_api.modules.agencies.schemas import AgencyClientRead
 from binx_api.modules.ai import service as ai_service
+from binx_api.modules.ai.schemas import AiDraftRead
 from binx_api.modules.leads import service
 from binx_api.modules.leads.models import Lead
 from binx_api.modules.leads.schemas import (
@@ -252,6 +253,16 @@ async def analyze_lead(
     lead = await service.get_lead_or_404(db, agency.id, lead_id)
     lead = await service.analyze_lead(db, lead, actor=current_user)
     return await _reload_detail(db, lead)
+
+
+@router.post("/{lead_id}/ai/follow-up", response_model=AiDraftRead)
+async def generate_lead_ai_followup(
+    db: DbSession, lead_id: uuid.UUID, current_user: CurrentUser, agency_and_role: AnyMember
+) -> AiDraftRead:
+    agency, _role = agency_and_role
+    lead = await service.get_lead_or_404(db, agency.id, lead_id)
+    draft = await ai_service.generate_lead_followup(db, lead, agency, actor=current_user)
+    return AiDraftRead(draft=draft)
 
 
 @router.delete("/{lead_id}", status_code=status.HTTP_204_NO_CONTENT)

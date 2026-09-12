@@ -8,7 +8,7 @@ from binx_api.core.dependencies import CurrentUser, DbSession
 from binx_api.modules.agencies.dependencies import require_agency_role
 from binx_api.modules.agencies.models import ROLE_ADMIN, ROLE_MEMBER, ROLE_OWNER, Agency, AgencyClient
 from binx_api.modules.ai import service as ai_service
-from binx_api.modules.ai.schemas import AiDraftRead
+from binx_api.modules.ai.schemas import AiDraftRead, AiTaskListSuggestion, AiTaskSuggestionsRead
 from binx_api.modules.projects import service
 from binx_api.modules.projects.models import ProjectRole
 from binx_api.modules.projects.schemas import (
@@ -239,6 +239,43 @@ async def generate_project_ai_summary(
     project = await service.get_project_or_404(db, agency.id, project_id)
     draft = await ai_service.generate_project_summary(db, project, agency, actor=current_user)
     return AiDraftRead(draft=draft)
+
+
+@router.post("/{project_id}/ai/tasks", response_model=AiTaskSuggestionsRead)
+async def suggest_project_ai_tasks(
+    db: DbSession, project_id: uuid.UUID, current_user: CurrentUser, agency_and_role: AnyMember
+) -> AiTaskSuggestionsRead:
+    agency, _role = agency_and_role
+    project = await service.get_project_or_404(db, agency.id, project_id)
+    suggestions = await ai_service.suggest_project_tasks(db, project, agency, actor=current_user)
+    return AiTaskSuggestionsRead(
+        lists=[
+            AiTaskListSuggestion(
+                name=lst.name,
+                tasks=[{"title": t.title, "description": t.description} for t in lst.tasks],
+            )
+            for lst in suggestions
+        ]
+    )
+
+
+# Applies a (possibly staff-edited) set of AI task suggestions to the board —
+# a separate step from /ai/tasks so nothing is written until the user
+# confirms the review.
+@router.post("/{project_id}/ai/tasks/apply", status_code=status.HTTP_204_NO_CONTENT)
+async def apply_project_ai_tasks(
+    db: DbSession, project_id: uuid.UUID, data: AiTaskSuggestionsRead, agency_and_role: AnyMember
+) -> None:
+    agency, _role = agency_and_role
+    project = await service.get_project_or_404(db, agency.id, project_id)
+    lists = [
+        ai_service.TaskListSuggestion(
+            name=lst.name,
+            tasks=[ai_service.TaskSuggestion(title=t.title, description=t.description) for t in lst.tasks],
+        )
+        for lst in data.lists
+    ]
+    await service.bulk_create_board(db, project, lists=lists)
 
 
 # --- Members ---

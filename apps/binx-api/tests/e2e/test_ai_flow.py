@@ -14,6 +14,8 @@ import pytest
 
 from binx_api.modules.agencies.models import ROLE_MEMBER, AgencyMember
 from binx_api.modules.ai import client as ai_client
+from binx_api.modules.messaging.models import SENDER_CLIENT
+from binx_api.modules.messaging.service import create_conversation, post_message
 from tests.conftest import auth_headers
 from tests.factories import make_agency, make_client, make_invoice, make_project, make_user
 
@@ -248,3 +250,123 @@ class TestProjectSummaryAndInvoiceReminder:
         )
         assert drafted.status_code == 200, drafted.text
         assert drafted.json() == {"draft": "Just a friendly reminder that this invoice is due."}
+
+
+class TestProjectTaskSuggestions:
+    async def test_suggest_then_apply_appends_to_the_board(
+        self, client, team, db_session, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        agency, owner, _member = team
+        _configure(monkeypatch)
+        project = await make_project(db_session, agency=agency, created_by=owner)
+
+        payload = (
+            '{"lists": [{"name": "Discovery", "tasks": ['
+            '{"title": "Kickoff call", "description": "Align on scope."}, '
+            '{"title": "Gather assets"}]}]}'
+        )
+        _stub_reply(monkeypatch, payload)
+
+        suggested = await client.post(
+            f"/agencies/{agency.id}/projects/{project.id}/ai/tasks", headers=auth_headers(owner)
+        )
+        assert suggested.status_code == 200, suggested.text
+        body = suggested.json()
+        assert body == {
+            "lists": [
+                {
+                    "name": "Discovery",
+                    "tasks": [
+                        {"title": "Kickoff call", "description": "Align on scope."},
+                        {"title": "Gather assets", "description": None},
+                    ],
+                }
+            ]
+        }
+
+        applied = await client.post(
+            f"/agencies/{agency.id}/projects/{project.id}/ai/tasks/apply", json=body, headers=auth_headers(owner)
+        )
+        assert applied.status_code == 204, applied.text
+
+        board = await client.get(f"/agencies/{agency.id}/projects/{project.id}/board", headers=auth_headers(owner))
+        assert board.status_code == 200, board.text
+        list_names = [lst["name"] for lst in board.json()]
+        assert list_names[-1] == "Discovery"
+        assert [t["title"] for t in board.json()[-1]["tasks"]] == ["Kickoff call", "Gather assets"]
+
+
+class TestLeadFollowup:
+    async def test_rejects_a_closed_lead_then_drafts_for_an_open_one(
+        self, client, team, db_session, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        agency, owner, _member = team
+        _configure(monkeypatch)
+        created = await client.post(
+            f"/agencies/{agency.id}/leads", json={"name": "Acme Co", "source": "manual"}, headers=auth_headers(owner)
+        )
+        assert created.status_code == 201, created.text
+        lead_id = created.json()["id"]
+
+        closed = await client.patch(
+            f"/agencies/{agency.id}/leads/{lead_id}/status",
+            json={"status": "lost", "lost_reason": "Went with a competitor"},
+            headers=auth_headers(owner),
+        )
+        assert closed.status_code == 200, closed.text
+
+        rejected = await client.post(f"/agencies/{agency.id}/leads/{lead_id}/ai/follow-up", headers=auth_headers(owner))
+        assert rejected.status_code == 400
+
+        reopened = await client.patch(
+            f"/agencies/{agency.id}/leads/{lead_id}/status",
+            json={"status": "contacted", "lost_reason": None},
+            headers=auth_headers(owner),
+        )
+        assert reopened.status_code == 200, reopened.text
+
+        _stub_reply(monkeypatch, "Just checking in on your project timeline!")
+        drafted = await client.post(f"/agencies/{agency.id}/leads/{lead_id}/ai/follow-up", headers=auth_headers(owner))
+        assert drafted.status_code == 200, drafted.text
+        assert drafted.json() == {"draft": "Just checking in on your project timeline!"}
+
+
+class TestMessageReplyDraft:
+    async def test_rejects_then_drafts_once_a_client_message_is_the_latest(
+        self, client, team, db_session, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        agency, owner, member = team
+        _configure(monkeypatch)
+        conversation = await create_conversation(
+            db_session,
+            agency,
+            creator=owner,
+            kind="group",
+            title="Rebrand chat",
+            participant_user_ids=[member.id],
+            client_id=None,
+            project_id=None,
+            initial_message=None,
+        )
+
+        rejected = await client.post(
+            f"/agencies/{agency.id}/conversations/{conversation.id}/ai/draft-reply", headers=auth_headers(owner)
+        )
+        assert rejected.status_code == 400
+
+        client_user = await make_user(db_session, email="client@example.com")
+        await post_message(
+            db_session,
+            conversation,
+            sender=client_user,
+            body="When will this be done?",
+            uploads=[],
+            sender_kind=SENDER_CLIENT,
+        )
+
+        _stub_reply(monkeypatch, "We expect it done by Friday.")
+        drafted = await client.post(
+            f"/agencies/{agency.id}/conversations/{conversation.id}/ai/draft-reply", headers=auth_headers(owner)
+        )
+        assert drafted.status_code == 200, drafted.text
+        assert drafted.json() == {"draft": "We expect it done by Friday."}

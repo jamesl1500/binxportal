@@ -12,6 +12,7 @@
  */
 "use server";
 
+import { draftMessageReply } from "@/lib/ai";
 import { AuthApiError } from "@/lib/auth";
 import {
   addConversationParticipants,
@@ -199,5 +200,21 @@ export async function deleteMessageAction(
     return {};
   } catch (error) {
     return errorResult(error, "Unable to delete message");
+  }
+}
+
+export interface DraftMessageReplyActionResult {
+  error?: string;
+  draft?: string;
+}
+
+export async function draftMessageReplyAction(
+  agencyId: string,
+  conversationId: string,
+): Promise<DraftMessageReplyActionResult> {
+  try {
+    return { draft: await draftMessageReply(agencyId, conversationId) };
+  } catch (error) {
+    return errorResult(error, "Unable to draft a reply");
   }
 }

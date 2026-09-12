@@ -4,7 +4,11 @@ lifecycle (create → work → convert), the event timeline, and the analyze stu
 
 from __future__ import annotations
 
+import asyncio
 import dataclasses
+import json
+import time
+from types import SimpleNamespace
 
 import pytest
 from fastapi import HTTPException
@@ -180,6 +184,51 @@ class TestBulkAnalyze:
         assert [lead.name for lead in result.leads] == ["Open"]
         await db_session.refresh(open_lead)
         assert open_lead.ai_analyzed_at is not None
+
+    async def test_analyzes_concurrently_without_corrupting_the_shared_session(
+        self, db_session, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Proves the concurrency fix: several leads' Claude calls overlap
+        (real speedup) while every DB-touching bit inside ai_client.complete()
+        stays serialized on the one shared AsyncSession — an unguarded
+        version of this would either run sequentially (no speedup) or raise
+        a real SQLAlchemy IllegalStateChangeError from concurrent session
+        use. Each lead has its own website, so none hit the sparse-record
+        heuristic shortcut — every one actually goes through the (faked)
+        Claude call this test is timing."""
+        from binx_api.modules.ai import client as ai_client
+
+        monkeypatch.setattr(ai_client.settings, "anthropic_api_key", "sk-test-fake")
+        monkeypatch.setattr(ai_client.settings, "ai_model", "claude-opus-5")
+
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        names = [f"Lead {i}" for i in range(6)]
+        for name in names:
+            await _lead(db_session, agency, owner, name=name, website=f"https://{name.replace(' ', '')}.example")
+
+        async def _slow_fake_call(**kwargs):
+            await asyncio.sleep(0.05)
+            payload = {"score": 70, "fit": "moderate", "summary": "ok", "talking_points": [], "next_step": "call"}
+            return SimpleNamespace(
+                content=[SimpleNamespace(type="text", text=json.dumps(payload))],
+                usage=SimpleNamespace(
+                    input_tokens=10, output_tokens=10, cache_creation_input_tokens=0, cache_read_input_tokens=0
+                ),
+                stop_reason="end_turn",
+            )
+
+        monkeypatch.setattr(ai_client, "_call_anthropic", _slow_fake_call)
+
+        start = time.monotonic()
+        result = await service.analyze_open_leads(db_session, agency, actor=owner)
+        elapsed = time.monotonic() - start
+
+        assert result.analyzed == 6
+        assert {lead.name for lead in result.leads} == set(names)
+        # Sequential would take >= 6 * 0.05s = 0.30s; concurrency=5 finishes
+        # in two overlapping batches (~0.10s) plus overhead.
+        assert elapsed < 0.25, f"leads were not analyzed concurrently (took {elapsed:.3f}s)"
 
 
 class TestImportProspects:

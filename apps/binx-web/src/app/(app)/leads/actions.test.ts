@@ -17,20 +17,25 @@ vi.mock("@/lib/leads", () => ({
   analyzeLead: vi.fn(),
 }));
 
+vi.mock("@/lib/ai", () => ({ generateLeadFollowup: vi.fn() }));
+
 import { redirect } from "next/navigation";
 
+import { generateLeadFollowup } from "@/lib/ai";
 import { AuthApiError } from "@/lib/auth";
 import { convertLead, createLead, deleteLead } from "@/lib/leads";
 import {
   convertLeadAction,
   createLeadAction,
   deleteLeadAction,
+  generateLeadFollowupAction,
 } from "./actions";
 
 const mockedCreate = vi.mocked(createLead);
 const mockedConvert = vi.mocked(convertLead);
 const mockedDelete = vi.mocked(deleteLead);
 const mockedRedirect = vi.mocked(redirect);
+const mockedFollowup = vi.mocked(generateLeadFollowup);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -84,5 +89,20 @@ describe("deleteLeadAction", () => {
       error: "Insufficient permissions for this agency",
     });
     expect(mockedRedirect).not.toHaveBeenCalled();
+  });
+});
+
+describe("generateLeadFollowupAction", () => {
+  it("returns the draft on success", async () => {
+    mockedFollowup.mockResolvedValueOnce("Just checking in!");
+    await expect(generateLeadFollowupAction("a1", "l1")).resolves.toEqual({ draft: "Just checking in!" });
+    expect(mockedFollowup).toHaveBeenCalledWith("a1", "l1");
+  });
+
+  it("returns the upstream error", async () => {
+    mockedFollowup.mockRejectedValueOnce(new AuthApiError("This lead is closed — no follow-up needed.", 400));
+    await expect(generateLeadFollowupAction("a1", "l1")).resolves.toEqual({
+      error: "This lead is closed — no follow-up needed.",
+    });
   });
 });

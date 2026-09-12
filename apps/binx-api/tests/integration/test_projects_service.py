@@ -244,6 +244,66 @@ class TestTaskLists:
         assert exc.value.status_code == 409
 
 
+class TestBulkCreateBoard:
+    async def test_appends_lists_and_tasks_after_the_defaults_in_one_commit(self, db_session, project_ctx) -> None:
+        _owner, _agency, _client, project = project_ctx
+        from binx_api.modules.ai.service import TaskListSuggestion, TaskSuggestion
+
+        await service.bulk_create_board(
+            db_session,
+            project,
+            lists=[
+                TaskListSuggestion(
+                    name="Discovery",
+                    tasks=[
+                        TaskSuggestion(title="Kickoff call", description="Align on scope."),
+                        TaskSuggestion(title="Gather assets", description=None),
+                    ],
+                ),
+                TaskListSuggestion(name="Design", tasks=[TaskSuggestion(title="Moodboard", description=None)]),
+            ],
+        )
+
+        lists = (
+            (
+                await db_session.execute(
+                    select(ProjectTaskList)
+                    .where(ProjectTaskList.project_id == project.id)
+                    .order_by(ProjectTaskList.position)
+                )
+            )
+            .scalars()
+            .all()
+        )
+        assert [lst.name for lst in lists] == [*DEFAULT_TASK_LISTS, "Discovery", "Design"]
+
+        discovery = lists[3]
+        tasks = (
+            (
+                await db_session.execute(
+                    select(ProjectTask).where(ProjectTask.list_id == discovery.id).order_by(ProjectTask.position)
+                )
+            )
+            .scalars()
+            .all()
+        )
+        assert [t.title for t in tasks] == ["Kickoff call", "Gather assets"]
+        assert tasks[0].description == "Align on scope."
+        assert tasks[0].position == 0
+        assert tasks[1].position == 1
+
+    async def test_empty_suggestion_list_is_a_no_op(self, db_session, project_ctx) -> None:
+        _owner, _agency, _client, project = project_ctx
+        await service.bulk_create_board(db_session, project, lists=[])
+
+        lists = (
+            (await db_session.execute(select(ProjectTaskList).where(ProjectTaskList.project_id == project.id)))
+            .scalars()
+            .all()
+        )
+        assert [lst.name for lst in lists] == DEFAULT_TASK_LISTS
+
+
 class TestTasks:
     async def test_create_task_appends_to_the_bottom_of_the_column(self, db_session, project_ctx) -> None:
         _owner, _agency, _client, project = project_ctx

@@ -5,9 +5,12 @@
  * the left (new/select/delete) and the active thread + composer on the
  * right. Opened from AiAssistantLauncher (header button or ⌘K/Ctrl+K).
  * Answers are read-only lookups over the agency's own leads/clients/
- * projects/invoices (see ai/service.py::assistant_reply's tool loop) — there
- * is no streaming yet, so a sent message shows a "Thinking…" state until the
- * full reply comes back.
+ * projects/invoices (see ai/service.py::assistant_reply_stream's tool loop).
+ * A sent message streams the reply in token-by-token via
+ * `/api/ai/{agencyId}/{conversationId}/messages/stream` (Server-Sent Events,
+ * proxied same-origin — see that route's own docstring for why it's a plain
+ * `fetch()` and not this app's usual axios-based `lib/*.ts` helpers) — a
+ * "Thinking…" bubble covers the gap before the first token arrives.
  *
  * @module apps/binx-web/src/components/ai/AiModal/AiModal.tsx
  * @author Binx.io
@@ -24,7 +27,6 @@ import {
   deleteAiConversationAction,
   getAiConversationMessagesAction,
   listAiConversationsAction,
-  sendAiMessageAction,
 } from "@/app/(app)/ai/actions";
 import type { AiConversation, AiMessage } from "@/lib/ai";
 import AiMarkdown from "@/components/ai/AiMarkdown/AiMarkdown";
@@ -43,12 +45,34 @@ const SUGGESTIONS = [
   "Summarize our active projects.",
 ];
 
+interface StreamEvent {
+  type: "delta" | "done" | "error";
+  text?: string;
+  message?: string;
+}
+
+/** Splits a decoded SSE chunk into whichever complete `data: {...}` events it
+ * contains, returning the not-yet-terminated remainder to prepend to the
+ * next chunk — a streamed byte chunk can split a "\n\n"-delimited event
+ * anywhere, including mid-JSON. */
+function splitSseEvents(buffer: string): { events: StreamEvent[]; remainder: string } {
+  const parts = buffer.split("\n\n");
+  const remainder = parts.pop() ?? "";
+  const events = parts
+    .filter((part) => part.startsWith("data: "))
+    .map((part) => JSON.parse(part.slice("data: ".length)) as StreamEvent);
+  return { events, remainder };
+}
+
 const AiModal = ({ agencyId, isOpen, onClose }: AiModalProps) => {
   const [conversations, setConversations] = useState<AiConversation[] | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [messages, setMessages] = useState<AiMessage[]>([]);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  // null: no reply in flight. "": in flight, no tokens yet ("Thinking…").
+  // Anything else: the reply as streamed in so far.
+  const [streamingReply, setStreamingReply] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const tempIdRef = useRef(0);
@@ -102,7 +126,7 @@ const AiModal = ({ agencyId, isOpen, onClose }: AiModalProps) => {
     if (el && typeof el.scrollTo === "function") {
       el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
     }
-  }, [messages, sending]);
+  }, [messages, sending, streamingReply]);
 
   const handleNewChat = async () => {
     const result = await createAiConversationAction(agencyId);
@@ -157,22 +181,71 @@ const AiModal = ({ agencyId, isOpen, onClose }: AiModalProps) => {
     setMessages((prev) => [...prev, optimisticUser]);
     setDraft("");
     setSending(true);
+    setStreamingReply("");
 
     const isFirstMessage = messages.length === 0;
-    const result = await sendAiMessageAction(agencyId, conversationId, trimmed);
-    setSending(false);
+    const finalize = (finalText: string) => {
+      tempIdRef.current += 1;
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `assistant-${tempIdRef.current}`,
+          role: "assistant",
+          content: finalText,
+          created_at: new Date().toISOString(),
+        },
+      ]);
+      if (isFirstMessage) {
+        setConversations((prev) =>
+          (prev ?? []).map((c) => (c.id === conversationId ? { ...c, title: trimmed.slice(0, 255) } : c)),
+        );
+      }
+    };
 
-    if (result.error || !result.message) {
-      toast.error(result.error ?? "Unable to send that message");
+    try {
+      const response = await fetch(`/api/ai/${agencyId}/${conversationId}/messages/stream`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: trimmed }),
+      });
+
+      if (!response.body || !response.headers.get("content-type")?.includes("text/event-stream")) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.message ?? "Unable to send that message");
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let finalText = "";
+      let streamError: string | null = null;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const { events, remainder } = splitSseEvents(buffer);
+        buffer = remainder;
+        for (const event of events) {
+          if (event.type === "delta" && event.text) {
+            finalText += event.text;
+            setStreamingReply(finalText);
+          } else if (event.type === "error") {
+            streamError = event.message ?? "Unable to send that message";
+          }
+        }
+      }
+
+      if (streamError) {
+        throw new Error(streamError);
+      }
+      finalize(finalText);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to send that message");
       setMessages((prev) => prev.filter((m) => m.id !== optimisticUser.id));
-      return;
-    }
-
-    setMessages((prev) => [...prev, result.message!]);
-    if (isFirstMessage) {
-      setConversations((prev) =>
-        (prev ?? []).map((c) => (c.id === conversationId ? { ...c, title: trimmed.slice(0, 255) } : c)),
-      );
+    } finally {
+      setSending(false);
+      setStreamingReply(null);
     }
   };
 
@@ -271,10 +344,10 @@ const AiModal = ({ agencyId, isOpen, onClose }: AiModalProps) => {
                   </div>
                 ))
               )}
-              {sending && (
+              {streamingReply !== null && (
                 <div className={styles.bubbleRow} data-role="assistant">
-                  <div className={styles.bubble} data-role="assistant" data-thinking="true">
-                    Thinking…
+                  <div className={styles.bubble} data-role="assistant" data-thinking={streamingReply === "" ? "true" : undefined}>
+                    {streamingReply === "" ? "Thinking…" : <AiMarkdown content={streamingReply} />}
                   </div>
                 </div>
               )}

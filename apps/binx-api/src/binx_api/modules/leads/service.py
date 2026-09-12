@@ -10,6 +10,7 @@ is never left unanalyzed.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import uuid
 from dataclasses import dataclass, field
@@ -43,6 +44,10 @@ from binx_api.modules.users.models import User
 
 # The most leads one bulk-analyze pass will touch, and one prospecting import.
 BULK_ANALYZE_CAP = 25
+
+# How many of those leads get analyzed concurrently — see analyze_open_leads.
+# Bounds how hard one bulk-analyze click can burst against the Anthropic API.
+_BULK_ANALYZE_CONCURRENCY = 5
 
 _STATUS_LABELS = {
     "new": "New",
@@ -349,11 +354,13 @@ def _is_sparse(lead: Lead) -> bool:
     )
 
 
-async def _run_analysis(db: AsyncSession, lead: Lead, agency: Agency, *, actor: User | None) -> ai_service.LeadAnalysis:
+async def _run_analysis(
+    db: AsyncSession, lead: Lead, agency: Agency, *, actor: User | None, lock: asyncio.Lock | None = None
+) -> ai_service.LeadAnalysis:
     if _is_sparse(lead):
         return _heuristic_analysis(lead)
     try:
-        return await ai_service.analyze_lead_website(db, lead, agency, actor=actor)
+        return await ai_service.analyze_lead_website(db, lead, agency, actor=actor, lock=lock)
     except Exception:
         return _heuristic_analysis(lead)
 
@@ -399,9 +406,13 @@ def _needs_analysis(lead: Lead) -> bool:
 
 async def analyze_open_leads(db: AsyncSession, agency: Agency, *, actor: User | None) -> BulkAnalyzeResult:
     """Analyze every open lead that's unanalyzed or stale (its last activity is
-    newer than its last analysis), capped at BULK_ANALYZE_CAP. Runs
-    sequentially on the request session — each call is fast (effort=low). If
-    the AI budget is already *exhausted* (429), stop early rather than quietly
+    newer than its last analysis), capped at BULK_ANALYZE_CAP. Runs up to
+    `_BULK_ANALYZE_CONCURRENCY` leads' Claude calls concurrently — the real
+    bottleneck (the network round trip, more with web_fetch) parallelizes;
+    every DB-touching step (the budget check and usage logging inside
+    ai_client.complete(), both awaited on this one shared AsyncSession, which
+    is not safe for concurrent access) stays serialized behind `lock`. If the
+    AI budget is already *exhausted* (429), stop early rather than quietly
     heuristic-scoring the whole pipeline; when AI simply isn't configured
     (503), fall through to the heuristic per-lead like single analyze does."""
     result = await db.execute(
@@ -421,15 +432,21 @@ async def analyze_open_leads(db: AsyncSession, agency: Agency, *, actor: User | 
         except HTTPException as exc:
             budget_ok = exc.status_code != 429
 
-    for lead in candidates:
-        if not budget_ok and not _is_sparse(lead):
-            out.skipped += 1
-            continue
-        analysis = await _run_analysis(db, lead, agency, actor=actor)
-        _apply_analysis(lead, analysis)
-        await _add_event(db, lead, kind=EVENT_ANALYZED, body=f"Analyzed — score {analysis.score}/100", actor=actor)
-        out.analyzed += 1
-        out.leads.append(lead)
+    lock = asyncio.Lock()
+    semaphore = asyncio.Semaphore(_BULK_ANALYZE_CONCURRENCY)
+
+    async def _bounded(lead: Lead) -> None:
+        async with semaphore:
+            if not budget_ok and not _is_sparse(lead):
+                out.skipped += 1
+                return
+            analysis = await _run_analysis(db, lead, agency, actor=actor, lock=lock)
+            _apply_analysis(lead, analysis)
+            await _add_event(db, lead, kind=EVENT_ANALYZED, body=f"Analyzed — score {analysis.score}/100", actor=actor)
+            out.analyzed += 1
+            out.leads.append(lead)
+
+    await asyncio.gather(*(_bounded(lead) for lead in candidates))
 
     await db.commit()
     for lead in out.leads:

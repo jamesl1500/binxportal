@@ -10,6 +10,8 @@ from binx_api.core.dependencies import CurrentUser, DbSession
 from binx_api.core.security import decode_ws_ticket
 from binx_api.modules.agencies.dependencies import require_agency_role
 from binx_api.modules.agencies.models import ROLE_ADMIN, ROLE_MEMBER, ROLE_OWNER, Agency
+from binx_api.modules.ai import service as ai_service
+from binx_api.modules.ai.schemas import AiDraftRead
 from binx_api.modules.messaging import realtime, service
 from binx_api.modules.messaging.schemas import (
     ConversationCreate,
@@ -149,6 +151,18 @@ async def mark_read(
         db, agency.id, conversation_id, current_user
     )
     await service.mark_read(db, conversation, participant)
+
+
+@router.post("/{conversation_id}/ai/draft-reply", response_model=AiDraftRead)
+async def generate_message_reply_draft(
+    db: DbSession, current_user: CurrentUser, agency_and_role: AnyMember, conversation_id: uuid.UUID
+) -> AiDraftRead:
+    agency, _role = agency_and_role
+    conversation, _participant = await service.get_conversation_for_participant_or_404(
+        db, agency.id, conversation_id, current_user
+    )
+    draft = await ai_service.generate_message_reply(db, conversation, agency, actor=current_user)
+    return AiDraftRead(draft=draft)
 
 
 @router.patch("/{conversation_id}/settings", response_model=ConversationDetailRead)

@@ -37,6 +37,10 @@ export type AiUsageSummary = Omit<Schemas["AiUsageSummaryRead"], "recent_events"
   recent_events: AiUsageEvent[];
 };
 
+export type AiTaskSuggestion = Schemas["AiTaskSuggestion"];
+export type AiTaskListSuggestion = Schemas["AiTaskListSuggestion"];
+export type AiTaskSuggestions = Schemas["AiTaskSuggestionsRead"];
+
 export type AiConversation = Schemas["AiConversationRead"];
 
 export type AiMessage = Omit<Schemas["AiMessageRead"], "role"> & { role: "user" | "assistant" };
@@ -141,6 +145,61 @@ export async function generateInvoiceReminder(agencyId: string, invoiceId: strin
     return data.draft;
   } catch (error) {
     rethrow(error, "Unable to draft a reminder");
+  }
+}
+
+export async function draftMessageReply(agencyId: string, conversationId: string): Promise<string> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.post<{ draft: string }>(
+      `/agencies/${agencyId}/conversations/${conversationId}/ai/draft-reply`,
+      undefined,
+      { headers },
+    );
+    return data.draft;
+  } catch (error) {
+    rethrow(error, "Unable to draft a reply");
+  }
+}
+
+export async function suggestProjectTasks(agencyId: string, projectId: string): Promise<AiTaskSuggestions> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.post<AiTaskSuggestions>(
+      `/agencies/${agencyId}/projects/${projectId}/ai/tasks`,
+      undefined,
+      { headers },
+    );
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to suggest a starter task list");
+  }
+}
+
+export async function applyProjectTaskSuggestions(
+  agencyId: string,
+  projectId: string,
+  suggestions: AiTaskSuggestions,
+): Promise<void> {
+  const headers = await authHeader();
+  try {
+    await api.post(`/agencies/${agencyId}/projects/${projectId}/ai/tasks/apply`, suggestions, { headers });
+  } catch (error) {
+    rethrow(error, "Unable to set up the task list");
+  }
+}
+
+export async function generateLeadFollowup(agencyId: string, leadId: string): Promise<string> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.post<{ draft: string }>(
+      `/agencies/${agencyId}/leads/${leadId}/ai/follow-up`,
+      undefined,
+      { headers },
+    );
+    return data.draft;
+  } catch (error) {
+    rethrow(error, "Unable to draft a follow-up");
   }
 }
 

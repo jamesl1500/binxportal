@@ -15,7 +15,8 @@
 
 import { redirect } from "next/navigation";
 
-import { generateProjectSummary } from "@/lib/ai";
+import { applyProjectTaskSuggestions, generateProjectSummary, suggestProjectTasks } from "@/lib/ai";
+import type { AiTaskSuggestions } from "@/lib/ai";
 import { AuthApiError } from "@/lib/auth";
 import {
   addProjectMember,
@@ -602,5 +603,34 @@ export async function generateProjectSummaryAction(
     return { draft: await generateProjectSummary(agencyId, projectId) };
   } catch (error) {
     return errorResult(error, "Unable to draft a summary");
+  }
+}
+
+export interface AiTaskSuggestionsActionResult {
+  error?: string;
+  suggestions?: AiTaskSuggestions;
+}
+
+export async function suggestProjectTasksAction(
+  agencyId: string,
+  projectId: string,
+): Promise<AiTaskSuggestionsActionResult> {
+  try {
+    return { suggestions: await suggestProjectTasks(agencyId, projectId) };
+  } catch (error) {
+    return errorResult(error, "Unable to suggest a starter task list");
+  }
+}
+
+export async function applyProjectTaskSuggestionsAction(
+  agencyId: string,
+  projectId: string,
+  suggestions: AiTaskSuggestions,
+): Promise<{ error?: string }> {
+  try {
+    await applyProjectTaskSuggestions(agencyId, projectId, suggestions);
+    return {};
+  } catch (error) {
+    return errorResult(error, "Unable to set up the task list");
   }
 }

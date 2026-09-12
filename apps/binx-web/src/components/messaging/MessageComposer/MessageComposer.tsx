@@ -18,10 +18,10 @@
 "use client";
 
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Paperclip, SendHorizontal, X } from "lucide-react";
+import { Paperclip, SendHorizontal, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
 
-import { sendMessageAction } from "@/app/(app)/messages/actions";
+import { draftMessageReplyAction, sendMessageAction } from "@/app/(app)/messages/actions";
 import type { Message } from "@/lib/messaging-client";
 import { MESSAGE_UPLOAD_MAX_BYTES } from "@/lib/messaging-client";
 import { useMessagingStore } from "@/stores/use-messaging-store";
@@ -49,6 +49,7 @@ const MessageComposer = ({ conversationId }: MessageComposerProps) => {
   const [body, setBody] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [sending, setSending] = useState(false);
+  const [drafting, setDrafting] = useState(false);
   const [dragOver, setDragOver] = useState(false);
 
   // Null when the mention picker is closed, otherwise the handle fragment
@@ -166,6 +167,25 @@ const MessageComposer = ({ conversationId }: MessageComposerProps) => {
     }
   };
 
+  const handleDraftWithAi = async () => {
+    if (drafting) return;
+    setDrafting(true);
+    try {
+      const result = await draftMessageReplyAction(agencyId, conversationId);
+      if (result.error || !result.draft) {
+        toast.error(result.error ?? "Unable to draft a reply");
+        return;
+      }
+      setBody(result.draft);
+      if (textareaRef.current) {
+        grow(textareaRef.current);
+        textareaRef.current.focus();
+      }
+    } finally {
+      setDrafting(false);
+    }
+  };
+
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (mentionOpen) {
       if (event.key === "ArrowDown") {
@@ -272,6 +292,16 @@ const MessageComposer = ({ conversationId }: MessageComposerProps) => {
           aria-label="Attach files"
         >
           <Paperclip aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          className={styles.aiDraftButton}
+          onClick={() => void handleDraftWithAi()}
+          disabled={drafting || sending}
+          aria-label="Draft a reply with AI"
+          title="Draft a reply with AI"
+        >
+          <Sparkles aria-hidden="true" />
         </button>
         <input
           ref={fileInputRef}

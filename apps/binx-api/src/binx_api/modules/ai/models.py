@@ -11,17 +11,23 @@ from binx_api.core.database import Base
 # never needs a migration.
 FEATURE_LEAD_ANALYSIS = "lead_analysis"
 FEATURE_LEAD_GENERATION = "lead_generation"
+FEATURE_LEAD_FOLLOWUP = "lead_followup"
 FEATURE_DASHBOARD_BRIEFING = "dashboard_briefing"
 FEATURE_PROJECT_SUMMARY = "project_summary"
+FEATURE_PROJECT_TASKS = "project_tasks"
 FEATURE_INVOICE_REMINDER = "invoice_reminder"
+FEATURE_MESSAGE_REPLY = "message_reply"
 FEATURE_ASSISTANT = "assistant"
 
 ai_features: list[str] = [
     FEATURE_LEAD_ANALYSIS,
     FEATURE_LEAD_GENERATION,
+    FEATURE_LEAD_FOLLOWUP,
     FEATURE_DASHBOARD_BRIEFING,
     FEATURE_PROJECT_SUMMARY,
+    FEATURE_PROJECT_TASKS,
     FEATURE_INVOICE_REMINDER,
+    FEATURE_MESSAGE_REPLY,
     FEATURE_ASSISTANT,
 ]
 

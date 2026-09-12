@@ -18,6 +18,7 @@ import { getLead, getLeadEvents } from "@/lib/leads";
 import { LEAD_SOURCE_LABELS } from "@/lib/leads-client";
 import { formatMoneyCents } from "@/lib/money";
 import AiMarkdown from "@/components/ai/AiMarkdown/AiMarkdown";
+import AiFollowUpCard from "@/components/leads/AiFollowUpCard/AiFollowUpCard";
 import AnalyzeLeadButton from "@/components/leads/AnalyzeLeadButton/AnalyzeLeadButton";
 import ConvertLeadButton from "@/components/leads/ConvertLeadButton/ConvertLeadButton";
 import LeadForm from "@/components/leads/LeadForm/LeadForm";
@@ -127,6 +128,14 @@ const LeadDetailPage = async ({ params }: LeadDetailPageProps) => {
               </p>
             )}
           </section>
+
+          <AiFollowUpCard
+            agencyId={agencyId}
+            leadId={lead.id}
+            status={lead.status}
+            contactEmail={lead.contact_email}
+            leadName={lead.name}
+          />
 
           <section className={styles.card}>
             <h2 className={styles.cardTitle}>Details</h2>

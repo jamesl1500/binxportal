@@ -54,6 +54,20 @@ class AiDraftRead(BaseModel):
     draft: str
 
 
+class AiTaskSuggestion(BaseModel):
+    title: str = Field(min_length=1, max_length=255)
+    description: str | None = Field(default=None, max_length=4096)
+
+
+class AiTaskListSuggestion(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    tasks: list[AiTaskSuggestion]
+
+
+class AiTaskSuggestionsRead(BaseModel):
+    lists: list[AiTaskListSuggestion]
+
+
 class AiConversationRead(BaseModel):
     id: uuid.UUID
     title: str | None

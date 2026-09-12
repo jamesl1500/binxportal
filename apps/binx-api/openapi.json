@@ -1465,6 +1465,72 @@
         "title": "AiSettingsUpdate",
         "type": "object"
       },
+      "AiTaskListSuggestion": {
+        "properties": {
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/AiTaskSuggestion"
+            },
+            "title": "Tasks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "tasks"
+        ],
+        "title": "AiTaskListSuggestion",
+        "type": "object"
+      },
+      "AiTaskSuggestion": {
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 4096,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "title": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "title": "AiTaskSuggestion",
+        "type": "object"
+      },
+      "AiTaskSuggestionsRead": {
+        "properties": {
+          "lists": {
+            "items": {
+              "$ref": "#/components/schemas/AiTaskListSuggestion"
+            },
+            "title": "Lists",
+            "type": "array"
+          }
+        },
+        "required": [
+          "lists"
+        ],
+        "title": "AiTaskSuggestionsRead",
+        "type": "object"
+      },
       "AiUsageEventRead": {
         "properties": {
           "cost_cents": {
@@ -8545,6 +8611,73 @@
         ]
       }
     },
+    "/agencies/{agency_id}/ai/conversations/{conversation_id}/messages/stream": {
+      "post": {
+        "description": "Same request as ``POST .../messages``, but the reply streams in as\nServer-Sent Events instead of arriving all at once. Once streaming\nstarts the HTTP status/headers are already sent, so an error mid-stream\ncan't become an HTTP error response \u2014 it's relayed as an in-band\n``{\"type\": \"error\"}`` event instead, and the generator ends there\n(no ``done`` event follows an ``error``).",
+        "operationId": "stream_conversation_message_agencies__agency_id__ai_conversations__conversation_id__messages_stream_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversation_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Conversation Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiMessageCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Stream Conversation Message",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
     "/agencies/{agency_id}/ai/settings": {
       "get": {
         "operationId": "get_ai_settings_agencies__agency_id__ai_settings_get",
@@ -9980,6 +10113,64 @@
           }
         ],
         "summary": "Update Conversation",
+        "tags": [
+          "messaging"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/conversations/{conversation_id}/ai/draft-reply": {
+      "post": {
+        "operationId": "generate_message_reply_draft_agencies__agency_id__conversations__conversation_id__ai_draft_reply_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversation_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Conversation Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiDraftRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Generate Message Reply Draft",
         "tags": [
           "messaging"
         ]
@@ -12296,6 +12487,64 @@
         ]
       }
     },
+    "/agencies/{agency_id}/leads/{lead_id}/ai/follow-up": {
+      "post": {
+        "operationId": "generate_lead_ai_followup_agencies__agency_id__leads__lead_id__ai_follow_up_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lead_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Lead Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiDraftRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Generate Lead Ai Followup",
+        "tags": [
+          "leads"
+        ]
+      }
+    },
     "/agencies/{agency_id}/leads/{lead_id}/analyze": {
       "post": {
         "operationId": "analyze_lead_agencies__agency_id__leads__lead_id__analyze_post",
@@ -13835,6 +14084,125 @@
           }
         ],
         "summary": "Generate Project Ai Summary",
+        "tags": [
+          "projects"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/projects/{project_id}/ai/tasks": {
+      "post": {
+        "operationId": "suggest_project_ai_tasks_agencies__agency_id__projects__project_id__ai_tasks_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiTaskSuggestionsRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Suggest Project Ai Tasks",
+        "tags": [
+          "projects"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/projects/{project_id}/ai/tasks/apply": {
+      "post": {
+        "operationId": "apply_project_ai_tasks_agencies__agency_id__projects__project_id__ai_tasks_apply_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiTaskSuggestionsRead"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Apply Project Ai Tasks",
         "tags": [
           "projects"
         ]

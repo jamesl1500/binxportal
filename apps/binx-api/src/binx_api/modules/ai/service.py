@@ -1,18 +1,26 @@
-"""The five AI features, each a thin prompt-builder over the shared
-ai/client.py::complete. Nothing here talks to Anthropic directly.
+"""The AI features, each a thin prompt-builder over the shared
+ai/client.py::complete / complete_stream. Nothing here talks to Anthropic
+directly.
 
-- analyze_lead_website — structured JSON scoring, used by leads/service.py
-  (which owns the heuristic fallback when this raises).
+- analyze_lead_website / find_prospects / suggest_project_tasks —
+  structured JSON output. analyze_lead_website is used by leads/service.py
+  (which owns the heuristic fallback when it raises); suggest_project_tasks
+  returns suggestions for the caller to review before
+  projects/service.py::bulk_create_board writes anything.
 - generate_dashboard_briefing / generate_project_summary /
-  generate_invoice_reminder — plain-text drafts.
-- assistant_reply — the "Ask AI" manual tool-calling loop over four
-  read-only, agency-scoped search tools.
+  generate_invoice_reminder / generate_lead_followup /
+  generate_message_reply — plain-text drafts.
+- assistant_reply / assistant_reply_stream — the "Ask AI" manual
+  tool-calling loop over four read-only, agency-scoped search tools; the
+  streaming variant yields text deltas instead of returning once.
 """
 
 from __future__ import annotations
 
 import json
 import uuid
+from asyncio import Lock
+from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
@@ -29,8 +37,11 @@ from binx_api.modules.ai.models import (
     FEATURE_DASHBOARD_BRIEFING,
     FEATURE_INVOICE_REMINDER,
     FEATURE_LEAD_ANALYSIS,
+    FEATURE_LEAD_FOLLOWUP,
     FEATURE_LEAD_GENERATION,
+    FEATURE_MESSAGE_REPLY,
     FEATURE_PROJECT_SUMMARY,
+    FEATURE_PROJECT_TASKS,
     ROLE_ASSISTANT,
     ROLE_USER,
     AiConversation,
@@ -41,6 +52,8 @@ from binx_api.modules.dashboard import service as dashboard_service
 from binx_api.modules.invoicing import service as invoicing_service
 from binx_api.modules.invoicing.models import STATUS_SENT, Invoice
 from binx_api.modules.leads.models import LEAD_OPEN_STATUSES, LEAD_STATUSES, Lead
+from binx_api.modules.messaging import service as messaging_service
+from binx_api.modules.messaging.models import SENDER_CLIENT, Conversation
 from binx_api.modules.projects import service as projects_service
 from binx_api.modules.projects.models import Project, project_statuses
 from binx_api.modules.users.models import User
@@ -88,14 +101,21 @@ _LEAD_ANALYSIS_FORMAT = {
 }
 
 
-async def analyze_lead_website(db: AsyncSession, lead: Lead, agency: Agency, *, actor: User | None) -> LeadAnalysis:
+async def analyze_lead_website(
+    db: AsyncSession, lead: Lead, agency: Agency, *, actor: User | None, lock: Lock | None = None
+) -> LeadAnalysis:
     """Score a lead 0-100, read its fit, and write a short summary + talking
     points + next step — fetching the lead's own website for real signal when
     one is on file. Tuned for speed: `effort="low"` and a tight token budget,
     since structured scoring doesn't need deep reasoning. Raises on any AI
     failure (not configured, over budget, malformed response) — the caller
     (leads/service.py::analyze_lead) catches that and falls back to the
-    completeness heuristic, so a lead is never left unanalyzed."""
+    completeness heuristic, so a lead is never left unanalyzed.
+
+    ``lock`` is a passthrough to ``ai_client.complete()`` — see its
+    docstring. Only ``leads/service.py::analyze_open_leads``'s bulk path
+    passes one, to run several of these concurrently on one shared
+    ``AsyncSession``."""
     contact_bits = ", ".join(filter(None, [lead.contact_name, lead.contact_email, lead.contact_phone]))
     value = f"${lead.estimated_value_cents / 100:,.0f}" if lead.estimated_value_cents else "unknown"
 
@@ -143,6 +163,7 @@ async def analyze_lead_website(db: AsyncSession, lead: Lead, agency: Agency, *, 
         effort="low",
         tools=tools,
         response_format=_LEAD_ANALYSIS_FORMAT,
+        lock=lock,
     )
     data = json.loads(result.text)
     fit = str(data.get("fit") or "").strip().lower()
@@ -255,6 +276,52 @@ async def find_prospects(
             )
         )
     return candidates
+
+
+# ---- Lead follow-up email draft ---------------------------------------
+
+
+async def generate_lead_followup(db: AsyncSession, lead: Lead, agency: Agency, *, actor: User | None) -> str:
+    """Draft a follow-up email for a lead still in play. Structurally the
+    same as generate_invoice_reminder: a guard, a plain-text prompt built
+    from what's already on file, one fast-tier call. Grounds the draft in
+    any existing analyze_lead_website output (ai_summary/ai_next_step)
+    without triggering a second AI call for it."""
+    if lead.status not in LEAD_OPEN_STATUSES:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "This lead is closed — no follow-up needed.")
+
+    contact_bits = ", ".join(filter(None, [lead.contact_name, lead.contact_email, lead.contact_phone]))
+    last_activity = lead.last_activity_at.date().isoformat() if lead.last_activity_at else "no activity logged"
+
+    prompt = (
+        f'Draft a follow-up email for the sales lead "{lead.name}" on behalf of "{agency.name}".\n'
+        f"Contact: {contact_bits or 'none on file'}\n"
+        f"Pipeline status: {lead.status}\n"
+        f"Last activity: {last_activity}\n"
+        f"Notes on file: {lead.notes or 'none'}\n"
+    )
+    if lead.ai_summary:
+        prompt += f"Prior analysis summary: {lead.ai_summary}\n"
+    if lead.ai_next_step:
+        prompt += f"Suggested next step: {lead.ai_next_step}\n"
+    prompt += (
+        "\nWrite a brief, warm, no-pressure check-in email — professional, not pushy. Reference what's "
+        "known above only; don't invent specifics. Write only the email body — no subject line, no "
+        "signature block."
+    )
+
+    result = await ai_client.complete(
+        db,
+        agency.id,
+        actor.id if actor else None,
+        feature=FEATURE_LEAD_FOLLOWUP,
+        system="You write concise, warm follow-up emails for a B2B sales pipeline.",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=400,
+        effort="low",
+        fast=True,
+    )
+    return result.text
 
 
 # ---- Dashboard briefing ----------------------------------------------
@@ -386,6 +453,104 @@ async def generate_project_summary(db: AsyncSession, project: Project, agency: A
     return result.text
 
 
+# ---- Project starter task list ----------------------------------------
+
+
+@dataclass
+class TaskSuggestion:
+    title: str
+    description: str | None = None
+
+
+@dataclass
+class TaskListSuggestion:
+    name: str
+    tasks: list[TaskSuggestion] = field(default_factory=list)
+
+
+_PROJECT_TASKS_FORMAT = {
+    "type": "json_schema",
+    "schema": {
+        "type": "object",
+        "properties": {
+            "lists": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string"},
+                        "tasks": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {"type": "string"},
+                                    "description": {"type": "string"},
+                                },
+                                "required": ["title"],
+                                "additionalProperties": False,
+                            },
+                        },
+                    },
+                    "required": ["name", "tasks"],
+                    "additionalProperties": False,
+                },
+            }
+        },
+        "required": ["lists"],
+        "additionalProperties": False,
+    },
+}
+
+
+async def suggest_project_tasks(
+    db: AsyncSession, project: Project, agency: Agency, *, actor: User | None
+) -> list[TaskListSuggestion]:
+    """Propose a starter kanban board (columns + cards) for a freshly created
+    project, from just its name/description — the opposite direction of
+    generate_project_summary (propose structure instead of summarizing
+    existing work). Returns suggestions for the caller to review/edit; never
+    writes to the DB itself (see projects/service.py::bulk_create_board for
+    that)."""
+    prompt = (
+        f'Propose a starter kanban task board for the project "{project.name}" at "{agency.name}" '
+        "(a services agency).\n"
+        f"Description: {project.description or 'none on file'}\n\n"
+        "Suggest 2-4 columns (e.g. a typical workflow for this kind of project) and, under each, "
+        "3-6 concrete starter tasks with short titles and a one-sentence description each. Keep it "
+        "practical and specific to what's described above — don't pad with generic boilerplate tasks "
+        "if the description doesn't support them."
+    )
+    result = await ai_client.complete(
+        db,
+        agency.id,
+        actor.id if actor else None,
+        feature=FEATURE_PROJECT_TASKS,
+        system="You are a delivery lead at a creative/marketing agency, setting up new project boards.",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=1500,
+        effort="low",
+        response_format=_PROJECT_TASKS_FORMAT,
+        fast=True,
+    )
+    data = json.loads(result.text)
+    lists: list[TaskListSuggestion] = []
+    for raw_list in data.get("lists") or []:
+        name = str(raw_list.get("name") or "").strip()[:100]
+        if not name:
+            continue
+        tasks = []
+        for raw_task in raw_list.get("tasks") or []:
+            title = str(raw_task.get("title") or "").strip()[:255]
+            if not title:
+                continue
+            description = str(raw_task.get("description") or "").strip()[:4096] or None
+            tasks.append(TaskSuggestion(title=title, description=description))
+        if tasks:
+            lists.append(TaskListSuggestion(name=name, tasks=tasks))
+    return lists
+
+
 # ---- Invoice reminder ----------------------------------------------
 
 
@@ -417,6 +582,47 @@ async def generate_invoice_reminder(db: AsyncSession, invoice: Invoice, agency: 
         system="You write concise, professional payment-reminder emails on behalf of a small agency.",
         messages=[{"role": "user", "content": prompt}],
         max_tokens=400,
+        effort="low",
+        fast=True,
+    )
+    return result.text
+
+
+# ---- Message reply draft ------------------------------------------------
+
+
+async def generate_message_reply(
+    db: AsyncSession, conversation: Conversation, agency: Agency, *, actor: User | None
+) -> str:
+    """Draft a reply to the client's most recent message in a staff/client
+    conversation. Guard: 400 when there's no client message to reply to yet
+    (an empty thread, or the newest message is already staff's own) — mirrors
+    generate_invoice_reminder's guard shape. Reuses
+    messaging/service.py::list_messages wholesale for the history fetch."""
+    history = await messaging_service.list_messages(db, conversation, limit=15, before=None)
+    if not history or history[-1].sender_kind != SENDER_CLIENT or history[-1].deleted_at is not None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "There's no new client message to reply to.")
+
+    lines = [
+        f"{'Client' if message.sender_kind == SENDER_CLIENT else message.sender_name}: {message.body}"
+        for message in history
+        if message.deleted_at is None
+    ]
+    prompt = (
+        f'Draft a reply to the client\'s most recent message in this conversation with "{agency.name}".\n\n'
+        "Conversation so far (oldest first):\n" + "\n".join(lines) + "\n\n"
+        "Write a warm, professional reply that directly addresses the client's most recent message. "
+        "Don't invent facts not present above. Write only the message body — no signature block."
+    )
+
+    result = await ai_client.complete(
+        db,
+        agency.id,
+        actor.id if actor else None,
+        feature=FEATURE_MESSAGE_REPLY,
+        system="You write clear, warm client-facing replies on behalf of a creative/marketing agency.",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=500,
         effort="low",
         fast=True,
     )
@@ -606,21 +812,59 @@ async def delete_conversation(db: AsyncSession, conversation: AiConversation) ->
     await db.commit()
 
 
-async def assistant_reply(
-    db: AsyncSession, conversation: AiConversation, agency: Agency, *, actor: User, user_message: str
-) -> str:
-    history = await list_conversation_messages(db, conversation.id)
-    messages: list[dict] = [{"role": m.role, "content": m.content} for m in history]
-    messages.append({"role": "user", "content": user_message})
-
-    system = (
+def _assistant_system_prompt(agency: Agency) -> str:
+    return (
         f'You are Binx\'s in-app AI assistant for the agency "{agency.name}". Answer questions about '
         "their leads, clients, projects, and invoices using the tools available — always look things "
         "up rather than guessing at numbers or statuses. Be concise and specific. You are read-only: "
         "you cannot create, edit, send, or change anything on the user's behalf."
     )
 
-    final_text = "I wasn't able to finish looking that up — try narrowing your question."
+
+async def _build_assistant_messages(db: AsyncSession, conversation: AiConversation, user_message: str) -> list[dict]:
+    history = await list_conversation_messages(db, conversation.id)
+    messages: list[dict] = [{"role": m.role, "content": m.content} for m in history]
+    messages.append({"role": "user", "content": user_message})
+    return messages
+
+
+async def _execute_tool_calls(db: AsyncSession, agency_id: uuid.UUID, message) -> list[dict]:
+    """Runs every ``tool_use`` block in one assistant message and returns all
+    their results as a list of ``tool_result`` blocks for a single user
+    message — never split across messages (that silently trains Claude to
+    stop making parallel tool calls)."""
+    tool_results = []
+    for block in message.content:
+        if block.type != "tool_use":
+            continue
+        try:
+            output = await _run_tool(db, agency_id, block.name, block.input or {})
+            tool_results.append({"type": "tool_result", "tool_use_id": block.id, "content": json.dumps(output)})
+        except Exception as exc:  # a bad tool call shouldn't kill the whole turn
+            tool_results.append({"type": "tool_result", "tool_use_id": block.id, "content": str(exc), "is_error": True})
+    return tool_results
+
+
+async def _persist_assistant_turn(
+    db: AsyncSession, conversation: AiConversation, *, user_message: str, final_text: str
+) -> None:
+    db.add(AiConversationMessage(conversation_id=conversation.id, role=ROLE_USER, content=user_message))
+    db.add(AiConversationMessage(conversation_id=conversation.id, role=ROLE_ASSISTANT, content=final_text))
+    if conversation.title is None:
+        conversation.title = user_message[:255]
+    await db.commit()
+
+
+_NO_ANSWER = "I wasn't able to finish looking that up — try narrowing your question."
+
+
+async def assistant_reply(
+    db: AsyncSession, conversation: AiConversation, agency: Agency, *, actor: User, user_message: str
+) -> str:
+    messages = await _build_assistant_messages(db, conversation, user_message)
+    system = _assistant_system_prompt(agency)
+
+    final_text = _NO_ANSWER
     for _iteration in range(MAX_ASSISTANT_ITERATIONS):
         result = await ai_client.complete(
             db,
@@ -632,6 +876,7 @@ async def assistant_reply(
             max_tokens=1200,
             effort="medium",
             tools=_ASSISTANT_TOOLS,
+            cache_system=True,
         )
         message = result.message
         if message.stop_reason != "tool_use":
@@ -639,22 +884,58 @@ async def assistant_reply(
             break
 
         messages.append({"role": "assistant", "content": message.content})
-        tool_results = []
-        for block in message.content:
-            if block.type != "tool_use":
-                continue
-            try:
-                output = await _run_tool(db, agency.id, block.name, block.input or {})
-                tool_results.append({"type": "tool_result", "tool_use_id": block.id, "content": json.dumps(output)})
-            except Exception as exc:  # a bad tool call shouldn't kill the whole turn
-                tool_results.append(
-                    {"type": "tool_result", "tool_use_id": block.id, "content": str(exc), "is_error": True}
-                )
+        tool_results = await _execute_tool_calls(db, agency.id, message)
         messages.append({"role": "user", "content": tool_results})
 
-    db.add(AiConversationMessage(conversation_id=conversation.id, role=ROLE_USER, content=user_message))
-    db.add(AiConversationMessage(conversation_id=conversation.id, role=ROLE_ASSISTANT, content=final_text))
-    if conversation.title is None:
-        conversation.title = user_message[:255]
-    await db.commit()
+    await _persist_assistant_turn(db, conversation, user_message=user_message, final_text=final_text)
     return final_text
+
+
+async def assistant_reply_stream(
+    db: AsyncSession, conversation: AiConversation, agency: Agency, *, actor: User, user_message: str
+) -> AsyncIterator[str]:
+    """Streaming counterpart to :func:`assistant_reply` — the exact same
+    tool loop (still capped at ``MAX_ASSISTANT_ITERATIONS``, still runs every
+    ``tool_use`` block from one message and returns all results in one user
+    message) and the exact same persistence (one commit at the end, same two
+    ``AiConversationMessage`` rows) — only the client-visible delivery is
+    incremental: yields text deltas as each iteration's reply is generated
+    instead of returning the finished text once. An iteration that's purely
+    a tool call yields no deltas (nothing to show yet), so what streams to
+    the user is naturally just the assistant's visible reasoning and its
+    final answer."""
+    messages = await _build_assistant_messages(db, conversation, user_message)
+    system = _assistant_system_prompt(agency)
+
+    final_text = _NO_ANSWER
+    for _iteration in range(MAX_ASSISTANT_ITERATIONS):
+        message = None
+        turn_text = ""
+        async for event in ai_client.complete_stream(
+            db,
+            agency.id,
+            actor.id,
+            feature=FEATURE_ASSISTANT,
+            system=system,
+            messages=messages,
+            max_tokens=1200,
+            effort="medium",
+            tools=_ASSISTANT_TOOLS,
+            cache_system=True,
+        ):
+            if isinstance(event, ai_client.TextDelta):
+                turn_text += event.text
+                yield event.text
+            else:
+                message = event.message
+
+        assert message is not None  # complete_stream always ends with a TurnComplete
+        if message.stop_reason != "tool_use":
+            final_text = turn_text or final_text
+            break
+
+        messages.append({"role": "assistant", "content": message.content})
+        tool_results = await _execute_tool_calls(db, agency.id, message)
+        messages.append({"role": "user", "content": tool_results})
+
+    await _persist_assistant_turn(db, conversation, user_message=user_message, final_text=final_text)

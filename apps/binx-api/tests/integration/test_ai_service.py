@@ -15,7 +15,9 @@ import pytest
 from binx_api.modules.ai import client as ai_client
 from binx_api.modules.ai import service as ai_service
 from binx_api.modules.leads import service as leads_service
-from tests.factories import make_agency, make_invoice, make_project, make_user
+from binx_api.modules.messaging.models import SENDER_CLIENT
+from binx_api.modules.messaging.service import post_message
+from tests.factories import add_agency_member, make_agency, make_conversation, make_invoice, make_project, make_user
 
 pytestmark = pytest.mark.integration
 
@@ -240,6 +242,151 @@ class TestDashboardBriefingCache:
         with pytest.raises(Exception) as exc_info:
             await ai_service.generate_invoice_reminder(db_session, invoice, agency, actor=owner)
         assert getattr(exc_info.value, "status_code", None) == 400
+
+    async def _lead(self, db, agency, actor, **overrides):
+        fields = {
+            "name": "Acme Co",
+            "contact_name": None,
+            "contact_email": "hi@acme.example",
+            "contact_phone": None,
+            "website": None,
+            "source": "manual",
+            "estimated_value_cents": None,
+            "notes": None,
+        }
+        fields.update(overrides)
+        return await leads_service.create_lead(db, agency, actor=actor, **fields)
+
+    async def test_lead_followup_returns_model_text(self, db_session, monkeypatch: pytest.MonkeyPatch) -> None:
+        _configure(monkeypatch)
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        lead = await self._lead(db_session, agency, owner)
+        monkeypatch.setattr(ai_client, "_call_anthropic", _sequenced(_text_message("Just checking in!")))
+
+        text = await ai_service.generate_lead_followup(db_session, lead, agency, actor=owner)
+        assert text == "Just checking in!"
+
+    async def test_lead_followup_rejects_a_closed_lead(self, db_session, monkeypatch: pytest.MonkeyPatch) -> None:
+        _configure(monkeypatch)
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        lead = await self._lead(db_session, agency, owner)
+        await leads_service.change_status(db_session, lead, new_status="won", lost_reason=None, actor=owner)
+
+        with pytest.raises(Exception) as exc_info:
+            await ai_service.generate_lead_followup(db_session, lead, agency, actor=owner)
+        assert getattr(exc_info.value, "status_code", None) == 400
+
+
+class TestGenerateMessageReply:
+    async def test_rejects_an_empty_conversation(self, db_session, monkeypatch: pytest.MonkeyPatch) -> None:
+        _configure(monkeypatch)
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        member = await make_user(db_session, email="member@example.com")
+        await add_agency_member(db_session, agency=agency, user=member)
+        conversation = await make_conversation(db_session, agency=agency, creator=owner, others=[member])
+
+        with pytest.raises(Exception) as exc_info:
+            await ai_service.generate_message_reply(db_session, conversation, agency, actor=owner)
+        assert getattr(exc_info.value, "status_code", None) == 400
+
+    async def test_rejects_when_staff_already_has_the_last_word(
+        self, db_session, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _configure(monkeypatch)
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        member = await make_user(db_session, email="member@example.com")
+        await add_agency_member(db_session, agency=agency, user=member)
+        conversation = await make_conversation(db_session, agency=agency, creator=owner, others=[member])
+        client_user = await make_user(db_session, email="client@example.com")
+        await post_message(
+            db_session, conversation, sender=client_user, body="Any update?", uploads=[], sender_kind=SENDER_CLIENT
+        )
+        await post_message(db_session, conversation, sender=owner, body="On it!", uploads=[])
+
+        with pytest.raises(Exception) as exc_info:
+            await ai_service.generate_message_reply(db_session, conversation, agency, actor=owner)
+        assert getattr(exc_info.value, "status_code", None) == 400
+
+    async def test_drafts_a_reply_to_the_clients_latest_message(
+        self, db_session, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _configure(monkeypatch)
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        member = await make_user(db_session, email="member@example.com")
+        await add_agency_member(db_session, agency=agency, user=member)
+        conversation = await make_conversation(db_session, agency=agency, creator=owner, others=[member])
+        client_user = await make_user(db_session, email="client@example.com")
+        await post_message(db_session, conversation, sender=owner, body="Hi there", uploads=[])
+        await post_message(
+            db_session,
+            conversation,
+            sender=client_user,
+            body="When will this be done?",
+            uploads=[],
+            sender_kind=SENDER_CLIENT,
+        )
+
+        captured: dict = {}
+
+        async def _capture(**kwargs):
+            captured.update(kwargs)
+            return _text_message("We expect it done by Friday.")
+
+        monkeypatch.setattr(ai_client, "_call_anthropic", _capture)
+
+        text = await ai_service.generate_message_reply(db_session, conversation, agency, actor=owner)
+        assert text == "We expect it done by Friday."
+        prompt = captured["messages"][0]["content"]
+        assert "When will this be done?" in prompt
+        assert "Hi there" in prompt
+
+
+class TestSuggestProjectTasks:
+    async def test_parses_lists_and_tasks(self, db_session, monkeypatch: pytest.MonkeyPatch) -> None:
+        _configure(monkeypatch)
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        project = await make_project(db_session, agency=agency, created_by=owner)
+
+        payload = json.dumps(
+            {
+                "lists": [
+                    {
+                        "name": "Discovery",
+                        "tasks": [
+                            {"title": "Kickoff call", "description": "Align on scope and timeline."},
+                            {"title": "Gather brand assets"},
+                        ],
+                    },
+                    {"name": "Empty list dropped", "tasks": []},
+                    {"name": "", "tasks": [{"title": "Dropped — no list name"}]},
+                ]
+            }
+        )
+        monkeypatch.setattr(ai_client, "_call_anthropic", _sequenced(_text_message(payload)))
+
+        suggestions = await ai_service.suggest_project_tasks(db_session, project, agency, actor=owner)
+        assert [lst.name for lst in suggestions] == ["Discovery"]
+        assert [t.title for t in suggestions[0].tasks] == ["Kickoff call", "Gather brand assets"]
+        assert suggestions[0].tasks[0].description == "Align on scope and timeline."
+        assert suggestions[0].tasks[1].description is None
+
+    async def test_drops_tasks_with_no_title(self, db_session, monkeypatch: pytest.MonkeyPatch) -> None:
+        _configure(monkeypatch)
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        project = await make_project(db_session, agency=agency, created_by=owner)
+
+        payload = json.dumps({"lists": [{"name": "To Do", "tasks": [{"title": ""}, {"title": "Real task"}]}]})
+        monkeypatch.setattr(ai_client, "_call_anthropic", _sequenced(_text_message(payload)))
+
+        suggestions = await ai_service.suggest_project_tasks(db_session, project, agency, actor=owner)
+        assert [t.title for t in suggestions[0].tasks] == ["Real task"]
 
 
 class TestAssistantReply:

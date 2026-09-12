@@ -12,12 +12,15 @@ vi.mock("@/lib/auth", async (importOriginal) => {
 import { api } from "@/lib/api";
 import { AuthApiError, getAccessToken } from "@/lib/auth";
 import {
+  applyProjectTaskSuggestions,
   generateInvoiceReminder,
+  generateLeadFollowup,
   generateProjectSummary,
   getAiBriefing,
   getAiSettings,
   getAiUsage,
   sendAiMessage,
+  suggestProjectTasks,
   updateAiSettings,
 } from "@/lib/ai";
 
@@ -135,6 +138,54 @@ describe("generateProjectSummary / generateInvoiceReminder", () => {
   it("surfaces a 400 (invoice not sent) as an AuthApiError", async () => {
     mockedApi.post.mockRejectedValueOnce(axiosError(400, "Only a sent invoice can get a reminder drafted."));
     await expect(generateInvoiceReminder("a1", "i1")).rejects.toMatchObject({ status: 400 });
+  });
+});
+
+describe("generateLeadFollowup", () => {
+  it("unwraps the draft field", async () => {
+    mockedApi.post.mockResolvedValueOnce({ data: { draft: "Just checking in!" } });
+    await expect(generateLeadFollowup("a1", "l1")).resolves.toBe("Just checking in!");
+    expect(mockedApi.post).toHaveBeenCalledWith(
+      "/agencies/a1/leads/l1/ai/follow-up",
+      undefined,
+      { headers: { Authorization: "Bearer token" } },
+    );
+  });
+
+  it("surfaces a 400 (closed lead) as an AuthApiError", async () => {
+    mockedApi.post.mockRejectedValueOnce(axiosError(400, "This lead is closed — no follow-up needed."));
+    await expect(generateLeadFollowup("a1", "l1")).rejects.toMatchObject({ status: 400 });
+  });
+});
+
+describe("suggestProjectTasks / applyProjectTaskSuggestions", () => {
+  it("returns the suggested lists", async () => {
+    const suggestions = {
+      lists: [{ name: "Discovery", tasks: [{ title: "Kickoff call", description: "Align on scope." }] }],
+    };
+    mockedApi.post.mockResolvedValueOnce({ data: suggestions });
+    await expect(suggestProjectTasks("a1", "p1")).resolves.toEqual(suggestions);
+    expect(mockedApi.post).toHaveBeenCalledWith(
+      "/agencies/a1/projects/p1/ai/tasks",
+      undefined,
+      { headers: { Authorization: "Bearer token" } },
+    );
+  });
+
+  it("posts the (possibly edited) suggestions to apply", async () => {
+    const suggestions = { lists: [{ name: "Discovery", tasks: [{ title: "Kickoff call", description: null }] }] };
+    mockedApi.post.mockResolvedValueOnce({ data: undefined });
+    await applyProjectTaskSuggestions("a1", "p1", suggestions);
+    expect(mockedApi.post).toHaveBeenCalledWith(
+      "/agencies/a1/projects/p1/ai/tasks/apply",
+      suggestions,
+      { headers: { Authorization: "Bearer token" } },
+    );
+  });
+
+  it("surfaces a failure to apply as an AuthApiError", async () => {
+    mockedApi.post.mockRejectedValueOnce(axiosError(429, "This agency's $20.00 monthly AI budget is used up."));
+    await expect(applyProjectTaskSuggestions("a1", "p1", { lists: [] })).rejects.toMatchObject({ status: 429 });
   });
 });
 

@@ -8,6 +8,7 @@ let mockMembers: Array<{ user_id: string; user_name: string; full_name: string }
 
 vi.mock("@/app/(app)/messages/actions", () => ({
   sendMessageAction: vi.fn(),
+  draftMessageReplyAction: vi.fn(),
 }));
 
 vi.mock("@/components/messaging/MessagingProvider/MessagingProvider", () => ({
@@ -24,12 +25,13 @@ vi.mock("@/components/messaging/MessagingProvider/MessagingProvider", () => ({
 const toastError = vi.fn();
 vi.mock("sonner", () => ({ toast: { error: (...args: unknown[]) => toastError(...args) } }));
 
-import { sendMessageAction } from "@/app/(app)/messages/actions";
+import { draftMessageReplyAction, sendMessageAction } from "@/app/(app)/messages/actions";
 import { useMessagingStore } from "@/stores/use-messaging-store";
 
 import MessageComposer from "./MessageComposer";
 
 const mockedSend = vi.mocked(sendMessageAction);
+const mockedDraft = vi.mocked(draftMessageReplyAction);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -113,5 +115,40 @@ describe("MessageComposer", () => {
 
     expect(toastError).toHaveBeenCalled();
     expect(screen.queryByText("big.bin")).not.toBeInTheDocument();
+  });
+
+  it("fills the composer with an AI-drafted reply", async () => {
+    mockedDraft.mockResolvedValue({ draft: "Thanks for reaching out, here's an update..." });
+    const user = userEvent.setup();
+    render(<MessageComposer conversationId="c1" />);
+
+    const button = screen.getByLabelText("Draft a reply with AI");
+    await user.click(button);
+
+    expect(mockedDraft).toHaveBeenCalledWith("a1", "c1");
+    const box = screen.getByLabelText("Message");
+    expect(box).toHaveValue("Thanks for reaching out, here's an update...");
+  });
+
+  it("toasts and leaves the composer untouched when drafting fails", async () => {
+    mockedDraft.mockResolvedValue({ error: "Unable to draft a reply" });
+    const user = userEvent.setup();
+    render(<MessageComposer conversationId="c1" />);
+
+    const button = screen.getByLabelText("Draft a reply with AI");
+    await user.click(button);
+
+    expect(toastError).toHaveBeenCalledWith("Unable to draft a reply");
+    expect(screen.getByLabelText("Message")).toHaveValue("");
+  });
+
+  it("disables the AI draft button while sending", async () => {
+    mockedSend.mockImplementation(() => new Promise(() => {}));
+    const user = userEvent.setup();
+    render(<MessageComposer conversationId="c1" />);
+
+    await user.type(screen.getByLabelText("Message"), "hello{Enter}");
+
+    expect(screen.getByLabelText("Draft a reply with AI")).toBeDisabled();
   });
 });

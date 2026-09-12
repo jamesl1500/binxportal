@@ -194,6 +194,31 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agencies/{agency_id}/ai/conversations/{conversation_id}/messages/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Stream Conversation Message
+         * @description Same request as ``POST .../messages``, but the reply streams in as
+         *     Server-Sent Events instead of arriving all at once. Once streaming
+         *     starts the HTTP status/headers are already sent, so an error mid-stream
+         *     can't become an HTTP error response — it's relayed as an in-band
+         *     ``{"type": "error"}`` event instead, and the generator ends there
+         *     (no ``done`` event follows an ``error``).
+         */
+        post: operations["stream_conversation_message_agencies__agency_id__ai_conversations__conversation_id__messages_stream_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agencies/{agency_id}/ai/settings": {
         parameters: {
             query?: never;
@@ -477,6 +502,23 @@ export interface paths {
         head?: never;
         /** Update Conversation */
         patch: operations["update_conversation_agencies__agency_id__conversations__conversation_id__patch"];
+        trace?: never;
+    };
+    "/agencies/{agency_id}/conversations/{conversation_id}/ai/draft-reply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Generate Message Reply Draft */
+        post: operations["generate_message_reply_draft_agencies__agency_id__conversations__conversation_id__ai_draft_reply_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/agencies/{agency_id}/conversations/{conversation_id}/messages": {
@@ -916,6 +958,23 @@ export interface paths {
         patch: operations["update_lead_agencies__agency_id__leads__lead_id__patch"];
         trace?: never;
     };
+    "/agencies/{agency_id}/leads/{lead_id}/ai/follow-up": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Generate Lead Ai Followup */
+        post: operations["generate_lead_ai_followup_agencies__agency_id__leads__lead_id__ai_follow_up_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agencies/{agency_id}/leads/{lead_id}/analyze": {
         parameters: {
             query?: never;
@@ -1225,6 +1284,40 @@ export interface paths {
         put?: never;
         /** Generate Project Ai Summary */
         post: operations["generate_project_ai_summary_agencies__agency_id__projects__project_id__ai_summary_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/projects/{project_id}/ai/tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Suggest Project Ai Tasks */
+        post: operations["suggest_project_ai_tasks_agencies__agency_id__projects__project_id__ai_tasks_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/projects/{project_id}/ai/tasks/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Apply Project Ai Tasks */
+        post: operations["apply_project_ai_tasks_agencies__agency_id__projects__project_id__ai_tasks_apply_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2950,6 +3043,25 @@ export interface components {
             is_enabled: boolean;
             /** Monthly Budget Cents */
             monthly_budget_cents: number;
+        };
+        /** AiTaskListSuggestion */
+        AiTaskListSuggestion: {
+            /** Name */
+            name: string;
+            /** Tasks */
+            tasks: components["schemas"]["AiTaskSuggestion"][];
+        };
+        /** AiTaskSuggestion */
+        AiTaskSuggestion: {
+            /** Description */
+            description?: string | null;
+            /** Title */
+            title: string;
+        };
+        /** AiTaskSuggestionsRead */
+        AiTaskSuggestionsRead: {
+            /** Lists */
+            lists: components["schemas"]["AiTaskListSuggestion"][];
         };
         /** AiUsageEventRead */
         AiUsageEventRead: {
@@ -5666,6 +5778,42 @@ export interface operations {
             };
         };
     };
+    stream_conversation_message_agencies__agency_id__ai_conversations__conversation_id__messages_stream_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conversation_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AiMessageCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_ai_settings_agencies__agency_id__ai_settings_get: {
         parameters: {
             query?: never;
@@ -6446,6 +6594,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConversationDetailRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    generate_message_reply_draft_agencies__agency_id__conversations__conversation_id__ai_draft_reply_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conversation_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiDraftRead"];
                 };
             };
             /** @description Validation Error */
@@ -7694,6 +7874,38 @@ export interface operations {
             };
         };
     };
+    generate_lead_ai_followup_agencies__agency_id__leads__lead_id__ai_follow_up_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiDraftRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     analyze_lead_agencies__agency_id__leads__lead_id__analyze_post: {
         parameters: {
             query?: never;
@@ -8578,6 +8790,72 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["AiDraftRead"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    suggest_project_ai_tasks_agencies__agency_id__projects__project_id__ai_tasks_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiTaskSuggestionsRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    apply_project_ai_tasks_agencies__agency_id__projects__project_id__ai_tasks_apply_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AiTaskSuggestionsRead"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

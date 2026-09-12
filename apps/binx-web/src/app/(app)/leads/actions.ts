@@ -13,6 +13,7 @@
 
 import { redirect } from "next/navigation";
 
+import { generateLeadFollowup } from "@/lib/ai";
 import type { AgencyClient } from "@/lib/clients";
 import { AuthApiError } from "@/lib/auth";
 import type { LeadStatus } from "@/lib/leads-client";
@@ -92,6 +93,19 @@ export async function analyzeLeadAction(agencyId: string, leadId: string): Promi
     return { lead: await analyzeLead(agencyId, leadId) };
   } catch (error) {
     return fail(error, "Unable to analyze the lead");
+  }
+}
+
+export interface LeadFollowupActionResult {
+  error?: string;
+  draft?: string;
+}
+
+export async function generateLeadFollowupAction(agencyId: string, leadId: string): Promise<LeadFollowupActionResult> {
+  try {
+    return { draft: await generateLeadFollowup(agencyId, leadId) };
+  } catch (error) {
+    return fail(error, "Unable to draft a follow-up");
   }
 }
 

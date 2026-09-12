@@ -127,6 +127,7 @@
 }
 
 .attachButton,
+.aiDraftButton,
 .sendButton {
   display: inline-flex;
   align-items: center;
@@ -161,6 +162,10 @@
     opacity: 0.5;
     cursor: not-allowed;
   }
+}
+
+.aiDraftButton {
+  color: t.$color-accent;
 }
 
 .sendButton {

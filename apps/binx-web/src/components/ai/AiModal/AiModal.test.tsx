@@ -1,13 +1,12 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/app/(app)/ai/actions", () => ({
   createAiConversationAction: vi.fn(),
   deleteAiConversationAction: vi.fn(),
   getAiConversationMessagesAction: vi.fn(),
   listAiConversationsAction: vi.fn(),
-  sendAiMessageAction: vi.fn(),
 }));
 
 vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
@@ -17,22 +16,52 @@ import {
   deleteAiConversationAction,
   getAiConversationMessagesAction,
   listAiConversationsAction,
-  sendAiMessageAction,
 } from "@/app/(app)/ai/actions";
+import { toast } from "sonner";
 
 import AiModal from "./AiModal";
 
 const mockedList = vi.mocked(listAiConversationsAction);
 const mockedCreate = vi.mocked(createAiConversationAction);
 const mockedMessages = vi.mocked(getAiConversationMessagesAction);
-const mockedSend = vi.mocked(sendAiMessageAction);
 const mockedDelete = vi.mocked(deleteAiConversationAction);
 
 const agencyId = "a1";
 
+/** A controllable fake SSE stream — push events on demand, close when done,
+ * mirroring how the real backend's assistant_reply_stream generator yields
+ * chunks over time rather than all at once. */
+function deferredSseStream() {
+  let controllerRef: ReadableStreamDefaultController<Uint8Array> | null = null;
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controllerRef = controller;
+    },
+  });
+  return {
+    stream,
+    push(event: { type: string; text?: string; message?: string }) {
+      controllerRef!.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+    },
+    close() {
+      controllerRef!.close();
+    },
+  };
+}
+
+function sseResponse(stream: ReadableStream<Uint8Array>): Response {
+  return new Response(stream, { status: 200, headers: { "Content-Type": "text/event-stream" } });
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   mockedList.mockResolvedValue({ conversations: [] });
+  vi.stubGlobal("fetch", vi.fn());
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
 
 describe("AiModal", () => {
@@ -69,16 +98,13 @@ describe("AiModal", () => {
     expect(mockedMessages).toHaveBeenCalledWith(agencyId, "c1");
   });
 
-  it("sends a suggestion, lazily creates a conversation, shows Thinking…, then the reply", async () => {
+  it("sends a suggestion, lazily creates a conversation, shows Thinking…, streams in the reply, then finalizes", async () => {
     mockedCreate.mockResolvedValueOnce({
       conversation: { id: "new-1", title: null, created_at: "2026-01-03T00:00:00Z", updated_at: null },
     });
-    let resolveSend: (value: Awaited<ReturnType<typeof sendAiMessageAction>>) => void = () => {};
-    mockedSend.mockReturnValueOnce(
-      new Promise((resolve) => {
-        resolveSend = resolve;
-      }),
-    );
+    const deferred = deferredSseStream();
+    const mockedFetch = vi.mocked(fetch);
+    mockedFetch.mockResolvedValueOnce(sseResponse(deferred.stream));
 
     const user = userEvent.setup();
     render(<AiModal agencyId={agencyId} isOpen onClose={vi.fn()} />);
@@ -88,14 +114,65 @@ describe("AiModal", () => {
     expect(await screen.findByText("Which invoices are overdue?")).toBeInTheDocument();
     expect(await screen.findByText("Thinking…")).toBeInTheDocument();
     expect(mockedCreate).toHaveBeenCalledWith(agencyId);
+    expect(mockedFetch).toHaveBeenCalledWith(
+      "/api/ai/a1/new-1/messages/stream",
+      expect.objectContaining({ method: "POST", body: JSON.stringify({ message: "Which invoices are overdue?" }) }),
+    );
 
-    resolveSend({
-      message: { id: "m2", role: "assistant", content: "You have 2 overdue invoices.", created_at: "2026-01-03T00:00:01Z" },
-    });
+    // First chunk arrives — the "Thinking…" placeholder is replaced by the
+    // growing reply, rendered incrementally, not all at once.
+    deferred.push({ type: "delta", text: "You have " });
+    expect(await screen.findByText("You have", { exact: false })).toBeInTheDocument();
+    expect(screen.queryByText("Thinking…")).not.toBeInTheDocument();
+
+    deferred.push({ type: "delta", text: "2 overdue invoices." });
+    deferred.push({ type: "done" });
+    deferred.close();
 
     expect(await screen.findByText("You have 2 overdue invoices.")).toBeInTheDocument();
     await waitFor(() => expect(screen.queryByText("Thinking…")).not.toBeInTheDocument());
-    expect(mockedSend).toHaveBeenCalledWith(agencyId, "new-1", "Which invoices are overdue?");
+  });
+
+  it("toasts an error and removes the optimistic message when the stream reports one", async () => {
+    mockedCreate.mockResolvedValueOnce({
+      conversation: { id: "new-1", title: null, created_at: "2026-01-03T00:00:00Z", updated_at: null },
+    });
+    const deferred = deferredSseStream();
+    const mockedFetch = vi.mocked(fetch);
+    mockedFetch.mockResolvedValueOnce(sseResponse(deferred.stream));
+
+    const user = userEvent.setup();
+    render(<AiModal agencyId={agencyId} isOpen onClose={vi.fn()} />);
+    await user.click(await screen.findByRole("button", { name: "Which invoices are overdue?" }));
+    expect(await screen.findByText("Which invoices are overdue?")).toBeInTheDocument();
+
+    deferred.push({ type: "error", message: "AI isn't configured for this agency yet." });
+    deferred.close();
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("AI isn't configured for this agency yet."));
+    // The optimistic user bubble was rolled back — back to the empty state,
+    // not just "no longer 'Thinking…'". (The suggestion button carries the
+    // same text, so re-querying for it isn't a useful assertion here.)
+    expect(await screen.findByText("Ask anything about your agency's data.")).toBeInTheDocument();
+  });
+
+  it("toasts a generic error when the response isn't a stream", async () => {
+    mockedCreate.mockResolvedValueOnce({
+      conversation: { id: "new-1", title: null, created_at: "2026-01-03T00:00:00Z", updated_at: null },
+    });
+    const mockedFetch = vi.mocked(fetch);
+    mockedFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ message: "Not authenticated" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    const user = userEvent.setup();
+    render(<AiModal agencyId={agencyId} isOpen onClose={vi.fn()} />);
+    await user.click(await screen.findByRole("button", { name: "Which invoices are overdue?" }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Not authenticated"));
   });
 
   it("starts a new chat and deletes a conversation", async () => {
