@@ -5066,6 +5066,8 @@ export interface components {
             full_name: string;
             /** Password */
             password: string;
+            /** Portal Invite Token */
+            portal_invite_token?: string | null;
             /** User Name */
             user_name: string;
         };

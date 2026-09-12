@@ -61,6 +61,15 @@ class TestSignupToFirstRequest:
         assert refresh.status_code == 200
         assert refresh.json()["refresh_token"] != login.json()["refresh_token"]
 
+    async def test_portal_invite_token_reaches_the_verification_email(self, client, email_outbox) -> None:
+        # Carried through opaquely — see auth/service.py::signup and
+        # core/email.py::send_verification_email. The frontend reads it back
+        # off the verify-email link to send a client-portal invitee straight
+        # to /auth/portal-invite instead of staff onboarding.
+        signup = await client.post("/auth/signup", json={**SIGNUP_BODY, "portal_invite_token": "inv-abc123"})
+        assert signup.status_code == 201
+        assert "portal_invite=inv-abc123" in email_outbox[0].body
+
     async def test_signup_rejects_a_short_password(self, client) -> None:
         response = await client.post("/auth/signup", json={**SIGNUP_BODY, "password": "short"})
         assert response.status_code == 422

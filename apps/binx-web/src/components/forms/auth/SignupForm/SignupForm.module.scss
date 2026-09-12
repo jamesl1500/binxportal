@@ -38,6 +38,12 @@
   color: t.$color-danger;
 }
 
+.hint {
+  margin: 0;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+}
+
 .formError {
   margin: 0;
   padding: t.$space-3;

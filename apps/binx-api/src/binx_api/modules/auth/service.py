@@ -96,7 +96,15 @@ async def _create_token_pair(db: AsyncSession, user: User) -> TokenPair:
     return TokenPair(access_token=access_token, refresh_token=refresh_token)
 
 
-async def signup(db: AsyncSession, *, user_name: str, email: str, full_name: str, password: str) -> User:
+async def signup(
+    db: AsyncSession,
+    *,
+    user_name: str,
+    email: str,
+    full_name: str,
+    password: str,
+    portal_invite_token: str | None = None,
+) -> User:
     # One generic message whether the email or the username collided — telling
     # an unauthenticated caller *which* one is taken hands them an account-
     # enumeration oracle. (The unique constraints on both columns are the real
@@ -107,7 +115,11 @@ async def signup(db: AsyncSession, *, user_name: str, email: str, full_name: str
     user = await create_user(db, user_name=user_name, email=email, full_name=full_name, password=password)
 
     token = await _issue_token(db, user, TokenPurpose.EMAIL_VERIFICATION)
-    send_verification_email(to=user.email, token=token)
+    # portal_invite_token is passed through opaquely — never validated here.
+    # An invalid/expired one is simply a dead link once they land back on
+    # /auth/portal-invite, where previewPortalInvitation already surfaces
+    # that error; nothing here needs to know or care.
+    send_verification_email(to=user.email, token=token, portal_invite_token=portal_invite_token)
     return user
 
 

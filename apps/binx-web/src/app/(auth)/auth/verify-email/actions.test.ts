@@ -69,6 +69,18 @@ describe("verifyEmailAction", () => {
     expect(mockedRedirect).toHaveBeenCalledWith("/onboarding/one");
   });
 
+  // A pending client-portal invite (threaded through from signup) sends the
+  // now-verified user back to accept it, never through staff onboarding.
+  it("redirects to /auth/portal-invite when a portal invite token is present", async () => {
+    mockedPost.mockResolvedValueOnce({ headers: { "set-cookie": ["a=1"] } });
+
+    await expect(verifyEmailAction("test-token", "inv-token")).rejects.toThrow(
+      "REDIRECT:/auth/portal-invite?token=inv-token",
+    );
+
+    expect(mockedRedirect).toHaveBeenCalledWith("/auth/portal-invite?token=inv-token");
+  });
+
   // On failure there's nothing to forward and nowhere to redirect — the
   // action should just resolve with `{ error }` so the client-side form can
   // render it, instead of throwing and taking down the whole action.

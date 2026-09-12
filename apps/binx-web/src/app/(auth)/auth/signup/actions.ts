@@ -33,11 +33,18 @@ export async function signupAction(
   email: string,
   fullName: string,
   password: string,
+  portalInviteToken?: string,
 ): Promise<SignupActionResult> {
   const baseUrl = await getInternalBaseUrl();
 
   try {
-    const response = await axios.post(`${baseUrl}/api/auth/signup`, { userName, email, fullName, password });
+    const response = await axios.post(`${baseUrl}/api/auth/signup`, {
+      userName,
+      email,
+      fullName,
+      password,
+      portalInviteToken,
+    });
     return { message: response.data?.message ?? "Account created. Check your email to verify your address." };
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {

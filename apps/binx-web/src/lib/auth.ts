@@ -326,6 +326,8 @@ export interface SignupInput {
   email: string;
   fullName: string;
   password: string;
+  /** Set when signup started from a client-portal invite link — see app/(auth)/auth/portal-invite/page.tsx. */
+  portalInviteToken?: string;
 }
 
 /**
@@ -338,13 +340,14 @@ export interface SignupInput {
  * @function signup
  * @throws {AuthApiError} - Thrown with binx-api's reason (e.g. "Email already registered").
  */
-export async function signup({ userName, email, fullName, password }: SignupInput): Promise<string> {
+export async function signup({ userName, email, fullName, password, portalInviteToken }: SignupInput): Promise<string> {
   try {
     const { data } = await api.post<{ message: string }>("/auth/signup", {
       user_name: userName,
       email,
       full_name: fullName,
       password,
+      portal_invite_token: portalInviteToken,
     });
     return data.message;
   } catch (error) {

@@ -58,6 +58,20 @@ describe("signupAction", () => {
     });
   });
 
+  it("passes the portal invite token through to the signup route", async () => {
+    mockedPost.mockResolvedValueOnce({ data: { message: "Account created." } });
+
+    await signupAction("user", "a@b.com", "A B", "password123", "inv-token");
+
+    expect(mockedPost).toHaveBeenCalledWith("http://localhost:3000/api/auth/signup", {
+      userName: "user",
+      email: "a@b.com",
+      fullName: "A B",
+      password: "password123",
+      portalInviteToken: "inv-token",
+    });
+  });
+
   it("falls back to a generic message for non-axios errors", async () => {
     mockedPost.mockRejectedValueOnce(new Error("network down"));
 

@@ -11,10 +11,15 @@ def send_email(*, to: str, subject: str, body: str) -> None:
     logger.info("EMAIL to=%s subject=%s\n%s", to, subject, body)
 
 
-def send_verification_email(*, to: str, token: str) -> None:
+def send_verification_email(*, to: str, token: str, portal_invite_token: str | None = None) -> None:
     # The frontend looks the account's email up from the token via GET
     # /auth/verify-email, so only the token needs to be in the link.
     link = f"{settings.frontend_url}/auth/verify-email?token={token}"
+    if portal_invite_token:
+        # Carries a pending client-portal invite through verification, so
+        # signup -> verify-email -> back to /auth/portal-invite never
+        # detours through staff onboarding. See verify-email/actions.ts.
+        link += f"&portal_invite={portal_invite_token}"
     send_email(to=to, subject="Verify your Binx Portal account", body=f"Click to verify your account: {link}")
 
 

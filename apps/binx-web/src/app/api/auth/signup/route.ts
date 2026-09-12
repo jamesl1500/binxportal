@@ -18,9 +18,10 @@ export async function POST(req: NextRequest) {
   let email: string | undefined;
   let fullName: string | undefined;
   let password: string | undefined;
+  let portalInviteToken: string | undefined;
 
   try {
-    ({ userName, email, fullName, password } = await req.json());
+    ({ userName, email, fullName, password, portalInviteToken } = await req.json());
   } catch {
     return NextResponse.json({ message: "Invalid JSON body" }, { status: 400 });
   }
@@ -30,7 +31,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const message = await signup({ userName, email, fullName, password });
+    const message = await signup({ userName, email, fullName, password, portalInviteToken });
     return NextResponse.json({ message }, { status: 201 });
   } catch (error) {
     if (error instanceof AuthApiError) {

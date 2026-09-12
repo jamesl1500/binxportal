@@ -31,7 +31,12 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 @limiter.limit("10/hour")
 async def signup(request: Request, db: DbSession, data: SignupRequest) -> SignupResponse:
     user = await service.signup(
-        db, user_name=data.user_name, email=data.email, full_name=data.full_name, password=data.password
+        db,
+        user_name=data.user_name,
+        email=data.email,
+        full_name=data.full_name,
+        password=data.password,
+        portal_invite_token=data.portal_invite_token,
     )
     return SignupResponse(
         user=UserRead.model_validate(user), message="Account created. Check your email to verify your address."

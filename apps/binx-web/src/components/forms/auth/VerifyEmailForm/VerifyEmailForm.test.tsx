@@ -50,7 +50,7 @@ describe("VerifyEmailForm", () => {
 
     await user.click(screen.getByRole("button", { name: /verify email/i }));
 
-    expect(mockedVerifyEmailAction).toHaveBeenCalledWith("test-token");
+    expect(mockedVerifyEmailAction).toHaveBeenCalledWith("test-token", undefined);
   });
 
   it("shows the server error for an invalid or expired token", async () => {
@@ -61,5 +61,15 @@ describe("VerifyEmailForm", () => {
     await user.click(screen.getByRole("button", { name: /verify email/i }));
 
     expect(await screen.findByText("Invalid or expired token")).toBeInTheDocument();
+  });
+
+  it("threads a pending portal invite token through on verify", async () => {
+    mockedVerifyEmailAction.mockResolvedValueOnce({});
+    const user = userEvent.setup();
+    render(<VerifyEmailForm token="test-token" email="valid@example.com" portalInviteToken="inv-token" />);
+
+    await user.click(screen.getByRole("button", { name: /verify email/i }));
+
+    expect(mockedVerifyEmailAction).toHaveBeenCalledWith("test-token", "inv-token");
   });
 });

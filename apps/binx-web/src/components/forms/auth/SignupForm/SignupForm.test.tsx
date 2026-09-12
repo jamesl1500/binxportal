@@ -59,7 +59,7 @@ describe("SignupForm", () => {
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
     expect(await screen.findByText("Account created. Check your email to verify your address.")).toBeInTheDocument();
-    expect(mockedSignupAction).toHaveBeenCalledWith("user123", "a@b.com", "A B", "str0ng-pass-phrase");
+    expect(mockedSignupAction).toHaveBeenCalledWith("user123", "a@b.com", "A B", "str0ng-pass-phrase", undefined);
   });
 
   it("shows the server error on failure", async () => {
@@ -71,5 +71,25 @@ describe("SignupForm", () => {
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
     expect(await screen.findByText("Email already registered")).toBeInTheDocument();
+  });
+
+  it("threads the portal invite token through on submit", async () => {
+    mockedSignupAction.mockResolvedValueOnce({ message: "Account created. Check your email to verify your address." });
+    const user = userEvent.setup();
+    render(<SignupForm portalInviteToken="inv-token" />);
+
+    await fillValidForm(user);
+    await user.click(screen.getByRole("button", { name: /create account/i }));
+
+    expect(mockedSignupAction).toHaveBeenCalledWith("user123", "a@b.com", "A B", "str0ng-pass-phrase", "inv-token");
+  });
+
+  it("prefills and locks the email field when lockedEmail is given", async () => {
+    render(<SignupForm portalInviteToken="inv-token" lockedEmail="casey@northwind.example" />);
+
+    const emailField = screen.getByLabelText("Email");
+    expect(emailField).toHaveValue("casey@northwind.example");
+    expect(emailField).toHaveAttribute("readonly");
+    expect(screen.getByText(/this invite is for casey@northwind.example/i)).toBeInTheDocument();
   });
 });

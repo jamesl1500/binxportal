@@ -9,6 +9,10 @@ class SignupRequest(BaseModel):
     email: EmailStr
     full_name: str
     password: Password
+    # Set when signup started from a client-portal invite link — carried
+    # through to the verification email so it isn't lost. See
+    # auth/service.py::signup and core/email.py::send_verification_email.
+    portal_invite_token: str | None = None
 
 
 class SignupResponse(BaseModel):

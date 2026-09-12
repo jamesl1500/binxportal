@@ -35,7 +35,14 @@ const signupSchema = z
 
 type SignupValues = z.infer<typeof signupSchema>;
 
-const SignupForm = () => {
+interface SignupFormProps {
+  /** Set when arriving from a client-portal invite link — threaded through to verification so it isn't lost. */
+  portalInviteToken?: string;
+  /** Prefills (and locks) the email field to the invited address, so a client can't accidentally sign up under a different one. */
+  lockedEmail?: string;
+}
+
+const SignupForm = ({ portalInviteToken, lockedEmail }: SignupFormProps) => {
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -49,7 +56,7 @@ const SignupForm = () => {
     defaultValues: {
       userName: "",
       fullName: "",
-      email: "",
+      email: lockedEmail ?? "",
       password: "",
       confirmPassword: "",
     },
@@ -60,7 +67,13 @@ const SignupForm = () => {
     setSuccessMessage(null);
 
     startTransition(async () => {
-      const result = await signupAction(values.userName, values.email, values.fullName, values.password);
+      const result = await signupAction(
+        values.userName,
+        values.email,
+        values.fullName,
+        values.password,
+        portalInviteToken,
+      );
 
       if (result?.error) {
         setFormError(result.error);
@@ -120,8 +133,10 @@ const SignupForm = () => {
           autoComplete="email"
           className={styles.input}
           aria-invalid={Boolean(errors.email)}
+          readOnly={Boolean(lockedEmail)}
           {...register("email")}
         />
+        {lockedEmail && <p className={styles.hint}>This invite is for {lockedEmail} — sign up with this address.</p>}
         {errors.email && <p className={styles.error}>{errors.email.message}</p>}
       </div>
 

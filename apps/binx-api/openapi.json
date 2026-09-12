@@ -7101,6 +7101,17 @@
             "title": "Password",
             "type": "string"
           },
+          "portal_invite_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Portal Invite Token"
+          },
           "user_name": {
             "maxLength": 255,
             "minLength": 3,

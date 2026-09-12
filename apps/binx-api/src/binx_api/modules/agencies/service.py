@@ -27,6 +27,7 @@ from binx_api.modules.agencies.models import (
     ClientPortalBranding,
 )
 from binx_api.modules.billing import service as billing_service
+from binx_api.modules.client_portal.models import ClientContact
 from binx_api.modules.notifications import service as notifications_service
 from binx_api.modules.notifications.models import CATEGORY_TEAM as NOTIFY_CATEGORY_TEAM
 from binx_api.modules.notifications.models import EVENT_INVITE_ACCEPTED as NOTIFY_EVENT_INVITE_ACCEPTED
@@ -91,8 +92,21 @@ async def _check_can_create_agency(db: AsyncSession, owner: User) -> None:
         )
 
 
+# A client-portal contact should never end up with staff access, even via a
+# stale invite link or a direct API call — see onboarding/layout.tsx's
+# matching frontend guard. create_agency_with_owner calls this on every
+# creation path, same as _check_can_create_agency above.
+async def _check_not_a_portal_contact(db: AsyncSession, owner: User) -> None:
+    result = await db.execute(select(ClientContact.id).where(ClientContact.user_id == owner.id).limit(1))
+    if result.scalar_one_or_none() is not None:
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN, "This account already has client-portal access and can't create an agency"
+        )
+
+
 # Creates an agency and makes the given user its owner, in one transaction.
 async def create_agency_with_owner(db: AsyncSession, *, owner: User, name: str) -> Agency:
+    await _check_not_a_portal_contact(db, owner)
     await _check_can_create_agency(db, owner)
     slug = await _generate_unique_slug(db, name)
     agency = Agency(name=name, slug=slug)

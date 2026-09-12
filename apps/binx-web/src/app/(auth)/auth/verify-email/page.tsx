@@ -19,11 +19,11 @@ import styles from "./page.module.scss";
 export const metadata: Metadata = { title: "Verify your email" };
 
 interface AuthVerifyEmailPageProps {
-  searchParams: Promise<{ token?: string }>;
+  searchParams: Promise<{ token?: string; portal_invite?: string }>;
 }
 
 const AuthVerifyEmailPage = async ({ searchParams }: AuthVerifyEmailPageProps) => {
-  const { token } = await searchParams;
+  const { token, portal_invite: portalInviteToken } = await searchParams;
 
   // Look the token up (without consuming it) before rendering anything —
   // an invalid/expired/already-used token should never reach the form.
@@ -49,7 +49,7 @@ const AuthVerifyEmailPage = async ({ searchParams }: AuthVerifyEmailPageProps) =
       </header>
 
       {token && email ? (
-        <VerifyEmailForm token={token} email={email} />
+        <VerifyEmailForm token={token} email={email} portalInviteToken={portalInviteToken} />
       ) : (
         <p className={styles.formError}>{tokenError}</p>
       )}

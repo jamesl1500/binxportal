@@ -66,7 +66,10 @@ const PortalInvitePage = async ({ searchParams }: PortalInvitePageProps) => {
             <Link href="/auth/login" className={styles.primaryButton}>
               Log in
             </Link>
-            <Link href="/auth/signup" className={styles.secondaryButton}>
+            <Link
+              href={`/auth/signup?portal_invite=${token}`}
+              className={styles.secondaryButton}
+            >
               Create account
             </Link>
           </div>

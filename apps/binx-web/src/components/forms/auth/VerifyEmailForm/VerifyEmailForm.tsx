@@ -19,6 +19,8 @@ interface VerifyEmailFormProps {
   token: string;
   /** Shown read-only for reassurance; not sent to the server. */
   email?: string;
+  /** Carried through from signup when this account came from a client-portal invite — sends the user back to accept it instead of staff onboarding. */
+  portalInviteToken?: string;
 }
 
 /**
@@ -29,7 +31,7 @@ interface VerifyEmailFormProps {
  *
  * @returns {JSX.Element} The rendered verify email form component.
  */
-const VerifyEmailForm = ({ token, email }: VerifyEmailFormProps) => {
+const VerifyEmailForm = ({ token, email, portalInviteToken }: VerifyEmailFormProps) => {
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -37,7 +39,7 @@ const VerifyEmailForm = ({ token, email }: VerifyEmailFormProps) => {
     setFormError(null);
 
     startTransition(async () => {
-      const result = await verifyEmailAction(token);
+      const result = await verifyEmailAction(token, portalInviteToken);
 
       if (result.error) {
         setFormError(result.error);

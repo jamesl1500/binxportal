@@ -262,3 +262,20 @@ class TestPortalMessages:
         )
         hidden = await client.get(f"/portal/conversations/{other_convo.id}", headers=auth_headers(contact_user))
         assert hidden.status_code == 404
+
+
+class TestPortalContactCannotBecomeStaff:
+    # A client-portal contact must never be able to acquire staff access —
+    # see agencies/service.py::_check_not_a_portal_contact. This is the real,
+    # server-enforced guard; onboarding/layout.tsx's redirect is just the UX
+    # nicety that keeps them from seeing the form in the first place.
+    async def test_an_accepted_client_contact_cannot_create_an_agency(
+        self, client, db_session, email_outbox, portal_setup
+    ) -> None:
+        s = portal_setup
+        contact_user, _ctx = await _invite_and_accept(
+            client, db_session, email_outbox, s["agency"].id, s["client"].id, s["owner"], "casey3@northwind.example"
+        )
+
+        response = await client.post("/agencies", json={"name": "Sneaky Agency"}, headers=auth_headers(contact_user))
+        assert response.status_code == 403
