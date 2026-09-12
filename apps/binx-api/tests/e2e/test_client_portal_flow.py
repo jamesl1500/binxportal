@@ -1,17 +1,23 @@
 """
 End-to-end tests for the client portal: staff invite a contact, the contact
 onboards with their own account, and the `/portal/*` surface is scoped to
-that one client — projects, invoices (pay stub), and client-linked messages.
+that one client — projects, invoices (Stripe Connect checkout + webhook),
+and client-linked messages.
 """
 
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import pytest
 
+from binx_api.core import stripe_client
+from binx_api.modules.invoicing import service as invoicing_service
 from binx_api.modules.invoicing.service import issue_invoice
 from binx_api.modules.messaging.service import create_conversation
 from tests.conftest import auth_headers, extract_token
 from tests.factories import make_agency, make_client, make_invoice, make_project, make_user
+from tests.stripe_helpers import sign_stripe_payload
 
 pytestmark = pytest.mark.e2e
 
@@ -88,22 +94,119 @@ class TestPortalReads:
         assert invoices[0]["client_id"] == str(s["client"].id)
         assert invoices[0]["display_status"] in ("sent", "overdue")
 
-    async def test_pay_invoice_stub_marks_it_paid(self, client, db_session, email_outbox, portal_setup) -> None:
+    async def test_pay_invoice_requires_stripe_connect(self, client, db_session, email_outbox, portal_setup) -> None:
+        """No Connect onboarding yet -> a real 409, not a silent fake success."""
         s = portal_setup
         contact_user, _ = await _invite_and_accept(
             client, db_session, email_outbox, s["agency"].id, s["client"].id, s["owner"], "casey3@northwind.example"
         )
 
-        paid = await client.post(f"/portal/invoices/{s['invoice'].id}/pay", headers=auth_headers(contact_user))
-        assert paid.status_code == 200, paid.text
-        body = paid.json()
-        assert body["status"] == "paid"
-        assert body["amount_due_cents"] == 0
-        assert body["payments"][0]["method"] == "portal"
+        blocked = await client.post(f"/portal/invoices/{s['invoice'].id}/pay", headers=auth_headers(contact_user))
+        assert blocked.status_code == 409
 
-        # Paying an already-paid invoice is rejected.
+    async def test_pay_invoice_starts_checkout_once_connected(
+        self, client, db_session, email_outbox, portal_setup, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        s = portal_setup
+        contact_user, _ = await _invite_and_accept(
+            client, db_session, email_outbox, s["agency"].id, s["client"].id, s["owner"], "casey4@northwind.example"
+        )
+
+        billing_settings = await invoicing_service.get_or_create_billing_settings(db_session, s["agency"])
+        billing_settings.stripe_connect_account_id = "acct_test123"
+        billing_settings.stripe_connect_charges_enabled = True
+        await db_session.commit()
+
+        captured: dict = {}
+
+        async def fake_create_checkout_session(params, *, stripe_account=None):
+            captured["params"] = params
+            captured["stripe_account"] = stripe_account
+            return SimpleNamespace(url="https://checkout.stripe.test/fake-session")
+
+        monkeypatch.setattr(invoicing_service.stripe_client, "create_checkout_session", fake_create_checkout_session)
+
+        started = await client.post(f"/portal/invoices/{s['invoice'].id}/pay", headers=auth_headers(contact_user))
+        assert started.status_code == 200, started.text
+        assert started.json() == {"checkout_url": "https://checkout.stripe.test/fake-session"}
+        assert captured["stripe_account"] == "acct_test123"
+        assert captured["params"]["mode"] == "payment"
+        assert captured["params"]["metadata"]["invoice_id"] == str(s["invoice"].id)
+
+        # An already-paid invoice can't be paid again — unaffected by the
+        # Stripe rewrite, still a plain 400 before ever calling Stripe.
+        s["invoice"].status = "paid"
+        await db_session.commit()
         again = await client.post(f"/portal/invoices/{s['invoice'].id}/pay", headers=auth_headers(contact_user))
         assert again.status_code == 400
+
+    async def test_connect_webhook_records_the_payment(
+        self, client, db_session, email_outbox, portal_setup, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        s = portal_setup
+        contact_user, _ = await _invite_and_accept(
+            client, db_session, email_outbox, s["agency"].id, s["client"].id, s["owner"], "casey5@northwind.example"
+        )
+
+        billing_settings = await invoicing_service.get_or_create_billing_settings(db_session, s["agency"])
+        billing_settings.stripe_connect_account_id = "acct_test123"
+        await db_session.commit()
+
+        monkeypatch.setattr(stripe_client.settings, "stripe_connect_webhook_secret", "whsec_test_fake")
+
+        # Captured up front: the dedupe rollback on the replayed delivery
+        # below expires every object in this shared test session, so touching
+        # an ORM instance's attributes again afterward needs an `await` — the
+        # plain strings captured here avoid that entirely.
+        invoice_id = str(s["invoice"].id)
+        contact_headers = auth_headers(contact_user)
+        contact_full_name = contact_user.full_name
+        balance = s["invoice"].total_cents - s["invoice"].amount_paid_cents
+        event_payload = {
+            "id": "evt_test_1",
+            "type": "checkout.session.completed",
+            "account": "acct_test123",
+            "data": {
+                "object": {
+                    "id": "cs_test_1",
+                    "mode": "payment",
+                    "amount_total": balance,
+                    "payment_intent": "pi_test_1",
+                    "metadata": {
+                        "invoice_id": invoice_id,
+                        "agency_id": str(s["agency"].id),
+                        "paid_by_user_id": str(contact_user.id),
+                    },
+                }
+            },
+        }
+        body, signature = sign_stripe_payload(event_payload, "whsec_test_fake")
+
+        delivered = await client.post(
+            "/webhooks/stripe/connect", content=body, headers={"stripe-signature": signature}
+        )
+        assert delivered.status_code == 200
+
+        paid = await client.get(f"/portal/invoices/{invoice_id}", headers=contact_headers)
+        paid_body = paid.json()
+        assert paid_body["status"] == "paid"
+        assert paid_body["payments"][0]["method"] == "stripe"
+        assert paid_body["payments"][0]["recorded_by_name"] == contact_full_name
+
+        # A redelivered event (Stripe retries on anything but a 2xx) must not
+        # double-record the payment.
+        replayed = await client.post(
+            "/webhooks/stripe/connect", content=body, headers={"stripe-signature": signature}
+        )
+        assert replayed.status_code == 200
+        again = await client.get(f"/portal/invoices/{invoice_id}", headers=contact_headers)
+        assert len(again.json()["payments"]) == 1
+
+    async def test_connect_webhook_rejects_bad_signature(self, client, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(stripe_client.settings, "stripe_connect_webhook_secret", "whsec_test_fake")
+        body, _ = sign_stripe_payload({"id": "evt_x", "type": "account.updated"}, "whsec_wrong_secret")
+        resp = await client.post("/webhooks/stripe/connect", content=body, headers={"stripe-signature": "t=1,v1=bad"})
+        assert resp.status_code == 400
 
 
 class TestPortalMessages:

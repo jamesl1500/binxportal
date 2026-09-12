@@ -36,7 +36,7 @@ const PLANS = [
     price: "$49",
     per: "per month",
     blurb: "For a small studio finding its rhythm.",
-    features: ["Everything in Free", "25 clients & 25 active projects", "500 leads", "10 team members", "Priority email support", "$40/mo of AI usage"],
+    features: ["Everything in Free", "15 clients & 25 active projects", "250 leads", "10 team members", "Priority email support", "$50/mo of AI usage"],
     cta: "Start Starter",
     featured: false,
   },
@@ -45,7 +45,7 @@ const PLANS = [
     price: "$149",
     per: "per month",
     blurb: "For an agency running many clients at once.",
-    features: ["Everything in Starter", "100 clients & 100 active projects", "5,000 leads", "30 team members", "$150/mo of AI usage"],
+    features: ["Everything in Starter", "60 clients & 150 active projects", "2,000 leads", "40 team members", "$200/mo of AI usage"],
     cta: "Start Pro",
     featured: true,
   },
@@ -54,7 +54,7 @@ const PLANS = [
     price: "$399",
     per: "per month",
     blurb: "For a large team with no room for limits.",
-    features: ["Everything in Pro", "Unlimited clients & projects", "Unlimited leads & members", "$500/mo of AI usage", "Onboarding help"],
+    features: ["Everything in Pro", "Unlimited clients, projects & leads", "150 team members", "$750/mo of AI usage", "Onboarding help"],
     cta: "Start Scale",
     featured: false,
   },
@@ -63,7 +63,7 @@ const PLANS = [
 const FAQ = [
   {
     q: "Is there really a free plan?",
-    a: "Yes. The Free plan doesn't expire and doesn't need a card. It's capped on clients, projects, leads and AI usage — when you outgrow it, upgrading takes one click and applies immediately.",
+    a: "Yes. The Free plan doesn't expire and doesn't need a card. It's capped on clients, projects, leads and AI usage — when you outgrow it, upgrading takes a minute through Stripe's secure checkout.",
   },
   {
     q: "Do you charge per seat?",
@@ -79,7 +79,7 @@ const FAQ = [
   },
   {
     q: "Can I change plans later?",
-    a: "Any time, in both directions. New limits take effect right away; if a downgrade would put you over a limit we'll tell you what to trim first.",
+    a: "Any time, in both directions, through Stripe's billing portal. Upgrades apply right away; if a downgrade would put you over a limit we'll tell you what to trim first.",
   },
   {
     q: "Where does my data live?",

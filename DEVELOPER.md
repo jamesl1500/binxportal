@@ -232,3 +232,28 @@ canonical origin used to build absolute links server-side), and `NODE_ENV`.
 
 Production values live in `/opt/binxportal/.env` on the instance — never
 committed; see `.env.prod.example` at the repo root for the shape.
+
+### Stripe (local test-mode smoke test)
+
+Platform billing (`modules/billing/`) and client-invoice payments via Stripe
+Connect (`modules/invoicing/` + `modules/client_portal/`) are both fully
+gated behind `STRIPE_SECRET_KEY` being set — unset (the default), everything
+behaves exactly as before Stripe existed. The automated test suite never
+calls real Stripe (see `core/stripe_client.py`'s module docstring); to
+actually exercise the real integration once:
+
+1. Stripe Dashboard → confirm **Test mode**. Create three Products
+   (Starter/Pro/Scale), one recurring monthly Price each, and set
+   `STRIPE_PRICE_ID_STARTER`/`_PRO`/`_SCALE` in `apps/binx-api/.env` to their
+   ids.
+2. Developers → API keys → test **Secret key** → `STRIPE_SECRET_KEY`.
+3. Settings → Connect → confirm Express is enabled in test mode.
+4. `stripe listen --forward-to localhost:8000/webhooks/stripe/platform` →
+   copy the printed secret into `STRIPE_WEBHOOK_SECRET`. A second listener
+   (or a Dashboard endpoint with "Listen to events on Connected accounts")
+   pointed at `localhost:8000/webhooks/stripe/connect` →
+   `STRIPE_CONNECT_WEBHOOK_SECRET`.
+5. Restart the API. Subscribe to a paid plan from Settings → Plan and
+   connect Stripe from Settings → Invoicing, using card `4242 4242 4242 4242`
+   (any future expiry, any CVC); use `4000 0000 0000 0002` to test a declined
+   payment.

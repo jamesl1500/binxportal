@@ -100,8 +100,8 @@ const cases: Case[] = [
   { name: "getPortalInvoices", call: () => portal.getPortalInvoices(), method: "get", url: "/portal/invoices" },
   { name: "getPortalInvoice", call: () => portal.getPortalInvoice("i1"), method: "get", url: "/portal/invoices/i1" },
   {
-    name: "payPortalInvoice",
-    call: () => portal.payPortalInvoice("i1"),
+    name: "startPortalInvoiceCheckout",
+    call: () => portal.startPortalInvoiceCheckout("i1"),
     method: "post",
     url: "/portal/invoices/i1/pay",
     body: undefined,
@@ -244,5 +244,18 @@ describe("portal.ts special cases", () => {
   it("previewPortalInvitation rethrows an expired-link error", async () => {
     mockedApi.get.mockRejectedValueOnce(axiosError(400, "expired"));
     await expect(portal.previewPortalInvitation("tok")).rejects.toMatchObject({ name: "AuthApiError", status: 400 });
+  });
+
+  it("startPortalInvoiceCheckout returns the checkout URL", async () => {
+    mockedApi.post.mockResolvedValueOnce({ data: { checkout_url: "https://checkout.stripe.com/abc" } });
+    expect(await portal.startPortalInvoiceCheckout("i1")).toBe("https://checkout.stripe.com/abc");
+  });
+
+  it("startPortalInvoiceCheckout surfaces a 409 (Stripe not connected yet)", async () => {
+    mockedApi.post.mockRejectedValueOnce(axiosError(409, "Online payment isn't set up for this agency yet"));
+    await expect(portal.startPortalInvoiceCheckout("i1")).rejects.toMatchObject({
+      name: "AuthApiError",
+      status: 409,
+    });
   });
 });

@@ -25,6 +25,7 @@ import {
   type InvoiceInput,
   issueInvoice,
   type PaymentInput,
+  startStripeConnectOnboarding,
   updateBillingSettings,
   updateInvoice,
   voidInvoice,
@@ -50,6 +51,19 @@ export async function updateBillingSettingsAction(
     return { settings: await updateBillingSettings(agencyId, input) };
   } catch (error) {
     return errorResult(error, "Unable to update billing settings");
+  }
+}
+
+export interface RedirectActionResult {
+  error?: string;
+  redirectUrl?: string;
+}
+
+export async function startStripeConnectOnboardingAction(agencyId: string): Promise<RedirectActionResult> {
+  try {
+    return { redirectUrl: await startStripeConnectOnboarding(agencyId) };
+  } catch (error) {
+    return errorResult(error, "Unable to start Stripe onboarding");
   }
 }
 

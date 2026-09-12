@@ -66,3 +66,47 @@ export async function changePlan(agencyId: string, plan: string): Promise<Subscr
     rethrow(error, "Unable to change the plan");
   }
 }
+
+/**
+ * createPlanCheckout
+ *
+ * Starts a Stripe Checkout Session for subscribing to a paid plan for the
+ * first time, via `POST /agencies/{agencyId}/plan/checkout`. Returns the
+ * hosted Checkout URL to redirect the browser to. An agency that already has
+ * a subscription must use `createBillingPortalSession` instead.
+ */
+export async function createPlanCheckout(agencyId: string, plan: string): Promise<string> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.post<{ checkout_url: string }>(
+      `/agencies/${agencyId}/plan/checkout`,
+      { plan },
+      { headers },
+    );
+    return data.checkout_url;
+  } catch (error) {
+    rethrow(error, "Unable to start checkout");
+  }
+}
+
+/**
+ * createBillingPortalSession
+ *
+ * Starts a Stripe Billing Portal session via
+ * `POST /agencies/{agencyId}/plan/billing-portal`. With no `targetPlan`, a
+ * plain "manage billing" link; with one, deep-links into the portal's
+ * cancel (`targetPlan: "free"`) or change-subscription flow.
+ */
+export async function createBillingPortalSession(agencyId: string, targetPlan?: string): Promise<string> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.post<{ portal_url: string }>(
+      `/agencies/${agencyId}/plan/billing-portal`,
+      { target_plan: targetPlan ?? null },
+      { headers },
+    );
+    return data.portal_url;
+  } catch (error) {
+    rethrow(error, "Unable to open the billing portal");
+  }
+}

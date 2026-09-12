@@ -247,6 +247,45 @@ export interface paths {
         patch: operations["write_billing_settings_agencies__agency_id__billing_settings_patch"];
         trace?: never;
     };
+    "/agencies/{agency_id}/billing-settings/stripe/connect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start Stripe Connect Onboarding */
+        post: operations["start_stripe_connect_onboarding_agencies__agency_id__billing_settings_stripe_connect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/billing-settings/stripe/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read Stripe Connect Status
+         * @description ``?stripe=return`` (set by the onboarding return_url) triggers one live
+         *     reconciliation call if the row still looks pending — closes the race
+         *     between the redirect landing back and the account.updated webhook.
+         */
+        get: operations["read_stripe_connect_status_agencies__agency_id__billing_settings_stripe_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agencies/{agency_id}/clients": {
         parameters: {
             query?: never;
@@ -1069,6 +1108,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agencies/{agency_id}/plan/billing-portal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start Billing Portal */
+        post: operations["start_billing_portal_agencies__agency_id__plan_billing_portal_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agencies/{agency_id}/plan/catalog": {
         parameters: {
             query?: never;
@@ -1080,6 +1136,23 @@ export interface paths {
         get: operations["get_catalog_agencies__agency_id__plan_catalog_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/plan/checkout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start Checkout */
+        post: operations["start_checkout_agencies__agency_id__plan_checkout_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2142,9 +2215,11 @@ export interface paths {
         put?: never;
         /**
          * Pay Invoice
-         * @description Stub payment: records the full outstanding balance as a payment with
-         *     method ``portal`` and flips the invoice to paid. Swap in a real processor
-         *     (Stripe Checkout + webhook) later without changing this contract.
+         * @description Starts a real Stripe Checkout Session on the agency's own connected
+         *     account and returns the URL to redirect to. A deliberate break from the
+         *     old stub's "returns the paid invoice" contract — a hosted-Checkout
+         *     redirect can't be synchronous. The payment itself is recorded by the
+         *     Connect webhook once Stripe confirms it (see invoicing/webhooks_router.py).
          */
         post: operations["pay_invoice_portal_invoices__invoice_id__pay_post"];
         delete?: never;
@@ -2391,6 +2466,40 @@ export interface paths {
         /** Write Privacy Settings */
         put: operations["write_privacy_settings_users_me_privacy_settings_put"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/webhooks/stripe/connect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Connect Webhook */
+        post: operations["connect_webhook_webhooks_stripe_connect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/webhooks/stripe/platform": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Platform Webhook */
+        post: operations["platform_webhook_webhooks_stripe_platform_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2892,6 +3001,16 @@ export interface components {
             /** Today Request Count */
             today_request_count: number;
         };
+        /** BillingPortalRequest */
+        BillingPortalRequest: {
+            /** Target Plan */
+            target_plan?: string | null;
+        };
+        /** BillingPortalSessionRead */
+        BillingPortalSessionRead: {
+            /** Portal Url */
+            portal_url: string;
+        };
         /** BillingSettingsRead */
         BillingSettingsRead: {
             /** Address */
@@ -3190,6 +3309,11 @@ export interface components {
         ChangePlanRequest: {
             /** Plan */
             plan: string;
+        };
+        /** CheckoutSessionRead */
+        CheckoutSessionRead: {
+            /** Checkout Url */
+            checkout_url: string;
         };
         /** ClientContactInvitationCreate */
         ClientContactInvitationCreate: {
@@ -4243,6 +4367,11 @@ export interface components {
             /** Reference */
             reference: string | null;
         };
+        /** PlanCheckoutRequest */
+        PlanCheckoutRequest: {
+            /** Plan */
+            plan: string;
+        };
         /** PlanLimitsRead */
         PlanLimitsRead: {
             /** Ai Daily User Cap */
@@ -4298,6 +4427,11 @@ export interface components {
             logo_version?: string | null;
             /** Name */
             name: string;
+            /**
+             * Stripe Charges Enabled
+             * @default false
+             */
+            stripe_charges_enabled: boolean;
         };
         /** PortalBoardColumn */
         PortalBoardColumn: {
@@ -4724,8 +4858,41 @@ export interface components {
             message: string;
             user: components["schemas"]["UserRead"];
         };
+        /** StripeConnectStatusRead */
+        StripeConnectStatusRead: {
+            /** Charges Enabled */
+            charges_enabled: boolean;
+            /** Connected */
+            connected: boolean;
+            /** Details Submitted */
+            details_submitted: boolean;
+            /** Onboarded At */
+            onboarded_at: string | null;
+            /** Payouts Enabled */
+            payouts_enabled: boolean;
+        };
+        /** StripeOnboardingLinkRead */
+        StripeOnboardingLinkRead: {
+            /** Onboarding Url */
+            onboarding_url: string;
+        };
         /** SubscriptionRead */
         SubscriptionRead: {
+            /**
+             * Cancel At Period End
+             * @default false
+             */
+            cancel_at_period_end: boolean;
+            /**
+             * Has Stripe Customer
+             * @default false
+             */
+            has_stripe_customer: boolean;
+            /**
+             * Has Stripe Subscription
+             * @default false
+             */
+            has_stripe_subscription: boolean;
             limits: components["schemas"]["PlanLimitsRead"];
             /** Plan */
             plan: string;
@@ -5649,6 +5816,70 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BillingSettingsRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_stripe_connect_onboarding_agencies__agency_id__billing_settings_stripe_connect_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StripeOnboardingLinkRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_stripe_connect_status_agencies__agency_id__billing_settings_stripe_status_get: {
+        parameters: {
+            query?: {
+                stripe?: string | null;
+            };
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StripeConnectStatusRead"];
                 };
             };
             /** @description Validation Error */
@@ -7994,6 +8225,41 @@ export interface operations {
             };
         };
     };
+    start_billing_portal_agencies__agency_id__plan_billing_portal_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BillingPortalRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingPortalSessionRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_catalog_agencies__agency_id__plan_catalog_get: {
         parameters: {
             query?: never;
@@ -8012,6 +8278,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PlanLimitsRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_checkout_agencies__agency_id__plan_checkout_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlanCheckoutRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckoutSessionRead"];
                 };
             };
             /** @description Validation Error */
@@ -10607,7 +10908,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["InvoiceDetailRead"];
+                    "application/json": components["schemas"]["CheckoutSessionRead"];
                 };
             };
             /** @description Validation Error */
@@ -11232,6 +11533,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    connect_webhook_webhooks_stripe_connect_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    platform_webhook_webhooks_stripe_platform_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
         };

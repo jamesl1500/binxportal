@@ -167,6 +167,25 @@ class TimePoint(BaseModel):
     value: int
 
 
+# --- Stripe --------------------------------------------------------------
+
+
+class CheckoutSessionRead(BaseModel):
+    checkout_url: str
+
+
+class StripeConnectStatusRead(BaseModel):
+    connected: bool
+    charges_enabled: bool
+    details_submitted: bool
+    payouts_enabled: bool
+    onboarded_at: datetime | None
+
+
+class StripeOnboardingLinkRead(BaseModel):
+    onboarding_url: str
+
+
 class InvoiceSummaryRead(BaseModel):
     outstanding_cents: int
     overdue_cents: int

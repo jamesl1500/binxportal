@@ -76,6 +76,28 @@ class Settings(BaseSettings):
     ai_default_monthly_budget_cents: int = 2000
     ai_default_daily_user_cap: int = 50
 
+    # --- Stripe (platform billing + Connect) --------------------------------
+    # Unset (the default) means Stripe-backed billing/invoicing is cleanly off
+    # — mirrors AiNotConfigured's pattern (see billing/service.py,
+    # invoicing/service.py). Platform events (subscriptions) and Connect
+    # events (connected-account invoicing) arrive on two separate webhook
+    # endpoints with two separate signing secrets — see billing/webhooks_router.py
+    # and invoicing/webhooks_router.py.
+    stripe_secret_key: str | None = None
+    stripe_publishable_key: str | None = None
+    stripe_webhook_secret: str | None = None
+    stripe_connect_webhook_secret: str | None = None
+    # Price ids are Stripe-account-specific (test vs live mode mint different
+    # ids for "the same" product), so they live in config, not in the plan
+    # catalog — see billing/service.py::_price_id_for_plan.
+    stripe_price_id_starter: str | None = None
+    stripe_price_id_pro: str | None = None
+    stripe_price_id_scale: str | None = None
+    # Basis points of a client-invoice payment Binx keeps as a platform fee on
+    # Connect "direct charge" payments. 0 = no fee today; see
+    # invoicing/service.py::start_invoice_checkout.
+    stripe_application_fee_bps: int = 0
+
 
 @lru_cache
 def get_settings() -> Settings:

@@ -1,37 +1,38 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/lib/portal", () => ({ payPortalInvoice: vi.fn() }));
+vi.mock("@/lib/portal", () => ({ startPortalInvoiceCheckout: vi.fn() }));
 
 import { AuthApiError } from "@/lib/auth";
-import { payPortalInvoice } from "@/lib/portal";
+import { startPortalInvoiceCheckout } from "@/lib/portal";
 import { payInvoiceAction } from "./actions";
 
-const mockedPay = vi.mocked(payPortalInvoice);
+const mockedStartCheckout = vi.mocked(startPortalInvoiceCheckout);
 
 beforeEach(() => {
   vi.clearAllMocks();
 });
 
 describe("payInvoiceAction", () => {
-  it("returns the updated invoice on success", async () => {
-    const invoice = { id: "inv-1", status: "paid" } as never;
-    mockedPay.mockResolvedValueOnce(invoice);
+  it("returns the checkout URL on success", async () => {
+    mockedStartCheckout.mockResolvedValueOnce("https://checkout.stripe.com/abc");
 
-    await expect(payInvoiceAction("inv-1")).resolves.toEqual({ invoice });
-    expect(mockedPay).toHaveBeenCalledWith("inv-1");
+    await expect(payInvoiceAction("inv-1")).resolves.toEqual({ checkoutUrl: "https://checkout.stripe.com/abc" });
+    expect(mockedStartCheckout).toHaveBeenCalledWith("inv-1");
   });
 
   it("maps an AuthApiError to a returned error", async () => {
-    mockedPay.mockRejectedValueOnce(new AuthApiError("This invoice isn't awaiting payment", 400));
+    mockedStartCheckout.mockRejectedValueOnce(
+      new AuthApiError("Online payment isn't set up for this agency yet", 409),
+    );
 
     await expect(payInvoiceAction("inv-1")).resolves.toEqual({
-      error: "This invoice isn't awaiting payment",
+      error: "Online payment isn't set up for this agency yet",
     });
   });
 
   it("falls back to a generic message for other errors", async () => {
-    mockedPay.mockRejectedValueOnce(new Error("boom"));
+    mockedStartCheckout.mockRejectedValueOnce(new Error("boom"));
 
-    await expect(payInvoiceAction("inv-1")).resolves.toEqual({ error: "Unable to record the payment" });
+    await expect(payInvoiceAction("inv-1")).resolves.toEqual({ error: "Unable to start checkout" });
   });
 });

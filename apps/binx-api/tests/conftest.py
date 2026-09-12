@@ -60,6 +60,7 @@ from sqlalchemy import text  # noqa: E402
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine  # noqa: E402
 from sqlalchemy.pool import NullPool  # noqa: E402
 
+from binx_api.core import stripe_events as _stripe_events  # noqa: E402,F401
 from binx_api.core.database import Base, get_db  # noqa: E402
 from binx_api.core.security import create_access_token  # noqa: E402
 
@@ -279,6 +280,22 @@ def _no_real_anthropic_calls(monkeypatch: pytest.MonkeyPatch) -> None:
     see tests/integration/test_ai_client.py.
     """
     monkeypatch.setattr(_ai_client.settings, "anthropic_api_key", None)
+
+
+@pytest.fixture(autouse=True)
+def _no_real_stripe_calls(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Forces every Stripe secret unset for every test, regardless of a
+    developer's local ``.env`` — mirrors ``_no_real_anthropic_calls`` above.
+    Tests that exercise the "configured" path set the relevant
+    ``binx_api.core.stripe_client.settings`` attribute back to a fake value
+    *and* monkeypatch the specific ``stripe_client`` wrapper(s) they need —
+    see tests/integration/test_billing_stripe.py.
+    """
+    from binx_api.core import stripe_client as _stripe_client
+
+    monkeypatch.setattr(_stripe_client.settings, "stripe_secret_key", None)
+    monkeypatch.setattr(_stripe_client.settings, "stripe_webhook_secret", None)
+    monkeypatch.setattr(_stripe_client.settings, "stripe_connect_webhook_secret", None)
 
 
 # ---------------------------------------------------------------------------

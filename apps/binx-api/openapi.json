@@ -1595,6 +1595,37 @@
         "title": "AiUsageSummaryRead",
         "type": "object"
       },
+      "BillingPortalRequest": {
+        "properties": {
+          "target_plan": {
+            "anyOf": [
+              {
+                "maxLength": 20,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Plan"
+          }
+        },
+        "title": "BillingPortalRequest",
+        "type": "object"
+      },
+      "BillingPortalSessionRead": {
+        "properties": {
+          "portal_url": {
+            "title": "Portal Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "portal_url"
+        ],
+        "title": "BillingPortalSessionRead",
+        "type": "object"
+      },
       "BillingSettingsRead": {
         "properties": {
           "address": {
@@ -2464,6 +2495,19 @@
           "plan"
         ],
         "title": "ChangePlanRequest",
+        "type": "object"
+      },
+      "CheckoutSessionRead": {
+        "properties": {
+          "checkout_url": {
+            "title": "Checkout Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "checkout_url"
+        ],
+        "title": "CheckoutSessionRead",
         "type": "object"
       },
       "ClientContactInvitationCreate": {
@@ -5551,6 +5595,21 @@
         "title": "PaymentRead",
         "type": "object"
       },
+      "PlanCheckoutRequest": {
+        "properties": {
+          "plan": {
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Plan",
+            "type": "string"
+          }
+        },
+        "required": [
+          "plan"
+        ],
+        "title": "PlanCheckoutRequest",
+        "type": "object"
+      },
       "PlanLimitsRead": {
         "properties": {
           "ai_daily_user_cap": {
@@ -5710,6 +5769,11 @@
           "name": {
             "title": "Name",
             "type": "string"
+          },
+          "stripe_charges_enabled": {
+            "default": false,
+            "title": "Stripe Charges Enabled",
+            "type": "boolean"
           }
         },
         "required": [
@@ -6831,8 +6895,77 @@
         "title": "SignupResponse",
         "type": "object"
       },
+      "StripeConnectStatusRead": {
+        "properties": {
+          "charges_enabled": {
+            "title": "Charges Enabled",
+            "type": "boolean"
+          },
+          "connected": {
+            "title": "Connected",
+            "type": "boolean"
+          },
+          "details_submitted": {
+            "title": "Details Submitted",
+            "type": "boolean"
+          },
+          "onboarded_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Onboarded At"
+          },
+          "payouts_enabled": {
+            "title": "Payouts Enabled",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "connected",
+          "charges_enabled",
+          "details_submitted",
+          "payouts_enabled",
+          "onboarded_at"
+        ],
+        "title": "StripeConnectStatusRead",
+        "type": "object"
+      },
+      "StripeOnboardingLinkRead": {
+        "properties": {
+          "onboarding_url": {
+            "title": "Onboarding Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "onboarding_url"
+        ],
+        "title": "StripeOnboardingLinkRead",
+        "type": "object"
+      },
       "SubscriptionRead": {
         "properties": {
+          "cancel_at_period_end": {
+            "default": false,
+            "title": "Cancel At Period End",
+            "type": "boolean"
+          },
+          "has_stripe_customer": {
+            "default": false,
+            "title": "Has Stripe Customer",
+            "type": "boolean"
+          },
+          "has_stripe_subscription": {
+            "default": false,
+            "title": "Has Stripe Subscription",
+            "type": "boolean"
+          },
           "limits": {
             "$ref": "#/components/schemas/PlanLimitsRead"
           },
@@ -8663,6 +8796,119 @@
           }
         ],
         "summary": "Write Billing Settings",
+        "tags": [
+          "invoicing"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/billing-settings/stripe/connect": {
+      "post": {
+        "operationId": "start_stripe_connect_onboarding_agencies__agency_id__billing_settings_stripe_connect_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StripeOnboardingLinkRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Start Stripe Connect Onboarding",
+        "tags": [
+          "invoicing"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/billing-settings/stripe/status": {
+      "get": {
+        "description": "``?stripe=return`` (set by the onboarding return_url) triggers one live\nreconciliation call if the row still looks pending \u2014 closes the race\nbetween the redirect landing back and the account.updated webhook.",
+        "operationId": "read_stripe_connect_status_agencies__agency_id__billing_settings_stripe_status_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "stripe",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Stripe"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StripeConnectStatusRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Read Stripe Connect Status",
         "tags": [
           "invoicing"
         ]
@@ -12967,6 +13213,64 @@
         ]
       }
     },
+    "/agencies/{agency_id}/plan/billing-portal": {
+      "post": {
+        "operationId": "start_billing_portal_agencies__agency_id__plan_billing_portal_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BillingPortalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingPortalSessionRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Start Billing Portal",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
     "/agencies/{agency_id}/plan/catalog": {
       "get": {
         "operationId": "get_catalog_agencies__agency_id__plan_catalog_get",
@@ -13014,6 +13318,64 @@
           }
         ],
         "summary": "Get Catalog",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/plan/checkout": {
+      "post": {
+        "operationId": "start_checkout_agencies__agency_id__plan_checkout_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanCheckoutRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckoutSessionRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Start Checkout",
         "tags": [
           "billing"
         ]
@@ -17623,7 +17985,7 @@
     },
     "/portal/invoices/{invoice_id}/pay": {
       "post": {
-        "description": "Stub payment: records the full outstanding balance as a payment with\nmethod ``portal`` and flips the invoice to paid. Swap in a real processor\n(Stripe Checkout + webhook) later without changing this contract.",
+        "description": "Starts a real Stripe Checkout Session on the agency's own connected\naccount and returns the URL to redirect to. A deliberate break from the\nold stub's \"returns the paid invoice\" contract \u2014 a hosted-Checkout\nredirect can't be synchronous. The payment itself is recorded by the\nConnect webhook once Stripe confirms it (see invoicing/webhooks_router.py).",
         "operationId": "pay_invoice_portal_invoices__invoice_id__pay_post",
         "parameters": [
           {
@@ -17642,7 +18004,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InvoiceDetailRead"
+                  "$ref": "#/components/schemas/CheckoutSessionRead"
                 }
               }
             },
@@ -18691,6 +19053,44 @@
         "summary": "Write Privacy Settings",
         "tags": [
           "users"
+        ]
+      }
+    },
+    "/webhooks/stripe/connect": {
+      "post": {
+        "operationId": "connect_webhook_webhooks_stripe_connect_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Connect Webhook",
+        "tags": [
+          "invoicing-webhooks"
+        ]
+      }
+    },
+    "/webhooks/stripe/platform": {
+      "post": {
+        "operationId": "platform_webhook_webhooks_stripe_platform_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Platform Webhook",
+        "tags": [
+          "billing-webhooks"
         ]
       }
     }

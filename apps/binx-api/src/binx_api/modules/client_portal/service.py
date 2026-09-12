@@ -32,6 +32,7 @@ from binx_api.modules.client_portal.schemas import (
     PortalClientRead,
     PortalProgress,
 )
+from binx_api.modules.invoicing.service import get_or_create_billing_settings
 from binx_api.modules.messaging.models import Conversation, ConversationParticipant
 from binx_api.modules.notifications import service as notifications_service
 from binx_api.modules.notifications.models import CATEGORY_TEAM as NOTIFY_CATEGORY_TEAM
@@ -46,12 +47,14 @@ INVITATION_EXPIRE_DAYS = 7
 
 async def portal_agency_read(db: AsyncSession, agency: Agency) -> PortalAgencyRead:
     profile = await get_or_create_agency_profile(db, agency)
+    billing_settings = await get_or_create_billing_settings(db, agency)
     return PortalAgencyRead(
         id=agency.id,
         name=agency.name,
         has_logo=profile.logo_storage_path is not None,
         logo_version=_image_version(profile.logo_storage_path),
         brand_color=profile.brand_color,
+        stripe_charges_enabled=billing_settings.stripe_connect_charges_enabled,
     )
 
 

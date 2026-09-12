@@ -4,7 +4,8 @@
  * The agency's subscription plan: current tier + usage bars (clients /
  * projects / leads / AI budget vs. the plan's limits), visible to every
  * member, and the plan catalog with a "switch" action available to the owner
- * only. No payment provider yet — switching sets the plan directly.
+ * only. Switching redirects to Stripe Checkout (new subscriber) or the
+ * Stripe Billing Portal (existing subscriber) — see PlanPanel.
  *
  * @module apps/binx-web/src/app/(app)/settings/plan/page.tsx
  * @author Binx.io
@@ -50,15 +51,15 @@ const SettingsPlanPage = async () => {
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Plans</h2>
         <p className={styles.sectionSubtitle}>
-          {isOwner
-            ? "Switch plans at any time — new limits apply immediately."
-            : "Only the agency owner can change the plan."}
+          {isOwner ? "Switch plans at any time." : "Only the agency owner can change the plan."}
         </p>
         <PlanPanel
           agencyId={currentAgency.id}
           currentPlan={subscription.plan}
           catalog={catalog}
           canManage={isOwner}
+          hasStripeCustomer={subscription.has_stripe_customer}
+          hasStripeSubscription={subscription.has_stripe_subscription}
         />
       </section>
     </div>

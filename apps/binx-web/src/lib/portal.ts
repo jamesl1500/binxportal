@@ -115,18 +115,23 @@ export async function getPortalInvoice(invoiceId: string): Promise<PortalInvoice
   }
 }
 
-/** Stub payment — records the full balance and flips the invoice to paid. */
-export async function payPortalInvoice(invoiceId: string): Promise<PortalInvoiceDetail> {
+/**
+ * startPortalInvoiceCheckout
+ *
+ * Starts a real Stripe Checkout Session for the full outstanding balance via
+ * `POST /portal/invoices/{invoiceId}/pay`, on the agency's own connected
+ * Stripe account. Returns the URL to redirect the browser to. Rejects (409)
+ * if the agency hasn't finished Stripe Connect onboarding yet.
+ */
+export async function startPortalInvoiceCheckout(invoiceId: string): Promise<string> {
   const headers = await authHeader();
   try {
-    const { data } = await api.post<PortalInvoiceDetail>(
-      `/portal/invoices/${invoiceId}/pay`,
-      undefined,
-      { headers },
-    );
-    return data;
+    const { data } = await api.post<{ checkout_url: string }>(`/portal/invoices/${invoiceId}/pay`, undefined, {
+      headers,
+    });
+    return data.checkout_url;
   } catch (error) {
-    rethrow(error, "Unable to record the payment");
+    rethrow(error, "Unable to start checkout");
   }
 }
 

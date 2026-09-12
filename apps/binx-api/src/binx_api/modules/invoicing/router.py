@@ -24,6 +24,8 @@ from binx_api.modules.invoicing.schemas import (
     LineItemRead,
     PaymentCreate,
     PaymentRead,
+    StripeConnectStatusRead,
+    StripeOnboardingLinkRead,
 )
 
 router = APIRouter(prefix="/agencies/{agency_id}", tags=["invoicing"])
@@ -137,6 +139,34 @@ async def write_billing_settings(
     agency, _role = agency_and_role
     settings = await service.update_billing_settings(db, agency, data=data.model_dump(), actor=current_user)
     return BillingSettingsRead.model_validate(settings, from_attributes=True)
+
+
+# ---- Stripe Connect ------------------------------------------------
+
+
+@router.get("/billing-settings/stripe/status", response_model=StripeConnectStatusRead)
+async def read_stripe_connect_status(
+    db: DbSession, agency_and_role: AnyMember, stripe: str | None = Query(default=None)
+) -> StripeConnectStatusRead:
+    """``?stripe=return`` (set by the onboarding return_url) triggers one live
+    reconciliation call if the row still looks pending — closes the race
+    between the redirect landing back and the account.updated webhook."""
+    agency, _role = agency_and_role
+    settings_row = await service.get_connect_status(db, agency, refresh=(stripe == "return"))
+    return StripeConnectStatusRead(
+        connected=settings_row.stripe_connect_account_id is not None,
+        charges_enabled=settings_row.stripe_connect_charges_enabled,
+        details_submitted=settings_row.stripe_connect_details_submitted,
+        payouts_enabled=settings_row.stripe_connect_payouts_enabled,
+        onboarded_at=settings_row.stripe_connect_onboarded_at,
+    )
+
+
+@router.post("/billing-settings/stripe/connect", response_model=StripeOnboardingLinkRead)
+async def start_stripe_connect_onboarding(db: DbSession, agency_and_role: AgencyAndRole) -> StripeOnboardingLinkRead:
+    agency, _role = agency_and_role
+    url = await service.start_connect_onboarding(db, agency)
+    return StripeOnboardingLinkRead(onboarding_url=url)
 
 
 # ---- Invoices ---------------------------------------------------

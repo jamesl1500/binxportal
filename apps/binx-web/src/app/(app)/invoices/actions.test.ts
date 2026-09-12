@@ -9,12 +9,18 @@ vi.mock("@/lib/invoicing", () => ({
   deleteInvoice: vi.fn(),
   addInvoicePayment: vi.fn(),
   deleteInvoicePayment: vi.fn(),
+  startStripeConnectOnboarding: vi.fn(),
 }));
 
 import { AuthApiError } from "@/lib/auth";
 import * as invoicing from "@/lib/invoicing";
 
-import { createInvoiceAction, issueInvoiceAction, addInvoicePaymentAction } from "./actions";
+import {
+  createInvoiceAction,
+  issueInvoiceAction,
+  addInvoicePaymentAction,
+  startStripeConnectOnboardingAction,
+} from "./actions";
 
 const agencyId = "a1";
 
@@ -57,5 +63,19 @@ describe("invoices actions", () => {
       reference: null,
     });
     expect(result).toEqual({ error: "Unable to record payment" });
+  });
+
+  it("startStripeConnectOnboardingAction returns the onboarding URL", async () => {
+    vi.mocked(invoicing.startStripeConnectOnboarding).mockResolvedValueOnce("https://connect.stripe.com/setup/x");
+    const result = await startStripeConnectOnboardingAction(agencyId);
+    expect(result).toEqual({ redirectUrl: "https://connect.stripe.com/setup/x" });
+  });
+
+  it("startStripeConnectOnboardingAction maps an AuthApiError to its message", async () => {
+    vi.mocked(invoicing.startStripeConnectOnboarding).mockRejectedValueOnce(
+      new AuthApiError("Stripe isn't configured", 503),
+    );
+    const result = await startStripeConnectOnboardingAction(agencyId);
+    expect(result).toEqual({ error: "Stripe isn't configured" });
   });
 });

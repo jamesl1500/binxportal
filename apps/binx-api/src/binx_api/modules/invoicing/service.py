@@ -12,11 +12,14 @@ import uuid
 from datetime import UTC, date, datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 
+import stripe
 from fastapi import HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from binx_api.core import stripe_client
+from binx_api.core.config import get_settings
 from binx_api.modules.activity import service as activity_service
 from binx_api.modules.activity.models import CATEGORY_INVOICING as ACTIVITY_CATEGORY_INVOICING
 from binx_api.modules.activity.models import CATEGORY_SETTINGS as ACTIVITY_CATEGORY_SETTINGS
@@ -38,6 +41,8 @@ from binx_api.modules.notifications import service as notifications_service
 from binx_api.modules.notifications.models import CATEGORY_INVOICING, EVENT_INVOICE_ISSUED, EVENT_INVOICE_PAID
 from binx_api.modules.projects.models import Project
 from binx_api.modules.users.models import User
+
+settings = get_settings()
 
 
 def _format_money(amount_cents: int, currency: str) -> str:
@@ -133,6 +138,122 @@ async def update_billing_settings(
         actor=actor,
     )
     return settings
+
+
+# ---- Stripe Connect (client-invoice payments) -------------------------
+# Money settles directly into the agency's own Stripe account ("direct
+# charge" pattern) rather than pooling in Binx's — see
+# client_portal/router.py::pay_invoice and invoicing/webhooks_router.py.
+
+
+async def start_connect_onboarding(db: AsyncSession, agency: Agency, *, country: str = "US") -> str:
+    """Get-or-create the agency's Express account, then always mint a fresh
+    Account Link — they expire in minutes, so a stored URL is never reusable
+    and "Continue onboarding" must call this again."""
+    if not settings.stripe_secret_key:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Stripe isn't configured")
+    billing_settings = await get_or_create_billing_settings(db, agency)
+    if billing_settings.stripe_connect_account_id is None:
+        account = await stripe_client.create_connect_account(
+            {
+                "type": "express",
+                "country": country,
+                "email": billing_settings.contact_email,
+                "capabilities": {
+                    "card_payments": {"requested": True},
+                    "transfers": {"requested": True},
+                },
+            }
+        )
+        billing_settings.stripe_connect_account_id = account.id
+        await db.commit()
+        await db.refresh(billing_settings)
+
+    link = await stripe_client.create_account_link(
+        {
+            "account": billing_settings.stripe_connect_account_id,
+            "type": "account_onboarding",
+            "refresh_url": f"{settings.frontend_url}/settings/invoicing?stripe=refresh",
+            "return_url": f"{settings.frontend_url}/settings/invoicing?stripe=return",
+        }
+    )
+    return link.url
+
+
+async def sync_connect_status(db: AsyncSession, account: stripe.Account) -> AgencyBillingSettings | None:
+    """Applied from the Connect webhook's ``account.updated`` event. Returns
+    ``None`` if the account id isn't recognised (shouldn't happen outside a
+    misconfigured webhook, but a webhook handler must never 500 on an
+    unexpected payload)."""
+    result = await db.execute(
+        select(AgencyBillingSettings).where(AgencyBillingSettings.stripe_connect_account_id == account.id)
+    )
+    billing_settings = result.scalar_one_or_none()
+    if billing_settings is None:
+        return None
+
+    billing_settings.stripe_connect_charges_enabled = bool(account.charges_enabled)
+    billing_settings.stripe_connect_details_submitted = bool(account.details_submitted)
+    billing_settings.stripe_connect_payouts_enabled = bool(account.payouts_enabled)
+    if billing_settings.stripe_connect_charges_enabled and billing_settings.stripe_connect_onboarded_at is None:
+        billing_settings.stripe_connect_onboarded_at = datetime.now(UTC)
+    await db.commit()
+    await db.refresh(billing_settings)
+    return billing_settings
+
+
+async def get_connect_status(db: AsyncSession, agency: Agency, *, refresh: bool = False) -> AgencyBillingSettings:
+    """A plain local read, unless ``refresh`` is set and the row still looks
+    pending — then one live lookup closes the race between the onboarding
+    redirect landing back and the ``account.updated`` webhook arriving."""
+    billing_settings = await get_or_create_billing_settings(db, agency)
+    if refresh and billing_settings.stripe_connect_account_id and not billing_settings.stripe_connect_charges_enabled:
+        account = await stripe_client.retrieve_connect_account(billing_settings.stripe_connect_account_id)
+        updated = await sync_connect_status(db, account)
+        if updated is not None:
+            return updated
+    return billing_settings
+
+
+async def start_invoice_checkout(
+    db: AsyncSession, invoice: Invoice, agency: Agency, billing_settings: AgencyBillingSettings, *, paid_by: User
+) -> str:
+    """A Checkout Session created *on the connected account* — the agency is
+    the merchant of record. Always for the full outstanding balance; no
+    partial-payment concept exists anywhere in this system. ``paid_by`` is
+    threaded through as metadata so the webhook can attribute the resulting
+    ``InvoicePayment`` to the contact who actually paid, the same way the
+    (now-removed) synchronous stub did."""
+    balance = invoice.total_cents - invoice.amount_paid_cents
+    fee_cents = round(balance * settings.stripe_application_fee_bps / 10_000)
+
+    params: dict = {
+        "mode": "payment",
+        "line_items": [
+            {
+                "quantity": 1,
+                "price_data": {
+                    "currency": invoice.currency.lower(),
+                    "unit_amount": balance,
+                    "product_data": {"name": f"Invoice {invoice.number}"},
+                },
+            }
+        ],
+        "metadata": {
+            "invoice_id": str(invoice.id),
+            "agency_id": str(agency.id),
+            "paid_by_user_id": str(paid_by.id),
+        },
+        "success_url": f"{settings.frontend_url}/portal/invoices/{invoice.id}?checkout=success",
+        "cancel_url": f"{settings.frontend_url}/portal/invoices/{invoice.id}?checkout=cancel",
+    }
+    if fee_cents:
+        params["payment_intent_data"] = {"application_fee_amount": fee_cents}
+
+    session = await stripe_client.create_checkout_session(
+        params, stripe_account=billing_settings.stripe_connect_account_id
+    )
+    return session.url
 
 
 async def _next_invoice_number(db: AsyncSession, agency: Agency) -> str:
@@ -510,21 +631,30 @@ async def add_payment(
     db: AsyncSession,
     invoice: Invoice,
     *,
-    recorded_by: User,
+    recorded_by: User | None,
     amount_cents: int,
     paid_on: date,
     method: str,
     reference: str | None,
+    stripe_payment_intent_id: str | None = None,
+    stripe_checkout_session_id: str | None = None,
 ) -> InvoicePayment:
+    """``recorded_by`` is only ``None`` for a Stripe-webhook-driven payment
+    where the paying user couldn't be resolved from the Checkout session's
+    metadata (e.g. their account was since deleted) — every other caller
+    (staff manual entry, the portal-checkout webhook's normal path) passes a
+    real user."""
     if invoice.status == STATUS_VOID:
         raise HTTPException(status.HTTP_409_CONFLICT, "This invoice was voided")
     payment = InvoicePayment(
         invoice_id=invoice.id,
-        recorded_by_id=recorded_by.id,
+        recorded_by_id=recorded_by.id if recorded_by else None,
         amount_cents=amount_cents,
         paid_on=paid_on,
         method=method,
         reference=reference,
+        stripe_payment_intent_id=stripe_payment_intent_id,
+        stripe_checkout_session_id=stripe_checkout_session_id,
     )
     db.add(payment)
     await db.flush()
@@ -536,10 +666,12 @@ async def add_payment(
     # Notify the people who own this invoice (drafter + issuer) that money came in.
     stakeholders = {uid for uid in (invoice.created_by_id, invoice.issued_by_id) if uid is not None}
     fully_paid = invoice.status == STATUS_PAID
-    # method "portal" means the client paid it themselves through /portal — the
-    # copy reads as an event ("X paid"), not a staff bookkeeping entry.
-    via_portal = method == "portal"
+    # method "portal" (historical stub) / "stripe" (real Connect payment) both
+    # mean the client paid it themselves through /portal — the copy reads as
+    # an event ("X paid"), not a staff bookkeeping entry.
+    via_portal = method in ("portal", "stripe")
     money = _format_money(amount_cents, invoice.currency)
+    payer_name = recorded_by.full_name if recorded_by else "The client"
     await notifications_service.notify_many(
         db,
         user_ids=stakeholders,
@@ -551,9 +683,9 @@ async def add_payment(
             else f"Payment recorded for invoice {invoice.number}"
         ),
         body=(
-            f"{recorded_by.full_name} paid {money} through the client portal."
+            f"{payer_name} paid {money} through the client portal."
             if via_portal
-            else f"{recorded_by.full_name} recorded {money}."
+            else f"{payer_name} recorded {money}."
         ),
         link=f"/invoices/{invoice.id}",
         agency_id=invoice.agency_id,
@@ -566,9 +698,9 @@ async def add_payment(
         event_type="invoice_paid_portal" if via_portal else "payment_recorded",
         summary=(
             (
-                f"{recorded_by.full_name} paid {money} on invoice {invoice.number} via the client portal"
+                f"{payer_name} paid {money} on invoice {invoice.number} via the client portal"
                 if via_portal
-                else f"{recorded_by.full_name} recorded a {money} payment on invoice {invoice.number}"
+                else f"{payer_name} recorded a {money} payment on invoice {invoice.number}"
             )
             + (" — paid in full" if fully_paid else "")
         ),

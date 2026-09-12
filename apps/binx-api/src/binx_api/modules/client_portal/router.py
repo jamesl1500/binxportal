@@ -1,5 +1,5 @@
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import Annotated
 
 from fastapi import APIRouter, File, Form, Query, UploadFile, status
@@ -32,7 +32,7 @@ from binx_api.modules.client_portal.schemas import (
 )
 from binx_api.modules.invoicing import service as invoicing_service
 from binx_api.modules.invoicing.router import _detail_read, _invoice_read
-from binx_api.modules.invoicing.schemas import InvoiceDetailRead, InvoiceRead
+from binx_api.modules.invoicing.schemas import CheckoutSessionRead, InvoiceDetailRead, InvoiceRead
 from binx_api.modules.messaging import service as messaging_service
 from binx_api.modules.messaging.models import SENDER_CLIENT
 from binx_api.modules.messaging.schemas import ConversationDetailRead, ConversationRead, MessageRead
@@ -358,29 +358,28 @@ async def read_invoice(db: DbSession, membership: PortalContext, invoice_id: uui
     return _detail_read(invoice, *(await invoicing_service.get_invoice_context(db, invoice)))
 
 
-@router.post("/invoices/{invoice_id}/pay", response_model=InvoiceDetailRead)
+@router.post("/invoices/{invoice_id}/pay", response_model=CheckoutSessionRead)
 async def pay_invoice(
     db: DbSession, current_user: CurrentUser, membership: PortalContext, invoice_id: uuid.UUID
-) -> InvoiceDetailRead:
-    """Stub payment: records the full outstanding balance as a payment with
-    method ``portal`` and flips the invoice to paid. Swap in a real processor
-    (Stripe Checkout + webhook) later without changing this contract."""
+) -> CheckoutSessionRead:
+    """Starts a real Stripe Checkout Session on the agency's own connected
+    account and returns the URL to redirect to. A deliberate break from the
+    old stub's "returns the paid invoice" contract — a hosted-Checkout
+    redirect can't be synchronous. The payment itself is recorded by the
+    Connect webhook once Stripe confirms it (see invoicing/webhooks_router.py)."""
     agency, client, _contact = membership
     invoice = await _portal_invoice_or_404(db, agency.id, client.id, invoice_id)
     if invoicing_service._display_status(invoice) not in _PAYABLE_STATUSES:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "This invoice isn't awaiting payment")
 
-    balance = invoice.total_cents - invoice.amount_paid_cents
-    await invoicing_service.add_payment(
-        db,
-        invoice,
-        recorded_by=current_user,
-        amount_cents=balance,
-        paid_on=datetime.now(UTC).date(),
-        method="portal",
-        reference=None,
+    billing_settings = await invoicing_service.get_or_create_billing_settings(db, agency)
+    if not billing_settings.stripe_connect_charges_enabled:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Online payment isn't set up for this agency yet")
+
+    checkout_url = await invoicing_service.start_invoice_checkout(
+        db, invoice, agency, billing_settings, paid_by=current_user
     )
-    return _detail_read(invoice, *(await invoicing_service.get_invoice_context(db, invoice)))
+    return CheckoutSessionRead(checkout_url=checkout_url)
 
 
 # ---- Messages ------------------------------------------------------

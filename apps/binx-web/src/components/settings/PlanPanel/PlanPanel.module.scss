@@ -1,6 +1,19 @@
 @use "../../../styles/tokens" as t;
 @use "../../../styles/mixins" as m;
 
+.manageBilling {
+  @include m.button-base;
+  margin-bottom: t.$space-4;
+  background: t.$color-surface;
+  color: t.$color-ink;
+  border: 1px solid t.$color-border;
+  font-size: t.$font-size-xs;
+
+  &:hover:not(:disabled) {
+    border-color: t.$color-border-strong;
+  }
+}
+
 .grid {
   display: grid;
   gap: t.$space-4;

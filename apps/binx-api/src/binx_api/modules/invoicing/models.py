@@ -2,7 +2,7 @@ import uuid
 from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import Date, DateTime, ForeignKey, Integer, Numeric, String, UniqueConstraint, Uuid
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, Numeric, String, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column
 
 from binx_api.core.database import Base
@@ -16,10 +16,11 @@ STATUS_VOID = "void"
 
 invoice_statuses: list[str] = [STATUS_DRAFT, STATUS_SENT, STATUS_PAID, STATUS_VOID]
 
-# How a recorded payment reached the agency. "portal" is a payment the client
-# made themselves through /portal (a demo/stub flow today — see
-# client_portal/router.py); the rest are entered by a team member.
-PAYMENT_METHODS: list[str] = ["bank_transfer", "check", "card", "cash", "other", "portal"]
+# How a recorded payment reached the agency. "portal" is the historical
+# stub value (kept for old rows, no longer written); "stripe" is a real
+# Connect-processed portal payment (see client_portal/router.py::pay_invoice
+# and invoicing/webhooks_router.py) — the rest are entered by a team member.
+PAYMENT_METHODS: list[str] = ["bank_transfer", "check", "card", "cash", "other", "portal", "stripe"]
 
 
 # One row per agency, created lazily on first access (same pattern as
@@ -51,6 +52,16 @@ class AgencyBillingSettings(Base):
     default_tax_rate_percent: Mapped[Decimal] = mapped_column(Numeric(6, 3), default=Decimal("0"))
     payment_instructions: Mapped[str | None] = mapped_column(String(2048), default=None)
     default_notes: Mapped[str | None] = mapped_column(String(4096), default=None)
+
+    # Stripe Connect — lets clients pay invoices through the portal directly
+    # into this agency's own Stripe account (see
+    # invoicing/service.py::start_connect_onboarding / sync_connect_status).
+    # Null/false until the agency completes onboarding.
+    stripe_connect_account_id: Mapped[str | None] = mapped_column(String(255), default=None, unique=True, index=True)
+    stripe_connect_charges_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    stripe_connect_details_submitted: Mapped[bool] = mapped_column(Boolean, default=False)
+    stripe_connect_payouts_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    stripe_connect_onboarded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
 
 
 # A bill to one client, within one agency. client_id has no ondelete: a client
@@ -116,10 +127,11 @@ class InvoiceLineItem(Base):
     amount_cents: Mapped[int] = mapped_column(Integer, default=0)
 
 
-# A payment received against an invoice, entered by a team member. When the
-# sum of an invoice's payments covers its total, the service flips it to paid
-# (see _apply_payments). The future client-portal "pay" flow will just add
-# another way to create one of these.
+# A payment received against an invoice — entered by a team member, or
+# recorded automatically from a real Stripe Connect payment (method="stripe",
+# see client_portal/router.py::pay_invoice and invoicing/webhooks_router.py).
+# When the sum of an invoice's payments covers its total, the service flips
+# it to paid (see _apply_payments).
 class InvoicePayment(Base):
     __tablename__ = "invoice_payments"
 
@@ -131,3 +143,9 @@ class InvoicePayment(Base):
     paid_on: Mapped[date] = mapped_column(Date)
     method: Mapped[str] = mapped_column(String(30), default="bank_transfer")
     reference: Mapped[str | None] = mapped_column(String(255), default=None)
+
+    # Set only for method="stripe" payments — the Connect webhook's audit
+    # trail and idempotency key (a replayed checkout.session.completed must
+    # not record the same payment twice).
+    stripe_payment_intent_id: Mapped[str | None] = mapped_column(String(255), default=None, unique=True, index=True)
+    stripe_checkout_session_id: Mapped[str | None] = mapped_column(String(255), default=None, index=True)

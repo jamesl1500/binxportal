@@ -58,6 +58,7 @@ function apiError(error: unknown, fallback: string): AuthApiError | unknown {
 // ---- Types ----
 
 export type BillingSettings = Schemas["BillingSettingsRead"];
+export type StripeConnectStatus = Schemas["StripeConnectStatusRead"];
 
 export interface BillingSettingsInput {
   legalName: string | null;
@@ -182,6 +183,58 @@ export async function updateBillingSettings(
     return data;
   } catch (error) {
     throw apiError(error, "Unable to update billing settings");
+  }
+}
+
+// ---- Stripe Connect ----
+
+/**
+ * getStripeConnectStatus
+ *
+ * The agency's Connect onboarding status via
+ * `GET /agencies/{agencyId}/billing-settings/stripe/status`. Pass
+ * `afterReturn: true` right after the onboarding redirect lands back — it
+ * asks binx-api to reconcile a still-pending row with one live Stripe call,
+ * closing the race with the account.updated webhook.
+ *
+ * @function getStripeConnectStatus
+ * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't a member of this agency.
+ */
+export async function getStripeConnectStatus(agencyId: string, afterReturn = false): Promise<StripeConnectStatus> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.get<StripeConnectStatus>(`/agencies/${agencyId}/billing-settings/stripe/status`, {
+      headers,
+      params: afterReturn ? { stripe: "return" } : undefined,
+    });
+    return data;
+  } catch (error) {
+    throw apiError(error, "Unable to load the Stripe connection status");
+  }
+}
+
+/**
+ * startStripeConnectOnboarding
+ *
+ * Starts (or continues) Stripe Express onboarding via
+ * `POST /agencies/{agencyId}/billing-settings/stripe/connect`. Returns the
+ * onboarding URL to redirect the browser to — always freshly minted, since
+ * Stripe's Account Links expire in minutes.
+ *
+ * @function startStripeConnectOnboarding
+ * @throws {AuthApiError} - Thrown if not authenticated, or the caller lacks permission.
+ */
+export async function startStripeConnectOnboarding(agencyId: string): Promise<string> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.post<{ onboarding_url: string }>(
+      `/agencies/${agencyId}/billing-settings/stripe/connect`,
+      undefined,
+      { headers },
+    );
+    return data.onboarding_url;
+  } catch (error) {
+    throw apiError(error, "Unable to start Stripe onboarding");
   }
 }
 

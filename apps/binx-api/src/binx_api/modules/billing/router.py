@@ -15,7 +15,11 @@ from binx_api.modules.agencies.models import ROLE_ADMIN, ROLE_MEMBER, ROLE_OWNER
 from binx_api.modules.billing import service
 from binx_api.modules.billing.models import PLAN_ORDER, PLANS, plan_limits
 from binx_api.modules.billing.schemas import (
+    BillingPortalRequest,
+    BillingPortalSessionRead,
     ChangePlanRequest,
+    CheckoutSessionRead,
+    PlanCheckoutRequest,
     PlanLimitsRead,
     PlanUsageRead,
     SubscriptionRead,
@@ -40,6 +44,9 @@ async def _subscription_read(db: DbSession, agency: Agency) -> SubscriptionRead:
         limits=_limits_read(subscription.plan),
         usage=PlanUsageRead(**usage),
         plan_order=PLAN_ORDER,
+        has_stripe_customer=subscription.stripe_customer_id is not None,
+        has_stripe_subscription=subscription.stripe_subscription_id is not None,
+        cancel_at_period_end=subscription.cancel_at_period_end,
     )
 
 
@@ -61,3 +68,21 @@ async def change_plan(
     agency, _role = agency_and_role
     await service.change_plan(db, agency, new_plan=data.plan, actor=current_user)
     return await _subscription_read(db, agency)
+
+
+@router.post("/checkout", response_model=CheckoutSessionRead)
+async def start_checkout(
+    db: DbSession, data: PlanCheckoutRequest, agency_and_role: OwnerOnly
+) -> CheckoutSessionRead:
+    agency, _role = agency_and_role
+    url = await service.start_checkout(db, agency, plan=data.plan)
+    return CheckoutSessionRead(checkout_url=url)
+
+
+@router.post("/billing-portal", response_model=BillingPortalSessionRead)
+async def start_billing_portal(
+    db: DbSession, data: BillingPortalRequest, agency_and_role: OwnerOnly
+) -> BillingPortalSessionRead:
+    agency, _role = agency_and_role
+    url = await service.start_billing_portal(db, agency, target_plan=data.target_plan)
+    return BillingPortalSessionRead(portal_url=url)

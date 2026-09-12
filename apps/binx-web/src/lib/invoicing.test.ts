@@ -175,6 +175,32 @@ describe("invoicing.ts", () => {
     expect(mockedApi.delete).toHaveBeenCalledWith(`/agencies/${A}/invoices/${I}/payments/pay-1`, AUTH);
   });
 
+  it("getStripeConnectStatus GETs the status endpoint", async () => {
+    mockedApi.get.mockResolvedValueOnce({ data: { connected: false } });
+    const res = await invoicing.getStripeConnectStatus(A);
+    expect(res).toEqual({ connected: false });
+    expect(mockedApi.get).toHaveBeenCalledWith(`/agencies/${A}/billing-settings/stripe/status`, {
+      ...AUTH,
+      params: undefined,
+    });
+  });
+
+  it("getStripeConnectStatus passes ?stripe=return when asked to reconcile", async () => {
+    mockedApi.get.mockResolvedValueOnce({ data: { connected: true } });
+    await invoicing.getStripeConnectStatus(A, true);
+    expect(mockedApi.get).toHaveBeenCalledWith(`/agencies/${A}/billing-settings/stripe/status`, {
+      ...AUTH,
+      params: { stripe: "return" },
+    });
+  });
+
+  it("startStripeConnectOnboarding POSTs and returns the onboarding URL", async () => {
+    mockedApi.post.mockResolvedValueOnce({ data: { onboarding_url: "https://connect.stripe.com/setup/abc" } });
+    const url = await invoicing.startStripeConnectOnboarding(A);
+    expect(url).toBe("https://connect.stripe.com/setup/abc");
+    expect(mockedApi.post).toHaveBeenCalledWith(`/agencies/${A}/billing-settings/stripe/connect`, undefined, AUTH);
+  });
+
   describe("error handling (shared)", () => {
     it("wraps upstream errors as AuthApiError", async () => {
       mockedApi.get.mockRejectedValueOnce(axiosError(403, "Nope"));

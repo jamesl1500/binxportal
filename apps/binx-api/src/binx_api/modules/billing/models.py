@@ -1,10 +1,13 @@
-"""Billing plans — a code-defined subscription scaffold (no payment provider).
+"""Billing plans — a code-defined subscription catalog, backed by real Stripe
+subscriptions.
 
 Every agency has one lazily-created ``AgencySubscription`` row that names its
 plan; the plan's limits themselves live in ``PLANS`` here (a plain dict, so a
 tier tweak never needs a migration). The limits are enforced at the existing
 ``_check_can_create_*`` seams in agencies/projects/leads services and at the AI
-budget check in ``ai/client.py`` — see ``billing/service.py``.
+budget check in ``ai/client.py``. Paid-plan changes go through Stripe Checkout
+/ the Billing Portal, kept in sync via webhook — see ``billing/service.py``
+and ``billing/webhooks_router.py``.
 """
 
 from __future__ import annotations
@@ -13,13 +16,13 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String, Uuid
+from sqlalchemy import Boolean, DateTime, ForeignKey, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column
 
 from binx_api.core.database import Base
 
-# Subscription lifecycle. Only "active" is reachable today — the others are
-# here so a real payment provider can be wired in later without a migration.
+# Subscription lifecycle. All four are reachable once Stripe is configured —
+# see billing/service.py's webhook-driven mutators.
 SUBSCRIPTION_STATUSES: list[str] = ["active", "trialing", "past_due", "canceled"]
 
 PLAN_FREE = "free"
@@ -118,6 +121,17 @@ class AgencySubscription(Base):
 
     plan: Mapped[str] = mapped_column(String(20), default=DEFAULT_PLAN)
     status: Mapped[str] = mapped_column(String(20), default="active")
-    # When the current paid period ends. Null on the Free plan / until a
-    # payment provider is wired in.
+    # When the current paid period ends. Null on the Free plan / before the
+    # first successful Checkout.
     current_period_end: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+
+    # Stripe identifiers — set once the agency's first Checkout session
+    # completes (see billing/service.py::start_checkout /
+    # sync_from_checkout_completed). Null for an agency that has always been
+    # on the Free plan.
+    stripe_customer_id: Mapped[str | None] = mapped_column(String(255), default=None, unique=True, index=True)
+    stripe_subscription_id: Mapped[str | None] = mapped_column(String(255), default=None, unique=True, index=True)
+    stripe_price_id: Mapped[str | None] = mapped_column(String(255), default=None)
+    # Surfaced by customer.subscription.updated when the owner cancels through
+    # the Billing Portal — the subscription stays active until period end.
+    cancel_at_period_end: Mapped[bool] = mapped_column(Boolean, default=False)

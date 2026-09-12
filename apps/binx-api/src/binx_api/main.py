@@ -10,11 +10,13 @@ from binx_api.modules.agencies.router import router as agencies_router
 from binx_api.modules.ai.router import router as ai_router
 from binx_api.modules.auth.router import router as auth_router
 from binx_api.modules.billing.router import router as billing_router
+from binx_api.modules.billing.webhooks_router import router as billing_webhooks_router
 from binx_api.modules.boards.router import router as boards_router
 from binx_api.modules.client_portal.router import router as client_portal_router
 from binx_api.modules.dashboard.router import router as dashboard_router
 from binx_api.modules.files.router import router as files_router
 from binx_api.modules.invoicing.router import router as invoicing_router
+from binx_api.modules.invoicing.webhooks_router import router as invoicing_webhooks_router
 from binx_api.modules.leads.router import router as leads_router
 from binx_api.modules.messaging.router import router as conversations_router
 from binx_api.modules.messaging.router import ws_router as messaging_ws_router
@@ -55,6 +57,8 @@ def create_app() -> FastAPI:
     app.include_router(leads_router)
     app.include_router(ai_router)
     app.include_router(billing_router)
+    app.include_router(billing_webhooks_router)
+    app.include_router(invoicing_webhooks_router)
     app.include_router(boards_router)
 
     return app

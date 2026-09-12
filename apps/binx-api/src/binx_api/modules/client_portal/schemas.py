@@ -14,6 +14,9 @@ class PortalAgencyRead(BaseModel):
     has_logo: bool = False
     logo_version: str | None = None
     brand_color: str | None = None
+    # Whether this agency can accept real online invoice payments (Stripe
+    # Connect onboarding complete) — gates PayInvoiceButton on the frontend.
+    stripe_charges_enabled: bool = False
 
 
 class PortalClientRead(BaseModel):

@@ -5,6 +5,7 @@ from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
 from alembic import context
+from binx_api.core import stripe_events as stripe_events_models  # noqa: F401
 from binx_api.core.config import get_settings
 from binx_api.core.database import Base
 from binx_api.modules.activity import models as activity_models  # noqa: F401

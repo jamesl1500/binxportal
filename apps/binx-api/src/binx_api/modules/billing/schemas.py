@@ -27,7 +27,27 @@ class SubscriptionRead(BaseModel):
     limits: PlanLimitsRead
     usage: PlanUsageRead
     plan_order: list[str]
+    # Derived booleans only — raw Stripe ids never reach the frontend.
+    has_stripe_customer: bool = False
+    has_stripe_subscription: bool = False
+    cancel_at_period_end: bool = False
 
 
 class ChangePlanRequest(BaseModel):
     plan: str = Field(min_length=1, max_length=20)
+
+
+class PlanCheckoutRequest(BaseModel):
+    plan: str = Field(min_length=1, max_length=20)
+
+
+class BillingPortalRequest(BaseModel):
+    target_plan: str | None = Field(default=None, max_length=20)
+
+
+class CheckoutSessionRead(BaseModel):
+    checkout_url: str
+
+
+class BillingPortalSessionRead(BaseModel):
+    portal_url: str

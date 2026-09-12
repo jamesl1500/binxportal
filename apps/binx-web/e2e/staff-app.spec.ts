@@ -69,4 +69,25 @@ test.describe("staff app", () => {
       await expect(staffPage.getByRole("heading", { level: 1 })).toBeVisible();
     }
   });
+
+  test("plan page offers a real Checkout redirect for a paid tier", async ({ staffPage }) => {
+    await staffPage.goto("/settings/plan");
+    await expect(staffPage.getByText("Current plan")).toBeVisible();
+    const switchButtons = staffPage.getByRole("button", { name: "Switch to this plan" });
+    await expect(switchButtons.first()).toBeVisible();
+    // No Stripe price is configured in this e2e environment, so clicking
+    // surfaces the clean 503 from billing/service.py — not a fake success,
+    // and not a raw network error either.
+    await switchButtons.first().click();
+    await expect(staffPage.getByText(/stripe isn.t configured/i)).toBeVisible();
+  });
+
+  test("invoicing page shows the Stripe Connect panel, not connected", async ({ staffPage }) => {
+    await staffPage.goto("/settings/invoicing");
+    await expect(staffPage.getByText(/not connected to stripe/i)).toBeVisible();
+    const connectButton = staffPage.getByRole("button", { name: "Connect Stripe" });
+    await expect(connectButton).toBeVisible();
+    await connectButton.click();
+    await expect(staffPage.getByText(/stripe isn.t configured/i)).toBeVisible();
+  });
 });
