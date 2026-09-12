@@ -147,3 +147,13 @@ jobs:
           name: playwright-report
           path: apps/binx-web/playwright-report
           if-no-files-found: ignore
+
+      # The backgrounded `uv run binx-api &` above never gets stopped on its
+      # own — left running, it holds astral-sh/setup-uv@v5's post-job cache
+      # prune waiting on the uv lock (`.cache/uv/.lock`), which fails the job
+      # with an unrelated "Post run astral-sh/setup-uv" error even when every
+      # real step above it passed. Stop it before the job ends so the cache
+      # prune runs against a released lock.
+      - name: Stop binx-api
+        if: always()
+        run: pkill -f "binx-api" || true

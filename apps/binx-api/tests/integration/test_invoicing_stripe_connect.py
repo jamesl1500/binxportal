@@ -120,9 +120,7 @@ class TestGetConnectStatus:
         result = await service.get_connect_status(db_session, agency, refresh=True)
         assert result.stripe_connect_charges_enabled is True
 
-    async def test_skips_the_live_call_once_already_enabled(
-        self, db_session, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    async def test_skips_the_live_call_once_already_enabled(self, db_session, monkeypatch: pytest.MonkeyPatch) -> None:
         owner = await make_user(db_session)
         agency = await make_agency(db_session, owner=owner)
         settings_row = await service.get_or_create_billing_settings(db_session, agency)

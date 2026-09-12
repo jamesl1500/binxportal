@@ -170,9 +170,7 @@ async def start_checkout(db: AsyncSession, agency: Agency, *, plan: str) -> str:
     price_id = _price_id_for_plan(plan)
 
     if subscription.stripe_customer_id is None:
-        customer = await stripe_client.create_customer(
-            {"name": agency.name, "metadata": {"agency_id": str(agency.id)}}
-        )
+        customer = await stripe_client.create_customer({"name": agency.name, "metadata": {"agency_id": str(agency.id)}})
         subscription.stripe_customer_id = customer.id
         await db.commit()
         await db.refresh(subscription)

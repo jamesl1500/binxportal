@@ -683,9 +683,7 @@ async def add_payment(
             else f"Payment recorded for invoice {invoice.number}"
         ),
         body=(
-            f"{payer_name} paid {money} through the client portal."
-            if via_portal
-            else f"{payer_name} recorded {money}."
+            f"{payer_name} paid {money} through the client portal." if via_portal else f"{payer_name} recorded {money}."
         ),
         link=f"/invoices/{invoice.id}",
         agency_id=invoice.agency_id,

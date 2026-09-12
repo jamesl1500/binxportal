@@ -71,9 +71,7 @@ async def change_plan(
 
 
 @router.post("/checkout", response_model=CheckoutSessionRead)
-async def start_checkout(
-    db: DbSession, data: PlanCheckoutRequest, agency_and_role: OwnerOnly
-) -> CheckoutSessionRead:
+async def start_checkout(db: DbSession, data: PlanCheckoutRequest, agency_and_role: OwnerOnly) -> CheckoutSessionRead:
     agency, _role = agency_and_role
     url = await service.start_checkout(db, agency, plan=data.plan)
     return CheckoutSessionRead(checkout_url=url)

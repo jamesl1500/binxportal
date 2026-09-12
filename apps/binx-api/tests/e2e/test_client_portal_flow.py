@@ -182,9 +182,7 @@ class TestPortalReads:
         }
         body, signature = sign_stripe_payload(event_payload, "whsec_test_fake")
 
-        delivered = await client.post(
-            "/webhooks/stripe/connect", content=body, headers={"stripe-signature": signature}
-        )
+        delivered = await client.post("/webhooks/stripe/connect", content=body, headers={"stripe-signature": signature})
         assert delivered.status_code == 200
 
         paid = await client.get(f"/portal/invoices/{invoice_id}", headers=contact_headers)
@@ -195,9 +193,7 @@ class TestPortalReads:
 
         # A redelivered event (Stripe retries on anything but a 2xx) must not
         # double-record the payment.
-        replayed = await client.post(
-            "/webhooks/stripe/connect", content=body, headers={"stripe-signature": signature}
-        )
+        replayed = await client.post("/webhooks/stripe/connect", content=body, headers={"stripe-signature": signature})
         assert replayed.status_code == 200
         again = await client.get(f"/portal/invoices/{invoice_id}", headers=contact_headers)
         assert len(again.json()["payments"]) == 1
