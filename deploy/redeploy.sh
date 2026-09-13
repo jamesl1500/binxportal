@@ -35,11 +35,19 @@ set +a
 aws ecr get-login-password --region "$AWS_REGION" | \
   docker login --username AWS --password-stdin "$ECR_REGISTRY"
 
+# The root volume is small (6.7GB) — a pull can land mid-layer with "no space
+# left on device" if the previous deploy's now-superseded images are still
+# sitting around. Pruning before the pull, not just after, is what actually
+# guarantees room; images still backing a running container are never
+# touched by `prune`, so this can't take down what's currently live.
+echo "==> Pruning unused images before pulling, to guarantee room for the new layers"
+docker image prune -af
+
 docker compose -f docker-compose.prod.yml pull api web
 docker compose -f docker-compose.prod.yml up -d --remove-orphans
 
-echo "==> Pruning old, now-unused images (keeps the last few layers Docker's still using)"
-docker image prune -af --filter "until=72h"
+echo "==> Pruning the now-superseded previous version's images"
+docker image prune -af
 
 echo "==> Current state"
 docker compose -f docker-compose.prod.yml ps
