@@ -85,6 +85,24 @@ class PortalProjectDetailRead(PortalProjectRead):
     columns: list[PortalBoardColumn]
 
 
+# The read-only task board (GET /portal/projects/{id}/board) — same trimming
+# as everywhere else in this file: title/description/due date only, no
+# assignee (an internal staff member) and no comments.
+class PortalTaskRead(BaseModel):
+    id: uuid.UUID
+    title: str
+    description: str | None
+    due_date: date | None
+    position: int
+
+
+class PortalTaskListRead(BaseModel):
+    id: uuid.UUID
+    name: str
+    position: int
+    tasks: list[PortalTaskRead]
+
+
 # ---- Staff side: managing a client's portal contacts ---------------------
 
 

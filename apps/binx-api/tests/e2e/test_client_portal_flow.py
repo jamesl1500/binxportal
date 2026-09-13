@@ -16,7 +16,7 @@ from binx_api.modules.invoicing import service as invoicing_service
 from binx_api.modules.invoicing.service import issue_invoice
 from binx_api.modules.messaging.service import create_conversation
 from tests.conftest import auth_headers, extract_token
-from tests.factories import make_agency, make_client, make_invoice, make_project, make_user
+from tests.factories import make_agency, make_client, make_invoice, make_project, make_task, make_user
 from tests.stripe_helpers import sign_stripe_payload
 
 pytestmark = pytest.mark.e2e
@@ -93,6 +93,51 @@ class TestPortalReads:
         assert len(invoices) == 1
         assert invoices[0]["client_id"] == str(s["client"].id)
         assert invoices[0]["display_status"] in ("sent", "overdue")
+
+    async def test_task_board_lists_columns_and_tasks_without_assignee(
+        self, client, db_session, email_outbox, portal_setup
+    ) -> None:
+        s = portal_setup
+        task = await make_task(db_session, project=s["project"], title="Design the homepage")
+        contact_user, _ = await _invite_and_accept(
+            client,
+            db_session,
+            email_outbox,
+            s["agency"].id,
+            s["client"].id,
+            s["owner"],
+            "casey-board@northwind.example",
+        )
+
+        resp = await client.get(f"/portal/projects/{s['project'].id}/board", headers=auth_headers(contact_user))
+        assert resp.status_code == 200, resp.text
+        columns = resp.json()
+        assert [c["name"] for c in columns] == ["To Do", "In Progress", "Done"]
+
+        task_payload = next(t for col in columns for t in col["tasks"] if t["id"] == str(task.id))
+        assert task_payload["title"] == "Design the homepage"
+        # Trimmed the same way as everywhere else in the portal — no assignee,
+        # no internal fields beyond title/description/due date.
+        assert set(task_payload.keys()) == {"id", "title", "description", "due_date", "position"}
+
+    async def test_task_board_is_scoped_to_the_client(self, client, db_session, email_outbox, portal_setup) -> None:
+        s = portal_setup
+        other_client = await make_client(db_session, agency=s["agency"], name="Globex")
+        other_project = await make_project(
+            db_session, agency=s["agency"], created_by=s["owner"], client=other_client, name="Secret"
+        )
+        contact_user, _ = await _invite_and_accept(
+            client,
+            db_session,
+            email_outbox,
+            s["agency"].id,
+            s["client"].id,
+            s["owner"],
+            "casey-board2@northwind.example",
+        )
+
+        resp = await client.get(f"/portal/projects/{other_project.id}/board", headers=auth_headers(contact_user))
+        assert resp.status_code == 404
 
     async def test_pay_invoice_requires_stripe_connect(self, client, db_session, email_outbox, portal_setup) -> None:
         """No Connect onboarding yet -> a real 409, not a silent fake success."""

@@ -55,4 +55,26 @@ test.describe("client portal", () => {
     await clientPage.goto("/dashboard");
     await expect(clientPage).toHaveURL(/\/portal/);
   });
+
+  test("a project's Overview/Board/Canvas tabs switch pages, and the board shows real tasks", async ({
+    clientPage,
+  }) => {
+    await clientPage.goto("/portal/projects");
+    await clientPage.getByRole("link", { name: new RegExp(DEMO.projectName) }).click();
+
+    const tabs = clientPage.getByRole("navigation", { name: "Project" });
+    await expect(tabs.getByRole("link", { name: "Overview" })).toHaveAttribute("data-active", "true");
+    await expect(clientPage.getByRole("heading", { name: "Progress" })).toBeVisible();
+
+    await tabs.getByRole("link", { name: "Board" }).click();
+    await expect(clientPage).toHaveURL(/\/board$/);
+    await expect(tabs.getByRole("link", { name: "Board" })).toHaveAttribute("data-active", "true");
+    // Seeded onto this project in "In Progress" — see seed_e2e.py.
+    await expect(clientPage.getByText("Homepage wireframe")).toBeVisible();
+    await expect(clientPage.getByRole("heading", { name: "Progress" })).not.toBeVisible();
+
+    await tabs.getByRole("link", { name: "Canvas" }).click();
+    await expect(clientPage).toHaveURL(/\/canvas$/);
+    await expect(tabs.getByRole("link", { name: "Canvas" })).toHaveAttribute("data-active", "true");
+  });
 });

@@ -35,6 +35,8 @@ from binx_api.modules.client_portal.schemas import (
     PortalBoardColumn,
     PortalClientRead,
     PortalProgress,
+    PortalTaskListRead,
+    PortalTaskRead,
 )
 from binx_api.modules.invoicing.service import get_or_create_billing_settings
 from binx_api.modules.messaging.models import Conversation, ConversationParticipant
@@ -363,6 +365,51 @@ async def get_portal_project_or_404(db: AsyncSession, client_id: uuid.UUID, proj
 
 async def portal_project_detail(db: AsyncSession, project: Project) -> tuple[PortalProgress, list[PortalBoardColumn]]:
     return await _project_progress(db, project.id)
+
+
+async def portal_task_board(db: AsyncSession, project_id: uuid.UUID) -> list[PortalTaskListRead]:
+    """The read-only task board a client sees (GET /portal/projects/{id}/board)
+    — same columns the agency team works in, trimmed to title/description/due
+    date per task. No assignee (an internal staff member) and no comments,
+    matching every other portal read in this module."""
+    lists = (
+        (
+            await db.execute(
+                select(ProjectTaskList)
+                .where(ProjectTaskList.project_id == project_id)
+                .order_by(ProjectTaskList.position)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    tasks = (
+        (
+            await db.execute(
+                select(ProjectTask).where(ProjectTask.project_id == project_id).order_by(ProjectTask.position)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    tasks_by_list: dict[uuid.UUID, list[ProjectTask]] = {}
+    for task in tasks:
+        tasks_by_list.setdefault(task.list_id, []).append(task)
+
+    return [
+        PortalTaskListRead(
+            id=lst.id,
+            name=lst.name,
+            position=lst.position,
+            tasks=[
+                PortalTaskRead(
+                    id=t.id, title=t.title, description=t.description, due_date=t.due_date, position=t.position
+                )
+                for t in tasks_by_list.get(lst.id, [])
+            ],
+        )
+        for lst in lists
+    ]
 
 
 async def portal_client_read(db: AsyncSession, client: AgencyClient) -> PortalClientRead:

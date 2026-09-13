@@ -29,6 +29,7 @@ from binx_api.modules.client_portal.schemas import (
     PortalMembershipRead,
     PortalProjectDetailRead,
     PortalProjectRead,
+    PortalTaskListRead,
 )
 from binx_api.modules.invoicing import service as invoicing_service
 from binx_api.modules.invoicing.router import _detail_read, _invoice_read
@@ -127,6 +128,18 @@ async def read_project(db: DbSession, membership: PortalContext, project_id: uui
     project = await service.get_portal_project_or_404(db, client.id, project_id)
     progress, columns = await service.portal_project_detail(db, project)
     return PortalProjectDetailRead(**_project_read(project, progress).model_dump(), columns=columns)
+
+
+# ---- Task board (read-only) -----------------------------------------
+# The same columns/tasks the agency team works in on /projects/.../board,
+# trimmed to what a client should see — see portal_task_board's docstring.
+
+
+@router.get("/projects/{project_id}/board", response_model=list[PortalTaskListRead])
+async def read_task_board(db: DbSession, membership: PortalContext, project_id: uuid.UUID) -> list[PortalTaskListRead]:
+    _agency, client, _contact = membership
+    project = await service.get_portal_project_or_404(db, client.id, project_id)
+    return await service.portal_task_board(db, project.id)
 
 
 # ---- Collaboration canvas ------------------------------------------

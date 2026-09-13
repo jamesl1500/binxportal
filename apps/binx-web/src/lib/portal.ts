@@ -10,6 +10,7 @@
  * @author Binx.io
  */
 import axios from "axios";
+import { cache } from "react";
 
 import { api } from "@/lib/api";
 import { getMyAgencies } from "@/lib/agencies";
@@ -32,6 +33,8 @@ export type PortalProgress = Schemas["PortalProgress"];
 export type PortalProject = Schemas["PortalProjectRead"];
 export type PortalBoardColumn = Schemas["PortalBoardColumn"];
 export type PortalProjectDetail = Schemas["PortalProjectDetailRead"];
+export type PortalTask = Schemas["PortalTaskRead"];
+export type PortalTaskList = Schemas["PortalTaskListRead"];
 
 export type PortalInvitationPreview = Schemas["ClientInvitationPreview"];
 
@@ -85,13 +88,31 @@ export async function getPortalProjects(): Promise<PortalProject[]> {
   }
 }
 
-export async function getPortalProject(projectId: string): Promise<PortalProjectDetail> {
+/**
+ * getPortalProject
+ *
+ * The project's layout and each of its Overview/Board/Canvas pages all need
+ * this, so it's wrapped in React's `cache()` — one request's worth of calls
+ * with the same `projectId` share a single fetch, the same dedup
+ * `getAgencyProject` uses on the staff side (lib/projects.ts).
+ */
+export const getPortalProject = cache(async (projectId: string): Promise<PortalProjectDetail> => {
   const headers = await authHeader();
   try {
     const { data } = await api.get<PortalProjectDetail>(`/portal/projects/${projectId}`, { headers });
     return data;
   } catch (error) {
     rethrow(error, "Unable to load this project");
+  }
+});
+
+export async function getPortalTaskBoard(projectId: string): Promise<PortalTaskList[]> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.get<PortalTaskList[]>(`/portal/projects/${projectId}/board`, { headers });
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to load the board");
   }
 }
 

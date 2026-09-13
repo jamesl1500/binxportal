@@ -2410,6 +2410,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/portal/projects/{project_id}/board": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Task Board */
+        get: operations["read_task_board_portal_projects__project_id__board_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/portal/projects/{project_id}/canvas": {
         parameters: {
             query?: never;
@@ -4779,6 +4796,36 @@ export interface components {
             start_date: string | null;
             /** Status */
             status: string;
+        };
+        /** PortalTaskListRead */
+        PortalTaskListRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Position */
+            position: number;
+            /** Tasks */
+            tasks: components["schemas"]["PortalTaskRead"][];
+        };
+        /** PortalTaskRead */
+        PortalTaskRead: {
+            /** Description */
+            description: string | null;
+            /** Due Date */
+            due_date: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Position */
+            position: number;
+            /** Title */
+            title: string;
         };
         /** PrivacySettingsRead */
         PrivacySettingsRead: {
@@ -11551,6 +11598,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PortalProjectDetailRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_task_board_portal_projects__project_id__board_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortalTaskListRead"][];
                 };
             };
             /** @description Validation Error */

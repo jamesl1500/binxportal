@@ -6321,6 +6321,87 @@
         "title": "PortalProjectRead",
         "type": "object"
       },
+      "PortalTaskListRead": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "position": {
+            "title": "Position",
+            "type": "integer"
+          },
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/PortalTaskRead"
+            },
+            "title": "Tasks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "position",
+          "tasks"
+        ],
+        "title": "PortalTaskListRead",
+        "type": "object"
+      },
+      "PortalTaskRead": {
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "position": {
+            "title": "Position",
+            "type": "integer"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "due_date",
+          "position"
+        ],
+        "title": "PortalTaskRead",
+        "type": "object"
+      },
       "PrivacySettingsRead": {
         "properties": {
           "activity_status_visible": {
@@ -18983,6 +19064,58 @@
           }
         ],
         "summary": "Read Project",
+        "tags": [
+          "client-portal"
+        ]
+      }
+    },
+    "/portal/projects/{project_id}/board": {
+      "get": {
+        "operationId": "read_task_board_portal_projects__project_id__board_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PortalTaskListRead"
+                  },
+                  "title": "Response Read Task Board Portal Projects  Project Id  Board Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Read Task Board",
         "tags": [
           "client-portal"
         ]

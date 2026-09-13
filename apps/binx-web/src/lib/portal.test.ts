@@ -97,6 +97,12 @@ interface Case {
 const cases: Case[] = [
   { name: "getPortalProjects", call: () => portal.getPortalProjects(), method: "get", url: "/portal/projects" },
   { name: "getPortalProject", call: () => portal.getPortalProject(PJ), method: "get", url: `/portal/projects/${PJ}` },
+  {
+    name: "getPortalTaskBoard",
+    call: () => portal.getPortalTaskBoard(PJ),
+    method: "get",
+    url: `/portal/projects/${PJ}/board`,
+  },
   { name: "getPortalInvoices", call: () => portal.getPortalInvoices(), method: "get", url: "/portal/invoices" },
   { name: "getPortalInvoice", call: () => portal.getPortalInvoice("i1"), method: "get", url: "/portal/invoices/i1" },
   {

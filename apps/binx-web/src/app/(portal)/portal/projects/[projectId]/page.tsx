@@ -1,15 +1,13 @@
 /**
- * page.tsx - Portal Project Detail
+ * page.tsx - Portal Project Overview
  *
- * One project as the client sees it: description, dates, and a read-only
- * progress view (the board columns as counts). No assignees, no internal
- * notes — the portal project schema on binx-api trims those.
+ * Progress and timeline for a project, as the client sees it. The header and
+ * tab nav (Overview / Board / Canvas) live in the layout above; this page
+ * only needs the project's own progress/dates.
  *
  * @module apps/binx-web/src/app/(portal)/portal/projects/[projectId]/page.tsx
  * @author Binx.io
  */
-import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AuthApiError } from "@/lib/auth";
@@ -18,18 +16,8 @@ import ProjectProgress from "@/components/portal/ProjectProgress/ProjectProgress
 
 import styles from "../../page.module.scss";
 
-interface PortalProjectPageProps {
+interface PortalProjectOverviewPageProps {
   params: Promise<{ projectId: string }>;
-}
-
-export async function generateMetadata({ params }: PortalProjectPageProps): Promise<Metadata> {
-  const { projectId } = await params;
-  try {
-    const project = await getPortalProject(projectId);
-    return { title: project.name };
-  } catch {
-    return { title: "Project" };
-  }
 }
 
 function formatDate(value: string | null): string {
@@ -41,7 +29,7 @@ function formatDate(value: string | null): string {
   });
 }
 
-const PortalProjectDetailPage = async ({ params }: PortalProjectPageProps) => {
+const PortalProjectOverviewPage = async ({ params }: PortalProjectOverviewPageProps) => {
   const { projectId } = await params;
 
   let project;
@@ -55,25 +43,7 @@ const PortalProjectDetailPage = async ({ params }: PortalProjectPageProps) => {
   }
 
   return (
-    <div className={styles.page}>
-      <header className={styles.header}>
-        <Link href="/portal/projects" className={styles.link}>
-          ← All projects
-        </Link>
-        <h1 className={styles.title}>{project.name}</h1>
-        {project.description && <p className={styles.subtitle}>{project.description}</p>}
-      </header>
-
-      <section className={styles.section}>
-        <div className={styles.sectionHead}>
-          <h2 className={styles.sectionTitle}>Collaboration canvas</h2>
-        </div>
-        <Link href={`/portal/projects/${projectId}/canvas`} className={styles.projectRow}>
-          <span className={styles.projectName}>Open the shared canvas</span>
-          <span>→</span>
-        </Link>
-      </section>
-
+    <>
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Progress</h2>
         <ProjectProgress progress={project.progress} columns={project.columns} />
@@ -92,8 +62,8 @@ const PortalProjectDetailPage = async ({ params }: PortalProjectPageProps) => {
           </li>
         </ul>
       </section>
-    </div>
+    </>
   );
 };
 
-export default PortalProjectDetailPage;
+export default PortalProjectOverviewPage;
