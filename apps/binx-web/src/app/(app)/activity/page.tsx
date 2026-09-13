@@ -41,7 +41,7 @@ const ActivityPage = async () => {
         {canManage
           ? "You can see sensitive entries (role changes, removals, billing) that plain members can't."
           : "Some sensitive entries are only visible to owners and admins."}{" "}
-        <Link href="/account" className={styles.link}>
+        <Link href="/account/security" className={styles.link}>
           Your own sign-in history
         </Link>{" "}
         lives on your account page.

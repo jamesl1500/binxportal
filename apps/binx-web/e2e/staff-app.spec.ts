@@ -120,4 +120,19 @@ test.describe("staff app", () => {
     await connectButton.click();
     await expect(staffPage.getByText(/stripe isn.t configured/i)).toBeVisible();
   });
+
+  test("account settings tabs switch between Preferences and Security", async ({ staffPage }) => {
+    await staffPage.goto("/account");
+    const tabs = staffPage.getByRole("navigation", { name: "Account settings" });
+    await expect(tabs.getByRole("link", { name: "Preferences" })).toHaveAttribute("data-active", "true");
+    await expect(staffPage.getByRole("heading", { name: "Notifications" })).toBeVisible();
+    await expect(staffPage.getByRole("heading", { name: "Danger zone" })).not.toBeVisible();
+
+    await tabs.getByRole("link", { name: "Security" }).click();
+    await expect(staffPage).toHaveURL(/\/account\/security$/);
+    await expect(tabs.getByRole("link", { name: "Security" })).toHaveAttribute("data-active", "true");
+    await expect(staffPage.getByRole("heading", { name: "Email" })).toBeVisible();
+    await expect(staffPage.getByRole("heading", { name: "Danger zone" })).toBeVisible();
+    await expect(staffPage.getByRole("heading", { name: "Notifications" })).not.toBeVisible();
+  });
 });
