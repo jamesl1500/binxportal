@@ -71,7 +71,17 @@ export class ComputeStack extends cdk.Stack {
     this.instanceRole.addToPolicy(
       new iam.PolicyStatement({
         actions: ["ses:SendEmail", "ses:SendRawEmail"],
-        resources: props.sesIdentityArns,
+        // SES's resource-level permissions for SendEmail check the Source
+        // identity AND, whenever a To/Cc/Bcc address happens to also be a
+        // verified identity this account owns (exactly what sandbox-mode
+        // testing requires — see `aws sesv2 create-email-identity` in the
+        // plan's manual steps), that recipient's identity ARN too. There's no
+        // way to know those test-recipient ARNs up front, so this scopes to
+        // every identity under this account/region rather than just
+        // sesIdentityArns — the real security boundary (which domains can be
+        // used as a *Source*) is enforced by SES verification itself, not by
+        // this IAM policy.
+        resources: [...props.sesIdentityArns, `arn:aws:ses:${this.region}:${this.account}:identity/*`],
       }),
     );
 
