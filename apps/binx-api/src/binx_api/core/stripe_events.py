@@ -34,10 +34,23 @@ class StripeWebhookEvent(Base):
 
 
 async def verify_and_dedupe(request: Request, db: AsyncSession, secret: str | None) -> stripe.Event | None:
-    """Verifies the raw request against ``secret`` and records the event id.
-    Returns the parsed event, or ``None`` when it's a replay Stripe has
-    already delivered (the caller should treat that as a no-op 200, not an
+    """Verifies the raw request against ``secret`` and stages the event id for
+    insertion. Returns the parsed event, or ``None`` when it's a replay Stripe
+    has already delivered (the caller should treat that as a no-op 200, not an
     error — Stripe retries on anything but a 2xx).
+
+    Deliberately does **not** commit here — only ``flush()``es, so the
+    uniqueness check still runs immediately (a genuine replay still comes back
+    ``None``), but the ledger row only becomes durable once the caller's own
+    handler commits *its* side effects. If the handler raises before
+    committing, the whole session rolls back together (FastAPI's ``DbSession``
+    dependency never auto-commits — see core/database.py::get_db), so the
+    ledger row disappears too and Stripe's retry gets a genuine second
+    attempt instead of being silently swallowed as "already seen". Committing
+    the ledger row unconditionally, before the handler even runs, was exactly
+    the bug that let a client's real Stripe payment succeed while the invoice
+    stayed unpaid — the ledger said "handled" for an event whose handler never
+    actually finished.
 
     Reads ``request.body()`` directly rather than a parsed Pydantic model:
     Stripe's HMAC is computed over the exact bytes it sent, and re-serializing
@@ -62,7 +75,7 @@ async def verify_and_dedupe(request: Request, db: AsyncSession, secret: str | No
         )
     )
     try:
-        await db.commit()
+        await db.flush()
     except IntegrityError:
         await db.rollback()
         return None
@@ -71,9 +84,12 @@ async def verify_and_dedupe(request: Request, db: AsyncSession, secret: str | No
 
 async def verify_and_dedupe_thin_event(request: Request, db: AsyncSession, secret: str | None):
     """The v2 Core Account "event destination" equivalent of
-    ``verify_and_dedupe`` above — same replay-protection ledger, but for a
-    **thin** event notification (no embedded object; the caller fetches the
-    current one itself, e.g. via ``notification.fetch_related_object_async()``).
+    ``verify_and_dedupe`` above — same replay-protection ledger (and the same
+    flush-not-commit contract: the ledger row only becomes durable alongside
+    the caller's own handler commit, so a failed handler doesn't permanently
+    eat the event — see ``verify_and_dedupe``'s docstring), but for a **thin**
+    event notification (no embedded object; the caller fetches the current
+    one itself, e.g. via ``notification.fetch_related_object_async()``).
     Returns ``None`` on a replay, same contract as ``verify_and_dedupe``."""
     if not secret:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Stripe isn't configured")
@@ -93,7 +109,7 @@ async def verify_and_dedupe_thin_event(request: Request, db: AsyncSession, secre
         )
     )
     try:
-        await db.commit()
+        await db.flush()
     except IntegrityError:
         await db.rollback()
         return None

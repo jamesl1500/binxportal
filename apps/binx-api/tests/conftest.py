@@ -296,6 +296,7 @@ def _no_real_stripe_calls(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(_stripe_client.settings, "stripe_secret_key", None)
     monkeypatch.setattr(_stripe_client.settings, "stripe_webhook_secret", None)
     monkeypatch.setattr(_stripe_client.settings, "stripe_connect_webhook_secret", None)
+    monkeypatch.setattr(_stripe_client.settings, "stripe_connect_account_webhook_secret", None)
 
 
 # ---------------------------------------------------------------------------
