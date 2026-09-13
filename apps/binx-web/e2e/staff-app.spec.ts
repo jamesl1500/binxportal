@@ -125,20 +125,38 @@ test.describe("staff app", () => {
     // Two tabs in the same signed-in browser context: one just watches
     // /activity (proving the *push* actually reaches an idle page over its
     // websocket — not just that the actor's own request re-rendered
-    // something), the other performs the action that logs it.
+    // something), the other performs the action that logs it. A second real
+    // tab (its own hydration, its own websocket) is heavier than this
+    // suite's other single-tab tests, so give it real headroom rather than
+    // the global 7.5s default — CI runners are meaningfully slower than a
+    // dev machine even running this suite serially (playwright.config.ts's
+    // `workers: CI ? 1 : undefined`), and this was seen timing out there.
+    //
+    // The trigger is a (reverted) agency rename, not "create a project" —
+    // the seeded agency is on the Free plan (3 active projects), and other
+    // tests in this file already create projects, so creation here silently
+    // no-ops behind a plan-limit banner once that cap is hit. Renaming isn't
+    // plan-limited, and the name is restored in `finally` so no other test
+    // (several assert on DEMO.agency's exact name) ever observes it changed.
+    test.slow();
     const watcher = staffPage;
     await watcher.goto("/activity");
 
     const actor = await watcher.context().newPage();
-    await actor.goto("/projects");
-    const projectName = `Realtime Check ${Date.now()}`;
-    await actor.getByRole("button", { name: "New project" }).click();
-    await actor.getByLabel("Project name").fill(projectName);
-    await actor.getByRole("button", { name: "Create project" }).click();
-    await expect(actor.getByRole("heading", { name: `${projectName} created` })).toBeVisible();
-    await actor.close();
+    await actor.goto("/settings/general");
+    const tempName = `Realtime Check ${Date.now()}`;
+    try {
+      await actor.getByLabel("Agency name").fill(tempName);
+      await actor.getByRole("button", { name: /save changes/i }).click();
+      await expect(actor.getByText("Agency updated.")).toBeVisible({ timeout: 20_000 });
 
-    await expect(watcher.getByText(`created the project ${projectName}`)).toBeVisible();
+      await expect(watcher.getByText(`renamed the agency`)).toBeVisible({ timeout: 20_000 });
+    } finally {
+      await actor.getByLabel("Agency name").fill(DEMO.agency);
+      await actor.getByRole("button", { name: /save changes/i }).click();
+      await expect(actor.getByText("Agency updated.")).toBeVisible({ timeout: 20_000 });
+      await actor.close();
+    }
   });
 
   test("account settings tabs switch between Preferences and Security", async ({ staffPage }) => {
