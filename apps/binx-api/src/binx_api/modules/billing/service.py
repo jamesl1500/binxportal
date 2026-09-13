@@ -42,7 +42,11 @@ from binx_api.modules.users.models import User
 settings = get_settings()
 
 # Price ids are environment-specific (test vs live mode mint different ids),
-# so they live in config, not the plan catalog — see config.py.
+# so they live in config, not the plan catalog — see config.py. Maps plan ->
+# the *attribute name* on `settings` (not the resolved price id itself) —
+# both _price_id_for_plan and _plan_for_price_id do a live getattr(settings,
+# attr) lookup, so a plan can pick up a changed/rotated price id without a
+# restart clearing any cache of the resolved value.
 _PRICE_ID_ATTR: dict[str, str] = {
     PLAN_STARTER: "stripe_price_id_starter",
     PLAN_PRO: "stripe_price_id_pro",

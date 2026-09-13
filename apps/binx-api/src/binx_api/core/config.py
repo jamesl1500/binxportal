@@ -97,9 +97,9 @@ class Settings(BaseSettings):
     # Price ids are Stripe-account-specific (test vs live mode mint different
     # ids for "the same" product), so they live in config, not in the plan
     # catalog — see billing/service.py::_price_id_for_plan.
-    stripe_price_id_starter: str | None = None
-    stripe_price_id_pro: str | None = None
-    stripe_price_id_scale: str | None = None
+    stripe_price_id_starter: str
+    stripe_price_id_pro: str
+    stripe_price_id_scale: str
     # Basis points of a client-invoice payment Binx keeps as a platform fee on
     # Connect "direct charge" payments. 0 = no fee today; see
     # invoicing/service.py::start_invoice_checkout.
