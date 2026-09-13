@@ -9168,7 +9168,7 @@
     },
     "/agencies/{agency_id}/billing-settings/stripe/status": {
       "get": {
-        "description": "``?stripe=return`` (set by the onboarding return_url) triggers one live\nreconciliation call if the row still looks pending \u2014 closes the race\nbetween the redirect landing back and the account.updated webhook.",
+        "description": "``?stripe=return`` (set by the onboarding return_url) triggers one live\nreconciliation call if the row still looks pending \u2014 closes the race\nbetween the redirect landing back and the v2.core.account.updated event\ndestination's webhook.",
         "operationId": "read_stripe_connect_status_agencies__agency_id__billing_settings_stripe_status_get",
         "parameters": [
           {
@@ -19948,6 +19948,25 @@
           }
         },
         "summary": "Connect Webhook",
+        "tags": [
+          "invoicing-webhooks"
+        ]
+      }
+    },
+    "/webhooks/stripe/connect-account": {
+      "post": {
+        "operationId": "connect_account_webhook_webhooks_stripe_connect_account_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Connect Account Webhook",
         "tags": [
           "invoicing-webhooks"
         ]

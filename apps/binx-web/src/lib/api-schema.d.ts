@@ -300,7 +300,8 @@ export interface paths {
          * Read Stripe Connect Status
          * @description ``?stripe=return`` (set by the onboarding return_url) triggers one live
          *     reconciliation call if the row still looks pending — closes the race
-         *     between the redirect landing back and the account.updated webhook.
+         *     between the redirect landing back and the v2.core.account.updated event
+         *     destination's webhook.
          */
         get: operations["read_stripe_connect_status_agencies__agency_id__billing_settings_stripe_status_get"];
         put?: never;
@@ -2630,6 +2631,23 @@ export interface paths {
         put?: never;
         /** Connect Webhook */
         post: operations["connect_webhook_webhooks_stripe_connect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/webhooks/stripe/connect-account": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Connect Account Webhook */
+        post: operations["connect_account_webhook_webhooks_stripe_connect_account_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -12111,6 +12129,26 @@ export interface operations {
         };
     };
     connect_webhook_webhooks_stripe_connect_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    connect_account_webhook_webhooks_stripe_connect_account_post: {
         parameters: {
             query?: never;
             header?: never;
