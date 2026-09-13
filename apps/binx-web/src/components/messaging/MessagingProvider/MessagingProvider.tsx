@@ -97,7 +97,6 @@ const MessagingProvider = ({
   const socketRef = useRef<WebSocket | null>(null);
   const reconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const attemptRef = useRef(0);
-  const closedRef = useRef(false);
   const [, force] = useState(0);
 
   const scopeKey = `${scope?.clientId ?? ""}|${scope?.projectId ?? ""}`;
@@ -119,10 +118,20 @@ const MessagingProvider = ({
 
   // The websocket connection, with reconnect backoff.
   useEffect(() => {
-    closedRef.current = false;
+    // A per-invocation local, not a ref: React StrictMode's dev-mode
+    // mount/cleanup/mount means a stale invocation's connect() can still be
+    // awaiting its ticket fetch when this effect starts fresh. A *shared*
+    // "closed" ref reset at the top of every invocation defeats its own
+    // purpose (the fresh invocation's reset flips it back to false before
+    // the stale one's fetch resolves) — a fresh `let` per invocation is the
+    // only thing that actually stays true for the invocation it belongs to,
+    // so the stale connect() correctly bails instead of opening a socket
+    // nothing will ever close (which then keeps applying every event
+    // a second time, alongside the real one).
+    let closed = false;
 
     const connect = async () => {
-      if (closedRef.current) return;
+      if (closed) return;
       setSocketStatus("connecting");
       let ticket: string;
       try {
@@ -133,6 +142,7 @@ const MessagingProvider = ({
         scheduleReconnect();
         return;
       }
+      if (closed) return;
 
       const base = wsBaseUrl();
       if (!base) {
@@ -176,7 +186,7 @@ const MessagingProvider = ({
     };
 
     const scheduleReconnect = () => {
-      if (closedRef.current) return;
+      if (closed) return;
       if (reconnectRef.current) clearTimeout(reconnectRef.current);
       const delay = Math.min(30_000, 1000 * 2 ** attemptRef.current);
       attemptRef.current += 1;
@@ -186,7 +196,7 @@ const MessagingProvider = ({
     void connect();
 
     return () => {
-      closedRef.current = true;
+      closed = true;
       if (reconnectRef.current) clearTimeout(reconnectRef.current);
       socketRef.current?.close();
       socketRef.current = null;
