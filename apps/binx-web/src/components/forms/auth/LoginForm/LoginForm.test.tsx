@@ -7,14 +7,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // test, so we replace the whole actions module with a mock we control.
 vi.mock("@/app/(auth)/auth/login/actions", () => ({
   loginAction: vi.fn(),
+  resendVerificationAction: vi.fn(),
 }));
 
-import { loginAction } from "@/app/(auth)/auth/login/actions";
+import { loginAction, resendVerificationAction } from "@/app/(auth)/auth/login/actions";
 import { useLoginPreferencesStore } from "@/stores/use-login-preferences-store";
 
 import LoginForm from "./LoginForm";
 
 const mockedLoginAction = vi.mocked(loginAction);
+const mockedResendVerificationAction = vi.mocked(resendVerificationAction);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -73,5 +75,45 @@ describe("LoginForm", () => {
 
     await waitFor(() => expect(mockedLoginAction).toHaveBeenCalled());
     expect(useLoginPreferencesStore.getState().rememberedEmail).toBe("a@b.com");
+  });
+
+  // An unverified-account login failure carries `unverifiedEmail` (see
+  // actions.ts) — the form should offer a resend button instead of just a
+  // dead-end error, and clicking it should call resendVerificationAction with
+  // the attempted email and show its result message.
+  it("offers to resend the verification email when login fails as unverified", async () => {
+    mockedLoginAction.mockResolvedValueOnce({ error: "Email not verified", unverifiedEmail: "a@b.com" });
+    mockedResendVerificationAction.mockResolvedValueOnce({
+      message: "If that account exists, a verification email has been sent.",
+    });
+    const user = userEvent.setup();
+    render(<LoginForm />);
+
+    await user.type(screen.getByLabelText("Email"), "a@b.com");
+    await user.type(screen.getByLabelText("Password"), "password123");
+    await user.click(screen.getByRole("button", { name: /sign in/i }));
+
+    const resendButton = await screen.findByRole("button", { name: /resend verification email/i });
+    await user.click(resendButton);
+
+    expect(mockedResendVerificationAction).toHaveBeenCalledWith("a@b.com");
+    expect(
+      await screen.findByText("If that account exists, a verification email has been sent."),
+    ).toBeInTheDocument();
+  });
+
+  // A plain wrong-password error carries no unverifiedEmail — no resend
+  // button should render for it.
+  it("does not offer a resend button for a plain incorrect-password error", async () => {
+    mockedLoginAction.mockResolvedValueOnce({ error: "Incorrect email or password" });
+    const user = userEvent.setup();
+    render(<LoginForm />);
+
+    await user.type(screen.getByLabelText("Email"), "a@b.com");
+    await user.type(screen.getByLabelText("Password"), "password123");
+    await user.click(screen.getByRole("button", { name: /sign in/i }));
+
+    expect(await screen.findByText("Incorrect email or password")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /resend verification email/i })).not.toBeInTheDocument();
   });
 });

@@ -387,6 +387,31 @@ export async function requestPasswordReset(email: string): Promise<string> {
 }
 
 /**
+ * resendVerification
+ *
+ * Asks binx-api to resend the account-verification email. Always resolves
+ * (binx-api intentionally returns a generic success message whether or not
+ * the email exists, to avoid leaking account existence).
+ *
+ * @function resendVerification
+ * @throws {AuthApiError} - Thrown if binx-api rejects the request outright (e.g. malformed email).
+ */
+export async function resendVerification(email: string): Promise<string> {
+  try {
+    const { data } = await api.post<{ message: string }>("/auth/resend-verification", { email });
+    return data.message;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new AuthApiError(
+        extractDetailMessage(error.response.data, "Unable to process your request"),
+        error.response.status,
+      );
+    }
+    throw error;
+  }
+}
+
+/**
  * resetPassword
  *
  * Exchanges a password-reset token (from the emailed link) for a new password.

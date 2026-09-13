@@ -61,6 +61,7 @@ import {
   logout,
   refreshSession,
   requestPasswordReset,
+  resendVerification,
   resetPassword,
   signup,
   verifyEmail,
@@ -233,6 +234,30 @@ describe("requestPasswordReset", () => {
     await expect(requestPasswordReset("a@b.com")).resolves.toBe(
       "If that account exists, a password reset email has been sent.",
     );
+  });
+});
+
+describe("resendVerification", () => {
+  // Same anti-enumeration shape as requestPasswordReset — binx-api always
+  // returns this generic message, whether the email is unregistered, already
+  // verified, or genuinely pending. We just pass it through untouched.
+  it("returns binx-api's generic message", async () => {
+    mockedApi.post.mockResolvedValueOnce({
+      data: { message: "If that account exists, a verification email has been sent." },
+    });
+
+    await expect(resendVerification("a@b.com")).resolves.toBe(
+      "If that account exists, a verification email has been sent.",
+    );
+  });
+
+  it("throws AuthApiError when binx-api rejects the request outright", async () => {
+    mockedApi.post.mockRejectedValueOnce(axiosError(422, "Invalid email address"));
+
+    await expect(resendVerification("not-an-email")).rejects.toMatchObject({
+      message: "Invalid email address",
+      status: 422,
+    });
   });
 });
 

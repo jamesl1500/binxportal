@@ -15,7 +15,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
-import { loginAction } from "@/app/(auth)/auth/login/actions";
+import { loginAction, resendVerificationAction } from "@/app/(auth)/auth/login/actions";
 import { useLoginPreferencesStore } from "@/stores/use-login-preferences-store";
 
 import styles from "./LoginForm.module.scss";
@@ -53,6 +53,12 @@ const LoginForm = () => {
 
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
+  // Set only when login failed specifically because the account isn't
+  // verified yet — see LoginActionResult.unverifiedEmail — so we can offer a
+  // resend button instead of leaving the user stuck on a dead-end error.
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
+  const [isResendPending, startResendTransition] = useTransition();
+  const [resendMessage, setResendMessage] = useState<string | null>(null);
 
   const {
     register,
@@ -69,13 +75,26 @@ const LoginForm = () => {
 
   const onSubmit = (values: LoginValues) => {
     setFormError(null);
+    setUnverifiedEmail(null);
+    setResendMessage(null);
     setRememberedEmail(values.rememberMe ? values.email : null);
 
     startTransition(async () => {
       const result = await loginAction(values.email, values.password);
       if (result?.error) {
         setFormError(result.error);
+        setUnverifiedEmail(result.unverifiedEmail ?? null);
       }
+    });
+  };
+
+  const onResendVerification = () => {
+    if (!unverifiedEmail) return;
+    setResendMessage(null);
+
+    startResendTransition(async () => {
+      const result = await resendVerificationAction(unverifiedEmail);
+      setResendMessage(result.message ?? result.error ?? null);
     });
   };
 
@@ -121,7 +140,26 @@ const LoginForm = () => {
         Remember me on this device
       </label>
 
-      {formError && <p className={styles.formError}>{formError}</p>}
+      {formError && (
+        <p className={styles.formError}>
+          {formError}
+          {unverifiedEmail && !resendMessage && (
+            <>
+              {" "}
+              <button
+                type="button"
+                className={styles.resendLink}
+                onClick={onResendVerification}
+                disabled={isResendPending}
+              >
+                {isResendPending ? "Resending…" : "Resend verification email"}
+              </button>
+            </>
+          )}
+        </p>
+      )}
+
+      {resendMessage && <p className={styles.formSuccess}>{resendMessage}</p>}
 
       <button type="submit" className={styles.submit} disabled={isPending}>
         {isPending ? "Signing in…" : "Sign in"}

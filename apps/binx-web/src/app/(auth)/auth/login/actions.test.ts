@@ -38,7 +38,7 @@ import axios from "axios";
 import { redirect } from "next/navigation";
 
 import { forwardSetCookies } from "@/lib/auth";
-import { loginAction } from "./actions";
+import { loginAction, resendVerificationAction } from "./actions";
 
 const mockedPost = vi.mocked(axios.post);
 const mockedForwardSetCookies = vi.mocked(forwardSetCookies);
@@ -94,6 +94,60 @@ describe("loginAction", () => {
 
     await expect(loginAction("a@b.com", "password123")).resolves.toEqual({
       error: "Unable to sign in",
+    });
+  });
+
+  // binx-api's login() raises this exact message for an unverified account
+  // (see modules/auth/service.py) — the action threads the attempted email
+  // back through as `unverifiedEmail` so LoginForm can offer a resend button
+  // instead of leaving the user stuck.
+  it("returns unverifiedEmail when the account isn't verified yet", async () => {
+    mockedPost.mockRejectedValueOnce(axiosError(403, "Email not verified"));
+
+    await expect(loginAction("a@b.com", "password123")).resolves.toEqual({
+      error: "Email not verified",
+      unverifiedEmail: "a@b.com",
+    });
+  });
+
+  // A disabled account is also a 403, but a different message — only the
+  // exact "Email not verified" text should trigger the resend offer.
+  it("does not set unverifiedEmail for other 403 errors", async () => {
+    mockedPost.mockRejectedValueOnce(axiosError(403, "Account is disabled"));
+
+    await expect(loginAction("a@b.com", "password123")).resolves.toEqual({
+      error: "Account is disabled",
+    });
+  });
+});
+
+describe("resendVerificationAction", () => {
+  it("calls our own resend-verification route and returns its message", async () => {
+    mockedPost.mockResolvedValueOnce({
+      data: { message: "If that account exists, a verification email has been sent." },
+    });
+
+    await expect(resendVerificationAction("a@b.com")).resolves.toEqual({
+      message: "If that account exists, a verification email has been sent.",
+    });
+    expect(mockedPost).toHaveBeenCalledWith("http://localhost:3000/api/auth/resend-verification", {
+      email: "a@b.com",
+    });
+  });
+
+  it("returns the upstream error message on failure", async () => {
+    mockedPost.mockRejectedValueOnce(axiosError(422, "Invalid email address"));
+
+    await expect(resendVerificationAction("not-an-email")).resolves.toEqual({
+      error: "Invalid email address",
+    });
+  });
+
+  it("falls back to a generic message for non-axios errors", async () => {
+    mockedPost.mockRejectedValueOnce(new Error("network down"));
+
+    await expect(resendVerificationAction("a@b.com")).resolves.toEqual({
+      error: "Unable to process your request",
     });
   });
 });
