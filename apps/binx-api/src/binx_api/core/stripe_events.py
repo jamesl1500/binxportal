@@ -1,7 +1,9 @@
 """Stripe webhook signature verification + replay protection — shared by
-billing/webhooks_router.py (platform events) and invoicing/webhooks_router.py
-(Connect events). One ledger table for both: Stripe explicitly documents that
-events can be redelivered, so every handler must be idempotent, and there's no
+billing/webhooks_router.py (platform events), invoicing/webhooks_router.py's
+v1 Connect endpoint (checkout.session.completed), and its v2 Core Account
+event-destination endpoint (verify_and_dedupe_thin_event, below). One ledger
+table for all of them: Stripe explicitly documents that events can be
+redelivered, so every handler must be idempotent, and there's no
 feature-specific reason to duplicate that bookkeeping per module.
 """
 
@@ -17,7 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
 
 from binx_api.core.database import Base
-from binx_api.core.stripe_client import construct_event
+from binx_api.core.stripe_client import construct_event, parse_connect_account_event_notification
 
 
 class StripeWebhookEvent(Base):
@@ -65,3 +67,34 @@ async def verify_and_dedupe(request: Request, db: AsyncSession, secret: str | No
         await db.rollback()
         return None
     return event
+
+
+async def verify_and_dedupe_thin_event(request: Request, db: AsyncSession, secret: str | None):
+    """The v2 Core Account "event destination" equivalent of
+    ``verify_and_dedupe`` above — same replay-protection ledger, but for a
+    **thin** event notification (no embedded object; the caller fetches the
+    current one itself, e.g. via ``notification.fetch_related_object_async()``).
+    Returns ``None`` on a replay, same contract as ``verify_and_dedupe``."""
+    if not secret:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Stripe isn't configured")
+
+    payload = await request.body()
+    sig_header = request.headers.get("stripe-signature", "")
+    try:
+        notification = parse_connect_account_event_notification(payload, sig_header, secret)
+    except (ValueError, stripe.SignatureVerificationError) as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid Stripe signature") from exc
+
+    db.add(
+        StripeWebhookEvent(
+            stripe_event_id=notification.id,
+            event_type=notification.type,
+            connect_account_id=getattr(notification, "related_object", None) and notification.related_object.id,
+        )
+    )
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        return None
+    return notification

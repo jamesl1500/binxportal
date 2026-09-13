@@ -147,21 +147,38 @@ async def update_billing_settings(
 
 
 async def start_connect_onboarding(db: AsyncSession, agency: Agency, *, country: str = "US") -> str:
-    """Get-or-create the agency's Express account, then always mint a fresh
-    Account Link — they expire in minutes, so a stored URL is never reusable
-    and "Continue onboarding" must call this again."""
+    """Get-or-create the agency's v2 Core Account (Merchant configuration —
+    direct charges, the agency is merchant of record for its own client
+    invoices, same "direct charge" pattern noted above), then always mint a
+    fresh Account Link — they expire in minutes, so a stored URL is never
+    reusable and "Continue onboarding" must call this again.
+
+    ``dashboard: "full"`` + ``fees_collector``/``losses_collector: "stripe"``
+    is Stripe's own recommended SaaS/direct-charge configuration (see
+    docs.stripe.com/connect/saas/tasks/create) — matches what this flow
+    already behaviorally assumed under the old v1 Express account (Stripe
+    absorbing negative-balance liability), so no liability shift here."""
     if not settings.stripe_secret_key:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Stripe isn't configured")
     billing_settings = await get_or_create_billing_settings(db, agency)
     if billing_settings.stripe_connect_account_id is None:
         account = await stripe_client.create_connect_account(
             {
-                "type": "express",
-                "country": country,
-                "email": billing_settings.contact_email,
-                "capabilities": {
-                    "card_payments": {"requested": True},
-                    "transfers": {"requested": True},
+                "contact_email": billing_settings.contact_email,
+                "dashboard": "full",
+                "identity": {"country": country},
+                "configuration": {
+                    "merchant": {
+                        "capabilities": {
+                            "card_payments": {"requested": True},
+                        },
+                    },
+                },
+                "defaults": {
+                    "responsibilities": {
+                        "fees_collector": "stripe",
+                        "losses_collector": "stripe",
+                    },
                 },
             }
         )
@@ -172,19 +189,32 @@ async def start_connect_onboarding(db: AsyncSession, agency: Agency, *, country:
     link = await stripe_client.create_account_link(
         {
             "account": billing_settings.stripe_connect_account_id,
-            "type": "account_onboarding",
-            "refresh_url": f"{settings.frontend_url}/settings/invoicing?stripe=refresh",
-            "return_url": f"{settings.frontend_url}/settings/invoicing?stripe=return",
+            "use_case": {
+                "type": "account_onboarding",
+                "account_onboarding": {
+                    "configurations": ["merchant"],
+                    "refresh_url": f"{settings.frontend_url}/settings/invoicing?stripe=refresh",
+                    "return_url": f"{settings.frontend_url}/settings/invoicing?stripe=return",
+                },
+            },
         }
     )
     return link.url
 
 
-async def sync_connect_status(db: AsyncSession, account: stripe.Account) -> AgencyBillingSettings | None:
-    """Applied from the Connect webhook's ``account.updated`` event. Returns
-    ``None`` if the account id isn't recognised (shouldn't happen outside a
-    misconfigured webhook, but a webhook handler must never 500 on an
-    unexpected payload)."""
+async def sync_connect_status(db: AsyncSession, account: stripe.v2.core.Account) -> AgencyBillingSettings | None:
+    """Applied from the Connect Account event destination's
+    ``v2.core.account.updated`` event. Returns ``None`` if the account id
+    isn't recognised (shouldn't happen outside a misconfigured webhook, but a
+    webhook handler must never 500 on an unexpected payload).
+
+    v2's Merchant configuration has no v1-style flat
+    charges_enabled/details_submitted/payouts_enabled booleans — capability
+    *status* is the go-live signal instead (see
+    docs.stripe.com/connect/accounts-v2 and this repo's
+    .agents/skills/stripe-best-practices/references/connect.md). ``merchant``
+    is ``None`` until the configuration has actually been applied, which
+    reads the same as "not submitted" for our purposes."""
     result = await db.execute(
         select(AgencyBillingSettings).where(AgencyBillingSettings.stripe_connect_account_id == account.id)
     )
@@ -192,9 +222,14 @@ async def sync_connect_status(db: AsyncSession, account: stripe.Account) -> Agen
     if billing_settings is None:
         return None
 
-    billing_settings.stripe_connect_charges_enabled = bool(account.charges_enabled)
-    billing_settings.stripe_connect_details_submitted = bool(account.details_submitted)
-    billing_settings.stripe_connect_payouts_enabled = bool(account.payouts_enabled)
+    merchant = account.configuration.merchant if account.configuration else None
+    card_payments_active = bool(merchant and merchant.capabilities.card_payments.status == "active")
+    stripe_balance = merchant.capabilities.stripe_balance if merchant else None
+    payouts_active = bool(stripe_balance and stripe_balance.payouts.status == "active")
+
+    billing_settings.stripe_connect_charges_enabled = card_payments_active
+    billing_settings.stripe_connect_details_submitted = merchant is not None
+    billing_settings.stripe_connect_payouts_enabled = payouts_active
     if billing_settings.stripe_connect_charges_enabled and billing_settings.stripe_connect_onboarded_at is None:
         billing_settings.stripe_connect_onboarded_at = datetime.now(UTC)
     await db.commit()
@@ -208,7 +243,9 @@ async def get_connect_status(db: AsyncSession, agency: Agency, *, refresh: bool 
     redirect landing back and the ``account.updated`` webhook arriving."""
     billing_settings = await get_or_create_billing_settings(db, agency)
     if refresh and billing_settings.stripe_connect_account_id and not billing_settings.stripe_connect_charges_enabled:
-        account = await stripe_client.retrieve_connect_account(billing_settings.stripe_connect_account_id)
+        account = await stripe_client.retrieve_connect_account(
+            billing_settings.stripe_connect_account_id, {"include": ["configuration.merchant"]}
+        )
         updated = await sync_connect_status(db, account)
         if updated is not None:
             return updated

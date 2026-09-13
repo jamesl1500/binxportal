@@ -87,6 +87,13 @@ class Settings(BaseSettings):
     stripe_publishable_key: str | None = None
     stripe_webhook_secret: str | None = None
     stripe_connect_webhook_secret: str | None = None
+    # v2 Core Accounts (invoicing/service.py's Connect onboarding) reports
+    # capability/status changes via a separate "event destination" — a
+    # different registration mechanism from the v1 webhook endpoint above,
+    # with its own signing secret, delivered to its own route
+    # (POST /webhooks/stripe/connect-account). See
+    # invoicing/webhooks_router.py.
+    stripe_connect_account_webhook_secret: str | None = None
     # Price ids are Stripe-account-specific (test vs live mode mint different
     # ids for "the same" product), so they live in config, not in the plan
     # catalog — see billing/service.py::_price_id_for_plan.

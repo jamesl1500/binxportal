@@ -1,7 +1,17 @@
-"""Stripe **Connect** webhook — events on a connected account (an agency's
-own Stripe account), arriving on a separate endpoint with a separate signing
-secret from the platform-billing webhook (billing/webhooks_router.py). See
-``core/stripe_events.py`` for signature verification + replay protection.
+"""Stripe **Connect** webhooks — events on a connected account (an agency's
+own Stripe account). Two separate endpoints, each with its own signing
+secret, from the platform-billing webhook (billing/webhooks_router.py) and
+from each other:
+
+- ``/connect``: the v1 webhook endpoint, for ``checkout.session.completed``
+  (client-invoice payments — still a v1 Checkout Session regardless of the
+  connected account's own API version).
+- ``/connect-account``: the v2 Core Account event destination, for
+  ``v2.core.account.updated`` (onboarding/capability-status changes) — a thin
+  event, so the handler fetches the current Account itself rather than
+  reading one embedded in the payload.
+
+See ``core/stripe_events.py`` for signature verification + replay protection.
 """
 
 from __future__ import annotations
@@ -14,17 +24,13 @@ from sqlalchemy import select
 
 from binx_api.core.config import get_settings
 from binx_api.core.dependencies import DbSession
-from binx_api.core.stripe_events import verify_and_dedupe
+from binx_api.core.stripe_events import verify_and_dedupe, verify_and_dedupe_thin_event
 from binx_api.modules.invoicing import service
 from binx_api.modules.invoicing.models import InvoicePayment
 from binx_api.modules.users.models import User
 
 router = APIRouter(prefix="/webhooks/stripe", tags=["invoicing-webhooks"])
 settings = get_settings()
-
-
-async def _handle_account_updated(db: DbSession, account) -> None:
-    await service.sync_connect_status(db, account)
 
 
 async def _handle_checkout_completed(db: DbSession, session) -> None:
@@ -68,9 +74,20 @@ async def connect_webhook(request: Request, db: DbSession) -> Response:
     if event is None:
         return Response(status_code=200)
 
-    if event.type == "account.updated":
-        await _handle_account_updated(db, event.data.object)
-    elif event.type == "checkout.session.completed":
+    if event.type == "checkout.session.completed":
         await _handle_checkout_completed(db, event.data.object)
+
+    return Response(status_code=200)
+
+
+@router.post("/connect-account")
+async def connect_account_webhook(request: Request, db: DbSession) -> Response:
+    notification = await verify_and_dedupe_thin_event(request, db, settings.stripe_connect_account_webhook_secret)
+    if notification is None:
+        return Response(status_code=200)
+
+    if notification.type == "v2.core.account.updated":
+        account = await notification.fetch_related_object_async()
+        await service.sync_connect_status(db, account)
 
     return Response(status_code=200)

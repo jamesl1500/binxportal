@@ -18,6 +18,13 @@ build/
 !.env.example
 !.env.prod.example
 
+# Agent skills fetched via `npx skills add` (e.g. stripe/ai) — regeneratable
+# tooling used to research an API while implementing a change, not part of
+# the app itself.
+/.agents/
+/.claude/skills/
+/skills-lock.json
+
 .venv/
 __pycache__/
 *.pyc

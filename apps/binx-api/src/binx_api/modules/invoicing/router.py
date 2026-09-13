@@ -150,7 +150,8 @@ async def read_stripe_connect_status(
 ) -> StripeConnectStatusRead:
     """``?stripe=return`` (set by the onboarding return_url) triggers one live
     reconciliation call if the row still looks pending — closes the race
-    between the redirect landing back and the account.updated webhook."""
+    between the redirect landing back and the v2.core.account.updated event
+    destination's webhook."""
     agency, _role = agency_and_role
     settings_row = await service.get_connect_status(db, agency, refresh=(stripe == "return"))
     return StripeConnectStatusRead(
