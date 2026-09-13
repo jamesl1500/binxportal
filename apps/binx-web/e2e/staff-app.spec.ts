@@ -121,6 +121,26 @@ test.describe("staff app", () => {
     await expect(staffPage.getByText(/stripe isn.t configured/i)).toBeVisible();
   });
 
+  test("a new agency activity event live-updates an already-open /activity tab", async ({ staffPage }) => {
+    // Two tabs in the same signed-in browser context: one just watches
+    // /activity (proving the *push* actually reaches an idle page over its
+    // websocket — not just that the actor's own request re-rendered
+    // something), the other performs the action that logs it.
+    const watcher = staffPage;
+    await watcher.goto("/activity");
+
+    const actor = await watcher.context().newPage();
+    await actor.goto("/projects");
+    const projectName = `Realtime Check ${Date.now()}`;
+    await actor.getByRole("button", { name: "New project" }).click();
+    await actor.getByLabel("Project name").fill(projectName);
+    await actor.getByRole("button", { name: "Create project" }).click();
+    await expect(actor.getByRole("heading", { name: `${projectName} created` })).toBeVisible();
+    await actor.close();
+
+    await expect(watcher.getByText(`created the project ${projectName}`)).toBeVisible();
+  });
+
   test("account settings tabs switch between Preferences and Security", async ({ staffPage }) => {
     await staffPage.goto("/account");
     const tabs = staffPage.getByRole("navigation", { name: "Account settings" });

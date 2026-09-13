@@ -2,22 +2,25 @@
  * NotificationBell.tsx
  *
  * The header's notifications dropdown: a bell with an unread badge and a Base
- * UI Menu listing the most recent notifications. The unread count is polled
- * on an interval (and on tab focus) since there's no websocket for
- * notifications; the list itself is refreshed each time the menu opens.
- * Clicking a row marks it read and navigates to its link. A footer offers
- * "Mark all as read" and a link to the full `/notifications` page.
+ * UI Menu listing the most recent notifications. Live over the shared
+ * per-user event socket (see useRealtimeSocket) — a new notification pops a
+ * toast and updates the badge/list immediately, no poll required. The
+ * interval poll is now just a belt-and-braces fallback for whenever the
+ * socket isn't open (offline, reconnecting), same pattern MessagingProvider
+ * uses. Clicking a row marks it read and navigates to its link. A footer
+ * offers "Mark all as read" and a link to the full `/notifications` page.
  *
  * @module apps/binx-web/src/components/notifications/NotificationBell/NotificationBell.tsx
  * @author Binx.io
  */
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Menu } from "@base-ui/react/menu";
 import { AtSign, Bell, FolderKanban, Receipt, Users, type LucideIcon } from "lucide-react";
+import { toast } from "sonner";
 
 import {
   getNotificationsAction,
@@ -25,12 +28,13 @@ import {
   markAllNotificationsReadAction,
   markNotificationReadAction,
 } from "@/app/(app)/notifications/actions";
+import { useRealtimeSocket, type RealtimeEvent } from "@/hooks/useRealtimeSocket";
 import type { AppNotification } from "@/lib/notifications";
 import { NOTIFICATION_CATEGORY_META, relativeTime, type NotificationCategory } from "@/lib/notifications-client";
 
 import styles from "./NotificationBell.module.scss";
 
-const POLL_MS = 45_000;
+const RECONCILE_CHECK_MS = 20_000;
 const DROPDOWN_LIMIT = 8;
 
 const CATEGORY_ICON: Record<NotificationCategory, LucideIcon> = {
@@ -51,7 +55,6 @@ const NotificationBell = ({ initialUnreadCount, initialItems }: NotificationBell
   const [items, setItems] = useState<AppNotification[]>(initialItems);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const refreshCount = useCallback(async () => {
     setUnreadCount(await getUnreadCountAction());
@@ -67,20 +70,41 @@ const NotificationBell = ({ initialUnreadCount, initialItems }: NotificationBell
     }
   }, []);
 
-  // Poll the count on an interval and whenever the tab regains focus.
+  const handleRealtimeEvent = useCallback((event: RealtimeEvent) => {
+    if (event.type !== "notification.created") return;
+    const notification = event.data as AppNotification;
+
+    setItems((prev) => [notification, ...prev].slice(0, DROPDOWN_LIMIT));
+    setUnreadCount((count) => count + 1);
+
+    toast(notification.title, {
+      description: notification.body ?? undefined,
+      action: notification.link ? { label: "View", onClick: () => router.push(notification.link!) } : undefined,
+    });
+  }, [router]);
+
+  const socketStatus = useRealtimeSocket(handleRealtimeEvent);
+
+  // Belt-and-braces: if the socket isn't open (offline, still reconnecting),
+  // fall back to polling the count so the badge doesn't go stale for long —
+  // same pattern MessagingProvider uses for its conversation list. Also
+  // reconciles on tab focus, since a missed event while backgrounded/asleep
+  // won't have replayed.
   useEffect(() => {
-    pollRef.current = setInterval(refreshCount, POLL_MS);
     const onVisible = () => {
       if (document.visibilityState === "visible") refreshCount();
     };
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("focus", refreshCount);
+    const interval = setInterval(() => {
+      if (socketStatus !== "open") refreshCount();
+    }, RECONCILE_CHECK_MS);
     return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
+      clearInterval(interval);
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("focus", refreshCount);
     };
-  }, [refreshCount]);
+  }, [refreshCount, socketStatus]);
 
   const handleOpenChange = (next: boolean) => {
     setOpen(next);

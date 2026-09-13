@@ -296,7 +296,12 @@ class TestComments:
             db_session, item, project, author=commenter, author_kind="agency", body="  needs work  "
         )
         assert comment.body == "needs work"
-        assert sock.sent[-1]["type"] == realtime.EVENT_BOARD_COMMENT_CREATED
+        # The comment itself broadcasts, and notifying the card author now
+        # broadcasts too (notifications/service.py) — order isn't contractual,
+        # so check both landed rather than asserting on sock.sent[-1].
+        event_types = [event["type"] for event in sock.sent]
+        assert realtime.EVENT_BOARD_COMMENT_CREATED in event_types
+        assert realtime.EVENT_NOTIFICATION_CREATED in event_types
 
         rows = (await db_session.execute(select(Notification).where(Notification.user_id == author.id))).scalars().all()
         assert any(n.event_type == "canvas_comment" for n in rows)

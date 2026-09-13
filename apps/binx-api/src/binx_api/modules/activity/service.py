@@ -14,6 +14,12 @@ Producers elsewhere in the codebase call :func:`log_agency_activity` /
 :func:`log_account_activity` after their own work has committed, the same
 "fire and forget, never block the action" contract as
 ``notifications/service.py``.
+
+Also pushed live over each recipient's websocket (see messaging/realtime.py)
+so the agency feed / account security list can prepend the new entry
+in-page — deliberately *not* a toast: an audit-log-style feed firing a popup
+for every teammate's task move would be far too noisy. Compare
+notifications/service.py, which is curated/actionable enough to toast.
 """
 
 from __future__ import annotations
@@ -31,7 +37,26 @@ from binx_api.modules.activity.models import (
     VISIBILITY_ADMIN,
     ActivityLog,
 )
+from binx_api.modules.activity.schemas import ActivityLogRead
+from binx_api.modules.agencies.models import ROLE_ADMIN, ROLE_OWNER, AgencyMember
+from binx_api.modules.messaging import realtime
 from binx_api.modules.users.models import User
+
+
+async def _broadcast_activity(db: AsyncSession, entry: ActivityLog, *, user_ids: list[uuid.UUID]) -> None:
+    """Real-time push, after commit — same "fire and forget" contract as the
+    write itself. Fans out to every listed recipient's websocket (see
+    messaging/realtime.py); a dropped/offline socket just means they see it
+    on their next page load instead of instantly."""
+    if not user_ids:
+        return
+    await realtime.manager.send_to_users(
+        user_ids,
+        {
+            "type": realtime.EVENT_ACTIVITY_CREATED,
+            "data": ActivityLogRead.model_validate(entry).model_dump(mode="json"),
+        },
+    )
 
 
 async def log_agency_activity(
@@ -64,6 +89,15 @@ async def log_agency_activity(
     db.add(entry)
     await db.commit()
     await db.refresh(entry)
+
+    # Every member sees "team" visibility; VISIBILITY_ADMIN entries (role
+    # changes, removals, billing) only reach owners/admins — same rule
+    # list_agency_activity applies when a page is loaded, kept in sync here.
+    member_query = select(AgencyMember.user_id).where(AgencyMember.agency_id == agency_id)
+    if visibility == VISIBILITY_ADMIN:
+        member_query = member_query.where(AgencyMember.role.in_((ROLE_OWNER, ROLE_ADMIN)))
+    member_ids = list((await db.execute(member_query)).scalars().all())
+    await _broadcast_activity(db, entry, user_ids=member_ids)
     return entry
 
 
@@ -92,6 +126,7 @@ async def log_account_activity(
     db.add(entry)
     await db.commit()
     await db.refresh(entry)
+    await _broadcast_activity(db, entry, user_ids=[user.id])
     return entry
 
 

@@ -5,17 +5,21 @@
  * (actor initial, summary, relative time, an "Admins only" tag on sensitive
  * rows), and offset-paginated "Load more". Seeded with the first page from the
  * server; every filter change and page fetch goes through the activity
- * actions.
+ * actions. New entries also arrive live over the shared per-user event socket
+ * (useRealtimeSocket) and get prepended in place — deliberately no toast for
+ * these; an audit-log-style feed popping up for every teammate's task move
+ * would be far too noisy (compare NotificationBell, which does toast).
  *
  * @module apps/binx-web/src/components/activity/ActivityFeed/ActivityFeed.tsx
  * @author Binx.io
  */
 "use client";
 
-import { useState, useTransition } from "react";
+import { useCallback, useState, useTransition } from "react";
 import { AtSign, FileText, FolderKanban, Receipt, Settings, Users, type LucideIcon } from "lucide-react";
 
 import { getAgencyActivityAction } from "@/app/(app)/activity/actions";
+import { useRealtimeSocket, type RealtimeEvent } from "@/hooks/useRealtimeSocket";
 import type { ActivityEntry, ActivityPage } from "@/lib/activity";
 import {
   ACTIVITY_CATEGORY_META,
@@ -81,6 +85,21 @@ const ActivityFeed = ({ agencyId, initialPage }: ActivityFeedProps) => {
     setItems([]);
     load(next, 0);
   };
+
+  // account-security entries (log_account_activity) ride the same socket as
+  // agency entries — they're never part of this feed (see binx-api's
+  // activity/service.py module docstring), so a stray one is dropped here.
+  const handleRealtimeEvent = useCallback(
+    (event: RealtimeEvent) => {
+      if (event.type !== "activity.created") return;
+      const entry = event.data as ActivityEntry;
+      if (entry.category === "security") return;
+      if (filter !== "all" && entry.category !== filter) return;
+      setItems((prev) => [entry, ...prev]);
+    },
+    [filter],
+  );
+  useRealtimeSocket(handleRealtimeEvent);
 
   return (
     <div className={styles.wrapper}>

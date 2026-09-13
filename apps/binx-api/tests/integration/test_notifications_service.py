@@ -8,12 +8,29 @@ from __future__ import annotations
 
 import pytest
 
+from binx_api.modules.messaging import realtime
 from binx_api.modules.notifications import service
 from binx_api.modules.notifications.models import CATEGORY_PROJECTS, CATEGORY_TEAM
 from binx_api.modules.users.models import UserNotificationSettings
 from tests.factories import make_user
 
 pytestmark = pytest.mark.integration
+
+
+class FakeSocket:
+    def __init__(self) -> None:
+        self.sent: list[dict] = []
+
+    async def accept(self) -> None:  # pragma: no cover
+        pass
+
+    async def send_json(self, data: dict) -> None:
+        self.sent.append(data)
+
+
+@pytest.fixture(autouse=True)
+def _fresh_manager(monkeypatch):
+    monkeypatch.setattr(realtime, "manager", realtime.ConnectionManager())
 
 
 class TestNotify:
@@ -91,6 +108,67 @@ class TestNotify:
         )
 
         assert {row.user_id for row in rows} == {a.id, b.id}
+
+
+class TestRealtimeBroadcast:
+    async def test_notify_pushes_over_the_recipients_socket(self, db_session) -> None:
+        recipient = await make_user(db_session)
+        sock = FakeSocket()
+        await realtime.manager.connect(recipient.id, sock)
+
+        created = await service.notify(
+            db_session,
+            user_id=recipient.id,
+            category=CATEGORY_TEAM,
+            event_type="invite_accepted",
+            title="Someone joined",
+        )
+
+        assert created is not None
+        assert len(sock.sent) == 1
+        assert sock.sent[0]["type"] == realtime.EVENT_NOTIFICATION_CREATED
+        assert sock.sent[0]["data"]["id"] == str(created.id)
+        assert sock.sent[0]["data"]["title"] == "Someone joined"
+
+    async def test_a_muted_category_does_not_broadcast(self, db_session) -> None:
+        recipient = await make_user(db_session)
+        db_session.add(UserNotificationSettings(user_id=recipient.id, inapp_projects=False))
+        await db_session.commit()
+        sock = FakeSocket()
+        await realtime.manager.connect(recipient.id, sock)
+
+        dropped = await service.notify(
+            db_session,
+            user_id=recipient.id,
+            category=CATEGORY_PROJECTS,
+            event_type="task_assigned",
+            title="Assigned",
+        )
+
+        assert dropped is None
+        assert sock.sent == []
+
+    async def test_notify_many_broadcasts_to_each_recipient_only(self, db_session) -> None:
+        actor = await make_user(db_session)
+        a = await make_user(db_session)
+        b = await make_user(db_session)
+        sock_a, sock_b, sock_actor = FakeSocket(), FakeSocket(), FakeSocket()
+        await realtime.manager.connect(a.id, sock_a)
+        await realtime.manager.connect(b.id, sock_b)
+        await realtime.manager.connect(actor.id, sock_actor)
+
+        await service.notify_many(
+            db_session,
+            user_ids=[a.id, b.id, actor.id],
+            category=CATEGORY_TEAM,
+            event_type="mention",
+            title="Mentioned",
+            actor=actor,
+        )
+
+        assert len(sock_a.sent) == 1
+        assert len(sock_b.sent) == 1
+        assert sock_actor.sent == []  # never notifies the actor about their own action
 
 
 class TestReadState:

@@ -5,6 +5,10 @@ codebase call :func:`notify` / :func:`notify_many` after their own work has
 committed — a suppressed or failed notification never rolls back the action
 that triggered it. Each recipient's ``UserNotificationSettings.inapp_<category>``
 toggle is honoured here: a muted category is dropped silently.
+
+Also pushed live over the recipient's websocket (see messaging/realtime.py —
+the same generic per-user event stream messages/boards already use), so the
+header bell can toast it immediately instead of waiting for its poll.
 """
 
 from __future__ import annotations
@@ -17,7 +21,9 @@ from fastapi import HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from binx_api.modules.messaging import realtime
 from binx_api.modules.notifications.models import Notification
+from binx_api.modules.notifications.schemas import NotificationRead
 from binx_api.modules.users.models import User, UserNotificationSettings
 
 # Category -> the settings column that mutes it.
@@ -116,6 +122,18 @@ async def notify_many(
     await db.commit()
     for row in rows:
         await db.refresh(row)
+
+    # Real-time push, after commit — same "fire and forget" contract as the
+    # write itself. A dropped/offline socket just means the recipient sees it
+    # on their next poll/page load instead of instantly.
+    for row in rows:
+        await realtime.manager.send_to_users(
+            [row.user_id],
+            {
+                "type": realtime.EVENT_NOTIFICATION_CREATED,
+                "data": NotificationRead.model_validate(row).model_dump(mode="json"),
+            },
+        )
     return rows
 
 

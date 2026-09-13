@@ -44,6 +44,15 @@ EVENT_BOARD_REACTION = "board.item.reaction"
 EVENT_BOARD_COMMENT_CREATED = "board.comment.created"
 EVENT_BOARD_COMMENT_DELETED = "board.comment.deleted"
 
+# In-app notifications (notifications/service.py::notify_many) and the
+# activity/audit log (activity/service.py::log_agency_activity /
+# log_account_activity) — same generic socket again. A notification always
+# targets one recipient; an activity entry fans out to every agency member
+# (or, for an account-security entry, just its one subject) — see each
+# service function's own broadcast call for the recipient-resolution logic.
+EVENT_NOTIFICATION_CREATED = "notification.created"
+EVENT_ACTIVITY_CREATED = "activity.created"
+
 
 class ConnectionManager:
     def __init__(self) -> None:

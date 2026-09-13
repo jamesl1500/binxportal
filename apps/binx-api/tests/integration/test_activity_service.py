@@ -15,9 +15,26 @@ from binx_api.modules.activity.models import (
     SCOPE_ACCOUNT,
     VISIBILITY_ADMIN,
 )
-from tests.factories import make_agency, make_user
+from binx_api.modules.messaging import realtime
+from tests.factories import add_agency_member, make_agency, make_user
 
 pytestmark = pytest.mark.integration
+
+
+class FakeSocket:
+    def __init__(self) -> None:
+        self.sent: list[dict] = []
+
+    async def accept(self) -> None:  # pragma: no cover
+        pass
+
+    async def send_json(self, data: dict) -> None:
+        self.sent.append(data)
+
+
+@pytest.fixture(autouse=True)
+def _fresh_manager(monkeypatch):
+    monkeypatch.setattr(realtime, "manager", realtime.ConnectionManager())
 
 
 class TestAgencyFeed:
@@ -73,6 +90,60 @@ class TestAgencyFeed:
         rows = await service.list_agency_activity(db_session, agency.id, viewer_is_admin=True)
         assert all(e.scope == "agency" for e in rows)
         assert all(e.event_type != "login" for e in rows)
+
+
+class TestRealtimeBroadcast:
+    async def test_team_visibility_reaches_every_member(self, db_session) -> None:
+        owner = await make_user(db_session)
+        member = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        await add_agency_member(db_session, agency=agency, user=member)
+        sock_owner, sock_member = FakeSocket(), FakeSocket()
+        await realtime.manager.connect(owner.id, sock_owner)
+        await realtime.manager.connect(member.id, sock_member)
+
+        entry = await service.log_agency_activity(
+            db_session, agency.id, category=CATEGORY_CLIENTS, event_type="client_created", summary="Added a client"
+        )
+
+        for sock in (sock_owner, sock_member):
+            assert len(sock.sent) == 1
+            assert sock.sent[0]["type"] == realtime.EVENT_ACTIVITY_CREATED
+            assert sock.sent[0]["data"]["id"] == str(entry.id)
+
+    async def test_admin_visibility_skips_plain_members(self, db_session) -> None:
+        owner = await make_user(db_session)
+        member = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        await add_agency_member(db_session, agency=agency, user=member)
+        sock_owner, sock_member = FakeSocket(), FakeSocket()
+        await realtime.manager.connect(owner.id, sock_owner)
+        await realtime.manager.connect(member.id, sock_member)
+
+        await service.log_agency_activity(
+            db_session,
+            agency.id,
+            category=CATEGORY_TEAM,
+            event_type="member_role_changed",
+            summary="Promoted someone",
+            visibility=VISIBILITY_ADMIN,
+        )
+
+        assert len(sock_owner.sent) == 1
+        assert sock_member.sent == []
+
+    async def test_account_activity_broadcasts_only_to_the_subject(self, db_session) -> None:
+        alice = await make_user(db_session)
+        bob = await make_user(db_session)
+        sock_alice, sock_bob = FakeSocket(), FakeSocket()
+        await realtime.manager.connect(alice.id, sock_alice)
+        await realtime.manager.connect(bob.id, sock_bob)
+
+        await service.log_account_activity(db_session, alice, event_type="login", summary="Signed in")
+
+        assert len(sock_alice.sent) == 1
+        assert sock_alice.sent[0]["type"] == realtime.EVENT_ACTIVITY_CREATED
+        assert sock_bob.sent == []
 
 
 class TestAccountFeed:
