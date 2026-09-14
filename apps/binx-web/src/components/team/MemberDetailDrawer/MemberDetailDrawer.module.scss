@@ -99,6 +99,20 @@
   color: t.$color-accent-foreground;
   background: t.$color-accent;
   border-radius: 50%;
+  object-fit: cover;
+}
+
+.viewProfileLink {
+  display: inline-block;
+  margin: 0 t.$space-6 t.$space-4;
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  color: var(--app-accent, #{t.$color-accent});
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 .name {

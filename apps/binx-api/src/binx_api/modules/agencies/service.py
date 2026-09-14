@@ -1,4 +1,3 @@
-import hashlib
 import re
 import shutil
 import uuid
@@ -11,6 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from binx_api.core.config import get_settings
+from binx_api.core.images import IMAGE_EXTENSIONS, unlink_quietly, validate_image
 from binx_api.core.security import generate_opaque_token, hash_token
 from binx_api.modules.activity import service as activity_service
 from binx_api.modules.activity.models import CATEGORY_TEAM, VISIBILITY_ADMIN
@@ -31,21 +31,11 @@ from binx_api.modules.client_portal.models import ClientContact
 from binx_api.modules.notifications import service as notifications_service
 from binx_api.modules.notifications.models import CATEGORY_TEAM as NOTIFY_CATEGORY_TEAM
 from binx_api.modules.notifications.models import EVENT_INVITE_ACCEPTED as NOTIFY_EVENT_INVITE_ACCEPTED
-from binx_api.modules.users.models import User, UserPrivacySettings
+from binx_api.modules.users.models import User, UserPrivacySettings, UserProfile
 
 settings = get_settings()
 
 INVITATION_EXPIRE_DAYS = 7
-
-# Logos / covers are shown inline in the app chrome and settings — keep this
-# list to what a browser renders reliably.
-ALLOWED_AGENCY_IMAGE_MIME_TYPES: set[str] = {"image/jpeg", "image/png", "image/webp", "image/gif"}
-_IMAGE_EXTENSIONS: dict[str, str] = {
-    "image/jpeg": ".jpg",
-    "image/png": ".png",
-    "image/webp": ".webp",
-    "image/gif": ".gif",
-}
 
 _SLUG_INVALID_CHARS = re.compile(r"[^a-z0-9]+")
 
@@ -186,23 +176,6 @@ async def delete_agency(db: AsyncSession, agency: Agency) -> None:
 # ---- Profile (branding / about / policies) --------------------------------
 
 
-def _unlink_quietly(storage_path: str) -> None:
-    """Best-effort delete of an image's bytes — a filesystem hiccup should
-    never block clearing the row that points at them."""
-    try:
-        Path(storage_path).unlink(missing_ok=True)
-    except OSError:
-        pass
-
-
-def _image_version(storage_path: str | None) -> str | None:
-    """A short, stable-per-file token the frontend appends as ?v= so a
-    re-uploaded image (new path) isn't hidden by a stale browser cache."""
-    if not storage_path:
-        return None
-    return hashlib.sha1(storage_path.encode("utf-8")).hexdigest()[:12]  # noqa: S324 - cache-bust only
-
-
 async def get_or_create_agency_profile(db: AsyncSession, agency: Agency) -> AgencyProfile:
     result = await db.execute(select(AgencyProfile).where(AgencyProfile.agency_id == agency.id))
     profile = result.scalar_one_or_none()
@@ -225,21 +198,13 @@ async def update_agency_profile(db: AsyncSession, agency: Agency, *, data: dict)
     return profile
 
 
-def _validate_agency_image(content: bytes, mime_type: str) -> None:
-    if mime_type not in ALLOWED_AGENCY_IMAGE_MIME_TYPES:
-        raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "Upload a JPEG, PNG, WebP, or GIF image")
-    if len(content) > settings.agency_image_max_bytes:
-        max_mb = settings.agency_image_max_bytes // (1024 * 1024)
-        raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, f"Images must be {max_mb}MB or smaller")
-
-
 # Saves a logo or cover image's bytes to local disk and records the path/mime
 # on the profile. Removes the previous file so re-uploads don't pile up.
 # Storage layout: {agency_upload_dir}/{agency_id}/{kind}_{uuid}{ext}.
 async def save_agency_image(
     db: AsyncSession, agency: Agency, *, kind: str, content: bytes, mime_type: str
 ) -> AgencyProfile:
-    _validate_agency_image(content, mime_type)
+    validate_image(content, mime_type)
     profile = await get_or_create_agency_profile(db, agency)
 
     path_attr = f"{kind}_storage_path"
@@ -248,7 +213,7 @@ async def save_agency_image(
 
     upload_dir = Path(settings.agency_upload_dir) / str(agency.id)
     upload_dir.mkdir(parents=True, exist_ok=True)
-    stored_path = upload_dir / f"{kind}_{uuid.uuid4().hex}{_IMAGE_EXTENSIONS[mime_type]}"
+    stored_path = upload_dir / f"{kind}_{uuid.uuid4().hex}{IMAGE_EXTENSIONS[mime_type]}"
     stored_path.write_bytes(content)
 
     setattr(profile, path_attr, str(stored_path))
@@ -257,7 +222,7 @@ async def save_agency_image(
     await db.refresh(profile)
 
     if old_path and old_path != str(stored_path):
-        _unlink_quietly(old_path)
+        unlink_quietly(old_path)
     return profile
 
 
@@ -269,7 +234,7 @@ async def clear_agency_image(db: AsyncSession, agency: Agency, *, kind: str) -> 
     await db.commit()
     await db.refresh(profile)
     if old_path:
-        _unlink_quietly(old_path)
+        unlink_quietly(old_path)
     return profile
 
 
@@ -300,18 +265,17 @@ async def update_client_branding(db: AsyncSession, client: AgencyClient, *, data
 
 # Storage layout: {agency_upload_dir}/clients/{client_id}/logo_{uuid}{ext} —
 # nested under the existing agency upload dir rather than a new settings
-# field. Reuses the agency image validation/extension helpers, which are
-# already generic (not agency-specific).
+# field. Reuses the shared image validation/extension helpers in core.images.
 async def save_client_logo(
     db: AsyncSession, client: AgencyClient, *, content: bytes, mime_type: str
 ) -> ClientPortalBranding:
-    _validate_agency_image(content, mime_type)
+    validate_image(content, mime_type)
     branding = await get_or_create_client_branding(db, client)
     old_path = branding.logo_storage_path
 
     upload_dir = Path(settings.agency_upload_dir) / "clients" / str(client.id)
     upload_dir.mkdir(parents=True, exist_ok=True)
-    stored_path = upload_dir / f"logo_{uuid.uuid4().hex}{_IMAGE_EXTENSIONS[mime_type]}"
+    stored_path = upload_dir / f"logo_{uuid.uuid4().hex}{IMAGE_EXTENSIONS[mime_type]}"
     stored_path.write_bytes(content)
 
     branding.logo_storage_path = str(stored_path)
@@ -320,7 +284,7 @@ async def save_client_logo(
     await db.refresh(branding)
 
     if old_path and old_path != str(stored_path):
-        _unlink_quietly(old_path)
+        unlink_quietly(old_path)
     return branding
 
 
@@ -332,7 +296,7 @@ async def clear_client_logo(db: AsyncSession, client: AgencyClient) -> ClientPor
     await db.commit()
     await db.refresh(branding)
     if old_path:
-        _unlink_quietly(old_path)
+        unlink_quietly(old_path)
     return branding
 
 
@@ -344,15 +308,16 @@ async def clear_client_logo(db: AsyncSession, client: AgencyClient) -> ClientPor
 # The router applies the privacy gating; this just gathers the data.
 async def list_agency_members(
     db: AsyncSession, agency_id: uuid.UUID
-) -> list[tuple[AgencyMember, User, UserPrivacySettings | None]]:
+) -> list[tuple[AgencyMember, User, UserPrivacySettings | None, UserProfile | None]]:
     result = await db.execute(
-        select(AgencyMember, User, UserPrivacySettings)
+        select(AgencyMember, User, UserPrivacySettings, UserProfile)
         .join(User, User.id == AgencyMember.user_id)
         .outerjoin(UserPrivacySettings, UserPrivacySettings.user_id == User.id)
+        .outerjoin(UserProfile, UserProfile.user_id == User.id)
         .where(AgencyMember.agency_id == agency_id)
         .order_by(AgencyMember.created_at)
     )
-    return [(member, user, privacy) for member, user, privacy in result.all()]
+    return [(member, user, privacy, profile) for member, user, privacy, profile in result.all()]
 
 
 # Owner/admin edit of a membership's agency-scoped fields (see the team-page
@@ -398,6 +363,24 @@ async def get_agency_member_or_404(db: AsyncSession, agency_id: uuid.UUID, membe
     if member is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Member not found")
     return member
+
+
+# Same joined shape as list_agency_members, for the teammate profile page —
+# fetches one member without pulling the whole roster.
+async def get_agency_member_with_user_or_404(
+    db: AsyncSession, agency_id: uuid.UUID, member_id: uuid.UUID
+) -> tuple[AgencyMember, User, UserPrivacySettings | None, UserProfile | None]:
+    result = await db.execute(
+        select(AgencyMember, User, UserPrivacySettings, UserProfile)
+        .join(User, User.id == AgencyMember.user_id)
+        .outerjoin(UserPrivacySettings, UserPrivacySettings.user_id == User.id)
+        .outerjoin(UserProfile, UserProfile.user_id == User.id)
+        .where(AgencyMember.id == member_id, AgencyMember.agency_id == agency_id)
+    )
+    row = result.one_or_none()
+    if row is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Member not found")
+    return row
 
 
 async def _count_owners(db: AsyncSession, agency_id: uuid.UUID) -> int:

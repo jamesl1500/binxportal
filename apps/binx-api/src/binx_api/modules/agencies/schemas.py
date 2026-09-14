@@ -3,6 +3,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
+from binx_api.modules.users.schemas import EducationEntry, ExperienceEntry
+
 
 class AgencyRead(BaseModel):
     id: uuid.UUID
@@ -97,6 +99,19 @@ class AgencyMemberRead(BaseModel):
     title: str | None
     phone: str | None
     bio: str | None
+    # Photos: unconditional, like full_name — seeing a teammate's avatar
+    # carries the same weight as seeing their name. Storage paths are never
+    # exposed; the frontend fetches the bytes through
+    # GET /agencies/{id}/members/{member_id}/avatar (proxied).
+    has_avatar: bool
+    avatar_version: str | None
+    has_cover: bool
+    cover_version: str | None
+    # Qualifications: gated by the same show_bio flag as bio above — a
+    # private profile hides these the same way it hides bio.
+    skills: list[str]
+    experience: list[ExperienceEntry]
+    education: list[EducationEntry]
     is_verified: bool
     last_active_at: datetime | None
     joined_at: datetime

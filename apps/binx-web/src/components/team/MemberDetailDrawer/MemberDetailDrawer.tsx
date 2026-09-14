@@ -17,6 +17,7 @@
 "use client";
 
 import { FormEvent, useState, useTransition } from "react";
+import Link from "next/link";
 import { Dialog } from "@base-ui/react/dialog";
 import { Trash2, X } from "lucide-react";
 import { toast } from "sonner";
@@ -27,6 +28,7 @@ import {
   updateMemberDetailsAction,
 } from "@/app/(app)/team/actions";
 import type { AgencyMember, AgencyRole } from "@/lib/agencies";
+import { memberImageUrl } from "@/lib/users-client";
 
 import styles from "./MemberDetailDrawer.module.scss";
 
@@ -164,9 +166,19 @@ const MemberDetailDrawer = ({
           </div>
 
           <div className={styles.identity}>
-            <span className={styles.avatar} aria-hidden="true">
-              {initials(currentMember.full_name)}
-            </span>
+            {currentMember.has_avatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                className={styles.avatar}
+                src={memberImageUrl(agencyId, currentMember.id, "avatar", currentMember.avatar_version)}
+                alt=""
+                aria-hidden="true"
+              />
+            ) : (
+              <span className={styles.avatar} aria-hidden="true">
+                {initials(currentMember.full_name)}
+              </span>
+            )}
             <div>
               <h2 className={styles.name}>
                 {currentMember.full_name}
@@ -183,6 +195,10 @@ const MemberDetailDrawer = ({
               </span>
             </div>
           </div>
+
+          <Link href={`/team/${currentMember.id}`} className={styles.viewProfileLink}>
+            View full profile →
+          </Link>
 
           <section className={styles.section}>
             <h3 className={styles.sectionTitle}>Profile</h3>

@@ -22,6 +22,7 @@ import { toast } from "sonner";
 
 import { updateAgencyMemberRoleAction } from "@/app/(app)/team/actions";
 import type { AgencyMember, AgencyRole } from "@/lib/agencies";
+import { memberImageUrl } from "@/lib/users-client";
 import MemberDetailDrawer from "@/components/team/MemberDetailDrawer/MemberDetailDrawer";
 
 import styles from "./TeamRoster.module.scss";
@@ -224,9 +225,19 @@ const TeamRoster = ({ agencyId, members: initialMembers, currentUserId, canManag
                 >
                   <td className={styles.cell}>
                     <div className={styles.person}>
-                      <span className={styles.avatar} aria-hidden="true">
-                        {initials(member.full_name)}
-                      </span>
+                      {member.has_avatar ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          className={styles.avatar}
+                          src={memberImageUrl(agencyId, member.id, "avatar", member.avatar_version)}
+                          alt=""
+                          aria-hidden="true"
+                        />
+                      ) : (
+                        <span className={styles.avatar} aria-hidden="true">
+                          {initials(member.full_name)}
+                        </span>
+                      )}
                       <div>
                         <p className={styles.name}>
                           {member.full_name}

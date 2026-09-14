@@ -65,6 +65,13 @@ const agencyMemberExtras = {
   is_verified: true,
   last_active_at: null,
   admin_notes: null,
+  has_avatar: false,
+  avatar_version: null,
+  has_cover: false,
+  cover_version: null,
+  skills: [],
+  experience: [],
+  education: [],
 };
 
 const agencyMembers: AgencyMember[] = [

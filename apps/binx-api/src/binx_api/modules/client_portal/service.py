@@ -14,12 +14,12 @@ from fastapi import HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from binx_api.core.images import image_version as _image_version
 from binx_api.core.security import generate_opaque_token, hash_token
 from binx_api.modules.activity import service as activity_service
 from binx_api.modules.activity.models import CATEGORY_CLIENTS
 from binx_api.modules.agencies.models import Agency, AgencyClient
 from binx_api.modules.agencies.service import (
-    _image_version,
     get_or_create_agency_profile,
     get_or_create_client_branding,
 )

@@ -9,11 +9,19 @@ from __future__ import annotations
 import pytest
 
 from binx_api.modules.agencies.models import Agency
+from binx_api.modules.users import service as users_service
 from binx_api.modules.users.models import UserPrivacySettings
 from tests.conftest import auth_headers, extract_token
 from tests.factories import add_agency_member, make_user
 
 pytestmark = pytest.mark.e2e
+
+PNG = ("avatar.png", b"\x89PNG\r\n\x1a\nfake", "image/png")
+
+
+@pytest.fixture(autouse=True)
+def _isolated_upload_dir(tmp_path, monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(users_service.settings, "agency_upload_dir", str(tmp_path))
 
 
 async def _agency_with_member(client, owner, invitee, email_outbox, *, role="member"):
@@ -59,6 +67,34 @@ class TestMemberDetails:
         assert all(m["admin_notes"] is None for m in as_member)
 
 
+class TestSingleMemberAndAvatar:
+    async def test_read_one_member_and_view_their_avatar(self, client, user, other_user, email_outbox) -> None:
+        owner_headers = auth_headers(user)
+        agency_id = await _agency_with_member(client, user, other_user, email_outbox)
+
+        roster = (await client.get(f"/agencies/{agency_id}/members", headers=owner_headers)).json()
+        member_id = next(m["id"] for m in roster if m["email"] == other_user.email)
+
+        single = await client.get(f"/agencies/{agency_id}/members/{member_id}", headers=owner_headers)
+        assert single.status_code == 200
+        assert single.json()["id"] == member_id
+        assert single.json()["has_avatar"] is False
+
+        # No avatar yet — the proxy 404s for a teammate too.
+        no_avatar = await client.get(f"/agencies/{agency_id}/members/{member_id}/avatar", headers=owner_headers)
+        assert no_avatar.status_code == 404
+
+        # other_user uploads their own avatar through /users/me/avatar...
+        await client.put("/users/me/avatar", files={"file": PNG}, headers=auth_headers(other_user))
+
+        # ...and it now shows up both on the member list and the agency-scoped proxy.
+        refreshed = await client.get(f"/agencies/{agency_id}/members/{member_id}", headers=owner_headers)
+        assert refreshed.json()["has_avatar"] is True
+        avatar = await client.get(f"/agencies/{agency_id}/members/{member_id}/avatar", headers=owner_headers)
+        assert avatar.status_code == 200
+        assert avatar.headers["content-type"] == "image/png"
+
+
 class TestPrivacyGating:
     async def test_a_plain_member_does_not_see_a_private_teammates_phone(
         self, client, db_session, user, other_user, email_outbox
@@ -77,11 +113,15 @@ class TestPrivacyGating:
             UserPrivacySettings(user_id=private_user.id, profile_visibility="private", show_phone_to_team=True)
         )
         await db_session.commit()
+        await users_service.update_qualifications(
+            db_session, private_user, skills=["Secret skill"], experience=[], education=[]
+        )
 
         as_member = (await client.get(f"/agencies/{agency_id}/members", headers=auth_headers(other_user))).json()
         private_row = next(m for m in as_member if m["user_id"] == str(private_user.id))
         assert private_row["phone"] is None
         assert private_row["bio"] is None
+        assert private_row["skills"] == []
 
         # The owner administers the roster — still sees the email.
         as_owner = (await client.get(f"/agencies/{agency_id}/members", headers=auth_headers(user))).json()

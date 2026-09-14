@@ -13,6 +13,7 @@ from binx_api.core.email import (
     send_agency_invitation_email,
     send_client_invitation_email,
 )
+from binx_api.core.images import image_version
 from binx_api.modules.activity import models as activity_models
 from binx_api.modules.activity import service as activity_service
 from binx_api.modules.agencies import service
@@ -44,7 +45,9 @@ from binx_api.modules.client_portal.schemas import (
     ClientContactRead,
     ClientInvitationRead,
 )
-from binx_api.modules.users.models import User, UserPrivacySettings
+from binx_api.modules.users.models import User, UserPrivacySettings, UserProfile
+from binx_api.modules.users.schemas import EducationEntry, ExperienceEntry
+from binx_api.modules.users.service import profile_education, profile_experience, profile_skills
 
 router = APIRouter(prefix="/agencies", tags=["agencies"])
 
@@ -61,7 +64,7 @@ def _agency_read(agency: Agency, role: str, *, logo_storage_path: str | None = N
         slug=agency.slug,
         role=role,
         has_logo=logo_storage_path is not None,
-        logo_version=service._image_version(logo_storage_path),
+        logo_version=image_version(logo_storage_path),
     )
 
 
@@ -87,8 +90,8 @@ def _profile_read(profile: AgencyProfile) -> AgencyProfileRead:
         cancellation_policy=profile.cancellation_policy,
         has_logo=profile.logo_storage_path is not None,
         has_cover=profile.cover_storage_path is not None,
-        logo_version=service._image_version(profile.logo_storage_path),
-        cover_version=service._image_version(profile.cover_storage_path),
+        logo_version=image_version(profile.logo_storage_path),
+        cover_version=image_version(profile.cover_storage_path),
     )
 
 
@@ -99,17 +102,19 @@ def _client_branding_read(branding) -> ClientBrandingRead:
         accent_color=branding.accent_color,
         welcome_message=branding.welcome_message,
         has_logo=branding.logo_storage_path is not None,
-        logo_version=service._image_version(branding.logo_storage_path),
+        logo_version=image_version(branding.logo_storage_path),
     )
 
 
 _VISIBILITY_PRIVATE = "private"
 
 
-def _member_read(member, user, privacy, *, caller_is_admin: bool) -> AgencyMemberRead:
+def _member_read(member, user, privacy, profile, *, caller_is_admin: bool) -> AgencyMemberRead:
     """Privacy gating: a member row is trimmed to what the *member* chose to
     share with teammates — except owners/admins, who administer the roster and
-    always see the email + activity and the internal admin_notes."""
+    always see the email + activity and the internal admin_notes. `profile`
+    is None until the member has visited their own /profile pages (lazily
+    created) — treated the same as an empty profile."""
     is_private = privacy is not None and privacy.profile_visibility == _VISIBILITY_PRIVATE
     show_email = caller_is_admin or privacy is None or privacy.show_email_to_team
     show_phone = not is_private and privacy is not None and privacy.show_phone_to_team
@@ -128,6 +133,13 @@ def _member_read(member, user, privacy, *, caller_is_admin: bool) -> AgencyMembe
         title=member.title,
         phone=user.phone_number if show_phone else None,
         bio=user.summary if show_bio else None,
+        has_avatar=profile is not None and profile.avatar_storage_path is not None,
+        avatar_version=image_version(profile.avatar_storage_path) if profile else None,
+        has_cover=profile is not None and profile.cover_storage_path is not None,
+        cover_version=image_version(profile.cover_storage_path) if profile else None,
+        skills=profile_skills(profile) if show_bio and profile else [],
+        experience=[ExperienceEntry(**e) for e in profile_experience(profile)] if show_bio and profile else [],
+        education=[EducationEntry(**e) for e in profile_education(profile)] if show_bio and profile else [],
         is_verified=user.is_verified,
         last_active_at=user.last_login_at if show_activity else None,
         joined_at=member.created_at,
@@ -292,21 +304,51 @@ def _is_admin(role: str) -> bool:
 
 async def _reload_member_read(db: DbSession, member, *, caller_role: str) -> AgencyMemberRead:
     """Rebuild the read model for one membership after a mutation — re-fetches
-    the user + privacy row so the response matches what a list call returns."""
+    the user + privacy + profile rows so the response matches what a list
+    call returns."""
     result = await db.execute(
-        select(User, UserPrivacySettings)
+        select(User, UserPrivacySettings, UserProfile)
         .outerjoin(UserPrivacySettings, UserPrivacySettings.user_id == User.id)
+        .outerjoin(UserProfile, UserProfile.user_id == User.id)
         .where(User.id == member.user_id)
     )
-    user, privacy = result.one()
-    return _member_read(member, user, privacy, caller_is_admin=_is_admin(caller_role))
+    user, privacy, profile = result.one()
+    return _member_read(member, user, privacy, profile, caller_is_admin=_is_admin(caller_role))
 
 
 @router.get("/{agency_id}/members", response_model=list[AgencyMemberRead])
 async def list_members(db: DbSession, agency_and_role: AnyMember) -> list[AgencyMemberRead]:
     agency, role = agency_and_role
     rows = await service.list_agency_members(db, agency.id)
-    return [_member_read(member, user, privacy, caller_is_admin=_is_admin(role)) for member, user, privacy in rows]
+    return [
+        _member_read(member, user, privacy, profile, caller_is_admin=_is_admin(role))
+        for member, user, privacy, profile in rows
+    ]
+
+
+@router.get("/{agency_id}/members/{member_id}", response_model=AgencyMemberRead)
+async def read_member(db: DbSession, member_id: uuid.UUID, agency_and_role: AnyMember) -> AgencyMemberRead:
+    agency, role = agency_and_role
+    member, user, privacy, profile = await service.get_agency_member_with_user_or_404(db, agency.id, member_id)
+    return _member_read(member, user, privacy, profile, caller_is_admin=_is_admin(role))
+
+
+@router.get("/{agency_id}/members/{member_id}/avatar")
+async def download_member_avatar(db: DbSession, member_id: uuid.UUID, agency_and_role: AnyMember):
+    agency, _role = agency_and_role
+    member, _user, _privacy, profile = await service.get_agency_member_with_user_or_404(db, agency.id, member_id)
+    if profile is None or not profile.avatar_storage_path:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No avatar set")
+    return FileResponse(path=profile.avatar_storage_path, media_type=profile.avatar_mime_type or "image/png")
+
+
+@router.get("/{agency_id}/members/{member_id}/cover")
+async def download_member_cover(db: DbSession, member_id: uuid.UUID, agency_and_role: AnyMember):
+    agency, _role = agency_and_role
+    member, _user, _privacy, profile = await service.get_agency_member_with_user_or_404(db, agency.id, member_id)
+    if profile is None or not profile.cover_storage_path:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No cover set")
+    return FileResponse(path=profile.cover_storage_path, media_type=profile.cover_mime_type or "image/png")
 
 
 @router.patch("/{agency_id}/members/{member_id}", response_model=AgencyMemberRead)

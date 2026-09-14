@@ -6,6 +6,10 @@
  * the login page instead of ever reaching these routes. Also resolves which
  * agency the user is currently working in, since a user can belong to more
  * than one — a visitor with no agency yet is sent back into onboarding.
+ * Also sets --app-accent from the user's own appearance preference (see
+ * /profile/appearance), the same --portal-accent mechanism (portal)/layout.tsx
+ * uses for client-portal branding — a handful of SCSS files opt into it via
+ * `var(--app-accent, #{fallback})`.
  *
  * @module apps/binx-web/src/app/(app)/layout.tsx
  * @author Binx.io
@@ -20,6 +24,7 @@ import { getCurrentAgencyContext } from "@/lib/agencies";
 import { getUnreadMessageCount } from "@/lib/messaging";
 import { getNotifications } from "@/lib/notifications";
 import { getPortalContext } from "@/lib/portal";
+import { getAppearanceSettings } from "@/lib/users";
 import AppHeader from "@/components/navigation/AppHeader/AppHeader";
 
 import styles from "./layout.module.scss";
@@ -47,13 +52,17 @@ const AppLayout = async ({ children }: { children: React.ReactNode }) => {
     redirect(portal ? "/portal" : "/onboarding/two");
   }
 
-  const [unreadMessages, notifications] = await Promise.all([
+  const [unreadMessages, notifications, appearance] = await Promise.all([
     getUnreadMessageCount(currentAgency.id),
     getNotifications({ limit: 8 }).catch(() => ({ items: [], unread_count: 0, has_more: false })),
+    getAppearanceSettings().catch(() => ({ accent_color: null })),
   ]);
 
   return (
-    <div className={styles.root}>
+    <div
+      className={styles.root}
+      style={{ "--app-accent": appearance.accent_color ?? undefined } as React.CSSProperties}
+    >
       <AppHeader
         user={user}
         agencies={agencies}

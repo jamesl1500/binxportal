@@ -30,7 +30,8 @@
   &[data-active="true"] {
     font-weight: 600;
     color: t.$color-ink;
-    border-bottom-color: t.$color-ink;
+    // Personal accent-color preference — see --app-accent in (app)/layout.tsx.
+    border-bottom-color: var(--app-accent, #{t.$color-ink});
   }
 
   &:focus-visible {

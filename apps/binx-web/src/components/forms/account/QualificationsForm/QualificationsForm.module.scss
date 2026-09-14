@@ -1,0 +1,60 @@
+@use "../../../../styles/tokens" as t;
+@use "../../../../styles/mixins" as m;
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-8;
+  max-width: 40rem;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-ink;
+}
+
+.sectionSubtitle {
+  margin: -#{t.$space-2} 0 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+}
+
+.formError {
+  margin: 0;
+  padding: t.$space-3;
+  font-size: t.$font-size-sm;
+  color: t.$color-danger;
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-radius: t.$radius-sm;
+}
+
+.formSuccess {
+  margin: 0;
+  padding: t.$space-3;
+  font-size: t.$font-size-sm;
+  color: #15803d;
+  background: rgba(21, 128, 61, 0.08);
+  border: 1px solid rgba(21, 128, 61, 0.2);
+  border-radius: t.$radius-sm;
+}
+
+.submit {
+  @include m.button-base;
+  align-self: flex-start;
+  // Personal accent-color preference — see --app-accent in (app)/layout.tsx.
+  background: var(--app-accent, #{t.$color-accent});
+  color: t.$color-accent-foreground;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--app-accent, #{t.$color-accent}) 85%, white);
+  }
+}

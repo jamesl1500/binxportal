@@ -1,0 +1,46 @@
+@use "../../../../styles/tokens" as t;
+@use "../../../../styles/mixins" as m;
+
+.eyebrow {
+  display: block;
+  margin-bottom: t.$space-2;
+  @include m.mono-label;
+  color: t.$color-ink-soft;
+}
+
+.title {
+  margin: 0 0 t.$space-6;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-2xl;
+  color: t.$color-ink;
+}
+
+.topRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: t.$space-4;
+  margin-bottom: t.$space-6;
+}
+
+.backLink {
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+  text-decoration: none;
+
+  &:hover {
+    color: t.$color-ink;
+    text-decoration: underline;
+  }
+}
+
+.manageLink {
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  color: var(--app-accent, #{t.$color-accent});
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}

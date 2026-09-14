@@ -18,6 +18,7 @@ import { api } from "@/lib/api";
 import type { Schemas } from "@/lib/api-types";
 import { AuthApiError, extractDetailMessage, getAccessToken } from "@/lib/auth";
 import { agencyImageUrl, type AgencyImageKind } from "@/lib/agencies-client";
+import type { EducationEntry, ExperienceEntry } from "@/lib/users";
 
 export { agencyImageUrl };
 export type { AgencyImageKind };
@@ -320,7 +321,11 @@ export async function deleteAgencyImage(agencyId: string, kind: AgencyImageKind)
 
 // ---- Members ----
 
-export type AgencyMember = Omit<Schemas["AgencyMemberRead"], "role"> & { role: AgencyRole };
+export type AgencyMember = Omit<Schemas["AgencyMemberRead"], "role" | "experience" | "education"> & {
+  role: AgencyRole;
+  experience: ExperienceEntry[];
+  education: EducationEntry[];
+};
 
 /**
  * getAgencyMembers
@@ -341,6 +346,29 @@ export async function getAgencyMembers(agencyId: string): Promise<AgencyMember[]
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new AuthApiError(extractDetailMessage(error.response.data, "Unable to load members"), error.response.status);
+    }
+    throw error;
+  }
+}
+
+/**
+ * getAgencyMember
+ *
+ * Fetches one member via `GET /agencies/{agencyId}/members/{memberId}` —
+ * used by the teammate profile page so it doesn't need the whole roster.
+ *
+ * @function getAgencyMember
+ * @throws {AuthApiError} - Thrown if not authenticated, the caller isn't a member of this agency, or the member doesn't exist.
+ */
+export async function getAgencyMember(agencyId: string, memberId: string): Promise<AgencyMember> {
+  const headers = await authHeader();
+
+  try {
+    const { data } = await api.get<AgencyMember>(`/agencies/${agencyId}/members/${memberId}`, { headers });
+    return data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new AuthApiError(extractDetailMessage(error.response.data, "Unable to load this member"), error.response.status);
     }
     throw error;
   }

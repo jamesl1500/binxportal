@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String, Uuid, text
+from sqlalchemy import DateTime, ForeignKey, String, Text, Uuid, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from binx_api.core.database import Base
@@ -99,3 +99,38 @@ class UserPrivacySettings(Base):
     show_phone_to_team: Mapped[bool] = mapped_column(default=False)
     activity_status_visible: Mapped[bool] = mapped_column(default=True)
     analytics_opt_out: Mapped[bool] = mapped_column(default=False)
+
+
+# A user's photos + qualifications — the "who are you" content shown on their
+# teammate-facing profile page, as opposed to the account-identity fields
+# (full_name, job_title, ...) that live directly on User. Created lazily on
+# first access, same as UserNotificationSettings/UserPrivacySettings.
+class UserProfile(Base):
+    __tablename__ = "user_profiles"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), unique=True, index=True)
+
+    avatar_storage_path: Mapped[str | None] = mapped_column(String(500), default=None)
+    avatar_mime_type: Mapped[str | None] = mapped_column(String(100), default=None)
+    cover_storage_path: Mapped[str | None] = mapped_column(String(500), default=None)
+    cover_mime_type: Mapped[str | None] = mapped_column(String(100), default=None)
+
+    # JSON list[str] — same "Text column, JSON-encoded" convention as
+    # Lead.ai_talking_points (see leads/models.py).
+    skills: Mapped[str | None] = mapped_column(Text, default=None)
+    # JSON list of {id, title, organization, start_year, end_year (null = present), description}
+    experience: Mapped[str | None] = mapped_column(Text, default=None)
+    # JSON list of {id, school, degree, field_of_study, start_year, end_year, description}
+    education: Mapped[str | None] = mapped_column(Text, default=None)
+
+
+# A user's personal appearance preference for their own view of the staff
+# portal. Created lazily on first access, same as the settings tables above.
+class UserAppearanceSettings(Base):
+    __tablename__ = "user_appearance_settings"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), unique=True, index=True)
+
+    accent_color: Mapped[str | None] = mapped_column(String(7), default=None)

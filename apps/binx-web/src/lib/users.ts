@@ -13,6 +13,7 @@ import axios from "axios";
 import { api } from "@/lib/api";
 import type { Schemas } from "@/lib/api-types";
 import { AuthApiError, CurrentUser, extractDetailMessage, getAccessToken } from "@/lib/auth";
+import type { UserImageKind } from "@/lib/users-client";
 
 export interface UpdateProfileInput {
   fullName?: string | null;
@@ -189,6 +190,223 @@ export async function updatePrivacySettings(settings: PrivacySettings): Promise<
     if (axios.isAxiosError(error) && error.response) {
       throw new AuthApiError(
         extractDetailMessage(error.response.data, "Unable to update privacy settings"),
+        error.response.status,
+      );
+    }
+    throw error;
+  }
+}
+
+// ---- Profile: photos + qualifications ----------------------------------
+
+// binx-api's response always populates every field (pydantic's "has a
+// default" just means optional on *input*), so narrow the generated
+// optional-with-default fields to always-present-but-nullable — same
+// narrowing PrivacySettings below does for profile_visibility.
+export type ExperienceEntry = Omit<Schemas["ExperienceEntry"], "end_year" | "description"> & {
+  end_year: number | null;
+  description: string | null;
+};
+export type EducationEntry = Omit<
+  Schemas["EducationEntry"],
+  "start_year" | "end_year" | "field_of_study" | "description"
+> & {
+  start_year: number | null;
+  end_year: number | null;
+  field_of_study: string | null;
+  description: string | null;
+};
+
+/**
+ * UserProfileData
+ *
+ * Photos + qualifications for the signed-in user's own /profile pages, as
+ * returned by binx-api.
+ *
+ * @interface UserProfileData
+ */
+export type UserProfileData = Omit<Schemas["UserProfileRead"], "experience" | "education"> & {
+  experience: ExperienceEntry[];
+  education: EducationEntry[];
+};
+
+export interface QualificationsInput {
+  skills: string[];
+  experience: ExperienceEntry[];
+  education: EducationEntry[];
+}
+
+/**
+ * getUserProfile
+ *
+ * Fetches the signed-in user's photos + qualifications via
+ * `GET /users/me/profile`. binx-api creates a default row on first access,
+ * so this always resolves rather than 404ing for new users.
+ *
+ * @function getUserProfile
+ * @throws {AuthApiError} - Thrown if not authenticated.
+ */
+export async function getUserProfile(): Promise<UserProfileData> {
+  const headers = await authHeader();
+
+  try {
+    const { data } = await api.get<UserProfileData>("/users/me/profile", { headers });
+    return data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new AuthApiError(
+        extractDetailMessage(error.response.data, "Unable to load your profile"),
+        error.response.status,
+      );
+    }
+    throw error;
+  }
+}
+
+/**
+ * updateQualifications
+ *
+ * Replaces the signed-in user's skills, experience, and education together
+ * via `PATCH /users/me/qualifications` — the qualifications form always
+ * submits its whole state at once, same as updateNotificationSettings.
+ *
+ * @function updateQualifications
+ * @throws {AuthApiError} - Thrown if not authenticated, or binx-api rejects the update.
+ */
+export async function updateQualifications(input: QualificationsInput): Promise<UserProfileData> {
+  const headers = await authHeader();
+
+  try {
+    const { data } = await api.patch<UserProfileData>(
+      "/users/me/qualifications",
+      { skills: input.skills, experience: input.experience, education: input.education },
+      { headers },
+    );
+    return data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new AuthApiError(
+        extractDetailMessage(error.response.data, "Unable to save your skills and experience"),
+        error.response.status,
+      );
+    }
+    throw error;
+  }
+}
+
+/**
+ * uploadUserImage
+ *
+ * Uploads the signed-in user's avatar or cover via `PUT /users/me/{kind}`
+ * (multipart/form-data) — same shape as agencies.ts's uploadAgencyImage.
+ * binx-api rejects non-images and anything over its size cap.
+ *
+ * @function uploadUserImage
+ * @throws {AuthApiError} - Thrown if not authenticated, the type isn't allowed, or it's too large.
+ */
+export async function uploadUserImage(kind: UserImageKind, file: File): Promise<UserProfileData> {
+  const headers = await authHeader();
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    // Delete the inherited `Content-Type: application/json` so axios sets
+    // its own multipart boundary.
+    const { data } = await api.put<UserProfileData>(`/users/me/${kind}`, formData, {
+      headers: { ...headers, "Content-Type": undefined },
+    });
+    return data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new AuthApiError(extractDetailMessage(error.response.data, "Unable to upload image"), error.response.status);
+    }
+    throw error;
+  }
+}
+
+/**
+ * removeUserImage
+ *
+ * Clears the signed-in user's avatar or cover via `DELETE /users/me/{kind}`.
+ *
+ * @function removeUserImage
+ * @throws {AuthApiError} - Thrown if not authenticated.
+ */
+export async function removeUserImage(kind: UserImageKind): Promise<UserProfileData> {
+  const headers = await authHeader();
+
+  try {
+    const { data } = await api.delete<UserProfileData>(`/users/me/${kind}`, { headers });
+    return data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new AuthApiError(extractDetailMessage(error.response.data, "Unable to remove image"), error.response.status);
+    }
+    throw error;
+  }
+}
+
+// ---- Appearance ----------------------------------------------------------
+
+/**
+ * AppearanceSettings
+ *
+ * The signed-in user's personal appearance preference for their own view of
+ * the staff portal, as returned by binx-api.
+ *
+ * @interface AppearanceSettings
+ */
+export type AppearanceSettings = Schemas["AppearanceSettingsRead"];
+
+/**
+ * getAppearanceSettings
+ *
+ * Fetches the signed-in user's appearance settings via
+ * `GET /users/me/appearance`. binx-api creates a default row on first
+ * access, so this always resolves rather than 404ing for new users.
+ *
+ * @function getAppearanceSettings
+ * @throws {AuthApiError} - Thrown if not authenticated.
+ */
+export async function getAppearanceSettings(): Promise<AppearanceSettings> {
+  const headers = await authHeader();
+
+  try {
+    const { data } = await api.get<AppearanceSettings>("/users/me/appearance", { headers });
+    return data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new AuthApiError(
+        extractDetailMessage(error.response.data, "Unable to load appearance settings"),
+        error.response.status,
+      );
+    }
+    throw error;
+  }
+}
+
+/**
+ * updateAppearanceSettings
+ *
+ * Replaces the signed-in user's accent color via `PUT /users/me/appearance`.
+ *
+ * @function updateAppearanceSettings
+ * @throws {AuthApiError} - Thrown if not authenticated, or binx-api rejects the update.
+ */
+export async function updateAppearanceSettings(accentColor: string | null): Promise<AppearanceSettings> {
+  const headers = await authHeader();
+
+  try {
+    const { data } = await api.put<AppearanceSettings>(
+      "/users/me/appearance",
+      { accent_color: accentColor },
+      { headers },
+    );
+    return data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new AuthApiError(
+        extractDetailMessage(error.response.data, "Unable to update appearance settings"),
         error.response.status,
       );
     }

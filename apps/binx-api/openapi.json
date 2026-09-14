@@ -629,6 +629,17 @@
             "title": "Agency Id",
             "type": "string"
           },
+          "avatar_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Version"
+          },
           "bio": {
             "anyOf": [
               {
@@ -639,6 +650,24 @@
               }
             ],
             "title": "Bio"
+          },
+          "cover_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cover Version"
+          },
+          "education": {
+            "items": {
+              "$ref": "#/components/schemas/EducationEntry"
+            },
+            "title": "Education",
+            "type": "array"
           },
           "email": {
             "anyOf": [
@@ -652,9 +681,24 @@
             ],
             "title": "Email"
           },
+          "experience": {
+            "items": {
+              "$ref": "#/components/schemas/ExperienceEntry"
+            },
+            "title": "Experience",
+            "type": "array"
+          },
           "full_name": {
             "title": "Full Name",
             "type": "string"
+          },
+          "has_avatar": {
+            "title": "Has Avatar",
+            "type": "boolean"
+          },
+          "has_cover": {
+            "title": "Has Cover",
+            "type": "boolean"
           },
           "id": {
             "format": "uuid",
@@ -708,6 +752,13 @@
             "title": "Role",
             "type": "string"
           },
+          "skills": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Skills",
+            "type": "array"
+          },
           "title": {
             "anyOf": [
               {
@@ -741,6 +792,13 @@
           "title",
           "phone",
           "bio",
+          "has_avatar",
+          "avatar_version",
+          "has_cover",
+          "cover_version",
+          "skills",
+          "experience",
+          "education",
           "is_verified",
           "last_active_at",
           "joined_at",
@@ -1661,6 +1719,44 @@
         "title": "AiUsageSummaryRead",
         "type": "object"
       },
+      "AppearanceSettingsRead": {
+        "properties": {
+          "accent_color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accent Color"
+          }
+        },
+        "required": [
+          "accent_color"
+        ],
+        "title": "AppearanceSettingsRead",
+        "type": "object"
+      },
+      "AppearanceSettingsUpdate": {
+        "properties": {
+          "accent_color": {
+            "anyOf": [
+              {
+                "pattern": "^#[0-9a-fA-F]{6}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accent Color"
+          }
+        },
+        "title": "AppearanceSettingsUpdate",
+        "type": "object"
+      },
       "BillingPortalRequest": {
         "properties": {
           "target_plan": {
@@ -2418,6 +2514,20 @@
         "title": "Body_post_message_portal_conversations__conversation_id__messages_post",
         "type": "object"
       },
+      "Body_upload_avatar_users_me_avatar_put": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_avatar_users_me_avatar_put",
+        "type": "object"
+      },
       "Body_upload_board_image_portal_projects__project_id__canvas_images_post": {
         "properties": {
           "file": {
@@ -2458,6 +2568,20 @@
           "file"
         ],
         "title": "Body_upload_cover_agencies__agency_id__cover_put",
+        "type": "object"
+      },
+      "Body_upload_cover_users_me_cover_put": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_cover_users_me_cover_put",
         "type": "object"
       },
       "Body_upload_image_agencies__agency_id__projects__project_id__canvas_images_post": {
@@ -3386,6 +3510,85 @@
         "title": "DeleteAccountRequest",
         "type": "object"
       },
+      "EducationEntry": {
+        "properties": {
+          "degree": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Degree",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 1024,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "end_year": {
+            "anyOf": [
+              {
+                "maximum": 2100.0,
+                "minimum": 1900.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Year"
+          },
+          "field_of_study": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Field Of Study"
+          },
+          "id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "school": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "School",
+            "type": "string"
+          },
+          "start_year": {
+            "anyOf": [
+              {
+                "maximum": 2100.0,
+                "minimum": 1900.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Year"
+          }
+        },
+        "required": [
+          "id",
+          "school",
+          "degree"
+        ],
+        "title": "EducationEntry",
+        "type": "object"
+      },
       "EmailChangeTokenInfo": {
         "properties": {
           "new_email": {
@@ -3398,6 +3601,67 @@
           "new_email"
         ],
         "title": "EmailChangeTokenInfo",
+        "type": "object"
+      },
+      "ExperienceEntry": {
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 1024,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "end_year": {
+            "anyOf": [
+              {
+                "maximum": 2100.0,
+                "minimum": 1900.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Year"
+          },
+          "id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "organization": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Organization",
+            "type": "string"
+          },
+          "start_year": {
+            "maximum": 2100.0,
+            "minimum": 1900.0,
+            "title": "Start Year",
+            "type": "integer"
+          },
+          "title": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "organization",
+          "start_year"
+        ],
+        "title": "ExperienceEntry",
         "type": "object"
       },
       "ForgotPasswordRequest": {
@@ -7099,6 +7363,39 @@
         "title": "ProspectRead",
         "type": "object"
       },
+      "QualificationsUpdate": {
+        "description": "Full replace of all three together \u2014 the qualifications form always\nsubmits its whole state at once, same as NotificationSettingsUpdate.",
+        "properties": {
+          "education": {
+            "items": {
+              "$ref": "#/components/schemas/EducationEntry"
+            },
+            "maxItems": 20,
+            "title": "Education",
+            "type": "array"
+          },
+          "experience": {
+            "items": {
+              "$ref": "#/components/schemas/ExperienceEntry"
+            },
+            "maxItems": 20,
+            "title": "Experience",
+            "type": "array"
+          },
+          "skills": {
+            "items": {
+              "maxLength": 50,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 40,
+            "title": "Skills",
+            "type": "array"
+          }
+        },
+        "title": "QualificationsUpdate",
+        "type": "object"
+      },
       "RefreshRequest": {
         "properties": {
           "refresh_token": {
@@ -7883,6 +8180,73 @@
           "unread_total"
         ],
         "title": "UnreadSummaryRead",
+        "type": "object"
+      },
+      "UserProfileRead": {
+        "description": "Photos + qualifications for the current user's own /profile pages.\nStorage paths are never exposed \u2014 the frontend fetches the bytes through\nGET /users/me/avatar (proxied), same convention as AgencyProfileRead.",
+        "properties": {
+          "avatar_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Version"
+          },
+          "cover_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cover Version"
+          },
+          "education": {
+            "items": {
+              "$ref": "#/components/schemas/EducationEntry"
+            },
+            "title": "Education",
+            "type": "array"
+          },
+          "experience": {
+            "items": {
+              "$ref": "#/components/schemas/ExperienceEntry"
+            },
+            "title": "Experience",
+            "type": "array"
+          },
+          "has_avatar": {
+            "title": "Has Avatar",
+            "type": "boolean"
+          },
+          "has_cover": {
+            "title": "Has Cover",
+            "type": "boolean"
+          },
+          "skills": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Skills",
+            "type": "array"
+          }
+        },
+        "required": [
+          "has_avatar",
+          "avatar_version",
+          "has_cover",
+          "cover_version",
+          "skills",
+          "experience",
+          "education"
+        ],
+        "title": "UserProfileRead",
         "type": "object"
       },
       "UserProfileUpdate": {
@@ -13757,6 +14121,62 @@
           "agencies"
         ]
       },
+      "get": {
+        "operationId": "read_member_agencies__agency_id__members__member_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "member_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Member Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgencyMemberRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Read Member",
+        "tags": [
+          "agencies"
+        ]
+      },
       "patch": {
         "operationId": "update_member_role_agencies__agency_id__members__member_id__patch",
         "parameters": [
@@ -13819,6 +14239,118 @@
           }
         ],
         "summary": "Update Member Role",
+        "tags": [
+          "agencies"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/members/{member_id}/avatar": {
+      "get": {
+        "operationId": "download_member_avatar_agencies__agency_id__members__member_id__avatar_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "member_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Member Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Download Member Avatar",
+        "tags": [
+          "agencies"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/members/{member_id}/cover": {
+      "get": {
+        "operationId": "download_member_cover_agencies__agency_id__members__member_id__cover_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "member_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Member Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Download Member Cover",
         "tags": [
           "agencies"
         ]
@@ -19974,6 +20506,260 @@
         ]
       }
     },
+    "/users/me/appearance": {
+      "get": {
+        "operationId": "read_appearance_settings_users_me_appearance_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppearanceSettingsRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Read Appearance Settings",
+        "tags": [
+          "users"
+        ]
+      },
+      "put": {
+        "operationId": "write_appearance_settings_users_me_appearance_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppearanceSettingsUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppearanceSettingsRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Write Appearance Settings",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/users/me/avatar": {
+      "delete": {
+        "operationId": "delete_avatar_users_me_avatar_delete",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfileRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Avatar",
+        "tags": [
+          "users"
+        ]
+      },
+      "get": {
+        "operationId": "download_avatar_users_me_avatar_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Download Avatar",
+        "tags": [
+          "users"
+        ]
+      },
+      "put": {
+        "operationId": "upload_avatar_users_me_avatar_put",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_avatar_users_me_avatar_put"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfileRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Upload Avatar",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/users/me/cover": {
+      "delete": {
+        "operationId": "delete_cover_users_me_cover_delete",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfileRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Cover",
+        "tags": [
+          "users"
+        ]
+      },
+      "get": {
+        "operationId": "download_cover_users_me_cover_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Download Cover",
+        "tags": [
+          "users"
+        ]
+      },
+      "put": {
+        "operationId": "upload_cover_users_me_cover_put",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_cover_users_me_cover_put"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfileRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Upload Cover",
+        "tags": [
+          "users"
+        ]
+      }
+    },
     "/users/me/notification-settings": {
       "get": {
         "operationId": "read_notification_settings_users_me_notification_settings_get",
@@ -20155,6 +20941,78 @@
           }
         ],
         "summary": "Write Privacy Settings",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/users/me/profile": {
+      "get": {
+        "operationId": "read_profile_users_me_profile_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfileRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Read Profile",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/users/me/qualifications": {
+      "patch": {
+        "operationId": "write_qualifications_users_me_qualifications_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QualificationsUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfileRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Write Qualifications",
         "tags": [
           "users"
         ]

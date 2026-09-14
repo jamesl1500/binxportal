@@ -1,0 +1,239 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.wrapper {
+  max-width: 40rem;
+}
+
+.cover {
+  position: relative;
+  height: 10rem;
+  // Pulls .identity up so the name + handle both land inside the cover's
+  // box (measured: with this much overlap they sit at roughly the 55-100%
+  // mark of the cover's height) — verified against real rendered layout,
+  // not just eyeballed, so the darkened band below actually sits behind them.
+  margin-bottom: -4.5rem;
+  overflow: hidden;
+  // Fallback gradient when there's no cover image — overridden by the
+  // inline style="background-image: url(...)" the component sets when
+  // member.has_cover is true (inline styles win over the class rule below).
+  background-color: t.$color-paper;
+  background-image: linear-gradient(135deg, t.$color-paper, t.$color-border);
+  background-position: center;
+  background-size: cover;
+  border-radius: t.$radius-md;
+}
+
+// A cover photo can be any color — this scrim over its bottom half (where
+// the name/handle sit, per the negative margin above) guarantees they stay
+// readable regardless of what's in the photo. Flat (not fading back out) for
+// the last stretch so the whole name+handle band gets even contrast.
+.coverOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 25%,
+    rgba(0, 0, 0, 0.72) 50%,
+    rgba(0, 0, 0, 0.72) 100%
+  );
+  pointer-events: none;
+}
+
+.identity {
+  // A positioned element always paints above a non-positioned one,
+  // regardless of DOM order — since .cover became `position: relative` for
+  // its overlay, .identity needs its own position too, or it would render
+  // *behind* the cover instead of overlapping in front of it as intended.
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: t.$space-4;
+  padding: 0 t.$space-4;
+
+  // The name/handle sit over the cover's overlaid bottom edge — switch them
+  // to light text so they stay readable over a photo of any color. The role
+  // badge isn't included: it sits below the cover, on the plain page
+  // background, and already has its own solid pill background.
+  &[data-has-cover="true"] {
+    .name {
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+    }
+
+    .youBadge {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .handle {
+      color: rgba(255, 255, 255, 0.9);
+    }
+  }
+}
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 6rem;
+  height: 6rem;
+  flex-shrink: 0;
+  font-size: t.$font-size-xl;
+  font-weight: 600;
+  color: t.$color-accent-foreground;
+  background: t.$color-accent;
+  border: 3px solid t.$color-paper;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.identityText {
+  padding-bottom: t.$space-2;
+}
+
+.name {
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+  margin: 0 0 t.$space-1;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-2xl;
+  color: t.$color-ink;
+}
+
+.youBadge {
+  padding: 0.125rem t.$space-2;
+  @include m.mono-label;
+  letter-spacing: normal;
+  color: t.$color-ink-soft;
+  background: t.$color-paper;
+  border-radius: t.$radius-sm;
+}
+
+.verified {
+  color: #15803d;
+}
+
+.handle {
+  margin: 0 0 t.$space-2;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+}
+
+.roleBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: t.$space-1 t.$space-3;
+  @include m.mono-label;
+  color: t.$color-ink-faint;
+  background: t.$color-paper;
+  border-radius: t.$radius-sm;
+
+  &[data-role="owner"] {
+    color: #b45309;
+    background: rgba(180, 83, 9, 0.08);
+  }
+
+  &[data-role="admin"] {
+    color: #1d4ed8;
+    background: rgba(29, 78, 216, 0.08);
+  }
+}
+
+.bio {
+  margin: t.$space-6 t.$space-4 0;
+  font-size: t.$font-size-sm;
+  line-height: 1.6;
+  color: t.$color-ink;
+}
+
+.section {
+  margin: t.$space-8 t.$space-4 0;
+  padding-top: t.$space-6;
+  border-top: 1px solid t.$color-border;
+}
+
+.sectionTitle {
+  margin: 0 0 t.$space-3;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-ink;
+}
+
+.skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-2;
+}
+
+.skillChip {
+  display: inline-flex;
+  align-items: center;
+  padding: t.$space-1 t.$space-3;
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  color: t.$color-ink;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-4;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.timelineItem {
+  padding-left: t.$space-4;
+  border-left: 2px solid t.$color-border;
+}
+
+.timelineTitle {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  color: t.$color-ink;
+}
+
+.timelineSubtitle {
+  margin: 0.125rem 0 0;
+  @include m.mono-label;
+  letter-spacing: normal;
+  color: t.$color-ink-soft;
+}
+
+.timelineDescription {
+  margin: t.$space-2 0 0;
+  font-size: t.$font-size-sm;
+  line-height: 1.6;
+  color: t.$color-ink-soft;
+}
+
+.metaList {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: t.$space-4;
+  margin: 0;
+}
+
+.metaItem {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-1;
+}
+
+.metaLabel {
+  @include m.mono-label;
+  color: t.$color-ink-faint;
+}
+
+.metaValue {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+}

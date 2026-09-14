@@ -1,0 +1,119 @@
+@use "../../../../styles/tokens" as t;
+@use "../../../../styles/mixins" as m;
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+  padding: t.$space-4;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: t.$space-3;
+
+  @media (max-width: 32rem) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-1;
+}
+
+.label {
+  @include m.mono-label;
+  color: t.$color-ink-soft;
+}
+
+.input,
+.textarea {
+  @include m.input-base;
+  padding: t.$space-2 t.$space-3;
+  font-size: t.$font-size-sm;
+
+  &:disabled {
+    color: t.$color-ink-faint;
+    background: t.$color-paper;
+  }
+}
+
+.textarea {
+  resize: vertical;
+  font-family: inherit;
+}
+
+.endYearRow {
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+}
+
+.presentToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-1;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+  white-space: nowrap;
+}
+
+.remove {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-1;
+  align-self: flex-start;
+  padding: t.$space-1 t.$space-2;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+  background: none;
+  border: none;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  svg {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+
+  &:hover {
+    color: t.$color-danger;
+    background: rgba(220, 38, 38, 0.08);
+  }
+}
+
+.addButton {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-1;
+  align-self: flex-start;
+  padding: t.$space-2 t.$space-3;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+  background: none;
+  border: 1px dashed t.$color-border;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  svg {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+
+  &:hover {
+    color: t.$color-ink;
+    background: rgba(10, 10, 11, 0.04);
+  }
+}

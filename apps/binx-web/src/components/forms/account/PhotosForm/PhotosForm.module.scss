@@ -1,0 +1,8 @@
+@use "../../../../styles/tokens" as t;
+
+.wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-8;
+  max-width: 40rem;
+}

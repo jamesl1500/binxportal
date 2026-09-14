@@ -79,10 +79,11 @@
 .submit {
   @include m.button-base;
   align-self: flex-start;
-  background: t.$color-accent;
+  // Personal accent-color preference — see --app-accent in (app)/layout.tsx.
+  background: var(--app-accent, #{t.$color-accent});
   color: t.$color-accent-foreground;
 
   &:hover:not(:disabled) {
-    background: color-mix(in srgb, t.$color-accent 85%, white);
+    background: color-mix(in srgb, var(--app-accent, #{t.$color-accent}) 85%, white);
   }
 }

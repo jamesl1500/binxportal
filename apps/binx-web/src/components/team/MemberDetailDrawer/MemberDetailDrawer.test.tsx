@@ -34,6 +34,13 @@ function member(overrides: Partial<AgencyMember> = {}): AgencyMember {
     last_active_at: "2026-08-01T00:00:00Z",
     joined_at: "2026-01-01T00:00:00Z",
     admin_notes: null,
+    has_avatar: false,
+    avatar_version: null,
+    has_cover: false,
+    cover_version: null,
+    skills: [],
+    experience: [],
+    education: [],
     ...overrides,
   };
 }

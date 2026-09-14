@@ -1142,7 +1142,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** Read Member */
+        get: operations["read_member_agencies__agency_id__members__member_id__get"];
         put?: never;
         post?: never;
         /** Remove Member */
@@ -1151,6 +1152,40 @@ export interface paths {
         head?: never;
         /** Update Member Role */
         patch: operations["update_member_role_agencies__agency_id__members__member_id__patch"];
+        trace?: never;
+    };
+    "/agencies/{agency_id}/members/{member_id}/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download Member Avatar */
+        get: operations["download_member_avatar_agencies__agency_id__members__member_id__avatar_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/members/{member_id}/cover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download Member Cover */
+        get: operations["download_member_cover_agencies__agency_id__members__member_id__cover_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/agencies/{agency_id}/members/{member_id}/details": {
@@ -2601,6 +2636,62 @@ export interface paths {
         patch: operations["update_current_user_users_me_patch"];
         trace?: never;
     };
+    "/users/me/appearance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Appearance Settings */
+        get: operations["read_appearance_settings_users_me_appearance_get"];
+        /** Write Appearance Settings */
+        put: operations["write_appearance_settings_users_me_appearance_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/me/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download Avatar */
+        get: operations["download_avatar_users_me_avatar_get"];
+        /** Upload Avatar */
+        put: operations["upload_avatar_users_me_avatar_put"];
+        post?: never;
+        /** Delete Avatar */
+        delete: operations["delete_avatar_users_me_avatar_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/me/cover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download Cover */
+        get: operations["download_cover_users_me_cover_get"];
+        /** Upload Cover */
+        put: operations["upload_cover_users_me_cover_put"];
+        post?: never;
+        /** Delete Cover */
+        delete: operations["delete_cover_users_me_cover_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/users/me/notification-settings": {
         parameters: {
             query?: never;
@@ -2652,6 +2743,40 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/users/me/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Profile */
+        get: operations["read_profile_users_me_profile_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/me/qualifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Write Qualifications */
+        patch: operations["write_qualifications_users_me_qualifications_patch"];
         trace?: never;
     };
     "/webhooks/stripe/connect": {
@@ -2918,12 +3043,24 @@ export interface components {
              * Format: uuid
              */
             agency_id: string;
+            /** Avatar Version */
+            avatar_version: string | null;
             /** Bio */
             bio: string | null;
+            /** Cover Version */
+            cover_version: string | null;
+            /** Education */
+            education: components["schemas"]["EducationEntry"][];
             /** Email */
             email: string | null;
+            /** Experience */
+            experience: components["schemas"]["ExperienceEntry"][];
             /** Full Name */
             full_name: string;
+            /** Has Avatar */
+            has_avatar: boolean;
+            /** Has Cover */
+            has_cover: boolean;
             /**
              * Id
              * Format: uuid
@@ -2944,6 +3081,8 @@ export interface components {
             phone: string | null;
             /** Role */
             role: string;
+            /** Skills */
+            skills: string[];
             /** Title */
             title: string | null;
             /**
@@ -3219,6 +3358,16 @@ export interface components {
             /** Today Request Count */
             today_request_count: number;
         };
+        /** AppearanceSettingsRead */
+        AppearanceSettingsRead: {
+            /** Accent Color */
+            accent_color: string | null;
+        };
+        /** AppearanceSettingsUpdate */
+        AppearanceSettingsUpdate: {
+            /** Accent Color */
+            accent_color?: string | null;
+        };
         /** BillingPortalRequest */
         BillingPortalRequest: {
             /** Target Plan */
@@ -3477,6 +3626,11 @@ export interface components {
             /** Files */
             files?: string[] | null;
         };
+        /** Body_upload_avatar_users_me_avatar_put */
+        Body_upload_avatar_users_me_avatar_put: {
+            /** File */
+            file: string;
+        };
         /** Body_upload_board_image_portal_projects__project_id__canvas_images_post */
         Body_upload_board_image_portal_projects__project_id__canvas_images_post: {
             /** File */
@@ -3489,6 +3643,11 @@ export interface components {
         };
         /** Body_upload_cover_agencies__agency_id__cover_put */
         Body_upload_cover_agencies__agency_id__cover_put: {
+            /** File */
+            file: string;
+        };
+        /** Body_upload_cover_users_me_cover_put */
+        Body_upload_cover_users_me_cover_put: {
             /** File */
             file: string;
         };
@@ -3827,6 +3986,23 @@ export interface components {
             /** Current Password */
             current_password: string;
         };
+        /** EducationEntry */
+        EducationEntry: {
+            /** Degree */
+            degree: string;
+            /** Description */
+            description?: string | null;
+            /** End Year */
+            end_year?: number | null;
+            /** Field Of Study */
+            field_of_study?: string | null;
+            /** Id */
+            id: string;
+            /** School */
+            school: string;
+            /** Start Year */
+            start_year?: number | null;
+        };
         /** EmailChangeTokenInfo */
         EmailChangeTokenInfo: {
             /**
@@ -3834,6 +4010,21 @@ export interface components {
              * Format: email
              */
             new_email: string;
+        };
+        /** ExperienceEntry */
+        ExperienceEntry: {
+            /** Description */
+            description?: string | null;
+            /** End Year */
+            end_year?: number | null;
+            /** Id */
+            id: string;
+            /** Organization */
+            organization: string;
+            /** Start Year */
+            start_year: number;
+            /** Title */
+            title: string;
         };
         /** ForgotPasswordRequest */
         ForgotPasswordRequest: {
@@ -5107,6 +5298,19 @@ export interface components {
             /** Website */
             website?: string | null;
         };
+        /**
+         * QualificationsUpdate
+         * @description Full replace of all three together — the qualifications form always
+         *     submits its whole state at once, same as NotificationSettingsUpdate.
+         */
+        QualificationsUpdate: {
+            /** Education */
+            education?: components["schemas"]["EducationEntry"][];
+            /** Experience */
+            experience?: components["schemas"]["ExperienceEntry"][];
+            /** Skills */
+            skills?: string[];
+        };
         /** RefreshRequest */
         RefreshRequest: {
             /** Refresh Token */
@@ -5434,6 +5638,28 @@ export interface components {
         UnreadSummaryRead: {
             /** Unread Total */
             unread_total: number;
+        };
+        /**
+         * UserProfileRead
+         * @description Photos + qualifications for the current user's own /profile pages.
+         *     Storage paths are never exposed — the frontend fetches the bytes through
+         *     GET /users/me/avatar (proxied), same convention as AgencyProfileRead.
+         */
+        UserProfileRead: {
+            /** Avatar Version */
+            avatar_version: string | null;
+            /** Cover Version */
+            cover_version: string | null;
+            /** Education */
+            education: components["schemas"]["EducationEntry"][];
+            /** Experience */
+            experience: components["schemas"]["ExperienceEntry"][];
+            /** Has Avatar */
+            has_avatar: boolean;
+            /** Has Cover */
+            has_cover: boolean;
+            /** Skills */
+            skills: string[];
         };
         /** UserProfileUpdate */
         UserProfileUpdate: {
@@ -8603,6 +8829,38 @@ export interface operations {
             };
         };
     };
+    read_member_agencies__agency_id__members__member_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                member_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgencyMemberRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     remove_member_agencies__agency_id__members__member_id__delete: {
         parameters: {
             query?: never;
@@ -8656,6 +8914,70 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AgencyMemberRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_member_avatar_agencies__agency_id__members__member_id__avatar_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                member_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_member_cover_agencies__agency_id__members__member_id__cover_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                member_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
@@ -12129,6 +12451,205 @@ export interface operations {
             };
         };
     };
+    read_appearance_settings_users_me_appearance_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppearanceSettingsRead"];
+                };
+            };
+        };
+    };
+    write_appearance_settings_users_me_appearance_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppearanceSettingsUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppearanceSettingsRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_avatar_users_me_avatar_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    upload_avatar_users_me_avatar_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_avatar_users_me_avatar_put"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserProfileRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_avatar_users_me_avatar_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserProfileRead"];
+                };
+            };
+        };
+    };
+    download_cover_users_me_cover_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    upload_cover_users_me_cover_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_cover_users_me_cover_put"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserProfileRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_cover_users_me_cover_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserProfileRead"];
+                };
+            };
+        };
+    };
     read_notification_settings_users_me_notification_settings_get: {
         parameters: {
             query?: never;
@@ -12255,6 +12776,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PrivacySettingsRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_profile_users_me_profile_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserProfileRead"];
+                };
+            };
+        };
+    };
+    write_qualifications_users_me_qualifications_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QualificationsUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserProfileRead"];
                 };
             };
             /** @description Validation Error */

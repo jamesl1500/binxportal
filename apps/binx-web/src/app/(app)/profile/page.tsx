@@ -1,9 +1,9 @@
 /**
- * page.tsx - Profile
+ * page.tsx - Profile · Details
  *
- * Lets the signed-in user edit their personal details. The (app) layout
- * above this page already guards for a signed-in session, so `getCurrentUser`
- * here is only for the initial form values, not an auth check.
+ * Lets the signed-in user edit their personal details. Auth is guarded by
+ * the layout above; this page only needs the user for the form's initial
+ * values.
  *
  * @module apps/binx-web/src/app/(app)/profile/page.tsx
  * @author Binx.io
@@ -16,7 +16,7 @@ import EditProfileForm from "@/components/forms/account/EditProfileForm/EditProf
 
 import styles from "./page.module.scss";
 
-export const metadata: Metadata = { title: "Profile" };
+export const metadata: Metadata = { title: "Details" };
 
 const ProfilePage = async () => {
   const user = await getCurrentUser();
@@ -26,14 +26,8 @@ const ProfilePage = async () => {
   }
 
   return (
-    <div>
-      <span className={styles.eyebrow}>Profile</span>
-      <h1 className={styles.title}>Your profile</h1>
-      <p className={styles.subtitle}>Update your personal details. Only you and your teammates can see these.</p>
-
-      <div className={styles.formWrapper}>
-        <EditProfileForm user={user} />
-      </div>
+    <div className={styles.formWrapper}>
+      <EditProfileForm user={user} />
     </div>
   );
 };

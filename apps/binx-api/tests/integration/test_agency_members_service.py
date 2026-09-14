@@ -1,8 +1,8 @@
 """
 Integration tests for the membership half of
-``binx_api.modules.agencies.service`` — the roster query (with its privacy
-join), the owner/admin edit of a membership's agency-scoped fields, and the
-invitation history / resend helpers that back the team page.
+``binx_api.modules.agencies.service`` — the roster query (with its privacy +
+profile joins), the owner/admin edit of a membership's agency-scoped fields,
+and the invitation history / resend helpers that back the team page.
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ pytestmark = pytest.mark.integration
 
 
 class TestListAgencyMembers:
-    async def test_returns_a_triple_per_member_with_privacy_when_present(self, db_session) -> None:
+    async def test_returns_a_quadruple_per_member_with_privacy_when_present(self, db_session) -> None:
         owner = await make_user(db_session, full_name="Olivia Owner")
         teammate = await make_user(db_session, full_name="Tim Teammate")
         agency = await make_agency(db_session, owner=owner)
@@ -28,10 +28,13 @@ class TestListAgencyMembers:
 
         rows = await service.list_agency_members(db_session, agency.id)
 
-        by_user = {user.id: (member, user, privacy) for member, user, privacy in rows}
+        by_user = {user.id: (member, user, privacy, profile) for member, user, privacy, profile in rows}
         assert set(by_user) == {owner.id, teammate.id}
         assert by_user[owner.id][2] is None
         assert by_user[teammate.id][2].profile_visibility == "private"
+        # Neither has visited their own /profile pages yet — no row created.
+        assert by_user[owner.id][3] is None
+        assert by_user[teammate.id][3] is None
 
 
 class TestUpdateMemberDetails:

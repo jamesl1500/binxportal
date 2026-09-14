@@ -1,0 +1,76 @@
+@use "../../../../styles/tokens" as t;
+@use "../../../../styles/mixins" as m;
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: t.$space-2;
+  padding: t.$space-2;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-1;
+  padding: 0.1875rem t.$space-2;
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  color: t.$color-ink;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+}
+
+.chipRemove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: t.$color-ink-faint;
+  background: none;
+  border: none;
+  cursor: pointer;
+
+  svg {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+
+  &:hover {
+    color: t.$color-danger;
+  }
+}
+
+.input {
+  flex: 1;
+  min-width: 10rem;
+  padding: t.$space-1 t.$space-2;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+  background: none;
+  border: none;
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+
+  &:disabled {
+    color: t.$color-ink-faint;
+  }
+}
+
+.hint {
+  margin: 0;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+}
