@@ -88,7 +88,6 @@ describe("AppHeader", () => {
     // renders an <a> but exposes role="menuitem" (correct per the ARIA menu
     // pattern), not "link".
     expect(await screen.findByRole("menuitem", { name: "Team" })).toHaveAttribute("href", "/team");
-    expect(screen.getByRole("menuitem", { name: "Files" })).toHaveAttribute("href", "/files");
     expect(screen.getByRole("menuitem", { name: "Settings" })).toHaveAttribute("href", "/settings");
   });
 
