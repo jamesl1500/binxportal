@@ -7518,6 +7518,21 @@
         "title": "TaskListCreate",
         "type": "object"
       },
+      "TaskListMove": {
+        "description": "Just the position a drag interaction changes \u2014 mirrors TaskMove.",
+        "properties": {
+          "position": {
+            "minimum": 0.0,
+            "title": "Position",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "position"
+        ],
+        "title": "TaskListMove",
+        "type": "object"
+      },
       "TaskListRead": {
         "properties": {
           "id": {
@@ -16833,6 +16848,84 @@
           }
         ],
         "summary": "Rename Task List",
+        "tags": [
+          "projects"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/projects/{project_id}/task-lists/{list_id}/move": {
+      "patch": {
+        "operationId": "move_task_list_agencies__agency_id__projects__project_id__task_lists__list_id__move_patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "list_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "List Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskListMove"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskListRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Move Task List",
         "tags": [
           "projects"
         ]

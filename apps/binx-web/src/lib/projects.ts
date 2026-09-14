@@ -367,6 +367,36 @@ export async function deleteTaskList(agencyId: string, projectId: string, listId
   }
 }
 
+/**
+ * moveTaskList
+ *
+ * Reorders a column among its siblings via
+ * `PATCH /agencies/{agencyId}/projects/{projectId}/task-lists/{listId}/move` — what
+ * dragging a column header does. binx-api reindexes the whole board to stay contiguous.
+ *
+ * @function moveTaskList
+ * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't a member of this agency.
+ */
+export async function moveTaskList(
+  agencyId: string,
+  projectId: string,
+  listId: string,
+  position: number,
+): Promise<TaskList> {
+  const headers = await authHeader();
+
+  try {
+    const { data } = await api.patch<TaskList>(
+      `/agencies/${agencyId}/projects/${projectId}/task-lists/${listId}/move`,
+      { position },
+      { headers },
+    );
+    return data;
+  } catch (error) {
+    throw apiError(error, "Unable to move list");
+  }
+}
+
 function toTaskPayload(input: TaskDetailsInput) {
   return {
     list_id: input.listId,

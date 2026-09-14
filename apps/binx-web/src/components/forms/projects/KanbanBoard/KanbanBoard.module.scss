@@ -42,6 +42,10 @@
     border-color: t.$color-accent;
     background: color-mix(in srgb, t.$color-accent 8%, t.$color-paper);
   }
+
+  &[data-dragging="true"] {
+    opacity: 0.4;
+  }
 }
 
 .columnHeader {
@@ -51,6 +55,26 @@
   margin-bottom: t.$space-3;
   padding: t.$space-1 0;
   border-bottom: 1px solid t.$color-border;
+}
+
+.columnDragHandle {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  color: t.$color-ink-faint;
+  cursor: grab;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
 }
 
 .columnName {

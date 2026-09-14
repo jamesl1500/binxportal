@@ -587,6 +587,27 @@ async def rename_task_list(db: AsyncSession, task_list: ProjectTaskList, *, name
     return task_list
 
 
+# Reorders a column among its siblings — what dragging a list header does.
+# Simpler than move_task: a list only ever reorders within its own project,
+# never moves "into" another list, so there's just the one sibling group to
+# reindex (no old-list gap to close).
+async def move_task_list(db: AsyncSession, task_list: ProjectTaskList, *, position: int) -> ProjectTaskList:
+    siblings_result = await db.execute(
+        select(ProjectTaskList)
+        .where(ProjectTaskList.project_id == task_list.project_id, ProjectTaskList.id != task_list.id)
+        .order_by(ProjectTaskList.position)
+    )
+    siblings = list(siblings_result.scalars().all())
+    clamped_position = max(0, min(position, len(siblings)))
+    siblings.insert(clamped_position, task_list)
+    for index, sibling in enumerate(siblings):
+        sibling.position = index
+
+    await db.commit()
+    await db.refresh(task_list)
+    return task_list
+
+
 # Deletes a column. Refuses if it still has cards (move or delete them
 # first) or if it's the board's only remaining column — a project should
 # always have somewhere for a task to live.

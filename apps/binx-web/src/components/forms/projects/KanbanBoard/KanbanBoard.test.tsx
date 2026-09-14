@@ -10,6 +10,7 @@ vi.mock("@/app/(app)/projects/[projectId]/actions", () => ({
   createTaskListAction: vi.fn(),
   deleteTaskListAction: vi.fn(),
   moveTaskAction: vi.fn(),
+  moveTaskListAction: vi.fn(),
   renameTaskListAction: vi.fn(),
 }));
 
@@ -18,12 +19,13 @@ vi.mock("@/components/forms/projects/TaskDetailPanel/TaskDetailPanel", () => ({
   default: () => null,
 }));
 
-import { moveTaskAction } from "@/app/(app)/projects/[projectId]/actions";
+import { moveTaskAction, moveTaskListAction } from "@/app/(app)/projects/[projectId]/actions";
 import type { BoardColumn } from "@/lib/projects";
 
 import KanbanBoard from "./KanbanBoard";
 
 const mockedMove = vi.mocked(moveTaskAction);
+const mockedMoveList = vi.mocked(moveTaskListAction);
 
 const columns: BoardColumn[] = [
   {
@@ -81,6 +83,7 @@ function dataTransfer() {
 beforeEach(() => {
   vi.clearAllMocks();
   mockedMove.mockResolvedValue({ task: columns[0].tasks[0] });
+  mockedMoveList.mockResolvedValue({ list: columns[0] });
 });
 
 describe("KanbanBoard", () => {
@@ -118,5 +121,36 @@ describe("KanbanBoard", () => {
     fireEvent.drop(ownColumn, { dataTransfer: transfer });
 
     expect(mockedMove).not.toHaveBeenCalled();
+  });
+
+  it("reorders lists by dragging a column's grip handle onto another column", async () => {
+    renderBoard();
+
+    const todoHeader = screen.getByText("To Do").closest("div") as HTMLElement;
+    const handle = todoHeader.querySelector("[draggable]") as HTMLElement;
+    const targetColumn = screen.getByText("In Progress").closest("div") as HTMLElement;
+    const transfer = dataTransfer();
+
+    fireEvent.dragStart(handle, { dataTransfer: transfer });
+    fireEvent.dragOver(targetColumn, { dataTransfer: transfer });
+    fireEvent.drop(targetColumn, { dataTransfer: transfer });
+
+    await waitFor(() =>
+      expect(mockedMoveList).toHaveBeenCalledWith("agency-1", "project-1", "list-todo", 1),
+    );
+  });
+
+  it("does not call moveTaskListAction when a column is dropped on itself", async () => {
+    renderBoard();
+
+    const todoHeader = screen.getByText("To Do").closest("div") as HTMLElement;
+    const handle = todoHeader.querySelector("[draggable]") as HTMLElement;
+    const ownColumn = screen.getByText("To Do").closest("div") as HTMLElement;
+    const transfer = dataTransfer();
+
+    fireEvent.dragStart(handle, { dataTransfer: transfer });
+    fireEvent.drop(ownColumn, { dataTransfer: transfer });
+
+    expect(mockedMoveList).not.toHaveBeenCalled();
   });
 });

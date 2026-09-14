@@ -29,6 +29,7 @@ from binx_api.modules.projects.schemas import (
     TaskCreate,
     TaskFileRead,
     TaskListCreate,
+    TaskListMove,
     TaskListRead,
     TaskListUpdate,
     TaskListWithTasksRead,
@@ -467,6 +468,17 @@ async def rename_task_list(
     await service.get_project_or_404(db, agency.id, project_id)
     task_list = await service.get_task_list_or_404(db, project_id, list_id)
     task_list = await service.rename_task_list(db, task_list, name=data.name)
+    return TaskListRead.model_validate(task_list, from_attributes=True)
+
+
+@router.patch("/{project_id}/task-lists/{list_id}/move", response_model=TaskListRead)
+async def move_task_list(
+    db: DbSession, project_id: uuid.UUID, list_id: uuid.UUID, data: TaskListMove, agency_and_role: AnyMember
+) -> TaskListRead:
+    agency, _role = agency_and_role
+    await service.get_project_or_404(db, agency.id, project_id)
+    task_list = await service.get_task_list_or_404(db, project_id, list_id)
+    task_list = await service.move_task_list(db, task_list, position=data.position)
     return TaskListRead.model_validate(task_list, from_attributes=True)
 
 

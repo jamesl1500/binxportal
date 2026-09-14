@@ -1712,6 +1712,23 @@ export interface paths {
         patch: operations["rename_task_list_agencies__agency_id__projects__project_id__task_lists__list_id__patch"];
         trace?: never;
     };
+    "/agencies/{agency_id}/projects/{project_id}/task-lists/{list_id}/move": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Move Task List */
+        patch: operations["move_task_list_agencies__agency_id__projects__project_id__task_lists__list_id__move_patch"];
+        trace?: never;
+    };
     "/agencies/{agency_id}/projects/{project_id}/tasks": {
         parameters: {
             query?: never;
@@ -5259,6 +5276,14 @@ export interface components {
         TaskListCreate: {
             /** Name */
             name: string;
+        };
+        /**
+         * TaskListMove
+         * @description Just the position a drag interaction changes — mirrors TaskMove.
+         */
+        TaskListMove: {
+            /** Position */
+            position: number;
         };
         /** TaskListRead */
         TaskListRead: {
@@ -10210,6 +10235,43 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["TaskListUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskListRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    move_task_list_agencies__agency_id__projects__project_id__task_lists__list_id__move_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                list_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskListMove"];
             };
         };
         responses: {

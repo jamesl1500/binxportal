@@ -4,7 +4,9 @@
  * A project's task board: columns (lists) of cards (tasks). A card is moved
  * to another column by dragging it there (native HTML5 drag-and-drop — no DnD
  * library for one board) or from the List field in its detail panel; there's
- * deliberately no per-card "move" control cluttering the face. Clicking a
+ * deliberately no per-card "move" control cluttering the face. Columns
+ * themselves are reordered by dragging their header's grip handle, the same
+ * native drag-and-drop mechanism. Clicking a
  * card's title opens TaskDetailPanel, a right-side drawer for managing that
  * task in full (fields, tags, files, comments) without leaving the board.
  * Every mutation (add/rename/delete list, add/move/delete task, and anything
@@ -19,13 +21,14 @@
 
 import { FormEvent, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { MessageSquare, Paperclip, Plus, X } from "lucide-react";
+import { GripVertical, MessageSquare, Paperclip, Plus, X } from "lucide-react";
 
 import {
   createTaskAction,
   createTaskListAction,
   deleteTaskListAction,
   moveTaskAction,
+  moveTaskListAction,
   renameTaskListAction,
 } from "@/app/(app)/projects/[projectId]/actions";
 import type { BoardColumn, ProjectMember, ProjectTag, Task } from "@/lib/projects";
@@ -75,9 +78,13 @@ const KanbanBoard = ({
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
   // Native drag-and-drop: which card is in flight, and which column it's
-  // hovering over (for the drop-target highlight).
+  // hovering over (for the drop-target highlight). draggedListId is the same
+  // idea for dragging a column header to reorder the board — only one of the
+  // two is ever in flight at once, so they share dragOverListId for the
+  // hover highlight.
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
   const [dragOverListId, setDragOverListId] = useState<string | null>(null);
+  const [draggedListId, setDraggedListId] = useState<string | null>(null);
 
   const run = (action: () => Promise<{ error?: string }>, onSuccess?: () => void) => {
     setError(null);
@@ -141,6 +148,24 @@ const KanbanBoard = ({
     if (task) handleMoveTask(task, listId);
   };
 
+  const handleMoveList = (listId: string, position: number) => {
+    run(() => moveTaskListAction(agencyId, projectId, listId, position));
+  };
+
+  const handleDropOnColumn = (listId: string) => {
+    if (draggedListId !== null) {
+      const sourceListId = draggedListId;
+      setDraggedListId(null);
+      setDragOverListId(null);
+      if (sourceListId === listId) return;
+      const targetPosition = columns.findIndex((column) => column.id === listId);
+      if (targetPosition === -1) return;
+      handleMoveList(sourceListId, targetPosition);
+      return;
+    }
+    handleDropOnList(listId);
+  };
+
   const selectedTask = selectedTaskId
     ? columns.flatMap((column) => column.tasks).find((task) => task.id === selectedTaskId) ?? null
     : null;
@@ -158,19 +183,36 @@ const KanbanBoard = ({
           <div
             key={column.id}
             className={styles.column}
-            data-dragover={draggedTaskId !== null && dragOverListId === column.id}
+            data-dragover={dragOverListId === column.id && (draggedTaskId !== null || draggedListId !== null)}
+            data-dragging={draggedListId === column.id}
             onDragOver={(event) => {
-              if (draggedTaskId === null) return;
+              if (draggedTaskId === null && draggedListId === null) return;
               event.preventDefault();
               event.dataTransfer.dropEffect = "move";
               setDragOverListId(column.id);
             }}
             onDrop={(event) => {
               event.preventDefault();
-              handleDropOnList(column.id);
+              handleDropOnColumn(column.id);
             }}
           >
             <div className={styles.columnHeader}>
+              <span
+                className={styles.columnDragHandle}
+                draggable={!isPending}
+                onDragStart={(event) => {
+                  event.dataTransfer.effectAllowed = "move";
+                  event.dataTransfer.setData("text/plain", column.id);
+                  setDraggedListId(column.id);
+                }}
+                onDragEnd={() => {
+                  setDraggedListId(null);
+                  setDragOverListId(null);
+                }}
+                aria-hidden="true"
+              >
+                <GripVertical aria-hidden="true" />
+              </span>
               {renamingListId === column.id ? (
                 <input
                   autoFocus

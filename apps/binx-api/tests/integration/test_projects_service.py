@@ -243,6 +243,33 @@ class TestTaskLists:
             await service.delete_task_list(db_session, board[0][0])
         assert exc.value.status_code == 409
 
+    async def test_move_task_list_reindexes_the_board(self, db_session, project_ctx) -> None:
+        _owner, _agency, _client, project = project_ctx
+        board = await service.get_project_board(db_session, project.id)
+        todo, doing, done = board[0][0], board[1][0], board[2][0]
+
+        # Drag "Done" to the front.
+        await service.move_task_list(db_session, done, position=0)
+
+        await db_session.refresh(todo)
+        await db_session.refresh(doing)
+        await db_session.refresh(done)
+        assert done.position == 0
+        assert (todo.position, doing.position) == (1, 2)
+
+    async def test_move_task_list_clamps_an_out_of_range_position(self, db_session, project_ctx) -> None:
+        _owner, _agency, _client, project = project_ctx
+        board = await service.get_project_board(db_session, project.id)
+        todo, doing, done = board[0][0], board[1][0], board[2][0]
+
+        await service.move_task_list(db_session, todo, position=99)
+
+        await db_session.refresh(todo)
+        await db_session.refresh(doing)
+        await db_session.refresh(done)
+        assert todo.position == 2  # pushed to the end, not left out of range
+        assert (doing.position, done.position) == (0, 1)
+
 
 class TestBulkCreateBoard:
     async def test_appends_lists_and_tasks_after_the_defaults_in_one_commit(self, db_session, project_ctx) -> None:

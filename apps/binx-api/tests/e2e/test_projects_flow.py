@@ -65,6 +65,14 @@ class TestBoardJourney:
         assert moved.status_code == 200
         assert moved.json()["list_id"] == doing_id
 
+        done_id = board[2]["id"]
+        moved_list = await client.patch(f"{base}/task-lists/{done_id}/move", json={"position": 0}, headers=headers)
+        assert moved_list.status_code == 200
+        assert moved_list.json()["position"] == 0
+
+        reordered = (await client.get(f"{base}/board", headers=headers)).json()
+        assert [col["id"] for col in reordered] == [done_id, todo_id, doing_id]
+
     async def test_roles_and_tags_round_trip(self, client, user, project) -> None:
         _agency, proj = project
         headers = auth_headers(user)

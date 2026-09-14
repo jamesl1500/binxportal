@@ -40,6 +40,7 @@ import {
   getTaskComments,
   getTaskFiles,
   moveTask,
+  moveTaskList,
   Project,
   ProjectDetailsInput,
   ProjectFile,
@@ -188,6 +189,20 @@ export async function deleteTaskListAction(
     return {};
   } catch (error) {
     return errorResult(error, "Unable to delete list");
+  }
+}
+
+export async function moveTaskListAction(
+  agencyId: string,
+  projectId: string,
+  listId: string,
+  position: number,
+): Promise<TaskListActionResult> {
+  try {
+    const list = await moveTaskList(agencyId, projectId, listId, position);
+    return { list };
+  } catch (error) {
+    return errorResult(error, "Unable to move list");
   }
 }
 

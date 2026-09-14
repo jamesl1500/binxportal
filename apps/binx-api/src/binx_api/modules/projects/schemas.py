@@ -115,6 +115,12 @@ class TaskListUpdate(BaseModel):
     name: str = Field(min_length=1, max_length=100)
 
 
+class TaskListMove(BaseModel):
+    """Just the position a drag interaction changes — mirrors TaskMove."""
+
+    position: int = Field(ge=0)
+
+
 class TaskRead(BaseModel):
     # Built by hand — assignee_name is denormalized in from an optional join,
     # comment_count/file_count from correlated subqueries, tags from a
