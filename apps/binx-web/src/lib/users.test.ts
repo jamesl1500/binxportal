@@ -21,12 +21,18 @@ import { AuthApiError, getAccessToken } from "@/lib/auth";
 import {
   changePassword,
   deleteAccount,
+  getAppearanceSettings,
   getNotificationSettings,
   getPrivacySettings,
+  getUserProfile,
+  removeUserImage,
   requestEmailChange,
+  updateAppearanceSettings,
   updateCurrentUserProfile,
   updateNotificationSettings,
   updatePrivacySettings,
+  updateQualifications,
+  uploadUserImage,
 } from "@/lib/users";
 
 const mockedApi = vi.mocked(api, true);
@@ -169,6 +175,145 @@ describe("getPrivacySettings / updatePrivacySettings", () => {
 
     await expect(updatePrivacySettings(settings)).rejects.toMatchObject({ name: "AuthApiError", status: 401 });
     expect(mockedApi.put).not.toHaveBeenCalled();
+  });
+});
+
+describe("getUserProfile / updateQualifications", () => {
+  const profile = {
+    has_avatar: false,
+    avatar_version: null,
+    has_cover: false,
+    cover_version: null,
+    skills: ["Python"],
+    experience: [],
+    education: [],
+  };
+
+  it("fetches the profile with a bearer token", async () => {
+    mockedApi.get.mockResolvedValueOnce({ data: profile });
+
+    const result = await getUserProfile();
+
+    expect(result).toEqual(profile);
+    expect(mockedApi.get).toHaveBeenCalledWith("/users/me/profile", {
+      headers: { Authorization: "Bearer test-access-token" },
+    });
+  });
+
+  it("throws AuthApiError(401) when fetching without a session", async () => {
+    mockedGetAccessToken.mockResolvedValueOnce(undefined);
+
+    await expect(getUserProfile()).rejects.toMatchObject({ name: "AuthApiError", status: 401 });
+  });
+
+  it("sends skills/experience/education together via PATCH", async () => {
+    mockedApi.patch.mockResolvedValueOnce({ data: profile });
+
+    const result = await updateQualifications({ skills: ["Python"], experience: [], education: [] });
+
+    expect(result).toEqual(profile);
+    expect(mockedApi.patch).toHaveBeenCalledWith(
+      "/users/me/qualifications",
+      { skills: ["Python"], experience: [], education: [] },
+      { headers: { Authorization: "Bearer test-access-token" } },
+    );
+  });
+
+  it("surfaces binx-api's error detail when the update is rejected", async () => {
+    mockedApi.patch.mockRejectedValueOnce(axiosError(422, "Too many skills"));
+
+    await expect(updateQualifications({ skills: [], experience: [], education: [] })).rejects.toEqual(
+      new AuthApiError("Too many skills", 422),
+    );
+  });
+});
+
+describe("uploadUserImage / removeUserImage", () => {
+  const profile = { has_avatar: true, avatar_version: "v1", has_cover: false, cover_version: null };
+
+  it("uploads the file as multipart/form-data, dropping the JSON content-type header", async () => {
+    mockedApi.put.mockResolvedValueOnce({ data: profile });
+    const file = new File(["fake"], "avatar.png", { type: "image/png" });
+
+    const result = await uploadUserImage("avatar", file);
+
+    expect(result).toEqual(profile);
+    expect(mockedApi.put).toHaveBeenCalledWith(
+      "/users/me/avatar",
+      expect.any(FormData),
+      { headers: { Authorization: "Bearer test-access-token", "Content-Type": undefined } },
+    );
+  });
+
+  it("surfaces binx-api's error detail when the upload is rejected", async () => {
+    mockedApi.put.mockRejectedValueOnce(axiosError(413, "Images must be 5MB or smaller"));
+
+    await expect(uploadUserImage("cover", new File(["x"], "c.png"))).rejects.toEqual(
+      new AuthApiError("Images must be 5MB or smaller", 413),
+    );
+  });
+
+  it("clears the image via DELETE", async () => {
+    mockedApi.delete.mockResolvedValueOnce({ data: { ...profile, has_avatar: false, avatar_version: null } });
+
+    const result = await removeUserImage("avatar");
+
+    expect(result.has_avatar).toBe(false);
+    expect(mockedApi.delete).toHaveBeenCalledWith("/users/me/avatar", {
+      headers: { Authorization: "Bearer test-access-token" },
+    });
+  });
+
+  it("throws AuthApiError(401) when removing without a session", async () => {
+    mockedGetAccessToken.mockResolvedValueOnce(undefined);
+
+    await expect(removeUserImage("cover")).rejects.toMatchObject({ name: "AuthApiError", status: 401 });
+    expect(mockedApi.delete).not.toHaveBeenCalled();
+  });
+});
+
+describe("getAppearanceSettings / updateAppearanceSettings", () => {
+  it("fetches settings with a bearer token", async () => {
+    mockedApi.get.mockResolvedValueOnce({ data: { accent_color: "#2563eb" } });
+
+    const result = await getAppearanceSettings();
+
+    expect(result).toEqual({ accent_color: "#2563eb" });
+    expect(mockedApi.get).toHaveBeenCalledWith("/users/me/appearance", {
+      headers: { Authorization: "Bearer test-access-token" },
+    });
+  });
+
+  it("replaces the accent color with a PUT request", async () => {
+    mockedApi.put.mockResolvedValueOnce({ data: { accent_color: "#2563eb" } });
+
+    const result = await updateAppearanceSettings("#2563eb");
+
+    expect(result).toEqual({ accent_color: "#2563eb" });
+    expect(mockedApi.put).toHaveBeenCalledWith(
+      "/users/me/appearance",
+      { accent_color: "#2563eb" },
+      { headers: { Authorization: "Bearer test-access-token" } },
+    );
+  });
+
+  it("clears the accent color by passing null", async () => {
+    mockedApi.put.mockResolvedValueOnce({ data: { accent_color: null } });
+
+    const result = await updateAppearanceSettings(null);
+
+    expect(result).toEqual({ accent_color: null });
+    expect(mockedApi.put).toHaveBeenCalledWith(
+      "/users/me/appearance",
+      { accent_color: null },
+      { headers: { Authorization: "Bearer test-access-token" } },
+    );
+  });
+
+  it("surfaces binx-api's error detail when the update is rejected", async () => {
+    mockedApi.put.mockRejectedValueOnce(axiosError(422, "Bad color"));
+
+    await expect(updateAppearanceSettings("blue")).rejects.toEqual(new AuthApiError("Bad color", 422));
   });
 });
 

@@ -45,6 +45,7 @@ import {
   deleteAgency,
   deleteAgencyImage,
   getAgencyInvitations,
+  getAgencyMember,
   getAgencyMembers,
   getAgencyProfile,
   getCurrentAgencyContext,
@@ -277,6 +278,35 @@ describe("getAgencyMembers", () => {
 
     await expect(getAgencyMembers(agencies[0].id)).rejects.toMatchObject({ name: "AuthApiError", status: 401 });
     expect(mockedApi.get).not.toHaveBeenCalled();
+  });
+});
+
+describe("getAgencyMember", () => {
+  it("fetches one member with a bearer token", async () => {
+    mockedApi.get.mockResolvedValueOnce({ data: member });
+
+    await expect(getAgencyMember(agencies[0].id, member.id)).resolves.toEqual(member);
+    expect(mockedApi.get).toHaveBeenCalledWith(`/agencies/${agencies[0].id}/members/${member.id}`, {
+      headers: { Authorization: "Bearer test-access-token" },
+    });
+  });
+
+  it("throws AuthApiError(401) when there is no access token", async () => {
+    mockedGetAccessToken.mockResolvedValueOnce(undefined);
+
+    await expect(getAgencyMember(agencies[0].id, member.id)).rejects.toMatchObject({
+      name: "AuthApiError",
+      status: 401,
+    });
+    expect(mockedApi.get).not.toHaveBeenCalled();
+  });
+
+  it("surfaces binx-api's error detail when the member isn't found", async () => {
+    mockedApi.get.mockRejectedValueOnce(axiosError(404, "Member not found"));
+
+    await expect(getAgencyMember(agencies[0].id, "missing")).rejects.toEqual(
+      new AuthApiError("Member not found", 404),
+    );
   });
 });
 
