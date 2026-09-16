@@ -45,6 +45,10 @@
   gap: t.$space-4;
   margin-top: t.$space-8;
   margin-bottom: t.$space-8;
+  background: white;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  padding: t.$space-4;
 }
 
 .sectionHead {

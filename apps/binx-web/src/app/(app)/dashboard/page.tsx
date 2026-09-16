@@ -15,7 +15,9 @@ import { redirect } from "next/navigation";
 import { getCurrentAgencyContext } from "@/lib/agencies";
 import { getDashboard } from "@/lib/dashboard";
 import { formatMoneyCents } from "@/lib/money";
-import ClientStatGrid, { type ClientStat } from "@/components/clients/ClientStatGrid/ClientStatGrid";
+import ClientStatGrid, {
+  type ClientStat,
+} from "@/components/clients/ClientStatGrid/ClientStatGrid";
 import AiBriefingCard from "@/components/dashboard/AiBriefingCard/AiBriefingCard";
 import AttentionCard from "@/components/dashboard/AttentionCard/AttentionCard";
 import ActivityTeaser from "@/components/dashboard/ActivityTeaser/ActivityTeaser";
@@ -48,9 +50,13 @@ const DashboardOverviewPage = async () => {
     },
     {
       label: "Outstanding",
-      value: formatMoneyCents(overview.invoice_summary.outstanding_cents, currency),
+      value: formatMoneyCents(
+        overview.invoice_summary.outstanding_cents,
+        currency,
+      ),
       hint: `${overview.invoice_summary.open_count} open`,
-      tone: overview.invoice_summary.outstanding_cents > 0 ? "warn" : "positive",
+      tone:
+        overview.invoice_summary.outstanding_cents > 0 ? "warn" : "positive",
     },
     {
       label: "Overdue",
@@ -58,14 +64,22 @@ const DashboardOverviewPage = async () => {
       hint: `${overview.invoice_summary.overdue_count} invoice${overview.invoice_summary.overdue_count === 1 ? "" : "s"}`,
       tone: overview.invoice_summary.overdue_cents > 0 ? "warn" : "positive",
     },
-    { label: "Active clients", value: String(overview.clients_active), hint: `${overview.clients_total} total` },
-    { label: "My open tasks", value: String(myWork.total_open), hint: `${myWork.overdue_count} overdue` },
+    {
+      label: "Active clients",
+      value: String(overview.clients_active),
+      hint: `${overview.clients_total} total`,
+    },
+    {
+      label: "My open tasks",
+      value: String(myWork.total_open),
+      hint: `${myWork.overdue_count} overdue`,
+    },
     { label: "Unread messages", value: String(overview.unread_messages) },
   ];
 
   return (
     <div>
-      <div className={styles.section}>
+      <div style={{ marginBottom: "25px" }}>
         <AiBriefingCard agencyId={agencyId} />
       </div>
 
@@ -93,16 +107,6 @@ const DashboardOverviewPage = async () => {
           <ActivityTeaser entries={activity} />
         </section>
       </div>
-
-      <section className={styles.section}>
-        <div className={styles.sectionHead}>
-          <h2 className={styles.sectionTitle}>Your tasks</h2>
-          <Link href="/dashboard/my-work" className={styles.link}>
-            My work
-          </Link>
-        </div>
-        <MyTasksCard tasks={myWork.tasks} limit={5} />
-      </section>
     </div>
   );
 };

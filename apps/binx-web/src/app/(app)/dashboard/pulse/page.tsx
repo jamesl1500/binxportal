@@ -105,7 +105,7 @@ const PulsePage = async () => {
       </section>
 
       <div className={`${styles.grid} ${styles.afterStats}`}>
-        <section>
+        <section className={styles.section}>
           <div className={styles.sectionHead}>
             <h2 className={styles.sectionTitle}>Projects by status</h2>
           </div>
@@ -121,7 +121,7 @@ const PulsePage = async () => {
           )}
         </section>
 
-        <section>
+        <section className={styles.section}>
           <div className={styles.sectionHead}>
             <h2 className={styles.sectionTitle}>Billing activity</h2>
           </div>

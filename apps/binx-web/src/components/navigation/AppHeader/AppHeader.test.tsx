@@ -88,7 +88,6 @@ describe("AppHeader", () => {
     // renders an <a> but exposes role="menuitem" (correct per the ARIA menu
     // pattern), not "link".
     expect(await screen.findByRole("menuitem", { name: "Team" })).toHaveAttribute("href", "/team");
-    expect(screen.getByRole("menuitem", { name: "Settings" })).toHaveAttribute("href", "/settings");
   });
 
   // Regression test for: "Base UI: MenuGroupContext is missing. Menu group

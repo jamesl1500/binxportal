@@ -18,7 +18,6 @@ import { getAgencyClient } from "@/lib/clients";
 import { getInvoices, getInvoiceSummary, formatMoneyCents } from "@/lib/invoicing";
 import ClientStatGrid from "@/components/clients/ClientStatGrid/ClientStatGrid";
 import InvoiceTable from "@/components/invoices/InvoiceTable/InvoiceTable";
-import BarChart from "@/components/charts/BarChart/BarChart";
 
 import styles from "./page.module.scss";
 
@@ -76,19 +75,6 @@ const ClientInvoicesPage = async ({ params }: ClientInvoicesPageProps) => {
           { label: "Average invoice", value: formatMoneyCents(summary.average_invoice_cents, currency) },
         ]}
       />
-
-      <section className={styles.panel}>
-        <div className={styles.panelHeader}>
-          <h3 className={styles.panelTitle}>Collected per month</h3>
-          <span className={styles.panelMeta}>Last 12 months</span>
-        </div>
-        <BarChart
-          data={summary.monthly_paid}
-          ariaLabel={`Payments received per month for ${client.name}, last 12 months`}
-          valueFormat="currency"
-          height={200}
-        />
-      </section>
 
       <InvoiceTable invoices={invoices} showClient={false} />
     </div>

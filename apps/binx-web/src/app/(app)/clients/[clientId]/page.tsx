@@ -10,11 +10,9 @@
  */
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { formatDistanceToNow } from "date-fns";
 
 import { getCurrentAgencyContext } from "@/lib/agencies";
 import { getAgencyClient } from "@/lib/clients";
-import { getConversations } from "@/lib/messaging";
 import { getInvoices, getInvoiceSummary, formatMoneyCents, formatCompactMoney, invoiceStatusLabel } from "@/lib/invoicing";
 import { getAgencyProjects } from "@/lib/projects";
 import { PROJECT_STATUS_LABELS, type ProjectStatus } from "@/lib/projects-client";
@@ -55,17 +53,15 @@ const ClientDashboardPage = async ({ params }: ClientDashboardPageProps) => {
     redirect("/onboarding/two");
   }
 
-  const [client, allProjects, clientConversations, invoices, summary] = await Promise.all([
+  const [client, allProjects, invoices, summary] = await Promise.all([
     getAgencyClient(currentAgency.id, clientId),
     getAgencyProjects(currentAgency.id),
-    getConversations(currentAgency.id, { clientId }),
     getInvoices(currentAgency.id, { clientId }),
     getInvoiceSummary(currentAgency.id, clientId),
   ]);
 
   const projects = allProjects.filter((project) => project.client_id === clientId);
   const activeProjects = projects.filter((project) => project.status === "active").length;
-  const recentConversations = clientConversations.slice(0, 4);
   const currency = invoices[0]?.currency ?? "USD";
 
   const projectStatusCounts = new Map<ProjectStatus, number>();
@@ -168,34 +164,6 @@ const ClientDashboardPage = async ({ params }: ClientDashboardPageProps) => {
           )}
         </section>
       </div>
-
-      <section className={styles.panel}>
-        <div className={styles.panelHeader}>
-          <h2 className={styles.panelTitle}>Recent messages</h2>
-          <Link href={`/messages?client=${client.id}`} className={styles.panelLink}>
-            View all
-          </Link>
-        </div>
-        {recentConversations.length === 0 ? (
-          <p className={styles.empty}>No message threads linked to this client yet.</p>
-        ) : (
-          <ul className={styles.messageList}>
-            {recentConversations.map((conversation) => (
-              <li key={conversation.id} className={styles.messageRow} data-unread={conversation.unread_count > 0}>
-                <div className={styles.messageMeta}>
-                  <span className={styles.messageFrom}>{conversation.title}</span>
-                  {conversation.last_message_at && (
-                    <span className={styles.messageTime}>
-                      {formatDistanceToNow(new Date(conversation.last_message_at), { addSuffix: true })}
-                    </span>
-                  )}
-                </div>
-                <p className={styles.messagePreview}>{conversation.last_message_preview ?? "No messages yet"}</p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
     </div>
   );
 };

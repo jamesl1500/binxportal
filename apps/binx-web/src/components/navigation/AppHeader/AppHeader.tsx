@@ -59,7 +59,6 @@ const MANAGE_LINKS: NavLink[] = [
   { href: "/team", label: "Team" },
   { href: "/invoices", label: "Invoices" },
   { href: "/activity", label: "Activity" },
-  { href: "/settings", label: "Settings" },
 ];
 
 const AppHeader = ({
