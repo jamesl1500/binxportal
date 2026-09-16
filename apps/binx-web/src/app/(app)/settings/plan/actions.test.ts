@@ -40,6 +40,15 @@ describe("startPlanCheckoutAction", () => {
     await expect(startPlanCheckoutAction("a1", "pro")).resolves.toEqual({
       redirectUrl: "https://checkout.stripe.com/abc",
     });
+    expect(mockedCreateCheckout).toHaveBeenCalledWith("a1", "pro", undefined);
+  });
+
+  // Onboarding passes this so a brand-new agency lands back on /dashboard
+  // instead of Settings > Plan.
+  it("forwards an optional returnTo override", async () => {
+    mockedCreateCheckout.mockResolvedValueOnce("https://checkout.stripe.com/abc");
+    await startPlanCheckoutAction("a1", "pro", "/dashboard");
+    expect(mockedCreateCheckout).toHaveBeenCalledWith("a1", "pro", "/dashboard");
   });
 
   it("maps an AuthApiError to a returned error", async () => {

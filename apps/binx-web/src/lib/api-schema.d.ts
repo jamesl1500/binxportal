@@ -4818,6 +4818,8 @@ export interface components {
         PlanCheckoutRequest: {
             /** Plan */
             plan: string;
+            /** Return To */
+            return_to?: string | null;
         };
         /** PlanLimitsRead */
         PlanLimitsRead: {
@@ -5355,7 +5357,7 @@ export interface components {
             /** Portal Invite Token */
             portal_invite_token?: string | null;
             /** User Name */
-            user_name: string;
+            user_name?: string | null;
         };
         /** SignupResponse */
         SignupResponse: {

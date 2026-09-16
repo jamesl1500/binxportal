@@ -21,7 +21,6 @@ beforeEach(() => {
  * don't care about validation can get straight to submitting. */
 async function fillValidForm(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText("Full name"), "A B");
-  await user.type(screen.getByLabelText("Username"), "user123");
   await user.type(screen.getByLabelText("Email"), "a@b.com");
   await user.type(screen.getByLabelText("Password"), "str0ng-pass-phrase");
   await user.type(screen.getByLabelText("Confirm password"), "str0ng-pass-phrase");
@@ -36,7 +35,6 @@ describe("SignupForm", () => {
     render(<SignupForm />);
 
     await user.type(screen.getByLabelText("Full name"), "A B");
-    await user.type(screen.getByLabelText("Username"), "user123");
     await user.type(screen.getByLabelText("Email"), "a@b.com");
     await user.type(screen.getByLabelText("Password"), "str0ng-pass-phrase");
     await user.type(screen.getByLabelText("Confirm password"), "different-pass-phrase");
@@ -59,7 +57,7 @@ describe("SignupForm", () => {
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
     expect(await screen.findByText("Account created. Check your email to verify your address.")).toBeInTheDocument();
-    expect(mockedSignupAction).toHaveBeenCalledWith("user123", "a@b.com", "A B", "str0ng-pass-phrase", undefined);
+    expect(mockedSignupAction).toHaveBeenCalledWith("a@b.com", "A B", "str0ng-pass-phrase", undefined);
   });
 
   it("shows the server error on failure", async () => {
@@ -81,7 +79,7 @@ describe("SignupForm", () => {
     await fillValidForm(user);
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
-    expect(mockedSignupAction).toHaveBeenCalledWith("user123", "a@b.com", "A B", "str0ng-pass-phrase", "inv-token");
+    expect(mockedSignupAction).toHaveBeenCalledWith("a@b.com", "A B", "str0ng-pass-phrase", "inv-token");
   });
 
   it("prefills and locks the email field when lockedEmail is given", async () => {

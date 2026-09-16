@@ -19,7 +19,7 @@ const OnboardingStepOnePage = () => {
   return (
     <div>
       <header className={styles.header}>
-        <span className={styles.eyebrow}>Step 1 of 2</span>
+        <span className={styles.eyebrow}>Step 1 of 3</span>
         <h1 className={styles.title}>Tell us about you</h1>
         <p className={styles.subtitle}>A couple of quick details to personalize your workspace.</p>
       </header>

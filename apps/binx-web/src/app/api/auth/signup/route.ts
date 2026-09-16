@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: "Invalid JSON body" }, { status: 400 });
   }
 
-  if (!userName || !email || !fullName || !password) {
+  if (!email || !fullName || !password) {
     return NextResponse.json({ message: "All fields are required" }, { status: 400 });
   }
 

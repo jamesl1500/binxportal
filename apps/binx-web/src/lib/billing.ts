@@ -73,14 +73,16 @@ export async function changePlan(agencyId: string, plan: string): Promise<Subscr
  * Starts a Stripe Checkout Session for subscribing to a paid plan for the
  * first time, via `POST /agencies/{agencyId}/plan/checkout`. Returns the
  * hosted Checkout URL to redirect the browser to. An agency that already has
- * a subscription must use `createBillingPortalSession` instead.
+ * a subscription must use `createBillingPortalSession` instead. `returnTo`
+ * overrides where the browser lands after paying or backing out (defaults to
+ * Settings > Plan) — onboarding passes "/dashboard" instead.
  */
-export async function createPlanCheckout(agencyId: string, plan: string): Promise<string> {
+export async function createPlanCheckout(agencyId: string, plan: string, returnTo?: string): Promise<string> {
   const headers = await authHeader();
   try {
     const { data } = await api.post<{ checkout_url: string }>(
       `/agencies/${agencyId}/plan/checkout`,
-      { plan },
+      { plan, return_to: returnTo ?? null },
       { headers },
     );
     return data.checkout_url;

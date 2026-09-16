@@ -8,7 +8,9 @@
  * invitation and swaps in client-specific copy + a locked, pre-filled email
  * — the token is threaded through to email verification so a new client
  * lands back on the invite-accept page instead of staff onboarding (see
- * app/(auth)/auth/verify-email/actions.ts).
+ * app/(auth)/auth/verify-email/actions.ts). A marketing pricing-page CTA
+ * (`?plan=pro`) is passed to SignupForm, which stashes it in localStorage —
+ * see lib/plan-intent.ts — for onboarding step three to pick back up.
  *
  * @module apps/binx-web/src/app/(auth)/auth/signup/page.tsx
  * @author Binx.io
@@ -26,7 +28,7 @@ import styles from "./page.module.scss";
 export const metadata: Metadata = { title: "Create your account" };
 
 interface AuthSignupPageProps {
-  searchParams: Promise<{ portal_invite?: string }>;
+  searchParams: Promise<{ portal_invite?: string; plan?: string }>;
 }
 
 const AuthSignupPage = async ({ searchParams }: AuthSignupPageProps) => {
@@ -36,7 +38,7 @@ const AuthSignupPage = async ({ searchParams }: AuthSignupPageProps) => {
     redirect(await resolveHome());
   }
 
-  const { portal_invite: portalInviteToken } = await searchParams;
+  const { portal_invite: portalInviteToken, plan } = await searchParams;
   const preview = portalInviteToken ? await previewPortalInvitation(portalInviteToken).catch(() => null) : null;
 
   return (
@@ -51,7 +53,11 @@ const AuthSignupPage = async ({ searchParams }: AuthSignupPageProps) => {
         </p>
       </header>
 
-      <SignupForm portalInviteToken={preview ? portalInviteToken : undefined} lockedEmail={preview?.email} />
+      <SignupForm
+        portalInviteToken={preview ? portalInviteToken : undefined}
+        lockedEmail={preview?.email}
+        planIntent={plan}
+      />
 
       <p className={styles.footer}>
         Already have an account?{" "}

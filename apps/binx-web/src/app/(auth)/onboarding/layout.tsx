@@ -18,30 +18,13 @@ import { getCurrentUser } from "@/lib/auth";
 import { getPortalContext } from "@/lib/portal";
 import { SITE } from "@/lib/site";
 
+import OnboardingSteps from "./OnboardingSteps";
 import styles from "./layout.module.scss";
 
 export const metadata: Metadata = {
   title: { default: "Get started", template: "%s · Binx" },
   robots: { index: false, follow: false },
 };
-
-const STEPS = [
-  {
-    index: "01",
-    title: "Tell us about you",
-    text: "A couple of quick details to personalize your workspace.",
-  },
-  {
-    index: "02",
-    title: "Create your agency",
-    text: "Set up the workspace your team will collaborate in.",
-  },
-  {
-    index: "03",
-    title: "You're in",
-    text: "Head straight to your dashboard and get started.",
-  },
-];
 
 const OnboardingLayout = async ({ children }: { children: React.ReactNode }) => {
   const user = await getCurrentUser();
@@ -71,17 +54,7 @@ const OnboardingLayout = async ({ children }: { children: React.ReactNode }) => 
         <div>
           <h1 className={styles.headline}>Set up your workspace.</h1>
 
-          <ol className={styles.features}>
-            {STEPS.map((step) => (
-              <li key={step.index} className={styles.feature}>
-                <span className={styles.featureIndex}>{step.index}</span>
-                <div>
-                  <p className={styles.featureTitle}>{step.title}</p>
-                  <p className={styles.featureText}>{step.text}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
+          <OnboardingSteps />
         </div>
 
         <p className={styles.footnote}>

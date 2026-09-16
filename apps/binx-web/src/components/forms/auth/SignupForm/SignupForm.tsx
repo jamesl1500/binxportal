@@ -11,18 +11,18 @@
  */
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
 import { signupAction } from "@/app/(auth)/auth/signup/actions";
+import { PLAN_INTENT_STORAGE_KEY } from "@/lib/plan-intent";
 
 import styles from "./SignupForm.module.scss";
 
 const signupSchema = z
   .object({
-    userName: z.string().min(3, "Must be at least 3 characters").max(255),
     fullName: z.string().min(1, "Full name is required"),
     email: z.email("Enter a valid email address"),
     password: z.string().min(12, "Use at least 12 characters"),
@@ -40,12 +40,29 @@ interface SignupFormProps {
   portalInviteToken?: string;
   /** Prefills (and locks) the email field to the invited address, so a client can't accidentally sign up under a different one. */
   lockedEmail?: string;
+  /**
+   * The `?plan=` a marketing pricing-page CTA was clicked with. Stashed in
+   * localStorage (best-effort — see lib/plan-intent.ts) so onboarding step
+   * three can highlight the matching card once the agency exists. Free
+   * needs no highlight — it's already the default.
+   */
+  planIntent?: string;
 }
 
-const SignupForm = ({ portalInviteToken, lockedEmail }: SignupFormProps) => {
+const SignupForm = ({ portalInviteToken, lockedEmail, planIntent }: SignupFormProps) => {
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!planIntent || planIntent === "free") return;
+    try {
+      window.localStorage.setItem(PLAN_INTENT_STORAGE_KEY, planIntent);
+    } catch {
+      // A private/locked-down browser can throw here — the funnel works
+      // identically with no intent stashed, so just skip it.
+    }
+  }, [planIntent]);
 
   const {
     register,
@@ -54,7 +71,6 @@ const SignupForm = ({ portalInviteToken, lockedEmail }: SignupFormProps) => {
   } = useForm<SignupValues>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
-      userName: "",
       fullName: "",
       email: lockedEmail ?? "",
       password: "",
@@ -67,13 +83,7 @@ const SignupForm = ({ portalInviteToken, lockedEmail }: SignupFormProps) => {
     setSuccessMessage(null);
 
     startTransition(async () => {
-      const result = await signupAction(
-        values.userName,
-        values.email,
-        values.fullName,
-        values.password,
-        portalInviteToken,
-      );
+      const result = await signupAction(values.email, values.fullName, values.password, portalInviteToken);
 
       if (result?.error) {
         setFormError(result.error);
@@ -91,36 +101,19 @@ const SignupForm = ({ portalInviteToken, lockedEmail }: SignupFormProps) => {
 
   return (
     <form className={styles.form} onSubmit={handleSubmit(onSubmit)} noValidate>
-      <div className={styles.row}>
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="fullName">
-            Full name
-          </label>
-          <input
-            id="fullName"
-            type="text"
-            autoComplete="name"
-            className={styles.input}
-            aria-invalid={Boolean(errors.fullName)}
-            {...register("fullName")}
-          />
-          {errors.fullName && <p className={styles.error}>{errors.fullName.message}</p>}
-        </div>
-
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="userName">
-            Username
-          </label>
-          <input
-            id="userName"
-            type="text"
-            autoComplete="username"
-            className={styles.input}
-            aria-invalid={Boolean(errors.userName)}
-            {...register("userName")}
-          />
-          {errors.userName && <p className={styles.error}>{errors.userName.message}</p>}
-        </div>
+      <div className={styles.field}>
+        <label className={styles.label} htmlFor="fullName">
+          Full name
+        </label>
+        <input
+          id="fullName"
+          type="text"
+          autoComplete="name"
+          className={styles.input}
+          aria-invalid={Boolean(errors.fullName)}
+          {...register("fullName")}
+        />
+        {errors.fullName && <p className={styles.error}>{errors.fullName.message}</p>}
       </div>
 
       <div className={styles.field}>

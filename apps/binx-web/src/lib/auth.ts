@@ -322,7 +322,8 @@ export async function login(
 }
 
 export interface SignupInput {
-  userName: string;
+  /** Omitted by the signup form — binx-api derives a handle from the email instead. A user can still set their own later from Profile. */
+  userName?: string;
   email: string;
   fullName: string;
   password: string;

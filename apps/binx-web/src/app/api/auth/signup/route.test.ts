@@ -39,8 +39,9 @@ describe("POST /api/auth/signup", () => {
     expect(res.status).toBe(400);
   });
 
-  // userName/email/fullName/password are all required before we even bother
-  // calling signup() — asserting it wasn't called proves the short-circuit.
+  // email/fullName/password are required before we even bother calling
+  // signup() — asserting it wasn't called proves the short-circuit. userName
+  // is deliberately NOT in this list — binx-api derives one when it's absent.
   it("returns 400 when required fields are missing", async () => {
     const res = await POST(makeRequest({ email: "a@b.com" }));
     expect(res.status).toBe(400);
@@ -59,6 +60,23 @@ describe("POST /api/auth/signup", () => {
 
     expect(res.status).toBe(201);
     expect(await res.json()).toEqual({ message: "Account created. Check your email to verify your address." });
+  });
+
+  // The signup form no longer collects a username at all — the route must
+  // not require one.
+  it("succeeds without a userName", async () => {
+    mockedSignup.mockResolvedValueOnce("Account created. Check your email to verify your address.");
+
+    const res = await POST(makeRequest({ email: "a@b.com", fullName: "A B", password: "password123" }));
+
+    expect(res.status).toBe(201);
+    expect(mockedSignup).toHaveBeenCalledWith({
+      userName: undefined,
+      email: "a@b.com",
+      fullName: "A B",
+      password: "password123",
+      portalInviteToken: undefined,
+    });
   });
 
   // binx-api returns 409 Conflict for "this email/username is already taken";

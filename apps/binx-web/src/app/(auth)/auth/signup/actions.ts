@@ -29,7 +29,6 @@ export interface SignupActionResult {
 }
 
 export async function signupAction(
-  userName: string,
   email: string,
   fullName: string,
   password: string,
@@ -39,7 +38,6 @@ export async function signupAction(
 
   try {
     const response = await axios.post(`${baseUrl}/api/auth/signup`, {
-      userName,
       email,
       fullName,
       password,

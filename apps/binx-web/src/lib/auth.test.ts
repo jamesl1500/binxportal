@@ -220,6 +220,20 @@ describe("signup", () => {
       signup({ userName: "user", email: "a@b.com", fullName: "A B", password: "password123" }),
     ).rejects.toMatchObject({ message: "Email already registered", status: 409 });
   });
+
+  // The signup form no longer collects a username — binx-api derives one
+  // from the email when user_name is absent from the request body.
+  it("works without a userName", async () => {
+    mockedApi.post.mockResolvedValueOnce({ data: { message: "Check your email" } });
+
+    await expect(signup({ email: "a@b.com", fullName: "A B", password: "password123" })).resolves.toBe(
+      "Check your email",
+    );
+    expect(mockedApi.post).toHaveBeenCalledWith(
+      "/auth/signup",
+      expect.objectContaining({ user_name: undefined }),
+    );
+  });
 });
 
 describe("requestPasswordReset", () => {

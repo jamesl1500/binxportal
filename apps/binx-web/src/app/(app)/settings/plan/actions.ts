@@ -38,9 +38,13 @@ export interface RedirectActionResult {
   redirectUrl?: string;
 }
 
-export async function startPlanCheckoutAction(agencyId: string, plan: string): Promise<RedirectActionResult> {
+export async function startPlanCheckoutAction(
+  agencyId: string,
+  plan: string,
+  returnTo?: string,
+): Promise<RedirectActionResult> {
   try {
-    const redirectUrl = await createPlanCheckout(agencyId, plan);
+    const redirectUrl = await createPlanCheckout(agencyId, plan, returnTo);
     return { redirectUrl };
   } catch (error) {
     return { error: error instanceof AuthApiError ? error.message : "Unable to start checkout" };

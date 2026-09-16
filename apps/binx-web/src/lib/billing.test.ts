@@ -77,10 +77,22 @@ describe("createPlanCheckout", () => {
     const url = await createPlanCheckout("a1", "pro");
     expect(mockedApi.post).toHaveBeenCalledWith(
       "/agencies/a1/plan/checkout",
-      { plan: "pro" },
+      { plan: "pro", return_to: null },
       { headers: { Authorization: "Bearer token" } },
     );
     expect(url).toBe("https://checkout.stripe.com/abc");
+  });
+
+  // Onboarding passes this so a brand-new agency lands back on /dashboard
+  // after paying, instead of Settings > Plan.
+  it("POSTs a returnTo override when given one", async () => {
+    mockedApi.post.mockResolvedValueOnce({ data: { checkout_url: "https://checkout.stripe.com/abc" } });
+    await createPlanCheckout("a1", "pro", "/dashboard");
+    expect(mockedApi.post).toHaveBeenCalledWith(
+      "/agencies/a1/plan/checkout",
+      { plan: "pro", return_to: "/dashboard" },
+      { headers: { Authorization: "Bearer token" } },
+    );
   });
 
   it("surfaces an existing-subscription 400 as an AuthApiError", async () => {

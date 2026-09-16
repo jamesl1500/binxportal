@@ -39,10 +39,9 @@ describe("signupAction", () => {
       data: { message: "Account created. Check your email to verify your address." },
     });
 
-    const result = await signupAction("user", "a@b.com", "A B", "password123");
+    const result = await signupAction("a@b.com", "A B", "password123");
 
     expect(mockedPost).toHaveBeenCalledWith("http://localhost:3000/api/auth/signup", {
-      userName: "user",
       email: "a@b.com",
       fullName: "A B",
       password: "password123",
@@ -53,7 +52,7 @@ describe("signupAction", () => {
   it("returns the upstream error message on failure", async () => {
     mockedPost.mockRejectedValueOnce(axiosError(409, "Email already registered"));
 
-    await expect(signupAction("user", "a@b.com", "A B", "password123")).resolves.toEqual({
+    await expect(signupAction("a@b.com", "A B", "password123")).resolves.toEqual({
       error: "Email already registered",
     });
   });
@@ -61,10 +60,9 @@ describe("signupAction", () => {
   it("passes the portal invite token through to the signup route", async () => {
     mockedPost.mockResolvedValueOnce({ data: { message: "Account created." } });
 
-    await signupAction("user", "a@b.com", "A B", "password123", "inv-token");
+    await signupAction("a@b.com", "A B", "password123", "inv-token");
 
     expect(mockedPost).toHaveBeenCalledWith("http://localhost:3000/api/auth/signup", {
-      userName: "user",
       email: "a@b.com",
       fullName: "A B",
       password: "password123",
@@ -75,7 +73,7 @@ describe("signupAction", () => {
   it("falls back to a generic message for non-axios errors", async () => {
     mockedPost.mockRejectedValueOnce(new Error("network down"));
 
-    await expect(signupAction("user", "a@b.com", "A B", "password123")).resolves.toEqual({
+    await expect(signupAction("a@b.com", "A B", "password123")).resolves.toEqual({
       error: "Unable to create account",
     });
   });

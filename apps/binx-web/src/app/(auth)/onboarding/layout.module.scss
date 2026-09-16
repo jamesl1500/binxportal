@@ -79,11 +79,21 @@
   display: grid;
   grid-template-columns: 2.5rem 1fr;
   gap: t.$space-4;
+  opacity: 0.55;
+  transition: opacity t.$duration-fast t.$ease-standard;
+
+  &[data-active="true"] {
+    opacity: 1;
+  }
 }
 
 .featureIndex {
   @include m.mono-label;
   color: t.$color-panel-muted;
+
+  .feature[data-active="true"] & {
+    color: t.$color-panel-foreground;
+  }
 }
 
 .featureTitle {

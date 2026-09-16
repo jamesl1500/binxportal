@@ -133,7 +133,11 @@ const PricingPage = () => {
                     <li key={feature}>{feature}</li>
                   ))}
                 </ul>
-                <Link href="/auth/signup" className={styles.priceCta} data-featured={plan.featured}>
+                <Link
+                  href={`/auth/signup?plan=${plan.name.toLowerCase()}`}
+                  className={styles.priceCta}
+                  data-featured={plan.featured}
+                >
                   {plan.cta}
                 </Link>
               </div>
