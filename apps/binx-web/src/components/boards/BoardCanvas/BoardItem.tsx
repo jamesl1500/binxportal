@@ -68,6 +68,19 @@ const BoardItemView = ({
   const cancelledRef = useRef(false);
   const [editing, setEditing] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+
+  // The toolbar (and its confirm step) only renders while selected, but this
+  // component itself stays mounted across selection toggles — reset the
+  // pending confirm when the card is deselected, adjusted during render
+  // (React's own pattern for this, same as MemberDetailDrawer's
+  // seededMemberId reset) rather than an effect, so re-selecting the card
+  // later doesn't reopen "Delete this card?" out of nowhere.
+  const [wasSelected, setWasSelected] = useState(selected);
+  if (selected !== wasSelected) {
+    setWasSelected(selected);
+    if (!selected) setConfirmingDelete(false);
+  }
 
   const bumpToFront = () => {
     // A cheap "bring to front": one past the current view is fine, the server
@@ -288,51 +301,76 @@ const BoardItemView = ({
       {selected && (
         <>
           <div className={styles.itemBar} onPointerDown={(e) => e.stopPropagation()}>
-            <span className={styles.reactionPicker}>
-              {REACTION_EMOJI.map((emoji) => (
-                <button
-                  key={emoji}
-                  type="button"
-                  className={styles.reactionChoice}
-                  data-mine={item.my_reactions.includes(emoji)}
-                  aria-label={`React ${emoji}`}
-                  onClick={() => toggleReaction(emoji)}
-                >
-                  {emoji}
-                </button>
-              ))}
-            </span>
-            <button
-              type="button"
-              className={styles.commentButton}
-              data-has={item.comment_count > 0}
-              onClick={() => setCommentsOpen(true)}
-              aria-label={`Comments (${item.comment_count})`}
-            >
-              <MessageCircle aria-hidden="true" />
-              {item.comment_count > 0 && <span>{item.comment_count}</span>}
-            </button>
-            {item.type === "note" && (
+            {confirmingDelete ? (
+              <div className={styles.confirmRow}>
+                <span className={styles.confirmText}>Delete this card?</span>
+                <div className={styles.confirmActions}>
+                  <button type="button" className={styles.confirmDelete} onClick={handleDelete}>
+                    Yes, delete
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.confirmCancel}
+                    onClick={() => setConfirmingDelete(false)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
               <>
-                <span className={styles.barDivider} aria-hidden="true" />
-                <span className={styles.swatches}>
-                  {NOTE_COLORS.map((color) => (
+                <span className={styles.reactionPicker}>
+                  {REACTION_EMOJI.map((emoji) => (
                     <button
-                      key={color}
+                      key={emoji}
                       type="button"
-                      className={styles.swatch}
-                      style={{ background: color }}
-                      aria-label={`Colour ${color}`}
-                      onClick={() => applyColor(color)}
-                    />
+                      className={styles.reactionChoice}
+                      data-mine={item.my_reactions.includes(emoji)}
+                      aria-label={`React ${emoji}`}
+                      onClick={() => toggleReaction(emoji)}
+                    >
+                      {emoji}
+                    </button>
                   ))}
                 </span>
+                <button
+                  type="button"
+                  className={styles.commentButton}
+                  data-has={item.comment_count > 0}
+                  onClick={() => setCommentsOpen(true)}
+                  aria-label={`Comments (${item.comment_count})`}
+                >
+                  <MessageCircle aria-hidden="true" />
+                  {item.comment_count > 0 && <span>{item.comment_count}</span>}
+                </button>
+                {item.type === "note" && (
+                  <>
+                    <span className={styles.barDivider} aria-hidden="true" />
+                    <span className={styles.swatches}>
+                      {NOTE_COLORS.map((color) => (
+                        <button
+                          key={color}
+                          type="button"
+                          className={styles.swatch}
+                          style={{ background: color }}
+                          aria-label={`Colour ${color}`}
+                          onClick={() => applyColor(color)}
+                        />
+                      ))}
+                    </span>
+                  </>
+                )}
+                <span className={styles.barDivider} aria-hidden="true" />
+                <button
+                  type="button"
+                  className={styles.itemDelete}
+                  onClick={() => setConfirmingDelete(true)}
+                  aria-label="Delete card"
+                >
+                  <Trash2 aria-hidden="true" />
+                </button>
               </>
             )}
-            <span className={styles.barDivider} aria-hidden="true" />
-            <button type="button" className={styles.itemDelete} onClick={handleDelete} aria-label="Delete card">
-              <Trash2 aria-hidden="true" />
-            </button>
           </div>
           <div
             className={styles.resizeHandle}

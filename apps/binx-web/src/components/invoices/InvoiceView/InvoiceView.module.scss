@@ -9,6 +9,10 @@
   display: flex;
   flex-direction: column;
   gap: t.$space-8;
+
+  @media (max-width: 560px) {
+    padding: t.$space-5;
+  }
 }
 
 .header {
@@ -112,6 +116,14 @@
   white-space: pre-line;
 }
 
+// Same wrapper pattern ClientsTable/ProjectsTable use — the table itself
+// stays full-width and un-shrunk, this just lets it scroll horizontally
+// instead of overflowing the page on a phone.
+.tableScroll {
+  @include m.table-scroll;
+  border-radius: t.$radius-sm;
+}
+
 .lineTable {
   width: 100%;
   border-collapse: collapse;
@@ -198,6 +210,13 @@
     font-size: t.$font-size-xs;
     color: t.$color-ink-soft;
     border-bottom: 1px solid t.$color-border;
+
+    // Same collapse-to-one-column move as .parties above, at the same
+    // breakpoint — a receipt row reads fine stacked, no horizontal scroll.
+    @media (max-width: 560px) {
+      grid-template-columns: 1fr;
+      gap: t.$space-1;
+    }
   }
 }
 

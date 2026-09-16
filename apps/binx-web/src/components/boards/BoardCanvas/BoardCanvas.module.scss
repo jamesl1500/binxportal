@@ -292,6 +292,60 @@
   background: t.$color-border;
 }
 
+// Replaces the toolbar's normal contents when a delete is pending — a
+// client can add/move/edit/delete cards the agency also edits live, so an
+// accidental tap-delete has real consequences. Same "swap the row for an
+// inline Yes/Cancel" pattern as MemberDetailDrawer's confirmingRemove.
+.confirmRow {
+  display: flex;
+  align-items: center;
+  gap: t.$space-3;
+  padding: 0 t.$space-1;
+}
+
+.confirmText {
+  font-size: t.$font-size-xs;
+  color: t.$color-ink;
+  white-space: nowrap;
+}
+
+.confirmActions {
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+}
+
+.confirmDelete {
+  padding: t.$space-1 t.$space-2;
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  color: #fff;
+  background: t.$color-danger;
+  border: none;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    opacity: 0.9;
+  }
+}
+
+.confirmCancel {
+  padding: t.$space-1 t.$space-2;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+  background: transparent;
+  border: none;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    color: t.$color-ink;
+  }
+}
+
 // Author label — a faint tag pinned to the card's top-right, revealed on
 // hover or select so a resting board stays clean.
 .authorTag {

@@ -4,15 +4,18 @@
  * The slim top bar for the client portal: the agency name, the four portal
  * sections (Overview · Projects · Invoices · Messages) with the active one
  * highlighted via `usePathname`, and the signed-in contact's name + sign-out.
+ * Below 900px the nav + account info collapse into a hamburger-triggered
+ * panel — same disclosure pattern as MarketingHeader.tsx.
  *
  * @module apps/binx-web/src/components/portal/PortalHeader/PortalHeader.tsx
  * @author Binx.io
  */
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Menu, X } from "lucide-react";
 
 import { logoutAction } from "@/app/(app)/actions";
 
@@ -36,8 +39,14 @@ const TABS = [
 const PortalHeader = ({ agencyName, clientName, contactName, hasLogo, logoVersion }: PortalHeaderProps) => {
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
+  const [open, setOpen] = useState(false);
 
   const isActive = (href: string) => (href === "/portal" ? pathname === href : pathname.startsWith(href));
+
+  const signOut = () => {
+    setOpen(false);
+    startTransition(() => logoutAction());
+  };
 
   return (
     <header className={styles.header}>
@@ -67,16 +76,45 @@ const PortalHeader = ({ agencyName, clientName, contactName, hasLogo, logoVersio
 
         <div className={styles.account}>
           <span className={styles.contact}>{contactName}</span>
-          <button
-            type="button"
-            className={styles.signOut}
-            disabled={isPending}
-            onClick={() => startTransition(() => logoutAction())}
-          >
+          <button type="button" className={styles.signOut} disabled={isPending} onClick={signOut}>
             Sign out
           </button>
         </div>
+
+        <button
+          type="button"
+          className={styles.menuToggle}
+          aria-expanded={open}
+          aria-label={open ? "Close menu" : "Open menu"}
+          onClick={() => setOpen((v) => !v)}
+        >
+          {open ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
+        </button>
       </div>
+
+      {open && (
+        <div className={styles.mobilePanel}>
+          <nav aria-label="Client portal">
+            {TABS.map((tab) => (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                className={styles.mobileTab}
+                data-active={isActive(tab.href)}
+                onClick={() => setOpen(false)}
+              >
+                {tab.label}
+              </Link>
+            ))}
+          </nav>
+          <div className={styles.mobileAccount}>
+            <span className={styles.contact}>{contactName}</span>
+            <button type="button" className={styles.signOut} disabled={isPending} onClick={signOut}>
+              Sign out
+            </button>
+          </div>
+        </div>
+      )}
     </header>
   );
 };

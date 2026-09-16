@@ -79,33 +79,35 @@ const InvoiceView = ({ invoice }: InvoiceViewProps) => {
         </section>
       </div>
 
-      <table className={styles.lineTable}>
-        <thead>
-          <tr>
-            <th>Description</th>
-            <th className={styles.numCol}>Qty</th>
-            <th className={styles.numCol}>Unit price</th>
-            <th className={styles.numCol}>Amount</th>
-          </tr>
-        </thead>
-        <tbody>
-          {invoice.line_items.map((item) => (
-            <tr key={item.id}>
-              <td>{item.description}</td>
-              <td className={styles.numCol}>{quantityLabel(item.quantity)}</td>
-              <td className={styles.numCol}>{formatMoneyCents(item.unit_price_cents, currency)}</td>
-              <td className={styles.numCol}>{formatMoneyCents(item.amount_cents, currency)}</td>
-            </tr>
-          ))}
-          {invoice.line_items.length === 0 && (
+      <div className={styles.tableScroll}>
+        <table className={styles.lineTable}>
+          <thead>
             <tr>
-              <td colSpan={4} className={styles.noLines}>
-                No line items yet.
-              </td>
+              <th>Description</th>
+              <th className={styles.numCol}>Qty</th>
+              <th className={styles.numCol}>Unit price</th>
+              <th className={styles.numCol}>Amount</th>
             </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {invoice.line_items.map((item) => (
+              <tr key={item.id}>
+                <td>{item.description}</td>
+                <td className={styles.numCol}>{quantityLabel(item.quantity)}</td>
+                <td className={styles.numCol}>{formatMoneyCents(item.unit_price_cents, currency)}</td>
+                <td className={styles.numCol}>{formatMoneyCents(item.amount_cents, currency)}</td>
+              </tr>
+            ))}
+            {invoice.line_items.length === 0 && (
+              <tr>
+                <td colSpan={4} className={styles.noLines}>
+                  No line items yet.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
 
       <dl className={styles.totals}>
         <div>

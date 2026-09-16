@@ -10,7 +10,7 @@
  */
 import Link from "next/link";
 
-import { formatMoneyCents } from "@/lib/money";
+import { formatMoneyCents, invoiceStatusLabel } from "@/lib/money";
 import { getPortalContext, getPortalConversations, getPortalInvoices, getPortalProjects } from "@/lib/portal";
 import ClientStatGrid, { type ClientStat } from "@/components/clients/ClientStatGrid/ClientStatGrid";
 import ProjectProgress from "@/components/portal/ProjectProgress/ProjectProgress";
@@ -93,7 +93,7 @@ const PortalOverviewPage = async () => {
                 <Link href={`/portal/invoices/${invoice.id}`} className={styles.invoiceRow}>
                   <span>{invoice.number}</span>
                   <span className={styles.invoiceStatus} data-status={invoice.display_status}>
-                    {invoice.display_status}
+                    {invoiceStatusLabel(invoice.display_status)}
                   </span>
                   <span className={styles.invoiceAmount}>
                     {formatMoneyCents(invoice.amount_due_cents, invoice.currency)} due

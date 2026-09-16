@@ -94,4 +94,47 @@ describe("BoardCanvas", () => {
     await waitFor(() => expect(actions.toggleReaction).toHaveBeenCalledWith("i1", "👍"));
     await waitFor(() => expect(useBoardStore.getState().itemsById.i1.reactions).toEqual({ "👍": 1 }));
   });
+
+  describe("deleting a card", () => {
+    it("asks for confirmation instead of deleting immediately", () => {
+      const actions = makeActions();
+      useBoardStore.getState().seed("b1", [item()], "u1");
+      render(<BoardCanvas actions={actions} imageUrl={(id) => `/img/${id}`} {...baseProps} />);
+
+      fireEvent.pointerDown(screen.getByText("seeded note"));
+      fireEvent.click(screen.getByRole("button", { name: "Delete card" }));
+
+      expect(screen.getByText("Delete this card?")).toBeInTheDocument();
+      expect(actions.remove).not.toHaveBeenCalled();
+      expect(useBoardStore.getState().itemsById.i1).toBeDefined();
+    });
+
+    it("deletes the card once the confirm is accepted", async () => {
+      const actions = makeActions();
+      useBoardStore.getState().seed("b1", [item()], "u1");
+      render(<BoardCanvas actions={actions} imageUrl={(id) => `/img/${id}`} {...baseProps} />);
+
+      fireEvent.pointerDown(screen.getByText("seeded note"));
+      fireEvent.click(screen.getByRole("button", { name: "Delete card" }));
+      fireEvent.click(screen.getByRole("button", { name: "Yes, delete" }));
+
+      await waitFor(() => expect(actions.remove).toHaveBeenCalledWith("i1"));
+      expect(useBoardStore.getState().itemsById.i1).toBeUndefined();
+    });
+
+    it("leaves the card untouched when the confirm is cancelled", () => {
+      const actions = makeActions();
+      useBoardStore.getState().seed("b1", [item()], "u1");
+      render(<BoardCanvas actions={actions} imageUrl={(id) => `/img/${id}`} {...baseProps} />);
+
+      fireEvent.pointerDown(screen.getByText("seeded note"));
+      fireEvent.click(screen.getByRole("button", { name: "Delete card" }));
+      fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+      expect(screen.queryByText("Delete this card?")).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Delete card" })).toBeInTheDocument();
+      expect(actions.remove).not.toHaveBeenCalled();
+      expect(useBoardStore.getState().itemsById.i1).toBeDefined();
+    });
+  });
 });

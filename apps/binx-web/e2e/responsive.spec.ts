@@ -90,6 +90,40 @@ test.describe("authenticated pages @ phone width", () => {
     });
   }
 
+  const portalPages = ["/portal", "/portal/invoices", "/portal/messages"];
+
+  for (const p of portalPages) {
+    test(`portal ${p} has no horizontal scroll`, async ({ browser }) => {
+      const context = await browser.newContext({
+        storageState: path.join(AUTH_DIR, "client.json"),
+        viewport: PHONE,
+      });
+      const page = await context.newPage();
+      await page.goto(p);
+      await page.waitForLoadState("domcontentloaded");
+      await expectNoHorizontalScroll(page);
+      await context.close();
+    });
+  }
+
+  test("portal header collapses the tab nav behind a menu button", async ({ browser }) => {
+    const context = await browser.newContext({
+      storageState: path.join(AUTH_DIR, "client.json"),
+      viewport: PHONE,
+    });
+    const page = await context.newPage();
+    await page.goto("/portal");
+    await expect(page.getByRole("button", { name: /open menu/i })).toBeVisible();
+    await expect(
+      page.getByRole("navigation", { name: "Client portal" }).getByRole("link", { name: "Invoices" }),
+    ).toBeHidden();
+
+    await page.getByRole("button", { name: /open menu/i }).click();
+    await expect(page.getByRole("link", { name: "Invoices" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
+    await context.close();
+  });
+
   test("portal project detail has no horizontal scroll", async ({ browser }) => {
     const context = await browser.newContext({
       storageState: path.join(AUTH_DIR, "client.json"),
@@ -100,6 +134,37 @@ test.describe("authenticated pages @ phone width", () => {
     await expect(page.getByRole("heading", { name: /your projects/i })).toBeVisible();
     await page.getByRole("link", { name: new RegExp(DEMO.projectName) }).click();
     await expect(page.getByRole("heading", { name: DEMO.projectName })).toBeVisible();
+    await expectNoHorizontalScroll(page);
+
+    // The Board and Canvas tabs are separate client bundles (the Kanban
+    // board and the pan/zoom collaboration canvas) — each gets its own
+    // horizontal-scroll check rather than assuming the Overview tab's pass
+    // covers them.
+    await page.getByRole("link", { name: "Board", exact: true }).click();
+    await page.waitForLoadState("domcontentloaded");
+    await expectNoHorizontalScroll(page);
+
+    await page.getByRole("link", { name: "Canvas", exact: true }).click();
+    await page.waitForLoadState("domcontentloaded");
+    await expectNoHorizontalScroll(page);
+
+    await context.close();
+  });
+
+  test("portal invoice detail has no horizontal scroll", async ({ browser }) => {
+    const context = await browser.newContext({
+      storageState: path.join(AUTH_DIR, "client.json"),
+      viewport: PHONE,
+    });
+    const page = await context.newPage();
+    await page.goto("/portal/invoices");
+    await expect(page.getByRole("heading", { name: "Invoices", exact: true })).toBeVisible();
+
+    const firstInvoice = page.locator('a[href^="/portal/invoices/"]').first();
+    const hasInvoice = (await firstInvoice.count()) > 0;
+    test.skip(!hasInvoice, "seeded demo agency has no invoices");
+    await firstInvoice.click();
+    await page.waitForLoadState("domcontentloaded");
     await expectNoHorizontalScroll(page);
     await context.close();
   });

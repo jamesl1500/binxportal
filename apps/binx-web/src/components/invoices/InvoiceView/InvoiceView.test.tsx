@@ -92,4 +92,13 @@ describe("InvoiceView", () => {
     render(<InvoiceView invoice={{ ...base, from: { ...base.from, name: null } }} />);
     expect(screen.getByText("—")).toBeInTheDocument();
   });
+
+  it("wraps the line-item table in a horizontal-scroll container, not a bare table", () => {
+    // Regression guard for the phone-overflow fix — every other data table
+    // in the app (ClientsTable, ProjectsTable) wraps its table the same way.
+    const { container } = render(<InvoiceView invoice={base} />);
+    const table = screen.getByRole("table");
+    expect(table.parentElement?.className).toMatch(/tableScroll/);
+    expect(container.querySelector('[class*="tableScroll"]')).toContainElement(table);
+  });
 });
