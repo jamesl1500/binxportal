@@ -154,15 +154,22 @@ def _require_stripe_configured() -> None:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Stripe isn't configured")
 
 
-async def start_checkout(db: AsyncSession, agency: Agency, *, plan: str) -> str:
+async def start_checkout(db: AsyncSession, agency: Agency, *, plan: str, return_to: str | None = None) -> str:
     """A Checkout Session for subscribing to a paid plan for the first time.
     An existing subscriber must use the Billing Portal instead (see
-    ``start_billing_portal``) — Checkout only ever creates a new subscription."""
+    ``start_billing_portal``) — Checkout only ever creates a new subscription.
+    ``return_to`` is where the browser lands after paying or backing out —
+    defaults to Settings > Plan (the original behavior); onboarding passes
+    "/dashboard" so a brand-new agency doesn't get dropped into Settings on
+    its way in. Already validated as a same-origin relative path by
+    PlanCheckoutRequest — safe to embed directly."""
     _require_stripe_configured()
     if plan not in PLANS:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Unknown plan")
     if plan == PLAN_FREE:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "The Free plan doesn't need Checkout")
+
+    return_path = return_to or "/settings/plan"
 
     subscription = await get_or_create_subscription(db, agency.id)
     if subscription.stripe_subscription_id is not None:
@@ -186,8 +193,8 @@ async def start_checkout(db: AsyncSession, agency: Agency, *, plan: str) -> str:
             "line_items": [{"price": price_id, "quantity": 1}],
             "client_reference_id": str(agency.id),
             "metadata": {"agency_id": str(agency.id)},
-            "success_url": f"{settings.frontend_url}/settings/plan?checkout=success",
-            "cancel_url": f"{settings.frontend_url}/settings/plan?checkout=cancel",
+            "success_url": f"{settings.frontend_url}{return_path}?checkout=success",
+            "cancel_url": f"{settings.frontend_url}{return_path}?checkout=cancel",
         }
     )
     return session.url

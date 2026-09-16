@@ -86,9 +86,53 @@ class TestStartCheckout:
         assert captured["mode"] == "subscription"
         assert captured["line_items"] == [{"price": "price_pro", "quantity": 1}]
         assert captured["customer"] == "cus_123"
+        # No return_to passed — falls back to the original Settings destination.
+        assert captured["success_url"] == "http://frontend.test/settings/plan?checkout=success"
+        assert captured["cancel_url"] == "http://frontend.test/settings/plan?checkout=cancel"
 
         subscription = await service.get_or_create_subscription(db_session, agency.id)
         assert subscription.stripe_customer_id == "cus_123"
+
+    async def test_return_to_redirects_success_and_cancel_there_instead(
+        self, db_session, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # Onboarding uses this so a brand-new agency lands back on /dashboard
+        # after paying, instead of Settings > Plan.
+        _configure_stripe(monkeypatch)
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+
+        async def fake_create_customer(params):
+            return SimpleNamespace(id="cus_123")
+
+        captured: dict = {}
+
+        async def fake_create_checkout_session(params, *, stripe_account=None):
+            captured.update(params)
+            return SimpleNamespace(url="https://checkout.stripe.test/abc")
+
+        monkeypatch.setattr(stripe_client, "create_customer", fake_create_customer)
+        monkeypatch.setattr(stripe_client, "create_checkout_session", fake_create_checkout_session)
+
+        await service.start_checkout(db_session, agency, plan="pro", return_to="/dashboard")
+        assert captured["success_url"] == "http://frontend.test/dashboard?checkout=success"
+        assert captured["cancel_url"] == "http://frontend.test/dashboard?checkout=cancel"
+
+    def test_return_to_rejects_anything_but_a_same_origin_relative_path(self) -> None:
+        # This value is embedded directly into a Stripe-hosted redirect, so
+        # it's validated at the schema layer before it ever reaches the
+        # service — protocol-relative ("//host") and absolute URLs must
+        # never pass, or this becomes an open redirect.
+        from pydantic import ValidationError
+
+        from binx_api.modules.billing.schemas import PlanCheckoutRequest
+
+        for safe in ["/dashboard", "/settings/plan", "/onboarding/three", None]:
+            PlanCheckoutRequest(plan="pro", return_to=safe)
+
+        for unsafe in ["//evil.example.com", "https://evil.example.com", "dashboard"]:
+            with pytest.raises(ValidationError):
+                PlanCheckoutRequest(plan="pro", return_to=unsafe)
 
     async def test_rejects_when_already_subscribed(self, db_session, monkeypatch: pytest.MonkeyPatch) -> None:
         _configure_stripe(monkeypatch)

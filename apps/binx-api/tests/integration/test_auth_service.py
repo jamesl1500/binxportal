@@ -81,6 +81,29 @@ class TestSignup:
             )
         assert exc.value.status_code == 409
 
+    async def test_derives_a_username_from_the_email_when_none_is_supplied(self, db_session) -> None:
+        # Signup no longer asks for a handle up front — omitting user_name is
+        # the normal path now, not an edge case.
+        user = await service.signup(
+            db_session, user_name=None, email="Jordan.Rivera+test@example.com", full_name="Jordan", password=PASSWORD
+        )
+        assert user.user_name == "jordanriveratest"
+
+    async def test_pads_a_short_email_local_part_to_meet_the_minimum_length(self, db_session) -> None:
+        user = await service.signup(
+            db_session, user_name=None, email="ab@example.com", full_name="AB", password=PASSWORD
+        )
+        assert user.user_name == "userab"
+
+    async def test_de_duplicates_a_derived_username_with_a_numeric_suffix(self, db_session) -> None:
+        await make_user(db_session, user_name="jordan", email="existing@example.com")
+        await make_user(db_session, user_name="jordan2", email="existing2@example.com")
+
+        user = await service.signup(
+            db_session, user_name=None, email="jordan@another.example.com", full_name="Jordan Two", password=PASSWORD
+        )
+        assert user.user_name == "jordan3"
+
 
 class TestEmailVerification:
     async def test_verifies_the_account_and_returns_a_token_pair(self, db_session, email_outbox) -> None:

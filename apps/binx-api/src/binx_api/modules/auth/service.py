@@ -1,3 +1,4 @@
+import re
 import uuid
 from datetime import UTC, datetime, timedelta
 
@@ -96,10 +97,31 @@ async def _create_token_pair(db: AsyncSession, user: User) -> TokenPair:
     return TokenPair(access_token=access_token, refresh_token=refresh_token)
 
 
+_USERNAME_SANITIZE_RE = re.compile(r"[^a-z0-9]")
+
+
+async def _generate_unique_user_name(db: AsyncSession, email: str) -> str:
+    """Derives a username from the email's local-part for a signup that
+    didn't supply one (see SignupRequest.user_name) — non-alphanumeric
+    characters stripped, capped short, and de-duplicated with a numeric
+    suffix so it never collides with an existing account."""
+    local_part = email.split("@", 1)[0].lower()
+    base = _USERNAME_SANITIZE_RE.sub("", local_part)[:20]
+    if len(base) < 3:
+        base = f"user{base}"
+
+    candidate = base
+    suffix = 1
+    while await get_user_by_user_name(db, candidate) is not None:
+        suffix += 1
+        candidate = f"{base}{suffix}"
+    return candidate
+
+
 async def signup(
     db: AsyncSession,
     *,
-    user_name: str,
+    user_name: str | None,
     email: str,
     full_name: str,
     password: str,
@@ -109,10 +131,13 @@ async def signup(
     # an unauthenticated caller *which* one is taken hands them an account-
     # enumeration oracle. (The unique constraints on both columns are the real
     # guard; this check is just for a friendlier error than a raw IntegrityError.)
-    if await get_user_by_email(db, email) is not None or await get_user_by_user_name(db, user_name) is not None:
+    email_taken = await get_user_by_email(db, email) is not None
+    user_name_taken = user_name is not None and await get_user_by_user_name(db, user_name) is not None
+    if email_taken or user_name_taken:
         raise HTTPException(status.HTTP_409_CONFLICT, "That email or username is already registered")
 
-    user = await create_user(db, user_name=user_name, email=email, full_name=full_name, password=password)
+    resolved_user_name = user_name or await _generate_unique_user_name(db, email)
+    user = await create_user(db, user_name=resolved_user_name, email=email, full_name=full_name, password=password)
 
     token = await _issue_token(db, user, TokenPurpose.EMAIL_VERIFICATION)
     # portal_invite_token is passed through opaquely — never validated here.

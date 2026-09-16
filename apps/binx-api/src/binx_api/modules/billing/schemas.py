@@ -39,6 +39,15 @@ class ChangePlanRequest(BaseModel):
 
 class PlanCheckoutRequest(BaseModel):
     plan: str = Field(min_length=1, max_length=20)
+    # Where the browser lands after Stripe Checkout completes/cancels —
+    # embedded directly into a Stripe-hosted redirect, so restricted to a
+    # same-origin relative path (leading "/", no "//" protocol-relative
+    # tricks, no scheme) to avoid turning this into an open redirect.
+    # Unset keeps the original behavior (lands on Settings > Plan).
+    # No lookahead — pydantic's regex engine doesn't support it. Same intent
+    # (reject "//host" protocol-relative URLs): the character right after
+    # the leading "/" must be a normal path character, never another "/".
+    return_to: str | None = Field(default=None, max_length=200, pattern=r"^/([A-Za-z0-9_-][A-Za-z0-9/_-]*)?$")
 
 
 class BillingPortalRequest(BaseModel):

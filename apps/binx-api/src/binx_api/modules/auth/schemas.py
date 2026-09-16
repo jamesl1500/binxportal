@@ -5,7 +5,10 @@ from binx_api.modules.users.schemas import UserRead
 
 
 class SignupRequest(BaseModel):
-    user_name: str = Field(min_length=3, max_length=255)
+    # Optional — signup no longer asks for a handle up front. When omitted,
+    # auth/service.py::signup derives one from the email address instead. A
+    # user can still set their own from Profile later.
+    user_name: str | None = Field(default=None, min_length=3, max_length=255)
     email: EmailStr
     full_name: str
     password: Password
