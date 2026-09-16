@@ -8174,6 +8174,52 @@
         "title": "TokenPair",
         "type": "object"
       },
+      "TutorialProgressRead": {
+        "description": "Progress through the staff-portal welcome tour and its per-page\ncontextual popups. Built manually in the router (like UserProfileRead)\nrather than from_attributes \u2014 dismissed_popups is JSON-in-Text on the\nmodel, list[str] here.",
+        "properties": {
+          "dismissed_popups": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Dismissed Popups",
+            "type": "array"
+          },
+          "tour_completed": {
+            "title": "Tour Completed",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "tour_completed",
+          "dismissed_popups"
+        ],
+        "title": "TutorialProgressRead",
+        "type": "object"
+      },
+      "TutorialProgressUpdate": {
+        "description": "Full replace of both fields together \u2014 the client always holds and\nresends its whole current state, same as NotificationSettingsUpdate.",
+        "properties": {
+          "dismissed_popups": {
+            "items": {
+              "maxLength": 64,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 64,
+            "title": "Dismissed Popups",
+            "type": "array"
+          },
+          "tour_completed": {
+            "title": "Tour Completed",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "tour_completed"
+        ],
+        "title": "TutorialProgressUpdate",
+        "type": "object"
+      },
       "UnreadCountRead": {
         "properties": {
           "unread_count": {
@@ -21032,6 +21078,76 @@
           }
         ],
         "summary": "Write Qualifications",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/users/me/tutorial-progress": {
+      "get": {
+        "operationId": "read_tutorial_progress_users_me_tutorial_progress_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TutorialProgressRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Read Tutorial Progress",
+        "tags": [
+          "users"
+        ]
+      },
+      "put": {
+        "operationId": "write_tutorial_progress_users_me_tutorial_progress_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TutorialProgressUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TutorialProgressRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Write Tutorial Progress",
         "tags": [
           "users"
         ]

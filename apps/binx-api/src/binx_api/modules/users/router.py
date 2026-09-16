@@ -17,6 +17,8 @@ from binx_api.modules.users.schemas import (
     PrivacySettingsRead,
     PrivacySettingsUpdate,
     QualificationsUpdate,
+    TutorialProgressRead,
+    TutorialProgressUpdate,
     UserProfileRead,
     UserProfileUpdate,
     UserRead,
@@ -31,14 +33,17 @@ from binx_api.modules.users.service import (
     get_or_create_appearance_settings,
     get_or_create_profile,
     get_privacy_settings,
+    get_tutorial_progress,
     profile_education,
     profile_experience,
     profile_skills,
     save_user_image,
+    tutorial_dismissed_popups,
     update_appearance_settings,
     update_notification_settings,
     update_privacy_settings,
     update_qualifications,
+    update_tutorial_progress,
     update_user_profile,
 )
 
@@ -179,6 +184,29 @@ async def write_privacy_settings(
 ) -> PrivacySettingsRead:
     settings = await update_privacy_settings(db, current_user, **data.model_dump())
     return PrivacySettingsRead.model_validate(settings)
+
+
+def _tutorial_progress_read(progress) -> TutorialProgressRead:
+    return TutorialProgressRead(
+        tour_completed=progress.tour_completed,
+        dismissed_popups=tutorial_dismissed_popups(progress),
+    )
+
+
+@router.get("/me/tutorial-progress", response_model=TutorialProgressRead)
+async def read_tutorial_progress(db: DbSession, current_user: CurrentUser) -> TutorialProgressRead:
+    progress = await get_tutorial_progress(db, current_user)
+    return _tutorial_progress_read(progress)
+
+
+@router.put("/me/tutorial-progress", response_model=TutorialProgressRead)
+async def write_tutorial_progress(
+    db: DbSession, current_user: CurrentUser, data: TutorialProgressUpdate
+) -> TutorialProgressRead:
+    progress = await update_tutorial_progress(
+        db, current_user, tour_completed=data.tour_completed, dismissed_popups=data.dismissed_popups
+    )
+    return _tutorial_progress_read(progress)
 
 
 @router.patch("/me/password", response_model=MessageResponse)

@@ -132,6 +132,26 @@ class AppearanceSettingsUpdate(BaseModel):
     accent_color: str | None = Field(default=None, pattern="^#[0-9a-fA-F]{6}$")
 
 
+class TutorialProgressRead(BaseModel):
+    """Progress through the staff-portal welcome tour and its per-page
+    contextual popups. Built manually in the router (like UserProfileRead)
+    rather than from_attributes — dismissed_popups is JSON-in-Text on the
+    model, list[str] here."""
+
+    tour_completed: bool
+    dismissed_popups: list[str]
+
+
+class TutorialProgressUpdate(BaseModel):
+    """Full replace of both fields together — the client always holds and
+    resends its whole current state, same as NotificationSettingsUpdate."""
+
+    tour_completed: bool
+    dismissed_popups: list[Annotated[str, Field(min_length=1, max_length=64)]] = Field(
+        default_factory=list, max_length=64
+    )
+
+
 class ChangePasswordRequest(BaseModel):
     current_password: str
     new_password: Password

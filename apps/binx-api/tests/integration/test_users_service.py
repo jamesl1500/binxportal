@@ -19,6 +19,7 @@ from binx_api.modules.users.models import (
     UserNotificationSettings,
     UserPrivacySettings,
     UserProfile,
+    UserTutorialProgress,
 )
 from tests.factories import make_user
 
@@ -229,6 +230,40 @@ class TestAppearanceSettings:
 
         cleared = await service.update_appearance_settings(db_session, user, accent_color=None)
         assert cleared.accent_color is None
+
+
+class TestTutorialProgress:
+    async def test_first_read_creates_a_default_row(self, db_session) -> None:
+        user = await make_user(db_session)
+        rows = (await db_session.execute(select(UserTutorialProgress))).scalars().all()
+        assert rows == []
+
+        progress = await service.get_tutorial_progress(db_session, user)
+        assert progress.tour_completed is False
+        assert service.tutorial_dismissed_popups(progress) == []
+
+        rows = (await db_session.execute(select(UserTutorialProgress))).scalars().all()
+        assert len(rows) == 1
+
+    async def test_second_read_reuses_the_same_row(self, db_session) -> None:
+        user = await make_user(db_session)
+        first = await service.get_tutorial_progress(db_session, user)
+        second = await service.get_tutorial_progress(db_session, user)
+        assert first.id == second.id
+
+    async def test_update_replaces_completion_and_dismissed_popups(self, db_session) -> None:
+        user = await make_user(db_session)
+        updated = await service.update_tutorial_progress(
+            db_session, user, tour_completed=True, dismissed_popups=["clients-new", "projects-new"]
+        )
+        assert updated.tour_completed is True
+        assert service.tutorial_dismissed_popups(updated) == ["clients-new", "projects-new"]
+
+        # A later update fully replaces the list, same as notification settings.
+        replaced = await service.update_tutorial_progress(
+            db_session, user, tour_completed=True, dismissed_popups=["clients-new"]
+        )
+        assert service.tutorial_dismissed_popups(replaced) == ["clients-new"]
 
 
 class TestDeleteAccount:

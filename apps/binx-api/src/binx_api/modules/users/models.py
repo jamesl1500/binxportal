@@ -134,3 +134,18 @@ class UserAppearanceSettings(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), unique=True, index=True)
 
     accent_color: Mapped[str | None] = mapped_column(String(7), default=None)
+
+
+# Tracks a user's progress through the staff-portal welcome tour and its
+# per-page contextual popups, so neither repeats once seen. Created lazily
+# on first access, same as the settings tables above.
+class UserTutorialProgress(Base):
+    __tablename__ = "user_tutorial_progress"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), unique=True, index=True)
+
+    tour_completed: Mapped[bool] = mapped_column(default=False)
+    # JSON list[str] of dismissed popup ids — same "Text column, JSON-encoded"
+    # convention as UserProfile.skills above.
+    dismissed_popups: Mapped[str] = mapped_column(Text, default="[]")

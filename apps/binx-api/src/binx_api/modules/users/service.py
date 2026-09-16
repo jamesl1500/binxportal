@@ -17,6 +17,7 @@ from binx_api.modules.users.models import (
     UserNotificationSettings,
     UserPrivacySettings,
     UserProfile,
+    UserTutorialProgress,
 )
 
 settings = get_settings()
@@ -272,6 +273,36 @@ async def update_appearance_settings(
     await db.commit()
     await db.refresh(settings_row)
     return settings_row
+
+
+# Get the current user's tutorial progress, creating a default row (tour not
+# completed, nothing dismissed) on first access, same as the settings tables above.
+async def get_tutorial_progress(db: AsyncSession, user: User) -> UserTutorialProgress:
+    result = await db.execute(select(UserTutorialProgress).where(UserTutorialProgress.user_id == user.id))
+    progress = result.scalar_one_or_none()
+    if progress is None:
+        progress = UserTutorialProgress(user_id=user.id)
+        db.add(progress)
+        await db.commit()
+        await db.refresh(progress)
+    return progress
+
+
+def tutorial_dismissed_popups(progress: UserTutorialProgress) -> list[str]:
+    return json.loads(progress.dismissed_popups) if progress.dismissed_popups else []
+
+
+# Replace the current user's tutorial progress wholesale — the client always
+# holds and resends its whole current state, same as update_notification_settings.
+async def update_tutorial_progress(
+    db: AsyncSession, user: User, *, tour_completed: bool, dismissed_popups: list[str]
+) -> UserTutorialProgress:
+    progress = await get_tutorial_progress(db, user)
+    progress.tour_completed = tour_completed
+    progress.dismissed_popups = json.dumps(dismissed_popups)
+    await db.commit()
+    await db.refresh(progress)
+    return progress
 
 
 # Changes the current user's password, requiring the current one as proof of
