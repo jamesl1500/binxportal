@@ -12,6 +12,7 @@ import { redirect } from "next/navigation";
 
 import { AuthApiError, logout } from "@/lib/auth";
 import { AgencyRead, createAgency, getMyAgencies, setCurrentAgencyId } from "@/lib/agencies";
+import { TutorialProgress, updateTutorialProgress } from "@/lib/users";
 
 export async function logoutAction(): Promise<void> {
   await logout();
@@ -70,4 +71,31 @@ export async function createAgencyAction(name: string): Promise<CreateAgencyActi
 
   await setCurrentAgencyId(agency.id);
   return { agency };
+}
+
+export interface UpdateTutorialProgressActionResult {
+  error?: string;
+}
+
+/**
+ * updateTutorialProgressAction
+ *
+ * Persists the welcome tour's completed/skipped state and which page
+ * popups have been dismissed. Called by TutorialProvider in the
+ * background — a failed save just means the hint reappears next load, an
+ * acceptable, low-stakes failure mode, so callers don't need to surface
+ * this error to the user.
+ */
+export async function updateTutorialProgressAction(
+  progress: TutorialProgress,
+): Promise<UpdateTutorialProgressActionResult> {
+  try {
+    await updateTutorialProgress(progress);
+  } catch (error) {
+    if (error instanceof AuthApiError) {
+      return { error: error.message };
+    }
+    return { error: "Unable to save tutorial progress" };
+  }
+  return {};
 }

@@ -23,6 +23,11 @@ vi.mock("@/components/messaging/MessagingProvider/MessagingProvider", () => ({
 vi.mock("@/stores/use-messaging-store", () => ({
   useMessagingStore: (selector: (s: unknown) => unknown) => selector({ upsertConversation }),
 }));
+// Renders a PageCoachmark on the trigger button, which reads tutorial state
+// via context — not under test here.
+vi.mock("@/components/tutorial/TutorialProvider/TutorialProvider", () => ({
+  useTutorial: () => ({ isPopupDismissed: () => true, dismissPopup: vi.fn() }),
+}));
 
 import { createConversationAction } from "@/app/(app)/messages/actions";
 import { toast } from "sonner";

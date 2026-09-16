@@ -10,12 +10,13 @@
  */
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog } from "@base-ui/react/dialog";
 import { Plus } from "lucide-react";
 
 import LeadForm from "@/components/leads/LeadForm/LeadForm";
+import PageCoachmark from "@/components/tutorial/PageCoachmark/PageCoachmark";
 
 import styles from "./CreateLeadDialog.module.scss";
 
@@ -26,13 +27,21 @@ interface CreateLeadDialogProps {
 const CreateLeadDialog = ({ agencyId }: CreateLeadDialogProps) => {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
 
   return (
     <>
-      <button type="button" className={styles.trigger} onClick={() => setOpen(true)}>
+      <button type="button" ref={triggerRef} className={styles.trigger} onClick={() => setOpen(true)}>
         <Plus className={styles.plusIcon} aria-hidden="true" />
         New lead
       </button>
+
+      <PageCoachmark
+        id="leads-new"
+        anchorRef={triggerRef}
+        title="Track a prospect"
+        body="Add a lead here, then drag it across stages as it moves toward becoming a client."
+      />
 
       <Dialog.Root open={open} onOpenChange={setOpen}>
         <Dialog.Portal>

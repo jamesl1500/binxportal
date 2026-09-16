@@ -11,6 +11,12 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: mockRefresh }),
 }));
 
+// Renders a PageCoachmark on the trigger button, which reads tutorial state
+// via context — not under test here.
+vi.mock("@/components/tutorial/TutorialProvider/TutorialProvider", () => ({
+  useTutorial: () => ({ isPopupDismissed: () => true, dismissPopup: vi.fn() }),
+}));
+
 import { createClientAction } from "@/app/(app)/clients/actions";
 
 import CreateClientDialog from "./CreateClientDialog";

@@ -414,6 +414,71 @@ export async function updateAppearanceSettings(accentColor: string | null): Prom
   }
 }
 
+/**
+ * TutorialProgress
+ *
+ * The signed-in user's progress through the staff-portal welcome tour and
+ * its per-page contextual popups, as returned by binx-api.
+ *
+ * @interface TutorialProgress
+ */
+export type TutorialProgress = Schemas["TutorialProgressRead"];
+
+/**
+ * getTutorialProgress
+ *
+ * Fetches the signed-in user's tutorial progress via
+ * `GET /users/me/tutorial-progress`. binx-api creates a default row (tour
+ * not completed, nothing dismissed) on first access, so this always
+ * resolves rather than 404ing for new users.
+ *
+ * @function getTutorialProgress
+ * @throws {AuthApiError} - Thrown if not authenticated.
+ */
+export async function getTutorialProgress(): Promise<TutorialProgress> {
+  const headers = await authHeader();
+
+  try {
+    const { data } = await api.get<TutorialProgress>("/users/me/tutorial-progress", { headers });
+    return data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new AuthApiError(
+        extractDetailMessage(error.response.data, "Unable to load tutorial progress"),
+        error.response.status,
+      );
+    }
+    throw error;
+  }
+}
+
+/**
+ * updateTutorialProgress
+ *
+ * Replaces the signed-in user's tutorial progress via
+ * `PUT /users/me/tutorial-progress` — a full replace, same as
+ * updateNotificationSettings.
+ *
+ * @function updateTutorialProgress
+ * @throws {AuthApiError} - Thrown if not authenticated, or binx-api rejects the update.
+ */
+export async function updateTutorialProgress(progress: TutorialProgress): Promise<TutorialProgress> {
+  const headers = await authHeader();
+
+  try {
+    const { data } = await api.put<TutorialProgress>("/users/me/tutorial-progress", progress, { headers });
+    return data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new AuthApiError(
+        extractDetailMessage(error.response.data, "Unable to update tutorial progress"),
+        error.response.status,
+      );
+    }
+    throw error;
+  }
+}
+
 export interface RequestEmailChangeInput {
   currentPassword: string;
   newEmail: string;

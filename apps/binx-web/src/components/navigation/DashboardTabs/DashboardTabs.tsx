@@ -10,8 +10,11 @@
  */
 "use client";
 
+import { useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+
+import PageCoachmark from "@/components/tutorial/PageCoachmark/PageCoachmark";
 
 import styles from "./DashboardTabs.module.scss";
 
@@ -28,17 +31,31 @@ interface DashboardTabsProps {
 
 const DashboardTabs = ({ myWorkCount = 0 }: DashboardTabsProps) => {
   const pathname = usePathname();
+  const myWorkRef = useRef<HTMLAnchorElement | null>(null);
 
   return (
     <nav className={styles.tabs} aria-label="Dashboard">
       {TABS.map((tab) => (
-        <Link key={tab.href} href={tab.href} className={styles.tab} data-active={pathname === tab.href}>
+        <Link
+          key={tab.href}
+          href={tab.href}
+          ref={tab.href === "/dashboard/my-work" ? myWorkRef : undefined}
+          className={styles.tab}
+          data-active={pathname === tab.href}
+        >
           {tab.label}
           {tab.href === "/dashboard/my-work" && myWorkCount > 0 && (
             <span className={styles.badge}>{myWorkCount}</span>
           )}
         </Link>
       ))}
+
+      <PageCoachmark
+        id="dashboard-my-work"
+        anchorRef={myWorkRef}
+        title="Your personal view"
+        body="Check My work for what's assigned to you specifically, across every project."
+      />
     </nav>
   );
 };

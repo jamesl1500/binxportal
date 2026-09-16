@@ -2779,6 +2779,24 @@ export interface paths {
         patch: operations["write_qualifications_users_me_qualifications_patch"];
         trace?: never;
     };
+    "/users/me/tutorial-progress": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Tutorial Progress */
+        get: operations["read_tutorial_progress_users_me_tutorial_progress_get"];
+        /** Write Tutorial Progress */
+        put: operations["write_tutorial_progress_users_me_tutorial_progress_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/webhooks/stripe/connect": {
         parameters: {
             query?: never;
@@ -5626,6 +5644,30 @@ export interface components {
              * @default bearer
              */
             token_type: string;
+        };
+        /**
+         * TutorialProgressRead
+         * @description Progress through the staff-portal welcome tour and its per-page
+         *     contextual popups. Built manually in the router (like UserProfileRead)
+         *     rather than from_attributes — dismissed_popups is JSON-in-Text on the
+         *     model, list[str] here.
+         */
+        TutorialProgressRead: {
+            /** Dismissed Popups */
+            dismissed_popups: string[];
+            /** Tour Completed */
+            tour_completed: boolean;
+        };
+        /**
+         * TutorialProgressUpdate
+         * @description Full replace of both fields together — the client always holds and
+         *     resends its whole current state, same as NotificationSettingsUpdate.
+         */
+        TutorialProgressUpdate: {
+            /** Dismissed Popups */
+            dismissed_popups?: string[];
+            /** Tour Completed */
+            tour_completed: boolean;
         };
         /** UnreadCountRead */
         UnreadCountRead: {
@@ -12831,6 +12873,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserProfileRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_tutorial_progress_users_me_tutorial_progress_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TutorialProgressRead"];
+                };
+            };
+        };
+    };
+    write_tutorial_progress_users_me_tutorial_progress_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TutorialProgressUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TutorialProgressRead"];
                 };
             };
             /** @description Validation Error */

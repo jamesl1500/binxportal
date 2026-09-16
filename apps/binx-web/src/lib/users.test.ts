@@ -24,6 +24,7 @@ import {
   getAppearanceSettings,
   getNotificationSettings,
   getPrivacySettings,
+  getTutorialProgress,
   getUserProfile,
   removeUserImage,
   requestEmailChange,
@@ -32,6 +33,7 @@ import {
   updateNotificationSettings,
   updatePrivacySettings,
   updateQualifications,
+  updateTutorialProgress,
   uploadUserImage,
 } from "@/lib/users";
 
@@ -314,6 +316,45 @@ describe("getAppearanceSettings / updateAppearanceSettings", () => {
     mockedApi.put.mockRejectedValueOnce(axiosError(422, "Bad color"));
 
     await expect(updateAppearanceSettings("blue")).rejects.toEqual(new AuthApiError("Bad color", 422));
+  });
+});
+
+describe("getTutorialProgress / updateTutorialProgress", () => {
+  const progress = { tour_completed: false, dismissed_popups: [] };
+
+  it("fetches progress with a bearer token", async () => {
+    mockedApi.get.mockResolvedValueOnce({ data: progress });
+
+    const result = await getTutorialProgress();
+
+    expect(result).toEqual(progress);
+    expect(mockedApi.get).toHaveBeenCalledWith("/users/me/tutorial-progress", {
+      headers: { Authorization: "Bearer test-access-token" },
+    });
+  });
+
+  it("throws AuthApiError(401) when fetching without a session", async () => {
+    mockedGetAccessToken.mockResolvedValueOnce(undefined);
+
+    await expect(getTutorialProgress()).rejects.toMatchObject({ name: "AuthApiError", status: 401 });
+  });
+
+  it("replaces progress with a PUT request", async () => {
+    const updated = { tour_completed: true, dismissed_popups: ["clients-new"] };
+    mockedApi.put.mockResolvedValueOnce({ data: updated });
+
+    const result = await updateTutorialProgress(updated);
+
+    expect(result).toEqual(updated);
+    expect(mockedApi.put).toHaveBeenCalledWith("/users/me/tutorial-progress", updated, {
+      headers: { Authorization: "Bearer test-access-token" },
+    });
+  });
+
+  it("surfaces binx-api's error detail when the update is rejected", async () => {
+    mockedApi.put.mockRejectedValueOnce(axiosError(422, "Bad progress"));
+
+    await expect(updateTutorialProgress(progress)).rejects.toEqual(new AuthApiError("Bad progress", 422));
   });
 });
 

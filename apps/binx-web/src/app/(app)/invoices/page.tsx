@@ -11,12 +11,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Plus } from "lucide-react";
 
 import { getCurrentAgencyContext } from "@/lib/agencies";
 import { getInvoices, getInvoiceSummary, getBillingSettings, formatMoneyCents } from "@/lib/invoicing";
 import ClientStatGrid from "@/components/clients/ClientStatGrid/ClientStatGrid";
 import InvoiceTable from "@/components/invoices/InvoiceTable/InvoiceTable";
+import NewInvoiceButton from "@/components/invoices/NewInvoiceButton/NewInvoiceButton";
 
 import styles from "./page.module.scss";
 
@@ -52,10 +52,7 @@ const InvoicesPage = async () => {
           <Link href="/settings/invoicing" className={styles.settingsLink}>
             Invoicing settings
           </Link>
-          <Link href="/invoices/new" className={styles.newButton}>
-            <Plus aria-hidden="true" />
-            New invoice
-          </Link>
+          <NewInvoiceButton />
         </div>
       </div>
 

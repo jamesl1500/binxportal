@@ -27,6 +27,7 @@ import type { AppNotification } from "@/lib/notifications";
 import OrgSwitcher from "@/components/navigation/OrgSwitcher/OrgSwitcher";
 import NotificationBell from "@/components/notifications/NotificationBell/NotificationBell";
 import AiAssistantLauncher from "@/components/ai/AiAssistantLauncher/AiAssistantLauncher";
+import TutorialLauncher from "@/components/tutorial/TutorialLauncher/TutorialLauncher";
 
 import styles from "./AppHeader.module.scss";
 
@@ -135,6 +136,7 @@ const AppHeader = ({
       </div>
 
       <div className={styles.right}>
+        <TutorialLauncher />
         <AiAssistantLauncher agencyId={currentAgency.id} />
         <NotificationBell initialUnreadCount={unreadNotifications} initialItems={notifications} />
 

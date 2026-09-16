@@ -12,12 +12,13 @@
  */
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog } from "@base-ui/react/dialog";
 import { Plus } from "lucide-react";
 
 import ClientForm from "@/components/forms/clients/ClientForm/ClientForm";
+import PageCoachmark from "@/components/tutorial/PageCoachmark/PageCoachmark";
 
 import styles from "./CreateClientDialog.module.scss";
 
@@ -28,6 +29,7 @@ interface CreateClientDialogProps {
 const CreateClientDialog = ({ agencyId }: CreateClientDialogProps) => {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
 
   const handleCreated = () => {
     setOpen(false);
@@ -36,10 +38,17 @@ const CreateClientDialog = ({ agencyId }: CreateClientDialogProps) => {
 
   return (
     <>
-      <button type="button" className={styles.trigger} onClick={() => setOpen(true)}>
+      <button type="button" ref={triggerRef} className={styles.trigger} onClick={() => setOpen(true)}>
         <Plus className={styles.plusIcon} aria-hidden="true" />
         New client
       </button>
+
+      <PageCoachmark
+        id="clients-new"
+        anchorRef={triggerRef}
+        title="Add your first client"
+        body="Start tracking who you work with — you can fill in the rest of their details any time."
+      />
 
       <Dialog.Root open={open} onOpenChange={setOpen}>
         <Dialog.Portal>

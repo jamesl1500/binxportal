@@ -11,7 +11,7 @@
  */
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog } from "@base-ui/react/dialog";
 import { Plus } from "lucide-react";
@@ -21,6 +21,7 @@ import { createConversationAction } from "@/app/(app)/messages/actions";
 import { useMessagingStore } from "@/stores/use-messaging-store";
 import { useMessaging } from "@/components/messaging/MessagingProvider/MessagingProvider";
 import MemberMultiSelect from "@/components/messaging/MemberMultiSelect/MemberMultiSelect";
+import PageCoachmark from "@/components/tutorial/PageCoachmark/PageCoachmark";
 
 import styles from "./NewConversationDialog.module.scss";
 
@@ -35,6 +36,7 @@ const NewConversationDialog = () => {
   const [clientId, setClientId] = useState("");
   const [firstMessage, setFirstMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
 
   const isGroup = selected.size > 1;
 
@@ -76,10 +78,17 @@ const NewConversationDialog = () => {
 
   return (
     <>
-      <button type="button" className={styles.trigger} onClick={() => setOpen(true)}>
+      <button type="button" ref={triggerRef} className={styles.trigger} onClick={() => setOpen(true)}>
         <Plus className={styles.plusIcon} aria-hidden="true" />
         New message
       </button>
+
+      <PageCoachmark
+        id="messages-new"
+        anchorRef={triggerRef}
+        title="Start a conversation"
+        body="Message a teammate or a client without leaving the app."
+      />
 
       <Dialog.Root
         open={open}

@@ -4,6 +4,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mockedPathname = vi.fn(() => "/dashboard");
 vi.mock("next/navigation", () => ({ usePathname: () => mockedPathname() }));
 
+// DashboardTabs renders a PageCoachmark on the My work tab, which reads
+// tutorial state via context — not under test here, so stub it dismissed.
+vi.mock("@/components/tutorial/TutorialProvider/TutorialProvider", () => ({
+  useTutorial: () => ({ isPopupDismissed: () => true, dismissPopup: vi.fn() }),
+}));
+
 import DashboardTabs from "./DashboardTabs";
 
 beforeEach(() => {

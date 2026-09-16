@@ -24,8 +24,10 @@ import { getCurrentAgencyContext } from "@/lib/agencies";
 import { getUnreadMessageCount } from "@/lib/messaging";
 import { getNotifications } from "@/lib/notifications";
 import { getPortalContext } from "@/lib/portal";
-import { getAppearanceSettings } from "@/lib/users";
+import { getAppearanceSettings, getTutorialProgress } from "@/lib/users";
 import AppHeader from "@/components/navigation/AppHeader/AppHeader";
+import TutorialProvider from "@/components/tutorial/TutorialProvider/TutorialProvider";
+import WelcomeTourModal from "@/components/tutorial/WelcomeTourModal/WelcomeTourModal";
 
 import styles from "./layout.module.scss";
 
@@ -52,30 +54,34 @@ const AppLayout = async ({ children }: { children: React.ReactNode }) => {
     redirect(portal ? "/portal" : "/onboarding/two");
   }
 
-  const [unreadMessages, notifications, appearance] = await Promise.all([
+  const [unreadMessages, notifications, appearance, tutorialProgress] = await Promise.all([
     getUnreadMessageCount(currentAgency.id),
     getNotifications({ limit: 8 }).catch(() => ({ items: [], unread_count: 0, has_more: false })),
     getAppearanceSettings().catch(() => ({ accent_color: null })),
+    getTutorialProgress().catch(() => ({ tour_completed: true, dismissed_popups: [] })),
   ]);
 
   return (
-    <div
-      className={styles.root}
-      style={{ "--app-accent": appearance.accent_color ?? undefined } as React.CSSProperties}
-    >
-      <AppHeader
-        user={user}
-        agencies={agencies}
-        currentAgency={currentAgency}
-        unreadMessages={unreadMessages}
-        unreadNotifications={notifications.unread_count}
-        notifications={notifications.items}
-      />
-      
-      <main className={styles.content}>{children}</main>
+    <TutorialProvider initialProgress={tutorialProgress}>
+      <div
+        className={styles.root}
+        style={{ "--app-accent": appearance.accent_color ?? undefined } as React.CSSProperties}
+      >
+        <AppHeader
+          user={user}
+          agencies={agencies}
+          currentAgency={currentAgency}
+          unreadMessages={unreadMessages}
+          unreadNotifications={notifications.unread_count}
+          notifications={notifications.items}
+        />
 
-      <Toaster position="bottom-right" richColors />
-    </div>
+        <main className={styles.content}>{children}</main>
+
+        <WelcomeTourModal />
+        <Toaster position="bottom-right" richColors />
+      </div>
+    </TutorialProvider>
   );
 };
 

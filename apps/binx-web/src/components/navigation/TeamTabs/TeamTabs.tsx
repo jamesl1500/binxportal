@@ -12,8 +12,11 @@
  */
 "use client";
 
+import { useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+
+import PageCoachmark from "@/components/tutorial/PageCoachmark/PageCoachmark";
 
 import styles from "./TeamTabs.module.scss";
 
@@ -23,6 +26,7 @@ interface TeamTabsProps {
 
 const TeamTabs = ({ canManage }: TeamTabsProps) => {
   const pathname = usePathname();
+  const invitationsRef = useRef<HTMLAnchorElement | null>(null);
 
   const tabs = [
     { href: "/team", label: "Members" },
@@ -32,10 +36,25 @@ const TeamTabs = ({ canManage }: TeamTabsProps) => {
   return (
     <nav className={styles.tabs} aria-label="Team">
       {tabs.map((tab) => (
-        <Link key={tab.href} href={tab.href} className={styles.tab} data-active={pathname === tab.href}>
+        <Link
+          key={tab.href}
+          href={tab.href}
+          ref={tab.href === "/team/invitations" ? invitationsRef : undefined}
+          className={styles.tab}
+          data-active={pathname === tab.href}
+        >
           {tab.label}
         </Link>
       ))}
+
+      {canManage && (
+        <PageCoachmark
+          id="team-invitations"
+          anchorRef={invitationsRef}
+          title="Bring your team in"
+          body="Invite teammates here — they'll get an email invite and can start working right away."
+        />
+      )}
     </nav>
   );
 };

@@ -20,6 +20,11 @@ vi.mock("@/lib/agencies", () => ({
   createAgency: vi.fn(),
 }));
 
+// updateTutorialProgressAction() only orchestrates: call updateTutorialProgress.
+vi.mock("@/lib/users", () => ({
+  updateTutorialProgress: vi.fn(),
+}));
+
 // Next's real redirect() throws a special "NEXT_REDIRECT" error internally
 // that the framework catches further up to actually perform the navigation.
 // We mimic that "redirect = throw" behavior with our own sentinel error so we
@@ -34,13 +39,15 @@ import { redirect } from "next/navigation";
 
 import { AuthApiError, logout } from "@/lib/auth";
 import { createAgency, getMyAgencies, setCurrentAgencyId } from "@/lib/agencies";
-import { createAgencyAction, logoutAction, switchAgencyAction } from "./actions";
+import { updateTutorialProgress } from "@/lib/users";
+import { createAgencyAction, logoutAction, switchAgencyAction, updateTutorialProgressAction } from "./actions";
 
 const mockedLogout = vi.mocked(logout);
 const mockedRedirect = vi.mocked(redirect);
 const mockedGetMyAgencies = vi.mocked(getMyAgencies);
 const mockedSetCurrentAgencyId = vi.mocked(setCurrentAgencyId);
 const mockedCreateAgency = vi.mocked(createAgency);
+const mockedUpdateTutorialProgress = vi.mocked(updateTutorialProgress);
 
 const agencies = [
   { id: "aaaaaaaa-1111-1111-1111-111111111111", name: "Acme Agency", slug: "acme-agency", role: "owner" as const, has_logo: false },
@@ -103,5 +110,30 @@ describe("createAgencyAction", () => {
     mockedCreateAgency.mockRejectedValueOnce(new Error("network down"));
 
     await expect(createAgencyAction("Widgets Co")).resolves.toEqual({ error: "Unable to create your agency" });
+  });
+});
+
+describe("updateTutorialProgressAction", () => {
+  const progress = { tour_completed: true, dismissed_popups: ["clients-new"] };
+
+  it("saves the progress and resolves with no error", async () => {
+    mockedUpdateTutorialProgress.mockResolvedValueOnce(progress);
+
+    await expect(updateTutorialProgressAction(progress)).resolves.toEqual({});
+    expect(mockedUpdateTutorialProgress).toHaveBeenCalledWith(progress);
+  });
+
+  it("maps an AuthApiError to a returned error", async () => {
+    mockedUpdateTutorialProgress.mockRejectedValueOnce(new AuthApiError("Not authenticated", 401));
+
+    await expect(updateTutorialProgressAction(progress)).resolves.toEqual({ error: "Not authenticated" });
+  });
+
+  it("falls back to a generic message for non-API errors", async () => {
+    mockedUpdateTutorialProgress.mockRejectedValueOnce(new Error("network down"));
+
+    await expect(updateTutorialProgressAction(progress)).resolves.toEqual({
+      error: "Unable to save tutorial progress",
+    });
   });
 });

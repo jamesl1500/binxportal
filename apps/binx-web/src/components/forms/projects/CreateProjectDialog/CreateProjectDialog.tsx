@@ -10,13 +10,14 @@
  */
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog } from "@base-ui/react/dialog";
 import { Plus } from "lucide-react";
 
 import AiTaskSetup from "@/components/projects/AiTaskSetup/AiTaskSetup";
 import ProjectForm from "@/components/forms/projects/ProjectForm/ProjectForm";
+import PageCoachmark from "@/components/tutorial/PageCoachmark/PageCoachmark";
 import type { AgencyClient } from "@/lib/clients";
 import type { Project } from "@/lib/projects";
 
@@ -31,6 +32,7 @@ const CreateProjectDialog = ({ agencyId, clients }: CreateProjectDialogProps) =>
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [createdProject, setCreatedProject] = useState<Project | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
 
   const handleCreated = (project: Project) => {
     setCreatedProject(project);
@@ -54,10 +56,17 @@ const CreateProjectDialog = ({ agencyId, clients }: CreateProjectDialogProps) =>
 
   return (
     <>
-      <button type="button" className={styles.trigger} onClick={() => setOpen(true)}>
+      <button type="button" ref={triggerRef} className={styles.trigger} onClick={() => setOpen(true)}>
         <Plus className={styles.plusIcon} aria-hidden="true" />
         New project
       </button>
+
+      <PageCoachmark
+        id="projects-new"
+        anchorRef={triggerRef}
+        title="Start a project"
+        body="Projects come with a board, files, and a team automatically."
+      />
 
       <Dialog.Root open={open} onOpenChange={handleOpenChange}>
         <Dialog.Portal>

@@ -19,6 +19,11 @@ vi.mock("@/components/projects/AiTaskSetup/AiTaskSetup", () => ({
     </div>
   ),
 }));
+// Renders a PageCoachmark on the trigger button, which reads tutorial state
+// via context — not under test here.
+vi.mock("@/components/tutorial/TutorialProvider/TutorialProvider", () => ({
+  useTutorial: () => ({ isPopupDismissed: () => true, dismissPopup: vi.fn() }),
+}));
 
 import CreateProjectDialog from "./CreateProjectDialog";
 

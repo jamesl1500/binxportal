@@ -24,6 +24,11 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn() }),
 }));
 
+const mockedOpenTour = vi.fn();
+vi.mock("@/components/tutorial/TutorialProvider/TutorialProvider", () => ({
+  useTutorial: () => ({ openTour: mockedOpenTour }),
+}));
+
 import { logoutAction } from "@/app/(app)/actions";
 import type { CurrentUser } from "@/lib/auth";
 import type { AgencyRead } from "@/lib/agencies";
@@ -116,5 +121,14 @@ describe("AppHeader", () => {
     await user.click(await screen.findByRole("menuitem", { name: /sign out/i }));
 
     expect(mockedLogoutAction).toHaveBeenCalledOnce();
+  });
+
+  it("opens the guided tour from the help launcher", async () => {
+    const user = userEvent.setup();
+    render(<AppHeader user={testUser} agencies={testAgencies} currentAgency={testAgencies[0]} />);
+
+    await user.click(screen.getByRole("button", { name: "Open the guided tour" }));
+
+    expect(mockedOpenTour).toHaveBeenCalledOnce();
   });
 });
