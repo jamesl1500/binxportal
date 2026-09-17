@@ -67,3 +67,43 @@ export const USE_CASE_PAGES = [
   { href: "/for/branding-agencies", label: "Branding agencies" },
   { href: "/for/freelance-collectives", label: "Freelance collectives" },
 ] as const;
+
+/**
+ * marketingOpenGraph
+ *
+ * A page's own `openGraph`/`twitter` metadata, so sharing e.g. /pricing on
+ * Slack or X shows that page's title/description instead of the root
+ * layout's homepage defaults — Next.js metadata doesn't deep-merge these
+ * objects, so a page that sets `openGraph` at all must supply the whole
+ * thing, `images` included: setting `openGraph` without `images` does NOT
+ * fall back to the file-convention `opengraph-image` route (verified against
+ * the actual rendered `<head>` — the auto-detected image only applies when a
+ * route defines no `openGraph`/`twitter` of its own at all), so the shared
+ * brand card (apps/binx-web/src/app/opengraph-image.tsx / twitter-image.tsx)
+ * is referenced explicitly here instead.
+ *
+ * @function marketingOpenGraph
+ */
+export function marketingOpenGraph(title: string, description: string, path: string) {
+  const url = `${SITE_URL}${path}`;
+  const image = { url: `${SITE_URL}/opengraph-image`, width: 1200, height: 630, alt: SITE.ogImageAlt };
+  return {
+    openGraph: {
+      type: "website" as const,
+      siteName: SITE.name,
+      title,
+      description,
+      url,
+      locale: "en_US",
+      images: [image],
+    },
+    twitter: {
+      card: "summary_large_image" as const,
+      title,
+      description,
+      site: SITE.twitter,
+      creator: SITE.twitter,
+      images: [`${SITE_URL}/twitter-image`],
+    },
+  };
+}

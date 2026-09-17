@@ -21,6 +21,7 @@ const orgJsonLd = {
   url: SITE_URL,
   email: SITE.email,
   description: SITE.description,
+  logo: `${SITE_URL}/icon-512.png`,
   sameAs: [`https://twitter.com/${SITE.twitter.replace("@", "")}`],
 };
 

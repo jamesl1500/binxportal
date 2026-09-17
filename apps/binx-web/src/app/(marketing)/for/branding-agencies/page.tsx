@@ -12,16 +12,20 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { FileStack, PanelsTopLeft, Receipt, Users } from "lucide-react";
 
-import { SITE } from "@/lib/site";
+import { marketingOpenGraph, SITE } from "@/lib/site";
 import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 
 import styles from "../../marketing.module.scss";
 
+const TITLE = "For branding agencies";
+const DESCRIPTION =
+  "A workspace for branding agencies: a canvas for presenting brand concepts, a portal that delivers final assets and guidelines properly, and invoicing that matches project-based work.";
+
 export const metadata: Metadata = {
-  title: "Binx for branding agencies",
-  description:
-    "A workspace for branding agencies: a canvas for presenting brand concepts, a portal that delivers final assets and guidelines properly, and invoicing that matches project-based work.",
+  title: TITLE,
+  description: DESCRIPTION,
   alternates: { canonical: "/for/branding-agencies" },
+  ...marketingOpenGraph(TITLE, DESCRIPTION, "/for/branding-agencies"),
 };
 
 const CAPABILITIES = [
@@ -47,9 +51,36 @@ const CAPABILITIES = [
   },
 ];
 
+const FAQ = [
+  {
+    q: "Can we put our own branding on the client portal?",
+    a: "Yes — the portal carries your agency's name and look, not Binx's. For a brand engagement, that matters as much as the work itself.",
+  },
+  {
+    q: "Does the canvas work for moodboards and logo directions, not just tasks?",
+    a: "Yes — it's a general shared surface, not a task-only board. Pin concepts, palettes and directions and the client can react and comment directly on them.",
+  },
+  {
+    q: "Is there a free plan to try it on a real brand project?",
+    a: "Yes — no card, no time limit, capped on clients and projects so you can run a real engagement through it end to end before deciding.",
+  },
+];
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQ.map((item) => ({
+    "@type": "Question",
+    name: item.q,
+    acceptedAnswer: { "@type": "Answer", text: item.a },
+  })),
+};
+
 const BrandingAgenciesPage = () => {
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+
       <section className={styles.hero}>
         <div className={styles.heroGlow} aria-hidden="true" />
         <div className={styles.container}>
@@ -105,6 +136,28 @@ const BrandingAgenciesPage = () => {
               </p>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className={styles.section}>
+        <div className={styles.container}>
+          <div className={styles.sectionHead}>
+            <span className={styles.eyebrow}>Questions</span>
+            <h2 className={styles.h2}>Before you switch.</h2>
+          </div>
+          <div className={styles.faq}>
+            {FAQ.map((item) => (
+              <div key={item.q} className={styles.faqItem}>
+                <h3 className={styles.faqQ}>{item.q}</h3>
+                <p className={styles.faqA}>{item.a}</p>
+              </div>
+            ))}
+          </div>
+          <p className={styles.faqRelated}>
+            Comparing client-portal tools? See the{" "}
+            <Link href="/alternatives/copilot-assembly">Copilot &amp; Assembly alternative</Link> page, or{" "}
+            <Link href="/pricing">check the plans</Link>.
+          </p>
         </div>
       </section>
 

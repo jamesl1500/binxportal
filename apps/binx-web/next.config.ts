@@ -6,6 +6,12 @@ const nextConfig: NextConfig = {
   // production Dockerfile copies into the final image; see apps/binx-web/Dockerfile.
   output: "standalone",
   reactCompiler: true,
+  images: {
+    // Explicit rather than relying on next/image's defaults — makes AVIF/WebP
+    // negotiation for the marketing hero images (public/marketing/*.webp) a
+    // deliberate choice, not an implicit one.
+    formats: ["image/avif", "image/webp"],
+  },
   experimental: {
     serverActions: {
       // Uploads (canvas images, task files, message attachments) go through

@@ -594,6 +594,37 @@
   color: t.$color-ink-soft;
 }
 
+.faqFooterLink {
+  display: inline-block;
+  margin-top: t.$space-6;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+  text-decoration: none;
+  border-bottom: 1px solid t.$color-border;
+
+  &:hover {
+    color: t.$color-ink;
+    border-color: t.$color-border-strong;
+  }
+}
+
+.faqRelated {
+  margin: t.$space-6 0 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-faint;
+
+  a {
+    color: t.$color-ink-soft;
+    text-decoration: none;
+    border-bottom: 1px solid t.$color-border;
+
+    &:hover {
+      color: t.$color-ink;
+      border-color: t.$color-border-strong;
+    }
+  }
+}
+
 // ---- Contact ----------------------------------------------
 
 .contactGrid {

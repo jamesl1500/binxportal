@@ -11,14 +11,18 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Mail } from "lucide-react";
 
-import { SITE } from "@/lib/site";
+import { marketingOpenGraph, SITE } from "@/lib/site";
 
 import styles from "../marketing.module.scss";
 
+const TITLE = "Contact";
+const DESCRIPTION = `Get in touch with the ${SITE.name} team — questions, feedback, or help moving your agency over.`;
+
 export const metadata: Metadata = {
-  title: "Contact",
-  description: `Get in touch with the ${SITE.name} team — questions, feedback, or help moving your agency over.`,
+  title: TITLE,
+  description: DESCRIPTION,
   alternates: { canonical: "/contact" },
+  ...marketingOpenGraph(TITLE, DESCRIPTION, "/contact"),
 };
 
 const ContactPage = () => {

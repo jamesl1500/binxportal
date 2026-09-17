@@ -12,16 +12,20 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CalendarCheck, LayoutGrid, Receipt, Users } from "lucide-react";
 
-import { SITE } from "@/lib/site";
+import { marketingOpenGraph, SITE } from "@/lib/site";
 import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 
 import styles from "../../marketing.module.scss";
 
+const TITLE = "For freelance collectives";
+const DESCRIPTION =
+  "A shared workspace for freelance collectives: clients and projects owned by the group, not one person's inbox, with a free plan that fits before the work is billing enough to justify a cost.";
+
 export const metadata: Metadata = {
-  title: "Binx for freelance collectives",
-  description:
-    "A shared workspace for freelance collectives: clients and projects owned by the group, not one person's inbox, with a free plan that fits before the work is billing enough to justify a cost.",
+  title: TITLE,
+  description: DESCRIPTION,
   alternates: { canonical: "/for/freelance-collectives" },
+  ...marketingOpenGraph(TITLE, DESCRIPTION, "/for/freelance-collectives"),
 };
 
 const CAPABILITIES = [
@@ -47,9 +51,36 @@ const CAPABILITIES = [
   },
 ];
 
+const FAQ = [
+  {
+    q: "Can more than one of us own the same client?",
+    a: "Yes — clients and projects belong to the group, not to whoever booked the work. Anyone in the collective can pick up a thread without a forwarded email chain.",
+  },
+  {
+    q: "How do we bill a client we're splitting the work on?",
+    a: "One invoice, your numbering and terms — Binx bills the client once. How the group settles up internally is a separate conversation, not a separate invoice each.",
+  },
+  {
+    q: "Is the Free plan really enough for a small collective?",
+    a: "For most: up to 3 team members, 3 clients and 3 active projects, no time limit and no card required — room to run a real client through it before deciding whether to upgrade.",
+  },
+];
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQ.map((item) => ({
+    "@type": "Question",
+    name: item.q,
+    acceptedAnswer: { "@type": "Answer", text: item.a },
+  })),
+};
+
 const FreelanceCollectivesPage = () => {
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+
       <section className={styles.hero}>
         <div className={styles.heroGlow} aria-hidden="true" />
         <div className={styles.container}>
@@ -105,6 +136,27 @@ const FreelanceCollectivesPage = () => {
               </p>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className={styles.section}>
+        <div className={styles.container}>
+          <div className={styles.sectionHead}>
+            <span className={styles.eyebrow}>Questions</span>
+            <h2 className={styles.h2}>Before you switch.</h2>
+          </div>
+          <div className={styles.faq}>
+            {FAQ.map((item) => (
+              <div key={item.q} className={styles.faqItem}>
+                <h3 className={styles.faqQ}>{item.q}</h3>
+                <p className={styles.faqA}>{item.a}</p>
+              </div>
+            ))}
+          </div>
+          <p className={styles.faqRelated}>
+            Coming from Bloom? See the <Link href="/alternatives/bloom">Bloom.io alternative</Link> page, or{" "}
+            <Link href="/pricing">check the plans</Link>.
+          </p>
         </div>
       </section>
 

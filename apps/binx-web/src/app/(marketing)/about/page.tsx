@@ -8,16 +8,20 @@
  */
 import type { Metadata } from "next";
 
-import { SITE } from "@/lib/site";
+import { marketingOpenGraph, SITE } from "@/lib/site";
 import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 
 import styles from "../marketing.module.scss";
 
+const TITLE = "About";
+const DESCRIPTION =
+  "Binx is one workspace for the whole agency — leads, clients, projects, files, invoicing and a client portal — built for small teams who'd rather do the work than manage the tools.";
+
 export const metadata: Metadata = {
-  title: "About",
-  description:
-    "Binx is one workspace for the whole agency — leads, clients, projects, files, invoicing and a client portal — built for small teams who'd rather do the work than manage the tools.",
+  title: TITLE,
+  description: DESCRIPTION,
   alternates: { canonical: "/about" },
+  ...marketingOpenGraph(TITLE, DESCRIPTION, "/about"),
 };
 
 const PRINCIPLES = [

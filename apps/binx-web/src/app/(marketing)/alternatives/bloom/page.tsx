@@ -12,17 +12,25 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { LayoutGrid, PanelsTopLeft, Users } from "lucide-react";
 
-import { SITE } from "@/lib/site";
+import { marketingOpenGraph, SITE, USE_CASE_PAGES } from "@/lib/site";
 import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 
 import styles from "../../marketing.module.scss";
 
+const TITLE = "Bloom.io alternative for agencies";
+const DESCRIPTION =
+  "Bloom is built around a single creative freelancer's workflow. Binx is the Bloom.io alternative for a team — several people, several clients, one shared workspace.";
+
 export const metadata: Metadata = {
-  title: "Bloom.io alternative for agencies",
-  description:
-    "Bloom is built around a single creative freelancer's workflow. Binx is the Bloom.io alternative for a team — several people, several clients, one shared workspace.",
+  title: TITLE,
+  description: DESCRIPTION,
   alternates: { canonical: "/alternatives/bloom" },
+  ...marketingOpenGraph(TITLE, DESCRIPTION, "/alternatives/bloom"),
 };
+
+const RELATED_USE_CASES = USE_CASE_PAGES.filter(
+  (page) => page.href === "/for/design-studios" || page.href === "/for/freelance-collectives",
+);
 
 const GAPS = [
   {
@@ -157,6 +165,17 @@ const BloomAlternativePage = () => {
               </div>
             ))}
           </div>
+          <p className={styles.faqRelated}>
+            More Binx fits:{" "}
+            {RELATED_USE_CASES.map((page, index) => (
+              <span key={page.href}>
+                <Link href={page.href}>{page.label}</Link>
+                {index < RELATED_USE_CASES.length - 1 ? ", " : ""}
+              </span>
+            ))}
+            {" · "}
+            <Link href="/pricing">See the plans →</Link>
+          </p>
         </div>
       </section>
 

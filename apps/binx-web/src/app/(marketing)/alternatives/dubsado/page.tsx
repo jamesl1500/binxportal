@@ -14,16 +14,20 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { LayoutGrid, PanelsTopLeft, Users } from "lucide-react";
 
-import { SITE } from "@/lib/site";
+import { marketingOpenGraph, SITE } from "@/lib/site";
 import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 
 import styles from "../../marketing.module.scss";
 
+const TITLE = "Dubsado alternative for agencies";
+const DESCRIPTION =
+  "Looking for a Dubsado alternative built for a growing agency, not a solo practice? Binx adds real project boards, a live client portal, and a team the whole workflow includes.";
+
 export const metadata: Metadata = {
-  title: "Dubsado alternative for agencies",
-  description:
-    "Looking for a Dubsado alternative built for a growing agency, not a solo practice? Binx adds real project boards, a live client portal, and a team the whole workflow includes.",
+  title: TITLE,
+  description: DESCRIPTION,
   alternates: { canonical: "/alternatives/dubsado" },
+  ...marketingOpenGraph(TITLE, DESCRIPTION, "/alternatives/dubsado"),
 };
 
 const GAPS = [
@@ -159,6 +163,9 @@ const DubsadoAlternativePage = () => {
               </div>
             ))}
           </div>
+          <Link href="/pricing" className={styles.faqFooterLink}>
+            See the Free, Starter, Pro and Scale plans in full →
+          </Link>
         </div>
       </section>
 

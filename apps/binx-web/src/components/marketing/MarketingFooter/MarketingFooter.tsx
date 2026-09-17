@@ -9,7 +9,7 @@
  */
 import Link from "next/link";
 
-import { SEO_LANDING_PAGES, SITE } from "@/lib/site";
+import { SEO_LANDING_PAGES, SITE, USE_CASE_PAGES } from "@/lib/site";
 import BinxMark from "@/components/BinxMark/BinxMark";
 
 import styles from "./MarketingFooter.module.scss";
@@ -32,6 +32,12 @@ const COLUMNS: { heading: string; links: { href: string; label: string }[] }[] =
     links: [...SEO_LANDING_PAGES],
   },
   {
+    heading: "Use cases",
+    // Same reasoning as Compare above — before this, the only inbound link
+    // to any /for/* page sitewide was the homepage trust bar.
+    links: [...USE_CASE_PAGES],
+  },
+  {
     heading: "Company",
     links: [
       { href: "/about", label: "About" },
@@ -41,8 +47,8 @@ const COLUMNS: { heading: string; links: { href: string; label: string }[] }[] =
   {
     heading: "Legal",
     links: [
-      { href: "/contact", label: "Privacy" },
-      { href: "/contact", label: "Terms" },
+      { href: "/privacy", label: "Privacy" },
+      { href: "/terms", label: "Terms" },
     ],
   },
 ];

@@ -12,16 +12,20 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { FileStack, LayoutGrid, PanelsTopLeft, Receipt } from "lucide-react";
 
-import { SITE } from "@/lib/site";
+import { marketingOpenGraph, SITE } from "@/lib/site";
 import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 
 import styles from "../../marketing.module.scss";
 
+const TITLE = "For design studios";
+const DESCRIPTION =
+  "A workspace for design studios: a shared canvas for reviewing concepts with clients, versioned files on every project, and a portal for sign-off — without a separate review tool.";
+
 export const metadata: Metadata = {
-  title: "Binx for design studios",
-  description:
-    "A workspace for design studios: a shared canvas for reviewing concepts with clients, versioned files on every project, and a portal for sign-off — without a separate review tool.",
+  title: TITLE,
+  description: DESCRIPTION,
   alternates: { canonical: "/for/design-studios" },
+  ...marketingOpenGraph(TITLE, DESCRIPTION, "/for/design-studios"),
 };
 
 const CAPABILITIES = [
@@ -47,9 +51,36 @@ const CAPABILITIES = [
   },
 ];
 
+const FAQ = [
+  {
+    q: "Does this replace our review/markup tool?",
+    a: "For most studios, yes — the canvas is where concepts get pinned and commented on directly by the client, so a separate markup tool or screenshot-and-email thread isn't needed to get to sign-off.",
+  },
+  {
+    q: "Can a client comment on a specific concept, not just the project as a whole?",
+    a: "Yes — comments and reactions land on the individual piece they're about, right on the canvas, not buried in a reply-all thread.",
+  },
+  {
+    q: "Is there a free plan we can try on a real project?",
+    a: "Yes — no card, no time limit, capped on clients and projects so you can run a real concept review through it before deciding.",
+  },
+];
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQ.map((item) => ({
+    "@type": "Question",
+    name: item.q,
+    acceptedAnswer: { "@type": "Answer", text: item.a },
+  })),
+};
+
 const DesignStudiosPage = () => {
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+
       <section className={styles.hero}>
         <div className={styles.heroGlow} aria-hidden="true" />
         <div className={styles.container}>
@@ -106,6 +137,27 @@ const DesignStudiosPage = () => {
               </p>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className={styles.section}>
+        <div className={styles.container}>
+          <div className={styles.sectionHead}>
+            <span className={styles.eyebrow}>Questions</span>
+            <h2 className={styles.h2}>Before you switch.</h2>
+          </div>
+          <div className={styles.faq}>
+            {FAQ.map((item) => (
+              <div key={item.q} className={styles.faqItem}>
+                <h3 className={styles.faqQ}>{item.q}</h3>
+                <p className={styles.faqA}>{item.a}</p>
+              </div>
+            ))}
+          </div>
+          <p className={styles.faqRelated}>
+            Coming from Bloom? See the <Link href="/alternatives/bloom">Bloom.io alternative</Link> page, or{" "}
+            <Link href="/pricing">check the plans</Link>.
+          </p>
         </div>
       </section>
 

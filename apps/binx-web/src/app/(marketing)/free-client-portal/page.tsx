@@ -14,16 +14,20 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { MessagesSquare, PanelsTopLeft, Receipt } from "lucide-react";
 
-import { SITE } from "@/lib/site";
+import { marketingOpenGraph, SITE } from "@/lib/site";
 import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 
 import styles from "../marketing.module.scss";
 
+const TITLE = "Free client portal";
+const DESCRIPTION =
+  "A real client portal on Binx's free plan — no card, no trial clock, no charge per client. Branded project status, files, invoicing and messaging your clients log into directly.";
+
 export const metadata: Metadata = {
-  title: "Free client portal",
-  description:
-    "A real client portal on Binx's free plan — no card, no trial clock, no charge per client. Branded project status, files, invoicing and messaging your clients log into directly.",
+  title: TITLE,
+  description: DESCRIPTION,
   alternates: { canonical: "/free-client-portal" },
+  ...marketingOpenGraph(TITLE, DESCRIPTION, "/free-client-portal"),
 };
 
 const INCLUDED = [

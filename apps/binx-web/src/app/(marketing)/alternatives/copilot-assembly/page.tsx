@@ -13,16 +13,20 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { LayoutGrid, Receipt, Users } from "lucide-react";
 
-import { SITE } from "@/lib/site";
+import { marketingOpenGraph, SITE } from "@/lib/site";
 import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 
 import styles from "../../marketing.module.scss";
 
+const TITLE = "Copilot & Assembly alternative";
+const DESCRIPTION =
+  "Comparing client-portal tools like Copilot or Assembly? Binx gives you the same client-facing portal — plus the leads, project boards, and invoicing that run behind it.";
+
 export const metadata: Metadata = {
-  title: "Copilot & Assembly alternative",
-  description:
-    "Comparing client-portal tools like Copilot or Assembly? Binx gives you the same client-facing portal — plus the leads, project boards, and invoicing that run behind it.",
+  title: TITLE,
+  description: DESCRIPTION,
   alternates: { canonical: "/alternatives/copilot-assembly" },
+  ...marketingOpenGraph(TITLE, DESCRIPTION, "/alternatives/copilot-assembly"),
 };
 
 const GAPS = [
@@ -158,6 +162,9 @@ const CopilotAssemblyAlternativePage = () => {
               </div>
             ))}
           </div>
+          <Link href="/pricing" className={styles.faqFooterLink}>
+            See the Free, Starter, Pro and Scale plans in full →
+          </Link>
         </div>
       </section>
 

@@ -12,16 +12,20 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CalendarCheck, LayoutGrid, Sparkles, Users } from "lucide-react";
 
-import { SITE } from "@/lib/site";
+import { marketingOpenGraph, SITE } from "@/lib/site";
 import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 
 import styles from "../../marketing.module.scss";
 
+const TITLE = "For marketing teams";
+const DESCRIPTION =
+  "A workspace for marketing teams and agencies: a lead pipeline, campaign-sized project boards per client, AI assist for drafts and reports, and a portal that keeps clients in the loop.";
+
 export const metadata: Metadata = {
-  title: "Binx for marketing teams",
-  description:
-    "A workspace for marketing teams and agencies: a lead pipeline, campaign-sized project boards per client, AI assist for drafts and reports, and a portal that keeps clients in the loop.",
+  title: TITLE,
+  description: DESCRIPTION,
   alternates: { canonical: "/for/marketing-teams" },
+  ...marketingOpenGraph(TITLE, DESCRIPTION, "/for/marketing-teams"),
 };
 
 const CAPABILITIES = [
@@ -47,9 +51,36 @@ const CAPABILITIES = [
   },
 ];
 
+const FAQ = [
+  {
+    q: "Does the AI assist replace our own drafting, or just speed it up?",
+    a: "It drafts a starting point — a project update or a lead's first-touch summary — that your team reviews and sends. Nothing goes to a client without someone on your side signing off.",
+  },
+  {
+    q: "Can we run multiple client campaigns without losing track of any of them?",
+    a: "Yes — each retainer or campaign is its own project with its own board, so leads, active campaigns and overdue invoices all show up together on one dashboard instead of scattered across tools.",
+  },
+  {
+    q: "Is there a free plan to try it on one client first?",
+    a: "Yes — no card, no time limit, capped on clients and leads so you can run a real pipeline and one campaign through it before deciding.",
+  },
+];
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQ.map((item) => ({
+    "@type": "Question",
+    name: item.q,
+    acceptedAnswer: { "@type": "Answer", text: item.a },
+  })),
+};
+
 const MarketingTeamsPage = () => {
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+
       <section className={styles.hero}>
         <div className={styles.heroGlow} aria-hidden="true" />
         <div className={styles.container}>
@@ -105,6 +136,27 @@ const MarketingTeamsPage = () => {
               </p>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className={styles.section}>
+        <div className={styles.container}>
+          <div className={styles.sectionHead}>
+            <span className={styles.eyebrow}>Questions</span>
+            <h2 className={styles.h2}>Before you switch.</h2>
+          </div>
+          <div className={styles.faq}>
+            {FAQ.map((item) => (
+              <div key={item.q} className={styles.faqItem}>
+                <h3 className={styles.faqQ}>{item.q}</h3>
+                <p className={styles.faqA}>{item.a}</p>
+              </div>
+            ))}
+          </div>
+          <p className={styles.faqRelated}>
+            Coming from a CRM like Dubsado? See the <Link href="/alternatives/dubsado">Dubsado alternative</Link>{" "}
+            page, or <Link href="/pricing">check the plans</Link>.
+          </p>
         </div>
       </section>
 

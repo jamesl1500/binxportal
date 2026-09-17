@@ -12,16 +12,20 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { LayoutGrid, PanelsTopLeft, Users } from "lucide-react";
 
-import { SITE } from "@/lib/site";
+import { marketingOpenGraph, SITE } from "@/lib/site";
 import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 
 import styles from "../../marketing.module.scss";
 
+const TITLE = "HoneyBook alternative for agencies";
+const DESCRIPTION =
+  "HoneyBook is built for independent businesses booking one client at a time. Binx is the HoneyBook alternative for an agency running several projects and people at once.";
+
 export const metadata: Metadata = {
-  title: "HoneyBook alternative for agencies",
-  description:
-    "HoneyBook is built for independent businesses booking one client at a time. Binx is the HoneyBook alternative for an agency running several projects and people at once.",
+  title: TITLE,
+  description: DESCRIPTION,
   alternates: { canonical: "/alternatives/honeybook" },
+  ...marketingOpenGraph(TITLE, DESCRIPTION, "/alternatives/honeybook"),
 };
 
 const GAPS = [
@@ -157,6 +161,9 @@ const HoneyBookAlternativePage = () => {
               </div>
             ))}
           </div>
+          <Link href="/pricing" className={styles.faqFooterLink}>
+            See the Free, Starter, Pro and Scale plans in full →
+          </Link>
         </div>
       </section>
 

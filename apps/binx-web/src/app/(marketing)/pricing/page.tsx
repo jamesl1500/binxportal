@@ -10,15 +10,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { marketingOpenGraph } from "@/lib/site";
 import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 
 import styles from "../marketing.module.scss";
 
+const TITLE = "Pricing";
+const DESCRIPTION =
+  "Simple plans that scale with the agency — a free tier to get started, then Starter, Pro and Scale as you grow. No per-seat surprises.";
+
 export const metadata: Metadata = {
-  title: "Pricing",
-  description:
-    "Simple plans that scale with the agency — a free tier to get started, then Starter, Pro and Scale as you grow. No per-seat surprises.",
+  title: TITLE,
+  description: DESCRIPTION,
   alternates: { canonical: "/pricing" },
+  ...marketingOpenGraph(TITLE, DESCRIPTION, "/pricing"),
 };
 
 const PLANS = [

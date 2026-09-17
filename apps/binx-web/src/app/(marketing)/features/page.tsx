@@ -20,15 +20,20 @@ import {
   Users,
 } from "lucide-react";
 
+import { marketingOpenGraph } from "@/lib/site";
 import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 
 import styles from "../marketing.module.scss";
 
+const TITLE = "Features";
+const DESCRIPTION =
+  "Leads and pipeline, clients and a live portal, projects with a board and canvas, files, invoicing, messaging, notifications, and AI assist — a tour of everything Binx does.";
+
 export const metadata: Metadata = {
-  title: "Features",
-  description:
-    "Leads and pipeline, clients and a live portal, projects with a board and canvas, files, invoicing, messaging, notifications, and AI assist — a tour of everything Binx does.",
+  title: TITLE,
+  description: DESCRIPTION,
   alternates: { canonical: "/features" },
+  ...marketingOpenGraph(TITLE, DESCRIPTION, "/features"),
 };
 
 const GROUPS = [

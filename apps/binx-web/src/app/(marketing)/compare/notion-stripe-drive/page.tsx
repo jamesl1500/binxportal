@@ -14,16 +14,20 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Link2, MessageSquareOff, ShieldQuestion } from "lucide-react";
 
-import { SITE } from "@/lib/site";
+import { marketingOpenGraph, SITE } from "@/lib/site";
 import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 
 import styles from "../../marketing.module.scss";
 
+const TITLE = "vs. a Notion + Stripe + Drive stack";
+const DESCRIPTION =
+  "Most small agencies aren't comparing tools — they're running one. See where a Notion + Stripe + Google Drive stack breaks down, and what one connected workspace looks like instead.";
+
 export const metadata: Metadata = {
-  title: "Binx vs. a Notion + Stripe + Drive stack",
-  description:
-    "Most small agencies aren't comparing tools — they're running one. See where a Notion + Stripe + Google Drive stack breaks down, and what one connected workspace looks like instead.",
+  title: TITLE,
+  description: DESCRIPTION,
   alternates: { canonical: "/compare/notion-stripe-drive" },
+  ...marketingOpenGraph(TITLE, DESCRIPTION, "/compare/notion-stripe-drive"),
 };
 
 const PROBLEMS = [
@@ -44,35 +48,29 @@ const PROBLEMS = [
   },
 ];
 
+const FAQ = [
+  {
+    q: "Isn't a DIY stack cheaper?",
+    a: "Often not once you count the time: re-entering client details in three places, chasing Stripe for payment status, and rebuilding a Drive folder structure per client all cost real hours. Binx's Free plan is $0 and replaces all three for a first client.",
+  },
+  {
+    q: "Can I still use Notion or Drive alongside Binx?",
+    a: "Sure — plenty of teams keep Notion for internal wikis or Drive for long-term archives. The difference is client work, project status, files, and invoicing no longer need to live split across all three.",
+  },
+  {
+    q: "What does switching actually involve?",
+    a: "Add your clients and open a project for each — most agencies have their first real client fully set up in under an hour, since there's nothing to migrate from a payments API or a docs tool, just clients and projects to re-create.",
+  },
+];
+
 const faqJsonLd = {
   "@context": "https://schema.org",
   "@type": "FAQPage",
-  mainEntity: [
-    {
-      "@type": "Question",
-      name: "Isn't a DIY stack cheaper?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Often not once you count the time: re-entering client details in three places, chasing Stripe for payment status, and rebuilding a Drive folder structure per client all cost real hours. Binx's Free plan is $0 and replaces all three for a first client.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "Can I still use Notion or Drive alongside Binx?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Sure — plenty of teams keep Notion for internal wikis or Drive for long-term archives. The difference is client work, project status, files, and invoicing no longer need to live split across all three.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "What does switching actually involve?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Add your clients and open a project for each — most agencies have their first real client fully set up in under an hour, since there's nothing to migrate from a payments API or a docs tool, just clients and projects to re-create.",
-      },
-    },
-  ],
+  mainEntity: FAQ.map((item) => ({
+    "@type": "Question",
+    name: item.q,
+    acceptedAnswer: { "@type": "Answer", text: item.a },
+  })),
 };
 
 const ComparePage = () => {
@@ -179,6 +177,26 @@ const ComparePage = () => {
               </p>
             </article>
           </div>
+        </div>
+      </section>
+
+      <section className={styles.section}>
+        <div className={styles.container}>
+          <div className={styles.sectionHead}>
+            <span className={styles.eyebrow}>Questions</span>
+            <h2 className={styles.h2}>Before you switch.</h2>
+          </div>
+          <div className={styles.faq}>
+            {FAQ.map((item) => (
+              <div key={item.q} className={styles.faqItem}>
+                <h3 className={styles.faqQ}>{item.q}</h3>
+                <p className={styles.faqA}>{item.a}</p>
+              </div>
+            ))}
+          </div>
+          <Link href="/pricing" className={styles.faqFooterLink}>
+            See the Free, Starter, Pro and Scale plans in full →
+          </Link>
         </div>
       </section>
 
