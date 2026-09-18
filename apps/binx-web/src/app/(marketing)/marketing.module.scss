@@ -135,6 +135,57 @@
     font-size: t.$font-size-xl;
     color: t.$color-ink;
   }
+
+  h3 {
+    margin: t.$space-6 0 t.$space-2;
+    font-family: var(--font-heading);
+    font-size: t.$font-size-base;
+    color: t.$color-ink;
+  }
+
+  ul,
+  ol {
+    margin: 0 0 t.$space-5;
+    padding-left: t.$space-6;
+  }
+
+  li {
+    margin-bottom: t.$space-2;
+    font-size: t.$font-size-base;
+    line-height: 1.75;
+    color: t.$color-ink-soft;
+  }
+
+  a {
+    color: t.$color-ink;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+
+    &:hover {
+      color: t.$color-accent;
+    }
+  }
+
+  strong {
+    color: t.$color-ink;
+  }
+}
+
+.proseMeta {
+  margin: 0 0 t.$space-8;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+}
+
+.proseNotice {
+  margin: 0 0 t.$space-8;
+  padding: t.$space-4 t.$space-5;
+  font-size: t.$font-size-sm;
+  line-height: 1.6;
+  color: t.$color-ink-soft;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
 }
 
 // ---- Buttons ----------------------------------------------------
