@@ -28,6 +28,7 @@ const ClientTabs = ({ clientId }: ClientTabsProps) => {
     { href: base, label: "Dashboard" },
     { href: `${base}/projects`, label: "Projects" },
     { href: `${base}/invoices`, label: "Invoices" },
+    { href: `${base}/meetings`, label: "Meetings" },
     { href: `${base}/settings`, label: "Settings" },
   ];
 

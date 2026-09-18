@@ -41,6 +41,7 @@ class NotificationSettingsRead(BaseModel):
     inapp_invoicing: bool
     inapp_projects: bool
     inapp_messages: bool
+    inapp_meetings: bool
 
 
 class NotificationSettingsUpdate(BaseModel):
@@ -54,6 +55,7 @@ class NotificationSettingsUpdate(BaseModel):
     inapp_invoicing: bool
     inapp_projects: bool
     inapp_messages: bool
+    inapp_meetings: bool
 
 
 class PrivacySettingsRead(BaseModel):

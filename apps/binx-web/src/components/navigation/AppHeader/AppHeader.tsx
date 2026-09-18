@@ -59,6 +59,7 @@ const NAV_LINKS: NavLink[] = [
 const MANAGE_LINKS: NavLink[] = [
   { href: "/team", label: "Team" },
   { href: "/invoices", label: "Invoices" },
+  { href: "/meetings", label: "Meetings" },
   { href: "/activity", label: "Activity" },
 ];
 

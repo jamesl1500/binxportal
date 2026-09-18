@@ -15,6 +15,7 @@ across a single test without every call site having to pass them.
 from __future__ import annotations
 
 import itertools
+from datetime import datetime, time
 from decimal import Decimal
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,6 +25,8 @@ from binx_api.modules.agencies.service import create_agency_with_owner, create_c
 from binx_api.modules.invoicing.models import Invoice
 from binx_api.modules.invoicing.schemas import LineItemInput
 from binx_api.modules.invoicing.service import create_invoice
+from binx_api.modules.meetings.models import CREATED_BY_AGENCY_MEMBER, AgencyMeetingSettings, AvailabilityRule, Meeting
+from binx_api.modules.meetings.service import book_slot
 from binx_api.modules.messaging.models import Conversation
 from binx_api.modules.messaging.service import create_conversation, post_message
 from binx_api.modules.projects.models import Project, ProjectTask, ProjectTaskList
@@ -222,4 +225,67 @@ async def make_task(
         description=None,
         due_date=None,
         assignee_id=None,
+    )
+
+
+async def make_meeting_settings(
+    db: AsyncSession,
+    *,
+    agency: Agency,
+    timezone: str = "UTC",
+    slot_minutes: int = 30,
+    booking_notice_hours: int = 24,
+    booking_window_days: int = 30,
+    self_booking_enabled: bool = True,
+) -> AgencyMeetingSettings:
+    settings = AgencyMeetingSettings(
+        agency_id=agency.id,
+        timezone=timezone,
+        slot_minutes=slot_minutes,
+        booking_notice_hours=booking_notice_hours,
+        booking_window_days=booking_window_days,
+        self_booking_enabled=self_booking_enabled,
+    )
+    db.add(settings)
+    await db.commit()
+    await db.refresh(settings)
+    return settings
+
+
+async def make_availability_rule(
+    db: AsyncSession, *, agency: Agency, weekday: int, start_time: time, end_time: time
+) -> AvailabilityRule:
+    """``weekday`` follows date.weekday(): Monday=0 .. Sunday=6."""
+    rule = AvailabilityRule(agency_id=agency.id, weekday=weekday, start_time=start_time, end_time=end_time)
+    db.add(rule)
+    await db.commit()
+    await db.refresh(rule)
+    return rule
+
+
+async def make_meeting(
+    db: AsyncSession,
+    *,
+    agency: Agency,
+    client: AgencyClient,
+    booked_by: User,
+    starts_at: datetime,
+    title: str = "Kickoff call",
+    booked_by_kind: str = CREATED_BY_AGENCY_MEMBER,
+) -> Meeting:
+    """Books a meeting via the real service (so the overlap/race-guard logic
+    runs the same way a real booking would), bypassing the notice window so
+    tests can freely book near-term slots."""
+    return await book_slot(
+        db,
+        agency,
+        client,
+        starts_at=starts_at,
+        project_id=None,
+        title=title,
+        notes=None,
+        location=None,
+        booked_by=booked_by,
+        booked_by_kind=booked_by_kind,
+        bypass_notice_window=True,
     )

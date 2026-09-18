@@ -188,6 +188,27 @@ const cases: Case[] = [
     url: "/portal/invitations/accept",
     body: { token: "tkn" },
   },
+  {
+    name: "getPortalMeetingSettings",
+    call: () => portal.getPortalMeetingSettings(),
+    method: "get",
+    url: "/portal/meeting-settings",
+  },
+  { name: "getPortalMeetings", call: () => portal.getPortalMeetings(), method: "get", url: "/portal/meetings" },
+  {
+    name: "bookPortalMeeting",
+    call: () => portal.bookPortalMeeting({ starts_at: "2026-01-01T00:00:00Z", title: "Meeting" } as never),
+    method: "post",
+    url: "/portal/meetings",
+    body: { starts_at: "2026-01-01T00:00:00Z" },
+  },
+  {
+    name: "cancelPortalMeeting",
+    call: () => portal.cancelPortalMeeting("m1"),
+    method: "post",
+    url: "/portal/meetings/m1/cancel",
+    body: undefined,
+  },
 ];
 
 describe("portal.ts endpoint wrappers", () => {
@@ -219,6 +240,15 @@ describe("portal.ts special cases", () => {
     expect(mockedApi.get).toHaveBeenCalledWith("/portal/conversations/c1/messages", {
       ...AUTH,
       params: { limit: 50, before: undefined },
+    });
+  });
+
+  it("getPortalAvailableSlots passes the date range as query params", async () => {
+    mockedApi.get.mockResolvedValueOnce({ data: [] });
+    await portal.getPortalAvailableSlots("2026-06-01", "2026-06-30");
+    expect(mockedApi.get).toHaveBeenCalledWith("/portal/meetings/slots", {
+      ...AUTH,
+      params: { from_date: "2026-06-01", to_date: "2026-06-30" },
     });
   });
 

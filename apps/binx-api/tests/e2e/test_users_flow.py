@@ -45,6 +45,7 @@ class TestSettings:
         assert initial.json()["email_product_updates"] is True
 
         assert initial.json()["inapp_projects"] is True
+        assert initial.json()["inapp_meetings"] is True
 
         updated = await auth_client.put(
             "/users/me/notification-settings",
@@ -58,11 +59,13 @@ class TestSettings:
                 "inapp_invoicing": False,
                 "inapp_projects": True,
                 "inapp_messages": False,
+                "inapp_meetings": False,
             },
         )
         assert updated.json()["email_product_updates"] is False
         assert updated.json()["email_weekly_digest"] is True
         assert updated.json()["inapp_invoicing"] is False
+        assert updated.json()["inapp_meetings"] is False
 
     async def test_privacy_settings_get_then_put(self, auth_client) -> None:
         assert (await auth_client.get("/users/me/privacy-settings")).json()["profile_visibility"] == "team"

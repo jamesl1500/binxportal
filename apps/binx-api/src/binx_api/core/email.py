@@ -123,3 +123,29 @@ async def send_invoice_issued_email(
             "Your account manager will follow up with payment details."
         ),
     )
+
+
+async def send_meeting_scheduled_email(
+    *, to: str, agency_name: str, title: str, starts_at_local: str, location: str | None
+) -> None:
+    # starts_at_local is pre-formatted by the caller in the agency's own
+    # timezone (see meetings/service.py) — this function never does its own
+    # timezone math, same convention as every other pre-formatted value here.
+    await send_email(
+        to=to,
+        subject=f"Meeting scheduled: {title}",
+        body=(
+            f"{agency_name} scheduled a meeting with you.\n\n"
+            f"{title}\n"
+            f"When: {starts_at_local}\n" + (f"Where: {location}\n" if location else "") + "\n"
+            "You can view or cancel this meeting from your client portal."
+        ),
+    )
+
+
+async def send_meeting_cancelled_email(*, to: str, agency_name: str, title: str, starts_at_local: str) -> None:
+    await send_email(
+        to=to,
+        subject=f"Meeting cancelled: {title}",
+        body=(f"A meeting with {agency_name} has been cancelled.\n\n{title}\nWas scheduled for: {starts_at_local}"),
+    )

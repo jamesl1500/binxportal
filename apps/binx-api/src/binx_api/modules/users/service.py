@@ -106,6 +106,7 @@ async def update_notification_settings(
     inapp_invoicing: bool,
     inapp_projects: bool,
     inapp_messages: bool,
+    inapp_meetings: bool,
 ) -> UserNotificationSettings:
     settings = await get_notification_settings(db, user)
     settings.email_product_updates = email_product_updates
@@ -117,6 +118,7 @@ async def update_notification_settings(
     settings.inapp_invoicing = inapp_invoicing
     settings.inapp_projects = inapp_projects
     settings.inapp_messages = inapp_messages
+    settings.inapp_meetings = inapp_meetings
     await db.commit()
     await db.refresh(settings)
     return settings

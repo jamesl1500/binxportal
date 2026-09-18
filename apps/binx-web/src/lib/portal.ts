@@ -19,10 +19,13 @@ import { AuthApiError, extractDetailMessage, getAccessToken } from "@/lib/auth";
 import type { Board, BoardComment, BoardItem, BoardItemPatch } from "@/lib/boards-client";
 import type { BoardReactions, CreateBoardItemInput } from "@/lib/boards";
 import type { InvoiceDetail, Invoice as StaffInvoice } from "@/lib/invoicing";
+import type { Meeting as StaffMeeting, Slot } from "@/lib/meetings";
 import type { Conversation, ConversationDetail, Message } from "@/lib/messaging-client";
 
 export type PortalInvoice = StaffInvoice;
 export type PortalInvoiceDetail = InvoiceDetail;
+export type PortalMeeting = StaffMeeting;
+export type PortalSlot = Slot;
 export type { Conversation, ConversationDetail, Message };
 
 export type PortalAgency = Schemas["PortalAgencyRead"];
@@ -37,6 +40,8 @@ export type PortalTask = Schemas["PortalTaskRead"];
 export type PortalTaskList = Schemas["PortalTaskListRead"];
 
 export type PortalInvitationPreview = Schemas["ClientInvitationPreview"];
+export type PortalMeetingSettings = Schemas["PortalMeetingSettingsRead"];
+export type PortalMeetingBookingInput = Schemas["PortalMeetingCreate"];
 
 async function authHeader(): Promise<{ Authorization: string }> {
   const accessToken = await getAccessToken();
@@ -153,6 +158,87 @@ export async function startPortalInvoiceCheckout(invoiceId: string): Promise<str
     return data.checkout_url;
   } catch (error) {
     rethrow(error, "Unable to start checkout");
+  }
+}
+
+/**
+ * getPortalMeetingSettings
+ *
+ * The agency's timezone, slot length, and whether self-service booking is
+ * currently on, via `GET /portal/meeting-settings` — trimmed to what the
+ * booking flow needs (no admin-only fields).
+ */
+export async function getPortalMeetingSettings(): Promise<PortalMeetingSettings> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.get<PortalMeetingSettings>("/portal/meeting-settings", { headers });
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to load meeting availability");
+  }
+}
+
+/**
+ * getPortalAvailableSlots
+ *
+ * Open booking slots via `GET /portal/meetings/slots` — the exact same
+ * computation the staff-side preview uses, scoped to this client's agency.
+ * Empty when the agency has turned self-service booking off.
+ */
+export async function getPortalAvailableSlots(fromDate: string, toDate?: string): Promise<PortalSlot[]> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.get<PortalSlot[]>("/portal/meetings/slots", {
+      headers,
+      params: { from_date: fromDate, to_date: toDate },
+    });
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to load available times");
+  }
+}
+
+export async function getPortalMeetings(): Promise<PortalMeeting[]> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.get<PortalMeeting[]>("/portal/meetings", { headers });
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to load meetings");
+  }
+}
+
+/**
+ * bookPortalMeeting
+ *
+ * Books an open slot via `POST /portal/meetings` — instant, no staff
+ * approval step. Rejects (409) if the slot was taken by someone else
+ * between the client fetching slots and submitting this, or (403) if
+ * self-service booking has since been turned off.
+ */
+export async function bookPortalMeeting(input: PortalMeetingBookingInput): Promise<PortalMeeting> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.post<PortalMeeting>("/portal/meetings", input, { headers });
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to book that time");
+  }
+}
+
+/**
+ * cancelPortalMeeting
+ *
+ * Cancels one of this client's own meetings via
+ * `POST /portal/meetings/{meetingId}/cancel`.
+ */
+export async function cancelPortalMeeting(meetingId: string): Promise<PortalMeeting> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.post<PortalMeeting>(`/portal/meetings/${meetingId}/cancel`, undefined, { headers });
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to cancel this meeting");
   }
 }
 

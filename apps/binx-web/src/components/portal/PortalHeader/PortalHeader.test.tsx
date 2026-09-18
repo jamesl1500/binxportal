@@ -32,7 +32,7 @@ describe("PortalHeader", () => {
     // hidden: true — jsdom never satisfies the header's `min-width: 900px`
     // desktop-nav media query, so Testing Library would otherwise treat
     // these CSS-hidden-in-jsdom (but really-there) links as absent.
-    for (const label of ["Overview", "Projects", "Invoices", "Messages"]) {
+    for (const label of ["Overview", "Projects", "Invoices", "Meetings", "Messages"]) {
       expect(screen.getByRole("link", { name: label, hidden: true })).toBeInTheDocument();
     }
     expect(screen.getByText("Casey")).toBeInTheDocument();

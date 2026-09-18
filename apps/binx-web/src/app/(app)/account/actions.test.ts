@@ -60,6 +60,7 @@ const notificationSettings = {
   inapp_invoicing: true,
   inapp_projects: true,
   inapp_messages: true,
+  inapp_meetings: true,
 };
 
 const privacySettings = {

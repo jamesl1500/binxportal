@@ -14,12 +14,14 @@ CATEGORY_TEAM = "team"
 CATEGORY_INVOICING = "invoicing"
 CATEGORY_PROJECTS = "projects"
 CATEGORY_MESSAGES = "messages"
+CATEGORY_MEETINGS = "meetings"
 
 notification_categories: list[str] = [
     CATEGORY_TEAM,
     CATEGORY_INVOICING,
     CATEGORY_PROJECTS,
     CATEGORY_MESSAGES,
+    CATEGORY_MEETINGS,
 ]
 
 # Fine-grained event kinds (free-form; the frontend only needs `category` to
@@ -31,6 +33,9 @@ EVENT_PROJECT_ADDED = "project_added"
 EVENT_TASK_ASSIGNED = "task_assigned"
 EVENT_MENTION = "mention"
 EVENT_CANVAS_COMMENT = "canvas_comment"
+EVENT_MEETING_BOOKED = "meeting_booked"
+EVENT_MEETING_SCHEDULED = "meeting_scheduled"
+EVENT_MEETING_CANCELLED = "meeting_cancelled"
 
 
 # A single in-app notification for one recipient. Notifications are per-user

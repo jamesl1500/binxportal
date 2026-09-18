@@ -84,6 +84,7 @@ class UserNotificationSettings(Base):
     inapp_invoicing: Mapped[bool] = mapped_column(default=True)
     inapp_projects: Mapped[bool] = mapped_column(default=True)
     inapp_messages: Mapped[bool] = mapped_column(default=True)
+    inapp_meetings: Mapped[bool] = mapped_column(default=True)
 
 
 # A user's privacy preferences, scoped to what their agency teammates can see.

@@ -20,6 +20,7 @@ CATEGORY_PROJECTS = "projects"
 CATEGORY_INVOICING = "invoicing"
 CATEGORY_SETTINGS = "settings"
 CATEGORY_SECURITY = "security"
+CATEGORY_MEETINGS = "meetings"
 
 # Who can see an agency-scoped entry. Set per event_type at the call site
 # (see each module's producer) rather than derived from category — most of a

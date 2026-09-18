@@ -1,0 +1,104 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-4;
+}
+
+.error {
+  margin: 0;
+  padding: t.$space-3;
+  font-size: t.$font-size-sm;
+  color: t.$color-danger;
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-radius: t.$radius-sm;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: t.$space-4;
+  padding: t.$space-4 t.$space-5;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-1;
+}
+
+.title {
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  color: t.$color-ink;
+}
+
+.when {
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+}
+
+.location {
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: t.$space-3;
+}
+
+.status {
+  @include m.mono-label;
+  font-size: 0.5625rem;
+  color: t.$color-ink-soft;
+
+  &[data-status="cancelled"] {
+    color: t.$color-ink-faint;
+    text-decoration: line-through;
+  }
+}
+
+.bookedBy {
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+  white-space: nowrap;
+}
+
+.cancelButton {
+  padding: t.$space-1 t.$space-2;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+  background: none;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    color: t.$color-danger;
+    border-color: t.$color-danger;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}

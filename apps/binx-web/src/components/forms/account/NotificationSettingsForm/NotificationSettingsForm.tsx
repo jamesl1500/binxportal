@@ -91,6 +91,11 @@ const GROUPS: SettingGroup[] = [
         label: "Mentions",
         description: "When a teammate @mentions you in a conversation.",
       },
+      {
+        key: "inapp_meetings",
+        label: "Meetings",
+        description: "When a meeting is booked, scheduled, or cancelled.",
+      },
     ],
   },
 ];

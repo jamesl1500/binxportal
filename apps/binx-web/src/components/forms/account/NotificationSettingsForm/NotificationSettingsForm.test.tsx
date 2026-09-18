@@ -23,6 +23,7 @@ const settings: NotificationSettings = {
   inapp_invoicing: true,
   inapp_projects: false,
   inapp_messages: true,
+  inapp_meetings: true,
 };
 
 beforeEach(() => {

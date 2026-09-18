@@ -17,6 +17,7 @@ from binx_api.modules.boards import models as boards_models  # noqa: F401
 from binx_api.modules.client_portal import models as client_portal_models  # noqa: F401
 from binx_api.modules.invoicing import models as invoicing_models  # noqa: F401
 from binx_api.modules.leads import models as leads_models  # noqa: F401
+from binx_api.modules.meetings import models as meetings_models  # noqa: F401
 from binx_api.modules.messaging import models as messaging_models  # noqa: F401
 from binx_api.modules.notifications import models as notifications_models  # noqa: F401
 from binx_api.modules.projects import models as projects_models  # noqa: F401

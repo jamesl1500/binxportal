@@ -85,11 +85,13 @@ class TestNotificationSettings:
             inapp_invoicing=False,
             inapp_projects=True,
             inapp_messages=False,
+            inapp_meetings=False,
         )
         assert updated.email_product_updates is False
         assert updated.email_weekly_digest is True
         assert updated.inapp_invoicing is False
         assert updated.inapp_messages is False
+        assert updated.inapp_meetings is False
 
 
 class TestPrivacySettings:

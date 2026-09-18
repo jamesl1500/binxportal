@@ -32,6 +32,7 @@ _MUTE_COLUMN = {
     "invoicing": UserNotificationSettings.inapp_invoicing,
     "projects": UserNotificationSettings.inapp_projects,
     "messages": UserNotificationSettings.inapp_messages,
+    "meetings": UserNotificationSettings.inapp_meetings,
 }
 
 

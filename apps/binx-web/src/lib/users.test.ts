@@ -102,6 +102,7 @@ describe("getNotificationSettings / updateNotificationSettings", () => {
     inapp_invoicing: true,
     inapp_projects: true,
     inapp_messages: true,
+    inapp_meetings: true,
   };
 
   it("fetches settings with a bearer token", async () => {

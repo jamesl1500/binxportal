@@ -1,0 +1,83 @@
+@use "../../../../styles/tokens" as t;
+@use "../../../../styles/mixins" as m;
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-5;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: t.$space-4;
+
+  @media (max-width: 32rem) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+}
+
+.label {
+  @include m.mono-label;
+  color: t.$color-ink-soft;
+}
+
+.input {
+  @include m.input-base;
+
+  &:disabled {
+    color: t.$color-ink-faint;
+    background: t.$color-paper;
+  }
+}
+
+.textarea {
+  @include m.input-base;
+  resize: vertical;
+  min-height: 4.5rem;
+  font-family: inherit;
+}
+
+.formError {
+  margin: 0;
+  padding: t.$space-3;
+  font-size: t.$font-size-sm;
+  color: t.$color-danger;
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-radius: t.$radius-sm;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: t.$space-3;
+}
+
+.cancel {
+  @include m.button-base;
+  background: none;
+  color: t.$color-ink-soft;
+
+  &:hover:not(:disabled) {
+    color: t.$color-ink;
+    background: rgba(10, 10, 11, 0.04);
+  }
+}
+
+.submit {
+  @include m.button-base;
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+}

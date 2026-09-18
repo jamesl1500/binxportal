@@ -9,12 +9,13 @@ import SettingsTabs from "./SettingsTabs";
 beforeEach(() => mockedPathname.mockReturnValue("/settings"));
 
 describe("SettingsTabs", () => {
-  it("renders all six tabs with their hrefs", () => {
+  it("renders all seven tabs with their hrefs", () => {
     render(<SettingsTabs />);
     for (const [label, href] of [
       ["Profile", "/settings"],
       ["Policies", "/settings/policies"],
       ["Invoicing", "/settings/invoicing"],
+      ["Meetings", "/settings/meetings"],
       ["Plan", "/settings/plan"],
       ["AI", "/settings/ai"],
       ["General", "/settings/general"],

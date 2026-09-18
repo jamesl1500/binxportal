@@ -33,6 +33,7 @@ const TABS = [
   { href: "/portal", label: "Overview" },
   { href: "/portal/projects", label: "Projects" },
   { href: "/portal/invoices", label: "Invoices" },
+  { href: "/portal/meetings", label: "Meetings" },
   { href: "/portal/messages", label: "Messages" },
 ];
 

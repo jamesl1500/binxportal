@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, File, Form, Query, UploadFile, status
@@ -34,6 +34,10 @@ from binx_api.modules.client_portal.schemas import (
 from binx_api.modules.invoicing import service as invoicing_service
 from binx_api.modules.invoicing.router import _detail_read, _invoice_read
 from binx_api.modules.invoicing.schemas import CheckoutSessionRead, InvoiceDetailRead, InvoiceRead
+from binx_api.modules.meetings import service as meetings_service
+from binx_api.modules.meetings.models import CREATED_BY_CLIENT
+from binx_api.modules.meetings.router import _meeting_read
+from binx_api.modules.meetings.schemas import MeetingRead, PortalMeetingCreate, PortalMeetingSettingsRead, SlotRead
 from binx_api.modules.messaging import service as messaging_service
 from binx_api.modules.messaging.models import SENDER_CLIENT
 from binx_api.modules.messaging.schemas import ConversationDetailRead, ConversationRead, MessageRead
@@ -405,6 +409,83 @@ async def pay_invoice(
         db, invoice, agency, billing_settings, paid_by=current_user
     )
     return CheckoutSessionRead(checkout_url=checkout_url)
+
+
+# ---- Meetings ------------------------------------------------------
+
+
+@router.get("/meeting-settings", response_model=PortalMeetingSettingsRead)
+async def read_portal_meeting_settings(db: DbSession, membership: PortalContext) -> PortalMeetingSettingsRead:
+    agency, _client, _contact = membership
+    settings = await meetings_service.get_or_create_meeting_settings(db, agency)
+    return PortalMeetingSettingsRead.model_validate(settings, from_attributes=True)
+
+
+@router.get("/meetings/slots", response_model=list[SlotRead])
+async def read_portal_available_slots(
+    db: DbSession,
+    membership: PortalContext,
+    from_date: date = Query(...),
+    to_date: date | None = Query(default=None),
+) -> list[SlotRead]:
+    agency, _client, _contact = membership
+    settings = await meetings_service.get_or_create_meeting_settings(db, agency)
+    if not settings.self_booking_enabled:
+        return []
+    slots = await meetings_service.get_available_slots(db, agency, from_date=from_date, to_date=to_date)
+    return [SlotRead(starts_at=starts_at, ends_at=ends_at) for starts_at, ends_at in slots]
+
+
+@router.get("/meetings", response_model=list[MeetingRead])
+async def list_portal_meetings(
+    db: DbSession, membership: PortalContext, status_filter: str | None = Query(default=None, alias="status")
+) -> list[MeetingRead]:
+    agency, client, _contact = membership
+    rows = await meetings_service.list_meetings(db, agency.id, client_id=client.id, status_filter=status_filter)
+    return [_meeting_read(meeting, client_name, project_name) for meeting, client_name, project_name in rows]
+
+
+@router.post("/meetings", response_model=MeetingRead, status_code=status.HTTP_201_CREATED)
+async def book_portal_meeting(
+    db: DbSession, current_user: CurrentUser, membership: PortalContext, data: PortalMeetingCreate
+) -> MeetingRead:
+    agency, client, _contact = membership
+    settings = await meetings_service.get_or_create_meeting_settings(db, agency)
+    if not settings.self_booking_enabled:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Self-service booking isn't enabled for this agency")
+    meeting = await meetings_service.book_slot(
+        db,
+        agency,
+        client,
+        starts_at=data.starts_at,
+        project_id=data.project_id,
+        title=data.title,
+        notes=data.notes,
+        location=None,
+        booked_by=current_user,
+        booked_by_kind=CREATED_BY_CLIENT,
+        bypass_notice_window=False,
+    )
+    return _meeting_read(*(await meetings_service.get_meeting_with_names_or_404(db, agency.id, meeting.id)))
+
+
+async def _portal_meeting_or_404(db, agency_id: uuid.UUID, client_id: uuid.UUID, meeting_id: uuid.UUID):
+    meeting = await meetings_service.get_meeting_or_404(db, agency_id, meeting_id)
+    if meeting.client_id != client_id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Meeting not found")
+    return meeting
+
+
+@router.post("/meetings/{meeting_id}/cancel", response_model=MeetingRead)
+async def cancel_portal_meeting(
+    db: DbSession, current_user: CurrentUser, membership: PortalContext, meeting_id: uuid.UUID
+) -> MeetingRead:
+    agency, client, _contact = membership
+    meeting = await _portal_meeting_or_404(db, agency.id, client.id, meeting_id)
+    await meetings_service.cancel_meeting(
+        db, meeting, agency, client, cancelled_by=current_user, cancelled_by_kind=CREATED_BY_CLIENT
+    )
+    return _meeting_read(*(await meetings_service.get_meeting_with_names_or_404(db, agency.id, meeting_id)))
 
 
 # ---- Messages ------------------------------------------------------

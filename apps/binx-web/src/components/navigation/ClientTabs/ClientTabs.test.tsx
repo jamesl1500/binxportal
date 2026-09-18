@@ -16,6 +16,7 @@ describe("ClientTabs", () => {
       ["Dashboard", "/clients/client-1"],
       ["Projects", "/clients/client-1/projects"],
       ["Invoices", "/clients/client-1/invoices"],
+      ["Meetings", "/clients/client-1/meetings"],
       ["Settings", "/clients/client-1/settings"],
     ];
     for (const [label, href] of expected) {
