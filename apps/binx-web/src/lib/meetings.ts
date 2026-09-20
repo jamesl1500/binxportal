@@ -43,6 +43,7 @@ export type AvailabilityRule = Schemas["AvailabilityRuleRead"];
 export type AvailabilityRuleInput = Schemas["AvailabilityRuleInput"];
 export type Meeting = Schemas["MeetingRead"];
 export type MeetingCreateInput = Schemas["MeetingCreate"];
+export type MeetingUpdateInput = Schemas["MeetingUpdate"];
 
 export interface MeetingFilter {
   clientId?: string;
@@ -218,6 +219,27 @@ export async function createMeeting(agencyId: string, input: MeetingCreateInput)
     return data;
   } catch (error) {
     throw apiError(error, "Unable to schedule meeting");
+  }
+}
+
+/**
+ * updateMeeting
+ *
+ * Edits an existing, still-scheduled meeting via `PATCH
+ * /agencies/{agencyId}/meetings/{meetingId}` — full replace of the editable
+ * fields, same convention as `updateMeetingSettings`. Changing `starts_at`
+ * reschedules it, subject to the same overlap guard `createMeeting` uses.
+ *
+ * @function updateMeeting
+ * @throws {AuthApiError} - Thrown if not authenticated, the meeting is cancelled, or the new time is no longer available (409).
+ */
+export async function updateMeeting(agencyId: string, meetingId: string, input: MeetingUpdateInput): Promise<Meeting> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.patch<Meeting>(`/agencies/${agencyId}/meetings/${meetingId}`, input, { headers });
+    return data;
+  } catch (error) {
+    throw apiError(error, "Unable to update meeting");
   }
 }
 

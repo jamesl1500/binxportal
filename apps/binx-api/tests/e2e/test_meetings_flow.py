@@ -247,3 +247,95 @@ class TestBookingFlow:
         outsider = await make_user(db_session)
         resp = await client.get(f"/agencies/{agency.id}/meetings", headers=auth_headers(outsider))
         assert resp.status_code == 404
+
+
+class TestUpdateMeeting:
+    async def test_staff_edits_details_and_client_sees_the_change(self, client, team) -> None:
+        agency, agency_client, owner, _member, contact_user = team
+        staff_base = f"/agencies/{agency.id}"
+
+        created = await client.post(
+            f"{staff_base}/meetings",
+            json={"client_id": str(agency_client.id), "starts_at": _FAR_FUTURE_ISO, "title": "Kickoff"},
+            headers=auth_headers(owner),
+        )
+        meeting_id = created.json()["id"]
+
+        updated = await client.patch(
+            f"{staff_base}/meetings/{meeting_id}",
+            json={
+                "starts_at": _FAR_FUTURE_ISO,
+                "title": "Kickoff call",
+                "notes": "Bring the brief",
+                "location": "Zoom",
+            },
+            headers=auth_headers(owner),
+        )
+        assert updated.status_code == 200, updated.text
+        assert updated.json()["title"] == "Kickoff call"
+        assert updated.json()["notes"] == "Bring the brief"
+        assert updated.json()["location"] == "Zoom"
+
+        portal_view = await client.get("/portal/meetings", headers=auth_headers(contact_user))
+        assert next(m for m in portal_view.json() if m["id"] == meeting_id)["title"] == "Kickoff call"
+
+    async def test_reschedule_conflict_returns_409(self, client, team) -> None:
+        agency, agency_client, owner, _member, _contact = team
+        staff_base = f"/agencies/{agency.id}"
+        later = (datetime.now(UTC) + timedelta(days=201)).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+        first = await client.post(
+            f"{staff_base}/meetings",
+            json={"client_id": str(agency_client.id), "starts_at": _FAR_FUTURE_ISO, "title": "First"},
+            headers=auth_headers(owner),
+        )
+        second = await client.post(
+            f"{staff_base}/meetings",
+            json={"client_id": str(agency_client.id), "starts_at": later, "title": "Second"},
+            headers=auth_headers(owner),
+        )
+        second_id = second.json()["id"]
+
+        conflict = await client.patch(
+            f"{staff_base}/meetings/{second_id}",
+            json={"starts_at": first.json()["starts_at"], "title": "Second"},
+            headers=auth_headers(owner),
+        )
+        assert conflict.status_code == 409
+
+    async def test_editing_a_cancelled_meeting_is_rejected(self, client, team) -> None:
+        agency, agency_client, owner, _member, _contact = team
+        staff_base = f"/agencies/{agency.id}"
+
+        created = await client.post(
+            f"{staff_base}/meetings",
+            json={"client_id": str(agency_client.id), "starts_at": _FAR_FUTURE_ISO, "title": "To cancel"},
+            headers=auth_headers(owner),
+        )
+        meeting_id = created.json()["id"]
+        await client.post(f"{staff_base}/meetings/{meeting_id}/cancel", headers=auth_headers(owner))
+
+        rejected = await client.patch(
+            f"{staff_base}/meetings/{meeting_id}",
+            json={"starts_at": _FAR_FUTURE_ISO, "title": "Should not apply"},
+            headers=auth_headers(owner),
+        )
+        assert rejected.status_code == 409
+
+    async def test_non_member_cannot_edit(self, client, team, db_session) -> None:
+        agency, agency_client, owner, _member, _contact = team
+        outsider = await make_user(db_session)
+
+        created = await client.post(
+            f"/agencies/{agency.id}/meetings",
+            json={"client_id": str(agency_client.id), "starts_at": _FAR_FUTURE_ISO, "title": "Kickoff"},
+            headers=auth_headers(owner),
+        )
+        meeting_id = created.json()["id"]
+
+        forbidden = await client.patch(
+            f"/agencies/{agency.id}/meetings/{meeting_id}",
+            json={"starts_at": _FAR_FUTURE_ISO, "title": "Hijacked"},
+            headers=auth_headers(outsider),
+        )
+        assert forbidden.status_code == 404

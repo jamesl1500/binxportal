@@ -37,6 +37,13 @@ const MeetingsPage = async () => {
     getAgencyProjects(currentAgency.id),
   ]);
 
+  const clientOptions = clients.map((client) => ({ id: client.id, name: client.name }));
+  const projectOptions = projects.map((project) => ({
+    id: project.id,
+    name: project.name,
+    client_id: project.client_id,
+  }));
+
   return (
     <div>
       <div className={styles.header}>
@@ -51,11 +58,7 @@ const MeetingsPage = async () => {
             Meeting settings
           </Link>
           {clients.length > 0 && (
-            <ScheduleMeetingDialog
-              agencyId={currentAgency.id}
-              clients={clients.map((client) => ({ id: client.id, name: client.name }))}
-              projects={projects.map((project) => ({ id: project.id, name: project.name, client_id: project.client_id }))}
-            />
+            <ScheduleMeetingDialog agencyId={currentAgency.id} clients={clientOptions} projects={projectOptions} />
           )}
         </div>
       </div>
@@ -64,7 +67,13 @@ const MeetingsPage = async () => {
         <p className={styles.notice}>Add a client from the Clients page before scheduling a meeting.</p>
       ) : (
         <div className={styles.tableWrapper}>
-          <MeetingsTable agencyId={currentAgency.id} meetings={meetings} showClient />
+          <MeetingsTable
+            agencyId={currentAgency.id}
+            meetings={meetings}
+            clients={clientOptions}
+            projects={projectOptions}
+            showClient
+          />
         </div>
       )}
     </div>

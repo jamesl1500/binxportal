@@ -15,7 +15,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getAgencyMembers, getCurrentAgencyContext } from "@/lib/agencies";
+import { getMeetings } from "@/lib/meetings";
 import { getAgencyProject, getProjectBoard, getProjectFiles, getProjectMembers } from "@/lib/projects";
+import ScheduleMeetingDialog from "@/components/forms/meetings/ScheduleMeetingDialog/ScheduleMeetingDialog";
+import UpcomingMeetingsCard from "@/components/meetings/UpcomingMeetingsCard/UpcomingMeetingsCard";
 import ProjectMembersPanel from "@/components/forms/projects/ProjectMembersPanel/ProjectMembersPanel";
 import AiProjectSummaryCard from "@/components/projects/AiProjectSummaryCard/AiProjectSummaryCard";
 
@@ -41,11 +44,16 @@ const ProjectDashboardPage = async ({ params }: ProjectDashboardPageProps) => {
   // shares that same request-scoped fetch via cache(), so it's free.
   const project = await getAgencyProject(currentAgency.id, projectId);
 
-  const [members, agencyMembers, board, files] = await Promise.all([
+  const [members, agencyMembers, board, files, meetings] = await Promise.all([
     getProjectMembers(currentAgency.id, projectId),
     getAgencyMembers(currentAgency.id),
     getProjectBoard(currentAgency.id, projectId),
     getProjectFiles(currentAgency.id, projectId),
+    getMeetings(currentAgency.id, {
+      projectId,
+      status: "scheduled",
+      fromDate: new Date().toISOString().slice(0, 10),
+    }),
   ]);
 
   const totalTasks = board.reduce((sum, column) => sum + column.tasks.length, 0);
@@ -98,6 +106,20 @@ const ProjectDashboardPage = async ({ params }: ProjectDashboardPageProps) => {
             ))}
           </ul>
         )}
+      </div>
+
+      <div className={styles.card}>
+        <div className={styles.cardHeader}>
+          <h2 className={styles.cardTitle}>Meetings</h2>
+          <ScheduleMeetingDialog
+            agencyId={currentAgency.id}
+            clients={[{ id: project.client_id, name: project.client_name }]}
+            projects={[{ id: project.id, name: project.name, client_id: project.client_id }]}
+            defaultClientId={project.client_id}
+            defaultProjectId={project.id}
+          />
+        </div>
+        <UpcomingMeetingsCard meetings={meetings} limit={4} moreHref={`/clients/${project.client_id}/meetings`} />
       </div>
 
       <div className={styles.row}>

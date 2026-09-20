@@ -25,6 +25,7 @@ from binx_api.modules.meetings.schemas import (
     MeetingRead,
     MeetingSettingsRead,
     MeetingSettingsUpdate,
+    MeetingUpdate,
     SlotRead,
 )
 
@@ -150,6 +151,28 @@ async def create_meeting(
 @router.get("/meetings/{meeting_id}", response_model=MeetingRead)
 async def read_meeting(db: DbSession, agency_and_role: AnyMember, meeting_id: uuid.UUID) -> MeetingRead:
     agency, _role = agency_and_role
+    return _meeting_read(*(await service.get_meeting_with_names_or_404(db, agency.id, meeting_id)))
+
+
+@router.patch("/meetings/{meeting_id}", response_model=MeetingRead)
+async def update_meeting(
+    db: DbSession, current_user: CurrentUser, agency_and_role: AnyMember, meeting_id: uuid.UUID, data: MeetingUpdate
+) -> MeetingRead:
+    agency, _role = agency_and_role
+    meeting = await service.get_meeting_or_404(db, agency.id, meeting_id)
+    client = await get_client_or_404(db, agency.id, meeting.client_id)
+    await service.update_meeting(
+        db,
+        meeting,
+        agency,
+        client,
+        project_id=data.project_id,
+        starts_at=data.starts_at,
+        title=data.title,
+        notes=data.notes,
+        location=data.location,
+        updated_by=current_user,
+    )
     return _meeting_read(*(await service.get_meeting_with_names_or_404(db, agency.id, meeting_id)))
 
 

@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/app/(app)/meetings/actions", () => ({
   createMeetingAction: vi.fn(),
+  updateMeetingAction: vi.fn(),
 }));
 
 const mockRefresh = vi.fn();

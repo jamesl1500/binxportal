@@ -1203,7 +1203,8 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /** Update Meeting */
+        patch: operations["update_meeting_agencies__agency_id__meetings__meeting_id__patch"];
         trace?: never;
     };
     "/agencies/{agency_id}/meetings/{meeting_id}/cancel": {
@@ -4893,6 +4894,22 @@ export interface components {
             slot_minutes: number;
             /** Timezone */
             timezone: string;
+        };
+        /** MeetingUpdate */
+        MeetingUpdate: {
+            /** Location */
+            location?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Project Id */
+            project_id?: string | null;
+            /**
+             * Starts At
+             * Format: date-time
+             */
+            starts_at: string;
+            /** Title */
+            title: string;
         };
         /** MessageAttachmentRead */
         MessageAttachmentRead: {
@@ -9463,6 +9480,42 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeetingRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_meeting_agencies__agency_id__meetings__meeting_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                meeting_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MeetingUpdate"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

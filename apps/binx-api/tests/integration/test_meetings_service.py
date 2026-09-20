@@ -320,3 +320,126 @@ class TestCancelMeeting:
                 db_session, meeting, agency, client, cancelled_by=owner, cancelled_by_kind="agency_member"
             )
         assert exc.value.status_code == 409
+
+
+class TestUpdateMeeting:
+    async def test_updates_details_without_changing_the_time(self, db_session, ctx) -> None:
+        owner, agency, client = ctx
+        await make_meeting_settings(db_session, agency=agency)
+        starts_at = datetime.now(UTC) + timedelta(days=1)
+        meeting = await make_meeting(
+            db_session, agency=agency, client=client, booked_by=owner, starts_at=starts_at, title="Kickoff"
+        )
+
+        updated = await service.update_meeting(
+            db_session,
+            meeting,
+            agency,
+            client,
+            project_id=None,
+            starts_at=starts_at,
+            title="Kickoff call",
+            notes="Bring the brief",
+            location="Zoom",
+            updated_by=owner,
+        )
+        assert updated.title == "Kickoff call"
+        assert updated.notes == "Bring the brief"
+        assert updated.location == "Zoom"
+        assert updated.starts_at == starts_at
+
+    async def test_reschedules_to_a_new_time(self, db_session, ctx) -> None:
+        owner, agency, client = ctx
+        await make_meeting_settings(db_session, agency=agency)
+        starts_at = datetime.now(UTC) + timedelta(days=1)
+        new_starts_at = starts_at + timedelta(days=2)
+        meeting = await make_meeting(
+            db_session, agency=agency, client=client, booked_by=owner, starts_at=starts_at, title="Kickoff"
+        )
+
+        updated = await service.update_meeting(
+            db_session,
+            meeting,
+            agency,
+            client,
+            project_id=None,
+            starts_at=new_starts_at,
+            title=meeting.title,
+            notes=None,
+            location=None,
+            updated_by=owner,
+        )
+        assert updated.starts_at == new_starts_at
+        assert updated.ends_at == new_starts_at + timedelta(minutes=30)
+
+    async def test_rescheduling_onto_another_meeting_is_rejected(self, db_session, ctx) -> None:
+        owner, agency, client = ctx
+        await make_meeting_settings(db_session, agency=agency)
+        first_starts_at = datetime.now(UTC) + timedelta(days=1)
+        second_starts_at = first_starts_at + timedelta(hours=2)
+        await make_meeting(db_session, agency=agency, client=client, booked_by=owner, starts_at=first_starts_at)
+        second = await make_meeting(
+            db_session, agency=agency, client=client, booked_by=owner, starts_at=second_starts_at
+        )
+
+        with pytest.raises(HTTPException) as exc:
+            await service.update_meeting(
+                db_session,
+                second,
+                agency,
+                client,
+                project_id=None,
+                starts_at=first_starts_at,
+                title=second.title,
+                notes=None,
+                location=None,
+                updated_by=owner,
+            )
+        assert exc.value.status_code == 409
+
+    async def test_rescheduling_a_meeting_onto_its_own_current_slot_is_a_no_op(self, db_session, ctx) -> None:
+        # Guards against the overlap check tripping on a meeting's own row —
+        # `Meeting.id != meeting.id` in the query is what this proves.
+        owner, agency, client = ctx
+        await make_meeting_settings(db_session, agency=agency)
+        starts_at = datetime.now(UTC) + timedelta(days=1)
+        meeting = await make_meeting(db_session, agency=agency, client=client, booked_by=owner, starts_at=starts_at)
+
+        updated = await service.update_meeting(
+            db_session,
+            meeting,
+            agency,
+            client,
+            project_id=None,
+            starts_at=starts_at,
+            title="Renamed, same time",
+            notes=None,
+            location=None,
+            updated_by=owner,
+        )
+        assert updated.title == "Renamed, same time"
+        assert updated.starts_at == starts_at
+
+    async def test_editing_a_cancelled_meeting_is_rejected(self, db_session, ctx) -> None:
+        owner, agency, client = ctx
+        await make_meeting_settings(db_session, agency=agency)
+        starts_at = datetime.now(UTC) + timedelta(days=1)
+        meeting = await make_meeting(db_session, agency=agency, client=client, booked_by=owner, starts_at=starts_at)
+        await service.cancel_meeting(
+            db_session, meeting, agency, client, cancelled_by=owner, cancelled_by_kind="agency_member"
+        )
+
+        with pytest.raises(HTTPException) as exc:
+            await service.update_meeting(
+                db_session,
+                meeting,
+                agency,
+                client,
+                project_id=None,
+                starts_at=starts_at,
+                title="Should not apply",
+                notes=None,
+                location=None,
+                updated_by=owner,
+            )
+        assert exc.value.status_code == 409

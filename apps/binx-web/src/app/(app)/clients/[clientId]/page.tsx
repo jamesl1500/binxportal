@@ -14,11 +14,13 @@ import { redirect } from "next/navigation";
 import { getCurrentAgencyContext } from "@/lib/agencies";
 import { getAgencyClient } from "@/lib/clients";
 import { getInvoices, getInvoiceSummary, formatMoneyCents, formatCompactMoney, invoiceStatusLabel } from "@/lib/invoicing";
+import { getMeetings } from "@/lib/meetings";
 import { getAgencyProjects } from "@/lib/projects";
 import { PROJECT_STATUS_LABELS, type ProjectStatus } from "@/lib/projects-client";
 import ClientStatGrid from "@/components/clients/ClientStatGrid/ClientStatGrid";
 import LineChart from "@/components/charts/LineChart/LineChart";
 import DonutChart from "@/components/charts/DonutChart/DonutChart";
+import UpcomingMeetingsCard from "@/components/meetings/UpcomingMeetingsCard/UpcomingMeetingsCard";
 
 import styles from "./page.module.scss";
 
@@ -53,11 +55,16 @@ const ClientDashboardPage = async ({ params }: ClientDashboardPageProps) => {
     redirect("/onboarding/two");
   }
 
-  const [client, allProjects, invoices, summary] = await Promise.all([
+  const [client, allProjects, invoices, summary, upcomingMeetings] = await Promise.all([
     getAgencyClient(currentAgency.id, clientId),
     getAgencyProjects(currentAgency.id),
     getInvoices(currentAgency.id, { clientId }),
     getInvoiceSummary(currentAgency.id, clientId),
+    getMeetings(currentAgency.id, {
+      clientId,
+      status: "scheduled",
+      fromDate: new Date().toISOString().slice(0, 10),
+    }),
   ]);
 
   const projects = allProjects.filter((project) => project.client_id === clientId);
@@ -125,6 +132,21 @@ const ClientDashboardPage = async ({ params }: ClientDashboardPageProps) => {
           ariaLabel={`Monthly payments received for ${client.name} over the last 12 months`}
           valueFormat="currency"
           height={220}
+        />
+      </section>
+
+      <section className={styles.panel}>
+        <div className={styles.panelHeader}>
+          <h2 className={styles.panelTitle}>Upcoming meetings</h2>
+          <Link href={`/clients/${client.id}/meetings`} className={styles.panelLink}>
+            View all
+          </Link>
+        </div>
+        <UpcomingMeetingsCard
+          meetings={upcomingMeetings}
+          limit={4}
+          moreHref={`/clients/${client.id}/meetings`}
+          showProject
         />
       </section>
 

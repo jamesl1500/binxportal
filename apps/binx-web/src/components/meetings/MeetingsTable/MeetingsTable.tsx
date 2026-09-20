@@ -18,13 +18,27 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 import { cancelMeetingAction } from "@/app/(app)/meetings/actions";
+import EditMeetingDialog from "@/components/forms/meetings/EditMeetingDialog/EditMeetingDialog";
 import type { Meeting } from "@/lib/meetings";
 
 import styles from "./MeetingsTable.module.scss";
 
+interface ClientOption {
+  id: string;
+  name: string;
+}
+interface ProjectOption {
+  id: string;
+  name: string;
+  client_id: string;
+}
+
 interface MeetingsTableProps {
   agencyId: string;
   meetings: Meeting[];
+  /** Needed to render the per-row Edit dialog's client/project selects. */
+  clients: ClientOption[];
+  projects: ProjectOption[];
   showClient?: boolean;
 }
 
@@ -44,7 +58,7 @@ function formatWhen(iso: string): string {
   });
 }
 
-const MeetingsTable = ({ agencyId, meetings, showClient = true }: MeetingsTableProps) => {
+const MeetingsTable = ({ agencyId, meetings, clients, projects, showClient = true }: MeetingsTableProps) => {
   const router = useRouter();
   const [filter, setFilter] = useState<Filter>("upcoming");
   const [isPending, startTransition] = useTransition();
@@ -112,6 +126,7 @@ const MeetingsTable = ({ agencyId, meetings, showClient = true }: MeetingsTableP
             <tr>
               <th className={styles.headCell}>Title</th>
               {showClient && <th className={styles.headCell}>Client</th>}
+              <th className={styles.headCell}>Project</th>
               <th className={styles.headCell}>When</th>
               <th className={styles.headCell}>Location</th>
               <th className={styles.headCell}>Booked by</th>
@@ -130,6 +145,15 @@ const MeetingsTable = ({ agencyId, meetings, showClient = true }: MeetingsTableP
                     </Link>
                   </td>
                 )}
+                <td className={styles.cell}>
+                  {meeting.project_id ? (
+                    <Link href={`/projects/${meeting.project_id}`} className={styles.clientLink}>
+                      {meeting.project_name}
+                    </Link>
+                  ) : (
+                    "—"
+                  )}
+                </td>
                 <td className={`${styles.cell} ${styles.nowrap}`}>{formatWhen(meeting.starts_at)}</td>
                 <td className={styles.cell}>{meeting.location || "—"}</td>
                 <td className={styles.cell}>
@@ -142,14 +166,17 @@ const MeetingsTable = ({ agencyId, meetings, showClient = true }: MeetingsTableP
                 </td>
                 <td className={styles.cell}>
                   {meeting.status === "scheduled" && (
-                    <button
-                      type="button"
-                      className={styles.cancelButton}
-                      onClick={() => handleCancel(meeting.id)}
-                      disabled={isPending && cancellingId === meeting.id}
-                    >
-                      {isPending && cancellingId === meeting.id ? "Cancelling…" : "Cancel"}
-                    </button>
+                    <div className={styles.rowActions}>
+                      <EditMeetingDialog agencyId={agencyId} meeting={meeting} clients={clients} projects={projects} />
+                      <button
+                        type="button"
+                        className={styles.cancelButton}
+                        onClick={() => handleCancel(meeting.id)}
+                        disabled={isPending && cancellingId === meeting.id}
+                      >
+                        {isPending && cancellingId === meeting.id ? "Cancelling…" : "Cancel"}
+                      </button>
+                    </div>
                   )}
                 </td>
               </tr>

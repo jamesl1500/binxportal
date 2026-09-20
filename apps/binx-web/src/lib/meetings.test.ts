@@ -99,6 +99,19 @@ describe("meetings.ts", () => {
     expect(mockedApi.post).toHaveBeenCalledWith(`/agencies/${A}/meetings`, meetingCreateInput, AUTH);
   });
 
+  it("updateMeeting PATCHes the meeting", async () => {
+    mockedApi.patch.mockResolvedValueOnce({ data: { id: M } });
+    const input: meetings.MeetingUpdateInput = {
+      project_id: null,
+      starts_at: "2026-06-01T15:00:00Z",
+      title: "Kickoff call",
+      notes: null,
+      location: null,
+    };
+    await meetings.updateMeeting(A, M, input);
+    expect(mockedApi.patch).toHaveBeenCalledWith(`/agencies/${A}/meetings/${M}`, input, AUTH);
+  });
+
   it("cancelMeeting POSTs a null body", async () => {
     mockedApi.post.mockResolvedValueOnce({ data: { id: M } });
     await meetings.cancelMeeting(A, M);
@@ -152,6 +165,17 @@ describe("meetings.ts", () => {
       ["getAvailableSlots", () => meetings.getAvailableSlots(A, "2026-01-01")],
       ["getMeetings", () => meetings.getMeetings(A)],
       ["createMeeting", () => meetings.createMeeting(A, meetingCreateInput)],
+      [
+        "updateMeeting",
+        () =>
+          meetings.updateMeeting(A, M, {
+            project_id: null,
+            starts_at: "2026-06-01T15:00:00Z",
+            title: "Kickoff",
+            notes: null,
+            location: null,
+          }),
+      ],
       ["cancelMeeting", () => meetings.cancelMeeting(A, M)],
     ])("%s throws AuthApiError(401) when unauthenticated", async (_name, call) => {
       mockedGetAccessToken.mockResolvedValueOnce(undefined);

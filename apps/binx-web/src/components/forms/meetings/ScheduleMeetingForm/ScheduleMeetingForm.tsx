@@ -8,7 +8,13 @@
  * call" — no video-conferencing API integration). Unlike the client
  * portal's booking flow, staff isn't constrained to open slots: this calls
  * `POST /agencies/{id}/meetings` directly, which bypasses the notice-window
- * guard for staff. Mirrors ClientForm's "caller owns the chrome" shape.
+ * guard for staff.
+ *
+ * Doubles as the edit form — pass `meeting` and it prefills every field and
+ * calls `updateMeetingAction` instead, same create/edit dual-mode shape as
+ * ClientForm. The client is always locked in edit mode: reassigning a
+ * meeting to a different client isn't supported, only editing the details
+ * (including rescheduling) of a meeting for its existing client.
  *
  * @module apps/binx-web/src/components/forms/meetings/ScheduleMeetingForm/ScheduleMeetingForm.tsx
  * @author Binx.io
@@ -17,7 +23,7 @@
 
 import { useState, useTransition } from "react";
 
-import { createMeetingAction } from "@/app/(app)/meetings/actions";
+import { createMeetingAction, updateMeetingAction } from "@/app/(app)/meetings/actions";
 import type { Meeting } from "@/lib/meetings";
 
 import styles from "./ScheduleMeetingForm.module.scss";
@@ -38,15 +44,26 @@ interface ScheduleMeetingFormProps {
   projects: ProjectOption[];
   /** Pre-selects and locks the client — set when scheduling from a client's own Meetings tab. */
   defaultClientId?: string;
+  /** Pre-selects (not locked — a project can be changed or cleared) the project, set when scheduling from a project's overview page. */
+  defaultProjectId?: string;
+  /** Present for edit mode: prefills every field and calls updateMeetingAction on submit. */
+  meeting?: Meeting;
   onSuccess?: (meeting: Meeting) => void;
   onCancel?: () => void;
+}
+
+function pad(n: number): string {
+  return String(n).padStart(2, "0");
+}
+
+function toDateTimeLocal(date: Date): string {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
 function defaultDateTimeLocal(): string {
   const inOneHour = new Date(Date.now() + 60 * 60 * 1000);
   inOneHour.setMinutes(0, 0, 0);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${inOneHour.getFullYear()}-${pad(inOneHour.getMonth() + 1)}-${pad(inOneHour.getDate())}T${pad(inOneHour.getHours())}:${pad(inOneHour.getMinutes())}`;
+  return toDateTimeLocal(inOneHour);
 }
 
 const ScheduleMeetingForm = ({
@@ -54,19 +71,22 @@ const ScheduleMeetingForm = ({
   clients,
   projects,
   defaultClientId,
+  defaultProjectId,
+  meeting,
   onSuccess,
   onCancel,
 }: ScheduleMeetingFormProps) => {
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
-  const clientLocked = Boolean(defaultClientId);
+  const isEdit = Boolean(meeting);
+  const clientLocked = Boolean(defaultClientId) || isEdit;
 
-  const [clientId, setClientId] = useState(defaultClientId ?? clients[0]?.id ?? "");
-  const [projectId, setProjectId] = useState("");
-  const [when, setWhen] = useState(defaultDateTimeLocal());
-  const [title, setTitle] = useState("");
-  const [notes, setNotes] = useState("");
-  const [location, setLocation] = useState("");
+  const [clientId, setClientId] = useState(meeting?.client_id ?? defaultClientId ?? clients[0]?.id ?? "");
+  const [projectId, setProjectId] = useState(meeting?.project_id ?? defaultProjectId ?? "");
+  const [when, setWhen] = useState(meeting ? toDateTimeLocal(new Date(meeting.starts_at)) : defaultDateTimeLocal());
+  const [title, setTitle] = useState(meeting?.title ?? "");
+  const [notes, setNotes] = useState(meeting?.notes ?? "");
+  const [location, setLocation] = useState(meeting?.location ?? "");
 
   const clientProjects = projects.filter((project) => project.client_id === clientId);
   const canSubmit = clientId !== "" && when !== "";
@@ -83,17 +103,25 @@ const ScheduleMeetingForm = ({
     }
 
     startTransition(async () => {
-      const result = await createMeetingAction(agencyId, {
-        client_id: clientId,
-        project_id: projectId || null,
-        starts_at: startsAt.toISOString(),
-        title: title.trim() || "Meeting",
-        notes: notes.trim() || null,
-        location: location.trim() || null,
-      });
+      const result = meeting
+        ? await updateMeetingAction(agencyId, meeting.id, {
+            project_id: projectId || null,
+            starts_at: startsAt.toISOString(),
+            title: title.trim() || "Meeting",
+            notes: notes.trim() || null,
+            location: location.trim() || null,
+          })
+        : await createMeetingAction(agencyId, {
+            client_id: clientId,
+            project_id: projectId || null,
+            starts_at: startsAt.toISOString(),
+            title: title.trim() || "Meeting",
+            notes: notes.trim() || null,
+            location: location.trim() || null,
+          });
 
       if (result.error || !result.meeting) {
-        setFormError(result.error ?? "Unable to schedule meeting");
+        setFormError(result.error ?? (isEdit ? "Unable to update meeting" : "Unable to schedule meeting"));
         return;
       }
       onSuccess?.(result.meeting);
@@ -221,7 +249,7 @@ const ScheduleMeetingForm = ({
           </button>
         )}
         <button type="submit" className={styles.submit} disabled={!canSubmit || isPending}>
-          {isPending ? "Scheduling…" : "Schedule meeting"}
+          {isPending ? "Saving…" : isEdit ? "Save changes" : "Schedule meeting"}
         </button>
       </div>
     </form>

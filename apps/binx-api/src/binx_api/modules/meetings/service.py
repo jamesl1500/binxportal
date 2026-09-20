@@ -34,6 +34,7 @@ from binx_api.modules.notifications.models import (
     CATEGORY_MEETINGS,
     EVENT_MEETING_BOOKED,
     EVENT_MEETING_CANCELLED,
+    EVENT_MEETING_RESCHEDULED,
     EVENT_MEETING_SCHEDULED,
 )
 from binx_api.modules.projects.models import Project
@@ -330,6 +331,102 @@ async def book_slot(
         event_type=f"meeting_{verb}",
         summary=f"{booked_by.full_name} {verb} a meeting with {client.name}",
         actor=booked_by,
+        target_type="meeting",
+        target_id=meeting.id,
+        target_name=meeting.title,
+    )
+    return meeting
+
+
+async def update_meeting(
+    db: AsyncSession,
+    meeting: Meeting,
+    agency: Agency,
+    client: AgencyClient,
+    *,
+    project_id: uuid.UUID | None,
+    starts_at: datetime,
+    title: str,
+    notes: str | None,
+    location: str | None,
+    updated_by: User,
+) -> Meeting:
+    """Edits an existing, still-scheduled meeting — title/notes/location/
+    project always, and a reschedule when `starts_at` differs from the
+    current value. A reschedule re-runs the exact same advisory-lock +
+    overlap guard `book_slot` uses (excluding this meeting's own row from
+    the overlap check), since moving a meeting can collide with another one
+    just as easily as booking a new one can. Only staff can edit — no
+    portal-side call site for this."""
+    if meeting.status == MEETING_STATUS_CANCELLED:
+        raise HTTPException(status.HTTP_409_CONFLICT, "This meeting is cancelled")
+
+    settings = await get_or_create_meeting_settings(db, agency)
+    rescheduled = starts_at != meeting.starts_at
+    new_ends_at = starts_at + timedelta(minutes=settings.slot_minutes)
+
+    if rescheduled:
+        await db.execute(text("SELECT pg_advisory_xact_lock(hashtext(:agency_id))"), {"agency_id": str(agency.id)})
+        overlap = await db.execute(
+            select(Meeting.id).where(
+                Meeting.agency_id == agency.id,
+                Meeting.id != meeting.id,
+                Meeting.status == MEETING_STATUS_SCHEDULED,
+                Meeting.starts_at < new_ends_at,
+                Meeting.ends_at > starts_at,
+            )
+        )
+        if overlap.scalar_one_or_none() is not None:
+            raise HTTPException(status.HTTP_409_CONFLICT, "That time is no longer available — pick another slot")
+
+    meeting.project_id = project_id
+    meeting.title = title
+    meeting.notes = notes
+    meeting.location = location
+    meeting.starts_at = starts_at
+    meeting.ends_at = new_ends_at
+
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(status.HTTP_409_CONFLICT, "That time is no longer available — pick another slot") from None
+    await db.refresh(meeting)
+
+    if rescheduled:
+        await _notify_client(
+            db,
+            agency,
+            client,
+            meeting,
+            event_type=EVENT_MEETING_RESCHEDULED,
+            title_text=f"Meeting rescheduled: {meeting.title}",
+            body=f"{updated_by.full_name} moved this meeting to a new time.",
+            actor=updated_by,
+        )
+        # Reuses the "scheduled" email template — same "here's your meeting
+        # info" content a client needs after either a fresh booking or a
+        # reschedule.
+        recipient = client.billing_email or client.primary_contact_email
+        if recipient:
+            await send_meeting_scheduled_email(
+                to=recipient,
+                agency_name=agency.name,
+                title=meeting.title,
+                starts_at_local=await _format_local(db, agency, meeting.starts_at),
+                location=meeting.location,
+            )
+    await activity_service.log_agency_activity(
+        db,
+        agency.id,
+        category=ACTIVITY_CATEGORY_MEETINGS,
+        event_type="meeting_rescheduled" if rescheduled else "meeting_updated",
+        summary=(
+            f'{updated_by.full_name} rescheduled the meeting "{meeting.title}" with {client.name}'
+            if rescheduled
+            else f'{updated_by.full_name} updated the meeting "{meeting.title}" with {client.name}'
+        ),
+        actor=updated_by,
         target_type="meeting",
         target_id=meeting.id,
         target_name=meeting.title,

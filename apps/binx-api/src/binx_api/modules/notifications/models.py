@@ -36,6 +36,7 @@ EVENT_CANVAS_COMMENT = "canvas_comment"
 EVENT_MEETING_BOOKED = "meeting_booked"
 EVENT_MEETING_SCHEDULED = "meeting_scheduled"
 EVENT_MEETING_CANCELLED = "meeting_cancelled"
+EVENT_MEETING_RESCHEDULED = "meeting_rescheduled"
 
 
 # A single in-app notification for one recipient. Notifications are per-user

@@ -6,6 +6,8 @@ vi.mock("next/link", () => ({ default: ({ children }: { children: React.ReactNod
 
 vi.mock("@/app/(app)/meetings/actions", () => ({
   cancelMeetingAction: vi.fn(),
+  createMeetingAction: vi.fn(),
+  updateMeetingAction: vi.fn(),
 }));
 
 const mockRefresh = vi.fn();
@@ -13,12 +15,16 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: mockRefresh }),
 }));
 
-import { cancelMeetingAction } from "@/app/(app)/meetings/actions";
+import { cancelMeetingAction, updateMeetingAction } from "@/app/(app)/meetings/actions";
 import type { Meeting } from "@/lib/meetings";
 
 import MeetingsTable from "./MeetingsTable";
 
 const mockedCancel = vi.mocked(cancelMeetingAction);
+const mockedUpdate = vi.mocked(updateMeetingAction);
+
+const CLIENTS = [{ id: "c1", name: "Globex" }];
+const PROJECTS = [{ id: "p1", name: "Website relaunch", client_id: "c1" }];
 
 // Computed relative to whenever the suite actually runs, not hardcoded —
 // this file caught a real bug earlier in this project when hardcoded dates
@@ -53,11 +59,12 @@ function makeMeeting(overrides: Partial<Meeting>): Meeting {
 beforeEach(() => {
   vi.clearAllMocks();
   mockedCancel.mockResolvedValue({} as never);
+  mockedUpdate.mockResolvedValue({ meeting: makeMeeting({}) } as never);
 });
 
 describe("MeetingsTable", () => {
   it("shows an empty state with no meetings", () => {
-    render(<MeetingsTable agencyId="a1" meetings={[]} />);
+    render(<MeetingsTable agencyId="a1" meetings={[]} clients={CLIENTS} projects={PROJECTS} />);
     expect(screen.getByText("No meetings yet.")).toBeInTheDocument();
   });
 
@@ -65,6 +72,8 @@ describe("MeetingsTable", () => {
     render(
       <MeetingsTable
         agencyId="a1"
+        clients={CLIENTS}
+        projects={PROJECTS}
         meetings={[
           makeMeeting({ id: "future", title: "Future meeting", starts_at: FUTURE }),
           makeMeeting({ id: "past", title: "Past meeting", starts_at: PAST }),
@@ -80,6 +89,8 @@ describe("MeetingsTable", () => {
     render(
       <MeetingsTable
         agencyId="a1"
+        clients={CLIENTS}
+        projects={PROJECTS}
         meetings={[
           makeMeeting({ id: "future", title: "Future meeting", starts_at: FUTURE }),
           makeMeeting({ id: "past", title: "Past meeting", starts_at: PAST }),
@@ -96,6 +107,8 @@ describe("MeetingsTable", () => {
     render(
       <MeetingsTable
         agencyId="a1"
+        clients={CLIENTS}
+        projects={PROJECTS}
         meetings={[makeMeeting({ id: "c1", title: "Called off", status: "cancelled", starts_at: FUTURE })]}
       />,
     );
@@ -103,16 +116,31 @@ describe("MeetingsTable", () => {
     await user.click(screen.getByRole("button", { name: "Cancelled" }));
     expect(screen.getByText("Called off")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Cancel" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Edit meeting" })).not.toBeInTheDocument();
   });
 
   it("hides the client column when showClient is false", () => {
-    render(<MeetingsTable agencyId="a1" meetings={[makeMeeting({})]} showClient={false} />);
+    render(
+      <MeetingsTable agencyId="a1" clients={CLIENTS} projects={PROJECTS} meetings={[makeMeeting({})]} showClient={false} />,
+    );
     expect(screen.queryByText("Globex")).not.toBeInTheDocument();
+  });
+
+  it("links a meeting's project when it has one", () => {
+    render(
+      <MeetingsTable
+        agencyId="a1"
+        clients={CLIENTS}
+        projects={PROJECTS}
+        meetings={[makeMeeting({ project_id: "p1", project_name: "Website relaunch" })]}
+      />,
+    );
+    expect(screen.getByText("Website relaunch")).toBeInTheDocument();
   });
 
   it("cancels a meeting and refreshes the route", async () => {
     const user = userEvent.setup();
-    render(<MeetingsTable agencyId="a1" meetings={[makeMeeting({ id: "m1" })]} />);
+    render(<MeetingsTable agencyId="a1" clients={CLIENTS} projects={PROJECTS} meetings={[makeMeeting({ id: "m1" })]} />);
 
     await user.click(screen.getByRole("button", { name: "Cancel" }));
 
@@ -123,9 +151,26 @@ describe("MeetingsTable", () => {
   it("surfaces a cancel error", async () => {
     mockedCancel.mockResolvedValueOnce({ error: "Not permitted" } as never);
     const user = userEvent.setup();
-    render(<MeetingsTable agencyId="a1" meetings={[makeMeeting({ id: "m1" })]} />);
+    render(<MeetingsTable agencyId="a1" clients={CLIENTS} projects={PROJECTS} meetings={[makeMeeting({ id: "m1" })]} />);
 
     await user.click(screen.getByRole("button", { name: "Cancel" }));
     expect(await screen.findByText("Not permitted")).toBeInTheDocument();
+  });
+
+  it("opens the edit dialog, prefilled, for a scheduled meeting", async () => {
+    const user = userEvent.setup();
+    render(
+      <MeetingsTable
+        agencyId="a1"
+        clients={CLIENTS}
+        projects={PROJECTS}
+        meetings={[makeMeeting({ id: "m1", title: "Kickoff call" })]}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Edit meeting" }));
+
+    expect(await screen.findByRole("heading", { name: "Edit meeting" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Title")).toHaveValue("Kickoff call");
   });
 });

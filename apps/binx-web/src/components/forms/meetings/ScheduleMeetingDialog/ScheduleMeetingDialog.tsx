@@ -35,9 +35,16 @@ interface ScheduleMeetingDialogProps {
   clients: ClientOption[];
   projects: ProjectOption[];
   defaultClientId?: string;
+  defaultProjectId?: string;
 }
 
-const ScheduleMeetingDialog = ({ agencyId, clients, projects, defaultClientId }: ScheduleMeetingDialogProps) => {
+const ScheduleMeetingDialog = ({
+  agencyId,
+  clients,
+  projects,
+  defaultClientId,
+  defaultProjectId,
+}: ScheduleMeetingDialogProps) => {
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
@@ -67,6 +74,7 @@ const ScheduleMeetingDialog = ({ agencyId, clients, projects, defaultClientId }:
               clients={clients}
               projects={projects}
               defaultClientId={defaultClientId}
+              defaultProjectId={defaultProjectId}
               onSuccess={handleScheduled}
               onCancel={() => setOpen(false)}
             />

@@ -86,6 +86,18 @@ class MeetingCreate(BaseModel):
     location: str | None = Field(default=None, max_length=2048)
 
 
+class MeetingUpdate(BaseModel):
+    # Full replace, same convention as MeetingSettingsUpdate — the edit form
+    # always submits every editable field together. client_id isn't here:
+    # reassigning a meeting to a different client isn't supported, only
+    # editing the details of a meeting for its existing client.
+    project_id: uuid.UUID | None = None
+    starts_at: datetime
+    title: str = Field(min_length=1, max_length=255)
+    notes: str | None = Field(default=None, max_length=4096)
+    location: str | None = Field(default=None, max_length=2048)
+
+
 class PortalMeetingCreate(BaseModel):
     project_id: uuid.UUID | None = None
     starts_at: datetime

@@ -14,6 +14,7 @@ import { redirect } from "next/navigation";
 
 import { getCurrentAgencyContext } from "@/lib/agencies";
 import { getDashboard } from "@/lib/dashboard";
+import { getMeetings } from "@/lib/meetings";
 import { formatMoneyCents } from "@/lib/money";
 import ClientStatGrid, {
   type ClientStat,
@@ -22,6 +23,7 @@ import AiBriefingCard from "@/components/dashboard/AiBriefingCard/AiBriefingCard
 import AttentionCard from "@/components/dashboard/AttentionCard/AttentionCard";
 import ActivityTeaser from "@/components/dashboard/ActivityTeaser/ActivityTeaser";
 import MyTasksCard from "@/components/dashboard/MyTasksCard/MyTasksCard";
+import UpcomingMeetingsCard from "@/components/meetings/UpcomingMeetingsCard/UpcomingMeetingsCard";
 
 import styles from "./page.module.scss";
 
@@ -32,7 +34,10 @@ const DashboardOverviewPage = async () => {
   }
   const agencyId = currentAgency.id;
 
-  const overview = await getDashboard(agencyId);
+  const [overview, upcomingMeetings] = await Promise.all([
+    getDashboard(agencyId),
+    getMeetings(agencyId, { status: "scheduled", fromDate: new Date().toISOString().slice(0, 10) }),
+  ]);
   const {
     on_hold_projects: onHoldProjects,
     overdue_invoices: overdueInvoices,
@@ -105,6 +110,16 @@ const DashboardOverviewPage = async () => {
             </Link>
           </div>
           <ActivityTeaser entries={activity} />
+        </section>
+
+        <section>
+          <div className={styles.sectionHead}>
+            <h2 className={styles.sectionTitle}>Upcoming meetings</h2>
+            <Link href="/meetings" className={styles.link}>
+              View all
+            </Link>
+          </div>
+          <UpcomingMeetingsCard meetings={upcomingMeetings} limit={5} moreHref="/meetings" showClient showProject />
         </section>
       </div>
     </div>
