@@ -61,8 +61,11 @@ test.describe("staff app", () => {
     await staffPage.getByLabel("Lead / company name").fill("Riverside Outfitters");
     await staffPage.getByRole("button", { name: "Add lead" }).click();
 
-    await staffPage.getByRole("link", { name: /Riverside Outfitters/ }).click();
+    // .first(): a retried run finds the lead the failed attempt already created.
+    await staffPage.getByRole("link", { name: /Riverside Outfitters/ }).first().click();
     await expect(staffPage.getByRole("heading", { name: "Riverside Outfitters" })).toBeVisible();
+    // The follow-up card lives in the lead page's AI analysis tab.
+    await staffPage.getByRole("tab", { name: "AI analysis" }).click();
     await expect(staffPage.getByText("AI follow-up")).toBeVisible();
     await expect(staffPage.getByRole("button", { name: "Draft follow-up" })).toBeVisible();
   });

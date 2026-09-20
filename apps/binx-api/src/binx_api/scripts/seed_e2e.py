@@ -51,6 +51,19 @@ PROJECT_NAME = "Brand & Website Refresh"
 DEMO_EMAILS = [STAFF_EMAIL, CLIENT_EMAIL, TEAMMATE_EMAIL]
 DEMO_USER_NAMES = [STAFF_USER_NAME, CLIENT_USER_NAME, TEAMMATE_USER_NAME]
 
+# Every PageCoachmark id in binx-web (grep `<PageCoachmark`). The welcome tour and
+# these popups open a modal over the app on first visit, which would intercept
+# every click in the suite — so the staff demo users start with all of it seen.
+_TUTORIAL_POPUP_IDS = [
+    "clients-new",
+    "dashboard-my-work",
+    "invoices-new",
+    "leads-new",
+    "messages-new",
+    "projects-new",
+    "team-invitations",
+]
+
 _BOARD_NOTES = [
     (60, 60, "Moodboard: coastal, warm neutrals, lots of air", "#fef3c7"),
     (320, 60, "Logo needs to work at 16px favicon size", "#e0f2fe"),
@@ -74,7 +87,7 @@ async def _run() -> None:
     from binx_api.modules.messaging.service import create_conversation, post_message
     from binx_api.modules.projects.service import create_project, create_task, get_project_board, move_task
     from binx_api.modules.users.models import User
-    from binx_api.modules.users.service import create_user
+    from binx_api.modules.users.service import create_user, update_tutorial_progress
 
     async def verified_user(user_name: str, email: str, full_name: str):
         account = await create_user(db, user_name=user_name, email=email, full_name=full_name, password=PASSWORD)
@@ -102,6 +115,10 @@ async def _run() -> None:
         owner = await verified_user(STAFF_USER_NAME, STAFF_EMAIL, STAFF_NAME)
         teammate = await verified_user(TEAMMATE_USER_NAME, TEAMMATE_EMAIL, TEAMMATE_NAME)
         client_contact_user = await verified_user(CLIENT_USER_NAME, CLIENT_EMAIL, CLIENT_CONTACT_NAME)
+        for staff_user in (owner, teammate):
+            await update_tutorial_progress(
+                db, staff_user, tour_completed=True, dismissed_popups=list(_TUTORIAL_POPUP_IDS)
+            )
 
         # --- Agency + team --------------------------------------------------
         agency = await create_agency_with_owner(db, owner=owner, name=AGENCY_NAME)
