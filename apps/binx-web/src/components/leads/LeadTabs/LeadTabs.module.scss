@@ -1,0 +1,76 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-6;
+  min-width: 0;
+}
+
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: t.$space-1;
+  overflow-x: auto;
+  border-bottom: 1px solid t.$color-border;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-2;
+  padding: t.$space-3 t.$space-4;
+  margin-bottom: -1px;
+  font-family: inherit;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+  white-space: nowrap;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition:
+    color t.$duration-fast t.$ease-standard,
+    border-color t.$duration-fast t.$ease-standard;
+
+  &:hover {
+    color: t.$color-ink;
+  }
+
+  &[data-active="true"] {
+    font-weight: 600;
+    color: t.$color-ink;
+    // Personal accent-color preference — see --app-accent in (app)/layout.tsx.
+    border-bottom-color: var(--app-accent, #{t.$color-ink});
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: t.$color-ink;
+  color: t.$color-surface;
+  font-size: 0.625rem;
+  font-weight: 700;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-6;
+  min-width: 0;
+
+  &[hidden] {
+    display: none;
+  }
+}

@@ -2,8 +2,9 @@
  * page.tsx - Lead detail
  *
  * One lead, worked end to end: the header (name, status, owner, score,
- * source), the AI card (summary + analyze), the editable details form, the
- * convert-to-client panel, the activity timeline, and a danger zone.
+ * source), a tabbed main column (editable details, activity timeline, AI
+ * analysis + follow-up), and a side column with the convert-to-client panel,
+ * a snapshot, and a danger zone.
  *
  * @module apps/binx-web/src/app/(app)/leads/[leadId]/page.tsx
  * @author Binx.io
@@ -25,6 +26,7 @@ import LeadForm from "@/components/leads/LeadForm/LeadForm";
 import LeadOwnerSelect from "@/components/leads/LeadOwnerSelect/LeadOwnerSelect";
 import LeadScoreBadge from "@/components/leads/LeadScoreBadge/LeadScoreBadge";
 import LeadStatusControl from "@/components/leads/LeadStatusControl/LeadStatusControl";
+import LeadTabs from "@/components/leads/LeadTabs/LeadTabs";
 import LeadTimeline from "@/components/leads/LeadTimeline/LeadTimeline";
 import DeleteLeadButton from "@/components/leads/DeleteLeadButton/DeleteLeadButton";
 
@@ -91,61 +93,70 @@ const LeadDetailPage = async ({ params }: LeadDetailPageProps) => {
 
       <div className={styles.grid}>
         <div className={styles.mainCol}>
-          <section className={styles.card}>
-            <div className={styles.cardHead}>
-              <h2 className={styles.cardTitle}>AI analysis</h2>
-              <AnalyzeLeadButton agencyId={agencyId} leadId={lead.id} analyzed={Boolean(lead.ai_analyzed_at)} />
-            </div>
-            {lead.ai_analyzed_at ? (
+          <LeadTabs
+            eventCount={events.length}
+            details={
+              <section className={styles.card}>
+                <h2 className={styles.cardTitle}>Details</h2>
+                <LeadForm agencyId={agencyId} lead={lead} />
+              </section>
+            }
+            timeline={
+              <section className={styles.card}>
+                <h2 className={styles.cardTitle}>Timeline</h2>
+                <LeadTimeline agencyId={agencyId} leadId={lead.id} events={events} />
+              </section>
+            }
+            analysis={
               <>
-                {lead.ai_fit && (
-                  <div className={styles.aiMeta}>
-                    <span className={styles.fitChip}>{lead.ai_fit} fit</span>
+                <section className={styles.card}>
+                  <div className={styles.cardHead}>
+                    <h2 className={styles.cardTitle}>AI analysis</h2>
+                    <AnalyzeLeadButton agencyId={agencyId} leadId={lead.id} analyzed={Boolean(lead.ai_analyzed_at)} />
                   </div>
-                )}
-                {lead.ai_summary && <AiMarkdown content={lead.ai_summary} className={styles.aiSummary} />}
-                {lead.ai_talking_points.length > 0 && (
-                  <div className={styles.aiBlock}>
-                    <p className={styles.aiBlockLabel}>Talking points</p>
-                    <ul className={styles.talkingPoints}>
-                      {lead.ai_talking_points.map((point) => (
-                        <li key={point}>{point}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {lead.ai_next_step && (
-                  <div className={styles.aiBlock}>
-                    <p className={styles.aiBlockLabel}>Next step</p>
-                    <p className={styles.nextStep}>{lead.ai_next_step}</p>
-                  </div>
-                )}
+                  {lead.ai_analyzed_at ? (
+                    <>
+                      {lead.ai_fit && (
+                        <div className={styles.aiMeta}>
+                          <span className={styles.fitChip}>{lead.ai_fit} fit</span>
+                        </div>
+                      )}
+                      {lead.ai_summary && <AiMarkdown content={lead.ai_summary} className={styles.aiSummary} />}
+                      {lead.ai_talking_points.length > 0 && (
+                        <div className={styles.aiBlock}>
+                          <p className={styles.aiBlockLabel}>Talking points</p>
+                          <ul className={styles.talkingPoints}>
+                            {lead.ai_talking_points.map((point) => (
+                              <li key={point}>{point}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {lead.ai_next_step && (
+                        <div className={styles.aiBlock}>
+                          <p className={styles.aiBlockLabel}>Next step</p>
+                          <p className={styles.nextStep}>{lead.ai_next_step}</p>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <p className={styles.muted}>
+                      Not analyzed yet. Run it to score the lead, fetch their website if they have one, and get a
+                      suggested next step. (Falls back to a quick completeness check if AI isn&apos;t available right now.)
+                    </p>
+                  )}
+                </section>
+
+                <AiFollowUpCard
+                  agencyId={agencyId}
+                  leadId={lead.id}
+                  status={lead.status}
+                  contactEmail={lead.contact_email}
+                  leadName={lead.name}
+                />
               </>
-            ) : (
-              <p className={styles.muted}>
-                Not analyzed yet. Run it to score the lead, fetch their website if they have one, and get a
-                suggested next step. (Falls back to a quick completeness check if AI isn&apos;t available right now.)
-              </p>
-            )}
-          </section>
-
-          <AiFollowUpCard
-            agencyId={agencyId}
-            leadId={lead.id}
-            status={lead.status}
-            contactEmail={lead.contact_email}
-            leadName={lead.name}
+            }
           />
-
-          <section className={styles.card}>
-            <h2 className={styles.cardTitle}>Details</h2>
-            <LeadForm agencyId={agencyId} lead={lead} />
-          </section>
-
-          <section className={styles.card}>
-            <h2 className={styles.cardTitle}>Timeline</h2>
-            <LeadTimeline agencyId={agencyId} leadId={lead.id} events={events} />
-          </section>
         </div>
 
         <aside className={styles.sideCol}>
