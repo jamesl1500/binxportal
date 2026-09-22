@@ -48,6 +48,12 @@
   color: t.$color-accent-foreground;
 }
 
+.startTrigger {
+  @include m.button-base;
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+}
+
 .stop {
   @include m.button-base;
   align-self: flex-start;
@@ -93,4 +99,55 @@
   margin: 0;
   font-size: t.$font-size-sm;
   color: t.$color-ink;
+}
+
+// ---- Dialog ----
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(10, 10, 11, 0.4);
+}
+
+.dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 60;
+  width: calc(100vw - #{t.$space-8});
+  max-width: 30rem;
+  padding: t.$space-6;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  box-shadow: 0 24px 48px rgba(10, 10, 11, 0.2);
+  outline: none;
+  transform: translate(-50%, -50%);
+}
+
+.dialogTitle {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-ink;
+}
+
+.dialogForm {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+  margin-top: t.$space-4;
+}
+
+.dialogActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: t.$space-3;
+  margin-top: t.$space-5;
+}
+
+.ghost {
+  @include m.button-base;
+  background: t.$color-surface;
 }

@@ -5,6 +5,8 @@
  * description, start/end datetime, billable, and an optional per-entry
  * hourly rate override (falls back to the project's default rate when left
  * blank — see resolve_hourly_rate_cents in binx-api's time_tracking/service.py).
+ * Rendered as a "Log time manually" button that opens the form in a modal,
+ * so the page's stats and entries aren't pushed below an always-open form.
  *
  * @module apps/binx-web/src/components/forms/projects/ManualEntryForm/ManualEntryForm.tsx
  * @author Binx.io
@@ -13,6 +15,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { Dialog } from "@base-ui/react/dialog";
 import { toast } from "sonner";
 
 import { logManualEntryAction } from "@/app/(app)/projects/[projectId]/time/actions";
@@ -54,6 +57,7 @@ function defaultEndedAt(): string {
 const ManualEntryForm = ({ agencyId, projectId, tasks }: ManualEntryFormProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const [taskId, setTaskId] = useState("");
   const [description, setDescription] = useState("");
@@ -62,6 +66,21 @@ const ManualEntryForm = ({ agencyId, projectId, tasks }: ManualEntryFormProps) =
   const [isBillable, setIsBillable] = useState(true);
   const [rate, setRate] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  const resetForm = () => {
+    setTaskId("");
+    setDescription("");
+    setStartedAt(defaultStartedAt());
+    setEndedAt(defaultEndedAt());
+    setIsBillable(true);
+    setRate("");
+    setError(null);
+  };
+
+  const handleDialogOpenChange = (open: boolean) => {
+    setDialogOpen(open);
+    if (!open) resetForm();
+  };
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -103,104 +122,120 @@ const ManualEntryForm = ({ agencyId, projectId, tasks }: ManualEntryFormProps) =
       }
 
       toast.success("Time entry logged");
-      setDescription("");
-      setRate("");
-      setTaskId("");
-      setStartedAt(defaultStartedAt());
-      setEndedAt(defaultEndedAt());
+      setDialogOpen(false);
+      resetForm();
       router.refresh();
     });
   };
 
   return (
-    <form className={styles.form} onSubmit={handleSubmit}>
-      <div className={styles.row}>
-        <label className={styles.field}>
-          <span className={styles.label}>Task (optional)</span>
-          <select
-            className={styles.select}
-            value={taskId}
-            onChange={(event) => setTaskId(event.target.value)}
-            disabled={isPending}
-          >
-            <option value="">No task</option>
-            {tasks.map((task) => (
-              <option key={task.id} value={task.id}>
-                {task.title}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className={styles.field}>
-          <span className={styles.label}>Description (optional)</span>
-          <input
-            className={styles.input}
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-            disabled={isPending}
-          />
-        </label>
-      </div>
-
-      <div className={styles.row}>
-        <label className={styles.field}>
-          <span className={styles.label}>Start</span>
-          <input
-            type="datetime-local"
-            className={styles.input}
-            value={startedAt}
-            onChange={(event) => setStartedAt(event.target.value)}
-            disabled={isPending}
-            required
-          />
-        </label>
-        <label className={styles.field}>
-          <span className={styles.label}>End</span>
-          <input
-            type="datetime-local"
-            className={styles.input}
-            value={endedAt}
-            onChange={(event) => setEndedAt(event.target.value)}
-            disabled={isPending}
-            required
-          />
-        </label>
-      </div>
-
-      <div className={styles.row}>
-        <label className={styles.checkboxRow}>
-          <input
-            type="checkbox"
-            checked={isBillable}
-            onChange={(event) => setIsBillable(event.target.checked)}
-            disabled={isPending}
-          />
-          Billable
-        </label>
-        <label className={styles.field}>
-          <span className={styles.label}>Hourly rate override (optional)</span>
-          <input
-            type="number"
-            step="0.01"
-            className={styles.input}
-            value={rate}
-            onChange={(event) => setRate(event.target.value)}
-            placeholder="Use project default"
-            disabled={isPending}
-          />
-        </label>
-      </div>
-
-      {error && (
-        <p className={styles.error} role="alert">
-          {error}
-        </p>
-      )}
-
-      <button type="submit" className={styles.submit} disabled={isPending}>
-        {isPending ? "Logging…" : "Log time"}
+    <>
+      <button type="button" className={styles.trigger} onClick={() => setDialogOpen(true)}>
+        Log time manually
       </button>
-    </form>
+
+      <Dialog.Root open={dialogOpen} onOpenChange={handleDialogOpenChange}>
+        <Dialog.Portal>
+          <Dialog.Backdrop className={styles.backdrop} />
+          <Dialog.Popup className={styles.dialog} aria-label="Log time manually">
+            <Dialog.Title className={styles.dialogTitle}>Log time manually</Dialog.Title>
+            <form className={styles.form} onSubmit={handleSubmit}>
+              <div className={styles.row}>
+                <label className={styles.field}>
+                  <span className={styles.label}>Task (optional)</span>
+                  <select
+                    className={styles.select}
+                    value={taskId}
+                    onChange={(event) => setTaskId(event.target.value)}
+                    disabled={isPending}
+                  >
+                    <option value="">No task</option>
+                    {tasks.map((task) => (
+                      <option key={task.id} value={task.id}>
+                        {task.title}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className={styles.field}>
+                  <span className={styles.label}>Description (optional)</span>
+                  <input
+                    className={styles.input}
+                    value={description}
+                    onChange={(event) => setDescription(event.target.value)}
+                    disabled={isPending}
+                  />
+                </label>
+              </div>
+
+              <div className={styles.row}>
+                <label className={styles.field}>
+                  <span className={styles.label}>Start</span>
+                  <input
+                    type="datetime-local"
+                    className={styles.input}
+                    value={startedAt}
+                    onChange={(event) => setStartedAt(event.target.value)}
+                    disabled={isPending}
+                    required
+                  />
+                </label>
+                <label className={styles.field}>
+                  <span className={styles.label}>End</span>
+                  <input
+                    type="datetime-local"
+                    className={styles.input}
+                    value={endedAt}
+                    onChange={(event) => setEndedAt(event.target.value)}
+                    disabled={isPending}
+                    required
+                  />
+                </label>
+              </div>
+
+              <div className={styles.row}>
+                <label className={styles.checkboxRow}>
+                  <input
+                    type="checkbox"
+                    checked={isBillable}
+                    onChange={(event) => setIsBillable(event.target.checked)}
+                    disabled={isPending}
+                  />
+                  Billable
+                </label>
+                <label className={styles.field}>
+                  <span className={styles.label}>Hourly rate override (optional)</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    className={styles.input}
+                    value={rate}
+                    onChange={(event) => setRate(event.target.value)}
+                    placeholder="Use project default"
+                    disabled={isPending}
+                  />
+                </label>
+              </div>
+
+              {error && (
+                <p className={styles.error} role="alert">
+                  {error}
+                </p>
+              )}
+
+              <div className={styles.dialogActions}>
+                <button type="button" className={styles.ghost} onClick={() => setDialogOpen(false)} disabled={isPending}>
+                  Cancel
+                </button>
+                <button type="submit" className={styles.submit} disabled={isPending}>
+                  {isPending ? "Logging…" : "Log time"}
+                </button>
+              </div>
+            </form>
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>
+    </>
   );
 };
 

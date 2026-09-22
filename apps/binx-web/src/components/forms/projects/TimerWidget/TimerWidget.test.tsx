@@ -1,4 +1,4 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -56,22 +56,26 @@ afterEach(() => {
 });
 
 describe("TimerWidget", () => {
-  it("shows a start form when no timer is running", () => {
+  it("shows a Start timer button when no timer is running, with the form closed", () => {
     render(<TimerWidget agencyId={agencyId} projectId={projectId} tasks={tasks} runningTimer={null} />);
 
     expect(screen.getByRole("button", { name: "Start timer" })).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "Design the hero" })).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Stop timer" })).not.toBeInTheDocument();
   });
 
-  it("starts the timer with the selected task, description, and billable flag", async () => {
+  it("opens the start-timer modal and starts with the selected task, description, and billable flag", async () => {
     mockedStart.mockResolvedValueOnce({ entry: runningEntry });
     const user = userEvent.setup();
     render(<TimerWidget agencyId={agencyId} projectId={projectId} tasks={tasks} runningTimer={null} />);
 
-    await user.selectOptions(screen.getByLabelText("Task (optional)"), "task-2");
-    await user.type(screen.getByLabelText("Description (optional)"), "Client call");
     await user.click(screen.getByRole("button", { name: "Start timer" }));
+    const dialog = within(screen.getByRole("dialog"));
+    expect(dialog.getByRole("option", { name: "Design the hero" })).toBeInTheDocument();
+
+    await user.selectOptions(dialog.getByLabelText("Task (optional)"), "task-2");
+    await user.type(dialog.getByLabelText("Description (optional)"), "Client call");
+    await user.click(dialog.getByRole("button", { name: "Start" }));
 
     expect(mockedStart).toHaveBeenCalledWith(agencyId, projectId, {
       projectId,
@@ -82,15 +86,28 @@ describe("TimerWidget", () => {
     expect(mockedRefresh).toHaveBeenCalledOnce();
   });
 
-  it("shows a toast when starting the timer fails", async () => {
+  it("shows a toast when starting the timer fails, and keeps the modal open", async () => {
     mockedStart.mockResolvedValueOnce({ error: "You already have a timer running" });
     const user = userEvent.setup();
     render(<TimerWidget agencyId={agencyId} projectId={projectId} tasks={tasks} runningTimer={null} />);
 
     await user.click(screen.getByRole("button", { name: "Start timer" }));
+    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Start" }));
 
     expect(mockedToastError).toHaveBeenCalledWith("You already have a timer running");
     expect(mockedRefresh).not.toHaveBeenCalled();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("closes the modal on Cancel without starting a timer", async () => {
+    const user = userEvent.setup();
+    render(<TimerWidget agencyId={agencyId} projectId={projectId} tasks={tasks} runningTimer={null} />);
+
+    await user.click(screen.getByRole("button", { name: "Start timer" }));
+    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Cancel" }));
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(mockedStart).not.toHaveBeenCalled();
   });
 
   it("shows the ticking elapsed time and a Stop button when a timer is running", () => {

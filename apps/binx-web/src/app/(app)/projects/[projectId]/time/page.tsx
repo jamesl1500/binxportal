@@ -1,12 +1,14 @@
 /**
  * page.tsx - Project Time Tracking
  *
- * The project's Time tab: the caller's start/stop timer, a manual-entry
- * form, an uninvoiced summary, and the full list of this project's logged
- * time with edit/delete and "generate an invoice from selected entries".
- * The project itself is already resolved (and 404-checked) by the layout
- * above — `getAgencyProject` is cached, so this page's call shares that
- * fetch. `client_id` comes straight off the project (denormalized onto
+ * The project's Time tab: an uninvoiced summary, the caller's start/stop
+ * timer and a manual-entry form (each a button that opens a modal, so the
+ * stats and logged time show first rather than being pushed below two
+ * always-open forms), and the full list of this project's logged time with
+ * edit/delete and "generate an invoice from selected entries". The project
+ * itself is already resolved (and 404-checked) by the layout above —
+ * `getAgencyProject` is cached, so this page's call shares that fetch.
+ * `client_id` comes straight off the project (denormalized onto
  * ProjectRead), so no extra lookup is needed to bill the client.
  *
  * @module apps/binx-web/src/app/(app)/projects/[projectId]/time/page.tsx
@@ -52,15 +54,6 @@ const ProjectTimePage = async ({ params }: ProjectTimePageProps) => {
 
   return (
     <div className={styles.page}>
-      <TimerWidget agencyId={currentAgency.id} projectId={project.id} tasks={tasks} runningTimer={runningTimer} />
-
-      <div className={styles.card}>
-        <div className={styles.cardHeader}>
-          <h2 className={styles.cardTitle}>Log time manually</h2>
-        </div>
-        <ManualEntryForm agencyId={currentAgency.id} projectId={project.id} tasks={tasks} />
-      </div>
-
       <div className={styles.statGrid}>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Uninvoiced entries</span>
@@ -78,6 +71,11 @@ const ProjectTimePage = async ({ params }: ProjectTimePageProps) => {
           <span className={styles.statLabel}>Missing a rate</span>
           <p className={styles.statValue}>{summary.unrated_entry_count}</p>
         </div>
+      </div>
+
+      <div className={styles.actionsRow}>
+        <TimerWidget agencyId={currentAgency.id} projectId={project.id} tasks={tasks} runningTimer={runningTimer} />
+        <ManualEntryForm agencyId={currentAgency.id} projectId={project.id} tasks={tasks} />
       </div>
 
       <div className={styles.card}>
