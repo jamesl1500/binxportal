@@ -11,6 +11,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getCurrentAgencyContext } from "@/lib/agencies";
+import { getAgencyClients } from "@/lib/clients";
 import ProposalForm from "@/components/proposals/ProposalForm/ProposalForm";
 
 import styles from "../page.module.scss";
@@ -28,7 +29,7 @@ const NewProposalPage = async ({ searchParams }: NewProposalPageProps) => {
     redirect("/onboarding/two");
   }
 
-  const { client } = await searchParams;
+  const [{ client }, clients] = await Promise.all([searchParams, getAgencyClients(currentAgency.id)]);
 
   return (
     <div>
@@ -44,7 +45,11 @@ const NewProposalPage = async ({ searchParams }: NewProposalPageProps) => {
       </div>
 
       <div className={styles.formCard}>
-        <ProposalForm agencyId={currentAgency.id} initialClientId={client ?? null} />
+        <ProposalForm
+          agencyId={currentAgency.id}
+          clients={clients.map((c) => ({ id: c.id, name: c.name }))}
+          initialClientId={client ?? null}
+        />
       </div>
     </div>
   );

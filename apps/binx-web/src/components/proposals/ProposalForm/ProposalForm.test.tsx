@@ -22,6 +22,11 @@ import ProposalForm from "./ProposalForm";
 
 const mockedCreate = vi.mocked(createProposalAction);
 
+const clients = [
+  { id: "client-1", name: "Acme Co" },
+  { id: "client-2", name: "Globex" },
+];
+
 beforeEach(() => {
   vi.clearAllMocks();
 });
@@ -29,7 +34,7 @@ beforeEach(() => {
 describe("ProposalForm", () => {
   it("computes live totals matching the backend formula", async () => {
     const user = userEvent.setup();
-    render(<ProposalForm agencyId="a1" />);
+    render(<ProposalForm agencyId="a1" clients={clients} />);
 
     await user.type(screen.getByLabelText(/^Title$/), "Website redesign");
     await user.type(screen.getByLabelText("Line 1 description"), "Design");
@@ -47,10 +52,10 @@ describe("ProposalForm", () => {
     expect(screen.getByText("$1,650.00")).toBeInTheDocument();
   });
 
-  it("submits the line items and totals inputs", async () => {
+  it("submits the line items and totals inputs with no client selected", async () => {
     mockedCreate.mockResolvedValueOnce({ proposal: { id: "p1" } as never });
     const user = userEvent.setup();
-    render(<ProposalForm agencyId="a1" />);
+    render(<ProposalForm agencyId="a1" clients={clients} />);
 
     await user.type(screen.getByLabelText(/^Title$/), "Retainer proposal");
     await user.type(screen.getByLabelText("Line 1 description"), "Retainer");
@@ -69,10 +74,21 @@ describe("ProposalForm", () => {
     expect(mockPush).toHaveBeenCalledWith("/proposals/p1");
   });
 
+  it("lists every client as an option, defaulting to No client", () => {
+    render(<ProposalForm agencyId="a1" clients={clients} />);
+
+    const select = screen.getByLabelText(/^Client$/) as HTMLSelectElement;
+    expect(select.value).toBe("");
+    expect(screen.getByRole("option", { name: "Acme Co" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Globex" })).toBeInTheDocument();
+  });
+
   it("submits with a pre-selected client from initialClientId", async () => {
     mockedCreate.mockResolvedValueOnce({ proposal: { id: "p1" } as never });
     const user = userEvent.setup();
-    render(<ProposalForm agencyId="a1" initialClientId="client-1" />);
+    render(<ProposalForm agencyId="a1" clients={clients} initialClientId="client-1" />);
+
+    expect((screen.getByLabelText(/^Client$/) as HTMLSelectElement).value).toBe("client-1");
 
     await user.type(screen.getByLabelText(/^Title$/), "Retainer proposal");
     await user.type(screen.getByLabelText("Line 1 description"), "Retainer");
@@ -82,9 +98,23 @@ describe("ProposalForm", () => {
     expect(mockedCreate).toHaveBeenCalledWith("a1", expect.objectContaining({ clientId: "client-1" }));
   });
 
+  it("submits with a client picked from the dropdown, overriding no default", async () => {
+    mockedCreate.mockResolvedValueOnce({ proposal: { id: "p1" } as never });
+    const user = userEvent.setup();
+    render(<ProposalForm agencyId="a1" clients={clients} />);
+
+    await user.selectOptions(screen.getByLabelText(/^Client$/), "client-2");
+    await user.type(screen.getByLabelText(/^Title$/), "Brand refresh");
+    await user.type(screen.getByLabelText("Line 1 description"), "Design");
+    await user.type(screen.getByLabelText("Line 1 unit price"), "500");
+    await user.click(screen.getByRole("button", { name: /create draft/i }));
+
+    expect(mockedCreate).toHaveBeenCalledWith("a1", expect.objectContaining({ clientId: "client-2" }));
+  });
+
   it("won't submit without a title or a described line", async () => {
     const user = userEvent.setup();
-    render(<ProposalForm agencyId="a1" />);
+    render(<ProposalForm agencyId="a1" clients={clients} />);
 
     expect(screen.getByRole("button", { name: /create draft/i })).toBeDisabled();
     await user.click(screen.getByRole("button", { name: /create draft/i }));
