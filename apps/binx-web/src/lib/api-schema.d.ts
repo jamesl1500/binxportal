@@ -4903,6 +4903,8 @@ export interface components {
         };
         /** IssueInvoiceRequest */
         IssueInvoiceRequest: {
+            /** Recipient Email */
+            recipient_email?: string | null;
             /**
              * Send Notice
              * @default false
