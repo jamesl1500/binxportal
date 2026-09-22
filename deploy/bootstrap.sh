@@ -6,7 +6,7 @@ set -euo pipefail
 
 echo "==> Installing Docker Engine + Compose plugin"
 sudo apt-get update -y
-sudo apt-get install -y ca-certificates curl jq
+sudo apt-get install -y ca-certificates curl jq unzip
 sudo install -m 0755 -d /etc/apt/keyrings
 sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
 sudo chmod a+r /etc/apt/keyrings/docker.asc
