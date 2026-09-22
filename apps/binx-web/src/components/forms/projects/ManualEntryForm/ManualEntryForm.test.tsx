@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -29,20 +29,33 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
+async function openDialog(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole("button", { name: "Log time manually" }));
+  return within(screen.getByRole("dialog"));
+}
+
 describe("ManualEntryForm", () => {
+  it("shows the trigger button with the form closed", () => {
+    render(<ManualEntryForm agencyId={agencyId} projectId={projectId} tasks={tasks} />);
+
+    expect(screen.getByRole("button", { name: "Log time manually" })).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
   it("logs a manual entry with the mapped payload", async () => {
     mockedLog.mockResolvedValueOnce({ entry: { id: "entry-1" } } as never);
     const user = userEvent.setup();
     render(<ManualEntryForm agencyId={agencyId} projectId={projectId} tasks={tasks} />);
+    const dialog = await openDialog(user);
 
-    await user.selectOptions(screen.getByLabelText("Task (optional)"), "task-1");
-    await user.type(screen.getByLabelText("Description (optional)"), "Client call");
-    await user.clear(screen.getByLabelText("Start"));
-    await user.type(screen.getByLabelText("Start"), "2026-01-01T09:00");
-    await user.clear(screen.getByLabelText("End"));
-    await user.type(screen.getByLabelText("End"), "2026-01-01T10:30");
-    await user.type(screen.getByLabelText("Hourly rate override (optional)"), "150");
-    await user.click(screen.getByRole("button", { name: "Log time" }));
+    await user.selectOptions(dialog.getByLabelText("Task (optional)"), "task-1");
+    await user.type(dialog.getByLabelText("Description (optional)"), "Client call");
+    await user.clear(dialog.getByLabelText("Start"));
+    await user.type(dialog.getByLabelText("Start"), "2026-01-01T09:00");
+    await user.clear(dialog.getByLabelText("End"));
+    await user.type(dialog.getByLabelText("End"), "2026-01-01T10:30");
+    await user.type(dialog.getByLabelText("Hourly rate override (optional)"), "150");
+    await user.click(dialog.getByRole("button", { name: "Log time" }));
 
     expect(mockedLog).toHaveBeenCalledWith(agencyId, projectId, {
       projectId,
@@ -55,17 +68,19 @@ describe("ManualEntryForm", () => {
     });
     expect(mockedToastSuccess).toHaveBeenCalledWith("Time entry logged");
     expect(mockedRefresh).toHaveBeenCalledOnce();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it("rejects an end time that isn't after the start time", async () => {
     const user = userEvent.setup();
     render(<ManualEntryForm agencyId={agencyId} projectId={projectId} tasks={tasks} />);
+    const dialog = await openDialog(user);
 
-    await user.clear(screen.getByLabelText("Start"));
-    await user.type(screen.getByLabelText("Start"), "2026-01-01T10:00");
-    await user.clear(screen.getByLabelText("End"));
-    await user.type(screen.getByLabelText("End"), "2026-01-01T09:00");
-    await user.click(screen.getByRole("button", { name: "Log time" }));
+    await user.clear(dialog.getByLabelText("Start"));
+    await user.type(dialog.getByLabelText("Start"), "2026-01-01T10:00");
+    await user.clear(dialog.getByLabelText("End"));
+    await user.type(dialog.getByLabelText("End"), "2026-01-01T09:00");
+    await user.click(dialog.getByRole("button", { name: "Log time" }));
 
     expect(await screen.findByText("End time must be after the start time")).toBeInTheDocument();
     expect(mockedLog).not.toHaveBeenCalled();
@@ -74,24 +89,38 @@ describe("ManualEntryForm", () => {
   it("rejects an invalid hourly rate", async () => {
     const user = userEvent.setup();
     render(<ManualEntryForm agencyId={agencyId} projectId={projectId} tasks={tasks} />);
+    const dialog = await openDialog(user);
 
-    const rateInput = screen.getByLabelText("Hourly rate override (optional)");
+    const rateInput = dialog.getByLabelText("Hourly rate override (optional)");
     await user.type(rateInput, "-5");
-    await user.click(screen.getByRole("button", { name: "Log time" }));
+    await user.click(dialog.getByRole("button", { name: "Log time" }));
 
     expect(await screen.findByText("Enter a valid hourly rate")).toBeInTheDocument();
     expect(mockedLog).not.toHaveBeenCalled();
   });
 
-  it("shows the server error on failure", async () => {
+  it("shows the server error on failure and keeps the modal open", async () => {
     mockedLog.mockResolvedValueOnce({ error: "ended_at must be after started_at" });
     const user = userEvent.setup();
     render(<ManualEntryForm agencyId={agencyId} projectId={projectId} tasks={tasks} />);
+    const dialog = await openDialog(user);
 
-    await user.click(screen.getByRole("button", { name: "Log time" }));
+    await user.click(dialog.getByRole("button", { name: "Log time" }));
 
     expect(await screen.findByText("ended_at must be after started_at")).toBeInTheDocument();
     expect(mockedToastError).toHaveBeenCalledWith("ended_at must be after started_at");
     expect(mockedRefresh).not.toHaveBeenCalled();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("closes the modal on Cancel without logging an entry", async () => {
+    const user = userEvent.setup();
+    render(<ManualEntryForm agencyId={agencyId} projectId={projectId} tasks={tasks} />);
+    const dialog = await openDialog(user);
+
+    await user.click(dialog.getByRole("button", { name: "Cancel" }));
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(mockedLog).not.toHaveBeenCalled();
   });
 });

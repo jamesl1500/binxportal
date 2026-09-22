@@ -1,13 +1,14 @@
 /**
  * TimerWidget.tsx
  *
- * The live start/stop timer at the top of a project's Time tab. When the
- * caller has no running timer anywhere in this agency, shows a small Start
- * form (optional task, description, billable toggle) scoped to this project.
- * When one is running — whether started from here or from another project —
- * shows the elapsed time ticking client-side from `started_at` (binx-api
- * never stores a running entry's duration, see time_tracking/models.py) and a
- * Stop button.
+ * The live start/stop timer on a project's Time tab. When the caller has no
+ * running timer anywhere in this agency, shows a "Start timer" button that
+ * opens a modal with the start form (optional task, description, billable
+ * toggle) scoped to this project. When one is running — whether started from
+ * here or from another project — shows the elapsed time ticking client-side
+ * from `started_at` (binx-api never stores a running entry's duration, see
+ * time_tracking/models.py) and a Stop button, inline, since that's live
+ * status rather than an action to configure.
  *
  * @module apps/binx-web/src/components/forms/projects/TimerWidget/TimerWidget.tsx
  * @author Binx.io
@@ -16,6 +17,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { Dialog } from "@base-ui/react/dialog";
 import { toast } from "sonner";
 
 import { startTimerAction, stopTimerAction } from "@/app/(app)/projects/[projectId]/time/actions";
@@ -50,6 +52,7 @@ const TimerWidget = ({ agencyId, projectId, tasks, runningTimer }: TimerWidgetPr
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [now, setNow] = useState(() => Date.now());
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const [taskId, setTaskId] = useState("");
   const [description, setDescription] = useState("");
@@ -67,6 +70,17 @@ const TimerWidget = ({ agencyId, projectId, tasks, runningTimer }: TimerWidgetPr
     return formatElapsed(now - new Date(runningTimer.started_at).getTime());
   }, [runningTimer, now]);
 
+  const resetForm = () => {
+    setTaskId("");
+    setDescription("");
+    setIsBillable(true);
+  };
+
+  const handleDialogOpenChange = (open: boolean) => {
+    setDialogOpen(open);
+    if (!open) resetForm();
+  };
+
   const handleStart = () => {
     startTransition(async () => {
       const result = await startTimerAction(agencyId, projectId, {
@@ -79,8 +93,8 @@ const TimerWidget = ({ agencyId, projectId, tasks, runningTimer }: TimerWidgetPr
         toast.error(result.error);
         return;
       }
-      setDescription("");
-      setTaskId("");
+      resetForm();
+      setDialogOpen(false);
       router.refresh();
     });
   };
@@ -123,54 +137,73 @@ const TimerWidget = ({ agencyId, projectId, tasks, runningTimer }: TimerWidgetPr
   }
 
   return (
-    <form
-      className={styles.card}
-      onSubmit={(event) => {
-        event.preventDefault();
-        handleStart();
-      }}
-    >
-      <div className={styles.row}>
-        <label className={styles.field}>
-          <span className={styles.label}>Task (optional)</span>
-          <select
-            className={styles.select}
-            value={taskId}
-            onChange={(event) => setTaskId(event.target.value)}
-            disabled={isPending}
-          >
-            <option value="">No task</option>
-            {tasks.map((task) => (
-              <option key={task.id} value={task.id}>
-                {task.title}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className={styles.field}>
-          <span className={styles.label}>Description (optional)</span>
-          <input
-            className={styles.input}
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-            placeholder="What are you working on?"
-            disabled={isPending}
-          />
-        </label>
-      </div>
-      <label className={styles.checkboxRow}>
-        <input
-          type="checkbox"
-          checked={isBillable}
-          onChange={(event) => setIsBillable(event.target.checked)}
-          disabled={isPending}
-        />
-        Billable
-      </label>
-      <button type="submit" className={styles.start} disabled={isPending}>
-        {isPending ? "Starting…" : "Start timer"}
+    <>
+      <button type="button" className={styles.startTrigger} onClick={() => setDialogOpen(true)}>
+        Start timer
       </button>
-    </form>
+
+      <Dialog.Root open={dialogOpen} onOpenChange={handleDialogOpenChange}>
+        <Dialog.Portal>
+          <Dialog.Backdrop className={styles.backdrop} />
+          <Dialog.Popup className={styles.dialog} aria-label="Start timer">
+            <Dialog.Title className={styles.dialogTitle}>Start timer</Dialog.Title>
+            <form
+              className={styles.dialogForm}
+              onSubmit={(event) => {
+                event.preventDefault();
+                handleStart();
+              }}
+            >
+              <div className={styles.row}>
+                <label className={styles.field}>
+                  <span className={styles.label}>Task (optional)</span>
+                  <select
+                    className={styles.select}
+                    value={taskId}
+                    onChange={(event) => setTaskId(event.target.value)}
+                    disabled={isPending}
+                  >
+                    <option value="">No task</option>
+                    {tasks.map((task) => (
+                      <option key={task.id} value={task.id}>
+                        {task.title}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className={styles.field}>
+                  <span className={styles.label}>Description (optional)</span>
+                  <input
+                    className={styles.input}
+                    value={description}
+                    onChange={(event) => setDescription(event.target.value)}
+                    placeholder="What are you working on?"
+                    disabled={isPending}
+                  />
+                </label>
+              </div>
+              <label className={styles.checkboxRow}>
+                <input
+                  type="checkbox"
+                  checked={isBillable}
+                  onChange={(event) => setIsBillable(event.target.checked)}
+                  disabled={isPending}
+                />
+                Billable
+              </label>
+              <div className={styles.dialogActions}>
+                <button type="button" className={styles.ghost} onClick={() => setDialogOpen(false)} disabled={isPending}>
+                  Cancel
+                </button>
+                <button type="submit" className={styles.start} disabled={isPending}>
+                  {isPending ? "Starting…" : "Start"}
+                </button>
+              </div>
+            </form>
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>
+    </>
   );
 };
 
