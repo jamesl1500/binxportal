@@ -214,9 +214,9 @@
 
 .field {
   display: flex;
-  flex: 1 1 10rem;
   flex-direction: column;
   gap: t.$space-1;
+  flex: 1;
 }
 
 .label {

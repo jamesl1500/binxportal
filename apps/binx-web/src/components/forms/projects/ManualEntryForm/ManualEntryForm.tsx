@@ -54,7 +54,11 @@ function defaultEndedAt(): string {
   return toLocalInputValue(date);
 }
 
-const ManualEntryForm = ({ agencyId, projectId, tasks }: ManualEntryFormProps) => {
+const ManualEntryForm = ({
+  agencyId,
+  projectId,
+  tasks,
+}: ManualEntryFormProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -130,15 +134,24 @@ const ManualEntryForm = ({ agencyId, projectId, tasks }: ManualEntryFormProps) =
 
   return (
     <>
-      <button type="button" className={styles.trigger} onClick={() => setDialogOpen(true)}>
+      <button
+        type="button"
+        className={styles.trigger}
+        onClick={() => setDialogOpen(true)}
+      >
         Log time manually
       </button>
 
       <Dialog.Root open={dialogOpen} onOpenChange={handleDialogOpenChange}>
         <Dialog.Portal>
           <Dialog.Backdrop className={styles.backdrop} />
-          <Dialog.Popup className={styles.dialog} aria-label="Log time manually">
-            <Dialog.Title className={styles.dialogTitle}>Log time manually</Dialog.Title>
+          <Dialog.Popup
+            className={styles.dialog}
+            aria-label="Log time manually"
+          >
+            <Dialog.Title className={styles.dialogTitle}>
+              Log time manually
+            </Dialog.Title>
             <form className={styles.form} onSubmit={handleSubmit}>
               <div className={styles.row}>
                 <label className={styles.field}>
@@ -191,18 +204,6 @@ const ManualEntryForm = ({ agencyId, projectId, tasks }: ManualEntryFormProps) =
                     required
                   />
                 </label>
-              </div>
-
-              <div className={styles.row}>
-                <label className={styles.checkboxRow}>
-                  <input
-                    type="checkbox"
-                    checked={isBillable}
-                    onChange={(event) => setIsBillable(event.target.checked)}
-                    disabled={isPending}
-                  />
-                  Billable
-                </label>
                 <label className={styles.field}>
                   <span className={styles.label}>Hourly rate override (optional)</span>
                   <input
@@ -217,6 +218,18 @@ const ManualEntryForm = ({ agencyId, projectId, tasks }: ManualEntryFormProps) =
                 </label>
               </div>
 
+              <div className={styles.row}>
+                <label className={styles.checkboxRow}>
+                  <input
+                    type="checkbox"
+                    checked={isBillable}
+                    onChange={(event) => setIsBillable(event.target.checked)}
+                    disabled={isPending}
+                  />
+                  Billable
+                </label>
+              </div>
+
               {error && (
                 <p className={styles.error} role="alert">
                   {error}
@@ -224,10 +237,19 @@ const ManualEntryForm = ({ agencyId, projectId, tasks }: ManualEntryFormProps) =
               )}
 
               <div className={styles.dialogActions}>
-                <button type="button" className={styles.ghost} onClick={() => setDialogOpen(false)} disabled={isPending}>
+                <button
+                  type="button"
+                  className={styles.ghost}
+                  onClick={() => setDialogOpen(false)}
+                  disabled={isPending}
+                >
                   Cancel
                 </button>
-                <button type="submit" className={styles.submit} disabled={isPending}>
+                <button
+                  type="submit"
+                  className={styles.submit}
+                  disabled={isPending}
+                >
                   {isPending ? "Logging…" : "Log time"}
                 </button>
               </div>

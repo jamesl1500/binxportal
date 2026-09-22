@@ -43,7 +43,11 @@ interface TimeEntriesTableProps {
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  return new Date(iso).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 function formatDuration(minutes: number): string {
@@ -65,10 +69,21 @@ function toLocalInputValue(date: Date): string {
 
 /** Selectable for invoicing: uninvoiced, billable, stopped, and has a resolved rate — the same rules binx-api enforces in create_invoice_from_entries. */
 function isSelectable(entry: TimeEntry): boolean {
-  return !entry.invoiced && entry.is_billable && entry.ended_at !== null && entry.amount_cents !== null;
+  return (
+    !entry.invoiced &&
+    entry.is_billable &&
+    entry.ended_at !== null &&
+    entry.amount_cents !== null
+  );
 }
 
-const TimeEntriesTable = ({ agencyId, projectId, clientId, entries, tasks }: TimeEntriesTableProps) => {
+const TimeEntriesTable = ({
+  agencyId,
+  projectId,
+  clientId,
+  entries,
+  tasks,
+}: TimeEntriesTableProps) => {
   const [isPending, startTransition] = useTransition();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
@@ -82,8 +97,12 @@ const TimeEntriesTable = ({ agencyId, projectId, clientId, entries, tasks }: Tim
   const [editStartedAt, setEditStartedAt] = useState("");
   const [editEndedAt, setEditEndedAt] = useState("");
 
-  const selectableIds = useMemo(() => entries.filter(isSelectable).map((entry) => entry.id), [entries]);
-  const allSelected = selectableIds.length > 0 && selectableIds.every((id) => selected.has(id));
+  const selectableIds = useMemo(
+    () => entries.filter(isSelectable).map((entry) => entry.id),
+    [entries],
+  );
+  const allSelected =
+    selectableIds.length > 0 && selectableIds.every((id) => selected.has(id));
 
   const toggleAll = () => {
     setSelected(allSelected ? new Set() : new Set(selectableIds));
@@ -106,9 +125,15 @@ const TimeEntriesTable = ({ agencyId, projectId, clientId, entries, tasks }: Tim
     setEditTaskId(entry.task_id ?? "");
     setEditDescription(entry.description ?? "");
     setEditIsBillable(entry.is_billable);
-    setEditRate(entry.hourly_rate_cents !== null ? (entry.hourly_rate_cents / 100).toFixed(2) : "");
+    setEditRate(
+      entry.hourly_rate_cents !== null
+        ? (entry.hourly_rate_cents / 100).toFixed(2)
+        : "",
+    );
     setEditStartedAt(toLocalInputValue(new Date(entry.started_at)));
-    setEditEndedAt(entry.ended_at ? toLocalInputValue(new Date(entry.ended_at)) : "");
+    setEditEndedAt(
+      entry.ended_at ? toLocalInputValue(new Date(entry.ended_at)) : "",
+    );
   };
 
   const handleSaveEdit = () => {
@@ -132,14 +157,19 @@ const TimeEntriesTable = ({ agencyId, projectId, clientId, entries, tasks }: Tim
     }
 
     startTransition(async () => {
-      const result = await updateTimeEntryAction(agencyId, projectId, editingEntry.id, {
-        description: editDescription.trim() || null,
-        taskId: editTaskId || null,
-        isBillable: editIsBillable,
-        hourlyRateCents,
-        startedAt: startDate.toISOString(),
-        endedAt: endDate.toISOString(),
-      });
+      const result = await updateTimeEntryAction(
+        agencyId,
+        projectId,
+        editingEntry.id,
+        {
+          description: editDescription.trim() || null,
+          taskId: editTaskId || null,
+          isBillable: editIsBillable,
+          hourlyRateCents,
+          startedAt: startDate.toISOString(),
+          endedAt: endDate.toISOString(),
+        },
+      );
 
       if (result.error) {
         toast.error(result.error);
@@ -154,7 +184,11 @@ const TimeEntriesTable = ({ agencyId, projectId, clientId, entries, tasks }: Tim
     if (!deletingEntry) return;
 
     startTransition(async () => {
-      const result = await deleteTimeEntryAction(agencyId, projectId, deletingEntry.id);
+      const result = await deleteTimeEntryAction(
+        agencyId,
+        projectId,
+        deletingEntry.id,
+      );
       if (result.error) {
         toast.error(result.error);
         return;
@@ -174,7 +208,12 @@ const TimeEntriesTable = ({ agencyId, projectId, clientId, entries, tasks }: Tim
     setError(null);
 
     startTransition(async () => {
-      const result = await createInvoiceFromTimeEntriesAction(agencyId, clientId, projectId, Array.from(selected));
+      const result = await createInvoiceFromTimeEntriesAction(
+        agencyId,
+        clientId,
+        projectId,
+        Array.from(selected),
+      );
       // On success this redirects and never resolves normally — an `error`
       // only comes back when creation failed.
       if (result?.error) {
@@ -188,7 +227,9 @@ const TimeEntriesTable = ({ agencyId, projectId, clientId, entries, tasks }: Tim
     <div className={styles.wrapper}>
       <div className={styles.toolbar}>
         <span className={styles.selectedCount}>
-          {selected.size > 0 ? `${selected.size} selected` : "Select uninvoiced, billable entries to bill"}
+          {selected.size > 0
+            ? `${selected.size} selected`
+            : "Select uninvoiced, billable entries to bill"}
         </span>
         <button
           type="button"
@@ -203,7 +244,9 @@ const TimeEntriesTable = ({ agencyId, projectId, clientId, entries, tasks }: Tim
       {entries.length === 0 ? (
         <div className={styles.emptyState}>
           <p className={styles.emptyTitle}>No time logged yet</p>
-          <p className={styles.emptyText}>Start a timer or log a manual entry above to see it here.</p>
+          <p className={styles.emptyText}>
+            Start a timer or log a manual entry above to see it here.
+          </p>
         </div>
       ) : (
         <div className={styles.tableScroll}>
@@ -248,10 +291,20 @@ const TimeEntriesTable = ({ agencyId, projectId, clientId, entries, tasks }: Tim
                         disabled={!selectable}
                       />
                     </td>
-                    <td className={`${styles.cell} ${styles.nowrap}`}>{formatDate(entry.started_at)}</td>
+                    <td className={`${styles.cell} ${styles.nowrap}`}>
+                      {formatDate(entry.started_at)}
+                    </td>
                     <td className={styles.cell}>{entry.user_name}</td>
-                    <td className={styles.cell}>{entry.task_title ?? <span className={styles.muted}>—</span>}</td>
-                    <td className={styles.cell}>{entry.description ?? <span className={styles.muted}>—</span>}</td>
+                    <td className={styles.cell}>
+                      {entry.task_title ?? (
+                        <span className={styles.muted}>—</span>
+                      )}
+                    </td>
+                    <td className={styles.cell}>
+                      {entry.description ?? (
+                        <span className={styles.muted}>—</span>
+                      )}
+                    </td>
                     <td className={`${styles.cell} ${styles.nowrap}`}>
                       {entry.ended_at === null ? (
                         <span className={styles.runningBadge}>Running…</span>
@@ -259,7 +312,9 @@ const TimeEntriesTable = ({ agencyId, projectId, clientId, entries, tasks }: Tim
                         formatDuration(entry.duration_minutes)
                       )}
                     </td>
-                    <td className={styles.cell}>{entry.is_billable ? "Yes" : "No"}</td>
+                    <td className={styles.cell}>
+                      {entry.is_billable ? "Yes" : "No"}
+                    </td>
                     <td className={`${styles.cell} ${styles.nowrap}`}>
                       {entry.hourly_rate_cents !== null ? (
                         `${formatMoneyCents(entry.hourly_rate_cents)}/hr`
@@ -289,7 +344,13 @@ const TimeEntriesTable = ({ agencyId, projectId, clientId, entries, tasks }: Tim
                           onClick={() => openEdit(entry)}
                           disabled={!canEdit}
                           aria-label={`Edit entry from ${formatDate(entry.started_at)}`}
-                          title={!canEdit ? (entry.invoiced ? "Invoiced entries can't be edited" : "Stop the timer to edit it") : undefined}
+                          title={
+                            !canEdit
+                              ? entry.invoiced
+                                ? "Invoiced entries can't be edited"
+                                : "Stop the timer to edit it"
+                              : undefined
+                          }
                         >
                           <Pencil aria-hidden="true" />
                         </button>
@@ -299,7 +360,11 @@ const TimeEntriesTable = ({ agencyId, projectId, clientId, entries, tasks }: Tim
                           onClick={() => setDeletingEntry(entry)}
                           disabled={!canDelete}
                           aria-label={`Delete entry from ${formatDate(entry.started_at)}`}
-                          title={!canDelete ? "Invoiced entries can't be deleted" : undefined}
+                          title={
+                            !canDelete
+                              ? "Invoiced entries can't be deleted"
+                              : undefined
+                          }
                         >
                           <Trash2 aria-hidden="true" />
                         </button>
@@ -319,11 +384,16 @@ const TimeEntriesTable = ({ agencyId, projectId, clientId, entries, tasks }: Tim
         </p>
       )}
 
-      <Dialog.Root open={editingEntry !== null} onOpenChange={(open) => !open && setEditingEntry(null)}>
+      <Dialog.Root
+        open={editingEntry !== null}
+        onOpenChange={(open) => !open && setEditingEntry(null)}
+      >
         <Dialog.Portal>
           <Dialog.Backdrop className={styles.backdrop} />
           <Dialog.Popup className={styles.dialog} aria-label="Edit time entry">
-            <Dialog.Title className={styles.dialogTitle}>Edit time entry</Dialog.Title>
+            <Dialog.Title className={styles.dialogTitle}>
+              Edit time entry
+            </Dialog.Title>
             <div className={styles.dialogForm}>
               <label className={styles.field}>
                 <span className={styles.label}>Task</span>
@@ -367,16 +437,6 @@ const TimeEntriesTable = ({ agencyId, projectId, clientId, entries, tasks }: Tim
                     onChange={(event) => setEditEndedAt(event.target.value)}
                   />
                 </label>
-              </div>
-              <div className={styles.dialogRow}>
-                <label className={styles.checkboxRow}>
-                  <input
-                    type="checkbox"
-                    checked={editIsBillable}
-                    onChange={(event) => setEditIsBillable(event.target.checked)}
-                  />
-                  Billable
-                </label>
                 <label className={styles.field}>
                   <span className={styles.label}>Hourly rate</span>
                   <input
@@ -388,12 +448,33 @@ const TimeEntriesTable = ({ agencyId, projectId, clientId, entries, tasks }: Tim
                   />
                 </label>
               </div>
+              <div className={styles.dialogRow}>
+                <label className={styles.checkboxRow}>
+                  <input
+                    type="checkbox"
+                    checked={editIsBillable}
+                    onChange={(event) =>
+                      setEditIsBillable(event.target.checked)
+                    }
+                  />
+                  Billable
+                </label>
+              </div>
             </div>
             <div className={styles.dialogActions}>
-              <button type="button" className={styles.ghost} onClick={() => setEditingEntry(null)}>
+              <button
+                type="button"
+                className={styles.ghost}
+                onClick={() => setEditingEntry(null)}
+              >
                 Cancel
               </button>
-              <button type="button" className={styles.primary} onClick={handleSaveEdit} disabled={isPending}>
+              <button
+                type="button"
+                className={styles.primary}
+                onClick={handleSaveEdit}
+                disabled={isPending}
+              >
                 {isPending ? "Saving…" : "Save changes"}
               </button>
             </div>
@@ -401,19 +482,36 @@ const TimeEntriesTable = ({ agencyId, projectId, clientId, entries, tasks }: Tim
         </Dialog.Portal>
       </Dialog.Root>
 
-      <Dialog.Root open={deletingEntry !== null} onOpenChange={(open) => !open && setDeletingEntry(null)}>
+      <Dialog.Root
+        open={deletingEntry !== null}
+        onOpenChange={(open) => !open && setDeletingEntry(null)}
+      >
         <Dialog.Portal>
           <Dialog.Backdrop className={styles.backdrop} />
-          <Dialog.Popup className={styles.dialog} aria-label="Delete time entry">
-            <Dialog.Title className={styles.dialogTitle}>Delete this time entry?</Dialog.Title>
+          <Dialog.Popup
+            className={styles.dialog}
+            aria-label="Delete time entry"
+          >
+            <Dialog.Title className={styles.dialogTitle}>
+              Delete this time entry?
+            </Dialog.Title>
             <Dialog.Description className={styles.dialogDescription}>
               This can&apos;t be undone.
             </Dialog.Description>
             <div className={styles.dialogActions}>
-              <button type="button" className={styles.ghost} onClick={() => setDeletingEntry(null)}>
+              <button
+                type="button"
+                className={styles.ghost}
+                onClick={() => setDeletingEntry(null)}
+              >
                 Cancel
               </button>
-              <button type="button" className={styles.dangerSolid} onClick={handleDelete} disabled={isPending}>
+              <button
+                type="button"
+                className={styles.dangerSolid}
+                onClick={handleDelete}
+                disabled={isPending}
+              >
                 {isPending ? "Deleting…" : "Delete entry"}
               </button>
             </div>
