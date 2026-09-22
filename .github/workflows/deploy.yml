@@ -141,7 +141,7 @@ jobs:
           command_id=$(aws ssm send-command \
             --instance-ids "$INSTANCE_ID" \
             --document-name "AWS-RunShellScript" \
-            --parameters 'commands=["bash /opt/binxportal/deploy/redeploy.sh"]' \
+            --parameters 'commands=["bash /binxportal/deploy/redeploy.sh"]' \
             --comment "deploy ${GITHUB_SHA::12}" \
             --query "Command.CommandId" --output text)
           echo "SSM command: $command_id"
