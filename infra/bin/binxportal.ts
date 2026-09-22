@@ -23,7 +23,9 @@ const DOMAIN_NAME = "binxportal.com";
 const MAIL_DOMAIN = "mail.binxportal.com";
 // The one instance this whole app wraps — created by hand, not by CDK. See
 // ComputeStack's docstring for why an ec2.Instance L2 construct isn't used.
-const INSTANCE_ID = "i-025b868d7d0487155";
+// Migrated to a Graviton (arm64) t4g.small instance — see ComputeStack's
+// docstring.
+const INSTANCE_ID = "i-0105be61fb01246d2";
 // binxportal (repo id 1338674349, owner jamesl1500 id 18580223) was created
 // after GitHub's 2026-07-15 immutable-subject-claims rollout, so its OIDC
 // tokens use the new `OWNER@OWNER_ID/REPO@REPO_ID` form, not plain
