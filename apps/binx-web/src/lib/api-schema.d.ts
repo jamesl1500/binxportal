@@ -3303,6 +3303,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/users/me/dashboard-layout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Dashboard Layout */
+        get: operations["read_dashboard_layout_users_me_dashboard_layout_get"];
+        /** Write Dashboard Layout */
+        put: operations["write_dashboard_layout_users_me_dashboard_layout_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/users/me/notification-settings": {
         parameters: {
             query?: never;
@@ -4638,6 +4656,29 @@ export interface components {
             project_id?: string | null;
             /** Title */
             title?: string | null;
+        };
+        /**
+         * DashboardLayoutRead
+         * @description Built manually in the router (like TutorialProgressRead) rather than
+         *     from_attributes — widget_order/hidden_widgets are JSON-in-Text on the
+         *     model, list[str] here. widget_order always lists every known widget id
+         *     (any missing from the stored value are appended at the end).
+         */
+        DashboardLayoutRead: {
+            /** Hidden Widgets */
+            hidden_widgets: string[];
+            /** Widget Order */
+            widget_order: string[];
+        };
+        /**
+         * DashboardLayoutUpdate
+         * @description Full replace of both fields together, same as TutorialProgressUpdate.
+         */
+        DashboardLayoutUpdate: {
+            /** Hidden Widgets */
+            hidden_widgets: string[];
+            /** Widget Order */
+            widget_order: string[];
         };
         /**
          * DashboardRead
@@ -15667,6 +15708,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserProfileRead"];
+                };
+            };
+        };
+    };
+    read_dashboard_layout_users_me_dashboard_layout_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardLayoutRead"];
+                };
+            };
+        };
+    };
+    write_dashboard_layout_users_me_dashboard_layout_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DashboardLayoutUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardLayoutRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

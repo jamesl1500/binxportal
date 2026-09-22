@@ -9,6 +9,8 @@ from binx_api.modules.users.schemas import (
     AppearanceSettingsRead,
     AppearanceSettingsUpdate,
     ChangePasswordRequest,
+    DashboardLayoutRead,
+    DashboardLayoutUpdate,
     DeleteAccountRequest,
     EducationEntry,
     ExperienceEntry,
@@ -28,9 +30,12 @@ from binx_api.modules.users.service import (
     change_password,
     clear_user_image,
     cover_version,
+    dashboard_hidden_widgets,
+    dashboard_widget_order,
     delete_account,
     get_notification_settings,
     get_or_create_appearance_settings,
+    get_or_create_dashboard_layout,
     get_or_create_profile,
     get_privacy_settings,
     get_tutorial_progress,
@@ -40,6 +45,7 @@ from binx_api.modules.users.service import (
     save_user_image,
     tutorial_dismissed_popups,
     update_appearance_settings,
+    update_dashboard_layout,
     update_notification_settings,
     update_privacy_settings,
     update_qualifications,
@@ -207,6 +213,29 @@ async def write_tutorial_progress(
         db, current_user, tour_completed=data.tour_completed, dismissed_popups=data.dismissed_popups
     )
     return _tutorial_progress_read(progress)
+
+
+def _dashboard_layout_read(layout) -> DashboardLayoutRead:
+    return DashboardLayoutRead(
+        widget_order=dashboard_widget_order(layout),
+        hidden_widgets=dashboard_hidden_widgets(layout),
+    )
+
+
+@router.get("/me/dashboard-layout", response_model=DashboardLayoutRead)
+async def read_dashboard_layout(db: DbSession, current_user: CurrentUser) -> DashboardLayoutRead:
+    layout = await get_or_create_dashboard_layout(db, current_user)
+    return _dashboard_layout_read(layout)
+
+
+@router.put("/me/dashboard-layout", response_model=DashboardLayoutRead)
+async def write_dashboard_layout(
+    db: DbSession, current_user: CurrentUser, data: DashboardLayoutUpdate
+) -> DashboardLayoutRead:
+    layout = await update_dashboard_layout(
+        db, current_user, widget_order=data.widget_order, hidden_widgets=data.hidden_widgets
+    )
+    return _dashboard_layout_read(layout)
 
 
 @router.patch("/me/password", response_model=MessageResponse)

@@ -22,6 +22,7 @@ import {
   changePassword,
   deleteAccount,
   getAppearanceSettings,
+  getDashboardLayout,
   getNotificationSettings,
   getPrivacySettings,
   getTutorialProgress,
@@ -30,6 +31,7 @@ import {
   requestEmailChange,
   updateAppearanceSettings,
   updateCurrentUserProfile,
+  updateDashboardLayout,
   updateNotificationSettings,
   updatePrivacySettings,
   updateQualifications,
@@ -356,6 +358,52 @@ describe("getTutorialProgress / updateTutorialProgress", () => {
     mockedApi.put.mockRejectedValueOnce(axiosError(422, "Bad progress"));
 
     await expect(updateTutorialProgress(progress)).rejects.toEqual(new AuthApiError("Bad progress", 422));
+  });
+});
+
+describe("getDashboardLayout / updateDashboardLayout", () => {
+  const layout = {
+    widget_order: ["my_tasks", "needs_attention", "quick_actions", "recent_activity", "upcoming_meetings"],
+    hidden_widgets: [],
+  };
+
+  it("fetches the layout with a bearer token", async () => {
+    mockedApi.get.mockResolvedValueOnce({ data: layout });
+
+    const result = await getDashboardLayout();
+
+    expect(result).toEqual(layout);
+    expect(mockedApi.get).toHaveBeenCalledWith("/users/me/dashboard-layout", {
+      headers: { Authorization: "Bearer test-access-token" },
+    });
+  });
+
+  it("throws AuthApiError(401) when fetching without a session", async () => {
+    mockedGetAccessToken.mockResolvedValueOnce(undefined);
+
+    await expect(getDashboardLayout()).rejects.toMatchObject({ name: "AuthApiError", status: 401 });
+  });
+
+  it("replaces the order and hidden widgets with a PUT request", async () => {
+    const updated = { widget_order: ["quick_actions", "my_tasks"], hidden_widgets: ["recent_activity"] };
+    mockedApi.put.mockResolvedValueOnce({ data: updated });
+
+    const result = await updateDashboardLayout(updated.widget_order, updated.hidden_widgets);
+
+    expect(result).toEqual(updated);
+    expect(mockedApi.put).toHaveBeenCalledWith(
+      "/users/me/dashboard-layout",
+      { widget_order: updated.widget_order, hidden_widgets: updated.hidden_widgets },
+      { headers: { Authorization: "Bearer test-access-token" } },
+    );
+  });
+
+  it("surfaces binx-api's error detail when the update is rejected", async () => {
+    mockedApi.put.mockRejectedValueOnce(axiosError(422, "Unknown widget id"));
+
+    await expect(updateDashboardLayout(["not_real"], [])).rejects.toEqual(
+      new AuthApiError("Unknown widget id", 422),
+    );
   });
 });
 

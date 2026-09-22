@@ -16,11 +16,13 @@ from binx_api.modules.users import service
 from binx_api.modules.users.models import (
     User,
     UserAppearanceSettings,
+    UserDashboardLayout,
     UserNotificationSettings,
     UserPrivacySettings,
     UserProfile,
     UserTutorialProgress,
 )
+from binx_api.modules.users.schemas import DASHBOARD_WIDGET_IDS
 from tests.factories import make_user
 
 pytestmark = pytest.mark.integration
@@ -268,6 +270,58 @@ class TestTutorialProgress:
         assert service.tutorial_dismissed_popups(replaced) == ["clients-new"]
 
 
+class TestDashboardLayout:
+    async def test_first_read_creates_a_default_row(self, db_session) -> None:
+        user = await make_user(db_session)
+        rows = (await db_session.execute(select(UserDashboardLayout))).scalars().all()
+        assert rows == []
+
+        layout = await service.get_or_create_dashboard_layout(db_session, user)
+        assert service.dashboard_widget_order(layout) == DASHBOARD_WIDGET_IDS
+        assert service.dashboard_hidden_widgets(layout) == []
+
+        rows = (await db_session.execute(select(UserDashboardLayout))).scalars().all()
+        assert len(rows) == 1
+
+    async def test_second_read_reuses_the_same_row(self, db_session) -> None:
+        user = await make_user(db_session)
+        first = await service.get_or_create_dashboard_layout(db_session, user)
+        second = await service.get_or_create_dashboard_layout(db_session, user)
+        assert first.id == second.id
+
+    async def test_update_replaces_order_and_hidden_widgets(self, db_session) -> None:
+        user = await make_user(db_session)
+        custom_order = list(reversed(DASHBOARD_WIDGET_IDS))
+        updated = await service.update_dashboard_layout(
+            db_session, user, widget_order=custom_order, hidden_widgets=["recent_activity"]
+        )
+        assert service.dashboard_widget_order(updated) == custom_order
+        assert service.dashboard_hidden_widgets(updated) == ["recent_activity"]
+
+        # A later update fully replaces both lists, same as tutorial progress.
+        replaced = await service.update_dashboard_layout(
+            db_session, user, widget_order=DASHBOARD_WIDGET_IDS, hidden_widgets=[]
+        )
+        assert service.dashboard_widget_order(replaced) == DASHBOARD_WIDGET_IDS
+        assert service.dashboard_hidden_widgets(replaced) == []
+
+    async def test_widget_order_appends_unknown_stored_ids_are_dropped_and_missing_ids_appended(
+        self, db_session
+    ) -> None:
+        user = await make_user(db_session)
+        layout = await service.get_or_create_dashboard_layout(db_session, user)
+        # Simulate a stored order from before a widget existed, plus a since-removed id.
+        layout.widget_order = '["quick_actions", "no_longer_exists"]'
+        layout.hidden_widgets = '["no_longer_exists"]'
+        await db_session.commit()
+        await db_session.refresh(layout)
+
+        order = service.dashboard_widget_order(layout)
+        assert order[0] == "quick_actions"
+        assert set(order) == set(DASHBOARD_WIDGET_IDS)
+        assert service.dashboard_hidden_widgets(layout) == []
+
+
 class TestDeleteAccount:
     async def test_rejects_a_wrong_current_password(self, db_session) -> None:
         user = await make_user(db_session, password=PASSWORD)
@@ -282,6 +336,7 @@ class TestDeleteAccount:
         await service.get_privacy_settings(db_session, user)
         await service.get_or_create_profile(db_session, user)
         await service.get_or_create_appearance_settings(db_session, user)
+        await service.get_or_create_dashboard_layout(db_session, user)
 
         await service.delete_account(db_session, user, current_password=PASSWORD)
 
@@ -299,6 +354,9 @@ class TestDeleteAccount:
         ).scalars().all() == []
         assert (
             await db_session.execute(select(UserAppearanceSettings).where(UserAppearanceSettings.user_id == user_id))
+        ).scalars().all() == []
+        assert (
+            await db_session.execute(select(UserDashboardLayout).where(UserDashboardLayout.user_id == user_id))
         ).scalars().all() == []
 
     async def test_deletes_the_users_uploaded_images_off_disk(self, db_session) -> None:
