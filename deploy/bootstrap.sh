@@ -28,7 +28,7 @@ if ! command -v aws >/dev/null 2>&1; then
   rm -rf /tmp/awscliv2.zip /tmp/aws
 fi
 
-echo "==> Setting up /opt/binxportal"
+echo "==> Setting up /binxportal"
 sudo mkdir -p /binxportal/deploy
 sudo chown -R "$USER":"$USER" /binxportal
 
