@@ -12,8 +12,9 @@ sync rides the messaging websocket infra (see ``boards/service.py`` and
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 
-from sqlalchemy import Float, ForeignKey, Integer, String, Text, UniqueConstraint, Uuid
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column
 
 from binx_api.core.database import Base
@@ -40,6 +41,14 @@ DEFAULT_NOTE_HEIGHT = 160.0
 # The fixed reaction set — one of each per person per card. The emoji char is
 # stored directly as ``kind``; a new emoji here needs no migration.
 REACTION_KINDS: list[str] = ["👍", "❤️", "🎉", "👀", "🚀"]
+
+# Client-approval workflow on a card. Null means no approval was ever
+# requested. An agency member requests/withdraws; only a client-portal
+# contact decides (approves or asks for changes) — see boards/service.py.
+APPROVAL_PENDING = "pending"
+APPROVAL_APPROVED = "approved"
+APPROVAL_CHANGES_REQUESTED = "changes_requested"
+BOARD_APPROVAL_STATUSES: list[str] = [APPROVAL_PENDING, APPROVAL_APPROVED, APPROVAL_CHANGES_REQUESTED]
 
 
 # One canvas per project. A row (rather than hanging items straight off
@@ -80,6 +89,20 @@ class BoardItem(Base):
     # Snapshotted at write time (like ProjectTaskComment.author_name) so history
     # reads right after someone leaves the agency or the client.
     created_by_name: Mapped[str] = mapped_column(String(255))
+
+    # Client-approval workflow — see BOARD_APPROVAL_STATUSES above. Names are
+    # snapshotted (like created_by_name) so they read right after someone
+    # leaves; approval_requested_by_id is kept live only to target the
+    # "your card was decided" notification.
+    approval_status: Mapped[str | None] = mapped_column(String(20), default=None)
+    approval_requested_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), default=None
+    )
+    approval_requested_by_name: Mapped[str | None] = mapped_column(String(255), default=None)
+    approval_decided_by_name: Mapped[str | None] = mapped_column(String(255), default=None)
+    approval_decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    # The client's feedback when requesting changes (or an optional note on approval).
+    approval_note: Mapped[str | None] = mapped_column(String(2000), default=None)
 
 
 # One emoji reaction on a card by one person. Toggled on/off; the unique

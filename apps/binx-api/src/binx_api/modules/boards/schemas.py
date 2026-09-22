@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 
 _TYPE_PATTERN = "^(note|image)$"
 _HEX_PATTERN = "^#[0-9a-fA-F]{6}$"
+_APPROVAL_DECISION_PATTERN = "^(approved|changes_requested)$"
 
 
 class BoardItemRead(BaseModel):
@@ -22,6 +23,12 @@ class BoardItemRead(BaseModel):
     author_kind: str
     created_by_id: uuid.UUID | None
     created_by_name: str
+    # Client-approval workflow — null status means never requested.
+    approval_status: str | None = None
+    approval_requested_by_name: str | None = None
+    approval_decided_by_name: str | None = None
+    approval_decided_at: datetime | None = None
+    approval_note: str | None = None
     # Filled from boards/service.py::item_meta on the board GET; the realtime
     # item events omit them and the frontend store keeps its own values.
     reactions: dict[str, int] = {}
@@ -82,3 +89,10 @@ class BoardCommentRead(BaseModel):
     author_name: str
     body: str
     created_at: datetime
+
+
+class BoardApprovalDecision(BaseModel):
+    """A client-portal contact's decision on a pending approval request."""
+
+    status: str = Field(pattern=_APPROVAL_DECISION_PATTERN)
+    note: str | None = Field(default=None, max_length=2000)

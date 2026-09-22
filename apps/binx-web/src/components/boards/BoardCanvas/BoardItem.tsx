@@ -40,6 +40,7 @@ interface BoardItemProps {
   imageUrl: (fileId: string) => string;
   currentUserId: string;
   canModerate: boolean;
+  viewerKind: "agency" | "client";
   onSelect: () => void;
   onError: (message: string) => void;
 }
@@ -54,6 +55,7 @@ const BoardItemView = ({
   imageUrl,
   currentUserId,
   canModerate,
+  viewerKind,
   onSelect,
   onError,
 }: BoardItemProps) => {
@@ -69,6 +71,9 @@ const BoardItemView = ({
   const [editing, setEditing] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [requestingChanges, setRequestingChanges] = useState(false);
+  const [changesNote, setChangesNote] = useState("");
+  const [approvalBusy, setApprovalBusy] = useState(false);
 
   // The toolbar (and its confirm step) only renders while selected, but this
   // component itself stays mounted across selection toggles — reset the
@@ -79,7 +84,11 @@ const BoardItemView = ({
   const [wasSelected, setWasSelected] = useState(selected);
   if (selected !== wasSelected) {
     setWasSelected(selected);
-    if (!selected) setConfirmingDelete(false);
+    if (!selected) {
+      setConfirmingDelete(false);
+      setRequestingChanges(false);
+      setChangesNote("");
+    }
   }
 
   const bumpToFront = () => {
@@ -219,6 +228,41 @@ const BoardItemView = ({
     });
   };
 
+  const runApproval = (fn: () => Promise<{ item?: BoardItemModel; error?: string }>) => {
+    setApprovalBusy(true);
+    void fn().then((r) => {
+      setApprovalBusy(false);
+      if (r.error) {
+        onError(r.error);
+        return;
+      }
+      if (r.item) upsertItem(r.item);
+    });
+  };
+
+  const requestApproval = () => {
+    if (!actions.requestApproval) return;
+    runApproval(() => actions.requestApproval!(item.id));
+  };
+
+  const withdrawApproval = () => {
+    if (!actions.withdrawApproval) return;
+    runApproval(() => actions.withdrawApproval!(item.id));
+  };
+
+  const approve = () => {
+    if (!actions.decideApproval) return;
+    runApproval(() => actions.decideApproval!(item.id, "approved"));
+  };
+
+  const sendRequestedChanges = () => {
+    if (!actions.decideApproval) return;
+    const note = changesNote.trim();
+    runApproval(() => actions.decideApproval!(item.id, "changes_requested", note || undefined));
+    setRequestingChanges(false);
+    setChangesNote("");
+  };
+
   return (
     <div
       className={styles.item}
@@ -280,6 +324,25 @@ const BoardItemView = ({
         {item.created_by_name}
       </span>
 
+      {/* Approval state — visible whenever set, not just on hover/select, so
+          a resting board still shows what's waiting on the client. */}
+      {item.approval_status && (
+        <div className={styles.approvalBadge} data-status={item.approval_status} onPointerDown={(e) => e.stopPropagation()}>
+          <span className={styles.approvalStatus}>
+            {item.approval_status === "pending" && "Awaiting approval"}
+            {item.approval_status === "approved" &&
+              (item.approval_decided_by_name ? `Approved by ${item.approval_decided_by_name}` : "Approved")}
+            {item.approval_status === "changes_requested" &&
+              (item.approval_decided_by_name
+                ? `Changes requested by ${item.approval_decided_by_name}`
+                : "Changes requested")}
+          </span>
+          {item.approval_status === "changes_requested" && item.approval_note && (
+            <p className={styles.approvalNote}>“{item.approval_note}”</p>
+          )}
+        </div>
+      )}
+
       {/* Reaction pills sit above the card whenever there are any — visible
           without selecting, like Milanote / Figma. */}
       {Object.keys(item.reactions).length > 0 && (
@@ -312,6 +375,32 @@ const BoardItemView = ({
                     type="button"
                     className={styles.confirmCancel}
                     onClick={() => setConfirmingDelete(false)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : requestingChanges ? (
+              <div className={styles.confirmRow}>
+                <input
+                  className={styles.changesInput}
+                  value={changesNote}
+                  onChange={(e) => setChangesNote(e.target.value)}
+                  placeholder="What needs to change? (optional)"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  autoFocus
+                />
+                <div className={styles.confirmActions}>
+                  <button type="button" className={styles.confirmDelete} data-tone="changes" onClick={sendRequestedChanges}>
+                    Send
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.confirmCancel}
+                    onClick={() => {
+                      setRequestingChanges(false);
+                      setChangesNote("");
+                    }}
                   >
                     Cancel
                   </button>
@@ -358,6 +447,53 @@ const BoardItemView = ({
                         />
                       ))}
                     </span>
+                  </>
+                )}
+                {viewerKind === "agency" && actions.requestApproval && (
+                  <>
+                    <span className={styles.barDivider} aria-hidden="true" />
+                    {item.approval_status === "pending" ? (
+                      <button
+                        type="button"
+                        className={styles.approvalButton}
+                        onClick={withdrawApproval}
+                        disabled={approvalBusy}
+                      >
+                        Withdraw request
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className={styles.approvalButton}
+                        data-tone="accent"
+                        onClick={requestApproval}
+                        disabled={approvalBusy}
+                      >
+                        {item.approval_status ? "Request re-approval" : "Request approval"}
+                      </button>
+                    )}
+                  </>
+                )}
+                {viewerKind === "client" && actions.decideApproval && item.approval_status === "pending" && (
+                  <>
+                    <span className={styles.barDivider} aria-hidden="true" />
+                    <button
+                      type="button"
+                      className={styles.approvalButton}
+                      data-tone="approve"
+                      onClick={approve}
+                      disabled={approvalBusy}
+                    >
+                      Approve
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.approvalButton}
+                      onClick={() => setRequestingChanges(true)}
+                      disabled={approvalBusy}
+                    >
+                      Request changes
+                    </button>
                   </>
                 )}
                 <span className={styles.barDivider} aria-hidden="true" />

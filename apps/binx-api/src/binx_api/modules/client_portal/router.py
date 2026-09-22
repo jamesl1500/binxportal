@@ -10,6 +10,7 @@ from binx_api.core.dependencies import CurrentUser, DbSession
 from binx_api.modules.boards import service as boards_service
 from binx_api.modules.boards.models import AUTHOR_CLIENT, ITEM_IMAGE
 from binx_api.modules.boards.schemas import (
+    BoardApprovalDecision,
     BoardCommentCreate,
     BoardCommentRead,
     BoardItemCreate,
@@ -361,6 +362,28 @@ async def delete_board_comment(
     comment = await boards_service.get_comment_or_404(db, item.id, comment_id)
     # Portal contacts have no agency role — author-only deletion.
     await boards_service.delete_comment(db, comment, project, requested_by=current_user, requester_role="member")
+
+
+# ---- Client approval ------------------------------------------------
+# Only the client decides; the agency side requests/withdraws
+# (boards/router.py's approval/request + approval/withdraw).
+
+
+@router.post("/projects/{project_id}/canvas/items/{item_id}/approval/decide", response_model=BoardItemRead)
+async def decide_board_item_approval(
+    db: DbSession,
+    current_user: CurrentUser,
+    membership: PortalContext,
+    project_id: uuid.UUID,
+    item_id: uuid.UUID,
+    data: BoardApprovalDecision,
+) -> BoardItemRead:
+    _agency, client, _contact = membership
+    project, item = await _portal_item(db, client.id, project_id, item_id)
+    item = await boards_service.decide_approval(
+        db, item, project, decider=current_user, decision=data.status, note=data.note
+    )
+    return BoardItemRead(**await boards_service.item_read(db, item, current_user.id))
 
 
 # ---- Invoices ------------------------------------------------------

@@ -486,6 +486,25 @@ export async function deletePortalBoardComment(
   }
 }
 
+export async function decidePortalBoardApproval(
+  projectId: string,
+  itemId: string,
+  decision: "approved" | "changes_requested",
+  note?: string,
+): Promise<BoardItem> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.post<BoardItem>(
+      `${canvasBase(projectId)}/items/${itemId}/approval/decide`,
+      { status: decision, note: note || null },
+      { headers },
+    );
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to record your decision");
+  }
+}
+
 // ---- Invitation (onboarding) ----
 
 export async function previewPortalInvitation(token: string): Promise<PortalInvitationPreview> {

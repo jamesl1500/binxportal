@@ -186,3 +186,31 @@ export async function deleteBoardComment(
     rethrow(error, "Unable to delete the comment");
   }
 }
+
+export async function requestBoardApproval(agencyId: string, projectId: string, itemId: string): Promise<BoardItem> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.post<BoardItem>(
+      `${base(agencyId, projectId)}/items/${itemId}/approval/request`,
+      {},
+      { headers },
+    );
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to request approval");
+  }
+}
+
+export async function withdrawBoardApproval(agencyId: string, projectId: string, itemId: string): Promise<BoardItem> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.post<BoardItem>(
+      `${base(agencyId, projectId)}/items/${itemId}/approval/withdraw`,
+      {},
+      { headers },
+    );
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to withdraw the approval request");
+  }
+}

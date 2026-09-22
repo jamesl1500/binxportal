@@ -1623,6 +1623,40 @@ export interface paths {
         patch: operations["update_item_agencies__agency_id__projects__project_id__canvas_items__item_id__patch"];
         trace?: never;
     };
+    "/agencies/{agency_id}/projects/{project_id}/canvas/items/{item_id}/approval/request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Request Item Approval */
+        post: operations["request_item_approval_agencies__agency_id__projects__project_id__canvas_items__item_id__approval_request_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/projects/{project_id}/canvas/items/{item_id}/approval/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdraw Item Approval */
+        post: operations["withdraw_item_approval_agencies__agency_id__projects__project_id__canvas_items__item_id__approval_withdraw_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agencies/{agency_id}/projects/{project_id}/canvas/items/{item_id}/comments": {
         parameters: {
             query?: never;
@@ -3002,6 +3036,23 @@ export interface paths {
         patch: operations["update_board_item_portal_projects__project_id__canvas_items__item_id__patch"];
         trace?: never;
     };
+    "/portal/projects/{project_id}/canvas/items/{item_id}/approval/decide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decide Board Item Approval */
+        post: operations["decide_board_item_approval_portal_projects__project_id__canvas_items__item_id__approval_decide_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/portal/projects/{project_id}/canvas/items/{item_id}/comments": {
         parameters: {
             query?: never;
@@ -4050,6 +4101,16 @@ export interface components {
             /** Tax Id */
             tax_id?: string | null;
         };
+        /**
+         * BoardApprovalDecision
+         * @description A client-portal contact's decision on a pending approval request.
+         */
+        BoardApprovalDecision: {
+            /** Note */
+            note?: string | null;
+            /** Status */
+            status: string;
+        };
         /** BoardCommentCreate */
         BoardCommentCreate: {
             /** Body */
@@ -4108,6 +4169,16 @@ export interface components {
         };
         /** BoardItemRead */
         BoardItemRead: {
+            /** Approval Decided At */
+            approval_decided_at?: string | null;
+            /** Approval Decided By Name */
+            approval_decided_by_name?: string | null;
+            /** Approval Note */
+            approval_note?: string | null;
+            /** Approval Requested By Name */
+            approval_requested_by_name?: string | null;
+            /** Approval Status */
+            approval_status?: string | null;
             /** Author Kind */
             author_kind: string;
             /**
@@ -11577,6 +11648,72 @@ export interface operations {
             };
         };
     };
+    request_item_approval_agencies__agency_id__projects__project_id__canvas_items__item_id__approval_request_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                item_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardItemRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    withdraw_item_approval_agencies__agency_id__projects__project_id__canvas_items__item_id__approval_withdraw_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                item_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardItemRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_comments_agencies__agency_id__projects__project_id__canvas_items__item_id__comments_get: {
         parameters: {
             query?: never;
@@ -14837,6 +14974,42 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["BoardItemUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardItemRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    decide_board_item_approval_portal_projects__project_id__canvas_items__item_id__approval_decide_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BoardApprovalDecision"];
             };
         };
         responses: {

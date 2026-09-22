@@ -13,6 +13,7 @@
 import {
   addPortalCommentAction,
   createPortalBoardItemAction,
+  decideApprovalAction,
   deletePortalBoardItemAction,
   deletePortalCommentAction,
   listPortalCommentsAction,
@@ -50,6 +51,7 @@ const PortalBoardStage = ({ projectId, boardId, currentUserId, initialItems }: P
     listComments: (id) => listPortalCommentsAction(projectId, id),
     addComment: (id, body) => addPortalCommentAction(projectId, id, body),
     deleteComment: (id, commentId) => deletePortalCommentAction(projectId, id, commentId),
+    decideApproval: (id, decision, note) => decideApprovalAction(projectId, id, decision, note),
   };
 
   return (
@@ -64,6 +66,7 @@ const PortalBoardStage = ({ projectId, boardId, currentUserId, initialItems }: P
         imageUrl={(fileId) => `/api/portal/projects/${projectId}/board-images/${fileId}`}
         currentUserId={currentUserId}
         canModerate={false}
+        viewerKind="client"
       />
     </BoardProvider>
   );

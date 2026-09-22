@@ -21,9 +21,11 @@ import {
   deleteBoardItem,
   getBoard,
   getBoardComments,
+  requestBoardApproval,
   toggleBoardReaction,
   updateBoardItem,
   uploadBoardImage,
+  withdrawBoardApproval,
 } from "@/lib/boards";
 
 function fail(error: unknown, fallback: string): { error: string } {
@@ -151,5 +153,29 @@ export async function deleteCommentAction(
     return {};
   } catch (error) {
     return fail(error, "Unable to delete the comment");
+  }
+}
+
+export async function requestApprovalAction(
+  agencyId: string,
+  projectId: string,
+  itemId: string,
+): Promise<{ item?: BoardItem; error?: string }> {
+  try {
+    return { item: await requestBoardApproval(agencyId, projectId, itemId) };
+  } catch (error) {
+    return fail(error, "Unable to request approval");
+  }
+}
+
+export async function withdrawApprovalAction(
+  agencyId: string,
+  projectId: string,
+  itemId: string,
+): Promise<{ item?: BoardItem; error?: string }> {
+  try {
+    return { item: await withdrawBoardApproval(agencyId, projectId, itemId) };
+  } catch (error) {
+    return fail(error, "Unable to withdraw the approval request");
   }
 }

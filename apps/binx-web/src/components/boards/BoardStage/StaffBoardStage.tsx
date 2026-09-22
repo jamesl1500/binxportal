@@ -16,10 +16,12 @@ import {
   deleteBoardItemAction,
   deleteCommentAction,
   listCommentsAction,
+  requestApprovalAction,
   resyncBoardAction,
   toggleReactionAction,
   updateBoardItemAction,
   uploadBoardImageAction,
+  withdrawApprovalAction,
 } from "@/app/(app)/projects/[projectId]/canvas/actions";
 import type { BoardItem } from "@/lib/boards-client";
 import BoardCanvas, { type BoardCanvasActions } from "@/components/boards/BoardCanvas/BoardCanvas";
@@ -60,6 +62,8 @@ const StaffBoardStage = ({
     listComments: (id) => listCommentsAction(agencyId, projectId, id),
     addComment: (id, body) => addCommentAction(agencyId, projectId, id, body),
     deleteComment: (id, commentId) => deleteCommentAction(agencyId, projectId, id, commentId),
+    requestApproval: (id) => requestApprovalAction(agencyId, projectId, id),
+    withdrawApproval: (id) => withdrawApprovalAction(agencyId, projectId, id),
   };
 
   return (
@@ -74,6 +78,7 @@ const StaffBoardStage = ({
         imageUrl={(fileId) => `/api/projects/${agencyId}/${projectId}/files/${fileId}`}
         currentUserId={currentUserId}
         canModerate={canModerate}
+        viewerKind="agency"
       />
     </BoardProvider>
   );

@@ -270,6 +270,116 @@ class TestReactionsAndComments:
         assert (await client.get(f"{staff_base}/items/{item['id']}/comments", headers=staff_h)).json() == []
 
 
+class TestApproval:
+    async def test_staff_requests_client_decides(self, client, canvas_ctx) -> None:
+        ctx = canvas_ctx
+        staff_h = auth_headers(ctx["owner"])
+        client_h = auth_headers(ctx["contact"])
+        staff_base = _staff_base(ctx)
+        portal_base = f"/portal/projects/{ctx['project'].id}/canvas"
+
+        item = (
+            await client.post(f"{staff_base}/items", json={"type": "note", "content": {"text": "v1"}}, headers=staff_h)
+        ).json()
+        assert item["approval_status"] is None
+
+        requested = await client.post(f"{staff_base}/items/{item['id']}/approval/request", headers=staff_h)
+        assert requested.status_code == 200, requested.text
+        assert requested.json()["approval_status"] == "pending"
+        assert requested.json()["approval_requested_by_name"] == "Olivia Owner"
+
+        decided = await client.post(
+            f"{portal_base}/items/{item['id']}/approval/decide",
+            json={"status": "changes_requested", "note": "make the logo bigger"},
+            headers=client_h,
+        )
+        assert decided.status_code == 200, decided.text
+        assert decided.json()["approval_status"] == "changes_requested"
+        assert decided.json()["approval_decided_by_name"] == "Casey Client"
+        assert decided.json()["approval_note"] == "make the logo bigger"
+
+        # Re-requesting after addressing feedback resets to pending.
+        again = await client.post(f"{staff_base}/items/{item['id']}/approval/request", headers=staff_h)
+        assert again.json()["approval_status"] == "pending"
+        assert again.json()["approval_note"] is None
+
+        approved = await client.post(
+            f"{portal_base}/items/{item['id']}/approval/decide", json={"status": "approved"}, headers=client_h
+        )
+        assert approved.json()["approval_status"] == "approved"
+
+        withdrawn = await client.post(f"{staff_base}/items/{item['id']}/approval/withdraw", headers=staff_h)
+        assert withdrawn.status_code == 200
+        assert withdrawn.json()["approval_status"] is None
+
+    async def test_client_cannot_request_or_withdraw(self, client, canvas_ctx) -> None:
+        ctx = canvas_ctx
+        staff_h = auth_headers(ctx["owner"])
+        client_h = auth_headers(ctx["contact"])
+        staff_base = _staff_base(ctx)
+        portal_base = f"/portal/projects/{ctx['project'].id}/canvas"
+
+        item = (
+            await client.post(f"{staff_base}/items", json={"type": "note", "content": {"text": "v1"}}, headers=staff_h)
+        ).json()
+
+        # The portal router has no approval/request or approval/withdraw route at all.
+        assert (
+            await client.post(f"{portal_base}/items/{item['id']}/approval/request", headers=client_h)
+        ).status_code == 404
+        assert (
+            await client.post(f"{portal_base}/items/{item['id']}/approval/withdraw", headers=client_h)
+        ).status_code == 404
+
+    async def test_staff_cannot_decide(self, client, canvas_ctx) -> None:
+        ctx = canvas_ctx
+        staff_h = auth_headers(ctx["owner"])
+        staff_base = _staff_base(ctx)
+
+        item = (
+            await client.post(f"{staff_base}/items", json={"type": "note", "content": {"text": "v1"}}, headers=staff_h)
+        ).json()
+        await client.post(f"{staff_base}/items/{item['id']}/approval/request", headers=staff_h)
+
+        # The staff router has no approval/decide route at all.
+        assert (
+            await client.post(
+                f"{staff_base}/items/{item['id']}/approval/decide", json={"status": "approved"}, headers=staff_h
+            )
+        ).status_code == 404
+
+    async def test_decide_without_a_pending_request_conflicts(self, client, canvas_ctx) -> None:
+        ctx = canvas_ctx
+        staff_h = auth_headers(ctx["owner"])
+        client_h = auth_headers(ctx["contact"])
+        staff_base = _staff_base(ctx)
+        portal_base = f"/portal/projects/{ctx['project'].id}/canvas"
+
+        item = (
+            await client.post(f"{staff_base}/items", json={"type": "note", "content": {"text": "v1"}}, headers=staff_h)
+        ).json()
+        r = await client.post(
+            f"{portal_base}/items/{item['id']}/approval/decide", json={"status": "approved"}, headers=client_h
+        )
+        assert r.status_code == 409
+
+    async def test_decide_rejects_an_unknown_status(self, client, canvas_ctx) -> None:
+        ctx = canvas_ctx
+        staff_h = auth_headers(ctx["owner"])
+        client_h = auth_headers(ctx["contact"])
+        staff_base = _staff_base(ctx)
+        portal_base = f"/portal/projects/{ctx['project'].id}/canvas"
+
+        item = (
+            await client.post(f"{staff_base}/items", json={"type": "note", "content": {"text": "v1"}}, headers=staff_h)
+        ).json()
+        await client.post(f"{staff_base}/items/{item['id']}/approval/request", headers=staff_h)
+        r = await client.post(
+            f"{portal_base}/items/{item['id']}/approval/decide", json={"status": "rejected"}, headers=client_h
+        )
+        assert r.status_code == 422
+
+
 class TestRealtime:
     async def test_staff_create_pushes_to_a_connected_client_contact(self, client, canvas_ctx) -> None:
         ctx = canvas_ctx
