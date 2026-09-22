@@ -69,6 +69,19 @@ describe("ProposalForm", () => {
     expect(mockPush).toHaveBeenCalledWith("/proposals/p1");
   });
 
+  it("submits with a pre-selected client from initialClientId", async () => {
+    mockedCreate.mockResolvedValueOnce({ proposal: { id: "p1" } as never });
+    const user = userEvent.setup();
+    render(<ProposalForm agencyId="a1" initialClientId="client-1" />);
+
+    await user.type(screen.getByLabelText(/^Title$/), "Retainer proposal");
+    await user.type(screen.getByLabelText("Line 1 description"), "Retainer");
+    await user.type(screen.getByLabelText("Line 1 unit price"), "2000");
+    await user.click(screen.getByRole("button", { name: /create draft/i }));
+
+    expect(mockedCreate).toHaveBeenCalledWith("a1", expect.objectContaining({ clientId: "client-1" }));
+  });
+
   it("won't submit without a title or a described line", async () => {
     const user = userEvent.setup();
     render(<ProposalForm agencyId="a1" />);

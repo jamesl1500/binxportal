@@ -1,0 +1,59 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.choose {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-3;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-4;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+}
+
+.label {
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  color: t.$color-ink-soft;
+}
+
+.textarea {
+  @include m.input-base;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: t.$space-3;
+}
+
+.ghost {
+  @include m.button-base;
+  background: t.$color-surface;
+}
+
+.primary {
+  @include m.button-base;
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+}
+
+.dangerSolid {
+  @include m.button-base;
+  background: t.$color-danger;
+  color: #fff;
+}

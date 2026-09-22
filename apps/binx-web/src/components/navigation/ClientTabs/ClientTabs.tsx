@@ -2,7 +2,7 @@
  * ClientTabs.tsx
  *
  * Sub-nav for a client's pages: the dashboard overview, the projects run for
- * them, their invoices, and settings. Same pattern as ProjectTabs —
+ * them, their invoices, proposals, and settings. Same pattern as ProjectTabs —
  * highlights the active tab via `usePathname`. Message threads about a client
  * live on the main /messages page now (filter by client there).
  *
@@ -28,6 +28,7 @@ const ClientTabs = ({ clientId }: ClientTabsProps) => {
     { href: base, label: "Dashboard" },
     { href: `${base}/projects`, label: "Projects" },
     { href: `${base}/invoices`, label: "Invoices" },
+    { href: `${base}/proposals`, label: "Proposals" },
     { href: `${base}/meetings`, label: "Meetings" },
     { href: `${base}/settings`, label: "Settings" },
   ];

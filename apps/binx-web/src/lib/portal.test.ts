@@ -209,6 +209,27 @@ const cases: Case[] = [
     url: "/portal/meetings/m1/cancel",
     body: undefined,
   },
+  { name: "getPortalProposals", call: () => portal.getPortalProposals(), method: "get", url: "/portal/proposals" },
+  {
+    name: "getPortalProposal",
+    call: () => portal.getPortalProposal("p1"),
+    method: "get",
+    url: "/portal/proposals/p1",
+  },
+  {
+    name: "signPortalProposal",
+    call: () => portal.signPortalProposal("p1"),
+    method: "post",
+    url: "/portal/proposals/p1/sign",
+    body: undefined,
+  },
+  {
+    name: "declinePortalProposal",
+    call: () => portal.declinePortalProposal("p1", "Not a fit"),
+    method: "post",
+    url: "/portal/proposals/p1/decline",
+    body: { reason: "Not a fit" },
+  },
 ];
 
 describe("portal.ts endpoint wrappers", () => {

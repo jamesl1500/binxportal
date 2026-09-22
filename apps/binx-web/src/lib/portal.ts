@@ -21,11 +21,14 @@ import type { BoardReactions, CreateBoardItemInput } from "@/lib/boards";
 import type { InvoiceDetail, Invoice as StaffInvoice } from "@/lib/invoicing";
 import type { Meeting as StaffMeeting, Slot } from "@/lib/meetings";
 import type { Conversation, ConversationDetail, Message } from "@/lib/messaging-client";
+import type { ProposalDetail, Proposal as StaffProposal } from "@/lib/proposals";
 
 export type PortalInvoice = StaffInvoice;
 export type PortalInvoiceDetail = InvoiceDetail;
 export type PortalMeeting = StaffMeeting;
 export type PortalSlot = Slot;
+export type PortalProposal = StaffProposal;
+export type PortalProposalDetail = ProposalDetail;
 export type { Conversation, ConversationDetail, Message };
 
 export type PortalAgency = Schemas["PortalAgencyRead"];
@@ -168,6 +171,59 @@ export async function startPortalInvoiceCheckout(invoiceId: string): Promise<str
  * currently on, via `GET /portal/meeting-settings` — trimmed to what the
  * booking flow needs (no admin-only fields).
  */
+export async function getPortalProposals(): Promise<PortalProposal[]> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.get<PortalProposal[]>("/portal/proposals", { headers });
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to load proposals");
+  }
+}
+
+export async function getPortalProposal(proposalId: string): Promise<PortalProposalDetail> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.get<PortalProposalDetail>(`/portal/proposals/${proposalId}`, { headers });
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to load this proposal");
+  }
+}
+
+/**
+ * signPortalProposal
+ *
+ * Signs with the signed-in contact's own name/email via
+ * `POST /portal/proposals/{proposalId}/sign` — unlike the public share-link
+ * flow, the portal already knows who this is, so there's nothing to type.
+ */
+export async function signPortalProposal(proposalId: string): Promise<PortalProposalDetail> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.post<PortalProposalDetail>(`/portal/proposals/${proposalId}/sign`, undefined, {
+      headers,
+    });
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to sign this proposal");
+  }
+}
+
+export async function declinePortalProposal(proposalId: string, reason: string | null): Promise<PortalProposalDetail> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.post<PortalProposalDetail>(
+      `/portal/proposals/${proposalId}/decline`,
+      { reason },
+      { headers },
+    );
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to decline this proposal");
+  }
+}
+
 export async function getPortalMeetingSettings(): Promise<PortalMeetingSettings> {
   const headers = await authHeader();
   try {

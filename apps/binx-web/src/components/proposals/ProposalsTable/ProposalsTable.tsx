@@ -3,7 +3,10 @@
  *
  * A sortable, status-filterable table of proposals. Rows link to the
  * proposal detail page. Status is the server-derived `display_status`
- * (draft / sent / viewed / signed / declined / expired).
+ * (draft / sent / viewed / signed / declined / expired). Used on the
+ * agency-wide `/proposals` page (with the client/lead column) and the
+ * per-client Proposals tab and the client portal (without it, via
+ * `linkBase` pointed at the portal's own detail route).
  *
  * @module apps/binx-web/src/components/proposals/ProposalsTable/ProposalsTable.tsx
  * @author Binx.io
@@ -22,6 +25,10 @@ import styles from "./ProposalsTable.module.scss";
 
 interface ProposalsTableProps {
   proposals: Proposal[];
+  /** Show the client/lead column (agency-wide list) or hide it (a scoped tab). */
+  showClient?: boolean;
+  /** Base path for a row's detail link — defaults to the staff route. */
+  linkBase?: string;
 }
 
 type SortKey = "title" | "recipient" | "total_cents" | "display_status" | "created_at";
@@ -37,7 +44,7 @@ function recipientLabel(proposal: Proposal): string {
   return proposal.client_name ?? proposal.lead_name ?? proposal.recipient_name ?? "—";
 }
 
-const ProposalsTable = ({ proposals }: ProposalsTableProps) => {
+const ProposalsTable = ({ proposals, showClient = true, linkBase = "/proposals" }: ProposalsTableProps) => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortKey, setSortKey] = useState<SortKey>("created_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -96,7 +103,7 @@ const ProposalsTable = ({ proposals }: ProposalsTableProps) => {
 
   const columns: [SortKey, string][] = [
     ["title", "Proposal"],
-    ["recipient", "Client / lead"],
+    ...((showClient ? [["recipient", "Client / lead"]] : []) as [SortKey, string][]),
     ["total_cents", "Total"],
     ["display_status", "Status"],
     ["created_at", "Created"],
@@ -147,11 +154,11 @@ const ProposalsTable = ({ proposals }: ProposalsTableProps) => {
             {visible.map((proposal) => (
               <tr key={proposal.id} className={styles.row}>
                 <td className={styles.cell}>
-                  <Link href={`/proposals/${proposal.id}`} className={styles.titleLink}>
+                  <Link href={`${linkBase}/${proposal.id}`} className={styles.titleLink}>
                     {proposal.title}
                   </Link>
                 </td>
-                <td className={styles.cell}>{recipientLabel(proposal)}</td>
+                {showClient && <td className={styles.cell}>{recipientLabel(proposal)}</td>}
                 <td className={`${styles.cell} ${styles.amount}`}>
                   {formatMoneyCents(proposal.total_cents, proposal.currency)}
                 </td>
