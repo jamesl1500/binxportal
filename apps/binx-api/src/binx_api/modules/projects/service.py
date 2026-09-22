@@ -139,6 +139,7 @@ async def create_project(
     status_: str,
     start_date,
     due_date,
+    default_hourly_rate_cents: int | None = None,
 ) -> Project:
     await _check_can_create_project(db, agency)
     await agencies_service.get_client_or_404(db, agency.id, client_id)
@@ -154,6 +155,7 @@ async def create_project(
         status=status_,
         start_date=start_date,
         due_date=due_date,
+        default_hourly_rate_cents=default_hourly_rate_cents,
     )
     db.add(project)
     await db.flush()  # populate project.id before creating its task lists
@@ -243,6 +245,7 @@ async def update_project(
     status_: str,
     start_date,
     due_date,
+    default_hourly_rate_cents: int | None = None,
 ) -> Project:
     await agencies_service.get_client_or_404(db, project.agency_id, client_id)
     project.client_id = client_id
@@ -251,6 +254,7 @@ async def update_project(
     project.status = status_
     project.start_date = start_date
     project.due_date = due_date
+    project.default_hourly_rate_cents = default_hourly_rate_cents
     await db.commit()
     await db.refresh(project)
     return project

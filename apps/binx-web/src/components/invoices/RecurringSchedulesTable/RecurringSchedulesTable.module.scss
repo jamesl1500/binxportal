@@ -1,0 +1,94 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.tableScroll {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  overflow: hidden;
+}
+
+.headCell {
+  padding: t.$space-3 t.$space-4;
+  text-align: left;
+  @include m.mono-label;
+  font-size: 0.625rem;
+  color: t.$color-ink-faint;
+  border-bottom: 1px solid t.$color-border;
+}
+
+.row {
+  border-bottom: 1px solid t.$color-border;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: t.$color-paper;
+  }
+}
+
+.cell {
+  padding: t.$space-4;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+  vertical-align: middle;
+}
+
+.title {
+  display: block;
+  font-weight: 600;
+}
+
+.subtitle {
+  display: block;
+  margin-top: t.$space-1;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+}
+
+.nowrap {
+  white-space: nowrap;
+  color: t.$color-ink-soft;
+}
+
+.amount {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.actionsCell {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem t.$space-2;
+  @include m.mono-label;
+  font-size: 0.625rem;
+  color: t.$color-ink-faint;
+  background: t.$color-paper;
+  border-radius: t.$radius-sm;
+
+  &[data-active="true"] {
+    color: #15803d;
+    background: rgba(21, 128, 61, 0.1);
+  }
+}
+
+.empty {
+  margin: 0;
+  padding: t.$space-6;
+  text-align: center;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-faint;
+}

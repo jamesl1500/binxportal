@@ -1,0 +1,57 @@
+@use "../../../../../styles/tokens" as t;
+@use "../../../../../styles/mixins" as m;
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-6;
+}
+
+.card {
+  @include m.card-base;
+  padding: t.$space-6;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: t.$space-3;
+  margin-bottom: t.$space-4;
+}
+
+.cardTitle {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-ink;
+}
+
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: t.$space-4;
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.statCard {
+  @include m.card-base;
+  padding: t.$space-5;
+}
+
+.statLabel {
+  @include m.mono-label;
+  display: block;
+  margin-bottom: t.$space-2;
+  color: t.$color-ink-soft;
+}
+
+.statValue {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-ink;
+}

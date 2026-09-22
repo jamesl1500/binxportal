@@ -85,6 +85,23 @@
   margin-top: t.$space-2;
 }
 
+.newButton {
+  @include m.button-base;
+  gap: t.$space-2;
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+  text-decoration: none;
+
+  svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  &:hover {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+}
+
 .formCard {
   background: t.$color-surface;
   border: 1px solid t.$color-border;

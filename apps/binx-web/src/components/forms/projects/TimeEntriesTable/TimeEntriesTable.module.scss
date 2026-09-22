@@ -1,0 +1,264 @@
+@use "../../../../styles/tokens" as t;
+@use "../../../../styles/mixins" as m;
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-4;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: t.$space-3;
+}
+
+.selectedCount {
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+}
+
+.generate {
+  @include m.button-base;
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+}
+
+.tableScroll {
+  @include m.table-scroll;
+}
+
+.table {
+  width: 100%;
+  min-width: 60rem;
+  border-collapse: separate;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  overflow: hidden;
+}
+
+.headCell {
+  padding: t.$space-3 t.$space-4;
+  @include m.mono-label;
+  text-align: left;
+  color: t.$color-ink-faint;
+  border-bottom: 1px solid t.$color-border;
+}
+
+.row {
+  border-bottom: 1px solid t.$color-border;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.cell {
+  padding: t.$space-4;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+  vertical-align: middle;
+}
+
+.nowrap {
+  white-space: nowrap;
+  color: t.$color-ink-soft;
+}
+
+.muted {
+  color: t.$color-ink-faint;
+}
+
+.runningBadge {
+  @include m.mono-label;
+  letter-spacing: normal;
+  color: t.$color-accent-foreground;
+  background: t.$color-ink;
+  padding: t.$space-1 t.$space-2;
+  border-radius: t.$radius-sm;
+}
+
+.invoicedBadge {
+  @include m.mono-label;
+  letter-spacing: normal;
+  color: t.$color-ink-soft;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  padding: t.$space-1 t.$space-2;
+  border-radius: t.$radius-sm;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: t.$space-1;
+}
+
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  color: t.$color-ink-faint;
+  background: none;
+  border: none;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  &:hover:not(:disabled) {
+    color: t.$color-ink;
+    background: rgba(10, 10, 11, 0.04);
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.emptyState {
+  padding: t.$space-10 t.$space-6;
+  text-align: center;
+  background: t.$color-surface;
+  border: 1px dashed t.$color-border;
+  border-radius: t.$radius-md;
+}
+
+.emptyTitle {
+  margin: 0 0 t.$space-2;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-ink;
+}
+
+.emptyText {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+}
+
+.error {
+  margin: 0;
+  padding: t.$space-3;
+  font-size: t.$font-size-sm;
+  color: t.$color-danger;
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-radius: t.$radius-sm;
+}
+
+// ---- Dialogs ----
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(10, 10, 11, 0.4);
+}
+
+.dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 60;
+  width: calc(100vw - #{t.$space-8});
+  max-width: 30rem;
+  padding: t.$space-6;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  box-shadow: 0 24px 48px rgba(10, 10, 11, 0.2);
+  outline: none;
+  transform: translate(-50%, -50%);
+}
+
+.dialogTitle {
+  margin: 0 0 t.$space-1;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-ink;
+}
+
+.dialogDescription {
+  margin: 0 0 t.$space-4;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+}
+
+.dialogForm {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+  margin-top: t.$space-4;
+}
+
+.dialogRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: t.$space-3;
+}
+
+.field {
+  display: flex;
+  flex: 1 1 10rem;
+  flex-direction: column;
+  gap: t.$space-1;
+}
+
+.label {
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  color: t.$color-ink-soft;
+}
+
+.input,
+.select {
+  @include m.input-base;
+}
+
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+  padding-bottom: t.$space-3;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+}
+
+.dialogActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: t.$space-3;
+  margin-top: t.$space-5;
+}
+
+.ghost {
+  @include m.button-base;
+  background: t.$color-surface;
+}
+
+.primary {
+  @include m.button-base;
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+}
+
+.dangerSolid {
+  @include m.button-base;
+  background: t.$color-danger;
+  color: t.$color-accent-foreground;
+}

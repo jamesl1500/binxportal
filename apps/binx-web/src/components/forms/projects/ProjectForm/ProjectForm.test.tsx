@@ -51,6 +51,21 @@ describe("ProjectForm", () => {
     expect(onSuccess).toHaveBeenCalledWith({ id: "p9", name: "New" });
   });
 
+  it("maps the default hourly rate to cents", async () => {
+    render(<ProjectForm agencyId="a1" clients={clients} />);
+    await userEvent.type(screen.getByLabelText("Project name"), "Website");
+    await userEvent.type(screen.getByLabelText("Default hourly rate"), "150.50");
+    await userEvent.click(screen.getByRole("button", { name: "Create project" }));
+    expect(create).toHaveBeenCalledWith("a1", expect.objectContaining({ defaultHourlyRateCents: 15050 }));
+  });
+
+  it("leaves the default hourly rate null when left blank", async () => {
+    render(<ProjectForm agencyId="a1" clients={clients} />);
+    await userEvent.type(screen.getByLabelText("Project name"), "Website");
+    await userEvent.click(screen.getByRole("button", { name: "Create project" }));
+    expect(create).toHaveBeenCalledWith("a1", expect.objectContaining({ defaultHourlyRateCents: null }));
+  });
+
   it("edits an existing project and shows the success message", async () => {
     render(
       <ProjectForm

@@ -18,6 +18,10 @@ class ProjectRead(BaseModel):
     start_date: date | None
     due_date: date | None
     member_count: int
+    # Default hourly rate (integer cents) new time entries on this project
+    # resolve to when no per-entry override is given — see
+    # time_tracking/service.py::resolve_hourly_rate_cents.
+    default_hourly_rate_cents: int | None
     created_at: datetime
 
 
@@ -28,6 +32,7 @@ class ProjectCreate(BaseModel):
     status: str = Field(default="planning", pattern="^(planning|active|on_hold|completed|archived)$")
     start_date: date | None = None
     due_date: date | None = None
+    default_hourly_rate_cents: int | None = Field(default=None, ge=0)
 
 
 class ProjectUpdate(BaseModel):
@@ -39,6 +44,7 @@ class ProjectUpdate(BaseModel):
     status: str = Field(pattern="^(planning|active|on_hold|completed|archived)$")
     start_date: date | None = None
     due_date: date | None = None
+    default_hourly_rate_cents: int | None = Field(default=None, ge=0)
 
 
 class ProjectMemberRead(BaseModel):
