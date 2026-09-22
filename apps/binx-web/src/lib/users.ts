@@ -576,3 +576,78 @@ export async function deleteAccount(currentPassword: string): Promise<void> {
     throw error;
   }
 }
+
+// ---- Dashboard layout ------------------------------------------------------
+
+/**
+ * DashboardLayout
+ *
+ * The signed-in user's personal customization of the staff dashboard's
+ * widget grid — which widgets show, and in what order — as returned by
+ * binx-api. `widget_order` always lists every known widget id.
+ *
+ * @interface DashboardLayout
+ */
+export type DashboardLayout = Schemas["DashboardLayoutRead"];
+
+/**
+ * getDashboardLayout
+ *
+ * Fetches the signed-in user's dashboard layout via
+ * `GET /users/me/dashboard-layout`. binx-api creates a default row (default
+ * order, nothing hidden) on first access, so this always resolves rather
+ * than 404ing for new users.
+ *
+ * @function getDashboardLayout
+ * @throws {AuthApiError} - Thrown if not authenticated.
+ */
+export async function getDashboardLayout(): Promise<DashboardLayout> {
+  const headers = await authHeader();
+
+  try {
+    const { data } = await api.get<DashboardLayout>("/users/me/dashboard-layout", { headers });
+    return data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new AuthApiError(
+        extractDetailMessage(error.response.data, "Unable to load your dashboard layout"),
+        error.response.status,
+      );
+    }
+    throw error;
+  }
+}
+
+/**
+ * updateDashboardLayout
+ *
+ * Replaces the signed-in user's widget order and hidden widgets wholesale
+ * via `PUT /users/me/dashboard-layout` — the client always holds and resends
+ * its whole current state, same as updateTutorialProgress.
+ *
+ * @function updateDashboardLayout
+ * @throws {AuthApiError} - Thrown if not authenticated, or binx-api rejects the update.
+ */
+export async function updateDashboardLayout(
+  widgetOrder: string[],
+  hiddenWidgets: string[],
+): Promise<DashboardLayout> {
+  const headers = await authHeader();
+
+  try {
+    const { data } = await api.put<DashboardLayout>(
+      "/users/me/dashboard-layout",
+      { widget_order: widgetOrder, hidden_widgets: hiddenWidgets },
+      { headers },
+    );
+    return data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new AuthApiError(
+        extractDetailMessage(error.response.data, "Unable to update your dashboard layout"),
+        error.response.status,
+      );
+    }
+    throw error;
+  }
+}

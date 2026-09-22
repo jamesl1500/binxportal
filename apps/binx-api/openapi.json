@@ -3572,6 +3572,58 @@
         "title": "ConversationUpdate",
         "type": "object"
       },
+      "DashboardLayoutRead": {
+        "description": "Built manually in the router (like TutorialProgressRead) rather than\nfrom_attributes \u2014 widget_order/hidden_widgets are JSON-in-Text on the\nmodel, list[str] here. widget_order always lists every known widget id\n(any missing from the stored value are appended at the end).",
+        "properties": {
+          "hidden_widgets": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Hidden Widgets",
+            "type": "array"
+          },
+          "widget_order": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Widget Order",
+            "type": "array"
+          }
+        },
+        "required": [
+          "widget_order",
+          "hidden_widgets"
+        ],
+        "title": "DashboardLayoutRead",
+        "type": "object"
+      },
+      "DashboardLayoutUpdate": {
+        "description": "Full replace of both fields together, same as TutorialProgressUpdate.",
+        "properties": {
+          "hidden_widgets": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 5,
+            "title": "Hidden Widgets",
+            "type": "array"
+          },
+          "widget_order": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 5,
+            "title": "Widget Order",
+            "type": "array"
+          }
+        },
+        "required": [
+          "widget_order",
+          "hidden_widgets"
+        ],
+        "title": "DashboardLayoutUpdate",
+        "type": "object"
+      },
       "DashboardRead": {
         "description": "One-shot aggregate for the Overview tab \u2014 replaces what used to be 7\nseparate agency-scoped requests (projects, clients, invoice summary,\noverdue invoices, activity, unread count, my work) with a single call.",
         "properties": {
@@ -26124,6 +26176,76 @@
           }
         ],
         "summary": "Upload Cover",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/users/me/dashboard-layout": {
+      "get": {
+        "operationId": "read_dashboard_layout_users_me_dashboard_layout_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardLayoutRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Read Dashboard Layout",
+        "tags": [
+          "users"
+        ]
+      },
+      "put": {
+        "operationId": "write_dashboard_layout_users_me_dashboard_layout_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DashboardLayoutUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardLayoutRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Write Dashboard Layout",
         "tags": [
           "users"
         ]

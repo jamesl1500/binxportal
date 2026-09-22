@@ -14,11 +14,13 @@ from binx_api.modules.activity import service as activity_service
 from binx_api.modules.users.models import (
     User,
     UserAppearanceSettings,
+    UserDashboardLayout,
     UserNotificationSettings,
     UserPrivacySettings,
     UserProfile,
     UserTutorialProgress,
 )
+from binx_api.modules.users.schemas import DASHBOARD_WIDGET_IDS
 
 settings = get_settings()
 
@@ -305,6 +307,47 @@ async def update_tutorial_progress(
     await db.commit()
     await db.refresh(progress)
     return progress
+
+
+# Get the current user's dashboard layout, creating a default row (default
+# order, nothing hidden) on first access, same as the settings tables above.
+async def get_or_create_dashboard_layout(db: AsyncSession, user: User) -> UserDashboardLayout:
+    result = await db.execute(select(UserDashboardLayout).where(UserDashboardLayout.user_id == user.id))
+    layout = result.scalar_one_or_none()
+    if layout is None:
+        layout = UserDashboardLayout(user_id=user.id)
+        db.add(layout)
+        await db.commit()
+        await db.refresh(layout)
+    return layout
+
+
+# Any widget id missing from the stored order (new widget shipped after the
+# user last customized, or a still-default "[]" row) is appended at the end
+# in the canonical order, so the frontend always gets every known widget.
+def dashboard_widget_order(layout: UserDashboardLayout) -> list[str]:
+    stored = json.loads(layout.widget_order) if layout.widget_order else []
+    ordered = [widget_id for widget_id in stored if widget_id in DASHBOARD_WIDGET_IDS]
+    ordered += [widget_id for widget_id in DASHBOARD_WIDGET_IDS if widget_id not in ordered]
+    return ordered
+
+
+def dashboard_hidden_widgets(layout: UserDashboardLayout) -> list[str]:
+    stored = json.loads(layout.hidden_widgets) if layout.hidden_widgets else []
+    return [widget_id for widget_id in stored if widget_id in DASHBOARD_WIDGET_IDS]
+
+
+# Replace the current user's dashboard layout wholesale — the client always
+# holds and resends its whole current state, same as update_tutorial_progress.
+async def update_dashboard_layout(
+    db: AsyncSession, user: User, *, widget_order: list[str], hidden_widgets: list[str]
+) -> UserDashboardLayout:
+    layout = await get_or_create_dashboard_layout(db, user)
+    layout.widget_order = json.dumps(widget_order)
+    layout.hidden_widgets = json.dumps(hidden_widgets)
+    await db.commit()
+    await db.refresh(layout)
+    return layout
 
 
 # Changes the current user's password, requiring the current one as proof of
