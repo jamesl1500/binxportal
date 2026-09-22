@@ -12,7 +12,8 @@
 "use client";
 
 import { formatMoneyCents } from "@/lib/money";
-import { recurringIntervalLabel, type RecurringSchedule, weekdayLabel } from "@/lib/recurring-invoices";
+import type { RecurringSchedule } from "@/lib/recurring-invoices";
+import { recurringIntervalLabel, weekdayLabel } from "@/lib/recurring-invoices-client";
 import RecurringScheduleActions from "@/components/invoices/RecurringScheduleActions/RecurringScheduleActions";
 
 import styles from "./RecurringSchedulesTable.module.scss";

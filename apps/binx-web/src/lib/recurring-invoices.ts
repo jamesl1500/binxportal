@@ -253,19 +253,3 @@ export async function runRecurringScheduleNow(agencyId: string, scheduleId: stri
   }
 }
 
-// ---- Display helpers ----
-
-export const RECURRING_INTERVAL_LABELS: Record<string, string> = {
-  weekly: "Weekly",
-  monthly: "Monthly",
-};
-
-export function recurringIntervalLabel(interval: string): string {
-  return RECURRING_INTERVAL_LABELS[interval] ?? interval;
-}
-
-const WEEKDAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-
-export function weekdayLabel(weekday: number): string {
-  return WEEKDAY_LABELS[weekday] ?? String(weekday);
-}

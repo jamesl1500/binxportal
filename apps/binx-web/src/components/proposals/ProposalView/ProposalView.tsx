@@ -11,7 +11,7 @@
 "use client";
 
 import type { ProposalDetail } from "@/lib/proposals";
-import { proposalStatusLabel } from "@/lib/proposals";
+import { proposalStatusLabel } from "@/lib/proposals-client";
 import { formatMoneyCents } from "@/lib/money";
 
 import styles from "./ProposalView.module.scss";

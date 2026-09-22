@@ -12,7 +12,8 @@
  */
 import type { Metadata } from "next";
 
-import { getPublicProposal, proposalStatusLabel } from "@/lib/proposals";
+import { getPublicProposal } from "@/lib/proposals";
+import { proposalStatusLabel } from "@/lib/proposals-client";
 import { formatMoneyCents } from "@/lib/money";
 import PublicProposalActions from "@/components/proposals/PublicProposalActions/PublicProposalActions";
 

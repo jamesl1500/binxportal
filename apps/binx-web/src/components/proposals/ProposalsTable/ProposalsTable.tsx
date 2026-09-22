@@ -15,7 +15,7 @@ import Link from "next/link";
 import { ArrowDown, ArrowUp, ChevronsUpDown } from "lucide-react";
 
 import type { Proposal } from "@/lib/proposals";
-import { proposalStatusLabel } from "@/lib/proposals";
+import { proposalStatusLabel } from "@/lib/proposals-client";
 import { formatMoneyCents } from "@/lib/money";
 
 import styles from "./ProposalsTable.module.scss";

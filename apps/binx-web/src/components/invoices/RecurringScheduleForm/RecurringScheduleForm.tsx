@@ -20,7 +20,8 @@ import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { formatMoneyCents } from "@/lib/money";
-import { type RecurringInterval, type RecurringScheduleInput, weekdayLabel } from "@/lib/recurring-invoices";
+import type { RecurringInterval, RecurringScheduleInput } from "@/lib/recurring-invoices";
+import { weekdayLabel } from "@/lib/recurring-invoices-client";
 import { createRecurringScheduleAction } from "@/app/(app)/invoices/recurring/actions";
 
 import styles from "./RecurringScheduleForm.module.scss";

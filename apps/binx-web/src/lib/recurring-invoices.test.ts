@@ -112,21 +112,6 @@ describe("recurring-invoices.ts", () => {
     expect(mockedApi.post).toHaveBeenCalledWith(`/agencies/${A}/recurring-invoices/${S}/run-now`, null, AUTH);
   });
 
-  describe("display helpers", () => {
-    it("recurringIntervalLabel labels known intervals and falls back otherwise", () => {
-      expect(recurring.recurringIntervalLabel("weekly")).toBe("Weekly");
-      expect(recurring.recurringIntervalLabel("monthly")).toBe("Monthly");
-      expect(recurring.recurringIntervalLabel("mystery")).toBe("mystery");
-    });
-
-    it("weekdayLabel maps 0-6 to day names and falls back otherwise", () => {
-      expect(recurring.weekdayLabel(0)).toBe("Monday");
-      expect(recurring.weekdayLabel(4)).toBe("Friday");
-      expect(recurring.weekdayLabel(6)).toBe("Sunday");
-      expect(recurring.weekdayLabel(9)).toBe("9");
-    });
-  });
-
   describe("error handling", () => {
     it("wraps upstream errors as AuthApiError", async () => {
       mockedApi.get.mockRejectedValueOnce(axiosError(403, "Nope"));

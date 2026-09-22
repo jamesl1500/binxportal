@@ -145,23 +145,6 @@ describe("proposals.ts", () => {
     });
   });
 
-  describe("proposalStatusLabel", () => {
-    it.each([
-      ["draft", "Draft"],
-      ["sent", "Sent"],
-      ["viewed", "Viewed"],
-      ["signed", "Signed"],
-      ["declined", "Declined"],
-      ["expired", "Expired"],
-    ])("labels %s as %s", (status, label) => {
-      expect(proposals.proposalStatusLabel(status)).toBe(label);
-    });
-
-    it("falls back to the raw value for an unknown status", () => {
-      expect(proposals.proposalStatusLabel("mystery")).toBe("mystery");
-    });
-  });
-
   describe("error handling (authenticated endpoints)", () => {
     it("wraps upstream errors as AuthApiError", async () => {
       mockedApi.get.mockRejectedValueOnce(axiosError(403, "Nope"));

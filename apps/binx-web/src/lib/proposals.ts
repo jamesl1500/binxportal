@@ -196,17 +196,3 @@ export async function declinePublicProposal(token: string, reason: string | null
   }
 }
 
-// ---- Display helpers ----
-
-export const PROPOSAL_STATUS_LABELS: Record<string, string> = {
-  draft: "Draft",
-  sent: "Sent",
-  viewed: "Viewed",
-  signed: "Signed",
-  declined: "Declined",
-  expired: "Expired",
-};
-
-export function proposalStatusLabel(status: string): string {
-  return PROPOSAL_STATUS_LABELS[status] ?? status;
-}
