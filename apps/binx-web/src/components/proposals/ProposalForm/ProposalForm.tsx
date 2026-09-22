@@ -1,12 +1,15 @@
 /**
  * ProposalForm.tsx
  *
- * The draft-proposal editor: title, recipient name/email, a markdown-ish
- * content textarea, currency, tax rate, valid-until date, and a repeatable
- * line-item table. Totals update live and mirror binx-api's `_recalculate`
- * math exactly (subtotal of line amounts, then tax — proposals carry no
- * discount). Used for both creating a new draft and editing an existing one
- * (sent/decided proposals are never editable — the page redirects away).
+ * The draft-proposal editor: an optional client select, title, recipient
+ * name/email, a markdown-ish content textarea, currency, tax rate,
+ * valid-until date, and a repeatable line-item table. Totals update live and
+ * mirror binx-api's `_recalculate` math exactly (subtotal of line amounts,
+ * then tax — proposals carry no discount). Used for both creating a new
+ * draft and editing an existing one (sent/decided proposals are never
+ * editable — the page redirects away). The client select is what actually
+ * attaches a proposal to an `AgencyClient` row — "Recipient name/email" are
+ * plain free text and never link to a client record.
  *
  * @module apps/binx-web/src/components/proposals/ProposalForm/ProposalForm.tsx
  * @author Binx.io
@@ -24,8 +27,14 @@ import { createProposalAction, updateProposalAction } from "@/app/(app)/proposal
 
 import styles from "./ProposalForm.module.scss";
 
+interface ClientOption {
+  id: string;
+  name: string;
+}
+
 interface ProposalFormProps {
   agencyId: string;
+  clients: ClientOption[];
   /** Present when editing an existing draft. */
   proposal?: ProposalDetail;
   /** Pre-selects a client on a new draft, e.g. from a client's Proposals tab. */
@@ -53,10 +62,11 @@ function roundHalfUp(value: number): number {
   return Math.round(value);
 }
 
-const ProposalForm = ({ agencyId, proposal, initialClientId = null }: ProposalFormProps) => {
+const ProposalForm = ({ agencyId, clients, proposal, initialClientId = null }: ProposalFormProps) => {
   const router = useRouter();
   const isEdit = Boolean(proposal);
 
+  const [clientId, setClientId] = useState(proposal?.client_id ?? initialClientId ?? "");
   const [title, setTitle] = useState(proposal?.title ?? "");
   const [recipientName, setRecipientName] = useState(proposal?.recipient_name ?? "");
   const [recipientEmail, setRecipientEmail] = useState(proposal?.recipient_email ?? "");
@@ -97,7 +107,7 @@ const ProposalForm = ({ agencyId, proposal, initialClientId = null }: ProposalFo
 
     const input: ProposalInput = {
       leadId: proposal?.lead_id ?? null,
-      clientId: proposal?.client_id ?? initialClientId,
+      clientId: clientId || null,
       title: title.trim(),
       recipientName: recipientName.trim() || null,
       recipientEmail: recipientEmail.trim() || null,
@@ -135,6 +145,18 @@ const ProposalForm = ({ agencyId, proposal, initialClientId = null }: ProposalFo
   return (
     <form className={styles.form} onSubmit={handleSubmit}>
       <div className={styles.grid}>
+        <label className={styles.field}>
+          <span className={styles.label}>Client</span>
+          <select className={styles.input} value={clientId} onChange={(event) => setClientId(event.target.value)}>
+            <option value="">No client</option>
+            {clients.map((client) => (
+              <option key={client.id} value={client.id}>
+                {client.name}
+              </option>
+            ))}
+          </select>
+        </label>
+
         <label className={styles.field}>
           <span className={styles.label}>Title</span>
           <input

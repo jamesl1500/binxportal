@@ -14,6 +14,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { AuthApiError } from "@/lib/auth";
 import { getCurrentAgencyContext } from "@/lib/agencies";
+import { getAgencyClients } from "@/lib/clients";
 import { getProposal } from "@/lib/proposals";
 import ProposalForm from "@/components/proposals/ProposalForm/ProposalForm";
 
@@ -47,6 +48,8 @@ const EditProposalPage = async ({ params }: EditProposalPageProps) => {
     redirect(`/proposals/${proposalId}`);
   }
 
+  const clients = await getAgencyClients(currentAgency.id);
+
   return (
     <div>
       <Link href={`/proposals/${proposalId}`} className={styles.backLink}>
@@ -60,7 +63,11 @@ const EditProposalPage = async ({ params }: EditProposalPageProps) => {
       </div>
 
       <div className={styles.formCard}>
-        <ProposalForm agencyId={currentAgency.id} proposal={proposal} />
+        <ProposalForm
+          agencyId={currentAgency.id}
+          clients={clients.map((c) => ({ id: c.id, name: c.name }))}
+          proposal={proposal}
+        />
       </div>
     </div>
   );
