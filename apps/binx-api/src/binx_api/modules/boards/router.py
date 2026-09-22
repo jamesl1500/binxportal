@@ -227,3 +227,36 @@ async def delete_comment(
     project, item = await _item(db, agency.id, project_id, item_id)
     comment = await service.get_comment_or_404(db, item.id, comment_id)
     await service.delete_comment(db, comment, project, requested_by=current_user, requester_role=role)
+
+
+# --- Client approval ---
+# Only the agency side requests/withdraws; only the client-portal side
+# decides (client_portal/router.py's approval/decide).
+
+
+@router.post("/items/{item_id}/approval/request", response_model=BoardItemRead)
+async def request_item_approval(
+    db: DbSession,
+    project_id: uuid.UUID,
+    item_id: uuid.UUID,
+    current_user: CurrentUser,
+    agency_and_role: AnyMember,
+) -> BoardItemRead:
+    agency, _role = agency_and_role
+    project, item = await _item(db, agency.id, project_id, item_id)
+    item = await service.request_approval(db, item, project, actor=current_user)
+    return BoardItemRead(**await service.item_read(db, item, current_user.id))
+
+
+@router.post("/items/{item_id}/approval/withdraw", response_model=BoardItemRead)
+async def withdraw_item_approval(
+    db: DbSession,
+    project_id: uuid.UUID,
+    item_id: uuid.UUID,
+    current_user: CurrentUser,
+    agency_and_role: AnyMember,
+) -> BoardItemRead:
+    agency, _role = agency_and_role
+    project, item = await _item(db, agency.id, project_id, item_id)
+    item = await service.withdraw_approval(db, item, project)
+    return BoardItemRead(**await service.item_read(db, item, current_user.id))

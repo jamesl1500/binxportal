@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import uuid
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import HTTPException, status
@@ -19,6 +20,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from binx_api.modules.agencies.models import ROLE_ADMIN, ROLE_OWNER, AgencyMember
 from binx_api.modules.boards.models import (
     ALLOWED_BOARD_IMAGE_MIME_TYPES,
+    APPROVAL_APPROVED,
+    APPROVAL_PENDING,
     AUTHOR_AGENCY,
     DEFAULT_NOTE_HEIGHT,
     DEFAULT_NOTE_WIDTH,
@@ -33,7 +36,7 @@ from binx_api.modules.boards.models import (
 from binx_api.modules.client_portal.models import ClientContact
 from binx_api.modules.messaging import realtime
 from binx_api.modules.notifications import service as notifications_service
-from binx_api.modules.notifications.models import CATEGORY_PROJECTS, EVENT_CANVAS_COMMENT
+from binx_api.modules.notifications.models import CATEGORY_PROJECTS, EVENT_CANVAS_APPROVAL, EVENT_CANVAS_COMMENT
 from binx_api.modules.projects import service as projects_service
 from binx_api.modules.projects.models import Project, ProjectFile
 from binx_api.modules.users.models import User
@@ -187,6 +190,82 @@ async def delete_item(db: AsyncSession, item: BoardItem, project: Project) -> No
     await _broadcast(db, project, board_id, realtime.EVENT_BOARD_ITEM_DELETED, {"id": str(item_id)})
 
 
+# ---- Client approval ---------------------------------------------------
+
+
+async def request_approval(db: AsyncSession, item: BoardItem, project: Project, *, actor: User) -> BoardItem:
+    """An agency member asks the client to review this card. Always resets to
+    ``pending``, even if it was already decided — that's how a re-request
+    after addressing feedback works."""
+    item.approval_status = APPROVAL_PENDING
+    item.approval_requested_by_id = actor.id
+    item.approval_requested_by_name = actor.full_name
+    item.approval_decided_by_name = None
+    item.approval_decided_at = None
+    item.approval_note = None
+    await db.commit()
+    await db.refresh(item)
+    await _broadcast(db, project, item.board_id, realtime.EVENT_BOARD_ITEM_UPDATED, _item_payload(item))
+    return item
+
+
+async def withdraw_approval(db: AsyncSession, item: BoardItem, project: Project) -> BoardItem:
+    """Clears the card's approval state entirely, whatever it currently is —
+    an agency member changed their mind about asking, or wants to drop an
+    old decision and start clean."""
+    if item.approval_status is None:
+        raise HTTPException(status.HTTP_409_CONFLICT, "This card has no approval request.")
+    item.approval_status = None
+    item.approval_requested_by_id = None
+    item.approval_requested_by_name = None
+    item.approval_decided_by_name = None
+    item.approval_decided_at = None
+    item.approval_note = None
+    await db.commit()
+    await db.refresh(item)
+    await _broadcast(db, project, item.board_id, realtime.EVENT_BOARD_ITEM_UPDATED, _item_payload(item))
+    return item
+
+
+async def decide_approval(
+    db: AsyncSession, item: BoardItem, project: Project, *, decider: User, decision: str, note: str | None
+) -> BoardItem:
+    """A client-portal contact approves or asks for changes on a card that's
+    awaiting review. Notifies the agency member who requested it, same as a
+    card comment notifies its author."""
+    if item.approval_status != APPROVAL_PENDING:
+        raise HTTPException(status.HTTP_409_CONFLICT, "This card isn't awaiting approval.")
+
+    item.approval_status = decision
+    item.approval_decided_by_name = decider.full_name
+    item.approval_decided_at = datetime.now(UTC)
+    item.approval_note = note.strip() if note else None
+    await db.commit()
+    await db.refresh(item)
+    await _broadcast(db, project, item.board_id, realtime.EVENT_BOARD_ITEM_UPDATED, _item_payload(item))
+
+    if item.approval_requested_by_id and item.approval_requested_by_id != decider.id:
+        is_member = await db.execute(
+            select(AgencyMember.id).where(
+                AgencyMember.agency_id == project.agency_id, AgencyMember.user_id == item.approval_requested_by_id
+            )
+        )
+        if is_member.scalar_one_or_none() is not None:
+            verb = "approved" if decision == APPROVAL_APPROVED else "requested changes on"
+            await notifications_service.notify(
+                db,
+                user_id=item.approval_requested_by_id,
+                category=CATEGORY_PROJECTS,
+                event_type=EVENT_CANVAS_APPROVAL,
+                title=f"{decider.full_name} {verb} your card in {project.name}",
+                body=item.approval_note[:280] if item.approval_note else None,
+                link=f"/projects/{project.id}/canvas",
+                agency_id=project.agency_id,
+                actor=decider,
+            )
+    return item
+
+
 async def save_board_image(
     db: AsyncSession, project: Project, *, uploaded_by: User, file_name: str, content: bytes, mime_type: str
 ) -> ProjectFile:
@@ -220,6 +299,11 @@ def _item_payload(item: BoardItem) -> dict:
         "author_kind": item.author_kind,
         "created_by_id": str(item.created_by_id) if item.created_by_id else None,
         "created_by_name": item.created_by_name,
+        "approval_status": item.approval_status,
+        "approval_requested_by_name": item.approval_requested_by_name,
+        "approval_decided_by_name": item.approval_decided_by_name,
+        "approval_decided_at": item.approval_decided_at.isoformat() if item.approval_decided_at else None,
+        "approval_note": item.approval_note,
     }
 
 
@@ -423,6 +507,7 @@ __all__ = [
     "add_comment",
     "comment_payload",
     "create_item",
+    "decide_approval",
     "delete_comment",
     "delete_item",
     "get_comment_or_404",
@@ -432,7 +517,9 @@ __all__ = [
     "item_payload",
     "list_comments",
     "list_items",
+    "request_approval",
     "save_board_image",
     "toggle_reaction",
     "update_item",
+    "withdraw_approval",
 ]

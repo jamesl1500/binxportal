@@ -47,6 +47,16 @@ export interface BoardCanvasActions {
   listComments: (id: string) => Promise<{ comments?: BoardComment[]; error?: string }>;
   addComment: (id: string, body: string) => Promise<{ comment?: BoardComment; error?: string }>;
   deleteComment: (id: string, commentId: string) => Promise<{ error?: string }>;
+  /** Agency side only — asks the client to review this card. */
+  requestApproval?: (id: string) => Promise<{ item?: BoardItem; error?: string }>;
+  /** Agency side only — clears the card's approval state. */
+  withdrawApproval?: (id: string) => Promise<{ item?: BoardItem; error?: string }>;
+  /** Client-portal side only — approves or asks for changes on a pending card. */
+  decideApproval?: (
+    id: string,
+    decision: "approved" | "changes_requested",
+    note?: string,
+  ) => Promise<{ item?: BoardItem; error?: string }>;
 }
 
 interface BoardCanvasProps {
@@ -55,11 +65,13 @@ interface BoardCanvasProps {
   currentUserId: string;
   /** Agency owner/admin — can delete anyone's comment (moderation). */
   canModerate: boolean;
+  /** Who's viewing — decides which approval controls a card shows. */
+  viewerKind: "agency" | "client";
 }
 
 const IMAGE_TARGET = 360;
 
-const BoardCanvas = ({ actions, imageUrl, currentUserId, canModerate }: BoardCanvasProps) => {
+const BoardCanvas = ({ actions, imageUrl, currentUserId, canModerate, viewerKind }: BoardCanvasProps) => {
   const itemsById = useBoardStore((s) => s.itemsById);
   const items = useMemo(
     () => Object.values(itemsById).sort((a, b) => a.z - b.z),
@@ -213,6 +225,7 @@ const BoardCanvas = ({ actions, imageUrl, currentUserId, canModerate }: BoardCan
               imageUrl={imageUrl}
               currentUserId={currentUserId}
               canModerate={canModerate}
+              viewerKind={viewerKind}
               onSelect={() => setSelectedId(item.id)}
               onError={(message) => {
                 notify(message);

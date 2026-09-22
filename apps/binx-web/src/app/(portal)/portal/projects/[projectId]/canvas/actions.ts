@@ -16,6 +16,7 @@ import type { BoardComment, BoardItem, BoardItemPatch } from "@/lib/boards-clien
 import {
   addPortalBoardComment,
   createPortalBoardItem,
+  decidePortalBoardApproval,
   deletePortalBoardComment,
   deletePortalBoardItem,
   getPortalBoard,
@@ -141,5 +142,18 @@ export async function deletePortalCommentAction(
     return {};
   } catch (error) {
     return fail(error, "Unable to delete the comment");
+  }
+}
+
+export async function decideApprovalAction(
+  projectId: string,
+  itemId: string,
+  decision: "approved" | "changes_requested",
+  note?: string,
+): Promise<{ item?: BoardItem; error?: string }> {
+  try {
+    return { item: await decidePortalBoardApproval(projectId, itemId, decision, note) };
+  } catch (error) {
+    return fail(error, "Unable to record your decision");
   }
 }

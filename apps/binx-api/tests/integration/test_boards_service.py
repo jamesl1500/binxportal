@@ -363,6 +363,148 @@ class TestComments:
         assert await service.list_comments(db_session, item.id) == []
 
 
+class TestApproval:
+    async def test_request_decide_and_notify(self, db_session) -> None:
+        owner = await make_user(db_session, full_name="Card Requester")
+        contact_user = await make_user(db_session, full_name="Client Casey")
+        agency = await make_agency(db_session, owner=owner)
+        client = await make_client(db_session, agency=agency)
+        await make_client_contact(db_session, agency=agency, client=client, user=contact_user)
+        project = await make_project(db_session, agency=agency, created_by=owner, client=client)
+        board = await service.get_or_create_board(db_session, project)
+        item = await service.create_item(
+            db_session,
+            board,
+            project,
+            actor=owner,
+            type_="note",
+            x=0,
+            y=0,
+            width=None,
+            height=None,
+            content={"text": "mockup v2"},
+            color=None,
+        )
+
+        sock = FakeSocket()
+        await realtime.manager.connect(owner.id, sock)
+
+        requested = await service.request_approval(db_session, item, project, actor=owner)
+        assert requested.approval_status == "pending"
+        assert requested.approval_requested_by_name == "Card Requester"
+        assert sock.sent[-1]["type"] == realtime.EVENT_BOARD_ITEM_UPDATED
+        assert sock.sent[-1]["data"]["approval_status"] == "pending"
+
+        decided = await service.decide_approval(
+            db_session, item, project, decider=contact_user, decision="approved", note=None
+        )
+        assert decided.approval_status == "approved"
+        assert decided.approval_decided_by_name == "Client Casey"
+        assert decided.approval_decided_at is not None
+
+        event_types = [e["type"] for e in sock.sent]
+        assert realtime.EVENT_NOTIFICATION_CREATED in event_types
+        rows = (await db_session.execute(select(Notification).where(Notification.user_id == owner.id))).scalars().all()
+        assert any(n.event_type == "canvas_approval" for n in rows)
+
+    async def test_decide_requires_pending(self, db_session) -> None:
+        from fastapi import HTTPException
+
+        owner, _agency, _client, project = await _project(db_session)
+        board = await service.get_or_create_board(db_session, project)
+        item = await service.create_item(
+            db_session,
+            board,
+            project,
+            actor=owner,
+            type_="note",
+            x=0,
+            y=0,
+            width=None,
+            height=None,
+            content={"text": "x"},
+            color=None,
+        )
+        with pytest.raises(HTTPException) as exc:
+            await service.decide_approval(db_session, item, project, decider=owner, decision="approved", note=None)
+        assert exc.value.status_code == 409
+
+    async def test_decide_with_changes_requested_keeps_note(self, db_session) -> None:
+        owner, _agency, _client, project = await _project(db_session)
+        board = await service.get_or_create_board(db_session, project)
+        item = await service.create_item(
+            db_session,
+            board,
+            project,
+            actor=owner,
+            type_="note",
+            x=0,
+            y=0,
+            width=None,
+            height=None,
+            content={"text": "x"},
+            color=None,
+        )
+        await service.request_approval(db_session, item, project, actor=owner)
+        decided = await service.decide_approval(
+            db_session, item, project, decider=owner, decision="changes_requested", note="  make it blue  "
+        )
+        assert decided.approval_status == "changes_requested"
+        assert decided.approval_note == "make it blue"
+
+    async def test_withdraw_clears_state_and_requires_a_request(self, db_session) -> None:
+        from fastapi import HTTPException
+
+        owner, _agency, _client, project = await _project(db_session)
+        board = await service.get_or_create_board(db_session, project)
+        item = await service.create_item(
+            db_session,
+            board,
+            project,
+            actor=owner,
+            type_="note",
+            x=0,
+            y=0,
+            width=None,
+            height=None,
+            content={"text": "x"},
+            color=None,
+        )
+        with pytest.raises(HTTPException) as exc:
+            await service.withdraw_approval(db_session, item, project)
+        assert exc.value.status_code == 409
+
+        await service.request_approval(db_session, item, project, actor=owner)
+        withdrawn = await service.withdraw_approval(db_session, item, project)
+        assert withdrawn.approval_status is None
+        assert withdrawn.approval_requested_by_name is None
+
+    async def test_re_request_resets_a_prior_decision(self, db_session) -> None:
+        owner, _agency, _client, project = await _project(db_session)
+        board = await service.get_or_create_board(db_session, project)
+        item = await service.create_item(
+            db_session,
+            board,
+            project,
+            actor=owner,
+            type_="note",
+            x=0,
+            y=0,
+            width=None,
+            height=None,
+            content={"text": "x"},
+            color=None,
+        )
+        await service.request_approval(db_session, item, project, actor=owner)
+        await service.decide_approval(
+            db_session, item, project, decider=owner, decision="changes_requested", note="fix the logo"
+        )
+        again = await service.request_approval(db_session, item, project, actor=owner)
+        assert again.approval_status == "pending"
+        assert again.approval_decided_by_name is None
+        assert again.approval_note is None
+
+
 class TestBroadcastRecipients:
     async def test_reaches_team_and_client_contacts_only(self, db_session) -> None:
         owner = await make_user(db_session, full_name="Owner")

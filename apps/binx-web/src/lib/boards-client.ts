@@ -24,6 +24,9 @@ export interface ImageContent {
 }
 export type BoardItemContent = NoteContent | ImageContent | Record<string, never>;
 
+/** Keep in sync with binx-api's boards/models.py BOARD_APPROVAL_STATUSES. */
+export type BoardApprovalStatus = "pending" | "approved" | "changes_requested";
+
 export interface BoardItem {
   id: string;
   board_id: string;
@@ -38,6 +41,12 @@ export interface BoardItem {
   author_kind: "agency" | "client";
   created_by_id: string | null;
   created_by_name: string;
+  /** Client-approval workflow — null means it was never requested. */
+  approval_status: BoardApprovalStatus | null;
+  approval_requested_by_name: string | null;
+  approval_decided_by_name: string | null;
+  approval_decided_at: string | null;
+  approval_note: string | null;
   /** {emoji: count}. The realtime item events omit these — the store keeps them. */
   reactions: Record<string, number>;
   /** Which reaction kinds the current viewer has on this card. */
