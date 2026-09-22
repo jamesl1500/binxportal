@@ -150,3 +150,20 @@ class UserTutorialProgress(Base):
     # JSON list[str] of dismissed popup ids — same "Text column, JSON-encoded"
     # convention as UserProfile.skills above.
     dismissed_popups: Mapped[str] = mapped_column(Text, default="[]")
+
+
+# A user's personal customization of the staff dashboard's widget grid (which
+# widgets show, and in what order). Created lazily on first access, same as
+# the settings tables above.
+class UserDashboardLayout(Base):
+    __tablename__ = "user_dashboard_layouts"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), unique=True, index=True)
+
+    # JSON list[str] of dashboard widget ids, same "Text column, JSON-encoded"
+    # convention as UserTutorialProgress.dismissed_popups above. A widget id
+    # missing from this list (e.g. one added after the user last customized)
+    # is appended at the end when the layout is read.
+    widget_order: Mapped[str] = mapped_column(Text, default="[]")
+    hidden_widgets: Mapped[str] = mapped_column(Text, default="[]")

@@ -1,31 +1,28 @@
 /**
  * page.tsx - Dashboard Overview
  *
- * The at-a-glance roll-up: headline figures for the agency, the things that
- * need attention, a peek at the signed-in member's tasks, and a slice of
- * recent team activity. Deeper views live on the My work and Pulse tabs and
- * the top-nav pages.
+ * The at-a-glance roll-up: headline figures for the agency, and a
+ * customizable widget grid (needs attention / recent activity / upcoming
+ * meetings / my tasks / quick actions — see DashboardWidgetGrid) staff can
+ * reorder and hide to fit how they work. Deeper views live on the My work
+ * and Pulse tabs and the top-nav pages.
  *
  * @module apps/binx-web/src/app/(app)/dashboard/page.tsx
  * @author Binx.io
  */
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getCurrentAgencyContext } from "@/lib/agencies";
 import { getDashboard } from "@/lib/dashboard";
 import { getMeetings } from "@/lib/meetings";
 import { formatMoneyCents } from "@/lib/money";
+import { getDashboardLayout } from "@/lib/users";
 import ClientStatGrid, {
   type ClientStat,
 } from "@/components/clients/ClientStatGrid/ClientStatGrid";
 import AiBriefingCard from "@/components/dashboard/AiBriefingCard/AiBriefingCard";
-import AttentionCard from "@/components/dashboard/AttentionCard/AttentionCard";
-import ActivityTeaser from "@/components/dashboard/ActivityTeaser/ActivityTeaser";
-import MyTasksCard from "@/components/dashboard/MyTasksCard/MyTasksCard";
-import UpcomingMeetingsCard from "@/components/meetings/UpcomingMeetingsCard/UpcomingMeetingsCard";
-
-import styles from "./page.module.scss";
+import DashboardWidgetGrid from "@/components/dashboard/DashboardWidgetGrid/DashboardWidgetGrid";
+import { DASHBOARD_WIDGET_IDS } from "@/components/dashboard/widgets";
 
 const DashboardOverviewPage = async () => {
   const { currentAgency } = await getCurrentAgencyContext();
@@ -34,9 +31,10 @@ const DashboardOverviewPage = async () => {
   }
   const agencyId = currentAgency.id;
 
-  const [overview, upcomingMeetings] = await Promise.all([
+  const [overview, upcomingMeetings, layout] = await Promise.all([
     getDashboard(agencyId),
     getMeetings(agencyId, { status: "scheduled", fromDate: new Date().toISOString().slice(0, 10) }),
+    getDashboardLayout().catch(() => ({ widget_order: [...DASHBOARD_WIDGET_IDS], hidden_widgets: [] })),
   ]);
   const {
     on_hold_projects: onHoldProjects,
@@ -90,37 +88,17 @@ const DashboardOverviewPage = async () => {
 
       <ClientStatGrid stats={stats} />
 
-      <div className={`${styles.grid} ${styles.afterStats}`}>
-        <section>
-          <div className={styles.sectionHead}>
-            <h2 className={styles.sectionTitle}>Needs attention</h2>
-          </div>
-          <AttentionCard
-            overdueInvoices={overdueInvoices}
-            overdueTaskCount={myWork.overdue_count}
-            onHoldProjects={onHoldProjects}
-          />
-        </section>
-
-        <section>
-          <div className={styles.sectionHead}>
-            <h2 className={styles.sectionTitle}>Recent activity</h2>
-            <Link href="/activity" className={styles.link}>
-              View all
-            </Link>
-          </div>
-          <ActivityTeaser entries={activity} />
-        </section>
-
-        <section>
-          <div className={styles.sectionHead}>
-            <h2 className={styles.sectionTitle}>Upcoming meetings</h2>
-            <Link href="/meetings" className={styles.link}>
-              View all
-            </Link>
-          </div>
-          <UpcomingMeetingsCard meetings={upcomingMeetings} limit={5} moreHref="/meetings" showClient showProject />
-        </section>
+      <div style={{ marginTop: "2rem" }}>
+        <DashboardWidgetGrid
+          initialOrder={layout.widget_order}
+          initialHidden={layout.hidden_widgets}
+          overdueInvoices={overdueInvoices}
+          overdueTaskCount={myWork.overdue_count}
+          onHoldProjects={onHoldProjects}
+          activity={activity}
+          meetings={upcomingMeetings}
+          myTasks={myWork.tasks}
+        />
       </div>
     </div>
   );

@@ -1,9 +1,19 @@
 import uuid
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
 from binx_api.core.security import Password
+
+# The staff dashboard's customizable widgets. Keep in sync with
+# apps/binx-web/src/components/dashboard/widgets.ts on the frontend.
+DASHBOARD_WIDGET_IDS: list[str] = [
+    "my_tasks",
+    "needs_attention",
+    "quick_actions",
+    "recent_activity",
+    "upcoming_meetings",
+]
 
 
 class UserRead(BaseModel):
@@ -152,6 +162,33 @@ class TutorialProgressUpdate(BaseModel):
     dismissed_popups: list[Annotated[str, Field(min_length=1, max_length=64)]] = Field(
         default_factory=list, max_length=64
     )
+
+
+class DashboardLayoutRead(BaseModel):
+    """Built manually in the router (like TutorialProgressRead) rather than
+    from_attributes — widget_order/hidden_widgets are JSON-in-Text on the
+    model, list[str] here. widget_order always lists every known widget id
+    (any missing from the stored value are appended at the end)."""
+
+    widget_order: list[str]
+    hidden_widgets: list[str]
+
+
+class DashboardLayoutUpdate(BaseModel):
+    """Full replace of both fields together, same as TutorialProgressUpdate."""
+
+    widget_order: list[str] = Field(max_length=len(DASHBOARD_WIDGET_IDS))
+    hidden_widgets: list[str] = Field(max_length=len(DASHBOARD_WIDGET_IDS))
+
+    @model_validator(mode="after")
+    def _valid_widget_ids(self) -> "DashboardLayoutUpdate":
+        for name, ids in (("widget_order", self.widget_order), ("hidden_widgets", self.hidden_widgets)):
+            if len(set(ids)) != len(ids):
+                raise ValueError(f"{name} contains a duplicate widget id")
+            unknown = set(ids) - set(DASHBOARD_WIDGET_IDS)
+            if unknown:
+                raise ValueError(f"{name} contains unknown widget id(s): {', '.join(sorted(unknown))}")
+        return self
 
 
 class ChangePasswordRequest(BaseModel):
