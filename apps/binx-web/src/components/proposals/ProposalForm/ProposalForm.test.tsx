@@ -23,8 +23,8 @@ import ProposalForm from "./ProposalForm";
 const mockedCreate = vi.mocked(createProposalAction);
 
 const clients = [
-  { id: "client-1", name: "Acme Co" },
-  { id: "client-2", name: "Globex" },
+  { id: "client-1", name: "Acme Co", primaryContactName: "Wile Coyote", primaryContactEmail: "wile@acme.example" },
+  { id: "client-2", name: "Globex", primaryContactName: null, primaryContactEmail: null },
 ];
 
 beforeEach(() => {
@@ -110,6 +110,27 @@ describe("ProposalForm", () => {
     await user.click(screen.getByRole("button", { name: /create draft/i }));
 
     expect(mockedCreate).toHaveBeenCalledWith("a1", expect.objectContaining({ clientId: "client-2" }));
+  });
+
+  it("auto-fills recipient name/email from the selected client's contact info", async () => {
+    const user = userEvent.setup();
+    render(<ProposalForm agencyId="a1" clients={clients} />);
+
+    await user.selectOptions(screen.getByLabelText(/^Client$/), "client-1");
+
+    expect(screen.getByLabelText("Recipient name")).toHaveValue("Wile Coyote");
+    expect(screen.getByLabelText("Recipient email")).toHaveValue("wile@acme.example");
+  });
+
+  it("clears recipient name/email when the selected client has no contact info on file", async () => {
+    const user = userEvent.setup();
+    render(<ProposalForm agencyId="a1" clients={clients} />);
+
+    await user.selectOptions(screen.getByLabelText(/^Client$/), "client-1");
+    await user.selectOptions(screen.getByLabelText(/^Client$/), "client-2");
+
+    expect(screen.getByLabelText("Recipient name")).toHaveValue("");
+    expect(screen.getByLabelText("Recipient email")).toHaveValue("");
   });
 
   it("won't submit without a title or a described line", async () => {

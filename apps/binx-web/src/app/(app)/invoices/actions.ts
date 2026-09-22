@@ -96,9 +96,10 @@ export async function issueInvoiceAction(
   agencyId: string,
   invoiceId: string,
   sendNotice: boolean,
+  recipientEmail?: string | null,
 ): Promise<InvoiceActionResult> {
   try {
-    return { invoice: await issueInvoice(agencyId, invoiceId, sendNotice) };
+    return { invoice: await issueInvoice(agencyId, invoiceId, sendNotice, recipientEmail) };
   } catch (error) {
     return errorResult(error, "Unable to issue invoice");
   }

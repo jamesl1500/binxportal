@@ -139,7 +139,21 @@ describe("invoicing.ts", () => {
   it("issueInvoice POSTs the send_notice flag", async () => {
     mockedApi.post.mockResolvedValueOnce({ data: { id: I } });
     await invoicing.issueInvoice(A, I, true);
-    expect(mockedApi.post).toHaveBeenCalledWith(`/agencies/${A}/invoices/${I}/issue`, { send_notice: true }, AUTH);
+    expect(mockedApi.post).toHaveBeenCalledWith(
+      `/agencies/${A}/invoices/${I}/issue`,
+      { send_notice: true, recipient_email: null },
+      AUTH,
+    );
+  });
+
+  it("issueInvoice POSTs a recipient_email override when given", async () => {
+    mockedApi.post.mockResolvedValueOnce({ data: { id: I } });
+    await invoicing.issueInvoice(A, I, true, "override@example.com");
+    expect(mockedApi.post).toHaveBeenCalledWith(
+      `/agencies/${A}/invoices/${I}/issue`,
+      { send_notice: true, recipient_email: "override@example.com" },
+      AUTH,
+    );
   });
 
   it("voidInvoice POSTs a null body", async () => {

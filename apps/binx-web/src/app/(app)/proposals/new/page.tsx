@@ -47,7 +47,12 @@ const NewProposalPage = async ({ searchParams }: NewProposalPageProps) => {
       <div className={styles.formCard}>
         <ProposalForm
           agencyId={currentAgency.id}
-          clients={clients.map((c) => ({ id: c.id, name: c.name }))}
+          clients={clients.map((c) => ({
+            id: c.id,
+            name: c.name,
+            primaryContactName: c.primary_contact_name,
+            primaryContactEmail: c.primary_contact_email,
+          }))}
           initialClientId={client ?? null}
         />
       </div>
