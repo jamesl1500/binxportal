@@ -25,11 +25,11 @@ export interface ComputeStackProps extends cdk.StackProps {
 }
 
 /**
- * Wraps the pre-existing `binxportal` EC2 instance (i-025b868d7d0487155,
- * `t3.micro`, Ubuntu 26.04 — see the plan's exploration notes) rather than
- * provisioning a new one: an Elastic IP so DNS survives a stop/start, and an
- * IAM role for SSM access (Session Manager for a human, `send-command` for
- * CI) + ECR pulls.
+ * Wraps the pre-existing `binxportal` EC2 instance (i-0105be61fb01246d2,
+ * `t4g.small`, Graviton/arm64, Ubuntu 26.04 — see the plan's exploration
+ * notes) rather than provisioning a new one: an Elastic IP so DNS survives a
+ * stop/start, and an IAM role for SSM access (Session Manager for a human,
+ * `send-command` for CI) + ECR pulls.
  *
  * Deliberately NOT an `ec2.Instance` L2 construct — CDK doesn't have a
  * clean "adopt this already-running instance" story, and modeling it as one
