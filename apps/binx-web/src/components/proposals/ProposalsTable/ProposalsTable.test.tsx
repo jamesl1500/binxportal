@@ -2,7 +2,9 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("next/link", () => ({ default: ({ children }: { children: React.ReactNode }) => <a>{children}</a> }));
+vi.mock("next/link", () => ({
+  default: ({ children, href }: { children: React.ReactNode; href: string }) => <a href={href}>{children}</a>,
+}));
 
 import type { Proposal } from "@/lib/proposals";
 
@@ -71,5 +73,19 @@ describe("ProposalsTable", () => {
   it("shows an empty state with no proposals", () => {
     render(<ProposalsTable proposals={[]} />);
     expect(screen.getByText("No proposals yet.")).toBeInTheDocument();
+  });
+
+  it("hides the client/lead column when showClient is false", () => {
+    render(<ProposalsTable proposals={[makeProposal({})]} showClient={false} />);
+    expect(screen.queryByRole("columnheader", { name: /client \/ lead/i })).not.toBeInTheDocument();
+    expect(screen.queryByText("Globex")).not.toBeInTheDocument();
+  });
+
+  it("links rows under a custom linkBase", () => {
+    render(<ProposalsTable proposals={[makeProposal({ id: "p9" })]} linkBase="/portal/proposals" />);
+    expect(screen.getByRole("link", { name: "Website redesign" })).toHaveAttribute(
+      "href",
+      "/portal/proposals/p9",
+    );
   });
 });

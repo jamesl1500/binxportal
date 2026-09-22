@@ -28,6 +28,8 @@ interface ProposalFormProps {
   agencyId: string;
   /** Present when editing an existing draft. */
   proposal?: ProposalDetail;
+  /** Pre-selects a client on a new draft, e.g. from a client's Proposals tab. */
+  initialClientId?: string | null;
 }
 
 interface LineRow {
@@ -51,7 +53,7 @@ function roundHalfUp(value: number): number {
   return Math.round(value);
 }
 
-const ProposalForm = ({ agencyId, proposal }: ProposalFormProps) => {
+const ProposalForm = ({ agencyId, proposal, initialClientId = null }: ProposalFormProps) => {
   const router = useRouter();
   const isEdit = Boolean(proposal);
 
@@ -95,7 +97,7 @@ const ProposalForm = ({ agencyId, proposal }: ProposalFormProps) => {
 
     const input: ProposalInput = {
       leadId: proposal?.lead_id ?? null,
-      clientId: proposal?.client_id ?? null,
+      clientId: proposal?.client_id ?? initialClientId,
       title: title.trim(),
       recipientName: recipientName.trim() || null,
       recipientEmail: recipientEmail.trim() || null,

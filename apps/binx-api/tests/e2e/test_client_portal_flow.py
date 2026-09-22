@@ -67,7 +67,13 @@ class TestOnboarding:
 
     async def test_a_non_contact_account_is_forbidden(self, client, db_session, portal_setup) -> None:
         stranger = await make_user(db_session, email="stranger@example.com")
-        for path in ("/portal/context", "/portal/projects", "/portal/invoices", "/portal/conversations"):
+        for path in (
+            "/portal/context",
+            "/portal/projects",
+            "/portal/invoices",
+            "/portal/proposals",
+            "/portal/conversations",
+        ):
             r = await client.get(path, headers=auth_headers(stranger))
             assert r.status_code == 403, path
 
@@ -307,6 +313,101 @@ class TestPortalMessages:
         )
         hidden = await client.get(f"/portal/conversations/{other_convo.id}", headers=auth_headers(contact_user))
         assert hidden.status_code == 404
+
+
+async def _create_and_send_proposal(client, agency_id, client_id, owner, *, title="Brand refresh") -> dict:
+    create = await client.post(
+        f"/agencies/{agency_id}/proposals",
+        json={
+            "client_id": str(client_id),
+            "title": title,
+            "recipient_email": "casey@northwind.example",
+            "currency": "USD",
+            "tax_rate_percent": "0",
+            "line_items": [{"description": "Brand strategy", "quantity": "1", "unit_price_cents": 500000}],
+        },
+        headers=auth_headers(owner),
+    )
+    assert create.status_code == 201, create.text
+    proposal = create.json()
+
+    send = await client.post(
+        f"/agencies/{agency_id}/proposals/{proposal['id']}/send", json={}, headers=auth_headers(owner)
+    )
+    assert send.status_code == 200, send.text
+    return send.json()
+
+
+class TestPortalProposals:
+    async def test_list_and_read_are_scoped_and_exclude_drafts(
+        self, client, db_session, email_outbox, portal_setup
+    ) -> None:
+        s = portal_setup
+        contact_user, _ = await _invite_and_accept(
+            client, db_session, email_outbox, s["agency"].id, s["client"].id, s["owner"], "casey5@northwind.example"
+        )
+        sent = await _create_and_send_proposal(client, s["agency"].id, s["client"].id, s["owner"])
+
+        # A draft (never sent) must not appear.
+        draft = await client.post(
+            f"/agencies/{s['agency'].id}/proposals",
+            json={
+                "client_id": str(s["client"].id),
+                "title": "Still drafting",
+                "currency": "USD",
+                "tax_rate_percent": "0",
+                "line_items": [],
+            },
+            headers=auth_headers(s["owner"]),
+        )
+        assert draft.status_code == 201, draft.text
+
+        # A proposal for a different client must not appear either.
+        other_client = await make_client(db_session, agency=s["agency"], name="Globex")
+        await _create_and_send_proposal(client, s["agency"].id, other_client.id, s["owner"], title="Globex proposal")
+
+        listing = (await client.get("/portal/proposals", headers=auth_headers(contact_user))).json()
+        assert [p["title"] for p in listing] == ["Brand refresh"]
+        assert listing[0]["client_id"] == str(s["client"].id)
+
+        detail = await client.get(f"/portal/proposals/{sent['id']}", headers=auth_headers(contact_user))
+        assert detail.status_code == 200, detail.text
+        assert detail.json()["line_items"][0]["description"] == "Brand strategy"
+
+        hidden = await client.get(f"/portal/proposals/{draft.json()['id']}", headers=auth_headers(contact_user))
+        assert hidden.status_code == 404
+
+    async def test_sign_uses_the_signed_in_contacts_own_identity(
+        self, client, db_session, email_outbox, portal_setup
+    ) -> None:
+        s = portal_setup
+        contact_user, _ = await _invite_and_accept(
+            client, db_session, email_outbox, s["agency"].id, s["client"].id, s["owner"], "casey6@northwind.example"
+        )
+        sent = await _create_and_send_proposal(client, s["agency"].id, s["client"].id, s["owner"])
+
+        signed = await client.post(f"/portal/proposals/{sent['id']}/sign", headers=auth_headers(contact_user))
+        assert signed.status_code == 200, signed.text
+        body = signed.json()
+        assert body["status"] == "signed"
+        assert body["signature"]["signer_name"] == contact_user.full_name
+        assert body["signature"]["signer_email"] == contact_user.email
+
+    async def test_decline_with_a_reason(self, client, db_session, email_outbox, portal_setup) -> None:
+        s = portal_setup
+        contact_user, _ = await _invite_and_accept(
+            client, db_session, email_outbox, s["agency"].id, s["client"].id, s["owner"], "casey7@northwind.example"
+        )
+        sent = await _create_and_send_proposal(client, s["agency"].id, s["client"].id, s["owner"])
+
+        declined = await client.post(
+            f"/portal/proposals/{sent['id']}/decline",
+            json={"reason": "Going with another agency"},
+            headers=auth_headers(contact_user),
+        )
+        assert declined.status_code == 200, declined.text
+        assert declined.json()["status"] == "declined"
+        assert declined.json()["decline_reason"] == "Going with another agency"
 
 
 class TestPortalContactCannotBecomeStaff:

@@ -16,6 +16,7 @@ describe("ClientTabs", () => {
       ["Dashboard", "/clients/client-1"],
       ["Projects", "/clients/client-1/projects"],
       ["Invoices", "/clients/client-1/invoices"],
+      ["Proposals", "/clients/client-1/proposals"],
       ["Meetings", "/clients/client-1/meetings"],
       ["Settings", "/clients/client-1/settings"],
     ];

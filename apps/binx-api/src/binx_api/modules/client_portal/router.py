@@ -2,7 +2,7 @@ import uuid
 from datetime import date, datetime
 from typing import Annotated
 
-from fastapi import APIRouter, File, Form, Query, UploadFile, status
+from fastapi import APIRouter, File, Form, Query, Request, UploadFile, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import FileResponse
 
@@ -42,6 +42,11 @@ from binx_api.modules.messaging import service as messaging_service
 from binx_api.modules.messaging.models import SENDER_CLIENT
 from binx_api.modules.messaging.schemas import ConversationDetailRead, ConversationRead, MessageRead
 from binx_api.modules.projects import service as projects_service
+from binx_api.modules.proposals import service as proposals_service
+from binx_api.modules.proposals.router import _detail_read as _proposal_detail_read
+from binx_api.modules.proposals.router import _names as _proposal_names
+from binx_api.modules.proposals.router import _read as _proposal_read
+from binx_api.modules.proposals.schemas import ProposalDeclineRequest, ProposalDetailRead, ProposalRead
 
 router = APIRouter(prefix="/portal", tags=["client-portal"])
 
@@ -486,6 +491,66 @@ async def cancel_portal_meeting(
         db, meeting, agency, client, cancelled_by=current_user, cancelled_by_kind=CREATED_BY_CLIENT
     )
     return _meeting_read(*(await meetings_service.get_meeting_with_names_or_404(db, agency.id, meeting_id)))
+
+
+# ---- Proposals ------------------------------------------------------
+
+
+async def _portal_proposal_or_404(db: DbSession, agency_id: uuid.UUID, client_id: uuid.UUID, proposal_id: uuid.UUID):
+    proposal = await proposals_service.get_proposal_or_404(db, agency_id, proposal_id)
+    if proposal.client_id != client_id or proposal.status == "draft":
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Proposal not found")
+    return proposal
+
+
+@router.get("/proposals", response_model=list[ProposalRead])
+async def list_portal_proposals(db: DbSession, membership: PortalContext) -> list[ProposalRead]:
+    agency, client, _contact = membership
+    rows = await proposals_service.list_proposals(db, agency.id, client_id=client.id)
+    # Clients never see drafts — those aren't real proposals yet.
+    return [
+        _proposal_read(proposal, lead_name, client_name)
+        for proposal, lead_name, client_name in rows
+        if proposal.status != "draft"
+    ]
+
+
+@router.get("/proposals/{proposal_id}", response_model=ProposalDetailRead)
+async def read_portal_proposal(db: DbSession, membership: PortalContext, proposal_id: uuid.UUID) -> ProposalDetailRead:
+    agency, client, _contact = membership
+    proposal = await _portal_proposal_or_404(db, agency.id, client.id, proposal_id)
+    lead_name, client_name = await _proposal_names(db, proposal)
+    return await _proposal_detail_read(db, proposal, lead_name, client_name)
+
+
+@router.post("/proposals/{proposal_id}/sign", response_model=ProposalDetailRead)
+async def sign_portal_proposal(
+    db: DbSession, current_user: CurrentUser, membership: PortalContext, proposal_id: uuid.UUID, request: Request
+) -> ProposalDetailRead:
+    """Signs with the signed-in contact's own name/email — unlike the public
+    token flow, the portal already knows who this is."""
+    agency, client, _contact = membership
+    proposal = await _portal_proposal_or_404(db, agency.id, client.id, proposal_id)
+    proposal = await proposals_service.sign_proposal(
+        db,
+        proposal,
+        signer_name=current_user.full_name,
+        signer_email=current_user.email,
+        ip_address=request.client.host if request.client else None,
+    )
+    lead_name, client_name = await _proposal_names(db, proposal)
+    return await _proposal_detail_read(db, proposal, lead_name, client_name)
+
+
+@router.post("/proposals/{proposal_id}/decline", response_model=ProposalDetailRead)
+async def decline_portal_proposal(
+    db: DbSession, membership: PortalContext, proposal_id: uuid.UUID, data: ProposalDeclineRequest
+) -> ProposalDetailRead:
+    agency, client, _contact = membership
+    proposal = await _portal_proposal_or_404(db, agency.id, client.id, proposal_id)
+    proposal = await proposals_service.decline_proposal(db, proposal, reason=data.reason)
+    lead_name, client_name = await _proposal_names(db, proposal)
+    return await _proposal_detail_read(db, proposal, lead_name, client_name)
 
 
 # ---- Messages ------------------------------------------------------

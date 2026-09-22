@@ -1,9 +1,10 @@
 /**
  * PortalHeader.tsx
  *
- * The slim top bar for the client portal: the agency name, the four portal
- * sections (Overview · Projects · Invoices · Messages) with the active one
- * highlighted via `usePathname`, and the signed-in contact's name + sign-out.
+ * The slim top bar for the client portal: the agency name, the portal
+ * sections (Overview · Projects · Invoices · Proposals · Meetings ·
+ * Messages) with the active one highlighted via `usePathname`, and the
+ * signed-in contact's name + sign-out.
  * Below 900px the nav + account info collapse into a hamburger-triggered
  * panel — same disclosure pattern as MarketingHeader.tsx.
  *
@@ -33,6 +34,7 @@ const TABS = [
   { href: "/portal", label: "Overview" },
   { href: "/portal/projects", label: "Projects" },
   { href: "/portal/invoices", label: "Invoices" },
+  { href: "/portal/proposals", label: "Proposals" },
   { href: "/portal/meetings", label: "Meetings" },
   { href: "/portal/messages", label: "Messages" },
 ];

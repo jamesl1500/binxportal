@@ -17,12 +17,18 @@ import styles from "../page.module.scss";
 
 export const metadata: Metadata = { title: "New proposal" };
 
-const NewProposalPage = async () => {
+interface NewProposalPageProps {
+  searchParams: Promise<{ client?: string }>;
+}
+
+const NewProposalPage = async ({ searchParams }: NewProposalPageProps) => {
   const { currentAgency } = await getCurrentAgencyContext();
 
   if (!currentAgency) {
     redirect("/onboarding/two");
   }
+
+  const { client } = await searchParams;
 
   return (
     <div>
@@ -38,7 +44,7 @@ const NewProposalPage = async () => {
       </div>
 
       <div className={styles.formCard}>
-        <ProposalForm agencyId={currentAgency.id} />
+        <ProposalForm agencyId={currentAgency.id} initialClientId={client ?? null} />
       </div>
     </div>
   );
