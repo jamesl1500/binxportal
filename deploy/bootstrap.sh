@@ -29,8 +29,8 @@ if ! command -v aws >/dev/null 2>&1; then
 fi
 
 echo "==> Setting up /opt/binxportal"
-sudo mkdir -p /opt/binxportal/deploy
-sudo chown -R "$USER":"$USER" /opt/binxportal
+sudo mkdir -p /binxportal/deploy
+sudo chown -R "$USER":"$USER" /binxportal
 
 cat <<'MSG'
 
@@ -41,7 +41,7 @@ cat <<'MSG'
    /opt/binxportal/deploy/).
 2. Log out and back in (or `newgrp docker`) so the docker group membership
    takes effect.
-3. `bash /opt/binxportal/deploy/redeploy.sh` — that's the whole first
+3. `bash /binxportal/deploy/redeploy.sh` — that's the whole first
    deploy. No `.env` to hand-place: it fetches POSTGRES_PASSWORD,
    JWT_SECRET, and ANTHROPIC_API_KEY from Secrets Manager
    (`binxportal/app` — see infra/lib/secrets-stack.ts) and regenerates

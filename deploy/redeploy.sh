@@ -8,7 +8,7 @@
 # SAFETY: this must never become `down -v` / `down` — see the warning at the
 # top of docker-compose.prod.yml. `up -d` after a `pull` is the whole deploy.
 set -euo pipefail
-cd /opt/binxportal
+cd /binxportal
 
 AWS_REGION=us-east-2
 ECR_REGISTRY="574247905173.dkr.ecr.${AWS_REGION}.amazonaws.com"
