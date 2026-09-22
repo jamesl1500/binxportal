@@ -5821,6 +5821,8 @@ export interface components {
              * Format: uuid
              */
             client_id: string;
+            /** Default Hourly Rate Cents */
+            default_hourly_rate_cents?: number | null;
             /** Description */
             description?: string | null;
             /** Due Date */
@@ -5930,6 +5932,8 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            /** Default Hourly Rate Cents */
+            default_hourly_rate_cents: number | null;
             /** Description */
             description: string | null;
             /** Due Date */
@@ -6025,6 +6029,8 @@ export interface components {
              * Format: uuid
              */
             client_id: string;
+            /** Default Hourly Rate Cents */
+            default_hourly_rate_cents?: number | null;
             /** Description */
             description?: string | null;
             /** Due Date */

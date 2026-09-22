@@ -117,6 +117,7 @@ def _project_read(project: Project, client_name: str, member_count: int) -> Proj
         start_date=project.start_date,
         due_date=project.due_date,
         member_count=member_count,
+        default_hourly_rate_cents=project.default_hourly_rate_cents,
         created_at=project.created_at,
     )
 

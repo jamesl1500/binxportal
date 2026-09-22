@@ -62,6 +62,7 @@ def _project_read(project, client_name: str, member_count: int) -> ProjectRead:
         start_date=project.start_date,
         due_date=project.due_date,
         member_count=member_count,
+        default_hourly_rate_cents=project.default_hourly_rate_cents,
         created_at=project.created_at,
     )
 
@@ -188,6 +189,7 @@ async def create_project(
         status_=data.status,
         start_date=data.start_date,
         due_date=data.due_date,
+        default_hourly_rate_cents=data.default_hourly_rate_cents,
     )
     client_name = await _resolve_client_name(db, project.client_id)
     return _project_read(project, client_name, 0)
@@ -217,6 +219,7 @@ async def update_project(
         status_=data.status,
         start_date=data.start_date,
         due_date=data.due_date,
+        default_hourly_rate_cents=data.default_hourly_rate_cents,
     )
     client_name = await _resolve_client_name(db, project.client_id)
     member_count = await service.count_project_members(db, project.id)

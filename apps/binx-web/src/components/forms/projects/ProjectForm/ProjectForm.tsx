@@ -34,7 +34,16 @@ const projectSchema = z.object({
   description: z.string().trim().max(4096, "Must be at most 4096 characters").optional(),
   startDate: z.string().optional(),
   dueDate: z.string().optional(),
+  defaultHourlyRate: z.string().optional(),
 });
+
+function toCents(dollars: string): number | null {
+  const n = Number.parseFloat(dollars);
+  return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) : null;
+}
+function centsToInput(cents: number | null): string {
+  return cents === null ? "" : (cents / 100).toFixed(2);
+}
 
 type ProjectValues = z.infer<typeof projectSchema>;
 
@@ -72,6 +81,7 @@ const ProjectForm = ({ agencyId, clients, project, onSuccess, onCancel }: Projec
       description: project?.description ?? "",
       startDate: project?.start_date ?? "",
       dueDate: project?.due_date ?? "",
+      defaultHourlyRate: centsToInput(project?.default_hourly_rate_cents ?? null),
     },
   });
 
@@ -86,6 +96,7 @@ const ProjectForm = ({ agencyId, clients, project, onSuccess, onCancel }: Projec
       description: values.description?.trim() || null,
       startDate: values.startDate || null,
       dueDate: values.dueDate || null,
+      defaultHourlyRateCents: values.defaultHourlyRate ? toCents(values.defaultHourlyRate) : null,
     };
 
     startTransition(async () => {
@@ -171,6 +182,22 @@ const ProjectForm = ({ agencyId, clients, project, onSuccess, onCancel }: Projec
           </label>
           <input id="dueDate" type="date" className={styles.input} {...register("dueDate")} />
         </div>
+      </div>
+
+      <div className={styles.field}>
+        <label className={styles.label} htmlFor="defaultHourlyRate">
+          Default hourly rate
+        </label>
+        <input
+          id="defaultHourlyRate"
+          type="number"
+          step="0.01"
+          min="0"
+          placeholder="e.g. 150.00"
+          className={styles.input}
+          {...register("defaultHourlyRate")}
+        />
+        <p className={styles.hint}>Used to bill time entries on this project when no rate is set on the entry itself.</p>
       </div>
 
       <div className={styles.field}>

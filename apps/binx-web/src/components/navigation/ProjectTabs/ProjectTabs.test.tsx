@@ -20,6 +20,7 @@ describe("ProjectTabs", () => {
 
     expect(screen.getByRole("link", { name: "Dashboard" })).toHaveAttribute("href", `/projects/${projectId}`);
     expect(screen.getByRole("link", { name: "Board" })).toHaveAttribute("href", `/projects/${projectId}/board`);
+    expect(screen.getByRole("link", { name: "Time" })).toHaveAttribute("href", `/projects/${projectId}/time`);
     expect(screen.getByRole("link", { name: "Files" })).toHaveAttribute("href", `/projects/${projectId}/files`);
     expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute("href", `/projects/${projectId}/settings`);
   });
@@ -67,6 +68,17 @@ describe("ProjectTabs", () => {
     expect(screen.getByRole("link", { name: "Files" })).toHaveAttribute("data-active", "true");
     expect(screen.getByRole("link", { name: "Dashboard" })).toHaveAttribute("data-active", "false");
     expect(screen.getByRole("link", { name: "Board" })).toHaveAttribute("data-active", "false");
+    expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute("data-active", "false");
+  });
+
+  it("marks the time tab active on the time path", () => {
+    mockedUsePathname.mockReturnValue(`/projects/${projectId}/time`);
+    render(<ProjectTabs projectId={projectId} />);
+
+    expect(screen.getByRole("link", { name: "Time" })).toHaveAttribute("data-active", "true");
+    expect(screen.getByRole("link", { name: "Dashboard" })).toHaveAttribute("data-active", "false");
+    expect(screen.getByRole("link", { name: "Board" })).toHaveAttribute("data-active", "false");
+    expect(screen.getByRole("link", { name: "Files" })).toHaveAttribute("data-active", "false");
     expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute("data-active", "false");
   });
 

@@ -49,6 +49,9 @@ const InvoicesPage = async () => {
         </div>
 
         <div className={styles.actions}>
+          <Link href="/invoices/recurring" className={styles.settingsLink}>
+            Recurring invoices
+          </Link>
           <Link href="/settings/invoicing" className={styles.settingsLink}>
             Invoicing settings
           </Link>

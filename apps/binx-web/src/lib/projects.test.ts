@@ -60,6 +60,7 @@ const projectInput = {
   status: "active",
   startDate: null,
   dueDate: "2026-01-01",
+  defaultHourlyRateCents: null,
 } satisfies projects.ProjectDetailsInput;
 
 const cases: Case[] = [

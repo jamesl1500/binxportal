@@ -1,0 +1,96 @@
+@use "../../../../styles/tokens" as t;
+@use "../../../../styles/mixins" as m;
+
+.card {
+  @include m.card-base;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-4;
+  padding: t.$space-6;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-4;
+}
+
+.field {
+  display: flex;
+  flex: 1 1 12rem;
+  flex-direction: column;
+  gap: t.$space-1;
+}
+
+.label {
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  color: t.$color-ink-soft;
+}
+
+.input,
+.select {
+  @include m.input-base;
+}
+
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+}
+
+.start {
+  @include m.button-base;
+  align-self: flex-start;
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+}
+
+.stop {
+  @include m.button-base;
+  align-self: flex-start;
+  background: t.$color-danger;
+  color: t.$color-accent-foreground;
+}
+
+.runningHeader {
+  display: flex;
+  align-items: center;
+  gap: t.$space-4;
+}
+
+.elapsed {
+  font-family: var(--font-mono);
+  font-size: t.$font-size-2xl;
+  font-variant-numeric: tabular-nums;
+  color: t.$color-ink;
+}
+
+.badge {
+  @include m.mono-label;
+  padding: t.$space-1 t.$space-3;
+  color: t.$color-ink-soft;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+
+  &[data-billable="true"] {
+    color: t.$color-accent-foreground;
+    background: t.$color-ink;
+    border-color: t.$color-ink;
+  }
+}
+
+.meta {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+}
+
+.description {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+}

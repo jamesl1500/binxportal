@@ -40,6 +40,7 @@ export interface ProjectDetailsInput {
   status: ProjectStatus;
   startDate: string | null;
   dueDate: string | null;
+  defaultHourlyRateCents: number | null;
 }
 
 export type ProjectMember = Schemas["ProjectMemberRead"];
@@ -86,6 +87,7 @@ function toProjectPayload(input: ProjectDetailsInput) {
     status: input.status,
     start_date: input.startDate,
     due_date: input.dueDate,
+    default_hourly_rate_cents: input.defaultHourlyRateCents,
   };
 }
 

@@ -7349,6 +7349,18 @@
             "title": "Client Id",
             "type": "string"
           },
+          "default_hourly_rate_cents": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Hourly Rate Cents"
+          },
           "description": {
             "anyOf": [
               {
@@ -7623,6 +7635,17 @@
             "title": "Created At",
             "type": "string"
           },
+          "default_hourly_rate_cents": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Hourly Rate Cents"
+          },
           "description": {
             "anyOf": [
               {
@@ -7692,6 +7715,7 @@
           "start_date",
           "due_date",
           "member_count",
+          "default_hourly_rate_cents",
           "created_at"
         ],
         "title": "ProjectRead",
@@ -7847,6 +7871,18 @@
             "format": "uuid",
             "title": "Client Id",
             "type": "string"
+          },
+          "default_hourly_rate_cents": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Hourly Rate Cents"
           },
           "description": {
             "anyOf": [
