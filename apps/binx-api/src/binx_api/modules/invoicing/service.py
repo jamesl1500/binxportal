@@ -342,6 +342,13 @@ async def _list_line_items(db: AsyncSession, invoice_id: uuid.UUID) -> list[Invo
     return list(result.scalars().all())
 
 
+async def list_line_items(db: AsyncSession, invoice_id: uuid.UUID) -> list[InvoiceLineItem]:
+    """Public wrapper — time_tracking/service.py needs the created rows (in
+    the order they were submitted) to link each one back to its source
+    TimeEntry after create_invoice() returns."""
+    return await _list_line_items(db, invoice_id)
+
+
 async def _replace_line_items(
     db: AsyncSession, invoice: Invoice, line_items: list[LineItemInput]
 ) -> list[InvoiceLineItem]:
@@ -368,7 +375,7 @@ async def create_invoice(
     db: AsyncSession,
     agency: Agency,
     *,
-    created_by: User,
+    created_by: User | None,
     client_id: uuid.UUID,
     project_id: uuid.UUID | None,
     issue_date: date | None,
@@ -408,7 +415,7 @@ async def create_invoice(
         payment_instructions=(
             payment_instructions if payment_instructions is not None else settings.payment_instructions
         ),
-        created_by_id=created_by.id,
+        created_by_id=created_by.id if created_by else None,
     )
     db.add(invoice)
     await db.flush()
@@ -429,7 +436,11 @@ async def create_invoice(
         agency.id,
         category=ACTIVITY_CATEGORY_INVOICING,
         event_type="invoice_created",
-        summary=f"{created_by.full_name} drafted invoice {invoice.number}",
+        summary=(
+            f"{created_by.full_name} drafted invoice {invoice.number}"
+            if created_by
+            else f"Invoice {invoice.number} was auto-drafted from a recurring schedule"
+        ),
         actor=created_by,
         target_type="invoice",
         target_id=invoice.id,

@@ -16,6 +16,7 @@ from binx_api.modules.invoicing.schemas import (
     BillingSettingsUpdate,
     InvoiceCreate,
     InvoiceDetailRead,
+    InvoiceFromTimeEntriesCreate,
     InvoiceParty,
     InvoiceRead,
     InvoiceSummaryRead,
@@ -27,6 +28,7 @@ from binx_api.modules.invoicing.schemas import (
     StripeConnectStatusRead,
     StripeOnboardingLinkRead,
 )
+from binx_api.modules.time_tracking import service as time_tracking_service
 
 router = APIRouter(prefix="/agencies/{agency_id}", tags=["invoicing"])
 
@@ -215,6 +217,22 @@ async def create_invoice(
         notes=data.notes,
         payment_instructions=data.payment_instructions,
         line_items=data.line_items,
+    )
+    return _detail_read(invoice, *(await service.get_invoice_context(db, invoice)))
+
+
+@router.post("/invoices/from-time-entries", response_model=InvoiceDetailRead, status_code=status.HTTP_201_CREATED)
+async def create_invoice_from_time_entries(
+    db: DbSession, current_user: CurrentUser, agency_and_role: AnyMember, data: InvoiceFromTimeEntriesCreate
+) -> InvoiceDetailRead:
+    agency, _role = agency_and_role
+    invoice = await time_tracking_service.create_invoice_from_entries(
+        db,
+        agency,
+        created_by=current_user,
+        client_id=data.client_id,
+        project_id=data.project_id,
+        entry_ids=data.entry_ids,
     )
     return _detail_read(invoice, *(await service.get_invoice_context(db, invoice)))
 

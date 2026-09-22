@@ -86,6 +86,12 @@ class InvoiceUpdate(InvoiceCreate):
     """Full replace of a draft invoice — same shape as create."""
 
 
+class InvoiceFromTimeEntriesCreate(BaseModel):
+    client_id: uuid.UUID
+    project_id: uuid.UUID
+    entry_ids: list[uuid.UUID] = Field(min_length=1)
+
+
 # --- Reads -----------------------------------------------------------
 
 

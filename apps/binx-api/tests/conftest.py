@@ -78,6 +78,8 @@ from binx_api.modules.invoicing import models as _invoicing_models  # noqa: E402
 from binx_api.modules.leads import models as _leads_models  # noqa: E402,F401
 from binx_api.modules.messaging import models as _messaging_models  # noqa: E402,F401
 from binx_api.modules.projects import models as _project_models  # noqa: E402,F401
+from binx_api.modules.proposals import models as _proposals_models  # noqa: E402,F401
+from binx_api.modules.time_tracking import models as _time_tracking_models  # noqa: E402,F401
 from binx_api.modules.users import models as _user_models  # noqa: E402,F401
 from binx_api.modules.users.models import User  # noqa: E402
 from binx_api.modules.users.service import create_user  # noqa: E402

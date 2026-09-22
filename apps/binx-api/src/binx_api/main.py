@@ -15,6 +15,7 @@ from binx_api.modules.boards.router import router as boards_router
 from binx_api.modules.client_portal.router import router as client_portal_router
 from binx_api.modules.dashboard.router import router as dashboard_router
 from binx_api.modules.files.router import router as files_router
+from binx_api.modules.invoicing.recurring_router import router as recurring_invoices_router
 from binx_api.modules.invoicing.router import router as invoicing_router
 from binx_api.modules.invoicing.webhooks_router import router as invoicing_webhooks_router
 from binx_api.modules.leads.router import router as leads_router
@@ -24,6 +25,9 @@ from binx_api.modules.messaging.router import ws_router as messaging_ws_router
 from binx_api.modules.notifications.router import router as notifications_router
 from binx_api.modules.ops.router import router as ops_router
 from binx_api.modules.projects.router import router as projects_router
+from binx_api.modules.proposals.router import public_router as proposals_public_router
+from binx_api.modules.proposals.router import router as proposals_router
+from binx_api.modules.time_tracking.router import router as time_tracking_router
 from binx_api.modules.users.router import router as users_router
 
 # Ensures binx_api.* loggers (e.g. the console-log email backend) are actually emitted.
@@ -62,6 +66,10 @@ def create_app() -> FastAPI:
     app.include_router(billing_webhooks_router)
     app.include_router(invoicing_webhooks_router)
     app.include_router(boards_router)
+    app.include_router(proposals_router)
+    app.include_router(proposals_public_router)
+    app.include_router(time_tracking_router)
+    app.include_router(recurring_invoices_router)
 
     return app
 

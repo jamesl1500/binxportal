@@ -21,6 +21,8 @@ from binx_api.modules.meetings import models as meetings_models  # noqa: F401
 from binx_api.modules.messaging import models as messaging_models  # noqa: F401
 from binx_api.modules.notifications import models as notifications_models  # noqa: F401
 from binx_api.modules.projects import models as projects_models  # noqa: F401
+from binx_api.modules.proposals import models as proposals_models  # noqa: F401
+from binx_api.modules.time_tracking import models as time_tracking_models  # noqa: F401
 from binx_api.modules.users import models as users_models  # noqa: F401
 
 # this is the Alembic Config object, which provides
