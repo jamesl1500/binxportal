@@ -22,7 +22,8 @@ sudo usermod -aG docker "$USER"
 
 echo "==> Installing the AWS CLI (for 'aws ecr get-login-password')"
 if ! command -v aws >/dev/null 2>&1; then
-  curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
+  # x86_64 or aarch64 (Graviton) — the installer is arch-specific.
+  curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o /tmp/awscliv2.zip
   (cd /tmp && unzip -q awscliv2.zip && sudo ./aws/install)
   rm -rf /tmp/awscliv2.zip /tmp/aws
 fi

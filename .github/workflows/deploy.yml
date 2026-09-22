@@ -43,7 +43,8 @@ env:
   # assumable by a GitHub Actions OIDC token whose `sub` claim matches this
   # exact repo + branch, per that stack's trust policy).
   DEPLOY_ROLE_ARN: arn:aws:iam::574247905173:role/binxportal-github-deploy
-  INSTANCE_ID: i-025b868d7d0487155
+  # Graviton (arm64) t4g.small — see infra/lib/compute-stack.ts.
+  INSTANCE_ID: i-0105be61fb01246d2
 
 jobs:
   build-and-push:
@@ -80,6 +81,12 @@ jobs:
           echo "api-image=${{ steps.ecr.outputs.registry }}/binx-api:sha-$sha" >> "$GITHUB_OUTPUT"
           echo "web-image=${{ steps.ecr.outputs.registry }}/binx-web:sha-$sha" >> "$GITHUB_OUTPUT"
 
+      # The runner is amd64; QEMU lets buildx cross-build the arm64 images
+      # the Graviton instance below actually runs.
+      - uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
       - uses: docker/setup-buildx-action@v3
 
       - name: Build + push binx-api
@@ -87,6 +94,7 @@ jobs:
         with:
           context: .
           file: apps/binx-api/Dockerfile
+          platforms: linux/arm64
           push: true
           tags: |
             ${{ steps.tags.outputs.api-image }}
@@ -99,6 +107,7 @@ jobs:
         with:
           context: .
           file: apps/binx-web/Dockerfile
+          platforms: linux/arm64
           push: true
           tags: |
             ${{ steps.tags.outputs.web-image }}
