@@ -46,6 +46,12 @@ class Project(Base):
     status: Mapped[str] = mapped_column(String(20), default=STATUS_PLANNING)
     start_date: Mapped[date | None] = mapped_column(Date, default=None)
     due_date: Mapped[date | None] = mapped_column(Date, default=None)
+    # Fallback billing rate for time_tracking entries logged on this project
+    # that don't carry their own override — see
+    # time_tracking/service.py::resolve_hourly_rate_cents. None means no
+    # default has been set; an entry with no rate anywhere can't be invoiced
+    # until one is.
+    default_hourly_rate_cents: Mapped[int | None] = mapped_column(Integer, default=None)
 
 
 # A custom, purely descriptive label for what a member does on THIS project

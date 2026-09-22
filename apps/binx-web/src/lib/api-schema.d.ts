@@ -804,6 +804,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agencies/{agency_id}/invoices/from-time-entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Invoice From Time Entries */
+        post: operations["create_invoice_from_time_entries_agencies__agency_id__invoices_from_time_entries_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agencies/{agency_id}/invoices/summary": {
         parameters: {
             query?: never;
@@ -2026,6 +2043,251 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agencies/{agency_id}/proposals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Proposals */
+        get: operations["list_proposals_agencies__agency_id__proposals_get"];
+        put?: never;
+        /** Create Proposal */
+        post: operations["create_proposal_agencies__agency_id__proposals_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/proposals/{proposal_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Proposal */
+        get: operations["read_proposal_agencies__agency_id__proposals__proposal_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Proposal */
+        delete: operations["delete_proposal_agencies__agency_id__proposals__proposal_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Proposal */
+        patch: operations["update_proposal_agencies__agency_id__proposals__proposal_id__patch"];
+        trace?: never;
+    };
+    "/agencies/{agency_id}/proposals/{proposal_id}/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send Proposal */
+        post: operations["send_proposal_agencies__agency_id__proposals__proposal_id__send_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/recurring-invoices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Schedules */
+        get: operations["list_schedules_agencies__agency_id__recurring_invoices_get"];
+        put?: never;
+        /** Create Schedule */
+        post: operations["create_schedule_agencies__agency_id__recurring_invoices_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/recurring-invoices/{schedule_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Schedule */
+        delete: operations["delete_schedule_agencies__agency_id__recurring_invoices__schedule_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Schedule */
+        patch: operations["update_schedule_agencies__agency_id__recurring_invoices__schedule_id__patch"];
+        trace?: never;
+    };
+    "/agencies/{agency_id}/recurring-invoices/{schedule_id}/pause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pause Schedule */
+        post: operations["pause_schedule_agencies__agency_id__recurring_invoices__schedule_id__pause_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/recurring-invoices/{schedule_id}/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resume Schedule */
+        post: operations["resume_schedule_agencies__agency_id__recurring_invoices__schedule_id__resume_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/recurring-invoices/{schedule_id}/run-now": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Run Schedule Now */
+        post: operations["run_schedule_now_agencies__agency_id__recurring_invoices__schedule_id__run_now_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/time-entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Entries */
+        get: operations["list_entries_agencies__agency_id__time_entries_get"];
+        put?: never;
+        /** Log Manual Entry */
+        post: operations["log_manual_entry_agencies__agency_id__time_entries_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/time-entries/running": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Running Timer */
+        get: operations["read_running_timer_agencies__agency_id__time_entries_running_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/time-entries/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start Timer */
+        post: operations["start_timer_agencies__agency_id__time_entries_start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/time-entries/uninvoiced-summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Uninvoiced Summary */
+        get: operations["read_uninvoiced_summary_agencies__agency_id__time_entries_uninvoiced_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/time-entries/{entry_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Entry */
+        delete: operations["delete_entry_agencies__agency_id__time_entries__entry_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Entry */
+        patch: operations["update_entry_agencies__agency_id__time_entries__entry_id__patch"];
+        trace?: never;
+    };
+    "/agencies/{agency_id}/time-entries/{entry_id}/stop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Stop Timer */
+        post: operations["stop_timer_agencies__agency_id__time_entries__entry_id__stop_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/change-email": {
         parameters: {
             query?: never;
@@ -2786,6 +3048,57 @@ export interface paths {
         put?: never;
         /** Toggle Board Reaction */
         post: operations["toggle_board_reaction_portal_projects__project_id__canvas_items__item_id__reactions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/proposals/public/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Public Proposal */
+        get: operations["read_public_proposal_proposals_public__token__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/proposals/public/{token}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decline Public Proposal */
+        post: operations["decline_public_proposal_proposals_public__token__decline_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/proposals/public/{token}/sign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sign Public Proposal */
+        post: operations["sign_public_proposal_proposals_public__token__sign_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4375,6 +4688,21 @@ export interface components {
             /** Voided At */
             voided_at: string | null;
         };
+        /** InvoiceFromTimeEntriesCreate */
+        InvoiceFromTimeEntriesCreate: {
+            /**
+             * Client Id
+             * Format: uuid
+             */
+            client_id: string;
+            /** Entry Ids */
+            entry_ids: string[];
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+        };
         /**
          * InvoiceParty
          * @description The 'from' (agency) or 'bill to' (client) block on a rendered invoice.
@@ -4779,6 +5107,35 @@ export interface components {
             email: string;
             /** Password */
             password: string;
+        };
+        /** ManualEntryCreate */
+        ManualEntryCreate: {
+            /** Description */
+            description?: string | null;
+            /**
+             * Ended At
+             * Format: date-time
+             */
+            ended_at: string;
+            /** Hourly Rate Cents */
+            hourly_rate_cents?: number | null;
+            /**
+             * Is Billable
+             * @default true
+             */
+            is_billable: boolean;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Task Id */
+            task_id?: string | null;
         };
         /** MeetingCreate */
         MeetingCreate: {
@@ -5679,6 +6036,266 @@ export interface components {
             /** Status */
             status: string;
         };
+        /** ProposalCreate */
+        ProposalCreate: {
+            /** Client Id */
+            client_id?: string | null;
+            /** Content */
+            content?: string | null;
+            /**
+             * Currency
+             * @default USD
+             */
+            currency: string;
+            /** Lead Id */
+            lead_id?: string | null;
+            /** Line Items */
+            line_items?: components["schemas"]["ProposalLineItemInput"][];
+            /** Recipient Email */
+            recipient_email?: string | null;
+            /** Recipient Name */
+            recipient_name?: string | null;
+            /**
+             * Tax Rate Percent
+             * @default 0
+             */
+            tax_rate_percent: number | string;
+            /** Title */
+            title: string;
+            /** Valid Until */
+            valid_until?: string | null;
+        };
+        /** ProposalDeclineRequest */
+        ProposalDeclineRequest: {
+            /** Reason */
+            reason?: string | null;
+        };
+        /** ProposalDetailRead */
+        ProposalDetailRead: {
+            /**
+             * Agency Id
+             * Format: uuid
+             */
+            agency_id: string;
+            /** Client Id */
+            client_id: string | null;
+            /** Client Name */
+            client_name: string | null;
+            /** Content */
+            content: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Currency */
+            currency: string;
+            /** Decided At */
+            decided_at: string | null;
+            /** Decline Reason */
+            decline_reason: string | null;
+            /** Display Status */
+            display_status: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Lead Id */
+            lead_id: string | null;
+            /** Lead Name */
+            lead_name: string | null;
+            /** Line Items */
+            line_items: components["schemas"]["ProposalLineItemRead"][];
+            /** Recipient Email */
+            recipient_email: string | null;
+            /** Recipient Name */
+            recipient_name: string | null;
+            /** Sent At */
+            sent_at: string | null;
+            /** Share Url */
+            share_url: string;
+            signature: components["schemas"]["ProposalSignatureRead"] | null;
+            /** Status */
+            status: string;
+            /** Subtotal Cents */
+            subtotal_cents: number;
+            /** Tax Cents */
+            tax_cents: number;
+            /** Tax Rate Percent */
+            tax_rate_percent: string;
+            /** Title */
+            title: string;
+            /** Total Cents */
+            total_cents: number;
+            /** Valid Until */
+            valid_until: string | null;
+            /** Viewed At */
+            viewed_at: string | null;
+        };
+        /** ProposalLineItemInput */
+        ProposalLineItemInput: {
+            /** Description */
+            description: string;
+            /** Quantity */
+            quantity: number | string;
+            /** Unit Price Cents */
+            unit_price_cents: number;
+        };
+        /** ProposalLineItemRead */
+        ProposalLineItemRead: {
+            /** Amount Cents */
+            amount_cents: number;
+            /** Description */
+            description: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Position */
+            position: number;
+            /** Quantity */
+            quantity: string;
+            /** Unit Price Cents */
+            unit_price_cents: number;
+        };
+        /**
+         * ProposalPublicRead
+         * @description What an unauthenticated recipient sees at /proposals/public/{token} —
+         *     deliberately excludes agency_id/lead_id/internal ids.
+         */
+        ProposalPublicRead: {
+            /** Agency Name */
+            agency_name: string;
+            /** Content */
+            content: string | null;
+            /** Currency */
+            currency: string;
+            /** Display Status */
+            display_status: string;
+            /** Line Items */
+            line_items: components["schemas"]["ProposalLineItemRead"][];
+            /** Recipient Name */
+            recipient_name: string | null;
+            signature: components["schemas"]["ProposalSignatureRead"] | null;
+            /** Status */
+            status: string;
+            /** Subtotal Cents */
+            subtotal_cents: number;
+            /** Tax Cents */
+            tax_cents: number;
+            /** Tax Rate Percent */
+            tax_rate_percent: string;
+            /** Title */
+            title: string;
+            /** Total Cents */
+            total_cents: number;
+            /** Valid Until */
+            valid_until: string | null;
+        };
+        /** ProposalRead */
+        ProposalRead: {
+            /**
+             * Agency Id
+             * Format: uuid
+             */
+            agency_id: string;
+            /** Client Id */
+            client_id: string | null;
+            /** Client Name */
+            client_name: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Currency */
+            currency: string;
+            /** Display Status */
+            display_status: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Lead Id */
+            lead_id: string | null;
+            /** Lead Name */
+            lead_name: string | null;
+            /** Recipient Email */
+            recipient_email: string | null;
+            /** Recipient Name */
+            recipient_name: string | null;
+            /** Sent At */
+            sent_at: string | null;
+            /** Status */
+            status: string;
+            /** Subtotal Cents */
+            subtotal_cents: number;
+            /** Tax Cents */
+            tax_cents: number;
+            /** Title */
+            title: string;
+            /** Total Cents */
+            total_cents: number;
+            /** Valid Until */
+            valid_until: string | null;
+        };
+        /** ProposalSignRequest */
+        ProposalSignRequest: {
+            /**
+             * Signer Email
+             * Format: email
+             */
+            signer_email: string;
+            /** Signer Name */
+            signer_name: string;
+        };
+        /** ProposalSignatureRead */
+        ProposalSignatureRead: {
+            /**
+             * Signed At
+             * Format: date-time
+             */
+            signed_at: string;
+            /** Signer Email */
+            signer_email: string;
+            /** Signer Name */
+            signer_name: string;
+        };
+        /**
+         * ProposalUpdate
+         * @description Full replace of a draft proposal — same shape as create.
+         */
+        ProposalUpdate: {
+            /** Client Id */
+            client_id?: string | null;
+            /** Content */
+            content?: string | null;
+            /**
+             * Currency
+             * @default USD
+             */
+            currency: string;
+            /** Lead Id */
+            lead_id?: string | null;
+            /** Line Items */
+            line_items?: components["schemas"]["ProposalLineItemInput"][];
+            /** Recipient Email */
+            recipient_email?: string | null;
+            /** Recipient Name */
+            recipient_name?: string | null;
+            /**
+             * Tax Rate Percent
+             * @default 0
+             */
+            tax_rate_percent: number | string;
+            /** Title */
+            title: string;
+            /** Valid Until */
+            valid_until?: string | null;
+        };
         /** ProspectRead */
         ProspectRead: {
             /** Contact Email */
@@ -5706,6 +6323,182 @@ export interface components {
             experience?: components["schemas"]["ExperienceEntry"][];
             /** Skills */
             skills?: string[];
+        };
+        /** RecurringLineItemInput */
+        RecurringLineItemInput: {
+            /** Description */
+            description: string;
+            /** Quantity */
+            quantity: number | string;
+            /** Unit Price Cents */
+            unit_price_cents: number;
+        };
+        /** RecurringLineItemRead */
+        RecurringLineItemRead: {
+            /** Description */
+            description: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Position */
+            position: number;
+            /** Quantity */
+            quantity: string;
+            /** Unit Price Cents */
+            unit_price_cents: number;
+        };
+        /** RecurringScheduleCreate */
+        RecurringScheduleCreate: {
+            /**
+             * Auto Issue
+             * @default false
+             */
+            auto_issue: boolean;
+            /**
+             * Client Id
+             * Format: uuid
+             */
+            client_id: string;
+            /** Day Of Month */
+            day_of_month?: number | null;
+            /**
+             * Due Days
+             * @default 14
+             */
+            due_days: number;
+            /** Interval */
+            interval: string;
+            /**
+             * Interval Count
+             * @default 1
+             */
+            interval_count: number;
+            /** Line Items */
+            line_items: components["schemas"]["RecurringLineItemInput"][];
+            /** Notes */
+            notes?: string | null;
+            /** Payment Instructions */
+            payment_instructions?: string | null;
+            /** Project Id */
+            project_id?: string | null;
+            /** Start Date */
+            start_date?: string | null;
+            /**
+             * Tax Rate Percent
+             * @default 0
+             */
+            tax_rate_percent: number | string;
+            /** Title */
+            title: string;
+            /** Weekday */
+            weekday?: number | null;
+        };
+        /** RecurringScheduleRead */
+        RecurringScheduleRead: {
+            /**
+             * Agency Id
+             * Format: uuid
+             */
+            agency_id: string;
+            /** Auto Issue */
+            auto_issue: boolean;
+            /**
+             * Client Id
+             * Format: uuid
+             */
+            client_id: string;
+            /** Client Name */
+            client_name: string;
+            /** Day Of Month */
+            day_of_month: number | null;
+            /** Due Days */
+            due_days: number;
+            /** Estimated Amount Cents */
+            estimated_amount_cents: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Interval */
+            interval: string;
+            /** Interval Count */
+            interval_count: number;
+            /** Is Active */
+            is_active: boolean;
+            /** Last Generated Invoice Id */
+            last_generated_invoice_id: string | null;
+            /** Last Run At */
+            last_run_at: string | null;
+            /** Line Items */
+            line_items: components["schemas"]["RecurringLineItemRead"][];
+            /**
+             * Next Run Date
+             * Format: date
+             */
+            next_run_date: string;
+            /** Project Id */
+            project_id: string | null;
+            /** Project Name */
+            project_name: string | null;
+            /** Tax Rate Percent */
+            tax_rate_percent: string;
+            /** Title */
+            title: string;
+            /** Weekday */
+            weekday: number | null;
+        };
+        /**
+         * RecurringScheduleUpdate
+         * @description Full replace, same shape as create. Doesn't reset next_run_date unless
+         *     start_date is given — see recurring_service.update_schedule.
+         */
+        RecurringScheduleUpdate: {
+            /**
+             * Auto Issue
+             * @default false
+             */
+            auto_issue: boolean;
+            /**
+             * Client Id
+             * Format: uuid
+             */
+            client_id: string;
+            /** Day Of Month */
+            day_of_month?: number | null;
+            /**
+             * Due Days
+             * @default 14
+             */
+            due_days: number;
+            /** Interval */
+            interval: string;
+            /**
+             * Interval Count
+             * @default 1
+             */
+            interval_count: number;
+            /** Line Items */
+            line_items: components["schemas"]["RecurringLineItemInput"][];
+            /** Notes */
+            notes?: string | null;
+            /** Payment Instructions */
+            payment_instructions?: string | null;
+            /** Project Id */
+            project_id?: string | null;
+            /** Start Date */
+            start_date?: string | null;
+            /**
+             * Tax Rate Percent
+             * @default 0
+             */
+            tax_rate_percent: number | string;
+            /** Title */
+            title: string;
+            /** Weekday */
+            weekday?: number | null;
         };
         /** RefreshRequest */
         RefreshRequest: {
@@ -5736,6 +6529,11 @@ export interface components {
             new_password: string;
             /** Token */
             token: string;
+        };
+        /** SendProposalRequest */
+        SendProposalRequest: {
+            /** Recipient Email */
+            recipient_email?: string | null;
         };
         /** SignupRequest */
         SignupRequest: {
@@ -6015,12 +6813,97 @@ export interface components {
             /** Title */
             title: string;
         };
+        /** TimeEntryRead */
+        TimeEntryRead: {
+            /** Amount Cents */
+            amount_cents: number | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Description */
+            description: string | null;
+            /** Duration Minutes */
+            duration_minutes: number;
+            /** Ended At */
+            ended_at: string | null;
+            /** Hourly Rate Cents */
+            hourly_rate_cents: number | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Invoiced */
+            invoiced: boolean;
+            /** Is Billable */
+            is_billable: boolean;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Project Name */
+            project_name: string;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Task Id */
+            task_id: string | null;
+            /** Task Title */
+            task_title: string | null;
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /** User Name */
+            user_name: string;
+        };
+        /** TimeEntryUpdate */
+        TimeEntryUpdate: {
+            /** Description */
+            description?: string | null;
+            /** Ended At */
+            ended_at?: string | null;
+            /** Hourly Rate Cents */
+            hourly_rate_cents?: number | null;
+            /**
+             * Is Billable
+             * @default true
+             */
+            is_billable: boolean;
+            /** Started At */
+            started_at?: string | null;
+            /** Task Id */
+            task_id?: string | null;
+        };
         /** TimePoint */
         TimePoint: {
             /** Label */
             label: string;
             /** Value */
             value: number;
+        };
+        /** TimerStart */
+        TimerStart: {
+            /** Description */
+            description?: string | null;
+            /**
+             * Is Billable
+             * @default true
+             */
+            is_billable: boolean;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Task Id */
+            task_id?: string | null;
         };
         /** TokenPair */
         TokenPair: {
@@ -6057,6 +6940,17 @@ export interface components {
             dismissed_popups?: string[];
             /** Tour Completed */
             tour_completed: boolean;
+        };
+        /** UninvoicedSummaryRead */
+        UninvoicedSummaryRead: {
+            /** Billable Amount Cents */
+            billable_amount_cents: number;
+            /** Entry Count */
+            entry_count: number;
+            /** Total Minutes */
+            total_minutes: number;
+            /** Unrated Entry Count */
+            unrated_entry_count: number;
         };
         /** UnreadCountRead */
         UnreadCountRead: {
@@ -8340,6 +9234,41 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["InvoiceCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceDetailRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_invoice_from_time_entries_agencies__agency_id__invoices_from_time_entries_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InvoiceFromTimeEntriesCreate"];
             };
         };
         responses: {
@@ -11804,6 +12733,709 @@ export interface operations {
             };
         };
     };
+    list_proposals_agencies__agency_id__proposals_get: {
+        parameters: {
+            query?: {
+                lead_id?: string | null;
+                client_id?: string | null;
+                status?: string | null;
+            };
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_proposal_agencies__agency_id__proposals_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProposalCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalDetailRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_proposal_agencies__agency_id__proposals__proposal_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposal_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalDetailRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_proposal_agencies__agency_id__proposals__proposal_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposal_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_proposal_agencies__agency_id__proposals__proposal_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposal_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProposalUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalDetailRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    send_proposal_agencies__agency_id__proposals__proposal_id__send_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposal_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendProposalRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalDetailRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_schedules_agencies__agency_id__recurring_invoices_get: {
+        parameters: {
+            query?: {
+                client_id?: string | null;
+            };
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecurringScheduleRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_schedule_agencies__agency_id__recurring_invoices_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecurringScheduleCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecurringScheduleRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_schedule_agencies__agency_id__recurring_invoices__schedule_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                schedule_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_schedule_agencies__agency_id__recurring_invoices__schedule_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                schedule_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecurringScheduleUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecurringScheduleRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pause_schedule_agencies__agency_id__recurring_invoices__schedule_id__pause_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                schedule_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecurringScheduleRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resume_schedule_agencies__agency_id__recurring_invoices__schedule_id__resume_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                schedule_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecurringScheduleRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_schedule_now_agencies__agency_id__recurring_invoices__schedule_id__run_now_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                schedule_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_entries_agencies__agency_id__time_entries_get: {
+        parameters: {
+            query?: {
+                project_id?: string | null;
+                task_id?: string | null;
+                user_id?: string | null;
+                billable?: boolean | null;
+                uninvoiced?: boolean;
+            };
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimeEntryRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    log_manual_entry_agencies__agency_id__time_entries_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ManualEntryCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimeEntryRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_running_timer_agencies__agency_id__time_entries_running_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimeEntryRead"] | null;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_timer_agencies__agency_id__time_entries_start_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TimerStart"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimeEntryRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_uninvoiced_summary_agencies__agency_id__time_entries_uninvoiced_summary_get: {
+        parameters: {
+            query: {
+                project_id: string;
+            };
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UninvoicedSummaryRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_entry_agencies__agency_id__time_entries__entry_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entry_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_entry_agencies__agency_id__time_entries__entry_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entry_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TimeEntryUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimeEntryRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stop_timer_agencies__agency_id__time_entries__entry_id__stop_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entry_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimeEntryRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     change_email_auth_change_email_post: {
         parameters: {
             query?: never;
@@ -13270,6 +14902,107 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BoardReactionsRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_public_proposal_proposals_public__token__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalPublicRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    decline_public_proposal_proposals_public__token__decline_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProposalDeclineRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalPublicRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sign_public_proposal_proposals_public__token__sign_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProposalSignRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalPublicRead"];
                 };
             };
             /** @description Validation Error */

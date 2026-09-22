@@ -149,3 +149,70 @@ class InvoicePayment(Base):
     # not record the same payment twice).
     stripe_payment_intent_id: Mapped[str | None] = mapped_column(String(255), default=None, unique=True, index=True)
     stripe_checkout_session_id: Mapped[str | None] = mapped_column(String(255), default=None, index=True)
+
+
+# ---- Recurring invoices (retainers) --------------------------------------
+# A template that stamps out a fresh draft (or auto-issued) Invoice on a
+# schedule — see recurring_service.py. There is no background worker in this
+# app, so "on a schedule" today means: whenever a schedule's next_run_date
+# has arrived by the time someone next opens the Recurring Invoices page
+# (recurring_service.catch_up_due_schedules is called from that GET) or hits
+# "Generate now". A real cron hitting recurring_service.catch_up_due_schedules
+# is a natural fast-follow once one exists in this deployment.
+
+RECURRING_INTERVAL_WEEKLY = "weekly"
+RECURRING_INTERVAL_MONTHLY = "monthly"
+recurring_intervals: list[str] = [RECURRING_INTERVAL_WEEKLY, RECURRING_INTERVAL_MONTHLY]
+
+
+class RecurringInvoiceSchedule(Base):
+    __tablename__ = "recurring_invoice_schedules"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    agency_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("agencies.id", ondelete="CASCADE"), index=True)
+    client_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("agency_clients.id"), index=True)
+    project_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("projects.id", ondelete="SET NULL"), default=None, index=True
+    )
+    created_by_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), default=None)
+
+    # Internal label only (e.g. "Monthly retainer") — never shown to the client.
+    title: Mapped[str] = mapped_column(String(255))
+    interval: Mapped[str] = mapped_column(String(20), default=RECURRING_INTERVAL_MONTHLY)
+    # "every interval_count <interval>s" — 1 is the common case, but this
+    # lets a schedule read "every 2 months" without a second interval enum.
+    interval_count: Mapped[int] = mapped_column(Integer, default=1)
+    # Monthly only: 1-28 (clamped away from month-end edge cases — see
+    # recurring_service._advance_monthly). Weekly only: 0=Monday..6=Sunday,
+    # matching AvailabilityRule.weekday's convention.
+    day_of_month: Mapped[int | None] = mapped_column(Integer, default=None)
+    weekday: Mapped[int | None] = mapped_column(Integer, default=None)
+
+    due_days: Mapped[int] = mapped_column(Integer, default=14)
+    tax_rate_percent: Mapped[Decimal] = mapped_column(Numeric(6, 3), default=Decimal("0"))
+    notes: Mapped[str | None] = mapped_column(String(4096), default=None)
+    payment_instructions: Mapped[str | None] = mapped_column(String(2048), default=None)
+    # False leaves each generated invoice as a draft for a human to review
+    # and issue by hand; True issues (and, same as the manual "issue" action,
+    # can email) it immediately on generation.
+    auto_issue: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    next_run_date: Mapped[date] = mapped_column(Date, index=True)
+    last_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    last_generated_invoice_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("invoices.id", ondelete="SET NULL"), default=None
+    )
+
+
+class RecurringInvoiceLineItem(Base):
+    __tablename__ = "recurring_invoice_line_items"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    schedule_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("recurring_invoice_schedules.id", ondelete="CASCADE"), index=True
+    )
+    position: Mapped[int] = mapped_column(Integer, default=0)
+    description: Mapped[str] = mapped_column(String(1024))
+    quantity: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=Decimal("1"))
+    unit_price_cents: Mapped[int] = mapped_column(Integer, default=0)
