@@ -22,7 +22,8 @@ const del = vi.mocked(deleteInvoiceAction);
 const issue = vi.mocked(issueInvoiceAction);
 const voidIt = vi.mocked(voidInvoiceAction);
 
-const invoice = (status: string) => ({ id: "i1", number: "INV-0001", status }) as never;
+const invoice = (status: string, billToEmail: string | null = "jamie@example.com") =>
+  ({ id: "i1", number: "INV-0001", status, bill_to: { email: billToEmail } }) as never;
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -58,7 +59,43 @@ describe("InvoiceActions", () => {
     // Dialog is open — its own "Issue invoice" button plus a title.
     expect(await screen.findByText("Issue INV-0001?")).toBeInTheDocument();
     await userEvent.click(screen.getAllByRole("button", { name: "Issue invoice" }).at(-1)!);
-    expect(issue).toHaveBeenCalledWith("a1", "i1", false);
+    expect(issue).toHaveBeenCalledWith("a1", "i1", false, null);
+  });
+
+  it("reveals a recipient-email input, pre-filled from the client's billing email, once notice is checked", async () => {
+    render(<InvoiceActions agencyId="a1" invoice={invoice("draft")} canManage clientHasEmail />);
+    await userEvent.click(screen.getByRole("button", { name: "Issue invoice" }));
+    await screen.findByText("Issue INV-0001?");
+
+    expect(screen.queryByLabelText("Recipient email")).toBeNull();
+    await userEvent.click(screen.getByRole("checkbox", { name: /email the client a notice/i }));
+    expect(screen.getByLabelText("Recipient email")).toHaveValue("jamie@example.com");
+
+    await userEvent.click(screen.getAllByRole("button", { name: "Issue invoice" }).at(-1)!);
+    expect(issue).toHaveBeenCalledWith("a1", "i1", true, "jamie@example.com");
+  });
+
+  it("lets staff override the recipient email before sending the notice", async () => {
+    render(<InvoiceActions agencyId="a1" invoice={invoice("draft")} canManage clientHasEmail />);
+    await userEvent.click(screen.getByRole("button", { name: "Issue invoice" }));
+    await screen.findByText("Issue INV-0001?");
+    await userEvent.click(screen.getByRole("checkbox", { name: /email the client a notice/i }));
+
+    const emailInput = screen.getByLabelText("Recipient email");
+    await userEvent.clear(emailInput);
+    await userEvent.type(emailInput, "override@example.com");
+    await userEvent.click(screen.getAllByRole("button", { name: "Issue invoice" }).at(-1)!);
+    expect(issue).toHaveBeenCalledWith("a1", "i1", true, "override@example.com");
+  });
+
+  it("disables Issue invoice when notice is checked but the email is blank", async () => {
+    render(<InvoiceActions agencyId="a1" invoice={invoice("draft", null)} canManage clientHasEmail={false} />);
+    await userEvent.click(screen.getByRole("button", { name: "Issue invoice" }));
+    await screen.findByText("Issue INV-0001?");
+    expect(screen.getByText(/no billing email on file/i)).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("checkbox", { name: /email the client a notice/i }));
+    expect(screen.getAllByRole("button", { name: "Issue invoice" }).at(-1)!).toBeDisabled();
   });
 
   it("sent invoice shows Record payment and Void", async () => {

@@ -4497,6 +4497,18 @@
       },
       "IssueInvoiceRequest": {
         "properties": {
+          "recipient_email": {
+            "anyOf": [
+              {
+                "format": "email",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recipient Email"
+          },
           "send_notice": {
             "default": false,
             "title": "Send Notice",

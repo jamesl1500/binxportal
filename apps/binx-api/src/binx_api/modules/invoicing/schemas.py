@@ -2,7 +2,7 @@ import uuid
 from datetime import date, datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, EmailStr, Field, model_validator
 
 # --- Billing settings ----------------------------------------------------
 
@@ -166,6 +166,8 @@ class PaymentCreate(BaseModel):
 class IssueInvoiceRequest(BaseModel):
     # Email the client's billing address a plain-text notice (no portal link yet).
     send_notice: bool = False
+    # Overrides the client's billing/contact email for this notice only, when set.
+    recipient_email: EmailStr | None = None
 
 
 class TimePoint(BaseModel):

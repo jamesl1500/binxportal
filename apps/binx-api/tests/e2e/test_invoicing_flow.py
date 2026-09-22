@@ -120,6 +120,35 @@ class TestInvoiceLifecycle:
         outsider = await make_user(db_session)
         assert (await client.get(f"/agencies/{agency.id}/invoices", headers=auth_headers(outsider))).status_code == 404
 
+    async def test_issue_notice_uses_recipient_email_override(self, client, team, monkeypatch) -> None:
+        agency, agency_client, owner, _member, admin = team
+        base = f"/agencies/{agency.id}"
+
+        sent = {}
+
+        async def fake_send(*, to, **kwargs):
+            sent["to"] = to
+
+        monkeypatch.setattr("binx_api.modules.invoicing.router.send_invoice_issued_email", fake_send)
+
+        created = await client.post(
+            f"{base}/invoices",
+            json={
+                "client_id": str(agency_client.id),
+                "line_items": [{"description": "x", "quantity": "1", "unit_price_cents": 100}],
+            },
+            headers=auth_headers(owner),
+        )
+        invoice_id = created.json()["id"]
+
+        issued = await client.post(
+            f"{base}/invoices/{invoice_id}/issue",
+            json={"send_notice": True, "recipient_email": "override@example.com"},
+            headers=auth_headers(admin),
+        )
+        assert issued.status_code == 200
+        assert sent["to"] == "override@example.com"
+
 
 class TestBillingSettings:
     async def test_member_reads_admin_writes(self, client, team) -> None:

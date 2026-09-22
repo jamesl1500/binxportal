@@ -4,7 +4,10 @@
  * The status-aware control bar above an invoice. Draft: Edit / Issue
  * (owner-admin) / Delete (owner-admin). Sent or paid: Record payment / Void
  * (owner-admin). Void: nothing. "Print / Save as PDF" is always available.
- * Issue and Void go through a confirm dialog.
+ * Issue and Void go through a confirm dialog. The issue dialog's "Email the
+ * client a notice" checkbox reveals an editable recipient-email input,
+ * pre-filled from the client's billing/contact email (`invoice.bill_to.email`)
+ * but overridable per-send.
  *
  * @module apps/binx-web/src/components/invoices/InvoiceActions/InvoiceActions.tsx
  * @author Binx.io
@@ -44,6 +47,7 @@ const InvoiceActions = ({ agencyId, invoice, canManage, clientHasEmail }: Invoic
   const [issueOpen, setIssueOpen] = useState(false);
   const [voidOpen, setVoidOpen] = useState(false);
   const [sendNotice, setSendNotice] = useState(false);
+  const [recipientEmail, setRecipientEmail] = useState(invoice.bill_to.email ?? "");
 
   const isDraft = invoice.status === "draft";
   const isVoid = invoice.status === "void";
@@ -120,16 +124,30 @@ const InvoiceActions = ({ agencyId, invoice, canManage, clientHasEmail }: Invoic
             <Dialog.Description className={styles.dialogDescription}>
               Once issued, the invoice can&apos;t be edited — only payments recorded, or the whole thing voided.
             </Dialog.Description>
-            <label className={styles.checkboxRow} data-disabled={!clientHasEmail}>
+            <label className={styles.checkboxRow}>
               <input
                 type="checkbox"
-                checked={sendNotice && clientHasEmail}
-                disabled={!clientHasEmail}
+                checked={sendNotice}
                 onChange={(event) => setSendNotice(event.target.checked)}
               />
               Email the client a notice
-              {!clientHasEmail && <span className={styles.hint}> — no billing email on file</span>}
+              {!clientHasEmail && !recipientEmail && (
+                <span className={styles.hint}> — no billing email on file</span>
+              )}
             </label>
+            {sendNotice && (
+              <label className={styles.field}>
+                <span className={styles.label}>Recipient email</span>
+                <input
+                  type="email"
+                  className={styles.input}
+                  value={recipientEmail}
+                  onChange={(event) => setRecipientEmail(event.target.value)}
+                  placeholder="jamie@example.com"
+                  required
+                />
+              </label>
+            )}
             <div className={styles.dialogActions}>
               <button type="button" className={styles.ghost} onClick={() => setIssueOpen(false)}>
                 Cancel
@@ -137,10 +155,15 @@ const InvoiceActions = ({ agencyId, invoice, canManage, clientHasEmail }: Invoic
               <button
                 type="button"
                 className={styles.primary}
-                disabled={isPending}
+                disabled={isPending || (sendNotice && recipientEmail.trim() === "")}
                 onClick={() =>
                   run(async () => {
-                    const result = await issueInvoiceAction(agencyId, invoice.id, sendNotice && clientHasEmail);
+                    const result = await issueInvoiceAction(
+                      agencyId,
+                      invoice.id,
+                      sendNotice,
+                      sendNotice ? recipientEmail.trim() : null,
+                    );
                     if (!result.error) setIssueOpen(false);
                     return result;
                   })

@@ -392,12 +392,13 @@ export async function issueInvoice(
   agencyId: string,
   invoiceId: string,
   sendNotice: boolean,
+  recipientEmail?: string | null,
 ): Promise<InvoiceDetail> {
   const headers = await authHeader();
   try {
     const { data } = await api.post<InvoiceDetail>(
       `/agencies/${agencyId}/invoices/${invoiceId}/issue`,
-      { send_notice: sendNotice },
+      { send_notice: sendNotice, recipient_email: recipientEmail || null },
       { headers },
     );
     return data;

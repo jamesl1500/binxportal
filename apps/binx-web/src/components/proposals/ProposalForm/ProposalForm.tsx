@@ -8,8 +8,9 @@
  * then tax — proposals carry no discount). Used for both creating a new
  * draft and editing an existing one (sent/decided proposals are never
  * editable — the page redirects away). The client select is what actually
- * attaches a proposal to an `AgencyClient` row — "Recipient name/email" are
- * plain free text and never link to a client record.
+ * attaches a proposal to an `AgencyClient` row; picking a client also
+ * auto-fills "Recipient name/email" from that client's primary contact
+ * info, though both stay plain free text the staff member can override.
  *
  * @module apps/binx-web/src/components/proposals/ProposalForm/ProposalForm.tsx
  * @author Binx.io
@@ -30,6 +31,8 @@ import styles from "./ProposalForm.module.scss";
 interface ClientOption {
   id: string;
   name: string;
+  primaryContactName?: string | null;
+  primaryContactEmail?: string | null;
 }
 
 interface ProposalFormProps {
@@ -147,7 +150,19 @@ const ProposalForm = ({ agencyId, clients, proposal, initialClientId = null }: P
       <div className={styles.grid}>
         <label className={styles.field}>
           <span className={styles.label}>Client</span>
-          <select className={styles.input} value={clientId} onChange={(event) => setClientId(event.target.value)}>
+          <select
+            className={styles.input}
+            value={clientId}
+            onChange={(event) => {
+              const id = event.target.value;
+              setClientId(id);
+              const selected = clients.find((client) => client.id === id);
+              if (selected) {
+                setRecipientName(selected.primaryContactName ?? "");
+                setRecipientEmail(selected.primaryContactEmail ?? "");
+              }
+            }}
+          >
             <option value="">No client</option>
             {clients.map((client) => (
               <option key={client.id} value={client.id}>

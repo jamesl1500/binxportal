@@ -282,7 +282,7 @@ async def issue_invoice(
     if data.send_notice:
         client = await db.get(AgencyClient, invoice.client_id)
         assert client is not None
-        recipient = client.billing_email or client.primary_contact_email
+        recipient = data.recipient_email or client.billing_email or client.primary_contact_email
         if recipient:
             await send_invoice_issued_email(
                 to=recipient,
