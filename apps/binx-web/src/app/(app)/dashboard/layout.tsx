@@ -30,11 +30,15 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
 
   const myWork = await getMyWork(currentAgency.id).catch(() => null);
   const firstName = user.full_name.trim().split(/\s+/)[0] || user.full_name;
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   return (
     <div>
       <span className={styles.eyebrow}>Dashboard</span>
-      <h1 className={styles.title}>Welcome back, {firstName}.</h1>
+      <h1 className={styles.title}>
+        {greeting}, {firstName}.
+      </h1>
       <p className={styles.subtitle}>What&apos;s happening across {currentAgency.name}.</p>
 
       <div className={styles.tabsWrap}>

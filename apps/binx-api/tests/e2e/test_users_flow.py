@@ -196,6 +196,43 @@ class TestAppearance:
         assert response.status_code == 422
 
 
+class TestDashboardLayout:
+    async def test_read_returns_the_default_layout(self, auth_client) -> None:
+        from binx_api.modules.users.schemas import DASHBOARD_WIDGET_IDS
+
+        response = await auth_client.get("/users/me/dashboard-layout")
+        assert response.status_code == 200
+        assert response.json() == {"widget_order": DASHBOARD_WIDGET_IDS, "hidden_widgets": []}
+
+    async def test_put_replaces_order_and_hidden_widgets(self, auth_client) -> None:
+        from binx_api.modules.users.schemas import DASHBOARD_WIDGET_IDS
+
+        custom_order = list(reversed(DASHBOARD_WIDGET_IDS))
+        response = await auth_client.put(
+            "/users/me/dashboard-layout",
+            json={"widget_order": custom_order, "hidden_widgets": ["quick_actions"]},
+        )
+        assert response.status_code == 200
+        assert response.json() == {"widget_order": custom_order, "hidden_widgets": ["quick_actions"]}
+
+        # It persists — a fresh GET reflects it, not just the PUT response.
+        follow_up = await auth_client.get("/users/me/dashboard-layout")
+        assert follow_up.json()["widget_order"] == custom_order
+
+    async def test_rejects_an_unknown_widget_id(self, auth_client) -> None:
+        response = await auth_client.put(
+            "/users/me/dashboard-layout", json={"widget_order": ["not_a_real_widget"], "hidden_widgets": []}
+        )
+        assert response.status_code == 422
+
+    async def test_rejects_a_duplicate_widget_id(self, auth_client) -> None:
+        response = await auth_client.put(
+            "/users/me/dashboard-layout",
+            json={"widget_order": ["my_tasks", "my_tasks"], "hidden_widgets": []},
+        )
+        assert response.status_code == 422
+
+
 class TestCredentialChanges:
     async def test_change_password_requires_the_current_one(self, auth_client) -> None:
         wrong = await auth_client.patch(
