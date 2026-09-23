@@ -6,7 +6,9 @@
  * than the staff `MessagingInbox` — no websocket, no shared store. It loads
  * on navigation, polls the open thread every 15s, and appends optimistically
  * on send. Staff messages and this client's own messages are distinguished
- * by `sender_kind`.
+ * by `sender_kind`. The thread header shows who the client is talking to
+ * (faces, names, job titles) and each message carries its sender's avatar,
+ * served through the conversation-scoped portal avatar route.
  *
  * @module apps/binx-web/src/components/portal/PortalMessages/PortalMessages.tsx
  * @author Binx.io
@@ -24,7 +26,10 @@ import {
   markPortalReadAction,
   sendPortalMessageAction,
 } from "@/app/(portal)/portal/messages/actions";
+import type { ConversationParticipant } from "@/lib/messaging-client";
 import type { Conversation, Message } from "@/lib/portal";
+import { portalParticipantAvatarUrl } from "@/lib/users-client";
+import MessageAvatar from "@/components/messaging/MessageAvatar/MessageAvatar";
 
 import styles from "./PortalMessages.module.scss";
 
@@ -33,8 +38,13 @@ interface PortalMessagesProps {
   activeId?: string | null;
   activeTitle?: string | null;
   initialMessages?: Message[];
+  /** Active participants of the open thread, for the "who you're talking to" header + sender avatars. */
+  participants?: ConversationParticipant[];
   currentUserId: string;
 }
+
+// Consecutive messages from one sender within this window share one avatar + name line.
+const GROUP_WINDOW_MS = 5 * 60 * 1000;
 
 function relTime(iso: string | null): string {
   if (!iso) return "";
@@ -46,7 +56,12 @@ function relTime(iso: string | null): string {
 }
 
 function timestamp(iso: string): string {
-  return new Date(iso).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  return new Date(iso).toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
 const PortalMessages = ({
@@ -54,6 +69,7 @@ const PortalMessages = ({
   activeId,
   activeTitle,
   initialMessages,
+  participants = [],
   currentUserId,
 }: PortalMessagesProps) => {
   const router = useRouter();
@@ -82,6 +98,15 @@ const PortalMessages = ({
     }, 15000);
     return () => clearInterval(timer);
   }, [activeId]);
+
+  const participantById = new Map(participants.map((p) => [p.user_id, p]));
+  const others = participants.filter((p) => p.user_id !== currentUserId);
+
+  const avatarSrc = (userId: string | null): string | null => {
+    const participant = userId ? participantById.get(userId) : undefined;
+    if (!activeId || !participant?.has_avatar) return null;
+    return portalParticipantAvatarUrl(activeId, participant.user_id, participant.avatar_version);
+  };
 
   const handleSend = async () => {
     const text = body.trim();
@@ -138,31 +163,73 @@ const PortalMessages = ({
               <Link href="/portal/messages" className={styles.back}>
                 ← Conversations
               </Link>
-              <h2 className={styles.threadTitle}>{activeTitle}</h2>
+              <div className={styles.threadHeading}>
+                {others.length > 0 && (
+                  <div className={styles.avatarStack}>
+                    {others.slice(0, 4).map((p) => (
+                      <MessageAvatar
+                        key={p.user_id}
+                        name={p.full_name}
+                        src={avatarSrc(p.user_id)}
+                        className={styles.stackAvatar}
+                      />
+                    ))}
+                  </div>
+                )}
+                <div className={styles.threadHeadingText}>
+                  <h2 className={styles.threadTitle}>{activeTitle}</h2>
+                  {others.length > 0 && (
+                    <p className={styles.people}>
+                      With{" "}
+                      {others.map((p, index) => (
+                        <span key={p.user_id}>
+                          {index > 0 && ", "}
+                          <span className={styles.personName}>{p.full_name}</span>
+                          {p.job_title && <span className={styles.personTitle}> · {p.job_title}</span>}
+                        </span>
+                      ))}
+                    </p>
+                  )}
+                </div>
+              </div>
             </header>
 
             <div className={styles.messages}>
               {messages.length === 0 ? (
                 <p className={styles.placeholder}>No messages yet — say hello.</p>
               ) : (
-                messages.map((message) => {
+                messages.map((message, index) => {
                   const mine = message.sender_id === currentUserId;
+                  const previous = messages[index - 1];
+                  const grouped =
+                    previous !== undefined &&
+                    previous.sender_id === message.sender_id &&
+                    new Date(message.created_at).getTime() - new Date(previous.created_at).getTime() < GROUP_WINDOW_MS;
                   return (
-                    <div key={message.id} className={styles.message} data-mine={mine}>
-                      <div className={styles.messageMeta}>
-                        <span className={styles.sender}>
-                          {mine ? "You" : message.sender_name}
-                          {message.sender_kind === "client" && !mine && (
-                            <span className={styles.clientTag}>Client</span>
-                          )}
-                        </span>
-                        <span className={styles.time}>{timestamp(message.created_at)}</span>
+                    <div key={message.id} className={styles.message} data-mine={mine} data-grouped={grouped}>
+                      <div className={styles.gutter}>
+                        {!grouped && <MessageAvatar name={message.sender_name} src={avatarSrc(message.sender_id)} />}
                       </div>
-                      {message.deleted_at ? (
-                        <p className={styles.deleted}>Message deleted</p>
-                      ) : (
-                        <p className={styles.body}>{message.body}</p>
-                      )}
+                      <div className={styles.content}>
+                        {!grouped && (
+                          <div className={styles.messageMeta}>
+                            <span className={styles.sender}>
+                              {mine ? "You" : message.sender_name}
+                              {message.sender_kind === "client" && !mine && (
+                                <span className={styles.clientTag}>Client</span>
+                              )}
+                            </span>
+                            <span className={styles.time}>{timestamp(message.created_at)}</span>
+                          </div>
+                        )}
+                        {message.deleted_at ? (
+                          <p className={styles.deleted}>Message deleted</p>
+                        ) : (
+                          <p className={styles.body} title={grouped ? timestamp(message.created_at) : undefined}>
+                            {message.body}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   );
                 })

@@ -66,6 +66,39 @@ describe("PortalMessages", () => {
     expect(screen.getByPlaceholderText("Write a message…")).toBeInTheDocument();
   });
 
+  it("shows who the client is talking to, with avatars", () => {
+    const participants = [
+      { user_id: "staff-1", full_name: "Morgan Lee", job_title: "Designer", has_avatar: true, avatar_version: "v1" },
+      { user_id: "staff-2", full_name: "Riley Park", job_title: null, has_avatar: false, avatar_version: null },
+      { user_id: "me", full_name: "Casey Client", job_title: null, has_avatar: false, avatar_version: null },
+    ] as never;
+    const { container } = render(
+      <PortalMessages
+        conversations={conversations}
+        activeId="c1"
+        activeTitle="Thread"
+        initialMessages={messages}
+        participants={participants}
+        currentUserId="me"
+      />,
+    );
+    const header = container.querySelector("header")!;
+    expect(header).toHaveTextContent("With Morgan Lee · Designer, Riley Park");
+    expect(header).not.toHaveTextContent("Casey Client");
+    expect(header.querySelector("img")).toHaveAttribute(
+      "src",
+      "/api/portal/conversations/c1/participants/staff-1/avatar?v=v1",
+    );
+    expect(screen.getByText("RP")).toBeInTheDocument();
+
+    // Morgan's message carries their photo too.
+    const bubble = screen.getByText("Concepts are in the canvas.").closest("[data-mine]")!;
+    expect(bubble.querySelector("img")).toHaveAttribute(
+      "src",
+      "/api/portal/conversations/c1/participants/staff-1/avatar?v=v1",
+    );
+  });
+
   it("optimistically appends a sent message", async () => {
     send.mockResolvedValueOnce({
       message: { id: "m2", sender_id: "me", sender_name: "You", body: "Looks good", created_at: "2026-01-02T00:00:00Z" },

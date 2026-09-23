@@ -2740,6 +2740,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/portal/conversations/{conversation_id}/participants/{user_id}/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download Participant Avatar */
+        get: operations["download_participant_avatar_portal_conversations__conversation_id__participants__user_id__avatar_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/portal/conversations/{conversation_id}/read": {
         parameters: {
             query?: never;
@@ -5777,10 +5794,17 @@ export interface components {
         };
         /** ParticipantRead */
         ParticipantRead: {
+            /** Avatar Version */
+            avatar_version?: string | null;
             /** Email */
             email: string;
             /** Full Name */
             full_name: string;
+            /**
+             * Has Avatar
+             * @default false
+             */
+            has_avatar: boolean;
             /** Is Muted */
             is_muted: boolean;
             /** Job Title */
@@ -14656,6 +14680,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MessageRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_participant_avatar_portal_conversations__conversation_id__participants__user_id__avatar_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conversation_id: string;
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

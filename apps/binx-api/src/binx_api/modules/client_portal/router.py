@@ -646,6 +646,16 @@ async def post_message(
     )
 
 
+@router.get("/conversations/{conversation_id}/participants/{user_id}/avatar")
+async def download_participant_avatar(
+    db: DbSession, current_user: CurrentUser, membership: PortalContext, conversation_id: uuid.UUID, user_id: uuid.UUID
+):
+    agency, client, _contact = membership
+    conversation, _p = await _portal_conversation_or_404(db, agency, client.id, conversation_id, current_user)
+    profile = await messaging_service.get_participant_avatar_or_404(db, conversation, user_id)
+    return FileResponse(path=profile.avatar_storage_path, media_type=profile.avatar_mime_type or "image/png")
+
+
 @router.post("/conversations/{conversation_id}/read", status_code=status.HTTP_204_NO_CONTENT)
 async def mark_read(
     db: DbSession, current_user: CurrentUser, membership: PortalContext, conversation_id: uuid.UUID

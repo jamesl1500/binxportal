@@ -34,7 +34,7 @@ import {
 import { useMessagingStore } from "@/stores/use-messaging-store";
 import { useMessaging } from "@/components/messaging/MessagingProvider/MessagingProvider";
 import MemberMultiSelect from "@/components/messaging/MemberMultiSelect/MemberMultiSelect";
-import MessageAvatar from "@/components/messaging/MessageAvatar/MessageAvatar";
+import MessageAvatar, { memberAvatarSrc } from "@/components/messaging/MessageAvatar/MessageAvatar";
 import MessageAttachmentView from "@/components/messaging/MessageAttachmentView/MessageAttachmentView";
 import MessageComposer from "@/components/messaging/MessageComposer/MessageComposer";
 
@@ -229,9 +229,8 @@ const MessageThread = ({ conversation, onConversationChanged, canModerate }: Mes
           {stackPeople.map((p) => (
             <MessageAvatar
               key={p.user_id}
-              agencyId={agencyId}
               name={p.full_name}
-              member={memberByUserId.get(p.user_id)}
+              src={memberAvatarSrc(agencyId, memberByUserId.get(p.user_id))}
               className={styles.stackAvatar}
             />
           ))}
@@ -361,9 +360,8 @@ const MessageThread = ({ conversation, onConversationChanged, canModerate }: Mes
               {typers.slice(0, 3).map((t) => (
                 <MessageAvatar
                   key={t.userId}
-                  agencyId={agencyId}
                   name={t.name}
-                  member={memberByUserId.get(t.userId)}
+                  src={memberAvatarSrc(agencyId, memberByUserId.get(t.userId))}
                   size="sm"
                 />
               ))}
@@ -476,7 +474,7 @@ const MessageRow = ({
             {format(createdAt, "p")}
           </time>
         ) : (
-          <MessageAvatar agencyId={agencyId} name={message.sender_name} member={member} />
+          <MessageAvatar name={message.sender_name} src={memberAvatarSrc(agencyId, member)} />
         )}
       </div>
 

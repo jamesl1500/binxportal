@@ -6867,6 +6867,17 @@
       },
       "ParticipantRead": {
         "properties": {
+          "avatar_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Version"
+          },
           "email": {
             "title": "Email",
             "type": "string"
@@ -6874,6 +6885,11 @@
           "full_name": {
             "title": "Full Name",
             "type": "string"
+          },
+          "has_avatar": {
+            "default": false,
+            "title": "Has Avatar",
+            "type": "boolean"
           },
           "is_muted": {
             "title": "Is Muted",
@@ -24656,6 +24672,62 @@
           }
         ],
         "summary": "Post Message",
+        "tags": [
+          "client-portal"
+        ]
+      }
+    },
+    "/portal/conversations/{conversation_id}/participants/{user_id}/avatar": {
+      "get": {
+        "operationId": "download_participant_avatar_portal_conversations__conversation_id__participants__user_id__avatar_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversation_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Conversation Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Download Participant Avatar",
         "tags": [
           "client-portal"
         ]

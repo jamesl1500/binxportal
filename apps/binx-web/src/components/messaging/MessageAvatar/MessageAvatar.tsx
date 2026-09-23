@@ -2,9 +2,10 @@
  * MessageAvatar.tsx
  *
  * A round avatar for someone in a conversation: their uploaded photo when
- * the agency member has one (proxied through the agency-scoped member image
- * route), otherwise — or if the image fails to load — their initials. Senders
- * who aren't agency members (client contacts) always get initials.
+ * there's one to show, otherwise — or if the image fails to load — their
+ * initials. Callers resolve `src` for their side of the app: staff views use
+ * the agency-scoped member image route (`memberAvatarSrc`), the client portal
+ * uses the conversation-scoped participant route.
  *
  * @module apps/binx-web/src/components/messaging/MessageAvatar/MessageAvatar.tsx
  * @author Binx.io
@@ -26,29 +27,27 @@ export function initials(fullName: string): string {
   return (first + last).toUpperCase();
 }
 
+/** The photo URL for an agency member, or null when they haven't set one (or aren't a member). */
+export function memberAvatarSrc(agencyId: string, member: AgencyMember | null | undefined): string | null {
+  return member?.has_avatar ? memberImageUrl(agencyId, member.id, "avatar", member.avatar_version) : null;
+}
+
 interface MessageAvatarProps {
-  agencyId: string;
   name: string;
-  member?: AgencyMember | null;
+  src?: string | null;
   size?: "sm" | "md";
   className?: string;
 }
 
-const MessageAvatar = ({ agencyId, name, member, size = "md", className }: MessageAvatarProps) => {
-  const [failed, setFailed] = useState(false);
+const MessageAvatar = ({ name, src, size = "md", className }: MessageAvatarProps) => {
+  // Remember which URL failed rather than a flag, so a new src gets a fresh try.
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const classes = [styles.avatar, className].filter(Boolean).join(" ");
 
-  if (member?.has_avatar && !failed) {
+  if (src && src !== failedSrc) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
-      <img
-        className={classes}
-        data-size={size}
-        src={memberImageUrl(agencyId, member.id, "avatar", member.avatar_version)}
-        alt=""
-        aria-hidden="true"
-        onError={() => setFailed(true)}
-      />
+      <img className={classes} data-size={size} src={src} alt="" aria-hidden="true" onError={() => setFailedSrc(src)} />
     );
   }
 

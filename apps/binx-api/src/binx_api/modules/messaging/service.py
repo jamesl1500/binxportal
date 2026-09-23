@@ -22,6 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
 from binx_api.core.config import get_settings
+from binx_api.core.images import image_version
 from binx_api.modules.agencies.models import ROLE_ADMIN, ROLE_OWNER, Agency, AgencyClient, AgencyMember
 from binx_api.modules.messaging import realtime
 from binx_api.modules.messaging.models import (
@@ -39,7 +40,7 @@ from binx_api.modules.messaging.schemas import MessageAttachmentRead, MessageRea
 from binx_api.modules.notifications import service as notifications_service
 from binx_api.modules.notifications.models import CATEGORY_MESSAGES, EVENT_MENTION
 from binx_api.modules.projects.models import Project
-from binx_api.modules.users.models import User
+from binx_api.modules.users.models import User, UserProfile
 
 settings = get_settings()
 
@@ -540,6 +541,7 @@ async def conversation_detail(
 ) -> dict:
     participants = await _participants_with_users(db, conversation.id, include_left=False)
     summary = await _conversation_summary(db, conversation, user, my_participant, participants=participants)
+    avatar_paths = await _avatar_paths(db, [p.user_id for p, _u in participants])
     summary["participants"] = [
         {
             "user_id": p.user_id,
@@ -547,6 +549,8 @@ async def conversation_detail(
             "user_name": u.user_name,
             "email": u.email,
             "job_title": u.job_title,
+            "has_avatar": p.user_id in avatar_paths,
+            "avatar_version": image_version(avatar_paths.get(p.user_id)),
             "is_muted": p.is_muted,
             "last_read_at": p.last_read_at,
             "left_at": p.left_at,
@@ -554,6 +558,39 @@ async def conversation_detail(
         for p, u in participants
     ]
     return summary
+
+
+async def _avatar_paths(db: AsyncSession, user_ids: list[uuid.UUID]) -> dict[uuid.UUID, str]:
+    """user_id -> avatar storage path, for the users that have one set."""
+    if not user_ids:
+        return {}
+    result = await db.execute(
+        select(UserProfile.user_id, UserProfile.avatar_storage_path).where(
+            UserProfile.user_id.in_(user_ids), UserProfile.avatar_storage_path.is_not(None)
+        )
+    )
+    return dict(result.all())
+
+
+async def get_participant_avatar_or_404(
+    db: AsyncSession, conversation: Conversation, user_id: uuid.UUID
+) -> UserProfile:
+    """The profile holding the avatar of someone who is (or was) in the
+    conversation — anyone the caller can see messages from. 404 for anyone
+    else, so the endpoint can't be used to fetch arbitrary users' photos."""
+    result = await db.execute(
+        select(UserProfile)
+        .join(ConversationParticipant, ConversationParticipant.user_id == UserProfile.user_id)
+        .where(
+            ConversationParticipant.conversation_id == conversation.id,
+            UserProfile.user_id == user_id,
+            UserProfile.avatar_storage_path.is_not(None),
+        )
+    )
+    profile = result.scalar_one_or_none()
+    if profile is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No avatar set")
+    return profile
 
 
 async def unread_total(db: AsyncSession, agency: Agency, user: User) -> int:

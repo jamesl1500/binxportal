@@ -54,6 +54,7 @@ const PortalConversationPage = async ({ params }: PortalConversationPageProps) =
         conversations={conversations}
         activeId={conversationId}
         activeTitle={detail.title}
+        participants={detail.participants}
         initialMessages={messages}
         currentUserId={user.id}
       />

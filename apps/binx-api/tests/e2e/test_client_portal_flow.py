@@ -15,11 +15,14 @@ from binx_api.core import stripe_client
 from binx_api.modules.invoicing import service as invoicing_service
 from binx_api.modules.invoicing.service import issue_invoice
 from binx_api.modules.messaging.service import create_conversation
+from binx_api.modules.users import service as users_service
 from tests.conftest import auth_headers, extract_token
 from tests.factories import make_agency, make_client, make_invoice, make_project, make_task, make_user
 from tests.stripe_helpers import sign_stripe_payload
 
 pytestmark = pytest.mark.e2e
+
+PNG = ("avatar.png", b"\x89PNG\r\n\x1a\nfake", "image/png")
 
 
 @pytest.fixture
@@ -313,6 +316,51 @@ class TestPortalMessages:
         )
         hidden = await client.get(f"/portal/conversations/{other_convo.id}", headers=auth_headers(contact_user))
         assert hidden.status_code == 404
+
+    async def test_contact_sees_participant_avatars(
+        self, client, db_session, email_outbox, portal_setup, tmp_path, monkeypatch
+    ) -> None:
+        monkeypatch.setattr(users_service.settings, "agency_upload_dir", str(tmp_path))
+        s = portal_setup
+        contact_user, _ = await _invite_and_accept(
+            client, db_session, email_outbox, s["agency"].id, s["client"].id, s["owner"], "casey5@northwind.example"
+        )
+        convo = await create_conversation(
+            db_session,
+            s["agency"],
+            creator=s["owner"],
+            kind="group",
+            title="Rebrand chat",
+            participant_user_ids=[],
+            client_id=s["client"].id,
+            project_id=None,
+            initial_message="Hi!",
+        )
+        headers = auth_headers(contact_user)
+        avatar_url = f"/portal/conversations/{convo.id}/participants/{s['owner'].id}/avatar"
+
+        detail = (await client.get(f"/portal/conversations/{convo.id}", headers=headers)).json()
+        owner_row = next(p for p in detail["participants"] if p["user_id"] == str(s["owner"].id))
+        assert owner_row["has_avatar"] is False
+        assert (await client.get(avatar_url, headers=headers)).status_code == 404
+
+        await client.put("/users/me/avatar", files={"file": PNG}, headers=auth_headers(s["owner"]))
+
+        detail = (await client.get(f"/portal/conversations/{convo.id}", headers=headers)).json()
+        owner_row = next(p for p in detail["participants"] if p["user_id"] == str(s["owner"].id))
+        assert owner_row["has_avatar"] is True
+        assert owner_row["avatar_version"]
+        avatar = await client.get(avatar_url, headers=headers)
+        assert avatar.status_code == 200
+        assert avatar.headers["content-type"] == "image/png"
+
+        # Someone with a photo who is NOT in the conversation can't be fetched.
+        outsider = await make_user(db_session, email="outsider@example.com")
+        await client.put("/users/me/avatar", files={"file": PNG}, headers=auth_headers(outsider))
+        blocked = await client.get(
+            f"/portal/conversations/{convo.id}/participants/{outsider.id}/avatar", headers=headers
+        )
+        assert blocked.status_code == 404
 
 
 async def _create_and_send_proposal(client, agency_id, client_id, owner, *, title="Brand refresh") -> dict:

@@ -46,3 +46,15 @@ export function memberImageUrl(
   const base = `/api/agencies/${agencyId}/members/${memberId}/${kind}`;
   return version ? `${base}?v=${encodeURIComponent(version)}` : base;
 }
+
+/**
+ * portalParticipantAvatarUrl
+ *
+ * For client portal contacts: the avatar of someone in a conversation they
+ * can see, via the conversation-scoped portal proxy route (binx-api only
+ * serves photos of that conversation's participants).
+ */
+export function portalParticipantAvatarUrl(conversationId: string, userId: string, version?: string | null): string {
+  const base = `/api/portal/conversations/${conversationId}/participants/${userId}/avatar`;
+  return version ? `${base}?v=${encodeURIComponent(version)}` : base;
+}

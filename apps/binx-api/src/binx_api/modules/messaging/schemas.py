@@ -39,6 +39,12 @@ class ParticipantRead(BaseModel):
     user_name: str
     email: str
     job_title: str | None
+    # Photo flags, same convention as AgencyMemberRead — storage paths are
+    # never exposed. Staff fetch the bytes through the agency member route;
+    # client contacts through GET /portal/conversations/{id}/participants/
+    # {user_id}/avatar (proxied).
+    has_avatar: bool = False
+    avatar_version: str | None = None
     is_muted: bool
     last_read_at: datetime | None
     left_at: datetime | None
