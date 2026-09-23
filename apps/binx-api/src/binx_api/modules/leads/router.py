@@ -11,7 +11,7 @@ from binx_api.modules.agencies.schemas import AgencyClientRead
 from binx_api.modules.ai import service as ai_service
 from binx_api.modules.ai.schemas import AiDraftRead
 from binx_api.modules.leads import service
-from binx_api.modules.leads.models import Lead
+from binx_api.modules.leads.models import Lead, LeadSearchCriteria
 from binx_api.modules.leads.schemas import (
     BulkAnalyzeRead,
     LeadCreate,
@@ -24,6 +24,9 @@ from binx_api.modules.leads.schemas import (
     LeadNoteCreate,
     LeadOwnerUpdate,
     LeadRead,
+    LeadSearchCriteriaCreate,
+    LeadSearchCriteriaRead,
+    LeadSearchCriteriaUpdate,
     LeadStatusUpdate,
     LeadUpdate,
     ProspectRead,
@@ -136,9 +139,28 @@ async def generate_leads(
     db: DbSession, data: LeadGenerateRequest, current_user: CurrentUser, agency_and_role: AnyMember
 ) -> LeadGenerateResponse:
     agency, _role = agency_and_role
-    candidates = await ai_service.find_prospects(db, agency, actor=current_user, brief=data.model_dump())
+    criteria: LeadSearchCriteria | None = None
+    if data.criteria_id is not None:
+        # A saved search's own fields drive the run — the rest of the posted
+        # body is ignored, same as how LeadUpdate's fields replace a lead.
+        criteria = await service.get_search_criteria_or_404(db, agency.id, data.criteria_id)
+        brief = {
+            "industry": criteria.industry,
+            "location": criteria.location,
+            "radius_miles": criteria.radius_miles,
+            "company_size": criteria.company_size,
+            "keywords": criteria.keywords,
+            "count": criteria.count,
+        }
+    else:
+        brief = data.model_dump(exclude={"criteria_id"})
+
+    candidates = await ai_service.find_prospects(db, agency, actor=current_user, brief=brief)
+    if criteria is not None:
+        await service.mark_search_criteria_run(db, criteria, result_count=len(candidates))
+
     return LeadGenerateResponse(
-        brief=data,
+        brief=LeadGenerateRequest(criteria_id=data.criteria_id, **brief),
         candidates=[ProspectRead.model_validate(c, from_attributes=True) for c in candidates],
     )
 
@@ -155,6 +177,56 @@ async def import_leads(
         imported=[await _reload_detail(db, lead) for lead in result.imported],
         skipped=result.skipped,
     )
+
+
+def _criteria_read(criteria: LeadSearchCriteria) -> LeadSearchCriteriaRead:
+    return LeadSearchCriteriaRead(
+        id=criteria.id,
+        agency_id=criteria.agency_id,
+        name=criteria.name,
+        industry=criteria.industry,
+        location=criteria.location,
+        radius_miles=criteria.radius_miles,
+        company_size=criteria.company_size,
+        keywords=criteria.keywords,
+        count=criteria.count,
+        last_run_at=criteria.last_run_at,
+        last_run_result_count=criteria.last_run_result_count,
+        created_at=criteria.created_at,
+    )
+
+
+@router.get("/search-criteria", response_model=list[LeadSearchCriteriaRead])
+async def list_search_criteria(db: DbSession, agency_and_role: AnyMember) -> list[LeadSearchCriteriaRead]:
+    agency, _role = agency_and_role
+    rows = await service.list_search_criteria(db, agency.id)
+    return [_criteria_read(c) for c in rows]
+
+
+@router.post("/search-criteria", response_model=LeadSearchCriteriaRead, status_code=status.HTTP_201_CREATED)
+async def create_search_criteria(
+    db: DbSession, data: LeadSearchCriteriaCreate, current_user: CurrentUser, agency_and_role: AnyMember
+) -> LeadSearchCriteriaRead:
+    agency, _role = agency_and_role
+    criteria = await service.create_search_criteria(db, agency, actor=current_user, **data.model_dump())
+    return _criteria_read(criteria)
+
+
+@router.patch("/search-criteria/{criteria_id}", response_model=LeadSearchCriteriaRead)
+async def update_search_criteria(
+    db: DbSession, criteria_id: uuid.UUID, data: LeadSearchCriteriaUpdate, agency_and_role: AnyMember
+) -> LeadSearchCriteriaRead:
+    agency, _role = agency_and_role
+    criteria = await service.get_search_criteria_or_404(db, agency.id, criteria_id)
+    criteria = await service.update_search_criteria(db, criteria, **data.model_dump())
+    return _criteria_read(criteria)
+
+
+@router.delete("/search-criteria/{criteria_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_search_criteria(db: DbSession, criteria_id: uuid.UUID, agency_and_role: AnyMember) -> None:
+    agency, _role = agency_and_role
+    criteria = await service.get_search_criteria_or_404(db, agency.id, criteria_id)
+    await service.delete_search_criteria(db, criteria)
 
 
 @router.get("/{lead_id}", response_model=LeadRead)

@@ -52,12 +52,16 @@ export interface Lead extends LeadListItem {
 }
 
 export interface LeadGenerateBrief {
+  criteriaId?: string;
   industry?: string;
   location?: string;
+  radiusMiles?: number;
   companySize?: string;
   keywords?: string;
   count?: number;
 }
+
+export type ProspectSource = "google_places" | "web_search" | "both";
 
 export interface ProspectCandidate {
   name: string;
@@ -66,6 +70,32 @@ export interface ProspectCandidate {
   contact_phone: string | null;
   estimated_value_cents: number | null;
   rationale: string | null;
+  source: ProspectSource;
+}
+
+export interface LeadSearchCriteria {
+  id: string;
+  agency_id: string;
+  name: string;
+  industry: string | null;
+  location: string | null;
+  radius_miles: number | null;
+  company_size: string | null;
+  keywords: string | null;
+  count: number;
+  last_run_at: string | null;
+  last_run_result_count: number | null;
+  created_at: string;
+}
+
+export interface LeadSearchCriteriaInput {
+  name: string;
+  industry?: string | null;
+  location?: string | null;
+  radiusMiles?: number | null;
+  companySize?: string | null;
+  keywords?: string | null;
+  count?: number;
 }
 
 export interface BulkAnalyzeResult {
@@ -286,15 +316,22 @@ export async function analyzeOpenLeads(agencyId: string): Promise<BulkAnalyzeRes
   }
 }
 
-/** AI prospector: finds real candidate companies for a brief. Nothing is saved — the caller reviews then imports. */
+/**
+ * AI prospector: finds real candidate companies for a brief (or, when
+ * `criteriaId` is set, for a saved search — the rest of the brief is
+ * ignored server-side in that case). Nothing is saved — the caller reviews
+ * then imports.
+ */
 export async function generateLeads(agencyId: string, brief: LeadGenerateBrief): Promise<ProspectCandidate[]> {
   const headers = await authHeader();
   try {
     const { data } = await api.post<{ candidates: ProspectCandidate[] }>(
       `/agencies/${agencyId}/leads/generate`,
       {
+        criteria_id: brief.criteriaId || null,
         industry: brief.industry || null,
         location: brief.location || null,
+        radius_miles: brief.radiusMiles || null,
         company_size: brief.companySize || null,
         keywords: brief.keywords || null,
         count: brief.count ?? 5,
@@ -319,5 +356,72 @@ export async function importLeads(agencyId: string, candidates: ProspectCandidat
     return data;
   } catch (error) {
     rethrow(error, "Unable to import the leads");
+  }
+}
+
+function criteriaPayload(input: LeadSearchCriteriaInput) {
+  return {
+    name: input.name,
+    industry: input.industry || null,
+    location: input.location || null,
+    radius_miles: input.radiusMiles || null,
+    company_size: input.companySize || null,
+    keywords: input.keywords || null,
+    count: input.count ?? 5,
+  };
+}
+
+/** Lists the agency's saved prospector searches, most recently created first. */
+export async function getLeadSearchCriteria(agencyId: string): Promise<LeadSearchCriteria[]> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.get<LeadSearchCriteria[]>(`/agencies/${agencyId}/leads/search-criteria`, { headers });
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to load saved searches");
+  }
+}
+
+export async function createLeadSearchCriteria(
+  agencyId: string,
+  input: LeadSearchCriteriaInput,
+): Promise<LeadSearchCriteria> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.post<LeadSearchCriteria>(
+      `/agencies/${agencyId}/leads/search-criteria`,
+      criteriaPayload(input),
+      { headers },
+    );
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to save this search");
+  }
+}
+
+export async function updateLeadSearchCriteria(
+  agencyId: string,
+  criteriaId: string,
+  input: LeadSearchCriteriaInput,
+): Promise<LeadSearchCriteria> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.patch<LeadSearchCriteria>(
+      `/agencies/${agencyId}/leads/search-criteria/${criteriaId}`,
+      criteriaPayload(input),
+      { headers },
+    );
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to update this saved search");
+  }
+}
+
+export async function deleteLeadSearchCriteria(agencyId: string, criteriaId: string): Promise<void> {
+  const headers = await authHeader();
+  try {
+    await api.delete(`/agencies/${agencyId}/leads/search-criteria/${criteriaId}`, { headers });
+  } catch (error) {
+    rethrow(error, "Unable to delete this saved search");
   }
 }

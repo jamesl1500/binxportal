@@ -5,21 +5,45 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const refresh = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
-vi.mock("@/app/(app)/leads/actions", () => ({ generateLeadsAction: vi.fn(), importLeadsAction: vi.fn() }));
+vi.mock("@/app/(app)/leads/actions", () => ({
+  generateLeadsAction: vi.fn(),
+  importLeadsAction: vi.fn(),
+  getLeadSearchCriteriaAction: vi.fn(),
+  createLeadSearchCriteriaAction: vi.fn(),
+  deleteLeadSearchCriteriaAction: vi.fn(),
+}));
 
-import { generateLeadsAction, importLeadsAction } from "@/app/(app)/leads/actions";
+import {
+  createLeadSearchCriteriaAction,
+  deleteLeadSearchCriteriaAction,
+  generateLeadsAction,
+  getLeadSearchCriteriaAction,
+  importLeadsAction,
+} from "@/app/(app)/leads/actions";
 import { toast } from "sonner";
 import FindLeadsDialog from "./FindLeadsDialog";
 
 const generate = vi.mocked(generateLeadsAction);
 const importLeads = vi.mocked(importLeadsAction);
+const getCriteria = vi.mocked(getLeadSearchCriteriaAction);
+const createCriteria = vi.mocked(createLeadSearchCriteriaAction);
+const deleteCriteria = vi.mocked(deleteLeadSearchCriteriaAction);
 
 const candidates = [
-  { name: "Acme", website: "https://acme.test", rationale: "Needs a rebrand", estimated_value_cents: 500000 },
-  { name: "Beta", website: null, rationale: null, estimated_value_cents: null },
+  {
+    name: "Acme",
+    website: "https://acme.test",
+    rationale: "Needs a rebrand",
+    estimated_value_cents: 500000,
+    source: "web_search",
+  },
+  { name: "Beta", website: null, rationale: null, estimated_value_cents: null, source: "google_places" },
 ];
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+  vi.clearAllMocks();
+  getCriteria.mockResolvedValue({ criteria: [] });
+});
 
 async function openAndSearch() {
   render(<FindLeadsDialog agencyId="a1" />);
@@ -64,5 +88,87 @@ describe("FindLeadsDialog", () => {
     await userEvent.click(screen.getByRole("button", { name: /Import 0 leads/ }));
     expect(await screen.findByText(/pick at least one company/i)).toBeInTheDocument();
     expect(importLeads).not.toHaveBeenCalled();
+  });
+
+  it("shows each candidate's source", async () => {
+    generate.mockResolvedValueOnce({ candidates } as never);
+    await openAndSearch();
+    expect(await screen.findByText("Web search")).toBeInTheDocument();
+    expect(screen.getByText("Google Places")).toBeInTheDocument();
+  });
+
+  it("lists saved searches and runs one by its own criteria id", async () => {
+    getCriteria.mockResolvedValue({
+      criteria: [
+        {
+          id: "c1",
+          agency_id: "a1",
+          name: "SaaS in Austin",
+          industry: "SaaS",
+          location: "Austin, TX",
+          radius_miles: 25,
+          company_size: null,
+          keywords: null,
+          count: 5,
+          last_run_at: null,
+          last_run_result_count: null,
+          created_at: "2026-01-01T00:00:00Z",
+        },
+      ],
+    } as never);
+    generate.mockResolvedValueOnce({ candidates } as never);
+
+    render(<FindLeadsDialog agencyId="a1" />);
+    await userEvent.click(screen.getByRole("button", { name: "Find leads" }));
+    await userEvent.click(await screen.findByRole("button", { name: "SaaS in Austin" }));
+
+    expect(generate).toHaveBeenCalledWith("a1", expect.objectContaining({ criteriaId: "c1" }));
+    expect(await screen.findByText("Acme")).toBeInTheDocument();
+  });
+
+  it("saves the current brief as a named search", async () => {
+    createCriteria.mockResolvedValueOnce({
+      criteria: { id: "c2", name: "Berlin software", agency_id: "a1" } as never,
+    });
+
+    render(<FindLeadsDialog agencyId="a1" />);
+    await userEvent.click(screen.getByRole("button", { name: "Find leads" }));
+    await userEvent.type(screen.getByLabelText("Industry / vertical"), "software");
+    await userEvent.type(screen.getByPlaceholderText("Name this search to save it for later"), "Berlin software");
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(createCriteria).toHaveBeenCalledWith(
+      "a1",
+      expect.objectContaining({ name: "Berlin software", industry: "software" }),
+    );
+    expect(toast.success).toHaveBeenCalledWith('Saved "Berlin software"');
+  });
+
+  it("deletes a saved search", async () => {
+    getCriteria.mockResolvedValue({
+      criteria: [
+        {
+          id: "c1",
+          agency_id: "a1",
+          name: "SaaS in Austin",
+          industry: null,
+          location: null,
+          radius_miles: null,
+          company_size: null,
+          keywords: null,
+          count: 5,
+          last_run_at: null,
+          last_run_result_count: null,
+          created_at: "2026-01-01T00:00:00Z",
+        },
+      ],
+    } as never);
+    deleteCriteria.mockResolvedValueOnce({});
+
+    render(<FindLeadsDialog agencyId="a1" />);
+    await userEvent.click(screen.getByRole("button", { name: "Find leads" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Delete saved search SaaS in Austin" }));
+
+    expect(deleteCriteria).toHaveBeenCalledWith("a1", "c1");
   });
 });

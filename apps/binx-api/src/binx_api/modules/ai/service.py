@@ -51,6 +51,7 @@ from binx_api.modules.ai.models import (
 from binx_api.modules.dashboard import service as dashboard_service
 from binx_api.modules.invoicing import service as invoicing_service
 from binx_api.modules.invoicing.models import STATUS_SENT, Invoice
+from binx_api.modules.leads import places as places_client
 from binx_api.modules.leads.models import LEAD_OPEN_STATUSES, LEAD_STATUSES, Lead
 from binx_api.modules.messaging import service as messaging_service
 from binx_api.modules.messaging.models import SENDER_CLIENT, Conversation
@@ -187,7 +188,13 @@ class ProspectCandidate:
     contact_phone: str | None = None
     estimated_value_cents: int | None = None
     rationale: str | None = None
+    # "google_places" | "web_search" | "both" — which source(s) surfaced this
+    # candidate. Defaults to "web_search" since that's the only source when
+    # places.is_configured() is False. See find_prospects.
+    source: str = "web_search"
 
+
+_PROSPECT_SOURCES = ("google_places", "web_search", "both")
 
 _PROSPECTS_FORMAT = {
     "type": "json_schema",
@@ -205,8 +212,9 @@ _PROSPECTS_FORMAT = {
                         "contact_phone": {"type": "string"},
                         "estimated_value_cents": {"type": "integer"},
                         "rationale": {"type": "string"},
+                        "source": {"type": "string", "enum": list(_PROSPECT_SOURCES)},
                     },
-                    "required": ["name", "rationale"],
+                    "required": ["name", "rationale", "source"],
                     "additionalProperties": False,
                 },
             }
@@ -217,29 +225,62 @@ _PROSPECTS_FORMAT = {
 }
 
 
+def _places_query(brief: dict) -> str:
+    """Folds industry/location/radius into one Places Text Search query
+    string — see leads/models.py::LeadSearchCriteria's note on why radius
+    isn't a real geo filter here."""
+    parts = [str(brief.get("industry") or "companies").strip()]
+    if brief.get("keywords"):
+        parts.append(f"that need {brief['keywords']}")
+    if brief.get("location"):
+        parts.append(f"in {brief['location']}")
+    if brief.get("radius_miles"):
+        parts.append(f"within {brief['radius_miles']} miles")
+    return " ".join(parts)
+
+
 async def find_prospects(
     db: AsyncSession, agency: Agency, *, actor: User | None, brief: dict
 ) -> list[ProspectCandidate]:
-    """Use web search to find real companies matching a prospecting brief.
-    Returns candidates for the caller to review — nothing is persisted here.
-    Raises like the other AI features on any failure."""
+    """Find real companies matching a prospecting brief, using Google Places
+    (when configured — see places.py) as a verified ground-truth source and
+    Claude web search to add rationale/estimated value and fill in beyond
+    Places' coverage. Returns candidates for the caller to review — nothing
+    is persisted here. Raises like the other AI features on any failure."""
     count = max(1, min(10, int(brief.get("count") or 5)))
+
+    places_results = await places_client.search_places(query=_places_query(brief), max_results=count * 2)
+
     lines = [
         f'Agency: "{agency.name}" (a services agency looking for new clients).',
         f"Industry / vertical: {brief.get('industry') or 'any'}",
-        f"Location: {brief.get('location') or 'any'}",
+        f"Location: {brief.get('location') or 'any'}"
+        + (f" (within {brief['radius_miles']} miles)" if brief.get("radius_miles") else ""),
         f"Company size: {brief.get('company_size') or 'any'}",
         f"Keywords / what they'd need: {brief.get('keywords') or '(none given)'}",
         f"How many to return: {count}",
     ]
     prompt = (
-        "Find real companies that would be a good fit as prospective clients for this agency, "
-        "using web search. Only include companies you actually find in search results, with their "
-        "real website URL. Never invent contact details — leave email/phone out unless the search "
+        "Find real companies that would be a good fit as prospective clients for this agency. "
+        "Only include companies you actually find (via the list below or web search), with their "
+        "real website URL. Never invent contact details — leave email/phone out unless a source "
         "surfaces them. Give each a one-sentence rationale for why they fit, and a rough estimated "
-        "first-project value in cents if you can justify one. If search turns up little, return "
-        "fewer rather than padding with guesses.\n\n" + "\n".join(lines)
+        "first-project value in cents if you can justify one. If nothing turns up, return fewer "
+        'rather than padding with guesses. Tag each candidate\'s "source" as "google_places", '
+        '"web_search", or "both" (Places-listed and confirmed/enriched via search).\n\n' + "\n".join(lines)
     )
+    if places_results:
+        listed = "\n".join(
+            f"- {p.name}" + (f" — {p.website}" if p.website else "") + (f" ({p.address})" if p.address else "")
+            for p in places_results
+        )
+        prompt += (
+            "\n\nGoogle Places already found these real businesses matching the brief — verified names, "
+            "not hallucinated. Prefer these: pick the ones that best fit and tag them "
+            'source="google_places" (or "both" if you also confirm/enrich them via web search). Only use '
+            "web search to find additional candidates if this list is too short for the count requested, "
+            f"or empty.\n\n{listed}"
+        )
 
     result = await ai_client.complete(
         db,
@@ -265,6 +306,7 @@ async def find_prospects(
         if not name:
             continue
         value = raw.get("estimated_value_cents")
+        source = str(raw.get("source") or "").strip().lower()
         candidates.append(
             ProspectCandidate(
                 name=name,
@@ -273,6 +315,7 @@ async def find_prospects(
                 contact_phone=_trimmed(raw, "contact_phone", 32),
                 estimated_value_cents=max(0, int(value)) if isinstance(value, int | float) else None,
                 rationale=_trimmed(raw, "rationale", 1000),
+                source=source if source in _PROSPECT_SOURCES else "web_search",
             )
         )
     return candidates
