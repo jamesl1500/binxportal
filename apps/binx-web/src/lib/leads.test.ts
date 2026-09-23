@@ -84,7 +84,15 @@ describe("generateLeads", () => {
     const candidates = await generateLeads("a1", { industry: "retail", companySize: "10-50", count: 4 });
     expect(mockedApi.post).toHaveBeenCalledWith(
       "/agencies/a1/leads/generate",
-      { industry: "retail", location: null, company_size: "10-50", keywords: null, count: 4 },
+      {
+        criteria_id: null,
+        industry: "retail",
+        location: null,
+        radius_miles: null,
+        company_size: "10-50",
+        keywords: null,
+        count: 4,
+      },
       { headers: { Authorization: "Bearer token" } },
     );
     expect(candidates).toEqual([{ name: "Contoso" }]);
@@ -94,8 +102,18 @@ describe("generateLeads", () => {
 describe("importLeads", () => {
   it("surfaces a 402 (plan cap) as an AuthApiError", async () => {
     mockedApi.post.mockRejectedValueOnce(axiosError(402, "Your Free plan is limited to 25 leads."));
-    await expect(importLeads("a1", [{ name: "X", website: null, contact_email: null, contact_phone: null, estimated_value_cents: null, rationale: null }])).rejects.toEqual(
-      new AuthApiError("Your Free plan is limited to 25 leads.", 402),
-    );
+    await expect(
+      importLeads("a1", [
+        {
+          name: "X",
+          website: null,
+          contact_email: null,
+          contact_phone: null,
+          estimated_value_cents: null,
+          rationale: null,
+          source: "web_search",
+        },
+      ]),
+    ).rejects.toEqual(new AuthApiError("Your Free plan is limited to 25 leads.", 402));
   });
 });

@@ -82,3 +82,30 @@ class LeadEvent(Base):
     body: Mapped[str] = mapped_column(String(2048))
     actor_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), default=None)
     actor_name: Mapped[str | None] = mapped_column(String(255), default=None)
+
+
+# A staff-configured, reusable prospecting search — the AI prospector's
+# "saved search" (see leads/router.py's /search-criteria endpoints). Running
+# one hands these fields to ai/service.py::find_prospects as its brief; see
+# find_prospects for how industry/location/radius_miles/keywords get turned
+# into a Google Places query plus the web-search prompt.
+class LeadSearchCriteria(Base):
+    __tablename__ = "lead_search_criteria"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    agency_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("agencies.id", ondelete="CASCADE"), index=True)
+
+    name: Mapped[str] = mapped_column(String(255))
+    industry: Mapped[str | None] = mapped_column(String(200), default=None)
+    location: Mapped[str | None] = mapped_column(String(200), default=None)
+    # Folded into the Places query text (e.g. "...within 25 miles of Austin,
+    # TX") rather than a real geo filter — a true radius search needs the
+    # location geocoded to lat/lng first, which find_prospects doesn't do.
+    radius_miles: Mapped[int | None] = mapped_column(Integer, default=None)
+    company_size: Mapped[str | None] = mapped_column(String(100), default=None)
+    keywords: Mapped[str | None] = mapped_column(String(500), default=None)
+    count: Mapped[int] = mapped_column(Integer, default=5)
+
+    created_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), default=None)
+    last_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    last_run_result_count: Mapped[int | None] = mapped_column(Integer, default=None)

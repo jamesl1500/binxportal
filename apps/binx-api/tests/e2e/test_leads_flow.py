@@ -175,6 +175,63 @@ class TestProspector:
         assert len(again.json()["skipped"]) == 1
 
 
+class TestSearchCriteria:
+    async def test_crud(self, client, agency_ctx) -> None:
+        agency, owner, _member = agency_ctx
+        h = auth_headers(owner)
+
+        created = await client.post(
+            f"/agencies/{agency.id}/leads/search-criteria",
+            json={"name": "SaaS in Austin", "industry": "SaaS", "location": "Austin, TX", "radius_miles": 25},
+            headers=h,
+        )
+        assert created.status_code == 201, created.text
+        criteria_id = created.json()["id"]
+        assert created.json()["last_run_at"] is None
+
+        listing = (await client.get(f"/agencies/{agency.id}/leads/search-criteria", headers=h)).json()
+        assert [c["name"] for c in listing] == ["SaaS in Austin"]
+
+        updated = await client.patch(
+            f"/agencies/{agency.id}/leads/search-criteria/{criteria_id}",
+            json={"name": "SaaS in Austin", "industry": "SaaS", "location": "Austin, TX", "count": 8},
+            headers=h,
+        )
+        assert updated.status_code == 200, updated.text
+        assert updated.json()["count"] == 8
+        assert updated.json()["radius_miles"] is None  # not resent — full replace like LeadUpdate
+
+        deleted = await client.delete(f"/agencies/{agency.id}/leads/search-criteria/{criteria_id}", headers=h)
+        assert deleted.status_code == 204
+        assert (await client.get(f"/agencies/{agency.id}/leads/search-criteria", headers=h)).json() == []
+
+    async def test_generate_from_a_saved_search_marks_it_run(
+        self, client, agency_ctx, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        agency, owner, _member = agency_ctx
+        h = auth_headers(owner)
+        _stub_json(monkeypatch, {"candidates": [{"name": "Contoso Ltd", "rationale": "Fits the brief."}]})
+
+        criteria_id = (
+            await client.post(
+                f"/agencies/{agency.id}/leads/search-criteria",
+                json={"name": "Berlin software", "industry": "software", "location": "Berlin", "count": 3},
+                headers=h,
+            )
+        ).json()["id"]
+
+        generated = await client.post(
+            f"/agencies/{agency.id}/leads/generate", json={"criteria_id": criteria_id}, headers=h
+        )
+        assert generated.status_code == 200, generated.text
+        assert generated.json()["candidates"][0]["name"] == "Contoso Ltd"
+        assert generated.json()["brief"]["industry"] == "software"
+
+        refreshed = (await client.get(f"/agencies/{agency.id}/leads/search-criteria", headers=h)).json()[0]
+        assert refreshed["last_run_at"] is not None
+        assert refreshed["last_run_result_count"] == 1
+
+
 class TestPermissions:
     async def test_a_non_member_is_404(self, client, agency_ctx, db_session) -> None:
         agency, _owner, _member = agency_ctx

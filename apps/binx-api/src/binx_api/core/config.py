@@ -75,6 +75,10 @@ class Settings(BaseSettings):
     # agency's owner/admin can raise these afterward (ai/router.py).
     ai_default_monthly_budget_cents: int = 2000
     ai_default_daily_user_cap: int = 50
+    # Optional second source for the AI prospector (modules/leads/places.py) —
+    # unset means cleanly off, same pattern as anthropic_api_key/
+    # stripe_secret_key: find_prospects falls back to web-search-only.
+    google_places_api_key: str | None = None
 
     # --- Stripe (platform billing + Connect) --------------------------------
     # Unset (the default) means Stripe-backed billing/invoicing is cleanly off

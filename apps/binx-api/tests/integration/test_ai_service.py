@@ -14,6 +14,7 @@ import pytest
 
 from binx_api.modules.ai import client as ai_client
 from binx_api.modules.ai import service as ai_service
+from binx_api.modules.leads import places as places_client
 from binx_api.modules.leads import service as leads_service
 from binx_api.modules.messaging.models import SENDER_CLIENT
 from binx_api.modules.messaging.service import post_message
@@ -158,6 +159,69 @@ class TestFindProspects:
         assert [c.name for c in candidates] == ["Northwind Traders"]
         assert candidates[0].estimated_value_cents == 750000
         assert candidates[0].website == "https://northwind.example"
+        assert candidates[0].source == "web_search"  # default when unset by the model
+
+    async def test_places_unconfigured_is_never_called(self, db_session, monkeypatch: pytest.MonkeyPatch) -> None:
+        _configure(monkeypatch)
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        # google_places_api_key is unset by default — search_places should
+        # short-circuit before ever reaching _call_places.
+        called = False
+
+        async def _call_places(**kwargs):
+            nonlocal called
+            called = True
+            return {}
+
+        monkeypatch.setattr(places_client, "_call_places", _call_places)
+        monkeypatch.setattr(ai_client, "_call_anthropic", _sequenced(_text_message(json.dumps({"candidates": []}))))
+
+        await ai_service.find_prospects(db_session, agency, actor=owner, brief={"industry": "retail"})
+        assert called is False
+
+    async def test_places_results_are_folded_into_the_prompt_and_tagged(
+        self, db_session, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _configure(monkeypatch)
+        monkeypatch.setattr(places_client.settings, "google_places_api_key", "test-places-key")
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+
+        async def _call_places(**kwargs):
+            return {
+                "places": [
+                    {
+                        "displayName": {"text": "Riverside Cafe"},
+                        "websiteUri": "https://riverside.example",
+                        "formattedAddress": "1 River Rd, Austin, TX",
+                    }
+                ]
+            }
+
+        monkeypatch.setattr(places_client, "_call_places", _call_places)
+
+        captured_prompts: list[str] = []
+
+        async def _capture_anthropic(**kwargs):
+            captured_prompts.append(kwargs["messages"][0]["content"])
+            payload = json.dumps(
+                {
+                    "candidates": [
+                        {"name": "Riverside Cafe", "website": "https://riverside.example", "rationale": "x", "source": "google_places"}
+                    ]
+                }
+            )
+            return _text_message(payload)
+
+        monkeypatch.setattr(ai_client, "_call_anthropic", _capture_anthropic)
+
+        brief = {"industry": "cafes", "location": "Austin, TX", "radius_miles": 10, "count": 3}
+        candidates = await ai_service.find_prospects(db_session, agency, actor=owner, brief=brief)
+
+        assert "Riverside Cafe" in captured_prompts[0]
+        assert "within 10 miles" in captured_prompts[0]
+        assert candidates[0].source == "google_places"
 
 
 class TestGenerateDrafts:

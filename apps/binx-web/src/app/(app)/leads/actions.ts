@@ -24,6 +24,8 @@ import {
   type LeadEvent,
   type LeadGenerateBrief,
   type LeadInput,
+  type LeadSearchCriteria,
+  type LeadSearchCriteriaInput,
   type ProspectCandidate,
   addLeadNote,
   analyzeLead,
@@ -32,10 +34,14 @@ import {
   changeLeadStatus,
   convertLead,
   createLead,
+  createLeadSearchCriteria,
   deleteLead,
+  deleteLeadSearchCriteria,
   generateLeads,
+  getLeadSearchCriteria,
   importLeads,
   updateLead,
+  updateLeadSearchCriteria,
 } from "@/lib/leads";
 
 export interface LeadResult {
@@ -193,4 +199,61 @@ export async function deleteLeadAction(agencyId: string, leadId: string): Promis
     return fail(error, "Unable to delete the lead");
   }
   redirect("/leads");
+}
+
+export interface SearchCriteriaListResult {
+  error?: string;
+  criteria?: LeadSearchCriteria[];
+}
+
+export async function getLeadSearchCriteriaAction(agencyId: string): Promise<SearchCriteriaListResult> {
+  try {
+    return { criteria: await getLeadSearchCriteria(agencyId) };
+  } catch (error) {
+    return fail(error, "Unable to load saved searches");
+  }
+}
+
+export interface SearchCriteriaResult {
+  error?: string;
+  criteria?: LeadSearchCriteria;
+}
+
+export async function createLeadSearchCriteriaAction(
+  agencyId: string,
+  input: LeadSearchCriteriaInput,
+): Promise<SearchCriteriaResult> {
+  try {
+    return { criteria: await createLeadSearchCriteria(agencyId, input) };
+  } catch (error) {
+    return fail(error, "Unable to save this search");
+  }
+}
+
+export async function updateLeadSearchCriteriaAction(
+  agencyId: string,
+  criteriaId: string,
+  input: LeadSearchCriteriaInput,
+): Promise<SearchCriteriaResult> {
+  try {
+    return { criteria: await updateLeadSearchCriteria(agencyId, criteriaId, input) };
+  } catch (error) {
+    return fail(error, "Unable to update this saved search");
+  }
+}
+
+export interface DeleteSearchCriteriaResult {
+  error?: string;
+}
+
+export async function deleteLeadSearchCriteriaAction(
+  agencyId: string,
+  criteriaId: string,
+): Promise<DeleteSearchCriteriaResult> {
+  try {
+    await deleteLeadSearchCriteria(agencyId, criteriaId);
+  } catch (error) {
+    return fail(error, "Unable to delete this saved search");
+  }
+  return {};
 }

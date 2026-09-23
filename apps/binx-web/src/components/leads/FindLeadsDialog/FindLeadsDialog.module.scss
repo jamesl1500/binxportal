@@ -108,6 +108,83 @@
   color: t.$color-danger;
 }
 
+.savedSearches {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+}
+
+.savedList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-2;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.savedItem {
+  display: flex;
+  align-items: center;
+  gap: t.$space-1;
+  padding: t.$space-1 t.$space-1 t.$space-1 t.$space-3;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  border-radius: 999px;
+}
+
+.savedChip {
+  padding: 0;
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  color: t.$color-ink;
+  background: none;
+  border: none;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    color: t.$color-accent;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.savedDelete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: t.$space-1;
+  color: t.$color-ink-soft;
+  background: none;
+  border: none;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    color: t.$color-danger;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.deleteIcon {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.saveRow {
+  display: flex;
+  gap: t.$space-2;
+
+  .input {
+    flex: 1;
+  }
+}
+
 .actions {
   display: flex;
   justify-content: flex-end;
@@ -158,6 +235,15 @@
   font-size: t.$font-size-sm;
   font-weight: 600;
   color: t.$color-ink;
+}
+
+.candidateSource {
+  padding: 0.0625rem t.$space-2;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: t.$color-ink-soft;
+  background: t.$color-paper;
+  border-radius: 999px;
 }
 
 .candidateValue {

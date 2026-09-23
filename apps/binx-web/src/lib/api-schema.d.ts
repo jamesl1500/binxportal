@@ -1012,6 +1012,42 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agencies/{agency_id}/leads/search-criteria": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Search Criteria */
+        get: operations["list_search_criteria_agencies__agency_id__leads_search_criteria_get"];
+        put?: never;
+        /** Create Search Criteria */
+        post: operations["create_search_criteria_agencies__agency_id__leads_search_criteria_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/leads/search-criteria/{criteria_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Search Criteria */
+        delete: operations["delete_search_criteria_agencies__agency_id__leads_search_criteria__criteria_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Search Criteria */
+        patch: operations["update_search_criteria_agencies__agency_id__leads_search_criteria__criteria_id__patch"];
+        trace?: never;
+    };
     "/agencies/{agency_id}/leads/{lead_id}": {
         parameters: {
             query?: never;
@@ -5078,12 +5114,16 @@ export interface components {
              * @default 5
              */
             count: number;
+            /** Criteria Id */
+            criteria_id?: string | null;
             /** Industry */
             industry?: string | null;
             /** Keywords */
             keywords?: string | null;
             /** Location */
             location?: string | null;
+            /** Radius Miles */
+            radius_miles?: number | null;
         };
         /** LeadGenerateResponse */
         LeadGenerateResponse: {
@@ -5223,6 +5263,88 @@ export interface components {
             updated_at?: string | null;
             /** Website */
             website: string | null;
+        };
+        /** LeadSearchCriteriaCreate */
+        LeadSearchCriteriaCreate: {
+            /** Company Size */
+            company_size?: string | null;
+            /**
+             * Count
+             * @default 5
+             */
+            count: number;
+            /** Industry */
+            industry?: string | null;
+            /** Keywords */
+            keywords?: string | null;
+            /** Location */
+            location?: string | null;
+            /** Name */
+            name: string;
+            /** Radius Miles */
+            radius_miles?: number | null;
+        };
+        /** LeadSearchCriteriaRead */
+        LeadSearchCriteriaRead: {
+            /**
+             * Agency Id
+             * Format: uuid
+             */
+            agency_id: string;
+            /** Company Size */
+            company_size?: string | null;
+            /**
+             * Count
+             * @default 5
+             */
+            count: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Industry */
+            industry?: string | null;
+            /** Keywords */
+            keywords?: string | null;
+            /** Last Run At */
+            last_run_at: string | null;
+            /** Last Run Result Count */
+            last_run_result_count: number | null;
+            /** Location */
+            location?: string | null;
+            /** Name */
+            name: string;
+            /** Radius Miles */
+            radius_miles?: number | null;
+        };
+        /**
+         * LeadSearchCriteriaUpdate
+         * @description A full replace of the editable fields — same shape as LeadUpdate.
+         */
+        LeadSearchCriteriaUpdate: {
+            /** Company Size */
+            company_size?: string | null;
+            /**
+             * Count
+             * @default 5
+             */
+            count: number;
+            /** Industry */
+            industry?: string | null;
+            /** Keywords */
+            keywords?: string | null;
+            /** Location */
+            location?: string | null;
+            /** Name */
+            name: string;
+            /** Radius Miles */
+            radius_miles?: number | null;
         };
         /** LeadStatusUpdate */
         LeadStatusUpdate: {
@@ -6500,6 +6622,11 @@ export interface components {
             name: string;
             /** Rationale */
             rationale?: string | null;
+            /**
+             * Source
+             * @default web_search
+             */
+            source: string;
             /** Website */
             website?: string | null;
         };
@@ -9974,6 +10101,138 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LeadImportResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_search_criteria_agencies__agency_id__leads_search_criteria_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadSearchCriteriaRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_search_criteria_agencies__agency_id__leads_search_criteria_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeadSearchCriteriaCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadSearchCriteriaRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_search_criteria_agencies__agency_id__leads_search_criteria__criteria_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                criteria_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_search_criteria_agencies__agency_id__leads_search_criteria__criteria_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                criteria_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeadSearchCriteriaUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadSearchCriteriaRead"];
                 };
             };
             /** @description Validation Error */
