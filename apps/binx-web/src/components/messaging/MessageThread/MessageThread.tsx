@@ -1,10 +1,10 @@
 /**
  * MessageThread.tsx
  *
- * The right pane of the inbox: the header (title, participants, settings
- * menu), the scrollable message history (day dividers, consecutive-sender
- * grouping, system notices, edited/deleted states, attachments, a typing
- * indicator), and the composer. History is loaded once per conversation and
+ * The right pane of the inbox: the header (participant avatars, title,
+ * participants, settings menu), the scrollable message history (day
+ * dividers, sender avatars with consecutive-sender grouping, system notices,
+ * edited/deleted states, attachments, a typing indicator), and the composer. History is loaded once per conversation and
  * kept live by the store; "Load earlier" pages backwards.
  *
  * @module apps/binx-web/src/components/messaging/MessageThread/MessageThread.tsx
@@ -19,6 +19,7 @@ import { format, isSameDay } from "date-fns";
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
+import type { AgencyMember } from "@/lib/agencies";
 import type { ConversationDetail, Message } from "@/lib/messaging-client";
 import {
   addParticipantsAction,
@@ -33,12 +34,15 @@ import {
 import { useMessagingStore } from "@/stores/use-messaging-store";
 import { useMessaging } from "@/components/messaging/MessagingProvider/MessagingProvider";
 import MemberMultiSelect from "@/components/messaging/MemberMultiSelect/MemberMultiSelect";
+import MessageAvatar from "@/components/messaging/MessageAvatar/MessageAvatar";
 import MessageAttachmentView from "@/components/messaging/MessageAttachmentView/MessageAttachmentView";
 import MessageComposer from "@/components/messaging/MessageComposer/MessageComposer";
 
 import styles from "./MessageThread.module.scss";
 
 const PAGE_SIZE = 50;
+// How many faces the header stack shows before collapsing into "+N".
+const HEADER_AVATARS = 4;
 
 // Matches an @handle the same way binx-api's _MENTION_RE does, so what we
 // highlight is exactly what the server turns into a notification.
@@ -73,7 +77,7 @@ interface MessageThreadProps {
 }
 
 const MessageThread = ({ conversation, onConversationChanged, canModerate }: MessageThreadProps) => {
-  const { agencyId, currentUserId, members } = useMessaging();
+  const { agencyId, currentUserId, members, memberByUserId } = useMessaging();
   const messages = useMessagingStore((s) => s.messagesByConversation[conversation.id]);
   const hydrated = useMessagingStore((s) => s.hydrated.has(conversation.id));
   const setMessages = useMessagingStore((s) => s.setMessages);
@@ -105,7 +109,9 @@ const MessageThread = ({ conversation, onConversationChanged, canModerate }: Mes
   useEffect(() => {
     if (hydrated) return;
     let cancelled = false;
-    void loadMessagesAction(agencyId, conversation.id, { limit: PAGE_SIZE }).then((result) => {
+    void loadMessagesAction(agencyId, conversation.id, {
+      limit: PAGE_SIZE,
+    }).then((result) => {
       if (cancelled) return;
       if (result.messages) {
         setMessages(conversation.id, result.messages);
@@ -202,14 +208,35 @@ const MessageThread = ({ conversation, onConversationChanged, canModerate }: Mes
     if (result.error) toast.error(result.error);
   };
 
-  const typingNames = useMemo(() => {
+  const typers = useMemo(() => {
     if (!typing) return [];
-    return Object.values(typing).map((t) => t.name);
+    return Object.entries(typing).map(([userId, t]) => ({
+      userId,
+      name: t.name,
+    }));
   }, [typing]);
+  const typingNames = typers.map((t) => t.name);
+
+  // Everyone but the caller, so a direct conversation shows the other person.
+  const headerPeople = activeParticipants.filter((p) => p.user_id !== currentUserId);
+  const stackPeople = (headerPeople.length > 0 ? headerPeople : activeParticipants).slice(0, HEADER_AVATARS);
+  const stackOverflow = Math.max(0, headerPeople.length - HEADER_AVATARS);
 
   return (
     <div className={styles.thread}>
       <header className={styles.header}>
+        <div className={styles.avatarStack} data-count={stackPeople.length}>
+          {stackPeople.map((p) => (
+            <MessageAvatar
+              key={p.user_id}
+              agencyId={agencyId}
+              name={p.full_name}
+              member={memberByUserId.get(p.user_id)}
+              className={styles.stackAvatar}
+            />
+          ))}
+          {stackOverflow > 0 && <span className={styles.stackOverflow}>+{stackOverflow}</span>}
+        </div>
         <div className={styles.headerMain}>
           {renaming ? (
             <input
@@ -306,6 +333,7 @@ const MessageThread = ({ conversation, onConversationChanged, canModerate }: Mes
                     message={message}
                     grouped={Boolean(grouped)}
                     mine={message.sender_id === currentUserId}
+                    member={message.sender_id ? memberByUserId.get(message.sender_id) : undefined}
                     canModerate={canModerate}
                     agencyId={agencyId}
                     conversationId={conversation.id}
@@ -327,10 +355,28 @@ const MessageThread = ({ conversation, onConversationChanged, canModerate }: Mes
           })
         )}
 
-        {typingNames.length > 0 && (
-          <p className={styles.typing}>
-            {typingNames.join(", ")} {typingNames.length === 1 ? "is" : "are"} typing…
-          </p>
+        {typers.length > 0 && (
+          <div className={styles.typing} aria-live="polite">
+            <span className={styles.typingAvatars}>
+              {typers.slice(0, 3).map((t) => (
+                <MessageAvatar
+                  key={t.userId}
+                  agencyId={agencyId}
+                  name={t.name}
+                  member={memberByUserId.get(t.userId)}
+                  size="sm"
+                />
+              ))}
+            </span>
+            <span className={styles.typingDots} aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </span>
+            <span className={styles.typingLabel}>
+              {typingNames.join(", ")} {typingNames.length === 1 ? "is" : "are"} typing…
+            </span>
+          </div>
         )}
         <div ref={bottomRef} />
       </div>
@@ -386,6 +432,7 @@ interface MessageRowProps {
   message: Message;
   grouped: boolean;
   mine: boolean;
+  member: AgencyMember | undefined;
   canModerate: boolean;
   agencyId: string;
   conversationId: string;
@@ -403,6 +450,7 @@ const MessageRow = ({
   message,
   grouped,
   mine,
+  member,
   canModerate,
   agencyId,
   conversationId,
@@ -417,78 +465,94 @@ const MessageRow = ({
 }: MessageRowProps) => {
   const pending = message.id.startsWith("optimistic-");
   const deleted = message.deleted_at !== null;
+  const createdAt = new Date(message.created_at);
 
   return (
     <div className={styles.message} data-grouped={grouped} data-pending={pending} data-mine={mine}>
-      {!grouped && (
-        <div className={styles.messageMeta}>
-          <span className={styles.sender}>{mine ? "You" : message.sender_name}</span>
-          <span className={styles.timestamp}>{format(new Date(message.created_at), "p")}</span>
-        </div>
-      )}
+      <div className={styles.gutter}>
+        {grouped ? (
+          // Follow-ups in a run skip the avatar; the time shows on hover instead.
+          <time className={styles.gutterTime} dateTime={message.created_at} title={format(createdAt, "PPpp")}>
+            {format(createdAt, "p")}
+          </time>
+        ) : (
+          <MessageAvatar agencyId={agencyId} name={message.sender_name} member={member} />
+        )}
+      </div>
 
-      {deleted ? (
-        <p className={styles.deleted}>Message deleted</p>
-      ) : editing ? (
-        <div className={styles.editBox}>
-          <textarea
-            autoFocus
-            className={styles.editTextarea}
-            value={editDraft}
-            onChange={(event) => onEditDraft(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && !event.shiftKey) {
-                event.preventDefault();
-                onSaveEdit();
-              }
-              if (event.key === "Escape") onCancelEdit();
-            }}
-          />
-          <div className={styles.editActions}>
-            <button type="button" onClick={onCancelEdit}>
-              Cancel
-            </button>
-            <button type="button" onClick={onSaveEdit}>
-              Save
+      <div className={styles.content}>
+        {!grouped && (
+          <div className={styles.messageMeta}>
+            <span className={styles.sender}>{mine ? "You" : message.sender_name}</span>
+            <time className={styles.timestamp} dateTime={message.created_at} title={format(createdAt, "PPpp")}>
+              {format(createdAt, "p")}
+            </time>
+          </div>
+        )}
+
+        {deleted ? (
+          <p className={styles.deleted}>Message deleted</p>
+        ) : editing ? (
+          <div className={styles.editBox}>
+            <textarea
+              autoFocus
+              className={styles.editTextarea}
+              value={editDraft}
+              onChange={(event) => onEditDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+                  onSaveEdit();
+                }
+                if (event.key === "Escape") onCancelEdit();
+              }}
+            />
+            <div className={styles.editActions}>
+              <button type="button" onClick={onCancelEdit}>
+                Cancel
+              </button>
+              <button type="button" onClick={onSaveEdit}>
+                Save
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {message.body && (
+              <p className={styles.body}>
+                {renderBody(message.body, mentionHandles)}
+                {message.edited_at && <span className={styles.edited}> (edited)</span>}
+              </p>
+            )}
+            {message.attachments.length > 0 && (
+              <div className={styles.attachments}>
+                {message.attachments.map((attachment) => (
+                  <MessageAttachmentView
+                    key={attachment.id}
+                    agencyId={agencyId}
+                    conversationId={conversationId}
+                    messageId={message.id}
+                    attachment={attachment}
+                  />
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {!deleted && !pending && (mine || canModerate) && (
+          <div className={styles.rowActions}>
+            {mine && !editing && (
+              <button type="button" onClick={onStartEdit} aria-label="Edit message">
+                <Pencil aria-hidden="true" />
+              </button>
+            )}
+            <button type="button" onClick={onDelete} aria-label="Delete message">
+              <Trash2 aria-hidden="true" />
             </button>
           </div>
-        </div>
-      ) : (
-        <>
-          {message.body && (
-            <p className={styles.body}>
-              {renderBody(message.body, mentionHandles)}
-              {message.edited_at && <span className={styles.edited}> (edited)</span>}
-            </p>
-          )}
-          {message.attachments.length > 0 && (
-            <div className={styles.attachments}>
-              {message.attachments.map((attachment) => (
-                <MessageAttachmentView
-                  key={attachment.id}
-                  agencyId={agencyId}
-                  conversationId={conversationId}
-                  messageId={message.id}
-                  attachment={attachment}
-                />
-              ))}
-            </div>
-          )}
-        </>
-      )}
-
-      {!deleted && !pending && (mine || canModerate) && (
-        <div className={styles.rowActions}>
-          {mine && !editing && (
-            <button type="button" onClick={onStartEdit} aria-label="Edit message">
-              <Pencil aria-hidden="true" />
-            </button>
-          )}
-          <button type="button" onClick={onDelete} aria-label="Delete message">
-            <Trash2 aria-hidden="true" />
-          </button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

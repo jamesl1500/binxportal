@@ -19,7 +19,48 @@
 }
 
 .headerMain {
+  flex: 1;
   min-width: 0;
+}
+
+// Overlapping faces of the other participants, left of the title.
+.avatarStack {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding-top: 0.125rem;
+}
+
+.stackAvatar {
+  width: 2.25rem;
+  height: 2.25rem;
+  box-shadow: 0 0 0 2px t.$color-surface;
+
+  & + & {
+    margin-left: -0.75rem;
+  }
+}
+
+.avatarStack[data-count="1"] .stackAvatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: 0.8125rem;
+}
+
+.stackOverflow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin-left: -0.75rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: t.$color-ink-soft;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px t.$color-surface;
 }
 
 .title {
@@ -167,12 +208,16 @@
 .message {
   position: relative;
   display: flex;
-  flex-direction: column;
   align-items: flex-start;
+  gap: t.$space-2;
   padding: t.$space-1 0;
 
   &[data-grouped="true"] {
     margin-top: -0.25rem;
+  }
+
+  &:hover .gutterTime {
+    opacity: 1;
   }
 
   &[data-pending="true"] {
@@ -185,7 +230,11 @@
 
   // The signed-in user's own messages: right-aligned, with a darker bubble.
   &[data-mine="true"] {
-    align-items: flex-end;
+    flex-direction: row-reverse;
+
+    .content {
+      align-items: flex-end;
+    }
 
     .body,
     .deleted {
@@ -201,6 +250,37 @@
       left: 0;
     }
   }
+}
+
+// Fixed-width avatar column so bubbles in a run line up under the first one.
+.gutter {
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2rem;
+  padding-top: t.$space-2;
+}
+
+.message[data-grouped="true"] .gutter {
+  padding-top: t.$space-2;
+  align-self: center;
+}
+
+.gutterTime {
+  @include m.mono-label;
+  font-size: 0.5rem;
+  color: t.$color-ink-faint;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity t.$duration-fast t.$ease-standard;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex: 1;
+  min-width: 0;
 }
 
 .messageMeta {
@@ -330,10 +410,68 @@
 }
 
 .typing {
-  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+  margin-top: t.$space-1;
   font-size: t.$font-size-xs;
-  font-style: italic;
   color: t.$color-ink-faint;
+}
+
+.typingAvatars {
+  display: flex;
+
+  > * + * {
+    margin-left: -0.4rem;
+    box-shadow: 0 0 0 2px t.$color-surface;
+  }
+}
+
+.typingDots {
+  display: inline-flex;
+  gap: 3px;
+  padding: t.$space-2 t.$space-3;
+  background: color-mix(in srgb, #{t.$color-ink} 5%, #{t.$color-surface});
+  border-radius: t.$radius-md;
+
+  span {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: t.$color-ink-faint;
+    animation: typing-bounce 1.2s infinite ease-in-out;
+
+    &:nth-child(2) {
+      animation-delay: 0.15s;
+    }
+
+    &:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    span {
+      animation: none;
+    }
+  }
+}
+
+.typingLabel {
+  font-style: italic;
+}
+
+@keyframes typing-bounce {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  30% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
 }
 
 .backdrop {

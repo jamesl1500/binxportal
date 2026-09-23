@@ -35,6 +35,8 @@ interface MessagingContextValue {
   currentUserId: string;
   /** Agency members available to start a conversation with (excludes the caller). */
   members: AgencyMember[];
+  /** Every agency member (caller included) keyed by user id — for sender avatars. */
+  memberByUserId: Map<string, AgencyMember>;
   /** Every client in the agency — for linking a new conversation and filtering the list. */
   clients: MessagingClientRef[];
   /** Re-pull the conversation list from the server (structural changes, reconnects, focus). */
@@ -57,6 +59,7 @@ export function useMessaging(): MessagingContextValue {
 interface MessagingProviderProps {
   agencyId: string;
   currentUserId: string;
+  /** Every agency member, caller included — the picker list is derived from this. */
   members: AgencyMember[];
   clients?: MessagingClientRef[];
   initialConversations: Conversation[];
@@ -135,7 +138,9 @@ const MessagingProvider = ({
       setSocketStatus("connecting");
       let ticket: string;
       try {
-        const response = await fetch("/api/messages/ws-ticket", { method: "POST" });
+        const response = await fetch("/api/messages/ws-ticket", {
+          method: "POST",
+        });
         if (!response.ok) throw new Error("ticket");
         ({ ticket } = await response.json());
       } catch {
@@ -228,17 +233,33 @@ const MessagingProvider = ({
     }
   }, []);
 
+  const memberByUserId = useMemo(() => new Map(members.map((member) => [member.user_id, member])), [members]);
+  const otherMembers = useMemo(
+    () => members.filter((member) => member.user_id !== currentUserId),
+    [members, currentUserId],
+  );
+
   const value = useMemo<MessagingContextValue>(
     () => ({
       agencyId,
       currentUserId,
-      members,
+      members: otherMembers,
+      memberByUserId,
       clients,
       refreshConversations,
       sendTyping,
       socketStatus: storeSocketStatus,
     }),
-    [agencyId, currentUserId, members, clients, refreshConversations, sendTyping, storeSocketStatus],
+    [
+      agencyId,
+      currentUserId,
+      otherMembers,
+      memberByUserId,
+      clients,
+      refreshConversations,
+      sendTyping,
+      storeSocketStatus,
+    ],
   );
 
   return <MessagingContext.Provider value={value}>{children}</MessagingContext.Provider>;

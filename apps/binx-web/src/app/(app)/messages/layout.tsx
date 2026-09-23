@@ -42,7 +42,7 @@ const MessagesLayout = async ({ children }: { children: React.ReactNode }) => {
     <MessagingProvider
       agencyId={currentAgency.id}
       currentUserId={user.id}
-      members={members.filter((member) => member.user_id !== user.id)}
+      members={members}
       clients={clients.map((client) => ({ id: client.id, name: client.name }))}
       initialConversations={conversations}
     >
