@@ -18,6 +18,9 @@ dependencies = [
     # async-native AWS SDK is needed.
     "boto3>=1.42.0",
     "fastapi>=0.141.1",
+    # Runtime, not just the test client: the Google Places client
+    # (modules/leads/places.py) calls the Places API with it.
+    "httpx>=0.28.1",
     "passlib[bcrypt]>=1.7.4",
     "pydantic-settings>=2.15.0",
     "pydantic[email]>=2.13.4",
@@ -44,7 +47,6 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
-    "httpx>=0.28.1",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
     "pytest-cov>=7.0.0",
