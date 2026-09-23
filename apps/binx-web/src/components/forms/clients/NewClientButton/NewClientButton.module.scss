@@ -1,0 +1,19 @@
+@use "../../../../styles/tokens" as t;
+@use "../../../../styles/mixins" as m;
+
+.newButton {
+  @include m.button-base;
+  gap: t.$space-2;
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+  text-decoration: none;
+
+  svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  &:hover {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+}

@@ -2,8 +2,9 @@
  * page.tsx - Projects
  *
  * The current agency's project roster: a searchable, status-filterable
- * table plus a "New project" dialog. The (app) layout above this page
- * already guards for a signed-in session with a current agency.
+ * table plus a "New project" link to the dedicated `/projects/new` page.
+ * The (app) layout above this page already guards for a signed-in session
+ * with a current agency.
  *
  * @module apps/binx-web/src/app/(app)/projects/page.tsx
  * @author Binx.io
@@ -15,7 +16,7 @@ import { getCurrentAgencyContext } from "@/lib/agencies";
 import { getAgencyClients } from "@/lib/clients";
 import { getAgencyProjects } from "@/lib/projects";
 import ProjectsTable from "@/components/forms/projects/ProjectsTable/ProjectsTable";
-import CreateProjectDialog from "@/components/forms/projects/CreateProjectDialog/CreateProjectDialog";
+import NewProjectButton from "@/components/forms/projects/NewProjectButton/NewProjectButton";
 
 import styles from "./page.module.scss";
 
@@ -45,7 +46,7 @@ const ProjectsPage = async () => {
           </p>
         </div>
 
-        <CreateProjectDialog agencyId={currentAgency.id} clients={clients} />
+        <NewProjectButton />
       </div>
 
       {clients.length === 0 && (

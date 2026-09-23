@@ -43,6 +43,25 @@
   border-radius: t.$radius-sm;
 }
 
+.backLink {
+  display: inline-block;
+  margin-bottom: t.$space-4;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+  text-decoration: none;
+
+  &:hover {
+    color: t.$color-ink;
+  }
+}
+
+.formCard {
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  padding: t.$space-6;
+}
+
 .tableWrapper {
   margin-top: t.$space-2;
 }

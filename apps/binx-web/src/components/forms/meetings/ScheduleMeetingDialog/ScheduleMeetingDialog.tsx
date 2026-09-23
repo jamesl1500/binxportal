@@ -2,9 +2,8 @@
  * ScheduleMeetingDialog.tsx
  *
  * The "Schedule meeting" button on the agency-wide and per-client Meetings
- * pages, and the modal it opens. Mirrors CreateClientDialog exactly —
- * ScheduleMeetingForm owns the fields, this owns the dialog chrome and
- * refresh-on-success.
+ * pages, and the modal it opens: plain `open` state, ScheduleMeetingForm
+ * owns the fields, this owns the dialog chrome and refresh-on-success.
  *
  * @module apps/binx-web/src/components/forms/meetings/ScheduleMeetingDialog/ScheduleMeetingDialog.tsx
  * @author Binx.io

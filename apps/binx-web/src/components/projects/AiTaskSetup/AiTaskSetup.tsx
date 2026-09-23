@@ -1,8 +1,9 @@
 /**
  * AiTaskSetup.tsx
  *
- * Shown right after a project is created (inside CreateProjectDialog, in
- * place of the form): offers to draft a starter kanban board with AI, then
+ * Shown right after a project is created (on the `/projects/new` page, via
+ * NewProjectForm, in place of the form): offers to draft a starter kanban
+ * board with AI, then
  * lets the user review/edit the suggestion (rename or drop a list/task)
  * before applying it — nothing is written to the board until confirmed.
  * Skipping at any point (or an AI failure) just calls `onDone()`, same as

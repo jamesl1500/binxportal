@@ -4,9 +4,9 @@
  * Shared create/edit form for a client: name plus optional contact details
  * and notes. Create and edit only differ in default values and which server
  * action they call — sharing one component keeps the two in sync as fields
- * are added. Used inside CreateClientDialog's modal (create) and directly on
- * the client detail page (edit) — the caller owns any surrounding chrome
- * (dialog, page section), this only owns the fields and submission.
+ * are added. Used on the dedicated `/clients/new` page via NewClientForm
+ * (create) and directly on the client detail page (edit) — the caller owns
+ * any surrounding chrome, this only owns the fields and submission.
  *
  * @module apps/binx-web/src/components/forms/clients/ClientForm/ClientForm.tsx
  * @author Binx.io
@@ -45,7 +45,7 @@ interface ClientFormProps {
    * Called after a successful save. Optional — edit mode already shows its
    * own inline success message and refreshes the route itself (so a header
    * showing the client's name stays in sync); callers only need this to
-   * react further, e.g. CreateClientDialog closing itself.
+   * react further, e.g. NewClientForm navigating to the new client's page.
    */
   onSuccess?: (client: AgencyClient) => void;
   onCancel?: () => void;

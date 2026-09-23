@@ -10,12 +10,9 @@
  * as AppHeader's other dropdowns), since picking the current org is
  * semantically a single-select choice among the user's agencies.
  *
- * The dropdown also carries a "Create agency" entry, which opens a Dialog
- * rather than a Menu.Item that navigates or submits directly. The dialog's
- * `open` state is plain component state rather than a Dialog.Trigger, since
- * a trigger nested inside the Menu's popup would fight the menu for focus
- * and unmount before the dialog could take over — setting state from the
- * menu item's onClick (with closeOnClick) sidesteps that entirely.
+ * The dropdown also carries a "Create agency" entry — a `Menu.LinkItem` to
+ * the dedicated `/agencies/new` page (same pattern AppHeader's account menu
+ * uses for Profile/Account/Agency settings), rather than a modal.
  *
  * @module apps/binx-web/src/components/navigation/OrgSwitcher/OrgSwitcher.tsx
  * @author Binx.io
@@ -23,15 +20,14 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Menu } from "@base-ui/react/menu";
-import { Dialog } from "@base-ui/react/dialog";
 import { Check, ChevronDown, Plus } from "lucide-react";
 
 import { switchAgencyAction } from "@/app/(app)/actions";
 import type { AgencyRead } from "@/lib/agencies";
 import { agencyImageUrl } from "@/lib/agencies-client";
-import CreateAgencyForm from "@/components/forms/agency/CreateAgencyForm/CreateAgencyForm";
 
 import styles from "./OrgSwitcher.module.scss";
 
@@ -60,7 +56,6 @@ const OrgSwitcher = ({ agencies, currentAgency }: OrgSwitcherProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [createOpen, setCreateOpen] = useState(false);
 
   const handleValueChange = (agencyId: string) => {
     if (agencyId === currentAgency.id) return;
@@ -78,13 +73,6 @@ const OrgSwitcher = ({ agencies, currentAgency }: OrgSwitcherProps) => {
       // "current agency" cookie in effect, instead of navigating elsewhere.
       router.refresh();
     });
-  };
-
-  const handleCreated = () => {
-    // createAgencyAction already made the new agency "current" server-side —
-    // refreshing is enough to pick it up, same as switching does above.
-    setCreateOpen(false);
-    router.refresh();
   };
 
   return (
@@ -113,14 +101,14 @@ const OrgSwitcher = ({ agencies, currentAgency }: OrgSwitcherProps) => {
 
               <div className={styles.separator} role="separator" />
 
-              <Menu.Item
+              <Menu.LinkItem
+                render={<Link href="/agencies/new" />}
                 className={`${styles.menuItem} ${styles.createItem}`}
                 closeOnClick
-                onClick={() => setCreateOpen(true)}
               >
                 <Plus className={styles.plusIcon} aria-hidden="true" />
                 Create agency
-              </Menu.Item>
+              </Menu.LinkItem>
             </Menu.Popup>
           </Menu.Positioner>
         </Menu.Portal>
@@ -131,21 +119,6 @@ const OrgSwitcher = ({ agencies, currentAgency }: OrgSwitcherProps) => {
           {error}
         </span>
       )}
-
-      <Dialog.Root open={createOpen} onOpenChange={setCreateOpen}>
-        <Dialog.Portal>
-          <Dialog.Backdrop className={styles.backdrop} />
-          <Dialog.Popup className={styles.dialog} aria-label="Create a new agency">
-            <Dialog.Title className={styles.dialogTitle}>Create a new agency</Dialog.Title>
-            <Dialog.Description className={styles.dialogDescription}>
-              Agencies keep clients, files, and teammates separate from each other. You&apos;ll be the owner of this
-              one, and can switch back to any other agency at any time.
-            </Dialog.Description>
-
-            <CreateAgencyForm onCreated={handleCreated} onCancel={() => setCreateOpen(false)} />
-          </Dialog.Popup>
-        </Dialog.Portal>
-      </Dialog.Root>
     </div>
   );
 };

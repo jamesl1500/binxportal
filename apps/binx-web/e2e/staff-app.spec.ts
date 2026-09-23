@@ -57,7 +57,7 @@ test.describe("staff app", () => {
 
   test("creating a lead shows the AI follow-up card", async ({ staffPage }) => {
     await staffPage.goto("/leads");
-    await staffPage.getByRole("button", { name: "New lead" }).click();
+    await staffPage.getByRole("link", { name: "New lead" }).click();
     await staffPage.getByLabel("Lead / company name").fill("Riverside Outfitters");
     await staffPage.getByRole("button", { name: "Add lead" }).click();
 
@@ -72,7 +72,7 @@ test.describe("staff app", () => {
 
   test("creating a project offers an AI starter task list", async ({ staffPage }) => {
     await staffPage.goto("/projects");
-    await staffPage.getByRole("button", { name: "New project" }).click();
+    await staffPage.getByRole("link", { name: "New project" }).click();
     await staffPage.getByLabel("Project name").fill("Seasonal Campaign");
     await staffPage.getByRole("button", { name: "Create project" }).click();
 

@@ -4,9 +4,10 @@
  * Shared create/edit form for a project: name, client, status, description,
  * and optional start/due dates. Create and edit only differ in default
  * values and which server action they call — sharing one component keeps
- * the two in sync as fields are added. Used inside CreateProjectDialog's
- * modal (create) and directly on the project dashboard (edit) — the caller
- * owns any surrounding chrome, this only owns the fields and submission.
+ * the two in sync as fields are added. Used on the dedicated `/projects/new`
+ * page via NewProjectForm (create) and directly on the project dashboard
+ * (edit) — the caller owns any surrounding chrome, this only owns the
+ * fields and submission.
  *
  * @module apps/binx-web/src/components/forms/projects/ProjectForm/ProjectForm.tsx
  * @author Binx.io
@@ -55,7 +56,8 @@ interface ProjectFormProps {
   /**
    * Called after a successful save. Optional — edit mode already shows its
    * own inline success message and refreshes the route itself; callers only
-   * need this to react further, e.g. CreateProjectDialog closing itself.
+   * need this to react further, e.g. NewProjectForm showing the AI
+   * starter-task step.
    */
   onSuccess?: (project: Project) => void;
   onCancel?: () => void;

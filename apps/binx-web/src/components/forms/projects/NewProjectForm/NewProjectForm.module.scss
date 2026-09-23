@@ -1,0 +1,15 @@
+@use "../../../../styles/tokens" as t;
+
+.stepTitle {
+  margin: 0 0 t.$space-2;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-ink;
+}
+
+.stepSubtitle {
+  margin: 0 0 t.$space-5;
+  font-size: t.$font-size-sm;
+  line-height: 1.5;
+  color: t.$color-ink-soft;
+}

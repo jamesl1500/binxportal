@@ -3,10 +3,10 @@
  *
  * Client-side form for creating a new agency from within the app (as
  * opposed to onboarding's AgencyForm, which creates the user's first one
- * and redirects afterward). Rendered inside OrgSwitcher's create-agency
- * dialog — this component owns validation/submission only; the dialog's
- * open/close state lives in OrgSwitcher, which is why success and cancel
- * are both reported upward via props instead of handled here.
+ * and redirects afterward). Rendered on the dedicated `/agencies/new` page
+ * via `NewAgencyForm` — this component owns validation/submission only;
+ * where to navigate on success or cancel is reported upward via props
+ * instead of handled here.
  *
  * @module apps/binx-web/src/components/forms/agency/CreateAgencyForm/CreateAgencyForm.tsx
  * @author Binx.io

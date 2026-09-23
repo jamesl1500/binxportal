@@ -2,9 +2,9 @@
  * page.tsx - Leads
  *
  * The agency's lead pipeline: headline figures + a searchable, filterable
- * table + a "New lead" dialog. The (app) layout above already guards for a
- * signed-in session with a current agency. Leads convert to real clients
- * from the detail page.
+ * table + a "New lead" link to the dedicated `/leads/new` page. The (app)
+ * layout above already guards for a signed-in session with a current
+ * agency. Leads convert to real clients from the detail page.
  *
  * @module apps/binx-web/src/app/(app)/leads/page.tsx
  * @author Binx.io
@@ -18,8 +18,8 @@ import { LEAD_STATUS_META } from "@/lib/leads-client";
 import { formatCompactMoney } from "@/lib/money";
 import ClientStatGrid, { type ClientStat } from "@/components/clients/ClientStatGrid/ClientStatGrid";
 import AnalyzeAllButton from "@/components/leads/AnalyzeAllButton/AnalyzeAllButton";
-import CreateLeadDialog from "@/components/leads/CreateLeadDialog/CreateLeadDialog";
 import FindLeadsDialog from "@/components/leads/FindLeadsDialog/FindLeadsDialog";
+import NewLeadButton from "@/components/leads/NewLeadButton/NewLeadButton";
 import LeadsTable from "@/components/leads/LeadsTable/LeadsTable";
 
 import styles from "./page.module.scss";
@@ -64,7 +64,7 @@ const LeadsPage = async () => {
         <div className={styles.headerActions}>
           <AnalyzeAllButton agencyId={currentAgency.id} />
           <FindLeadsDialog agencyId={currentAgency.id} />
-          <CreateLeadDialog agencyId={currentAgency.id} />
+          <NewLeadButton />
         </div>
       </div>
 

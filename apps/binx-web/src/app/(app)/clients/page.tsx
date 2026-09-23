@@ -2,8 +2,9 @@
  * page.tsx - Clients
  *
  * The current agency's client roster: a searchable, status-filterable table
- * plus a "New client" dialog. The (app) layout above this page already
- * guards for a signed-in session with a current agency.
+ * plus a "New client" link to the dedicated `/clients/new` page. The (app)
+ * layout above this page already guards for a signed-in session with a
+ * current agency.
  *
  * @module apps/binx-web/src/app/(app)/clients/page.tsx
  * @author Binx.io
@@ -14,7 +15,7 @@ import { redirect } from "next/navigation";
 import { getCurrentAgencyContext } from "@/lib/agencies";
 import { getAgencyClients } from "@/lib/clients";
 import ClientsTable from "@/components/forms/clients/ClientsTable/ClientsTable";
-import CreateClientDialog from "@/components/forms/clients/CreateClientDialog/CreateClientDialog";
+import NewClientButton from "@/components/forms/clients/NewClientButton/NewClientButton";
 
 import styles from "./page.module.scss";
 
@@ -41,7 +42,7 @@ const ClientsPage = async () => {
           </p>
         </div>
 
-        <CreateClientDialog agencyId={currentAgency.id} />
+        <NewClientButton />
       </div>
 
       <div className={styles.tableWrapper}>

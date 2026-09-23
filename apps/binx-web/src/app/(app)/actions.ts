@@ -54,9 +54,9 @@ export interface CreateAgencyActionResult {
  * Creates a new agency (the caller becomes its owner) and immediately makes
  * it the "current agency", since having just created it you're almost
  * certainly about to work in it. Unlike onboarding's createAgencyAction,
- * this doesn't redirect — it's launched from a dialog under the org
- * switcher, on whatever page the user already happens to be on, and the
- * caller (OrgSwitcher) just refreshes the current route instead.
+ * this doesn't redirect — it's called from the dedicated `/agencies/new`
+ * page (reachable from the org switcher), and the caller (NewAgencyForm)
+ * navigates to the dashboard itself instead.
  */
 export async function createAgencyAction(name: string): Promise<CreateAgencyActionResult> {
   let agency: AgencyRead;

@@ -16,7 +16,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/app/(app)/actions", () => ({
   switchAgencyAction: vi.fn(),
-  createAgencyAction: vi.fn(),
 }));
 
 const mockRefresh = vi.fn();
@@ -24,13 +23,12 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: mockRefresh }),
 }));
 
-import { createAgencyAction, switchAgencyAction } from "@/app/(app)/actions";
+import { switchAgencyAction } from "@/app/(app)/actions";
 import type { AgencyRead } from "@/lib/agencies";
 
 import OrgSwitcher from "./OrgSwitcher";
 
 const mockedSwitchAgencyAction = vi.mocked(switchAgencyAction);
-const mockedCreateAgencyAction = vi.mocked(createAgencyAction);
 
 const agencies: AgencyRead[] = [
   { id: "aaaaaaaa-1111-1111-1111-111111111111", name: "Acme Agency", slug: "acme-agency", role: "owner", has_logo: false },
@@ -96,42 +94,15 @@ describe("OrgSwitcher", () => {
     expect(mockRefresh).not.toHaveBeenCalled();
   });
 
-  it("opens the create-agency dialog from the dropdown", async () => {
+  it("links Create agency to the dedicated /agencies/new page", async () => {
     const user = userEvent.setup();
     render(<OrgSwitcher agencies={agencies} currentAgency={agencies[0]} />);
 
     await user.click(screen.getByRole("button", { name: "Switch agency" }));
-    await user.click(await screen.findByRole("menuitem", { name: "Create agency" }));
 
-    expect(await screen.findByRole("heading", { name: "Create a new agency" })).toBeInTheDocument();
-  });
-
-  it("creates a new agency and refreshes the route on success", async () => {
-    mockedCreateAgencyAction.mockResolvedValueOnce({
-      agency: { id: "cccccccc-3333-3333-3333-333333333333", name: "New Co", slug: "new-co", role: "owner", has_logo: false },
-    });
-    const user = userEvent.setup();
-    render(<OrgSwitcher agencies={agencies} currentAgency={agencies[0]} />);
-
-    await user.click(screen.getByRole("button", { name: "Switch agency" }));
-    await user.click(await screen.findByRole("menuitem", { name: "Create agency" }));
-    await user.type(screen.getByLabelText("Agency name"), "New Co");
-    await user.click(screen.getByRole("button", { name: /^create agency$/i }));
-
-    expect(mockedCreateAgencyAction).toHaveBeenCalledWith("New Co");
-    expect(mockRefresh).toHaveBeenCalledOnce();
-    expect(screen.queryByRole("heading", { name: "Create a new agency" })).not.toBeInTheDocument();
-  });
-
-  it("closes the dialog without creating anything when cancelled", async () => {
-    const user = userEvent.setup();
-    render(<OrgSwitcher agencies={agencies} currentAgency={agencies[0]} />);
-
-    await user.click(screen.getByRole("button", { name: "Switch agency" }));
-    await user.click(await screen.findByRole("menuitem", { name: "Create agency" }));
-    await user.click(await screen.findByRole("button", { name: /cancel/i }));
-
-    expect(screen.queryByRole("heading", { name: "Create a new agency" })).not.toBeInTheDocument();
-    expect(mockedCreateAgencyAction).not.toHaveBeenCalled();
+    expect(await screen.findByRole("menuitem", { name: "Create agency" })).toHaveAttribute(
+      "href",
+      "/agencies/new",
+    );
   });
 });

@@ -1,4 +1,9 @@
-@use "../../../styles/tokens" as t;
+@use "../../../../styles/tokens" as t;
+
+.header {
+  max-width: 32rem;
+  margin-bottom: t.$space-8;
+}
 
 .eyebrow {
   display: block;
@@ -20,37 +25,14 @@
 .subtitle {
   margin: 0;
   font-size: t.$font-size-sm;
+  line-height: 1.5;
   color: t.$color-ink-soft;
-}
-
-.header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: t.$space-4;
-  margin-bottom: t.$space-8;
-}
-
-.backLink {
-  display: inline-block;
-  margin-bottom: t.$space-4;
-  font-size: t.$font-size-sm;
-  color: t.$color-ink-soft;
-  text-decoration: none;
-
-  &:hover {
-    color: t.$color-ink;
-  }
 }
 
 .formCard {
+  max-width: 32rem;
   background: t.$color-surface;
   border: 1px solid t.$color-border;
   border-radius: t.$radius-md;
   padding: t.$space-6;
-}
-
-.tableWrapper {
-  margin-top: t.$space-2;
 }
