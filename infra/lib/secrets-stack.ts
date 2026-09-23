@@ -28,7 +28,8 @@ export class SecretsStack extends cdk.Stack {
 
     this.secret = new secretsmanager.Secret(this, "AppSecret", {
       secretName: "binxportal/app",
-      description: "POSTGRES_PASSWORD, JWT_SECRET, ANTHROPIC_API_KEY, NEXT_SERVER_ACTIONS_ENCRYPTION_KEY — set via put-secret-value, never by CDK",
+      description:
+        "POSTGRES_PASSWORD, JWT_SECRET, ANTHROPIC_API_KEY, NEXT_SERVER_ACTIONS_ENCRYPTION_KEY — set via put-secret-value, never by CDK",
       // Placeholder only — overwritten out of band immediately after the
       // first deploy of this stack. Never fill this in with real values.
       secretStringValue: cdk.SecretValue.unsafePlainText(
@@ -37,6 +38,7 @@ export class SecretsStack extends cdk.Stack {
           JWT_SECRET: "REPLACE_ME",
           ANTHROPIC_API_KEY: "REPLACE_ME",
           NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: "REPLACE_ME",
+          GOOGLE_PLACES_API_KEY: "REPLACE_ME",
         }),
       ),
       removalPolicy: cdk.RemovalPolicy.RETAIN,
