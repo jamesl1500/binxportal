@@ -88,8 +88,12 @@ class BulkAnalyzeRead(BaseModel):
 
 
 class LeadGenerateRequest(BaseModel):
+    # When set, the saved search's own fields are used and the rest of this
+    # body is ignored — see leads/router.py::generate_leads.
+    criteria_id: uuid.UUID | None = None
     industry: str | None = Field(default=None, max_length=200)
     location: str | None = Field(default=None, max_length=200)
+    radius_miles: int | None = Field(default=None, ge=1, le=500)
     company_size: str | None = Field(default=None, max_length=100)
     keywords: str | None = Field(default=None, max_length=500)
     count: int = Field(default=5, ge=1, le=10)
@@ -102,6 +106,7 @@ class ProspectRead(BaseModel):
     contact_phone: str | None = None
     estimated_value_cents: int | None = None
     rationale: str | None = None
+    source: str = "web_search"
 
 
 class LeadGenerateResponse(BaseModel):
@@ -116,3 +121,29 @@ class LeadImportRequest(BaseModel):
 class LeadImportResponse(BaseModel):
     imported: list[LeadRead]
     skipped: list[dict]
+
+
+class LeadSearchCriteriaBase(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+    industry: str | None = Field(default=None, max_length=200)
+    location: str | None = Field(default=None, max_length=200)
+    radius_miles: int | None = Field(default=None, ge=1, le=500)
+    company_size: str | None = Field(default=None, max_length=100)
+    keywords: str | None = Field(default=None, max_length=500)
+    count: int = Field(default=5, ge=1, le=10)
+
+
+class LeadSearchCriteriaCreate(LeadSearchCriteriaBase):
+    pass
+
+
+class LeadSearchCriteriaUpdate(LeadSearchCriteriaBase):
+    """A full replace of the editable fields — same shape as LeadUpdate."""
+
+
+class LeadSearchCriteriaRead(LeadSearchCriteriaBase):
+    id: uuid.UUID
+    agency_id: uuid.UUID
+    last_run_at: datetime | None
+    last_run_result_count: int | None
+    created_at: datetime

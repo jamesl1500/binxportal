@@ -37,6 +37,7 @@ from binx_api.modules.leads.models import (
     LEAD_OPEN_STATUSES,
     Lead,
     LeadEvent,
+    LeadSearchCriteria,
 )
 from binx_api.modules.notifications import service as notifications_service
 from binx_api.modules.notifications.models import CATEGORY_TEAM
@@ -454,6 +455,97 @@ async def analyze_open_leads(db: AsyncSession, agency: Agency, *, actor: User | 
     return out
 
 
+# ---- Saved search criteria (AI prospector) --------------------------
+
+
+async def list_search_criteria(db: AsyncSession, agency_id: uuid.UUID) -> list[LeadSearchCriteria]:
+    result = await db.execute(
+        select(LeadSearchCriteria)
+        .where(LeadSearchCriteria.agency_id == agency_id)
+        .order_by(LeadSearchCriteria.created_at.desc())
+    )
+    return list(result.scalars().all())
+
+
+async def get_search_criteria_or_404(
+    db: AsyncSession, agency_id: uuid.UUID, criteria_id: uuid.UUID
+) -> LeadSearchCriteria:
+    result = await db.execute(
+        select(LeadSearchCriteria).where(
+            LeadSearchCriteria.id == criteria_id, LeadSearchCriteria.agency_id == agency_id
+        )
+    )
+    criteria = result.scalar_one_or_none()
+    if criteria is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Saved search not found")
+    return criteria
+
+
+async def create_search_criteria(
+    db: AsyncSession,
+    agency: Agency,
+    *,
+    actor: User | None,
+    name: str,
+    industry: str | None,
+    location: str | None,
+    radius_miles: int | None,
+    company_size: str | None,
+    keywords: str | None,
+    count: int,
+) -> LeadSearchCriteria:
+    criteria = LeadSearchCriteria(
+        agency_id=agency.id,
+        name=name,
+        industry=industry,
+        location=location,
+        radius_miles=radius_miles,
+        company_size=company_size,
+        keywords=keywords,
+        count=count,
+        created_by=actor.id if actor else None,
+    )
+    db.add(criteria)
+    await db.commit()
+    await db.refresh(criteria)
+    return criteria
+
+
+async def update_search_criteria(
+    db: AsyncSession,
+    criteria: LeadSearchCriteria,
+    *,
+    name: str,
+    industry: str | None,
+    location: str | None,
+    radius_miles: int | None,
+    company_size: str | None,
+    keywords: str | None,
+    count: int,
+) -> LeadSearchCriteria:
+    criteria.name = name
+    criteria.industry = industry
+    criteria.location = location
+    criteria.radius_miles = radius_miles
+    criteria.company_size = company_size
+    criteria.keywords = keywords
+    criteria.count = count
+    await db.commit()
+    await db.refresh(criteria)
+    return criteria
+
+
+async def delete_search_criteria(db: AsyncSession, criteria: LeadSearchCriteria) -> None:
+    await db.delete(criteria)
+    await db.commit()
+
+
+async def mark_search_criteria_run(db: AsyncSession, criteria: LeadSearchCriteria, *, result_count: int) -> None:
+    criteria.last_run_at = _now()
+    criteria.last_run_result_count = result_count
+    await db.commit()
+
+
 # ---- AI prospector (find + import leads) ---------------------------
 
 
@@ -488,6 +580,7 @@ async def import_prospects(
     existing = (await db.execute(select(Lead.name, Lead.website).where(Lead.agency_id == agency.id))).all()
     seen_names = {name.strip().lower() for name, _ in existing}
     seen_hosts = {h for _, site in existing if (h := _host(site))}
+    source_labels = {"google_places": "Google Places", "web_search": "web search", "both": "Google Places + web search"}
 
     for cand in fresh:
         name = str(cand["name"]).strip()
@@ -495,6 +588,7 @@ async def import_prospects(
         if name.lower() in seen_names or (host and host in seen_hosts):
             out.skipped.append({"name": name, "reason": "Already a lead"})
             continue
+        source_label = source_labels.get(cand.get("source"), "web search")
         lead = await create_lead(
             db,
             agency,
@@ -506,7 +600,7 @@ async def import_prospects(
             website=(cand.get("website") or None),
             source="ai_generated",
             estimated_value_cents=cand.get("estimated_value_cents"),
-            notes=(f"AI prospector: {cand['rationale']}" if cand.get("rationale") else None),
+            notes=(f"AI prospector ({source_label}): {cand['rationale']}" if cand.get("rationale") else None),
         )
         out.imported.append(lead)
         seen_names.add(name.lower())
