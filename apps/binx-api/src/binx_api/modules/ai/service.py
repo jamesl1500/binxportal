@@ -293,6 +293,7 @@ async def find_prospects(
         effort="medium",
         tools=[{"type": "web_search_20260209", "name": "web_search", "max_uses": 5}],
         response_format=_PROSPECTS_FORMAT,
+        fast=True,
     )
 
     def _trimmed(raw: dict, key: str, length: int) -> str | None:
