@@ -208,7 +208,12 @@ class TestFindProspects:
             payload = json.dumps(
                 {
                     "candidates": [
-                        {"name": "Riverside Cafe", "website": "https://riverside.example", "rationale": "x", "source": "google_places"}
+                        {
+                            "name": "Riverside Cafe",
+                            "website": "https://riverside.example",
+                            "rationale": "x",
+                            "source": "google_places",
+                        }
                     ]
                 }
             )
