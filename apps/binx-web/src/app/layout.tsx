@@ -30,7 +30,6 @@ export const metadata: Metadata = {
   authors: [{ name: SITE.legalName }],
   creator: SITE.legalName,
   publisher: SITE.legalName,
-  alternates: { canonical: "/" },
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },

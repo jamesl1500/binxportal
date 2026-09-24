@@ -12,14 +12,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CalendarCheck, LayoutGrid, Sparkles, Users } from "lucide-react";
 
-import { marketingOpenGraph, SITE } from "@/lib/site";
+import { breadcrumbJsonLd, marketingOpenGraph, SITE } from "@/lib/site";
 import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 
 import styles from "../../marketing.module.scss";
 
 const TITLE = "For marketing teams";
 const DESCRIPTION =
-  "A workspace for marketing teams and agencies: a lead pipeline, campaign-sized project boards per client, AI assist for drafts and reports, and a portal that keeps clients in the loop.";
+  "Binx for marketing teams: AI lead prospecting, signable proposals, campaign boards per client, AI drafts and a portal that keeps clients in the loop.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -31,8 +31,8 @@ export const metadata: Metadata = {
 const CAPABILITIES = [
   {
     icon: CalendarCheck,
-    title: "A pipeline that isn't a spreadsheet",
-    text: "Track prospects by stage, score and owner, and convert a won lead straight into a client — no re-typing a name into a new tool.",
+    title: "A pipeline that fills itself",
+    text: "Let the AI prospector find businesses that match your ideal client, save the search, then track each lead by stage and owner and send a signable proposal when it's warm.",
   },
   {
     icon: LayoutGrid,
@@ -79,7 +79,7 @@ const faqJsonLd = {
 const MarketingTeamsPage = () => {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([faqJsonLd, breadcrumbJsonLd(TITLE, "/for/marketing-teams")]) }} />
 
       <section className={styles.hero}>
         <div className={styles.heroGlow} aria-hidden="true" />

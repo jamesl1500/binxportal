@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { marketingOpenGraph, SITE, SITE_URL } from "@/lib/site";
+import { breadcrumbJsonLd, marketingOpenGraph, PLANS, SITE, SITE_URL, softwareApplicationJsonLd } from "@/lib/site";
 
 describe("marketingOpenGraph", () => {
   it("builds a full openGraph/twitter object with the page's own title, description and url", () => {
@@ -35,5 +35,28 @@ describe("marketingOpenGraph", () => {
       { url: `${SITE_URL}/opengraph-image`, width: 1200, height: 630, alt: SITE.ogImageAlt },
     ]);
     expect(result.twitter.images).toEqual([`${SITE_URL}/twitter-image`]);
+  });
+});
+
+describe("softwareApplicationJsonLd", () => {
+  it("summarises the plan prices as an aggregate offer", () => {
+    const result = softwareApplicationJsonLd(["Proposals"]);
+
+    expect(result.featureList).toEqual(["Proposals"]);
+    expect(result.offers).toMatchObject({
+      lowPrice: Math.min(...PLANS.map((plan) => plan.price)),
+      highPrice: Math.max(...PLANS.map((plan) => plan.price)),
+      offerCount: PLANS.length,
+      url: `${SITE_URL}/pricing`,
+    });
+  });
+});
+
+describe("breadcrumbJsonLd", () => {
+  it("links Home to the page", () => {
+    expect(breadcrumbJsonLd("Pricing", "/pricing").itemListElement).toEqual([
+      { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
+      { "@type": "ListItem", position: 2, name: "Pricing", item: `${SITE_URL}/pricing` },
+    ]);
   });
 });

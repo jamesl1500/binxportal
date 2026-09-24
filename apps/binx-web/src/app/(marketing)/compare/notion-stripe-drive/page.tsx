@@ -14,14 +14,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Link2, MessageSquareOff, ShieldQuestion } from "lucide-react";
 
-import { marketingOpenGraph, SITE } from "@/lib/site";
+import { breadcrumbJsonLd, marketingOpenGraph, SITE } from "@/lib/site";
 import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 
 import styles from "../../marketing.module.scss";
 
 const TITLE = "vs. a Notion + Stripe + Drive stack";
 const DESCRIPTION =
-  "Most small agencies aren't comparing tools — they're running one. See where a Notion + Stripe + Google Drive stack breaks down, and what one connected workspace looks like instead.";
+  "See where a Notion + Stripe + Google Drive stack breaks down for a small agency, and what one connected workspace for clients and projects looks like.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -76,7 +76,7 @@ const faqJsonLd = {
 const ComparePage = () => {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([faqJsonLd, breadcrumbJsonLd(TITLE, "/compare/notion-stripe-drive")]) }} />
 
       <section className={styles.hero}>
         <div className={styles.heroGlow} aria-hidden="true" />

@@ -12,14 +12,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { LayoutGrid, PanelsTopLeft, Users } from "lucide-react";
 
-import { marketingOpenGraph, SITE, USE_CASE_PAGES } from "@/lib/site";
+import { breadcrumbJsonLd, marketingOpenGraph, SITE, USE_CASE_PAGES } from "@/lib/site";
 import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 
 import styles from "../../marketing.module.scss";
 
 const TITLE = "Bloom.io alternative for agencies";
 const DESCRIPTION =
-  "Bloom is built around a single creative freelancer's workflow. Binx is the Bloom.io alternative for a team — several people, several clients, one shared workspace.";
+  "Bloom is built around one creative freelancer's workflow. Binx is the Bloom.io alternative for a team: several people, several clients, one shared workspace.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -78,7 +78,7 @@ const faqJsonLd = {
 const BloomAlternativePage = () => {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([faqJsonLd, breadcrumbJsonLd(TITLE, "/alternatives/bloom")]) }} />
 
       <section className={styles.hero}>
         <div className={styles.heroGlow} aria-hidden="true" />
@@ -136,7 +136,7 @@ const BloomAlternativePage = () => {
               <ul className={styles.splitList}>
                 <li>A branded portal with live project progress and files</li>
                 <li>Invoices they can pay directly from the portal</li>
-                <li>A shared canvas the client can see and comment on</li>
+                <li>A shared canvas where the client approves work in place</li>
               </ul>
             </div>
             <div className={styles.splitBody}>
@@ -144,7 +144,7 @@ const BloomAlternativePage = () => {
               <ul className={styles.splitList}>
                 <li>Task boards with assignees and due dates per project</li>
                 <li>Every client and project shared across the team</li>
-                <li>Leads, clients, and invoicing under one login</li>
+                <li>AI lead prospecting, proposals and invoicing under one login</li>
               </ul>
             </div>
           </div>

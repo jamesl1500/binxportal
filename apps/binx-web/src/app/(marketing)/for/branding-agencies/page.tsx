@@ -12,14 +12,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { FileStack, PanelsTopLeft, Receipt, Users } from "lucide-react";
 
-import { marketingOpenGraph, SITE } from "@/lib/site";
+import { breadcrumbJsonLd, marketingOpenGraph, SITE } from "@/lib/site";
 import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 
 import styles from "../../marketing.module.scss";
 
 const TITLE = "For branding agencies";
 const DESCRIPTION =
-  "A workspace for branding agencies: a canvas for presenting brand concepts, a portal that delivers final assets and guidelines properly, and invoicing that matches project-based work.";
+  "Binx for branding agencies: present concepts on a shared canvas, get client approval on each card, and deliver final assets through a branded portal.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -32,7 +32,7 @@ const CAPABILITIES = [
   {
     icon: PanelsTopLeft,
     title: "Present concepts, not attachments",
-    text: "Lay out logo directions, palettes and moodboards on a shared canvas the client can react and comment on directly — a presentation that stays live, not a PDF that goes stale.",
+    text: "Lay out logo directions, palettes and moodboards on a shared canvas, and ask the client to approve the direction right on the card. A presentation that stays live, with sign-off on record.",
   },
   {
     icon: FileStack,
@@ -79,7 +79,7 @@ const faqJsonLd = {
 const BrandingAgenciesPage = () => {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([faqJsonLd, breadcrumbJsonLd(TITLE, "/for/branding-agencies")]) }} />
 
       <section className={styles.hero}>
         <div className={styles.heroGlow} aria-hidden="true" />
