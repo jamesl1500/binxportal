@@ -12,14 +12,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { FileStack, LayoutGrid, PanelsTopLeft, Receipt } from "lucide-react";
 
-import { marketingOpenGraph, SITE } from "@/lib/site";
+import { breadcrumbJsonLd, marketingOpenGraph, SITE } from "@/lib/site";
 import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 
 import styles from "../../marketing.module.scss";
 
 const TITLE = "For design studios";
 const DESCRIPTION =
-  "A workspace for design studios: a shared canvas for reviewing concepts with clients, versioned files on every project, and a portal for sign-off — without a separate review tool.";
+  "Binx for design studios: review concepts with clients on a shared canvas, collect approvals on each card, and keep versioned files on every project.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -32,7 +32,7 @@ const CAPABILITIES = [
   {
     icon: PanelsTopLeft,
     title: "Concepts on a shared canvas",
-    text: "Pin drafts, moodboards and revisions to a project canvas the client can see and comment on directly — no separate review tool, no screenshots in an email thread.",
+    text: "Pin drafts, moodboards and revisions to a project canvas the client can comment on, then request approval on a card and get a clear yes or a note on what to change. No separate review tool.",
   },
   {
     icon: FileStack,
@@ -79,7 +79,7 @@ const faqJsonLd = {
 const DesignStudiosPage = () => {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([faqJsonLd, breadcrumbJsonLd(TITLE, "/for/design-studios")]) }} />
 
       <section className={styles.hero}>
         <div className={styles.heroGlow} aria-hidden="true" />

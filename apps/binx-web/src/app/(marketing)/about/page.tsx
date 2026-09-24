@@ -8,14 +8,14 @@
  */
 import type { Metadata } from "next";
 
-import { marketingOpenGraph, SITE } from "@/lib/site";
+import { breadcrumbJsonLd, marketingOpenGraph, SITE } from "@/lib/site";
 import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 
 import styles from "../marketing.module.scss";
 
 const TITLE = "About";
 const DESCRIPTION =
-  "Binx is one workspace for the whole agency — leads, clients, projects, files, invoicing and a client portal — built for small teams who'd rather do the work than manage the tools.";
+  "Binx is one workspace for the whole agency: leads, proposals, clients, projects, invoicing and a client portal, built for small teams who'd rather do the work.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -46,6 +46,8 @@ const PRINCIPLES = [
 const AboutPage = () => {
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd(TITLE, "/about")) }} />
+
       <section className={styles.hero}>
         <div className={styles.heroGlow} aria-hidden="true" />
         <div className={styles.container}>

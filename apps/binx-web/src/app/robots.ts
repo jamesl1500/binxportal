@@ -6,9 +6,9 @@
  * `robots: { index: false }` via their layout metadata ((app)/layout.tsx,
  * (auth)/auth/layout.tsx, (auth)/onboarding/layout.tsx, (portal)/layout.tsx)
  * — this is belt and braces. The (app) segments below are every top-level
- * route under that group (`find src/app/\(app\) -maxdepth 1 -type d`) — keep
- * this list in sync if a new one is added, since it isn't derived from the
- * filesystem automatically.
+ * route under that group; robots.test.ts fails if a new one is added without
+ * being listed here. `/proposals` covers both the staff proposals area and the
+ * token-scoped public share page.
  *
  * @module apps/binx-web/src/app/robots.ts
  * @author Binx.io
@@ -17,19 +17,22 @@ import type { MetadataRoute } from "next";
 
 import { SITE_URL } from "@/lib/site";
 
-const APP_SEGMENTS = [
+export const APP_SEGMENTS = [
   "account",
   "activity",
+  "agencies",
   "ai",
   "billing",
   "clients",
   "dashboard",
   "invoices",
   "leads",
+  "meetings",
   "messages",
   "notifications",
   "profile",
   "projects",
+  "proposals",
   "settings",
   "team",
 ];

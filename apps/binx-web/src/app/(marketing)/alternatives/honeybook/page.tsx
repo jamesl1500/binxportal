@@ -12,14 +12,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { LayoutGrid, PanelsTopLeft, Users } from "lucide-react";
 
-import { marketingOpenGraph, SITE } from "@/lib/site";
+import { breadcrumbJsonLd, marketingOpenGraph, SITE } from "@/lib/site";
 import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 
 import styles from "../../marketing.module.scss";
 
 const TITLE = "HoneyBook alternative for agencies";
 const DESCRIPTION =
-  "HoneyBook is built for independent businesses booking one client at a time. Binx is the HoneyBook alternative for an agency running several projects and people at once.";
+  "HoneyBook suits one business booking one client at a time. Binx is the HoneyBook alternative for agencies running many projects and people at once.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -53,7 +53,7 @@ const FAQ = [
   },
   {
     q: "Does Binx handle proposals and contracts?",
-    a: "Not today. Binx picks up once a client is confirmed — running the project, giving them a portal, and invoicing. Most agencies pair it with a separate e-signature tool for the contract step.",
+    a: "Proposals, yes. Build a priced proposal with line items and tax, send it as a link, and the client signs or declines online. Once it's signed, the same client record carries on into the project, the portal and the invoice.",
   },
   {
     q: "What does the Free plan actually include?",
@@ -74,7 +74,7 @@ const faqJsonLd = {
 const HoneyBookAlternativePage = () => {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([faqJsonLd, breadcrumbJsonLd(TITLE, "/alternatives/honeybook")]) }} />
 
       <section className={styles.hero}>
         <div className={styles.heroGlow} aria-hidden="true" />
@@ -132,7 +132,7 @@ const HoneyBookAlternativePage = () => {
               <ul className={styles.splitList}>
                 <li>A branded portal that shows live project progress</li>
                 <li>Invoices they can pay directly from the portal</li>
-                <li>A shared canvas the client can see and comment on</li>
+                <li>A shared canvas where the client approves work in place</li>
               </ul>
             </div>
             <div className={styles.splitBody}>
@@ -140,7 +140,7 @@ const HoneyBookAlternativePage = () => {
               <ul className={styles.splitList}>
                 <li>Task boards with assignees and due dates per project</li>
                 <li>Everyone on the team sees the same client record</li>
-                <li>Leads, clients, and invoicing under one login</li>
+                <li>AI lead prospecting, proposals and invoicing under one login</li>
               </ul>
             </div>
           </div>

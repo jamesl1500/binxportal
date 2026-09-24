@@ -14,14 +14,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { MessagesSquare, PanelsTopLeft, Receipt } from "lucide-react";
 
-import { marketingOpenGraph, SITE } from "@/lib/site";
+import { breadcrumbJsonLd, marketingOpenGraph, SITE } from "@/lib/site";
 import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 
 import styles from "../marketing.module.scss";
 
 const TITLE = "Free client portal";
 const DESCRIPTION =
-  "A real client portal on Binx's free plan — no card, no trial clock, no charge per client. Branded project status, files, invoicing and messaging your clients log into directly.";
+  "A real client portal on Binx's free plan: no card, no trial clock, no per-client fee. Branded project status, files, proposals, invoices and messaging.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -38,8 +38,8 @@ const INCLUDED = [
   },
   {
     icon: Receipt,
-    title: "Invoices they can pay",
-    text: "Every invoice you send shows up in their portal, payable directly — no separate payment link to track down.",
+    title: "Proposals and invoices in one place",
+    text: "Proposals they can sign and invoices they can pay both show up in their portal, so there's no separate link to track down.",
   },
   {
     icon: MessagesSquare,
@@ -80,7 +80,7 @@ const faqJsonLd = {
 const FreeClientPortalPage = () => {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([faqJsonLd, breadcrumbJsonLd(TITLE, "/free-client-portal")]) }} />
 
       <section className={styles.hero}>
         <div className={styles.heroGlow} aria-hidden="true" />

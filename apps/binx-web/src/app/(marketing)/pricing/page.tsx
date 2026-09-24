@@ -10,14 +10,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { marketingOpenGraph } from "@/lib/site";
+import { PLANS, breadcrumbJsonLd, marketingOpenGraph, softwareApplicationJsonLd } from "@/lib/site";
 import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 
 import styles from "../marketing.module.scss";
 
 const TITLE = "Pricing";
 const DESCRIPTION =
-  "Simple plans that scale with the agency — a free tier to get started, then Starter, Pro and Scale as you grow. No per-seat surprises.";
+  "Simple, flat plans for agencies: start free, then Starter, Pro and Scale as you grow. Proposals, portal, invoicing and AI on every tier. No per-seat pricing.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -25,45 +25,6 @@ export const metadata: Metadata = {
   alternates: { canonical: "/pricing" },
   ...marketingOpenGraph(TITLE, DESCRIPTION, "/pricing"),
 };
-
-const PLANS = [
-  {
-    name: "Free",
-    price: "$0",
-    per: "forever",
-    blurb: "For a solo operator or a first project.",
-    features: ["1 agency workspace", "Up to 3 clients & 3 active projects", "25 leads", "3 team members", "Client portal & invoicing", "$10/mo of AI usage"],
-    cta: "Get started",
-    featured: false,
-  },
-  {
-    name: "Starter",
-    price: "$49",
-    per: "per month",
-    blurb: "For a small studio finding its rhythm.",
-    features: ["Everything in Free", "15 clients & 25 active projects", "250 leads", "10 team members", "Priority email support", "$50/mo of AI usage"],
-    cta: "Start Starter",
-    featured: false,
-  },
-  {
-    name: "Pro",
-    price: "$149",
-    per: "per month",
-    blurb: "For an agency running many clients at once.",
-    features: ["Everything in Starter", "60 clients & 150 active projects", "2,000 leads", "40 team members", "$200/mo of AI usage"],
-    cta: "Start Pro",
-    featured: true,
-  },
-  {
-    name: "Scale",
-    price: "$399",
-    per: "per month",
-    blurb: "For a large team with no room for limits.",
-    features: ["Everything in Pro", "Unlimited clients, projects & leads", "150 team members", "$750/mo of AI usage", "Onboarding help"],
-    cta: "Start Scale",
-    featured: false,
-  },
-];
 
 const FAQ = [
   {
@@ -76,7 +37,11 @@ const FAQ = [
   },
   {
     q: "What counts as AI usage?",
-    a: "Every AI action — scoring a lead, drafting a reminder, summarising a project, asking the assistant — draws against a monthly budget set by your plan. An owner can see the spend and cap individual users in Settings.",
+    a: "Every AI action (finding prospects, scoring a lead, drafting a reminder, summarising a project, asking the assistant) draws against a monthly budget set by your plan. An owner can see the spend and cap individual users in Settings.",
+  },
+  {
+    q: "Are proposals included on every plan?",
+    a: "Yes. Every plan, Free included, can build proposals, send them as a link and collect an online signature. Signed proposals show up on the client record and in their portal.",
   },
   {
     q: "Can clients use the portal for free?",
@@ -107,7 +72,13 @@ const PricingPage = () => {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify([
+            faqJsonLd,
+            softwareApplicationJsonLd(PLANS.map((plan) => `${plan.name} plan`)),
+            breadcrumbJsonLd(TITLE, "/pricing"),
+          ]),
+        }}
       />
 
       <section className={styles.hero}>
@@ -117,8 +88,8 @@ const PricingPage = () => {
             <span className={styles.eyebrow}>Pricing</span>
             <h1 className={styles.h1}>Plans that grow with the agency.</h1>
             <p className={styles.lead}>
-              Start free, upgrade when the work does. Every plan includes the portal, invoicing and AI — the tiers
-              just change how much of everything you get.
+              Start free, upgrade when the work does. Every plan includes proposals, the client portal, invoicing and
+              AI. The tiers just change how much of everything you get.
             </p>
           </div>
         </div>
@@ -130,8 +101,8 @@ const PricingPage = () => {
             {PLANS.map((plan) => (
               <div key={plan.name} className={styles.priceCard} data-featured={plan.featured}>
                 <p className={styles.priceName}>{plan.name}</p>
-                <p className={styles.priceTag}>{plan.price}</p>
-                <p className={styles.pricePer}>{plan.per}</p>
+                <p className={styles.priceTag}>${plan.price}</p>
+                <p className={styles.pricePer}>{plan.price === 0 ? "forever" : "per month"}</p>
                 <p className={styles.priceBlurb}>{plan.blurb}</p>
                 <ul className={styles.priceList}>
                   {plan.features.map((feature) => (

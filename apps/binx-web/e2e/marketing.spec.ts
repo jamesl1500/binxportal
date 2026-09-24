@@ -59,6 +59,8 @@ test.describe("marketing site", () => {
     await expect(shots.first()).toBeVisible();
     expect(await shots.count()).toBeGreaterThanOrEqual(3);
     for (let i = 0; i < (await shots.count()); i++) {
+      // next/image lazy-loads, so an image far below the fold never starts loading until scrolled to.
+      await shots.nth(i).scrollIntoViewIfNeeded();
       await expect(shots.nth(i)).toHaveJSProperty("complete", true);
       expect(await shots.nth(i).evaluate((el: HTMLImageElement) => el.naturalWidth)).toBeGreaterThan(0);
     }

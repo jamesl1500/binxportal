@@ -9,10 +9,10 @@
  */
 import type { MetadataRoute } from "next";
 
-import { MARKETING_NAV, SEO_LANDING_PAGES, SITE_URL, USE_CASE_PAGES } from "@/lib/site";
+import { MARKETING_LAST_UPDATED, MARKETING_NAV, SEO_LANDING_PAGES, SITE_URL, USE_CASE_PAGES } from "@/lib/site";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const lastModified = new Date();
+  const lastModified = MARKETING_LAST_UPDATED;
 
   return [
     { url: `${SITE_URL}/`, lastModified, changeFrequency: "weekly", priority: 1 },
@@ -27,6 +27,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified,
       changeFrequency: "monthly" as const,
       priority: 0.6,
+    })),
+    ...["/privacy", "/terms"].map((path) => ({
+      url: `${SITE_URL}${path}`,
+      lastModified,
+      changeFrequency: "yearly" as const,
+      priority: 0.3,
     })),
   ];
 }

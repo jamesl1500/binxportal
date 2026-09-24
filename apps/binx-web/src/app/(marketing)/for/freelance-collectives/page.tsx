@@ -12,14 +12,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CalendarCheck, LayoutGrid, Receipt, Users } from "lucide-react";
 
-import { marketingOpenGraph, SITE } from "@/lib/site";
+import { breadcrumbJsonLd, marketingOpenGraph, SITE } from "@/lib/site";
 import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 
 import styles from "../../marketing.module.scss";
 
 const TITLE = "For freelance collectives";
 const DESCRIPTION =
-  "A shared workspace for freelance collectives: clients and projects owned by the group, not one person's inbox, with a free plan that fits before the work is billing enough to justify a cost.";
+  "A shared workspace for freelance collectives: clients and projects owned by the group, not one inbox, on a free plan that fits before the work pays.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -79,7 +79,7 @@ const faqJsonLd = {
 const FreelanceCollectivesPage = () => {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([faqJsonLd, breadcrumbJsonLd(TITLE, "/for/freelance-collectives")]) }} />
 
       <section className={styles.hero}>
         <div className={styles.heroGlow} aria-hidden="true" />

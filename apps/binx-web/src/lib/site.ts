@@ -22,7 +22,7 @@ export const SITE = {
   tagline: "Run the whole agency from one place.",
   /** ~155 chars — default meta description. */
   description:
-    "Binx brings leads, clients, projects, files, invoicing and a live client portal into one calm workspace — so your agency spends its time on the work, not the wrangling.",
+    "Binx brings AI lead prospecting, proposals, clients, projects, invoicing and a live client portal into one calm workspace built for creative agencies.",
   url: SITE_URL,
   ogImageAlt: "Binx — the operating system for creative agencies",
   twitter: "@binxhq",
@@ -35,8 +35,90 @@ export const SITE = {
     "project management for agencies",
     "agency invoicing",
     "studio management",
+    "proposal software for agencies",
+    "AI lead generation",
+    "client approval workflow",
+    "agency dashboard",
   ],
 } as const;
+
+/**
+ * When the marketing copy last materially changed — the sitemap's
+ * `lastModified`. A per-request `new Date()` tells crawlers every page
+ * changes on every fetch, which teaches them to ignore lastmod entirely.
+ */
+export const MARKETING_LAST_UPDATED = new Date("2026-09-24");
+
+/** Shared pricing tiers — rendered on /pricing and summarised in JSON-LD offers. */
+export const PLANS = [
+  {
+    name: "Free",
+    price: 0,
+    blurb: "For a solo operator or a first project.",
+    features: ["1 agency workspace", "Up to 3 clients & 3 active projects", "25 leads", "3 team members", "Client portal, proposals & invoicing", "$10/mo of AI usage"],
+    cta: "Get started",
+    featured: false,
+  },
+  {
+    name: "Starter",
+    price: 49,
+    blurb: "For a small studio finding its rhythm.",
+    features: ["Everything in Free", "15 clients & 25 active projects", "250 leads", "10 team members", "Priority email support", "$50/mo of AI usage"],
+    cta: "Start Starter",
+    featured: false,
+  },
+  {
+    name: "Pro",
+    price: 149,
+    blurb: "For an agency running many clients at once.",
+    features: ["Everything in Starter", "60 clients & 150 active projects", "2,000 leads", "40 team members", "$200/mo of AI usage"],
+    cta: "Start Pro",
+    featured: true,
+  },
+  {
+    name: "Scale",
+    price: 399,
+    blurb: "For a large team with no room for limits.",
+    features: ["Everything in Pro", "Unlimited clients, projects & leads", "150 team members", "$750/mo of AI usage", "Onboarding help"],
+    cta: "Start Scale",
+    featured: false,
+  },
+] as const;
+
+/** SoftwareApplication JSON-LD — lets search engines show Binx as an app with a price range. */
+export function softwareApplicationJsonLd(featureList: readonly string[]) {
+  const prices = PLANS.map((plan) => plan.price);
+  return {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: SITE.name,
+    url: SITE_URL,
+    description: SITE.description,
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Web",
+    featureList: [...featureList],
+    offers: {
+      "@type": "AggregateOffer",
+      priceCurrency: "USD",
+      lowPrice: Math.min(...prices),
+      highPrice: Math.max(...prices),
+      offerCount: PLANS.length,
+      url: `${SITE_URL}/pricing`,
+    },
+  };
+}
+
+/** BreadcrumbList JSON-LD for a page nested one level below Home. */
+export function breadcrumbJsonLd(name: string, path: string) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
+      { "@type": "ListItem", position: 2, name, item: `${SITE_URL}${path}` },
+    ],
+  };
+}
 
 /** Primary marketing nav — also drives the sitemap. */
 export const MARKETING_NAV = [

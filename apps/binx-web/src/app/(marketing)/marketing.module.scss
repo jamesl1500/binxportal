@@ -62,6 +62,12 @@
   }
 }
 
+.sectionMuted {
+  background: t.$color-surface;
+  border-top: 1px solid t.$color-border;
+  border-bottom: 1px solid t.$color-border;
+}
+
 .divider {
   border: 0;
   border-top: 1px solid t.$color-border;
@@ -387,6 +393,46 @@
   color: t.$color-ink-soft;
 }
 
+.newTag {
+  display: inline-block;
+  margin-left: t.$space-2;
+  padding: 0.1rem 0.45rem;
+  vertical-align: middle;
+  @include m.mono-label;
+  font-size: 0.625rem;
+  color: t.$color-accent-foreground;
+  background: t.$color-accent;
+  border-radius: 999px;
+}
+
+.cardLink {
+  justify-content: center;
+  color: inherit;
+  text-decoration: none;
+  background: t.$color-paper;
+  border-style: dashed;
+
+  &:focus-visible {
+    outline: 2px solid t.$color-focus;
+    outline-offset: 2px;
+  }
+}
+
+.cardLinkArrow {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-2;
+  margin-top: t.$space-2;
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  color: t.$color-ink;
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
 // ---- Steps -----------------------------------------------------
 
 .steps {
@@ -394,9 +440,22 @@
   gap: t.$space-8;
   grid-template-columns: 1fr;
   counter-reset: step;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 
   @media (min-width: 800px) {
     grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.stepsFour {
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 

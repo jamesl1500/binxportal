@@ -13,14 +13,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { LayoutGrid, Receipt, Users } from "lucide-react";
 
-import { marketingOpenGraph, SITE } from "@/lib/site";
+import { breadcrumbJsonLd, marketingOpenGraph, SITE } from "@/lib/site";
 import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 
 import styles from "../../marketing.module.scss";
 
 const TITLE = "Copilot & Assembly alternative";
 const DESCRIPTION =
-  "Comparing client-portal tools like Copilot or Assembly? Binx gives you the same client-facing portal — plus the leads, project boards, and invoicing that run behind it.";
+  "Comparing Copilot or Assembly? Binx gives you the same client portal, plus the leads, proposals, project boards and invoicing that run behind it.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -75,7 +75,7 @@ const faqJsonLd = {
 const CopilotAssemblyAlternativePage = () => {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([faqJsonLd, breadcrumbJsonLd(TITLE, "/alternatives/copilot-assembly")]) }} />
 
       <section className={styles.hero}>
         <div className={styles.heroGlow} aria-hidden="true" />
@@ -140,7 +140,7 @@ const CopilotAssemblyAlternativePage = () => {
               <h3 className={styles.h3}>The team side</h3>
               <ul className={styles.splitList}>
                 <li>Task boards and a shared canvas behind every portal</li>
-                <li>Leads that convert straight into a client record</li>
+                <li>AI-found leads and signed proposals that become a client record</li>
                 <li>Your invoice numbering, terms, and payment tracking</li>
               </ul>
             </div>

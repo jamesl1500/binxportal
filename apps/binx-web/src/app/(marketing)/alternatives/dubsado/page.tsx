@@ -14,14 +14,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { LayoutGrid, PanelsTopLeft, Users } from "lucide-react";
 
-import { marketingOpenGraph, SITE } from "@/lib/site";
+import { breadcrumbJsonLd, marketingOpenGraph, SITE } from "@/lib/site";
 import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 
 import styles from "../../marketing.module.scss";
 
 const TITLE = "Dubsado alternative for agencies";
 const DESCRIPTION =
-  "Looking for a Dubsado alternative built for a growing agency, not a solo practice? Binx adds real project boards, a live client portal, and a team the whole workflow includes.";
+  "A Dubsado alternative for a growing agency: signable proposals, real project boards, a live client portal and a whole team in one workspace.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -55,7 +55,7 @@ const FAQ = [
   },
   {
     q: "Does Binx do contracts and forms like Dubsado?",
-    a: "Not yet — Binx focuses on the part after the contract is signed: running the project, keeping the client in the loop, and getting paid. Many agencies keep a separate e-signature tool for contracts and use Binx for everything after.",
+    a: "Partly. Binx has proposals with online e-signature, so a client can review your scope and pricing and sign from a link. It doesn't have Dubsado-style intake forms or contract templates yet, so some agencies keep a separate tool for those.",
   },
   {
     q: "Is there a free plan to try it?",
@@ -76,7 +76,7 @@ const faqJsonLd = {
 const DubsadoAlternativePage = () => {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([faqJsonLd, breadcrumbJsonLd(TITLE, "/alternatives/dubsado")]) }} />
 
       <section className={styles.hero}>
         <div className={styles.heroGlow} aria-hidden="true" />
@@ -142,7 +142,7 @@ const DubsadoAlternativePage = () => {
               <ul className={styles.splitList}>
                 <li>Task boards with assignees and due dates per project</li>
                 <li>A shared canvas the team and client arrange together</li>
-                <li>Leads, clients, and invoicing under one login and one client record</li>
+                <li>AI lead prospecting, proposals and invoicing on one client record</li>
               </ul>
             </div>
           </div>
