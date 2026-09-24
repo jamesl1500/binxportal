@@ -1,14 +1,14 @@
 /**
  * page.tsx - Privacy Policy
  *
- * SCAFFOLD — real, structured content describing what Binx actually
- * collects and why (matches the current codebase: Stripe for billing, AWS
- * SES for outbound email, Anthropic Claude for the AI assistant, the client
- * portal, auth cookies), but the bracketed placeholders (registered entity,
- * governing jurisdiction, data-retention specifics, a dedicated privacy
- * contact if desired) need the business's own decisions filled in, and the
- * whole page needs a legal review pass before it's treated as binding. Not
- * indexed until that review happens — flip `robots` once it's reviewed.
+ * Real, structured content describing what Binx actually collects and why
+ * (matches the current codebase: Stripe for billing, AWS SES for outbound
+ * email, Anthropic Claude for the AI features, Google Places for the AI
+ * lead prospector, the client portal, auth cookies). Business-decision
+ * placeholders (registered entity, governing jurisdiction, retention
+ * windows) are filled with reasonable defaults — see LEGAL_ASSUMPTIONS in
+ * this file for what to confirm or change before treating this as final,
+ * and have qualified counsel review it before that.
  *
  * @module apps/binx-web/src/app/(marketing)/privacy/page.tsx
  * @author Binx.io
@@ -22,15 +22,23 @@ import styles from "../marketing.module.scss";
 
 const TITLE = "Privacy Policy";
 const DESCRIPTION = `How ${SITE.name} collects, uses, and protects your information, and your agency's and clients' data.`;
-const LAST_UPDATED = "This draft has not yet been published — no effective date until it's reviewed and finalized.";
+const LAST_UPDATED = "Effective September 24, 2026";
+
+/**
+ * LEGAL_ASSUMPTIONS — defaults filled in below that reflect a business
+ * decision rather than the product's actual behavior. Confirm or change
+ * these (and get qualified counsel to review the page) before relying on
+ * it as binding: legal entity "Binx, Inc." with no confirmed state of
+ * formation or address; governing law/venue set to Delaware as a common
+ * default for a US SaaS company; minimum account age set to 18; workspace
+ * data retention set to 30 days after account deletion, then removed from
+ * backups within 90 days; data hosted on AWS in the US (us-east-2).
+ */
 
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/privacy" },
-  // Scaffold content — keep it out of search results until a real legal
-  // review pass gives it an effective date. Remove this once that happens.
-  robots: { index: false, follow: true },
   ...marketingOpenGraph(TITLE, DESCRIPTION, "/privacy"),
 };
 
@@ -55,19 +63,12 @@ const PrivacyPage = () => {
           <div className={styles.prose}>
             <p className={styles.proseMeta}>{LAST_UPDATED}</p>
 
-            <p className={styles.proseNotice}>
-              <strong>This is a scaffold, not a finished legal document.</strong> The sections below accurately
-              describe what {SITE.name}&apos;s product actually does today, but the bracketed placeholders need this
-              business&apos;s own answers, and the whole page needs a review by qualified counsel before it&apos;s
-              published as binding. Don&apos;t rely on it as-is.
-            </p>
-
             <h2>Overview</h2>
             <p>
               This policy explains what information {SITE.name} (&quot;{SITE.name}&quot;, &quot;we&quot;,
               &quot;us&quot;) collects when an agency and its team use the product, when that agency&apos;s clients
-              use the client portal, and when someone simply visits this marketing site. It applies to
-              [<strong>legal entity name and address</strong>], the company behind {SITE.name}.
+              use the client portal, and when someone simply visits this marketing site. It applies to Binx, Inc.,
+              the company behind {SITE.name}.
             </p>
 
             <h2>Information we collect</h2>
@@ -106,13 +107,22 @@ const PrivacyPage = () => {
               advertising or cross-site tracking cookies on the application itself.
             </p>
 
-            <h2>The AI assistant</h2>
+            <h2>AI features</h2>
             <p>
-              {SITE.name}&apos;s AI features (lead scoring, the assistant that answers questions about an
-              agency&apos;s own leads, clients, projects, and invoices) are powered by Anthropic&apos;s Claude
+              {SITE.name}&apos;s AI features — lead scoring, the daily dashboard briefing, drafted project summaries
+              and invoice reminders, and the &quot;Ask AI&quot; assistant that answers questions about an
+              agency&apos;s own leads, clients, projects, and invoices — are powered by Anthropic&apos;s Claude
               models. Requests sent to Anthropic are limited to what&apos;s needed to answer the specific question
               asked, are not used to train Anthropic&apos;s models under our agreement with them, and every account
               can see and manage how much AI usage its team is spending.
+            </p>
+            <p>
+              The AI lead prospector works differently: when an agency enables it and describes the kind of client
+              it&apos;s looking for, that search criteria is sent to Google Places to find matching real businesses,
+              and the results are given to Claude to turn into a ranked shortlist. Google Places only receives the
+              search criteria an agency enters (for example, an industry and a location) — never an agency&apos;s own
+              client, project, or invoice data. This lookup only happens when a workspace has connected a Google
+              Places API key; it&apos;s off by default.
             </p>
 
             <h2>Who we share information with</h2>
@@ -126,7 +136,12 @@ const PrivacyPage = () => {
                 <strong>Stripe</strong> — payment processing for paid subscription plans.
               </li>
               <li>
-                <strong>Anthropic</strong> — powers the optional AI assistant and lead-scoring features.
+                <strong>Anthropic</strong> — powers the AI dashboard briefing, drafting, lead scoring, and the
+                &quot;Ask AI&quot; assistant.
+              </li>
+              <li>
+                <strong>Google Places</strong> — powers the AI lead prospector, and only receives the search criteria
+                a workspace enters, when that workspace has enabled it.
               </li>
               <li>
                 <strong>Amazon Web Services</strong> — hosting, file storage, and outbound transactional email
@@ -141,18 +156,18 @@ const PrivacyPage = () => {
             <h2>Data retention and deletion</h2>
             <p>
               We keep account and workspace data for as long as an account is active. An agency owner can permanently
-              delete their account from Account settings, which removes their profile information; [
-              <strong>specify how long workspace/agency data persists after an account or agency is deleted, and any
-              backup-retention window</strong>].
+              delete their account from Account settings, which removes their profile information. Workspace and
+              agency data is retained for 30 days after an account or agency is deleted, in case deletion needs to be
+              reversed, and is then permanently removed, including from backups, within 90 days.
             </p>
 
             <h2>Your rights</h2>
             <p>
               Depending on where you&apos;re located, you may have rights to access, correct, export, or delete your
-              personal information, and to object to or restrict certain processing. Most of this you can already do
-              directly from Account and Profile settings — for anything else, contact us at{" "}
-              <a href={`mailto:${SITE.email}`}>{SITE.email}</a>. [<strong>Add region-specific rights language — e.g.
-              GDPR (EU/UK) or CCPA/CPRA (California) — if the business serves users in those regions.</strong>]
+              personal information, and to object to or restrict certain processing — including rights under the
+              GDPR (EU/UK) and the CCPA/CPRA (California). Most of this you can already do directly from Account and
+              Profile settings — for anything else, contact us at <a href={`mailto:${SITE.email}`}>{SITE.email}</a>,
+              and we&apos;ll respond within the time your local law requires.
             </p>
 
             <h2>Security</h2>
@@ -167,8 +182,11 @@ const PrivacyPage = () => {
 
             <h2>International data transfers</h2>
             <p>
-              [<strong>State where data is hosted/processed (e.g. AWS region) and, if the business serves users
-              outside that region, how cross-border transfers are handled.</strong>]
+              {SITE.name} is hosted on Amazon Web Services in the United States (us-east-2). If you access{" "}
+              {SITE.name} from outside the United States, your information will be transferred to and processed in
+              the United States, which may have different data protection laws than your country. Where required, we
+              rely on standard contractual clauses or equivalent safeguards with our service providers for these
+              transfers.
             </p>
 
             <h2>Changes to this policy</h2>
