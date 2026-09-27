@@ -22,6 +22,7 @@ import type { InvoiceDetail, Invoice as StaffInvoice } from "@/lib/invoicing";
 import type { Meeting as StaffMeeting, Slot } from "@/lib/meetings";
 import type { Conversation, ConversationDetail, Message } from "@/lib/messaging-client";
 import type { ProposalDetail, Proposal as StaffProposal } from "@/lib/proposals";
+import type { KickoffDetail as StaffKickoffDetail } from "@/lib/kickoffs";
 
 export type PortalInvoice = StaffInvoice;
 export type PortalInvoiceDetail = InvoiceDetail;
@@ -29,6 +30,7 @@ export type PortalMeeting = StaffMeeting;
 export type PortalSlot = Slot;
 export type PortalProposal = StaffProposal;
 export type PortalProposalDetail = ProposalDetail;
+export type PortalKickoff = StaffKickoffDetail;
 export type { Conversation, ConversationDetail, Message };
 
 export type PortalAgency = Schemas["PortalAgencyRead"];
@@ -502,6 +504,69 @@ export async function decidePortalBoardApproval(
     return data;
   } catch (error) {
     rethrow(error, "Unable to record your decision");
+  }
+}
+
+// ---- Kickoff ----
+// Only visible once staff sends it (404 while it's still a draft — see
+// binx-api's client_portal/router.py::_portal_kickoff_or_404). Submitting is
+// one-shot: the endpoint flips the kickoff to "completed" and refuses a
+// second POST.
+
+export interface PortalKickoffAnswerInput {
+  questionId: string;
+  textValue?: string | null;
+  selectedOptions?: string[];
+  fileId?: string | null;
+}
+
+export async function getPortalKickoff(projectId: string): Promise<PortalKickoff> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.get<PortalKickoff>(`/portal/projects/${projectId}/kickoff`, { headers });
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to load this kickoff");
+  }
+}
+
+export async function uploadPortalKickoffFile(projectId: string, file: File): Promise<{ file_id: string; file_name: string }> {
+  const headers = await authHeader();
+  const form = new FormData();
+  form.append("file", file);
+  try {
+    const { data } = await api.post<{ file_id: string; file_name: string }>(
+      `/portal/projects/${projectId}/kickoff/files`,
+      form,
+      { headers: { ...headers, "Content-Type": undefined } },
+    );
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to upload that file");
+  }
+}
+
+export async function submitPortalKickoffAnswers(
+  projectId: string,
+  answers: PortalKickoffAnswerInput[],
+): Promise<PortalKickoff> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.post<PortalKickoff>(
+      `/portal/projects/${projectId}/kickoff/answers`,
+      {
+        answers: answers.map((a) => ({
+          question_id: a.questionId,
+          text_value: a.textValue ?? null,
+          selected_options: a.selectedOptions ?? [],
+          file_id: a.fileId ?? null,
+        })),
+      },
+      { headers },
+    );
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to submit your answers");
   }
 }
 

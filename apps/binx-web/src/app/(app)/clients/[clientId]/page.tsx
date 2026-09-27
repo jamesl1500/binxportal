@@ -43,6 +43,7 @@ const PROJECT_STATUS_COLORS: Record<ProjectStatus, string> = {
   planning: "#a1a1aa",
   active: "#0a0a0b",
   on_hold: "#d97706",
+  waiting_on_client: "#6d28d9",
   completed: "#6e6e76",
   archived: "#d4d4d8",
 };
