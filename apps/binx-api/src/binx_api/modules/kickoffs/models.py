@@ -56,9 +56,7 @@ class KickoffTemplateQuestion(Base):
     __tablename__ = "kickoff_template_questions"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
-    template_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("kickoff_templates.id", ondelete="CASCADE"), index=True
-    )
+    template_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("kickoff_templates.id", ondelete="CASCADE"), index=True)
     position: Mapped[int] = mapped_column(Integer, default=0)
     type: Mapped[str] = mapped_column(String(20), default=QUESTION_TEXT)
     label: Mapped[str] = mapped_column(String(500))
@@ -129,8 +127,6 @@ class KickoffAnswer(Base):
     # client_portal/router.py's kickoff file endpoint, which reuses
     # projects_service.save_project_file). SET NULL: deleting the file from
     # the project just clears this pointer, it doesn't delete the answer.
-    file_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("project_files.id", ondelete="SET NULL"), default=None
-    )
+    file_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("project_files.id", ondelete="SET NULL"), default=None)
 
     answered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

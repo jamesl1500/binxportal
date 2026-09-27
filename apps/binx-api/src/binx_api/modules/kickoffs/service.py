@@ -86,10 +86,14 @@ async def list_templates(db: AsyncSession, agency_id: uuid.UUID) -> list[tuple[K
     out: list[tuple[KickoffTemplate, int]] = []
     for template in templates:
         count = (
-            await db.execute(
-                select(KickoffTemplateQuestion).where(KickoffTemplateQuestion.template_id == template.id)
+            (
+                await db.execute(
+                    select(KickoffTemplateQuestion).where(KickoffTemplateQuestion.template_id == template.id)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         out.append((template, len(count)))
     return out
 
@@ -251,9 +255,7 @@ async def create_kickoff(
         template = await get_template_or_404(db, project.agency_id, template_id)
         template_questions = await list_template_questions(db, template.id)
         questions = [
-            KickoffQuestionInput(
-                type=q.type, label=q.label, options=load_options(q.options), required=q.required
-            )
+            KickoffQuestionInput(type=q.type, label=q.label, options=load_options(q.options), required=q.required)
             for q in template_questions
         ]
     _validate_questions(questions)

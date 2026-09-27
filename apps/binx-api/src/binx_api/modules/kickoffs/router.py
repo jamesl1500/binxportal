@@ -166,9 +166,7 @@ async def read_kickoff(db: DbSession, agency_and_role: AnyMember, project_id: uu
     return await _detail_read(db, kickoff)
 
 
-@router.post(
-    "/projects/{project_id}/kickoff", response_model=KickoffDetailRead, status_code=status.HTTP_201_CREATED
-)
+@router.post("/projects/{project_id}/kickoff", response_model=KickoffDetailRead, status_code=status.HTTP_201_CREATED)
 async def create_kickoff(
     db: DbSession, current_user: CurrentUser, agency_and_role: AnyMember, project_id: uuid.UUID, data: KickoffCreate
 ) -> KickoffDetailRead:
