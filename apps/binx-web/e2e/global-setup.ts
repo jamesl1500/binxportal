@@ -60,6 +60,9 @@ async function saveSignedInState(
   page.setDefaultNavigationTimeout(90_000);
 
   const attempt = async (): Promise<void> => {
+    // Start each attempt signed out: if a previous attempt got as far as a
+    // session, /auth/login would redirect away and mask the real failure.
+    await page.context().clearCookies();
     await page.goto(`${baseURL}/auth/login`);
     // The form re-renders once when the "remember me" store hydrates; settle
     // first, then type, so the inputs don't detach mid-fill.
@@ -114,7 +117,8 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
     baseURL,
     DEMO.client.email,
     "/portal",
-    (page) => expect(page.getByRole("heading", { name: DEMO.clientName })).toBeVisible(),
+    // The portal home's eyebrow ("<client> · <agency>"); the h1 is a greeting.
+    (page) => expect(page.getByText(`${DEMO.clientName} · ${DEMO.agency}`)).toBeVisible(),
     path.join(AUTH_DIR, "client.json"),
   );
 }

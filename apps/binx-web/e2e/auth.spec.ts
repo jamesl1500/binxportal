@@ -45,7 +45,7 @@ test.describe("authentication", () => {
 
   test("client sign-in lands on the portal", async ({ page }) => {
     await signIn(page, DEMO.client.email, /\/portal/);
-    await expect(page.getByRole("heading", { name: DEMO.clientName })).toBeVisible();
+    await expect(page.getByText(`${DEMO.clientName} · ${DEMO.agency}`)).toBeVisible();
   });
 
   test("forgot-password accepts an email and confirms", async ({ page }) => {
