@@ -2856,6 +2856,45 @@
         "title": "ChangePlanRequest",
         "type": "object"
       },
+      "CheckoutConfirmRead": {
+        "description": "What the portal's return page shows after Stripe Checkout:\n\n- ``paid``: the money is in and the payment is recorded on the invoice;\n- ``processing``: checkout finished but an async method (e.g. a bank\n  debit) is still settling \u2014 the webhook records it when it clears;\n- ``failed``: the session expired or the payment didn't go through;\n- ``open``: checkout was never finished (nothing was charged).",
+        "properties": {
+          "invoice": {
+            "$ref": "#/components/schemas/InvoiceDetailRead"
+          },
+          "outcome": {
+            "enum": [
+              "paid",
+              "processing",
+              "failed",
+              "open"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          }
+        },
+        "required": [
+          "outcome",
+          "invoice"
+        ],
+        "title": "CheckoutConfirmRead",
+        "type": "object"
+      },
+      "CheckoutConfirmRequest": {
+        "properties": {
+          "session_id": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id"
+        ],
+        "title": "CheckoutConfirmRequest",
+        "type": "object"
+      },
       "CheckoutSessionRead": {
         "properties": {
           "checkout_url": {
@@ -8152,6 +8191,85 @@
           "client"
         ],
         "title": "PortalMembershipRead",
+        "type": "object"
+      },
+      "PortalPendingKickoffRead": {
+        "description": "A sent kickoff still waiting on the client's answers \u2014 just enough\nfor the portal to invite them in (the questions themselves come from\nGET /portal/projects/{id}/kickoff once they open it).",
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "intro_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intro Message"
+          },
+          "last_nudged_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Nudged At"
+          },
+          "project_id": {
+            "format": "uuid",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "project_name": {
+            "title": "Project Name",
+            "type": "string"
+          },
+          "question_count": {
+            "title": "Question Count",
+            "type": "integer"
+          },
+          "required_count": {
+            "title": "Required Count",
+            "type": "integer"
+          },
+          "sent_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sent At"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "project_id",
+          "project_name",
+          "title",
+          "intro_message",
+          "question_count",
+          "required_count",
+          "sent_at",
+          "last_nudged_at"
+        ],
+        "title": "PortalPendingKickoffRead",
         "type": "object"
       },
       "PortalProgress": {
@@ -26330,6 +26448,96 @@
           }
         ],
         "summary": "Pay Invoice",
+        "tags": [
+          "client-portal"
+        ]
+      }
+    },
+    "/portal/invoices/{invoice_id}/pay/confirm": {
+      "post": {
+        "description": "Called by the invoice page on its way back from Stripe Checkout (the\nsuccess_url carries ``session_id``). Checks the session with Stripe\ndirectly and records the payment if it's settled, so the client gets a\ndefinite answer even when the Connect webhook is slow, misrouted, or\nmissing. Safe to call repeatedly and alongside the webhook.",
+        "operationId": "confirm_invoice_payment_portal_invoices__invoice_id__pay_confirm_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "invoice_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Invoice Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckoutConfirmRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckoutConfirmRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Confirm Invoice Payment",
+        "tags": [
+          "client-portal"
+        ]
+      }
+    },
+    "/portal/kickoffs/pending": {
+      "get": {
+        "description": "Every kickoff waiting on this client's answers, across all their\nprojects \u2014 what the portal's \"complete your kickoff\" invitation reads.",
+        "operationId": "list_portal_pending_kickoffs_portal_kickoffs_pending_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PortalPendingKickoffRead"
+                  },
+                  "title": "Response List Portal Pending Kickoffs Portal Kickoffs Pending Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Portal Pending Kickoffs",
         "tags": [
           "client-portal"
         ]

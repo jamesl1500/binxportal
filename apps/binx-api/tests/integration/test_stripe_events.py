@@ -19,7 +19,7 @@ from sqlalchemy import select
 
 from binx_api.core import stripe_client
 from binx_api.core.stripe_events import StripeWebhookEvent
-from binx_api.modules.invoicing import service, webhooks_router
+from binx_api.modules.invoicing import service
 from tests.factories import make_agency, make_invoice, make_user
 from tests.stripe_helpers import sign_stripe_payload
 
@@ -49,6 +49,8 @@ class TestReplayProtectionIsAtomicWithTheHandler:
                 "object": {
                     "id": "cs_test_1",
                     "mode": "payment",
+                    "status": "complete",
+                    "payment_status": "paid",
                     "payment_intent": "pi_test_1",
                     "amount_total": invoice.total_cents,
                     "metadata": {
@@ -61,16 +63,16 @@ class TestReplayProtectionIsAtomicWithTheHandler:
         }
         body, signature = sign_stripe_payload(payload, "whsec_test_fake")
 
-        real_handler = webhooks_router._handle_checkout_completed
+        real_handler = service.record_checkout_payment
         call_count = {"n": 0}
 
         async def flaky_then_real(db, session):
             call_count["n"] += 1
             if call_count["n"] == 1:
                 raise RuntimeError("simulated transient failure (e.g. a DB hiccup)")
-            await real_handler(db, session)
+            return await real_handler(db, session)
 
-        monkeypatch.setattr(webhooks_router, "_handle_checkout_completed", flaky_then_real)
+        monkeypatch.setattr(service, "record_checkout_payment", flaky_then_real)
 
         # First delivery: the handler blows up. The ledger must NOT have
         # committed a row for it — otherwise the retry below would be a

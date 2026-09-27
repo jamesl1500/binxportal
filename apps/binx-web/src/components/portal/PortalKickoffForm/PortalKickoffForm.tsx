@@ -46,15 +46,18 @@ const PortalKickoffForm = ({ projectId, kickoff }: PortalKickoffFormProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [uploadingId, setUploadingId] = useState<string | null>(null);
-  const answersById = kickoff.answers.reduce<Record<string, AnswerState>>((acc, a) => {
-    acc[a.question_id] = {
-      textValue: a.text_value ?? "",
-      selectedOption: a.selected_options[0] ?? "",
-      fileId: a.file_id,
-      fileName: a.file_name,
-    };
-    return acc;
-  }, {});
+  const answersById = kickoff.answers.reduce<Record<string, AnswerState>>(
+    (acc, a) => {
+      acc[a.question_id] = {
+        textValue: a.text_value ?? "",
+        selectedOption: a.selected_options[0] ?? "",
+        fileId: a.file_id,
+        fileName: a.file_name,
+      };
+      return acc;
+    },
+    {},
+  );
   const [answers, setAnswers] = useState<Record<string, AnswerState>>(() => {
     const initial: Record<string, AnswerState> = {};
     for (const q of kickoff.questions) {
@@ -66,7 +69,10 @@ const PortalKickoffForm = ({ projectId, kickoff }: PortalKickoffFormProps) => {
   const isCompleted = kickoff.status === "completed";
 
   const updateAnswer = (questionId: string, patch: Partial<AnswerState>) => {
-    setAnswers((prev) => ({ ...prev, [questionId]: { ...prev[questionId], ...patch } }));
+    setAnswers((prev) => ({
+      ...prev,
+      [questionId]: { ...prev[questionId], ...patch },
+    }));
   };
 
   const handleFilePick = async (questionId: string, file: File) => {
@@ -79,7 +85,10 @@ const PortalKickoffForm = ({ projectId, kickoff }: PortalKickoffFormProps) => {
       toast.error(result.error);
       return;
     }
-    updateAnswer(questionId, { fileId: result.fileId ?? null, fileName: result.fileName ?? null });
+    updateAnswer(questionId, {
+      fileId: result.fileId ?? null,
+      fileName: result.fileName ?? null,
+    });
   };
 
   const handleSubmit = () => {
@@ -101,7 +110,9 @@ const PortalKickoffForm = ({ projectId, kickoff }: PortalKickoffFormProps) => {
         kickoff.questions.map((q) => ({
           questionId: q.id,
           textValue: answers[q.id].textValue || null,
-          selectedOptions: answers[q.id].selectedOption ? [answers[q.id].selectedOption] : [],
+          selectedOptions: answers[q.id].selectedOption
+            ? [answers[q.id].selectedOption]
+            : [],
           fileId: answers[q.id].fileId,
         })),
       );
@@ -118,10 +129,16 @@ const PortalKickoffForm = ({ projectId, kickoff }: PortalKickoffFormProps) => {
     <div className={styles.form}>
       <div className={styles.header}>
         <h2 className={styles.title}>{kickoff.title}</h2>
-        {kickoff.intro_message && <p className={styles.intro}>{kickoff.intro_message}</p>}
+        {kickoff.intro_message && (
+          <p className={styles.intro}>{kickoff.intro_message}</p>
+        )}
       </div>
 
-      {isCompleted && <p className={styles.completedNotice}>You&apos;ve already completed this kickoff. Thanks!</p>}
+      {isCompleted && (
+        <p className={styles.completedNotice}>
+          You&apos;ve completed this kickoff. Thanks!
+        </p>
+      )}
 
       <div className={styles.questions}>
         {kickoff.questions.map((question) => {
@@ -130,14 +147,18 @@ const PortalKickoffForm = ({ projectId, kickoff }: PortalKickoffFormProps) => {
             <div key={question.id} className={styles.questionRow}>
               <span className={styles.questionLabel}>
                 {question.label}
-                {question.required && <span className={styles.required}> *</span>}
+                {question.required && (
+                  <span className={styles.required}> *</span>
+                )}
               </span>
 
               {question.type === "text" && (
                 <textarea
                   className={styles.textarea}
                   value={answer.textValue}
-                  onChange={(event) => updateAnswer(question.id, { textValue: event.target.value })}
+                  onChange={(event) =>
+                    updateAnswer(question.id, { textValue: event.target.value })
+                  }
                   disabled={isCompleted}
                   rows={2}
                   maxLength={8000}
@@ -153,7 +174,9 @@ const PortalKickoffForm = ({ projectId, kickoff }: PortalKickoffFormProps) => {
                         name={question.id}
                         value={option}
                         checked={answer.selectedOption === option}
-                        onChange={() => updateAnswer(question.id, { selectedOption: option })}
+                        onChange={() =>
+                          updateAnswer(question.id, { selectedOption: option })
+                        }
                         disabled={isCompleted}
                       />
                       {option}
@@ -164,7 +187,9 @@ const PortalKickoffForm = ({ projectId, kickoff }: PortalKickoffFormProps) => {
 
               {question.type === "file_upload" && (
                 <div className={styles.fileRow}>
-                  {answer.fileName && <span className={styles.fileName}>{answer.fileName}</span>}
+                  {answer.fileName && (
+                    <span className={styles.fileName}>{answer.fileName}</span>
+                  )}
                   {!isCompleted && (
                     <>
                       <input
@@ -175,7 +200,9 @@ const PortalKickoffForm = ({ projectId, kickoff }: PortalKickoffFormProps) => {
                           if (file) void handleFilePick(question.id, file);
                         }}
                       />
-                      {uploadingId === question.id && <span className={styles.uploading}>Uploading…</span>}
+                      {uploadingId === question.id && (
+                        <span className={styles.uploading}>Uploading…</span>
+                      )}
                     </>
                   )}
                 </div>
@@ -187,7 +214,12 @@ const PortalKickoffForm = ({ projectId, kickoff }: PortalKickoffFormProps) => {
 
       {!isCompleted && (
         <div className={styles.actions}>
-          <button type="button" className={styles.primary} disabled={isPending} onClick={handleSubmit}>
+          <button
+            type="button"
+            className={styles.primary}
+            disabled={isPending}
+            onClick={handleSubmit}
+          >
             Submit answers
           </button>
         </div>

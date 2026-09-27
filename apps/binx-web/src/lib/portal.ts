@@ -43,6 +43,9 @@ export type PortalBoardColumn = Schemas["PortalBoardColumn"];
 export type PortalProjectDetail = Schemas["PortalProjectDetailRead"];
 export type PortalTask = Schemas["PortalTaskRead"];
 export type PortalTaskList = Schemas["PortalTaskListRead"];
+export type PortalPendingKickoff = Schemas["PortalPendingKickoffRead"];
+export type PortalCheckoutConfirmation = Schemas["CheckoutConfirmRead"];
+export type PortalCheckoutOutcome = PortalCheckoutConfirmation["outcome"];
 
 export type PortalInvitationPreview = Schemas["ClientInvitationPreview"];
 export type PortalMeetingSettings = Schemas["PortalMeetingSettingsRead"];
@@ -167,6 +170,31 @@ export async function startPortalInvoiceCheckout(invoiceId: string): Promise<str
     return data.checkout_url;
   } catch (error) {
     rethrow(error, "Unable to start checkout");
+  }
+}
+
+/**
+ * confirmPortalInvoicePayment
+ *
+ * Asks binx-api to check a just-finished Stripe Checkout Session directly
+ * with Stripe (`POST /portal/invoices/{invoiceId}/pay/confirm`) and record
+ * the payment if it has settled — idempotent, and safe alongside the
+ * webhook. `sessionId` comes from the success_url's `session_id` param.
+ */
+export async function confirmPortalInvoicePayment(
+  invoiceId: string,
+  sessionId: string,
+): Promise<PortalCheckoutConfirmation> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.post<PortalCheckoutConfirmation>(
+      `/portal/invoices/${invoiceId}/pay/confirm`,
+      { session_id: sessionId },
+      { headers },
+    );
+    return data;
+  } catch (error) {
+    rethrow(error, "We couldn't confirm your payment with Stripe");
   }
 }
 
@@ -523,6 +551,24 @@ export interface PortalKickoffAnswerInput {
   selectedOptions?: string[];
   fileId?: string | null;
 }
+
+/**
+ * getPortalPendingKickoffs
+ *
+ * Every sent kickoff still waiting on this client's answers, across all
+ * their projects, via `GET /portal/kickoffs/pending` — what the (portal)
+ * layout's invitation modal and the home page's attention list read.
+ * `cache()`-wrapped since both of those run in the same render.
+ */
+export const getPortalPendingKickoffs = cache(async (): Promise<PortalPendingKickoff[]> => {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.get<PortalPendingKickoff[]>("/portal/kickoffs/pending", { headers });
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to load your kickoffs");
+  }
+});
 
 export async function getPortalKickoff(projectId: string): Promise<PortalKickoff> {
   const headers = await authHeader();

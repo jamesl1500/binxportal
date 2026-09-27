@@ -28,13 +28,20 @@ from binx_api.modules.client_portal.schemas import (
     PortalContactRead,
     PortalContextRead,
     PortalMembershipRead,
+    PortalPendingKickoffRead,
     PortalProjectDetailRead,
     PortalProjectRead,
     PortalTaskListRead,
 )
 from binx_api.modules.invoicing import service as invoicing_service
 from binx_api.modules.invoicing.router import _detail_read, _invoice_read
-from binx_api.modules.invoicing.schemas import CheckoutSessionRead, InvoiceDetailRead, InvoiceRead
+from binx_api.modules.invoicing.schemas import (
+    CheckoutConfirmRead,
+    CheckoutConfirmRequest,
+    CheckoutSessionRead,
+    InvoiceDetailRead,
+    InvoiceRead,
+)
 from binx_api.modules.kickoffs import service as kickoffs_service
 from binx_api.modules.kickoffs.models import STATUS_DRAFT as KICKOFF_STATUS_DRAFT
 from binx_api.modules.kickoffs.router import _detail_read as _kickoff_detail_read
@@ -400,6 +407,29 @@ async def decide_board_item_approval(
 # kickoffs/service.py::submit_answers, which requires status "sent".
 
 
+@router.get("/kickoffs/pending", response_model=list[PortalPendingKickoffRead])
+async def list_portal_pending_kickoffs(db: DbSession, membership: PortalContext) -> list[PortalPendingKickoffRead]:
+    """Every kickoff waiting on this client's answers, across all their
+    projects — what the portal's "complete your kickoff" invitation reads."""
+    _agency, client, _contact = membership
+    return [
+        PortalPendingKickoffRead(
+            id=kickoff.id,
+            project_id=project.id,
+            project_name=project.name,
+            title=kickoff.title,
+            intro_message=kickoff.intro_message,
+            question_count=question_count,
+            required_count=required_count,
+            sent_at=kickoff.sent_at,
+            last_nudged_at=kickoff.last_nudged_at,
+        )
+        for kickoff, project, question_count, required_count in await kickoffs_service.list_pending_for_client(
+            db, client.id
+        )
+    ]
+
+
 async def _portal_kickoff_or_404(db: DbSession, client_id: uuid.UUID, project_id: uuid.UUID):
     project = await service.get_portal_project_or_404(db, client_id, project_id)
     kickoff = await kickoffs_service.get_kickoff_by_project_or_404(db, project.id)
@@ -513,6 +543,27 @@ async def pay_invoice(
         db, invoice, agency, billing_settings, paid_by=current_user
     )
     return CheckoutSessionRead(checkout_url=checkout_url)
+
+
+@router.post("/invoices/{invoice_id}/pay/confirm", response_model=CheckoutConfirmRead)
+async def confirm_invoice_payment(
+    db: DbSession, membership: PortalContext, invoice_id: uuid.UUID, data: CheckoutConfirmRequest
+) -> CheckoutConfirmRead:
+    """Called by the invoice page on its way back from Stripe Checkout (the
+    success_url carries ``session_id``). Checks the session with Stripe
+    directly and records the payment if it's settled, so the client gets a
+    definite answer even when the Connect webhook is slow, misrouted, or
+    missing. Safe to call repeatedly and alongside the webhook."""
+    agency, client, _contact = membership
+    invoice = await _portal_invoice_or_404(db, agency.id, client.id, invoice_id)
+    billing_settings = await invoicing_service.get_or_create_billing_settings(db, agency)
+    outcome = await invoicing_service.confirm_checkout_session(db, invoice, agency, billing_settings, data.session_id)
+
+    invoice = await _portal_invoice_or_404(db, agency.id, client.id, invoice_id)
+    await db.refresh(invoice)
+    return CheckoutConfirmRead(
+        outcome=outcome, invoice=_detail_read(invoice, *(await invoicing_service.get_invoice_context(db, invoice)))
+    )
 
 
 # ---- Meetings ------------------------------------------------------

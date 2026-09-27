@@ -176,3 +176,71 @@ class TestKickoffLifecycle:
             headers=auth_headers(owner),
         )
         assert second.status_code == 409
+
+
+class TestPortalPendingKickoffs:
+    async def test_lists_only_sent_kickoffs_for_this_client(self, client, db_session, email_outbox, ctx) -> None:
+        agency, owner, project, contact = ctx["agency"], ctx["owner"], ctx["project"], ctx["contact"]
+        pending_url = "/portal/kickoffs/pending"
+
+        create = await client.post(
+            f"/agencies/{agency.id}/projects/{project.id}/kickoff",
+            json={
+                "title": "Rebrand kickoff",
+                "intro_message": "A few questions before we start.",
+                "questions": [
+                    {"type": "text", "label": "Main goal?", "required": True},
+                    {"type": "text", "label": "Anything else?", "required": False},
+                ],
+            },
+            headers=auth_headers(owner),
+        )
+        assert create.status_code == 201, create.text
+
+        # A draft is staff-only.
+        drafts = await client.get(pending_url, headers=auth_headers(contact))
+        assert drafts.status_code == 200
+        assert drafts.json() == []
+
+        send = await client.post(
+            f"/agencies/{agency.id}/projects/{project.id}/kickoff/send", headers=auth_headers(owner)
+        )
+        assert send.status_code == 200, send.text
+
+        # Another client of the same agency never sees it.
+        other_client = await make_client(db_session, agency=agency, name="Other Co")
+        other_user = await make_user(db_session, full_name="Olga Other", email="olga@other.example")
+        await make_client_contact(db_session, agency=agency, client=other_client, user=other_user, is_primary=True)
+        other = await client.get(pending_url, headers=auth_headers(other_user))
+        assert other.status_code == 200
+        assert other.json() == []
+
+        pending = await client.get(pending_url, headers=auth_headers(contact))
+        assert pending.status_code == 200
+        [row] = pending.json()
+        assert row["project_id"] == str(project.id)
+        assert row["project_name"] == "Rebrand"
+        assert row["title"] == "Rebrand kickoff"
+        assert row["intro_message"] == "A few questions before we start."
+        assert row["question_count"] == 2
+        assert row["required_count"] == 1
+        assert row["sent_at"] is not None
+
+        questions = (await client.get(f"/portal/projects/{project.id}/kickoff", headers=auth_headers(contact))).json()[
+            "questions"
+        ]
+        goal = next(q for q in questions if q["required"])
+        submit = await client.post(
+            f"/portal/projects/{project.id}/kickoff/answers",
+            json={"answers": [{"question_id": goal["id"], "text_value": "Launch"}]},
+            headers=auth_headers(contact),
+        )
+        assert submit.status_code == 200, submit.text
+
+        # Answered — nothing left to invite them to.
+        done = await client.get(pending_url, headers=auth_headers(contact))
+        assert done.json() == []
+
+    async def test_staff_without_a_portal_membership_are_refused(self, client, ctx) -> None:
+        response = await client.get("/portal/kickoffs/pending", headers=auth_headers(ctx["owner"]))
+        assert response.status_code == 403

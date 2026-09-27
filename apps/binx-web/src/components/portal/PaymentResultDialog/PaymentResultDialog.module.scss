@@ -1,0 +1,151 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+// Rendered through a portal into <body>; the brand color reaches it via
+// PortalBrandVars on <html>.
+$brand: var(--portal-primary, #{t.$color-ink});
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(10, 10, 11, 0.45);
+  backdrop-filter: blur(2px);
+  transition: opacity t.$duration-base t.$ease-standard;
+
+  &[data-starting-style],
+  &[data-ending-style] {
+    opacity: 0;
+  }
+}
+
+.dialog {
+  --tone: #{$brand};
+  --tone-bg: color-mix(in srgb, #{$brand} 10%, white);
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: t.$space-3;
+  width: min(26rem, calc(100vw - #{t.$space-8}));
+  padding: t.$space-10 t.$space-8 t.$space-6;
+  text-align: center;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-top: 4px solid var(--tone);
+  border-radius: t.$radius-lg;
+  box-shadow: 0 32px 64px rgba(10, 10, 11, 0.24);
+  outline: none;
+  transform: translate(-50%, -50%);
+  transition:
+    opacity t.$duration-base t.$ease-standard,
+    transform t.$duration-base t.$ease-standard;
+
+  &[data-starting-style],
+  &[data-ending-style] {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.97);
+  }
+
+  &[data-tone="success"] {
+    --tone: #16a34a;
+    --tone-bg: #f0fdf4;
+  }
+
+  &[data-tone="info"] {
+    --tone: #b45309;
+    --tone-bg: #fffbeb;
+  }
+
+  &[data-tone="danger"] {
+    --tone: #{t.$color-danger};
+    --tone-bg: #fef2f2;
+  }
+
+  &[data-tone="neutral"] {
+    --tone: #{t.$color-ink-soft};
+    --tone-bg: #{t.$color-paper};
+  }
+}
+
+.iconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  margin-bottom: t.$space-2;
+  color: var(--tone);
+  background: var(--tone-bg);
+  border-radius: 999px;
+}
+
+.icon {
+  width: 1.75rem;
+  height: 1.75rem;
+
+  &[data-spin="true"] {
+    animation: spin 0.9s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &[data-spin="true"] {
+      animation-duration: 2.5s;
+    }
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-xl;
+  line-height: 1.2;
+  color: t.$color-ink;
+}
+
+.body {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  line-height: 1.65;
+  color: t.$color-ink-soft;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: t.$space-2;
+  margin-top: t.$space-4;
+}
+
+.primary {
+  @include m.button-base;
+  padding: t.$space-2 t.$space-6;
+  color: t.$color-accent-foreground;
+  background: $brand;
+
+  &:hover {
+    background: color-mix(in srgb, #{$brand} 85%, white);
+  }
+}
+
+.secondary {
+  @include m.button-base;
+  padding: t.$space-2 t.$space-5;
+  color: t.$color-ink;
+  background: none;
+  border-color: t.$color-border-strong;
+
+  &:hover {
+    border-color: $brand;
+  }
+}

@@ -23,6 +23,7 @@ import {
   getPortalInvoices,
   getPortalMeetings,
   getPortalMeetingSettings,
+  getPortalPendingKickoffs,
   getPortalProjects,
   getPortalProposals,
 } from "@/lib/portal";
@@ -47,7 +48,8 @@ import styles from "./home.module.scss";
 const STATUS_ORDER: Record<string, number> = { active: 0, planning: 1, on_hold: 2, completed: 3, archived: 4 };
 
 const PortalHomePage = async () => {
-  const [user, context, projects, invoices, proposals, conversations, meetings, meetingSettings] = await Promise.all([
+  const [user, context, projects, invoices, proposals, conversations, meetings, meetingSettings, kickoffs] =
+    await Promise.all([
     getCurrentUser(),
     getPortalContext(),
     getPortalProjects(),
@@ -56,6 +58,7 @@ const PortalHomePage = async () => {
     getPortalConversations(),
     getPortalMeetings().catch(() => []),
     getPortalMeetingSettings().catch(() => null),
+    getPortalPendingKickoffs().catch(() => []),
   ]);
   if (!context || !user) return null;
 
@@ -63,7 +66,7 @@ const PortalHomePage = async () => {
   const agencyName = context.agency.name;
   const selfBooking = meetingSettings?.self_booking_enabled ?? false;
 
-  const attention = buildAttentionItems({ proposals, invoices, conversations, meetings, now });
+  const attention = buildAttentionItems({ kickoffs, proposals, invoices, conversations, meetings, now });
   const checklist = buildChecklist({
     projects,
     proposals,

@@ -281,7 +281,12 @@ async def start_invoice_checkout(
             "agency_id": str(agency.id),
             "paid_by_user_id": str(paid_by.id),
         },
-        "success_url": f"{settings.frontend_url}/portal/invoices/{invoice.id}?checkout=success",
+        # {CHECKOUT_SESSION_ID} is a Stripe template variable, filled in on
+        # redirect — the return page hands it to confirm_checkout_session so
+        # the payment is recorded without waiting on the webhook.
+        "success_url": (
+            f"{settings.frontend_url}/portal/invoices/{invoice.id}?checkout=success&session_id={{CHECKOUT_SESSION_ID}}"
+        ),
         "cancel_url": f"{settings.frontend_url}/portal/invoices/{invoice.id}?checkout=cancel",
     }
     if fee_cents:
@@ -291,6 +296,99 @@ async def start_invoice_checkout(
         params, stripe_account=billing_settings.stripe_connect_account_id
     )
     return session.url
+
+
+# Checkout Session payment_status values that mean the money is actually in.
+# "unpaid" on a completed session means an async method (e.g. a bank debit)
+# is still settling — Stripe follows up with
+# checkout.session.async_payment_succeeded (or _failed) later.
+_SETTLED_PAYMENT_STATUSES = ("paid", "no_payment_required")
+
+
+async def record_checkout_payment(db: AsyncSession, session: stripe.checkout.Session) -> Invoice | None:
+    """Records a settled client-invoice Checkout Session as an
+    ``InvoicePayment`` — the single idempotent path shared by the Connect
+    webhook (``checkout.session.completed`` / ``async_payment_succeeded``,
+    whichever endpoint it arrives on) and the portal's return-page
+    confirmation (``confirm_checkout_session``). Whichever of those gets
+    there first records it; the other finds it already there.
+
+    Returns the invoice when the session is an invoice payment that is (now)
+    recorded, ``None`` when it isn't one or hasn't settled yet."""
+    if session.mode != "payment" or session.payment_status not in _SETTLED_PAYMENT_STATUSES:
+        return None
+
+    # StripeObject isn't a real dict (no .get()) — .to_dict() gives us one.
+    metadata = session.metadata.to_dict() if session.metadata else {}
+    invoice_id = metadata.get("invoice_id")
+    agency_id = metadata.get("agency_id")
+    if invoice_id is None or agency_id is None:
+        return None
+
+    invoice = await get_invoice_or_404(db, uuid.UUID(agency_id), uuid.UUID(invoice_id))
+    existing = await db.execute(
+        select(InvoicePayment.id).where(InvoicePayment.stripe_payment_intent_id == session.payment_intent)
+    )
+    if existing.scalar_one_or_none() is not None:
+        return invoice  # already recorded — a redelivery, or the other path got here first
+
+    paid_by_user_id = metadata.get("paid_by_user_id")
+    recorded_by = await db.get(User, uuid.UUID(paid_by_user_id)) if paid_by_user_id else None
+    try:
+        await add_payment(
+            db,
+            invoice,
+            recorded_by=recorded_by,
+            amount_cents=session.amount_total,
+            paid_on=datetime.now(UTC).date(),
+            method="stripe",
+            reference=None,
+            stripe_payment_intent_id=session.payment_intent,
+            stripe_checkout_session_id=session.id,
+        )
+    except IntegrityError:
+        # Lost a race with the other path on the unique PaymentIntent id —
+        # it's recorded either way.
+        await db.rollback()
+        return await get_invoice_or_404(db, uuid.UUID(agency_id), uuid.UUID(invoice_id))
+    return invoice
+
+
+_SESSION_NOT_FOUND = (
+    "We couldn't find that payment with Stripe. If you were charged, please contact the agency so they can check."
+)
+
+
+async def confirm_checkout_session(
+    db: AsyncSession, invoice: Invoice, agency: Agency, billing_settings: AgencyBillingSettings, session_id: str
+) -> str:
+    """The portal return page's direct check with Stripe, so a client sees a
+    real answer without waiting on (or depending on) webhook delivery.
+    Fetches the session from the agency's connected account, refuses one that
+    belongs to a different invoice/agency, records the payment if it has
+    settled (idempotently, via ``record_checkout_payment``), and returns the
+    outcome — see ``CheckoutConfirmRead`` for what each means."""
+    if not billing_settings.stripe_connect_account_id:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Online payment isn't set up for this agency yet")
+    try:
+        session = await stripe_client.retrieve_checkout_session(
+            session_id, stripe_account=billing_settings.stripe_connect_account_id
+        )
+    except stripe.InvalidRequestError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, _SESSION_NOT_FOUND) from exc
+
+    metadata = session.metadata.to_dict() if session.metadata else {}
+    if metadata.get("invoice_id") != str(invoice.id) or metadata.get("agency_id") != str(agency.id):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, _SESSION_NOT_FOUND)
+
+    if session.status == "complete" and session.payment_status in _SETTLED_PAYMENT_STATUSES:
+        await record_checkout_payment(db, session)
+        return "paid"
+    if session.status == "complete":
+        return "processing"
+    if session.status == "expired":
+        return "failed"
+    return "open"
 
 
 async def _next_invoice_number(db: AsyncSession, agency: Agency) -> str:

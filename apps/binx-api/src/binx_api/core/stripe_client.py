@@ -46,6 +46,14 @@ async def create_checkout_session(
     return await _get_client().v1.checkout.sessions.create_async(params, options)
 
 
+async def retrieve_checkout_session(session_id: str, *, stripe_account: str | None = None) -> stripe.checkout.Session:
+    """Same ``stripe_account`` targeting as ``create_checkout_session`` — a
+    client-invoice session lives on the agency's connected account, so it has
+    to be fetched from there too."""
+    options = {"stripe_account": stripe_account} if stripe_account else None
+    return await _get_client().v1.checkout.sessions.retrieve_async(session_id, None, options)
+
+
 async def create_billing_portal_session(params: dict[str, Any]) -> stripe.billing_portal.Session:
     return await _get_client().v1.billing_portal.sessions.create_async(params)
 

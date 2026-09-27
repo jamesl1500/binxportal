@@ -26,11 +26,13 @@ import {
   getPortalConversations,
   getPortalInvoices,
   getPortalMeetings,
+  getPortalPendingKickoffs,
   getPortalProposals,
 } from "@/lib/portal";
 import { buildBadges, firstName, PORTAL_TOUR_ID } from "@/lib/portal-insights";
 import { getTutorialProgress } from "@/lib/users";
 import PortalBrandVars from "@/components/portal/PortalBrandVars/PortalBrandVars";
+import PortalKickoffInvite from "@/components/portal/PortalKickoffInvite/PortalKickoffInvite";
 import PortalOnboardingProvider from "@/components/portal/PortalOnboardingProvider/PortalOnboardingProvider";
 import PortalSidebar from "@/components/portal/PortalSidebar/PortalSidebar";
 import PortalWelcomeTour from "@/components/portal/PortalWelcomeTour/PortalWelcomeTour";
@@ -53,11 +55,12 @@ const PortalLayout = async ({ children }: { children: React.ReactNode }) => {
     redirect("/dashboard");
   }
 
-  const [conversations, invoices, proposals, meetings, tutorialProgress] = await Promise.all([
+  const [conversations, invoices, proposals, meetings, pendingKickoffs, tutorialProgress] = await Promise.all([
     getPortalConversations().catch(() => []),
     getPortalInvoices().catch(() => []),
     getPortalProposals().catch(() => []),
     getPortalMeetings().catch(() => []),
+    getPortalPendingKickoffs().catch(() => []),
     // Default to "tour already seen" on failure — better to skip a tour than
     // to pop it on every page load while the API is unhappy.
     getTutorialProgress().catch(() => ({ tour_completed: true, dismissed_popups: [PORTAL_TOUR_ID] })),
@@ -94,6 +97,13 @@ const PortalLayout = async ({ children }: { children: React.ReactNode }) => {
         <PortalWelcomeTour
           agencyName={context.agency.name}
           clientName={context.client.name}
+          contactFirstName={firstName(user.full_name)}
+          logoSrc={logoSrc}
+        />
+        {/* Waits for the welcome tour above to close before it opens. */}
+        <PortalKickoffInvite
+          kickoffs={pendingKickoffs}
+          agencyName={context.agency.name}
           contactFirstName={firstName(user.full_name)}
           logoSrc={logoSrc}
         />

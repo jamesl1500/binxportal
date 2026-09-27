@@ -205,6 +205,31 @@ async def get_kickoff_by_project_or_404(db: AsyncSession, project_id: uuid.UUID)
     return kickoff
 
 
+async def list_pending_for_client(db: AsyncSession, client_id: uuid.UUID) -> list[tuple[Kickoff, Project, int, int]]:
+    """Sent-but-unanswered kickoffs for one client, oldest send first, as
+    (kickoff, project, question_count, required_count). Drafts are staff-only
+    and completed ones need nothing from the client, so both are left out.
+    Scoped through the project's own client_id too, so a kickoff can never
+    surface for a client that doesn't own its project."""
+    rows = (
+        await db.execute(
+            select(Kickoff, Project)
+            .join(Project, Project.id == Kickoff.project_id)
+            .where(
+                Kickoff.client_id == client_id,
+                Project.client_id == client_id,
+                Kickoff.status == STATUS_SENT,
+            )
+            .order_by(Kickoff.sent_at.asc().nulls_last(), Kickoff.created_at.asc())
+        )
+    ).all()
+    out: list[tuple[Kickoff, Project, int, int]] = []
+    for kickoff, project in rows:
+        questions = await list_questions(db, kickoff.id)
+        out.append((kickoff, project, len(questions), sum(1 for q in questions if q.required)))
+    return out
+
+
 async def list_questions(db: AsyncSession, kickoff_id: uuid.UUID) -> list[KickoffQuestion]:
     result = await db.execute(
         select(KickoffQuestion).where(KickoffQuestion.kickoff_id == kickoff_id).order_by(KickoffQuestion.position)

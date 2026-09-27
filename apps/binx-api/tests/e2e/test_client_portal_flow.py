@@ -186,6 +186,9 @@ class TestPortalReads:
         assert captured["stripe_account"] == "acct_test123"
         assert captured["params"]["mode"] == "payment"
         assert captured["params"]["metadata"]["invoice_id"] == str(s["invoice"].id)
+        # Stripe fills {CHECKOUT_SESSION_ID} in on redirect, for the return
+        # page's direct confirmation.
+        assert captured["params"]["success_url"].endswith("?checkout=success&session_id={CHECKOUT_SESSION_ID}")
 
         # An already-paid invoice can't be paid again — unaffected by the
         # Stripe rewrite, still a plain 400 before ever calling Stripe.
@@ -224,6 +227,8 @@ class TestPortalReads:
                 "object": {
                     "id": "cs_test_1",
                     "mode": "payment",
+                    "status": "complete",
+                    "payment_status": "paid",
                     "amount_total": balance,
                     "payment_intent": "pi_test_1",
                     "metadata": {
@@ -257,6 +262,194 @@ class TestPortalReads:
         body, _ = sign_stripe_payload({"id": "evt_x", "type": "account.updated"}, "whsec_wrong_secret")
         resp = await client.post("/webhooks/stripe/connect", content=body, headers={"stripe-signature": "t=1,v1=bad"})
         assert resp.status_code == 400
+
+
+def _fake_session(invoice_id: str, agency_id: str, paid_by: str, **overrides):
+    """A stand-in for a retrieved stripe.checkout.Session: just the fields
+    confirm/record read (``metadata`` needs ``to_dict()`` like StripeObject)."""
+    metadata = {"invoice_id": invoice_id, "agency_id": agency_id, "paid_by_user_id": paid_by}
+    fields = {
+        "id": "cs_test_confirm",
+        "mode": "payment",
+        "status": "complete",
+        "payment_status": "paid",
+        "amount_total": 0,
+        "payment_intent": "pi_test_confirm",
+        "metadata": SimpleNamespace(to_dict=lambda: dict(metadata)),
+    }
+    fields.update(overrides)
+    return SimpleNamespace(**fields)
+
+
+def _checkout_event(event_id, event_type, *, invoice_id, agency_id, paid_by, amount, payment_status="paid"):
+    return {
+        "id": event_id,
+        "type": event_type,
+        "account": "acct_test123",
+        "data": {
+            "object": {
+                "id": f"cs_{event_id}",
+                "mode": "payment",
+                "status": "complete",
+                "payment_status": payment_status,
+                "amount_total": amount,
+                "payment_intent": "pi_shared",
+                "metadata": {"invoice_id": invoice_id, "agency_id": agency_id, "paid_by_user_id": paid_by},
+            }
+        },
+    }
+
+
+class TestPortalPaymentConfirmation:
+    """The return-page confirmation, plus Connect payments that arrive on the
+    platform endpoint: the two ways a paid invoice used to stay unpaid."""
+
+    async def _connected(self, client, db_session, email_outbox, s, email):
+        contact_user, _ = await _invite_and_accept(
+            client, db_session, email_outbox, s["agency"].id, s["client"].id, s["owner"], email
+        )
+        billing_settings = await invoicing_service.get_or_create_billing_settings(db_session, s["agency"])
+        billing_settings.stripe_connect_account_id = "acct_test123"
+        billing_settings.stripe_connect_charges_enabled = True
+        await db_session.commit()
+        return contact_user
+
+    async def test_confirm_records_a_paid_session_once(
+        self, client, db_session, email_outbox, portal_setup, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        s = portal_setup
+        contact_user = await self._connected(client, db_session, email_outbox, s, "pay1@northwind.example")
+        invoice_id, agency_id = str(s["invoice"].id), str(s["agency"].id)
+        balance = s["invoice"].total_cents - s["invoice"].amount_paid_cents
+        headers = auth_headers(contact_user)
+        paid_by = str(contact_user.id)
+        seen: dict = {}
+
+        async def fake_retrieve(session_id, *, stripe_account=None):
+            seen["args"] = (session_id, stripe_account)
+            return _fake_session(invoice_id, agency_id, paid_by, amount_total=balance)
+
+        monkeypatch.setattr(invoicing_service.stripe_client, "retrieve_checkout_session", fake_retrieve)
+
+        url = f"/portal/invoices/{invoice_id}/pay/confirm"
+        first = await client.post(url, json={"session_id": "cs_test_confirm"}, headers=headers)
+        assert first.status_code == 200, first.text
+        body = first.json()
+        assert body["outcome"] == "paid"
+        assert body["invoice"]["status"] == "paid"
+        assert body["invoice"]["amount_due_cents"] == 0
+        assert seen["args"] == ("cs_test_confirm", "acct_test123")
+
+        # Refreshing the return page (or the webhook landing too) never double-records.
+        second = await client.post(url, json={"session_id": "cs_test_confirm"}, headers=headers)
+        assert second.json()["outcome"] == "paid"
+        assert len(second.json()["invoice"]["payments"]) == 1
+
+    @pytest.mark.parametrize(
+        ("session_status", "outcome"),
+        [("complete", "processing"), ("expired", "failed"), ("open", "open")],
+    )
+    async def test_confirm_reports_unsettled_sessions_without_recording(
+        self,
+        client,
+        db_session,
+        email_outbox,
+        portal_setup,
+        monkeypatch: pytest.MonkeyPatch,
+        session_status,
+        outcome,
+    ) -> None:
+        s = portal_setup
+        contact_user = await self._connected(
+            client, db_session, email_outbox, s, f"pay-{session_status}@northwind.example"
+        )
+        invoice_id, agency_id, paid_by = str(s["invoice"].id), str(s["agency"].id), str(contact_user.id)
+
+        async def fake_retrieve(session_id, *, stripe_account=None):
+            return _fake_session(invoice_id, agency_id, paid_by, status=session_status, payment_status="unpaid")
+
+        monkeypatch.setattr(invoicing_service.stripe_client, "retrieve_checkout_session", fake_retrieve)
+        resp = await client.post(
+            f"/portal/invoices/{invoice_id}/pay/confirm",
+            json={"session_id": "cs_x"},
+            headers=auth_headers(contact_user),
+        )
+        assert resp.status_code == 200, resp.text
+        assert resp.json()["outcome"] == outcome
+        assert resp.json()["invoice"]["payments"] == []
+
+    async def test_confirm_refuses_a_session_for_another_invoice(
+        self, client, db_session, email_outbox, portal_setup, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        s = portal_setup
+        contact_user = await self._connected(client, db_session, email_outbox, s, "pay-other@northwind.example")
+        agency_id, paid_by = str(s["agency"].id), str(contact_user.id)
+
+        async def fake_retrieve(session_id, *, stripe_account=None):
+            return _fake_session("00000000-0000-0000-0000-000000000000", agency_id, paid_by)
+
+        monkeypatch.setattr(invoicing_service.stripe_client, "retrieve_checkout_session", fake_retrieve)
+        resp = await client.post(
+            f"/portal/invoices/{s['invoice'].id}/pay/confirm",
+            json={"session_id": "cs_elsewhere"},
+            headers=auth_headers(contact_user),
+        )
+        assert resp.status_code == 404
+
+    async def test_platform_endpoint_records_a_connect_invoice_payment(
+        self, client, db_session, email_outbox, portal_setup, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """`stripe listen --forward-to .../platform` without
+        --forward-connect-to delivers Connect events here. This used to 200
+        without recording anything."""
+        s = portal_setup
+        contact_user = await self._connected(client, db_session, email_outbox, s, "pay-platform@northwind.example")
+        monkeypatch.setattr(stripe_client.settings, "stripe_webhook_secret", "whsec_platform_fake")
+        invoice_id = str(s["invoice"].id)
+        headers = auth_headers(contact_user)
+        payload = _checkout_event(
+            "evt_platform_1",
+            "checkout.session.completed",
+            invoice_id=invoice_id,
+            agency_id=str(s["agency"].id),
+            paid_by=str(contact_user.id),
+            amount=s["invoice"].total_cents - s["invoice"].amount_paid_cents,
+        )
+        body, signature = sign_stripe_payload(payload, "whsec_platform_fake")
+        resp = await client.post("/webhooks/stripe/platform", content=body, headers={"stripe-signature": signature})
+        assert resp.status_code == 200
+
+        paid = (await client.get(f"/portal/invoices/{invoice_id}", headers=headers)).json()
+        assert paid["status"] == "paid"
+        assert paid["payments"][0]["method"] == "stripe"
+
+    async def test_async_payment_is_recorded_only_once_it_settles(
+        self, client, db_session, email_outbox, portal_setup, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        s = portal_setup
+        contact_user = await self._connected(client, db_session, email_outbox, s, "pay-async@northwind.example")
+        monkeypatch.setattr(stripe_client.settings, "stripe_connect_webhook_secret", "whsec_test_fake")
+        invoice_id = str(s["invoice"].id)
+        headers = auth_headers(contact_user)
+        common = {
+            "invoice_id": invoice_id,
+            "agency_id": str(s["agency"].id),
+            "paid_by": str(contact_user.id),
+            "amount": s["invoice"].total_cents - s["invoice"].amount_paid_cents,
+        }
+
+        pending_event = _checkout_event("evt_async_1", "checkout.session.completed", payment_status="unpaid", **common)
+        body, signature = sign_stripe_payload(pending_event, "whsec_test_fake")
+        await client.post("/webhooks/stripe/connect", content=body, headers={"stripe-signature": signature})
+        pending = (await client.get(f"/portal/invoices/{invoice_id}", headers=headers)).json()
+        assert pending["payments"] == []
+
+        settled_event = _checkout_event("evt_async_2", "checkout.session.async_payment_succeeded", **common)
+        body, signature = sign_stripe_payload(settled_event, "whsec_test_fake")
+        await client.post("/webhooks/stripe/connect", content=body, headers={"stripe-signature": signature})
+        settled = (await client.get(f"/portal/invoices/{invoice_id}", headers=headers)).json()
+        assert settled["status"] == "paid"
+        assert len(settled["payments"]) == 1
 
 
 class TestPortalMessages:

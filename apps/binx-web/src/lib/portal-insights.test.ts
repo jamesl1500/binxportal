@@ -10,6 +10,8 @@ import {
   firstName,
   greetingFor,
   initials,
+  kickoffInviteKey,
+  kickoffQuestionSummary,
   PORTAL_STEP_IDS,
 } from "@/lib/portal-insights";
 
@@ -243,5 +245,51 @@ describe("buildBadges", () => {
         now: NOW,
       }),
     ).toEqual({ messages: 3, invoices: 2, invoicesOverdue: true, proposals: 2, meetings: 1 });
+  });
+});
+
+describe("kickoffs", () => {
+  const pending = {
+    id: "k1",
+    project_id: "p1",
+    project_name: "Brand refresh",
+    title: "Project kickoff",
+    intro_message: null,
+    question_count: 5,
+    required_count: 3,
+    sent_at: "2026-09-20T00:00:00Z",
+    last_nudged_at: null,
+  };
+
+  it("puts a pending kickoff at the top of the warnings, after anything overdue", () => {
+    const items = buildAttentionItems({
+      kickoffs: [pending],
+      proposals: [proposal()],
+      invoices: [invoice({ id: "late", display_status: "overdue", due_date: "2026-09-20" })],
+      conversations: [],
+      meetings: [],
+      now: NOW,
+    });
+    expect(items.map((item) => item.id)).toEqual(["invoice-late", "kickoff-k1", "proposal-prop-1"]);
+    expect(items[1]).toMatchObject({
+      kind: "kickoff",
+      title: "Complete the kickoff for Brand refresh",
+      detail: "5 questions · 3 required",
+      href: "/portal/projects/p1/kickoff",
+    });
+  });
+
+  it("summarizes question counts", () => {
+    expect(kickoffQuestionSummary({ question_count: 1, required_count: 1 })).toBe("1 question");
+    expect(kickoffQuestionSummary({ question_count: 4, required_count: 0 })).toBe("4 questions");
+    expect(kickoffQuestionSummary({ question_count: 4, required_count: 2 })).toBe("4 questions · 2 required");
+  });
+
+  it("changes the invite key when a kickoff is added or nudged, not when order changes", () => {
+    const other = { id: "k2", last_nudged_at: null };
+    const base = kickoffInviteKey([pending, other]);
+    expect(kickoffInviteKey([other, pending])).toBe(base);
+    expect(kickoffInviteKey([pending])).not.toBe(base);
+    expect(kickoffInviteKey([{ ...pending, last_nudged_at: "2026-09-26T00:00:00Z" }, other])).not.toBe(base);
   });
 });

@@ -2974,6 +2974,51 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/portal/invoices/{invoice_id}/pay/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirm Invoice Payment
+         * @description Called by the invoice page on its way back from Stripe Checkout (the
+         *     success_url carries ``session_id``). Checks the session with Stripe
+         *     directly and records the payment if it's settled, so the client gets a
+         *     definite answer even when the Connect webhook is slow, misrouted, or
+         *     missing. Safe to call repeatedly and alongside the webhook.
+         */
+        post: operations["confirm_invoice_payment_portal_invoices__invoice_id__pay_confirm_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/portal/kickoffs/pending": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Portal Pending Kickoffs
+         * @description Every kickoff waiting on this client's answers, across all their
+         *     projects — what the portal's "complete your kickoff" invitation reads.
+         */
+        get: operations["list_portal_pending_kickoffs_portal_kickoffs_pending_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/portal/logo": {
         parameters: {
             query?: never;
@@ -4617,6 +4662,29 @@ export interface components {
         ChangePlanRequest: {
             /** Plan */
             plan: string;
+        };
+        /**
+         * CheckoutConfirmRead
+         * @description What the portal's return page shows after Stripe Checkout:
+         *
+         *     - ``paid``: the money is in and the payment is recorded on the invoice;
+         *     - ``processing``: checkout finished but an async method (e.g. a bank
+         *       debit) is still settling — the webhook records it when it clears;
+         *     - ``failed``: the session expired or the payment didn't go through;
+         *     - ``open``: checkout was never finished (nothing was charged).
+         */
+        CheckoutConfirmRead: {
+            invoice: components["schemas"]["InvoiceDetailRead"];
+            /**
+             * Outcome
+             * @enum {string}
+             */
+            outcome: "paid" | "processing" | "failed" | "open";
+        };
+        /** CheckoutConfirmRequest */
+        CheckoutConfirmRequest: {
+            /** Session Id */
+            session_id: string;
         };
         /** CheckoutSessionRead */
         CheckoutSessionRead: {
@@ -6451,6 +6519,38 @@ export interface components {
         PortalMembershipRead: {
             agency: components["schemas"]["PortalAgencyRead"];
             client: components["schemas"]["PortalClientRead"];
+        };
+        /**
+         * PortalPendingKickoffRead
+         * @description A sent kickoff still waiting on the client's answers — just enough
+         *     for the portal to invite them in (the questions themselves come from
+         *     GET /portal/projects/{id}/kickoff once they open it).
+         */
+        PortalPendingKickoffRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Intro Message */
+            intro_message: string | null;
+            /** Last Nudged At */
+            last_nudged_at: string | null;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Project Name */
+            project_name: string;
+            /** Question Count */
+            question_count: number;
+            /** Required Count */
+            required_count: number;
+            /** Sent At */
+            sent_at: string | null;
+            /** Title */
+            title: string;
         };
         /** PortalProgress */
         PortalProgress: {
@@ -15705,6 +15805,61 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirm_invoice_payment_portal_invoices__invoice_id__pay_confirm_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckoutConfirmRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckoutConfirmRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_portal_pending_kickoffs_portal_kickoffs_pending_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortalPendingKickoffRead"][];
                 };
             };
         };

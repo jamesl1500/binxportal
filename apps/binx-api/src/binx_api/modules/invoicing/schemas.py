@@ -1,6 +1,7 @@
 import uuid
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Literal
 
 from pydantic import BaseModel, EmailStr, Field, model_validator
 
@@ -180,6 +181,24 @@ class TimePoint(BaseModel):
 
 class CheckoutSessionRead(BaseModel):
     checkout_url: str
+
+
+class CheckoutConfirmRequest(BaseModel):
+    session_id: str = Field(min_length=1, max_length=255)
+
+
+class CheckoutConfirmRead(BaseModel):
+    """What the portal's return page shows after Stripe Checkout:
+
+    - ``paid``: the money is in and the payment is recorded on the invoice;
+    - ``processing``: checkout finished but an async method (e.g. a bank
+      debit) is still settling — the webhook records it when it clears;
+    - ``failed``: the session expired or the payment didn't go through;
+    - ``open``: checkout was never finished (nothing was charged).
+    """
+
+    outcome: Literal["paid", "processing", "failed", "open"]
+    invoice: InvoiceDetailRead
 
 
 class StripeConnectStatusRead(BaseModel):

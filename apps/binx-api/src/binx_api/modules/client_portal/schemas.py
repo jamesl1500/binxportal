@@ -103,6 +103,22 @@ class PortalTaskListRead(BaseModel):
     tasks: list[PortalTaskRead]
 
 
+class PortalPendingKickoffRead(BaseModel):
+    """A sent kickoff still waiting on the client's answers — just enough
+    for the portal to invite them in (the questions themselves come from
+    GET /portal/projects/{id}/kickoff once they open it)."""
+
+    id: uuid.UUID
+    project_id: uuid.UUID
+    project_name: str
+    title: str
+    intro_message: str | None
+    question_count: int
+    required_count: int
+    sent_at: datetime | None
+    last_nudged_at: datetime | None
+
+
 # ---- Staff side: managing a client's portal contacts ---------------------
 
 

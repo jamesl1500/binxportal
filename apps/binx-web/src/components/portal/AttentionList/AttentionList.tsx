@@ -14,6 +14,7 @@ import {
   CalendarDays,
   CheckCircle2,
   ChevronRight,
+  ClipboardList,
   FileSignature,
   MessageSquare,
   Receipt,
@@ -26,6 +27,7 @@ import LocalTime from "@/components/portal/LocalTime/LocalTime";
 import styles from "./AttentionList.module.scss";
 
 const ICONS: Record<AttentionKind, LucideIcon> = {
+  kickoff: ClipboardList,
   proposal: FileSignature,
   invoice: Receipt,
   message: MessageSquare,

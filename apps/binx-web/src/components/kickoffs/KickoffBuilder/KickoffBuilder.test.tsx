@@ -79,6 +79,7 @@ describe("KickoffBuilder", () => {
       }),
     );
     expect(mockedRefresh).toHaveBeenCalledOnce();
+    expect(mockedToastSuccess).toHaveBeenCalledWith("Kickoff draft created", expect.anything());
   });
 
   it("refuses to save a draft with no questions and no template", async () => {
@@ -106,6 +107,9 @@ describe("KickoffBuilder", () => {
 
     expect(mockedUpdate).toHaveBeenCalledWith("a1", "p1", expect.objectContaining({ title: "Project kickoff" }));
     expect(mockedRefresh).toHaveBeenCalledOnce();
+    expect(mockedToastSuccess).toHaveBeenCalledWith("Draft saved", {
+      description: "Only your team can see it until you send it to the client.",
+    });
   });
 
   it("sends the kickoff after confirming the dialog", async () => {
@@ -118,6 +122,20 @@ describe("KickoffBuilder", () => {
 
     expect(mockedSend).toHaveBeenCalledWith("a1", "p1");
     expect(mockedRefresh).toHaveBeenCalledOnce();
+    expect(mockedToastSuccess).toHaveBeenCalledWith("Kickoff sent to your client", expect.anything());
+  });
+
+  it("shows the error and no success alert when sending fails", async () => {
+    mockedSend.mockResolvedValueOnce({ error: "This client has no portal contact yet" });
+    const user = userEvent.setup();
+    render(<KickoffBuilder agencyId="a1" projectId="p1" kickoff={existingKickoff} templates={[]} />);
+
+    await user.click(screen.getByRole("button", { name: /send to client/i }));
+    await user.click(screen.getByRole("button", { name: "Send kickoff" }));
+
+    expect(mockedToastError).toHaveBeenCalledWith("This client has no portal contact yet");
+    expect(mockedToastSuccess).not.toHaveBeenCalled();
+    expect(mockedRefresh).not.toHaveBeenCalled();
   });
 
   it("deletes the kickoff after confirming the dialog", async () => {

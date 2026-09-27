@@ -122,13 +122,19 @@ const KickoffBuilder = ({ agencyId, projectId, kickoff, templates }: KickoffBuil
       .map((q) => ({ ...q, label: q.label.trim() }))
       .filter((q) => q.label !== "");
 
-  const run = (action: () => Promise<{ error?: string }>) => {
+  // `onSuccess` fires only once the action has actually succeeded. Success
+  // feedback is a toast rather than a dialog on purpose: sending flips the
+  // kickoff out of draft, so the page swaps this builder for
+  // KickoffStatusView on refresh — a dialog owned by this component would
+  // unmount mid-read, while the app-level Toaster outlives the swap.
+  const run = (action: () => Promise<{ error?: string }>, onSuccess?: () => void) => {
     startTransition(async () => {
       const result = await action();
       if (result?.error) {
         toast.error(result.error);
         return;
       }
+      onSuccess?.();
       router.refresh();
     });
   };
@@ -150,7 +156,11 @@ const KickoffBuilder = ({ agencyId, projectId, kickoff, templates }: KickoffBuil
         return result;
       }
       return updateKickoffAction(agencyId, projectId, { title, introMessage: introMessage.trim() || null, questions: cleaned });
-    });
+    }, () =>
+      toast.success(isNew ? "Kickoff draft created" : "Draft saved", {
+        description: "Only your team can see it until you send it to the client.",
+      }),
+    );
   };
 
   const handleSend = () => {
@@ -158,7 +168,11 @@ const KickoffBuilder = ({ agencyId, projectId, kickoff, templates }: KickoffBuil
       const result = await sendKickoffAction(agencyId, projectId);
       if (!result.error) setSendOpen(false);
       return result;
-    });
+    }, () =>
+      toast.success("Kickoff sent to your client", {
+        description: "We've emailed their portal contact. You'll see answers here as they come in.",
+      }),
+    );
   };
 
   const handleDelete = () => {

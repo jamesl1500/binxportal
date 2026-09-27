@@ -38,7 +38,7 @@ import {
 
 import { logoutAction } from "@/app/(app)/actions";
 import { useOptionalPortalOnboarding } from "@/components/portal/PortalOnboardingProvider/PortalOnboardingProvider";
-import { initials, type PortalBadges } from "@/lib/portal-insights";
+import { initials, KICKOFF_INVITE_STORAGE_KEY, type PortalBadges } from "@/lib/portal-insights";
 
 import styles from "./PortalSidebar.module.scss";
 
@@ -132,6 +132,13 @@ const PortalSidebar = ({ agencyName, clientName, contactName, contactDetail, log
 
   const signOut = () => {
     setOpen(false);
+    // Forget any "Remind me later" on the kickoff invitation, so whoever
+    // signs in next gets invited again (see PortalKickoffInvite).
+    try {
+      window.sessionStorage.removeItem(KICKOFF_INVITE_STORAGE_KEY);
+    } catch {
+      // Storage blocked — nothing to clear.
+    }
     startTransition(() => logoutAction());
   };
 
