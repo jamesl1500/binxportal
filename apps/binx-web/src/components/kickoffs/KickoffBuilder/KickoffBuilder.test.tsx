@@ -153,4 +153,27 @@ describe("KickoffBuilder", () => {
     await user.click(screen.getAllByRole("button", { name: "Remove question" })[0]);
     expect(screen.getAllByPlaceholderText("Question")).toHaveLength(1);
   });
+
+  it("keeps the comma while typing multiple-choice options, and parses them for save", async () => {
+    mockedCreate.mockResolvedValueOnce({});
+    const user = userEvent.setup();
+    render(<KickoffBuilder agencyId="a1" projectId="p1" kickoff={null} templates={[]} />);
+
+    await user.selectOptions(screen.getByDisplayValue("Short answer"), "multiple_choice");
+    await user.type(screen.getByPlaceholderText("Question"), "Preferred channel?");
+    const optionsInput = screen.getByPlaceholderText(/options, comma separated/i);
+    await user.type(optionsInput, "Email, Slack");
+
+    expect(optionsInput).toHaveValue("Email, Slack");
+
+    await user.click(screen.getByRole("button", { name: /save draft/i }));
+
+    expect(mockedCreate).toHaveBeenCalledWith(
+      "a1",
+      "p1",
+      expect.objectContaining({
+        questions: [expect.objectContaining({ options: ["Email", "Slack"] })],
+      }),
+    );
+  });
 });
