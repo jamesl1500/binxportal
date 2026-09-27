@@ -41,6 +41,13 @@ interface KickoffBuilderProps {
 
 interface QuestionRow extends KickoffQuestionInput {
   key: string;
+  // The multiple-choice options input's raw typed text. Kept separate from
+  // `options` (the parsed, trimmed list actually sent to the API) so the
+  // field isn't a controlled input re-rendering itself from that parsed
+  // list on every keystroke — which used to eat the comma the user just
+  // typed, since a trailing "Email," parses to ["Email"] and re-joining
+  // that drops the comma before the next option can be typed.
+  optionsText: string;
 }
 
 let rowCounter = 0;
@@ -49,8 +56,16 @@ const newQuestion = (): QuestionRow => ({
   type: "text",
   label: "",
   options: [],
+  optionsText: "",
   required: true,
 });
+
+function parseOptionsText(text: string): string[] {
+  return text
+    .split(",")
+    .map((o) => o.trim())
+    .filter((o) => o !== "");
+}
 
 const TYPE_LABELS: Record<KickoffQuestionType, string> = {
   text: "Short answer",
@@ -65,7 +80,14 @@ const KickoffBuilder = ({ agencyId, projectId, kickoff, templates }: KickoffBuil
   const [introMessage, setIntroMessage] = useState(kickoff?.intro_message ?? "");
   const [questions, setQuestions] = useState<QuestionRow[]>(
     kickoff?.questions.length
-      ? kickoff.questions.map((q) => ({ key: q.id, type: q.type as KickoffQuestionType, label: q.label, options: q.options, required: q.required }))
+      ? kickoff.questions.map((q) => ({
+          key: q.id,
+          type: q.type as KickoffQuestionType,
+          label: q.label,
+          options: q.options,
+          optionsText: q.options.join(", "),
+          required: q.required,
+        }))
       : [newQuestion()],
   );
   const [templateId, setTemplateId] = useState<string>("");
@@ -257,13 +279,11 @@ const KickoffBuilder = ({ agencyId, projectId, kickoff, templates }: KickoffBuil
                 <input
                   type="text"
                   className={styles.input}
-                  value={q.options.join(", ")}
+                  value={q.optionsText}
                   onChange={(event) =>
                     updateQuestion(q.key, {
-                      options: event.target.value
-                        .split(",")
-                        .map((o) => o.trim())
-                        .filter((o) => o !== ""),
+                      optionsText: event.target.value,
+                      options: parseOptionsText(event.target.value),
                     })
                   }
                   placeholder="Options, comma separated (e.g. Email, Slack, Phone)"
