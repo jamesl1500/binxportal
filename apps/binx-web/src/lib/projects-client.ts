@@ -14,15 +14,25 @@
  * @module apps/binx-web/src/lib/projects-client.ts
  * @author Binx.io
  */
-export type ProjectStatus = "planning" | "active" | "on_hold" | "completed" | "archived";
+export type ProjectStatus = "planning" | "active" | "on_hold" | "waiting_on_client" | "completed" | "archived";
 
-export const PROJECT_STATUSES: ProjectStatus[] = ["planning", "active", "on_hold", "completed", "archived"];
+export const PROJECT_STATUSES: ProjectStatus[] = [
+  "planning",
+  "active",
+  "on_hold",
+  "waiting_on_client",
+  "completed",
+  "archived",
+];
 
 /** Display label for each lifecycle status — shared by the status select, badges, and summary cards. */
 export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
   planning: "Planning",
   active: "Active",
   on_hold: "On hold",
+  // Set automatically when a kickoff is sent, cleared once the client
+  // answers it — see lib/kickoffs.ts and binx-api's kickoffs/service.py.
+  waiting_on_client: "Waiting on client",
   completed: "Completed",
   archived: "Archived",
 };

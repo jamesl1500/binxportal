@@ -29,7 +29,7 @@ class ProjectCreate(BaseModel):
     name: str = Field(min_length=1, max_length=255)
     client_id: uuid.UUID
     description: str | None = Field(default=None, max_length=4096)
-    status: str = Field(default="planning", pattern="^(planning|active|on_hold|completed|archived)$")
+    status: str = Field(default="planning", pattern="^(planning|active|on_hold|waiting_on_client|completed|archived)$")
     start_date: date | None = None
     due_date: date | None = None
     default_hourly_rate_cents: int | None = Field(default=None, ge=0)
@@ -41,7 +41,7 @@ class ProjectUpdate(BaseModel):
     name: str = Field(min_length=1, max_length=255)
     client_id: uuid.UUID
     description: str | None = Field(default=None, max_length=4096)
-    status: str = Field(pattern="^(planning|active|on_hold|completed|archived)$")
+    status: str = Field(pattern="^(planning|active|on_hold|waiting_on_client|completed|archived)$")
     start_date: date | None = None
     due_date: date | None = None
     default_hourly_rate_cents: int | None = Field(default=None, ge=0)

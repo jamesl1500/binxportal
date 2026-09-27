@@ -28,6 +28,7 @@ const ProjectTabs = ({ projectId }: ProjectTabsProps) => {
     { href: base, label: "Dashboard" },
     { href: `${base}/board`, label: "Board" },
     { href: `${base}/canvas`, label: "Canvas" },
+    { href: `${base}/kickoff`, label: "Kickoff" },
     { href: `${base}/team`, label: "Team" },
     { href: `${base}/time`, label: "Time" },
     { href: `${base}/files`, label: "Files" },
