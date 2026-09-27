@@ -1,0 +1,462 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+// Brand color, falling back to the app's ink when neither the client nor the
+// agency has set one — see --portal-primary in (portal)/layout.tsx.
+$brand: var(--portal-primary, #{t.$color-ink});
+$desktop: 900px;
+$width: 16.5rem;
+
+// ---- Mobile top bar ----
+
+.mobileBar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: t.$space-3;
+  padding: t.$space-3 t.$space-4;
+  background: t.$color-surface;
+  border-bottom: 1px solid t.$color-border;
+
+  @media (min-width: $desktop) {
+    display: none;
+  }
+}
+
+.mobileBrand {
+  display: flex;
+  align-items: center;
+  gap: t.$space-3;
+  min-width: 0;
+}
+
+.mobileAgency {
+  overflow: hidden;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-base;
+  color: t.$color-ink;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.menuToggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  color: t.$color-ink;
+  background: transparent;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  cursor: pointer;
+
+  svg {
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.menuDot {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.3rem;
+  width: 0.45rem;
+  height: 0.45rem;
+  background: $brand;
+  border: 2px solid t.$color-surface;
+  border-radius: 999px;
+  box-sizing: content-box;
+}
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(10, 10, 11, 0.35);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity t.$duration-base t.$ease-standard;
+
+  &[data-open="true"] {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  @media (min-width: $desktop) {
+    display: none;
+  }
+}
+
+// ---- Sidebar ----
+
+.sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  width: min(#{$width}, 85vw);
+  background: t.$color-surface;
+  border-right: 1px solid t.$color-border;
+  // Closed drawer: off-canvas *and* hidden, so its links leave the tab
+  // order and the accessibility tree. `visibility` waits for the slide-out
+  // to finish before it flips.
+  transform: translateX(-100%);
+  visibility: hidden;
+  transition:
+    transform t.$duration-base t.$ease-standard,
+    visibility 0s linear t.$duration-base;
+
+  &[data-open="true"] {
+    transform: none;
+    visibility: visible;
+    box-shadow: 0 24px 48px rgba(10, 10, 11, 0.18);
+    transition:
+      transform t.$duration-base t.$ease-standard,
+      visibility 0s;
+  }
+
+  @media (min-width: $desktop) {
+    position: sticky;
+    top: 0;
+    flex-shrink: 0;
+    width: $width;
+    height: 100dvh;
+    transform: none;
+    visibility: visible;
+    transition: none;
+
+    &[data-open="true"] {
+      box-shadow: none;
+    }
+  }
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: t.$space-3;
+  padding: t.$space-6 t.$space-5 t.$space-5;
+}
+
+.logo {
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  object-fit: contain;
+  border-radius: t.$radius-md;
+}
+
+.monogram {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-accent-foreground;
+  background: $brand;
+  border-radius: t.$radius-lg;
+}
+
+.brandText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.agency {
+  overflow: hidden;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  line-height: 1.2;
+  color: t.$color-ink;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.client {
+  @include m.mono-label;
+  overflow: hidden;
+  font-size: 0.5625rem;
+  color: t.$color-ink-faint;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.nav {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: t.$space-5;
+  min-height: 0;
+  padding: t.$space-2 t.$space-3;
+  overflow-y: auto;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-1;
+}
+
+.groupLabel {
+  @include m.mono-label;
+  padding: 0 t.$space-3 t.$space-1;
+  font-size: 0.5625rem;
+  color: t.$color-ink-faint;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: t.$space-3;
+  padding: t.$space-2 t.$space-3;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+  text-decoration: none;
+  border-radius: t.$radius-md;
+  transition:
+    background-color t.$duration-fast t.$ease-standard,
+    color t.$duration-fast t.$ease-standard;
+
+  &:hover {
+    color: t.$color-ink;
+    background: t.$color-paper;
+  }
+
+  &[data-active="true"] {
+    font-weight: 600;
+    color: t.$color-ink;
+    background: color-mix(in srgb, #{$brand} 9%, #{t.$color-surface});
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: 0.45rem;
+      bottom: 0.45rem;
+      left: -#{t.$space-3};
+      width: 3px;
+      background: $brand;
+      border-radius: 0 3px 3px 0;
+    }
+
+    .itemIcon {
+      color: $brand;
+    }
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.itemIcon {
+  width: 1.05rem;
+  height: 1.05rem;
+  flex-shrink: 0;
+}
+
+.itemLabel {
+  flex: 1;
+}
+
+.badge {
+  min-width: 1.35rem;
+  padding: 0.05rem 0.4rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+  color: t.$color-ink;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  border-radius: 999px;
+
+  &[data-tone="alert"] {
+    color: #fff;
+    background: t.$color-danger;
+    border-color: t.$color-danger;
+  }
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+// ---- Footer ----
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+  padding: t.$space-3 t.$space-3 t.$space-4;
+}
+
+.helpCard {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: t.$space-2 t.$space-3;
+  padding: t.$space-4;
+  background: color-mix(in srgb, #{$brand} 5%, #{t.$color-paper});
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-lg;
+}
+
+.helpIcon {
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-top: 0.1rem;
+  color: $brand;
+}
+
+.helpText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.helpTitle {
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  color: t.$color-ink;
+}
+
+.helpBody {
+  font-size: t.$font-size-xs;
+  line-height: 1.5;
+  color: t.$color-ink-soft;
+}
+
+.helpActions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-2;
+}
+
+.helpLink {
+  padding: t.$space-1 t.$space-3;
+  font: inherit;
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  color: t.$color-ink;
+  text-decoration: none;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: 999px;
+  cursor: pointer;
+
+  &:hover {
+    border-color: $brand;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.account {
+  display: flex;
+  align-items: center;
+  gap: t.$space-3;
+  padding: t.$space-3 t.$space-2 0;
+  border-top: 1px solid t.$color-border;
+}
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: $brand;
+  background: color-mix(in srgb, #{$brand} 12%, #{t.$color-surface});
+  border-radius: 999px;
+}
+
+.accountText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.contact {
+  overflow: hidden;
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  color: t.$color-ink;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.contactDetail {
+  overflow: hidden;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.signOut {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  color: t.$color-ink-soft;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: t.$radius-md;
+  cursor: pointer;
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  &:hover:not(:disabled) {
+    color: t.$color-ink;
+    border-color: t.$color-border;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}

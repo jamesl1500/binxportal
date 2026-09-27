@@ -1,0 +1,141 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+$brand: var(--portal-primary, #{t.$color-ink});
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  @include m.card-base;
+  --tone: #{t.$color-ink-soft};
+  --tone-bg: #{t.$color-paper};
+  display: flex;
+  align-items: center;
+  gap: t.$space-4;
+  padding: t.$space-3 t.$space-4;
+  text-decoration: none;
+  border-left: 3px solid var(--tone);
+  transition: box-shadow t.$duration-fast t.$ease-standard;
+
+  &[data-tone="danger"] {
+    --tone: #{t.$color-danger};
+    --tone-bg: #fef2f2;
+  }
+
+  &[data-tone="warn"] {
+    --tone: #b45309;
+    --tone-bg: #fffbeb;
+  }
+
+  &[data-tone="info"] {
+    --tone: #{$brand};
+    --tone-bg: color-mix(in srgb, #{$brand} 8%, white);
+  }
+
+  &:hover {
+    box-shadow: 0 6px 16px rgba(10, 10, 11, 0.06);
+
+    .cta svg {
+      transform: translateX(2px);
+    }
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.iconWrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  color: var(--tone);
+  background: var(--tone-bg);
+  border-radius: t.$radius-lg;
+
+  svg {
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+}
+
+.text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.title {
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  color: t.$color-ink;
+  overflow-wrap: anywhere;
+}
+
+.detail {
+  overflow: hidden;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.cta {
+  display: none;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  color: var(--tone);
+
+  svg {
+    width: 0.9rem;
+    height: 0.9rem;
+    transition: transform t.$duration-fast t.$ease-standard;
+  }
+
+  @media (min-width: 560px) {
+    display: inline-flex;
+  }
+}
+
+.clear {
+  @include m.card-base;
+  display: flex;
+  align-items: center;
+  gap: t.$space-4;
+  padding: t.$space-5;
+}
+
+.clearIcon {
+  width: 1.75rem;
+  height: 1.75rem;
+  flex-shrink: 0;
+  color: #16a34a;
+}
+
+.clearTitle {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  color: t.$color-ink;
+}
+
+.clearBody {
+  margin: 2px 0 0;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+}

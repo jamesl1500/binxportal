@@ -64,6 +64,8 @@ _TUTORIAL_POPUP_IDS = [
     "team-invitations",
 ]
 
+_PORTAL_TOUR_IDS = ["portal-welcome"]
+
 _BOARD_NOTES = [
     (60, 60, "Moodboard: coastal, warm neutrals, lots of air", "#fef3c7"),
     (320, 60, "Logo needs to work at 16px favicon size", "#e0f2fe"),
@@ -119,6 +121,12 @@ async def _run() -> None:
             await update_tutorial_progress(
                 db, staff_user, tour_completed=True, dismissed_popups=list(_TUTORIAL_POPUP_IDS)
             )
+        # The client portal's first-visit tour is a modal too. Only the tour —
+        # the getting-started checklist is an inline card, so it stays visible
+        # (lib/portal-insights.ts owns these ids).
+        await update_tutorial_progress(
+            db, client_contact_user, tour_completed=False, dismissed_popups=list(_PORTAL_TOUR_IDS)
+        )
 
         # --- Agency + team --------------------------------------------------
         agency = await create_agency_with_owner(db, owner=owner, name=AGENCY_NAME)

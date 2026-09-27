@@ -90,7 +90,7 @@ test.describe("authenticated pages @ phone width", () => {
     });
   }
 
-  const portalPages = ["/portal", "/portal/invoices", "/portal/messages"];
+  const portalPages = ["/portal", "/portal/projects", "/portal/invoices", "/portal/proposals", "/portal/messages"];
 
   for (const p of portalPages) {
     test(`portal ${p} has no horizontal scroll`, async ({ browser }) => {
@@ -106,7 +106,7 @@ test.describe("authenticated pages @ phone width", () => {
     });
   }
 
-  test("portal header collapses the tab nav behind a menu button", async ({ browser }) => {
+  test("portal sidebar collapses into a drawer behind a menu button", async ({ browser }) => {
     const context = await browser.newContext({
       storageState: path.join(AUTH_DIR, "client.json"),
       viewport: PHONE,
@@ -115,12 +115,18 @@ test.describe("authenticated pages @ phone width", () => {
     await page.goto("/portal");
     await expect(page.getByRole("button", { name: /open menu/i })).toBeVisible();
     await expect(
-      page.getByRole("navigation", { name: "Client portal" }).getByRole("link", { name: "Invoices" }),
+      page.getByRole("navigation", { name: "Client portal" }).getByRole("link", { name: /^Invoices/ }),
     ).toBeHidden();
 
     await page.getByRole("button", { name: /open menu/i }).click();
-    await expect(page.getByRole("link", { name: "Invoices" })).toBeVisible();
+    const nav = page.getByRole("navigation", { name: "Client portal" });
+    await expect(nav.getByRole("link", { name: /^Invoices/ })).toBeVisible();
     await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
+
+    // Following a link closes the drawer again.
+    await nav.getByRole("link", { name: /^Projects/ }).click();
+    await expect(page).toHaveURL(/\/portal\/projects$/);
+    await expect(page.getByRole("navigation", { name: "Client portal" })).toBeHidden();
     await context.close();
   });
 

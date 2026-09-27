@@ -4,11 +4,13 @@
 .trigger {
   @include m.button-base;
   gap: t.$space-2;
-  background: t.$color-accent;
+  // The client's brand color when set (see --portal-primary in
+  // (portal)/layout.tsx and PortalBrandVars), else the app's accent.
+  background: var(--portal-primary, #{t.$color-accent});
   color: t.$color-accent-foreground;
 
   &:hover:not(:disabled) {
-    background: color-mix(in srgb, t.$color-accent 85%, white);
+    background: color-mix(in srgb, var(--portal-primary, #{t.$color-accent}) 85%, white);
   }
 }
 
@@ -147,11 +149,13 @@
 
 .primary {
   @include m.button-base;
-  background: t.$color-accent;
+  // The client's brand color when set (see --portal-primary in
+  // (portal)/layout.tsx and PortalBrandVars), else the app's accent.
+  background: var(--portal-primary, #{t.$color-accent});
   color: t.$color-accent-foreground;
 
   &:hover:not(:disabled) {
-    background: color-mix(in srgb, t.$color-accent 85%, white);
+    background: color-mix(in srgb, var(--portal-primary, #{t.$color-accent}) 85%, white);
   }
 }
 

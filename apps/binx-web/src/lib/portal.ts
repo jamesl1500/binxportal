@@ -68,7 +68,7 @@ function rethrow(error: unknown, fallback: string): never {
  * `null` when they aren't a client contact at all — the routing layer uses
  * that to decide between `/portal` and `/dashboard`.
  */
-export async function getPortalContext(): Promise<PortalContext | null> {
+export const getPortalContext = cache(async (): Promise<PortalContext | null> => {
   let headers: { Authorization: string };
   try {
     headers = await authHeader();
@@ -84,9 +84,13 @@ export async function getPortalContext(): Promise<PortalContext | null> {
     }
     rethrow(error, "Unable to load your portal");
   }
-}
+});
 
-export async function getPortalProjects(): Promise<PortalProject[]> {
+// The list getters (projects, invoices, proposals, meetings, conversations)
+// are `cache()`-wrapped too: the (portal) layout reads them for the sidebar's
+// badges, and the page below it usually reads the same lists again in the
+// same render.
+export const getPortalProjects = cache(async (): Promise<PortalProject[]> => {
   const headers = await authHeader();
   try {
     const { data } = await api.get<PortalProject[]>("/portal/projects", { headers });
@@ -94,7 +98,7 @@ export async function getPortalProjects(): Promise<PortalProject[]> {
   } catch (error) {
     rethrow(error, "Unable to load projects");
   }
-}
+});
 
 /**
  * getPortalProject
@@ -124,7 +128,7 @@ export async function getPortalTaskBoard(projectId: string): Promise<PortalTaskL
   }
 }
 
-export async function getPortalInvoices(): Promise<PortalInvoice[]> {
+export const getPortalInvoices = cache(async (): Promise<PortalInvoice[]> => {
   const headers = await authHeader();
   try {
     const { data } = await api.get<PortalInvoice[]>("/portal/invoices", { headers });
@@ -132,7 +136,7 @@ export async function getPortalInvoices(): Promise<PortalInvoice[]> {
   } catch (error) {
     rethrow(error, "Unable to load invoices");
   }
-}
+});
 
 export async function getPortalInvoice(invoiceId: string): Promise<PortalInvoiceDetail> {
   const headers = await authHeader();
@@ -171,7 +175,7 @@ export async function startPortalInvoiceCheckout(invoiceId: string): Promise<str
  * currently on, via `GET /portal/meeting-settings` — trimmed to what the
  * booking flow needs (no admin-only fields).
  */
-export async function getPortalProposals(): Promise<PortalProposal[]> {
+export const getPortalProposals = cache(async (): Promise<PortalProposal[]> => {
   const headers = await authHeader();
   try {
     const { data } = await api.get<PortalProposal[]>("/portal/proposals", { headers });
@@ -179,7 +183,7 @@ export async function getPortalProposals(): Promise<PortalProposal[]> {
   } catch (error) {
     rethrow(error, "Unable to load proposals");
   }
-}
+});
 
 export async function getPortalProposal(proposalId: string): Promise<PortalProposalDetail> {
   const headers = await authHeader();
@@ -224,7 +228,7 @@ export async function declinePortalProposal(proposalId: string, reason: string |
   }
 }
 
-export async function getPortalMeetingSettings(): Promise<PortalMeetingSettings> {
+export const getPortalMeetingSettings = cache(async (): Promise<PortalMeetingSettings> => {
   const headers = await authHeader();
   try {
     const { data } = await api.get<PortalMeetingSettings>("/portal/meeting-settings", { headers });
@@ -232,7 +236,7 @@ export async function getPortalMeetingSettings(): Promise<PortalMeetingSettings>
   } catch (error) {
     rethrow(error, "Unable to load meeting availability");
   }
-}
+});
 
 /**
  * getPortalAvailableSlots
@@ -254,7 +258,7 @@ export async function getPortalAvailableSlots(fromDate: string, toDate?: string)
   }
 }
 
-export async function getPortalMeetings(): Promise<PortalMeeting[]> {
+export const getPortalMeetings = cache(async (): Promise<PortalMeeting[]> => {
   const headers = await authHeader();
   try {
     const { data } = await api.get<PortalMeeting[]>("/portal/meetings", { headers });
@@ -262,7 +266,7 @@ export async function getPortalMeetings(): Promise<PortalMeeting[]> {
   } catch (error) {
     rethrow(error, "Unable to load meetings");
   }
-}
+});
 
 /**
  * bookPortalMeeting
@@ -298,7 +302,7 @@ export async function cancelPortalMeeting(meetingId: string): Promise<PortalMeet
   }
 }
 
-export async function getPortalConversations(): Promise<Conversation[]> {
+export const getPortalConversations = cache(async (): Promise<Conversation[]> => {
   const headers = await authHeader();
   try {
     const { data } = await api.get<Conversation[]>("/portal/conversations", { headers });
@@ -306,7 +310,7 @@ export async function getPortalConversations(): Promise<Conversation[]> {
   } catch (error) {
     rethrow(error, "Unable to load messages");
   }
-}
+});
 
 export async function getPortalConversation(conversationId: string): Promise<ConversationDetail> {
   const headers = await authHeader();

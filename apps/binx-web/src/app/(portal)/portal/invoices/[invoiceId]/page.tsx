@@ -10,14 +10,16 @@
  * @author Binx.io
  */
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AuthApiError } from "@/lib/auth";
+import { formatMoneyCents, invoiceStatusLabel } from "@/lib/money";
 import { getPortalContext, getPortalInvoice } from "@/lib/portal";
+import { formatDay } from "@/lib/portal-insights";
 import CheckoutReturnNotice from "@/components/portal/CheckoutReturnNotice/CheckoutReturnNotice";
 import InvoiceView from "@/components/invoices/InvoiceView/InvoiceView";
 import PayInvoiceButton from "@/components/portal/PayInvoiceButton/PayInvoiceButton";
+import PortalPageHeader from "@/components/portal/PortalPageHeader/PortalPageHeader";
 
 import styles from "../../page.module.scss";
 
@@ -57,11 +59,16 @@ const PortalInvoiceDetailPage = async ({ params, searchParams }: PortalInvoicePa
     <div className={styles.page}>
       <CheckoutReturnNotice status={checkoutStatus} />
 
-      <header className={styles.header}>
-        <Link href="/portal/invoices" className={styles.link}>
-          ← All invoices
-        </Link>
-      </header>
+      <PortalPageHeader
+        back={{ href: "/portal/invoices", label: "All invoices" }}
+        eyebrow="Invoice"
+        title={invoice.number}
+        subtitle={
+          invoice.amount_due_cents > 0 && invoice.display_status !== "void"
+            ? `${formatMoneyCents(invoice.amount_due_cents, invoice.currency)} due ${formatDay(invoice.due_date)}`
+            : invoiceStatusLabel(invoice.display_status)
+        }
+      />
 
       {invoice.amount_due_cents > 0 && invoice.display_status !== "void" && (
         <PayInvoiceButton

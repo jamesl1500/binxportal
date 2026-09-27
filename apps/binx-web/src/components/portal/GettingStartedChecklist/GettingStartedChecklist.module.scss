@@ -1,0 +1,211 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+$brand: var(--portal-primary, #{t.$color-ink});
+
+.card {
+  @include m.card-base;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-4;
+  padding: t.$space-5;
+  background: linear-gradient(180deg, color-mix(in srgb, #{$brand} 5%, white), #{t.$color-surface} 7rem);
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: t.$space-3;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-ink;
+}
+
+.subtitle {
+  margin: 2px 0 0;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+}
+
+.hide {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  color: t.$color-ink-faint;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: t.$radius-md;
+  cursor: pointer;
+
+  svg {
+    width: 0.95rem;
+    height: 0.95rem;
+  }
+
+  &:hover {
+    color: t.$color-ink;
+    border-color: t.$color-border;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.meter {
+  height: 0.375rem;
+  overflow: hidden;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  border-radius: 999px;
+}
+
+.meterBar {
+  display: block;
+  height: 100%;
+  background: $brand;
+  border-radius: 999px;
+  transition: width 400ms t.$ease-standard;
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0 (-(t.$space-2));
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: t.$space-3;
+  width: 100%;
+  padding: t.$space-2;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  border-radius: t.$radius-md;
+  cursor: pointer;
+  transition: background-color t.$duration-fast t.$ease-standard;
+
+  &:hover {
+    background: t.$color-paper;
+
+    .chevron {
+      opacity: 1;
+      transform: translateX(2px);
+    }
+  }
+
+  &[data-done="true"] {
+    .stepTitle {
+      color: t.$color-ink-faint;
+      text-decoration: line-through;
+      text-decoration-color: t.$color-border-strong;
+    }
+
+    .stepBody {
+      display: none;
+    }
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  flex-shrink: 0;
+  color: #fff;
+  border: 1.5px solid t.$color-border-strong;
+  border-radius: 999px;
+  transition:
+    background-color t.$duration-base t.$ease-standard,
+    border-color t.$duration-base t.$ease-standard;
+
+  svg {
+    width: 0.8rem;
+    height: 0.8rem;
+    stroke-width: 3;
+  }
+
+  &[data-done="true"] {
+    background: $brand;
+    border-color: $brand;
+  }
+}
+
+.stepText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.stepTitle {
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  color: t.$color-ink;
+}
+
+.stepBody {
+  font-size: t.$font-size-xs;
+  line-height: 1.45;
+  color: t.$color-ink-soft;
+}
+
+.chevron {
+  width: 0.95rem;
+  height: 0.95rem;
+  flex-shrink: 0;
+  color: t.$color-ink-faint;
+  opacity: 0.5;
+  transition:
+    opacity t.$duration-fast t.$ease-standard,
+    transform t.$duration-fast t.$ease-standard;
+}
+
+.celebrate {
+  display: flex;
+  align-items: center;
+  gap: t.$space-3;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+
+  p {
+    margin: 0;
+  }
+}
+
+.celebrateIcon {
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+  color: $brand;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

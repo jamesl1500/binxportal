@@ -1,0 +1,188 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+// Brand color, falling back to the app's ink — see --portal-primary in
+// (portal)/layout.tsx.
+$brand: var(--portal-primary, #{t.$color-ink});
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgba(10, 10, 11, 0.45);
+  backdrop-filter: blur(2px);
+  transition: opacity t.$duration-base t.$ease-standard;
+
+  &[data-starting-style],
+  &[data-ending-style] {
+    opacity: 0;
+  }
+}
+
+.dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  width: min(30rem, calc(100vw - #{t.$space-8}));
+  overflow: hidden;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-lg;
+  box-shadow: 0 32px 64px rgba(10, 10, 11, 0.24);
+  outline: none;
+  transform: translate(-50%, -50%);
+  transition:
+    opacity t.$duration-base t.$ease-standard,
+    transform t.$duration-base t.$ease-standard;
+
+  &[data-starting-style],
+  &[data-ending-style] {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.97);
+  }
+}
+
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 9rem;
+  background:
+    radial-gradient(circle at 20% 20%, color-mix(in srgb, #{$brand} 28%, transparent), transparent 60%),
+    radial-gradient(circle at 85% 90%, color-mix(in srgb, #{$brand} 18%, transparent), transparent 55%),
+    color-mix(in srgb, #{$brand} 6%, #{t.$color-paper});
+  border-bottom: 1px solid t.$color-border;
+}
+
+.iconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  color: t.$color-accent-foreground;
+  background: $brand;
+  border-radius: 1rem;
+  box-shadow: 0 12px 24px color-mix(in srgb, #{$brand} 35%, transparent);
+}
+
+.icon {
+  width: 1.6rem;
+  height: 1.6rem;
+}
+
+.logo {
+  max-width: 9rem;
+  max-height: 4rem;
+  object-fit: contain;
+}
+
+.skip {
+  position: absolute;
+  top: t.$space-3;
+  right: t.$space-3;
+  padding: t.$space-1 t.$space-3;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid t.$color-border;
+  border-radius: 999px;
+  cursor: pointer;
+
+  &:hover {
+    color: t.$color-ink;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+  padding: t.$space-6 t.$space-8 t.$space-2;
+  min-height: 11rem;
+}
+
+.eyebrow {
+  @include m.mono-label;
+  font-size: 0.625rem;
+  color: t.$color-ink-faint;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-xl;
+  line-height: 1.2;
+  color: t.$color-ink;
+}
+
+.description {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  line-height: 1.65;
+  color: t.$color-ink-soft;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: t.$space-4;
+  padding: t.$space-5 t.$space-8 t.$space-6;
+}
+
+.dots {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  background: t.$color-border-strong;
+  border-radius: 999px;
+  transition:
+    width t.$duration-base t.$ease-standard,
+    background-color t.$duration-base t.$ease-standard;
+
+  &[data-active="true"] {
+    width: 1.1rem;
+    background: $brand;
+  }
+}
+
+.buttons {
+  display: flex;
+  gap: t.$space-2;
+}
+
+.back {
+  @include m.button-base;
+  padding: t.$space-2 t.$space-4;
+  color: t.$color-ink-soft;
+  background: none;
+  border-color: t.$color-border;
+
+  &:hover {
+    color: t.$color-ink;
+    border-color: t.$color-border-strong;
+  }
+}
+
+.next {
+  @include m.button-base;
+  padding: t.$space-2 t.$space-5;
+  color: t.$color-accent-foreground;
+  background: $brand;
+
+  &:hover {
+    background: color-mix(in srgb, #{$brand} 85%, white);
+  }
+}

@@ -9,13 +9,13 @@
  * @author Binx.io
  */
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AuthApiError } from "@/lib/auth";
 import { getPortalProposal } from "@/lib/portal";
 import PortalProposalActions from "@/components/proposals/PortalProposalActions/PortalProposalActions";
 import ProposalView from "@/components/proposals/ProposalView/ProposalView";
+import PortalPageHeader from "@/components/portal/PortalPageHeader/PortalPageHeader";
 
 import styles from "../page.module.scss";
 
@@ -50,11 +50,12 @@ const PortalProposalDetailPage = async ({ params }: PortalProposalPageProps) => 
 
   return (
     <div className={styles.page}>
-      <header className={styles.header}>
-        <Link href="/portal/proposals" className={styles.link}>
-          ← All proposals
-        </Link>
-      </header>
+      <PortalPageHeader
+        back={{ href: "/portal/proposals", label: "All proposals" }}
+        eyebrow="Proposal"
+        title={proposal.title}
+        subtitle={awaitingDecision ? "Read it through, then sign or decline at the bottom." : undefined}
+      />
 
       <ProposalView proposal={proposal} />
 

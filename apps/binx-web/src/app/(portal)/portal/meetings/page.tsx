@@ -14,9 +14,9 @@ import type { Metadata } from "next";
 import { getPortalMeetings, getPortalMeetingSettings } from "@/lib/portal";
 import BookMeetingDialog from "@/components/portal/BookMeetingDialog/BookMeetingDialog";
 import PortalMeetingsList from "@/components/portal/PortalMeetingsList/PortalMeetingsList";
+import PortalPageHeader from "@/components/portal/PortalPageHeader/PortalPageHeader";
 
 import sharedStyles from "../page.module.scss";
-import styles from "./page.module.scss";
 
 export const metadata: Metadata = { title: "Meetings" };
 
@@ -32,19 +32,22 @@ const PortalMeetingsPage = async () => {
 
   return (
     <div className={sharedStyles.page}>
-      <header className={styles.header}>
-        <div>
-          <span className={sharedStyles.eyebrow}>Meetings</span>
-          <h1 className={sharedStyles.title}>Meetings</h1>
-          <p className={sharedStyles.subtitle}>
+      <PortalPageHeader
+        eyebrow="Meetings"
+        title="Meetings"
+        subtitle={
+          <>
             {upcomingCount} upcoming meeting{upcomingCount === 1 ? "" : "s"}.
-          </p>
-        </div>
-        {settings.self_booking_enabled && <BookMeetingDialog />}
-      </header>
+            {settings.self_booking_enabled && " Pick an open slot any time — it's booked instantly."}
+          </>
+        }
+        actions={settings.self_booking_enabled ? <BookMeetingDialog /> : undefined}
+      />
 
       {meetings.length === 0 ? (
-        <p className={sharedStyles.empty}>No meetings yet.</p>
+        <p className={sharedStyles.empty}>
+          No meetings yet.{settings.self_booking_enabled && " Book your first call with the button above."}
+        </p>
       ) : (
         <PortalMeetingsList meetings={meetings} />
       )}

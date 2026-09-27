@@ -6,9 +6,50 @@ import { test, expect } from "./fixtures";
 import { DEMO } from "./fixtures";
 
 test.describe("client portal", () => {
-  test("portal home greets the client", async ({ clientPage }) => {
+  test("portal home greets the contact by name and lists what needs them", async ({ clientPage }) => {
     await clientPage.goto("/portal");
-    await expect(clientPage.getByRole("heading", { name: DEMO.clientName })).toBeVisible();
+    const firstName = DEMO.client.name.split(" ")[0];
+    await expect(clientPage.getByRole("heading", { level: 1, name: new RegExp(firstName) })).toBeVisible();
+    await expect(clientPage.getByText(`${DEMO.clientName} · ${DEMO.agency}`)).toBeVisible();
+    // The seeded invoice is issued and unpaid, so it's waiting on the client.
+    await expect(clientPage.getByRole("heading", { name: /needs your attention/i })).toBeVisible();
+    await expect(clientPage.getByRole("link", { name: /Invoice INV-0001/ })).toBeVisible();
+  });
+
+  test("the getting-started checklist ticks off a step when it's followed", async ({ clientPage }) => {
+    await clientPage.goto("/portal");
+    const checklist = clientPage.getByRole("region", { name: /getting started|you're all set up/i });
+    await expect(checklist).toBeVisible();
+    await checklist.getByRole("link", { name: /check in on your projects/i }).click();
+    await expect(clientPage).toHaveURL(/\/portal\/projects$/);
+
+    await clientPage.goto("/portal");
+    await expect(checklist.getByRole("link", { name: /check in on your projects\s*\(done\)/i })).toBeVisible();
+  });
+
+  test("the welcome tour reopens from the sidebar and can be skipped", async ({ clientPage }) => {
+    await clientPage.goto("/portal");
+    const menu = clientPage.getByRole("button", { name: "Open menu" });
+    if (await menu.isVisible()) await menu.click();
+    await clientPage.getByRole("button", { name: "Take the tour" }).click();
+
+    const firstName = DEMO.client.name.split(" ")[0];
+    await expect(clientPage.getByRole("heading", { name: `Welcome, ${firstName}` })).toBeVisible();
+    await clientPage.getByRole("button", { name: "Show me around" }).click();
+    await expect(clientPage.getByRole("heading", { name: "Everything that needs you, first" })).toBeVisible();
+    await clientPage.getByRole("button", { name: "Skip tour" }).click();
+    await expect(clientPage.getByRole("dialog")).toBeHidden();
+  });
+
+  test("the sidebar highlights the current section", async ({ clientPage }) => {
+    await clientPage.goto("/portal/invoices");
+    const menu = clientPage.getByRole("button", { name: "Open menu" });
+    if (await menu.isVisible()) await menu.click();
+    const nav = clientPage.getByRole("navigation", { name: "Client portal" });
+    await expect(nav.getByRole("link", { name: /^Invoices/ })).toHaveAttribute("aria-current", "page");
+    await nav.getByRole("link", { name: /^Projects/ }).click();
+    await expect(clientPage).toHaveURL(/\/portal\/projects$/);
+    await expect(clientPage.getByRole("heading", { name: /your projects/i })).toBeVisible();
   });
 
   test("projects list shows the seeded project with progress", async ({ clientPage }) => {

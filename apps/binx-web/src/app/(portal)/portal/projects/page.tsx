@@ -1,59 +1,43 @@
 /**
  * page.tsx - Portal Projects
  *
- * Every project the agency is running for this client, with a progress bar.
+ * Every project the agency is running for this client, as filterable cards
+ * with progress and due dates (see PortalProjectList).
  *
  * @module apps/binx-web/src/app/(portal)/portal/projects/page.tsx
  * @author Binx.io
  */
 import type { Metadata } from "next";
-import Link from "next/link";
 
-import { getPortalProjects } from "@/lib/portal";
-import ProjectProgress from "@/components/portal/ProjectProgress/ProjectProgress";
+import { getPortalContext, getPortalProjects } from "@/lib/portal";
+import PortalPageHeader from "@/components/portal/PortalPageHeader/PortalPageHeader";
+import PortalProjectList from "@/components/portal/PortalProjectList/PortalProjectList";
 
 import styles from "../page.module.scss";
 
 export const metadata: Metadata = { title: "Projects" };
 
-const STATUS_LABELS: Record<string, string> = {
-  planning: "Planning",
-  active: "Active",
-  on_hold: "On hold",
-  completed: "Completed",
-  archived: "Archived",
-};
-
 const PortalProjectsPage = async () => {
-  const projects = await getPortalProjects();
+  const [context, projects] = await Promise.all([getPortalContext(), getPortalProjects()]);
+  const active = projects.filter((project) => project.status === "active").length;
+  const agencyName = context?.agency.name ?? "your agency";
 
   return (
     <div className={styles.page}>
-      <header className={styles.header}>
-        <span className={styles.eyebrow}>Projects</span>
-        <h1 className={styles.title}>Your projects</h1>
-        <p className={styles.subtitle}>{projects.length} in total.</p>
-      </header>
+      <PortalPageHeader
+        eyebrow="Projects"
+        title="Your projects"
+        subtitle={
+          projects.length === 0
+            ? `Projects ${agencyName} runs for you will show up here.`
+            : `${active} in progress · ${projects.length} in total. Open one for its timeline, task board and shared canvas.`
+        }
+      />
 
       {projects.length === 0 ? (
         <p className={styles.empty}>No projects yet.</p>
       ) : (
-        <ul className={styles.projectList}>
-          {projects.map((project) => (
-            <li key={project.id}>
-              <Link href={`/portal/projects/${project.id}`} className={styles.projectRow}>
-                <span className={styles.projectName}>
-                  {project.name}
-                  <span className={styles.invoiceStatus} data-status={project.status}>
-                    {" "}
-                    · {STATUS_LABELS[project.status] ?? project.status}
-                  </span>
-                </span>
-                <ProjectProgress progress={project.progress} compact />
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <PortalProjectList projects={projects} />
       )}
     </div>
   );

@@ -1,0 +1,60 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-self: flex-start;
+  gap: 2px;
+  padding: 3px;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: 999px;
+}
+
+.option {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-2;
+  padding: 0.35rem 0.85rem;
+  font: inherit;
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  color: t.$color-ink-soft;
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    background-color t.$duration-fast t.$ease-standard,
+    color t.$duration-fast t.$ease-standard;
+
+  &:hover {
+    color: t.$color-ink;
+  }
+
+  &[aria-pressed="true"] {
+    color: t.$color-accent-foreground;
+    background: var(--portal-primary, #{t.$color-ink});
+
+    .count {
+      color: inherit;
+      background: rgba(255, 255, 255, 0.2);
+    }
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.count {
+  min-width: 1.1rem;
+  padding: 0 0.3rem;
+  font-size: 0.625rem;
+  line-height: 1.5;
+  text-align: center;
+  color: t.$color-ink-soft;
+  background: t.$color-paper;
+  border-radius: 999px;
+}

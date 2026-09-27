@@ -1,46 +1,23 @@
 @use "../../../styles/tokens" as t;
 @use "../../../styles/mixins" as m;
 
+// Shared by the portal's inner pages. Page headers are PortalPageHeader;
+// the home page has its own home.module.scss.
+
+// Brand color, falling back to the app's own ink when no client/agency
+// brand color is set — see --portal-primary in (portal)/layout.tsx.
+$brand: var(--portal-primary, #{t.$color-ink});
+
 .page {
   display: flex;
   flex-direction: column;
-  gap: t.$space-8;
-}
-
-.header {
-  display: flex;
-  flex-direction: column;
-  gap: t.$space-1;
-}
-
-.eyebrow {
-  @include m.mono-label;
-  color: t.$color-ink-soft;
-}
-
-.title {
-  margin: 0;
-  font-family: var(--font-heading);
-  font-size: t.$font-size-2xl;
-  color: t.$color-ink;
-}
-
-.subtitle {
-  margin: 0;
-  font-size: t.$font-size-sm;
-  color: t.$color-ink-soft;
+  gap: t.$space-6;
 }
 
 .section {
   display: flex;
   flex-direction: column;
   gap: t.$space-4;
-}
-
-.sectionHead {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
 }
 
 .sectionTitle {
@@ -50,54 +27,208 @@
   color: t.$color-ink;
 }
 
-.link {
-  font-size: t.$font-size-xs;
-  font-weight: 600;
-  color: t.$color-ink-soft;
-  text-decoration: none;
-
-  &:hover {
-    // Falls back to the app's own ink color when no client/agency brand
-    // color is set — see --portal-primary in (portal)/layout.tsx.
-    color: var(--portal-primary, #{t.$color-ink});
-  }
-}
-
 .empty {
   margin: 0;
-  padding: t.$space-6;
+  padding: t.$space-8 t.$space-6;
   text-align: center;
   font-size: t.$font-size-sm;
-  color: t.$color-ink-faint;
+  color: t.$color-ink-soft;
+  background: t.$color-surface;
+  border: 1px dashed t.$color-border-strong;
+  border-radius: t.$radius-lg;
+}
+
+.card {
+  @include m.card-base;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-4;
+  min-width: 0;
+  padding: t.$space-5 t.$space-6;
+}
+
+// ---- Project header meta ----
+
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: t.$space-2 t.$space-4;
+}
+
+.pill {
+  padding: 0.15rem 0.6rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: t.$color-ink-soft;
   background: t.$color-surface;
   border: 1px solid t.$color-border;
-  border-radius: t.$radius-md;
+  border-radius: 999px;
+
+  &[data-status="active"] {
+    color: $brand;
+    background: color-mix(in srgb, #{$brand} 8%, white);
+    border-color: color-mix(in srgb, #{$brand} 20%, transparent);
+  }
+
+  &[data-status="completed"] {
+    color: #15803d;
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+  }
+
+  &[data-status="on_hold"] {
+    color: #b45309;
+    background: #fffbeb;
+    border-color: #fde68a;
+  }
 }
 
-.projectList,
-.invoiceList {
-  display: flex;
-  flex-direction: column;
-  gap: t.$space-2;
+.metaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-1;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+
+  svg {
+    width: 0.85rem;
+    height: 0.85rem;
+  }
+
+  &[data-tone="soon"] {
+    color: #b45309;
+  }
+
+  &[data-tone="overdue"] {
+    font-weight: 600;
+    color: t.$color-danger;
+  }
+}
+
+// ---- Project overview ----
+
+.overviewGrid {
+  display: grid;
+  gap: t.$space-4;
+
+  @media (min-width: 900px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.timeline {
+  position: relative;
+  height: 2.25rem;
+  margin-top: t.$space-1;
+}
+
+.timelineTrack,
+.timelineDone {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 0.5rem;
+  border-radius: 999px;
+}
+
+.timelineTrack {
+  right: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    #{t.$color-paper} 0 6px,
+    #{t.$color-border} 6px 7px
+  );
+  border: 1px solid t.$color-border;
+}
+
+.timelineDone {
+  background: color-mix(in srgb, #{$brand} 35%, white);
+}
+
+.timelineToday {
+  position: absolute;
+  top: 0;
+  padding: 0 0.35rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: t.$color-accent-foreground;
+  background: $brand;
+  border-radius: 3px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    width: 2px;
+    height: 0.9rem;
+    background: $brand;
+    transform: translateX(-50%);
+  }
+}
+
+.dates {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: t.$space-3;
   margin: 0;
-  padding: 0;
-  list-style: none;
+
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  dt {
+    @include m.mono-label;
+    font-size: 0.5625rem;
+    color: t.$color-ink-faint;
+  }
+
+  dd {
+    margin: 0;
+    font-size: t.$font-size-sm;
+    font-weight: 600;
+    color: t.$color-ink;
+  }
 }
 
-.projectRow {
+.shortcuts {
+  display: grid;
+  gap: t.$space-3;
+
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  @media (min-width: 900px) {
+    grid-column: 1 / -1;
+  }
+}
+
+.shortcut {
+  @include m.card-base;
   display: flex;
   flex-direction: column;
-  gap: t.$space-2;
+  gap: t.$space-1;
   padding: t.$space-4 t.$space-5;
   text-decoration: none;
-  background: t.$color-surface;
-  border: 1px solid t.$color-border;
-  border-radius: t.$radius-md;
+  transition:
+    border-color t.$duration-fast t.$ease-standard,
+    transform t.$duration-fast t.$ease-standard;
 
   &:hover {
-    // Falls back to the app's own default when no client/agency accent
-    // color is set — see --portal-accent in (portal)/layout.tsx.
     border-color: var(--portal-accent, #{t.$color-border-strong});
+    transform: translateY(-1px);
+
+    .shortcutTitle svg {
+      transform: translateX(2px);
+    }
   }
 
   &:focus-visible {
@@ -105,50 +236,40 @@
   }
 }
 
-.projectName {
+.shortcutIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  margin-bottom: t.$space-2;
+  color: $brand;
+  background: color-mix(in srgb, #{$brand} 8%, white);
+  border-radius: t.$radius-lg;
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+.shortcutTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-1;
   font-size: t.$font-size-sm;
   font-weight: 600;
   color: t.$color-ink;
-}
 
-.invoiceRow {
-  display: flex;
-  align-items: center;
-  gap: t.$space-4;
-  padding: t.$space-3 t.$space-5;
-  font-size: t.$font-size-sm;
-  color: t.$color-ink;
-  text-decoration: none;
-  background: t.$color-surface;
-  border: 1px solid t.$color-border;
-  border-radius: t.$radius-md;
-
-  &:hover {
-    border-color: var(--portal-accent, #{t.$color-border-strong});
-  }
-
-  &:focus-visible {
-    @include m.focus-ring;
+  svg {
+    width: 0.85rem;
+    height: 0.85rem;
+    transition: transform t.$duration-fast t.$ease-standard;
   }
 }
 
-.invoiceStatus {
-  @include m.mono-label;
-  font-size: 0.5625rem;
-  color: t.$color-ink-soft;
-
-  &[data-status="overdue"] {
-    color: t.$color-danger;
-  }
-
-  &[data-status="paid"] {
-    color: t.$color-ink-faint;
-  }
-}
-
-.invoiceAmount {
-  margin-left: auto;
+.shortcutBody {
   font-size: t.$font-size-xs;
+  line-height: 1.5;
   color: t.$color-ink-soft;
-  white-space: nowrap;
 }

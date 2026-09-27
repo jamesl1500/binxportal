@@ -1,62 +1,79 @@
 /**
  * page.tsx - Portal Invoices
  *
- * The client's invoices (drafts are never shown — binx-api filters them).
+ * The client's invoices (drafts are never shown — binx-api filters them):
+ * what's outstanding, what's overdue and what's been paid to date, then
+ * the filterable list (see PortalInvoiceList).
  *
  * @module apps/binx-web/src/app/(portal)/portal/invoices/page.tsx
  * @author Binx.io
  */
 import type { Metadata } from "next";
-import Link from "next/link";
+import { AlertTriangle, CheckCircle2, Wallet } from "lucide-react";
 
-import { formatMoneyCents, invoiceStatusLabel } from "@/lib/money";
+import { formatMoneyCents } from "@/lib/money";
 import { getPortalInvoices } from "@/lib/portal";
+import { isUnpaid } from "@/lib/portal-insights";
+import PortalInvoiceList from "@/components/portal/PortalInvoiceList/PortalInvoiceList";
+import PortalPageHeader from "@/components/portal/PortalPageHeader/PortalPageHeader";
+import PortalStatTiles, { type PortalStat } from "@/components/portal/PortalStatTiles/PortalStatTiles";
 
 import styles from "../page.module.scss";
 
 export const metadata: Metadata = { title: "Invoices" };
 
-function formatDate(iso: string): string {
-  return new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
-}
-
 const PortalInvoicesPage = async () => {
   const invoices = await getPortalInvoices();
-  const outstanding = invoices
-    .filter((invoice) => invoice.display_status !== "paid" && invoice.display_status !== "void")
-    .reduce((total, invoice) => total + invoice.amount_due_cents, 0);
   const currency = invoices[0]?.currency ?? "USD";
+  const unpaid = invoices.filter(isUnpaid);
+  const overdue = unpaid.filter((invoice) => invoice.display_status === "overdue");
+  const sum = (list: typeof invoices, pick: (invoice: (typeof invoices)[number]) => number) =>
+    list.reduce((total, invoice) => total + pick(invoice), 0);
+
+  const outstanding = sum(unpaid, (invoice) => invoice.amount_due_cents);
+  const stats: PortalStat[] = [
+    {
+      label: "Outstanding",
+      value: formatMoneyCents(outstanding, currency),
+      hint: `${unpaid.length} unpaid`,
+      icon: Wallet,
+      tone: outstanding > 0 ? "warn" : "positive",
+    },
+    {
+      label: "Overdue",
+      value: formatMoneyCents(sum(overdue, (invoice) => invoice.amount_due_cents), currency),
+      hint: overdue.length > 0 ? `${overdue.length} past due` : "Nothing late",
+      icon: AlertTriangle,
+      tone: overdue.length > 0 ? "warn" : "default",
+    },
+    {
+      label: "Paid to date",
+      value: formatMoneyCents(sum(invoices, (invoice) => invoice.amount_paid_cents), currency),
+      hint: `Across ${invoices.length} invoice${invoices.length === 1 ? "" : "s"}`,
+      icon: CheckCircle2,
+      tone: "positive",
+    },
+  ];
 
   return (
     <div className={styles.page}>
-      <header className={styles.header}>
-        <span className={styles.eyebrow}>Invoices</span>
-        <h1 className={styles.title}>Invoices</h1>
-        <p className={styles.subtitle}>
-          {formatMoneyCents(outstanding, currency)} outstanding across {invoices.length}{" "}
-          {invoices.length === 1 ? "invoice" : "invoices"}.
-        </p>
-      </header>
+      <PortalPageHeader
+        eyebrow="Billing"
+        title="Invoices"
+        subtitle={
+          unpaid.length > 0
+            ? `${formatMoneyCents(outstanding, currency)} outstanding across ${unpaid.length} ${unpaid.length === 1 ? "invoice" : "invoices"}. Open one to pay securely by card.`
+            : "You're all paid up — thank you!"
+        }
+      />
 
       {invoices.length === 0 ? (
         <p className={styles.empty}>No invoices yet.</p>
       ) : (
-        <ul className={styles.invoiceList}>
-          {invoices.map((invoice) => (
-            <li key={invoice.id}>
-              <Link href={`/portal/invoices/${invoice.id}`} className={styles.invoiceRow}>
-                <span>{invoice.number}</span>
-                <span className={styles.invoiceStatus} data-status={invoice.display_status}>
-                  {invoiceStatusLabel(invoice.display_status)}
-                </span>
-                <span className={styles.invoiceAmount}>
-                  due {formatDate(invoice.due_date)} ·{" "}
-                  {formatMoneyCents(invoice.amount_due_cents, invoice.currency)}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <>
+          <PortalStatTiles stats={stats} />
+          <PortalInvoiceList invoices={invoices} />
+        </>
       )}
     </div>
   );

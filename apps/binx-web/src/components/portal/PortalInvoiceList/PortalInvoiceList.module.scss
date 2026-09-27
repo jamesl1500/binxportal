@@ -1,38 +1,12 @@
-@use "../../../../styles/tokens" as t;
-@use "../../../../styles/mixins" as m;
-
-// Also the proposal detail page's wrapper (see [proposalId]/page.tsx).
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
 
 $brand: var(--portal-primary, #{t.$color-ink});
 
-.page {
+.wrap {
   display: flex;
   flex-direction: column;
-  gap: t.$space-6;
-}
-
-.section {
-  display: flex;
-  flex-direction: column;
-  gap: t.$space-3;
-}
-
-.sectionTitle {
-  margin: 0;
-  font-family: var(--font-heading);
-  font-size: t.$font-size-lg;
-  color: t.$color-ink;
-}
-
-.empty {
-  margin: 0;
-  padding: t.$space-8 t.$space-6;
-  text-align: center;
-  font-size: t.$font-size-sm;
-  color: t.$color-ink-soft;
-  background: t.$color-surface;
-  border: 1px dashed t.$color-border-strong;
-  border-radius: t.$radius-lg;
+  gap: t.$space-5;
 }
 
 .list {
@@ -46,11 +20,6 @@ $brand: var(--portal-primary, #{t.$color-ink});
 
   li + li {
     border-top: 1px solid t.$color-border;
-  }
-
-  &[data-highlight="true"] {
-    border-color: color-mix(in srgb, #{$brand} 35%, transparent);
-    box-shadow: 0 0 0 3px color-mix(in srgb, #{$brand} 8%, transparent);
   }
 }
 
@@ -70,8 +39,8 @@ $brand: var(--portal-primary, #{t.$color-ink});
     background: t.$color-paper;
 
     .chevron {
-      color: $brand;
       transform: translateX(2px);
+      color: $brand;
     }
   }
 
@@ -80,7 +49,7 @@ $brand: var(--portal-primary, #{t.$color-ink});
   }
 
   @media (min-width: 700px) {
-    grid-template-columns: auto minmax(0, 1fr) 7rem auto auto;
+    grid-template-columns: auto minmax(0, 1fr) 8rem auto auto;
     grid-template-areas: "icon main status amount chevron";
   }
 }
@@ -109,13 +78,10 @@ $brand: var(--portal-primary, #{t.$color-ink});
   min-width: 0;
 }
 
-.title {
-  overflow: hidden;
+.number {
   font-size: t.$font-size-sm;
   font-weight: 600;
   color: t.$color-ink;
-  white-space: nowrap;
-  text-overflow: ellipsis;
 }
 
 .meta {
@@ -137,34 +103,55 @@ $brand: var(--portal-primary, #{t.$color-ink});
   border: 1px solid t.$color-border;
   border-radius: 999px;
 
+  &[data-status="overdue"] {
+    color: t.$color-danger;
+    background: #fef2f2;
+    border-color: #fecaca;
+  }
+
   &[data-status="sent"],
-  &[data-status="viewed"] {
+  &[data-status="partial"] {
     color: #b45309;
     background: #fffbeb;
     border-color: #fde68a;
   }
 
-  &[data-status="signed"] {
+  &[data-status="paid"] {
     color: #15803d;
     background: #f0fdf4;
     border-color: #bbf7d0;
   }
+}
 
-  &[data-status="declined"],
-  &[data-status="expired"] {
-    color: t.$color-danger;
-    background: #fef2f2;
-    border-color: #fecaca;
-  }
+.amountCol {
+  grid-area: amount;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
 }
 
 .amount {
-  grid-area: amount;
   font-size: t.$font-size-sm;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: t.$color-ink;
   white-space: nowrap;
+}
+
+.due {
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+  white-space: nowrap;
+
+  &[data-tone="soon"] {
+    color: #b45309;
+  }
+
+  &[data-tone="overdue"] {
+    font-weight: 600;
+    color: t.$color-danger;
+  }
 }
 
 .chevron {
@@ -180,4 +167,15 @@ $brand: var(--portal-primary, #{t.$color-ink});
   @media (min-width: 700px) {
     display: block;
   }
+}
+
+.empty {
+  margin: 0;
+  padding: t.$space-8 t.$space-6;
+  font-size: t.$font-size-sm;
+  text-align: center;
+  color: t.$color-ink-soft;
+  background: t.$color-surface;
+  border: 1px dashed t.$color-border-strong;
+  border-radius: t.$radius-lg;
 }

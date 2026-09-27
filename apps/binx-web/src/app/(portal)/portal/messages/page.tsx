@@ -13,8 +13,8 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { getPortalConversations } from "@/lib/portal";
 import PortalMessages from "@/components/portal/PortalMessages/PortalMessages";
+import PortalPageHeader from "@/components/portal/PortalPageHeader/PortalPageHeader";
 
-import sharedStyles from "../page.module.scss";
 import styles from "./page.module.scss";
 
 export const metadata: Metadata = { title: "Messages" };
@@ -27,11 +27,11 @@ const PortalMessagesPage = async () => {
 
   return (
     <div className={styles.page}>
-      <header className={sharedStyles.header}>
-        <span className={sharedStyles.eyebrow}>Messages</span>
-        <h1 className={sharedStyles.title}>Messages</h1>
-        <p className={sharedStyles.subtitle}>Talk to your account team.</p>
-      </header>
+      <PortalPageHeader
+        eyebrow="Messages"
+        title="Messages"
+        subtitle="Questions, feedback and files — straight to the people doing the work."
+      />
       <PortalMessages conversations={conversations} currentUserId={user.id} />
     </div>
   );
