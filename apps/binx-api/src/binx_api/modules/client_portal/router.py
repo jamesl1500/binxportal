@@ -35,6 +35,14 @@ from binx_api.modules.client_portal.schemas import (
 from binx_api.modules.invoicing import service as invoicing_service
 from binx_api.modules.invoicing.router import _detail_read, _invoice_read
 from binx_api.modules.invoicing.schemas import CheckoutSessionRead, InvoiceDetailRead, InvoiceRead
+from binx_api.modules.kickoffs import service as kickoffs_service
+from binx_api.modules.kickoffs.models import STATUS_DRAFT as KICKOFF_STATUS_DRAFT
+from binx_api.modules.kickoffs.router import _detail_read as _kickoff_detail_read
+from binx_api.modules.kickoffs.schemas import (
+    KickoffAnswersSubmit,
+    KickoffDetailRead,
+    KickoffFileUploadRead,
+)
 from binx_api.modules.meetings import service as meetings_service
 from binx_api.modules.meetings.models import CREATED_BY_CLIENT
 from binx_api.modules.meetings.router import _meeting_read
@@ -384,6 +392,74 @@ async def decide_board_item_approval(
         db, item, project, decider=current_user, decision=data.status, note=data.note
     )
     return BoardItemRead(**await boards_service.item_read(db, item, current_user.id))
+
+
+# ---- Kickoff ---------------------------------------------------------
+# One per project; only visible once staff sends it (a draft is staff-only
+# same as a draft Proposal). Answering is one-shot — see
+# kickoffs/service.py::submit_answers, which requires status "sent".
+
+
+async def _portal_kickoff_or_404(db: DbSession, client_id: uuid.UUID, project_id: uuid.UUID):
+    project = await service.get_portal_project_or_404(db, client_id, project_id)
+    kickoff = await kickoffs_service.get_kickoff_by_project_or_404(db, project.id)
+    if kickoff.status == KICKOFF_STATUS_DRAFT:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No kickoff has been created for this project yet")
+    return project, kickoff
+
+
+@router.get("/projects/{project_id}/kickoff", response_model=KickoffDetailRead)
+async def read_portal_kickoff(db: DbSession, membership: PortalContext, project_id: uuid.UUID) -> KickoffDetailRead:
+    _agency, client, _contact = membership
+    _project, kickoff = await _portal_kickoff_or_404(db, client.id, project_id)
+    return await _kickoff_detail_read(db, kickoff)
+
+
+@router.post(
+    "/projects/{project_id}/kickoff/files", response_model=KickoffFileUploadRead, status_code=status.HTTP_201_CREATED
+)
+async def upload_portal_kickoff_file(
+    db: DbSession,
+    current_user: CurrentUser,
+    membership: PortalContext,
+    project_id: uuid.UUID,
+    file: Annotated[UploadFile, File()],
+) -> KickoffFileUploadRead:
+    """Uploads one file answer ahead of the final submit — the returned
+    file_id goes on that question's KickoffAnswerInput.file_id. Reuses
+    projects_service.save_project_file wholesale (same size limit, same
+    storage layout), so the file also shows up in the project's own Files
+    tab for staff, same as a task attachment does."""
+    _agency, client, _contact = membership
+    project, _kickoff = await _portal_kickoff_or_404(db, client.id, project_id)
+    stored = await projects_service.save_project_file(
+        db,
+        project,
+        uploaded_by=current_user,
+        file_name=file.filename or "upload",
+        content=await file.read(),
+        mime_type=file.content_type or "application/octet-stream",
+    )
+    return KickoffFileUploadRead(file_id=stored.id, file_name=stored.file_name)
+
+
+@router.post("/projects/{project_id}/kickoff/answers", response_model=KickoffDetailRead)
+async def submit_portal_kickoff_answers(
+    db: DbSession,
+    current_user: CurrentUser,
+    membership: PortalContext,
+    project_id: uuid.UUID,
+    data: KickoffAnswersSubmit,
+) -> KickoffDetailRead:
+    _agency, client, _contact = membership
+    _project, kickoff = await _portal_kickoff_or_404(db, client.id, project_id)
+    kickoff = await kickoffs_service.submit_answers(
+        db,
+        kickoff,
+        answered_by=current_user,
+        answers=[(a.question_id, a.text_value, a.selected_options, a.file_id) for a in data.answers],
+    )
+    return await _kickoff_detail_read(db, kickoff)
 
 
 # ---- Invoices ------------------------------------------------------

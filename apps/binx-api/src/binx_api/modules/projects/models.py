@@ -10,6 +10,11 @@ from binx_api.core.database import Base
 STATUS_PLANNING = "planning"
 STATUS_ACTIVE = "active"
 STATUS_ON_HOLD = "on_hold"
+# Set automatically when a kickoff is sent (kickoffs/service.py::send_kickoff)
+# and cleared back to STATUS_ACTIVE once the client submits it
+# (kickoffs/service.py::submit_answers) — a normal status otherwise, staff
+# can also set/clear it by hand like any other.
+STATUS_WAITING_ON_CLIENT = "waiting_on_client"
 STATUS_COMPLETED = "completed"
 STATUS_ARCHIVED = "archived"
 
@@ -17,6 +22,7 @@ project_statuses: list[str] = [
     STATUS_PLANNING,
     STATUS_ACTIVE,
     STATUS_ON_HOLD,
+    STATUS_WAITING_ON_CLIENT,
     STATUS_COMPLETED,
     STATUS_ARCHIVED,
 ]

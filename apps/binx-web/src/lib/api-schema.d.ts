@@ -943,6 +943,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agencies/{agency_id}/kickoff-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Templates */
+        get: operations["list_templates_agencies__agency_id__kickoff_templates_get"];
+        put?: never;
+        /** Create Template */
+        post: operations["create_template_agencies__agency_id__kickoff_templates_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/kickoff-templates/{template_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Template */
+        get: operations["read_template_agencies__agency_id__kickoff_templates__template_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Template */
+        delete: operations["delete_template_agencies__agency_id__kickoff_templates__template_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Template */
+        patch: operations["update_template_agencies__agency_id__kickoff_templates__template_id__patch"];
+        trace?: never;
+    };
     "/agencies/{agency_id}/leads": {
         parameters: {
             query?: never;
@@ -1791,6 +1828,77 @@ export interface paths {
         get: operations["download_project_file_agencies__agency_id__projects__project_id__files__file_id__download_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/projects/{project_id}/kickoff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Kickoff */
+        get: operations["read_kickoff_agencies__agency_id__projects__project_id__kickoff_get"];
+        put?: never;
+        /** Create Kickoff */
+        post: operations["create_kickoff_agencies__agency_id__projects__project_id__kickoff_post"];
+        /** Delete Kickoff */
+        delete: operations["delete_kickoff_agencies__agency_id__projects__project_id__kickoff_delete"];
+        options?: never;
+        head?: never;
+        /** Update Kickoff */
+        patch: operations["update_kickoff_agencies__agency_id__projects__project_id__kickoff_patch"];
+        trace?: never;
+    };
+    "/agencies/{agency_id}/projects/{project_id}/kickoff/convert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Convert Kickoff */
+        post: operations["convert_kickoff_agencies__agency_id__projects__project_id__kickoff_convert_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/projects/{project_id}/kickoff/nudge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Nudge Kickoff */
+        post: operations["nudge_kickoff_agencies__agency_id__projects__project_id__kickoff_nudge_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/projects/{project_id}/kickoff/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send Kickoff */
+        post: operations["send_kickoff_agencies__agency_id__projects__project_id__kickoff_send_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3158,6 +3266,64 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/portal/projects/{project_id}/kickoff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Portal Kickoff */
+        get: operations["read_portal_kickoff_portal_projects__project_id__kickoff_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/portal/projects/{project_id}/kickoff/answers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit Portal Kickoff Answers */
+        post: operations["submit_portal_kickoff_answers_portal_projects__project_id__kickoff_answers_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/portal/projects/{project_id}/kickoff/files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload Portal Kickoff File
+         * @description Uploads one file answer ahead of the final submit — the returned
+         *     file_id goes on that question's KickoffAnswerInput.file_id. Reuses
+         *     projects_service.save_project_file wholesale (same size limit, same
+         *     storage layout), so the file also shows up in the project's own Files
+         *     tab for staff, same as a task attachment does.
+         */
+        post: operations["upload_portal_kickoff_file_portal_projects__project_id__kickoff_files_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/portal/proposals": {
         parameters: {
             query?: never;
@@ -4416,6 +4582,11 @@ export interface components {
             /** File */
             file: string;
         };
+        /** Body_upload_portal_kickoff_file_portal_projects__project_id__kickoff_files_post */
+        Body_upload_portal_kickoff_file_portal_projects__project_id__kickoff_files_post: {
+            /** File */
+            file: string;
+        };
         /** Body_upload_project_file_agencies__agency_id__projects__project_id__files_post */
         Body_upload_project_file_agencies__agency_id__projects__project_id__files_post: {
             /** File */
@@ -5075,6 +5246,246 @@ export interface components {
              * @default false
              */
             send_notice: boolean;
+        };
+        /** KickoffAnswerInput */
+        KickoffAnswerInput: {
+            /** File Id */
+            file_id?: string | null;
+            /**
+             * Question Id
+             * Format: uuid
+             */
+            question_id: string;
+            /** Selected Options */
+            selected_options?: string[];
+            /** Text Value */
+            text_value?: string | null;
+        };
+        /** KickoffAnswerRead */
+        KickoffAnswerRead: {
+            /**
+             * Answered At
+             * Format: date-time
+             */
+            answered_at: string;
+            /** File Id */
+            file_id: string | null;
+            /** File Name */
+            file_name: string | null;
+            /**
+             * Question Id
+             * Format: uuid
+             */
+            question_id: string;
+            /** Selected Options */
+            selected_options: string[];
+            /** Text Value */
+            text_value: string | null;
+        };
+        /** KickoffAnswersSubmit */
+        KickoffAnswersSubmit: {
+            /** Answers */
+            answers?: components["schemas"]["KickoffAnswerInput"][];
+        };
+        /** KickoffConvertRequest */
+        KickoffConvertRequest: {
+            /** List Id */
+            list_id?: string | null;
+        };
+        /** KickoffConvertResult */
+        KickoffConvertResult: {
+            /** Tasks Created */
+            tasks_created: number;
+        };
+        /** KickoffCreate */
+        KickoffCreate: {
+            /** Intro Message */
+            intro_message?: string | null;
+            /** Questions */
+            questions?: components["schemas"]["KickoffQuestionInput"][];
+            /** Template Id */
+            template_id?: string | null;
+            /**
+             * Title
+             * @default Project kickoff
+             */
+            title: string;
+        };
+        /** KickoffDetailRead */
+        KickoffDetailRead: {
+            /**
+             * Agency Id
+             * Format: uuid
+             */
+            agency_id: string;
+            /** Answers */
+            answers: components["schemas"]["KickoffAnswerRead"][];
+            /**
+             * Client Id
+             * Format: uuid
+             */
+            client_id: string;
+            /** Completed At */
+            completed_at: string | null;
+            /** Converted At */
+            converted_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Intro Message */
+            intro_message: string | null;
+            /** Last Nudged At */
+            last_nudged_at: string | null;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Questions */
+            questions: components["schemas"]["KickoffQuestionRead"][];
+            /** Sent At */
+            sent_at: string | null;
+            /** Status */
+            status: string;
+            /** Title */
+            title: string;
+        };
+        /** KickoffFileUploadRead */
+        KickoffFileUploadRead: {
+            /**
+             * File Id
+             * Format: uuid
+             */
+            file_id: string;
+            /** File Name */
+            file_name: string;
+        };
+        /** KickoffQuestionInput */
+        KickoffQuestionInput: {
+            /** Label */
+            label: string;
+            /** Options */
+            options?: string[];
+            /**
+             * Required
+             * @default true
+             */
+            required: boolean;
+            /**
+             * Type
+             * @default text
+             */
+            type: string;
+        };
+        /** KickoffQuestionRead */
+        KickoffQuestionRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Label */
+            label: string;
+            /** Options */
+            options: string[];
+            /** Position */
+            position: number;
+            /** Required */
+            required: boolean;
+            /** Type */
+            type: string;
+        };
+        /** KickoffTemplateCreate */
+        KickoffTemplateCreate: {
+            /** Description */
+            description?: string | null;
+            /** Name */
+            name: string;
+            /** Questions */
+            questions?: components["schemas"]["KickoffQuestionInput"][];
+        };
+        /** KickoffTemplateDetailRead */
+        KickoffTemplateDetailRead: {
+            /**
+             * Agency Id
+             * Format: uuid
+             */
+            agency_id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Description */
+            description: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Question Count */
+            question_count: number;
+            /** Questions */
+            questions: components["schemas"]["KickoffQuestionRead"][];
+        };
+        /** KickoffTemplateRead */
+        KickoffTemplateRead: {
+            /**
+             * Agency Id
+             * Format: uuid
+             */
+            agency_id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Description */
+            description: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Question Count */
+            question_count: number;
+        };
+        /**
+         * KickoffTemplateUpdate
+         * @description Full replace of a template — same shape as create.
+         */
+        KickoffTemplateUpdate: {
+            /** Description */
+            description?: string | null;
+            /** Name */
+            name: string;
+            /** Questions */
+            questions?: components["schemas"]["KickoffQuestionInput"][];
+        };
+        /**
+         * KickoffUpdate
+         * @description Full replace of a draft kickoff's content — same shape as create,
+         *     minus template_id (a draft is edited directly once created, it isn't
+         *     re-pointed at a different template).
+         */
+        KickoffUpdate: {
+            /** Intro Message */
+            intro_message?: string | null;
+            /** Questions */
+            questions?: components["schemas"]["KickoffQuestionInput"][];
+            /** Title */
+            title: string;
         };
         /** LeadCreate */
         LeadCreate: {
@@ -9967,6 +10378,170 @@ export interface operations {
             };
         };
     };
+    list_templates_agencies__agency_id__kickoff_templates_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KickoffTemplateRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_template_agencies__agency_id__kickoff_templates_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KickoffTemplateCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KickoffTemplateDetailRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_template_agencies__agency_id__kickoff_templates__template_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                template_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KickoffTemplateDetailRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_template_agencies__agency_id__kickoff_templates__template_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                template_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_template_agencies__agency_id__kickoff_templates__template_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                template_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KickoffTemplateUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KickoffTemplateDetailRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_leads_agencies__agency_id__leads_get: {
         parameters: {
             query?: {
@@ -12296,6 +12871,240 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_kickoff_agencies__agency_id__projects__project_id__kickoff_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KickoffDetailRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_kickoff_agencies__agency_id__projects__project_id__kickoff_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KickoffCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KickoffDetailRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_kickoff_agencies__agency_id__projects__project_id__kickoff_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_kickoff_agencies__agency_id__projects__project_id__kickoff_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KickoffUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KickoffDetailRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    convert_kickoff_agencies__agency_id__projects__project_id__kickoff_convert_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KickoffConvertRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KickoffConvertResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    nudge_kickoff_agencies__agency_id__projects__project_id__kickoff_nudge_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KickoffDetailRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    send_kickoff_agencies__agency_id__projects__project_id__kickoff_send_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KickoffDetailRead"];
                 };
             };
             /** @description Validation Error */
@@ -15511,6 +16320,107 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BoardReactionsRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_portal_kickoff_portal_projects__project_id__kickoff_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KickoffDetailRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_portal_kickoff_answers_portal_projects__project_id__kickoff_answers_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KickoffAnswersSubmit"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KickoffDetailRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_portal_kickoff_file_portal_projects__project_id__kickoff_files_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_portal_kickoff_file_portal_projects__project_id__kickoff_files_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KickoffFileUploadRead"];
                 };
             };
             /** @description Validation Error */

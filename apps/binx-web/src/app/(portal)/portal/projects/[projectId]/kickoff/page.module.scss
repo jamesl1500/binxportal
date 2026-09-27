@@ -1,0 +1,15 @@
+@use "../../../../../../styles/tokens" as t;
+
+.empty {
+  padding: t.$space-8;
+  text-align: center;
+  color: t.$color-ink-faint;
+  font-size: t.$font-size-sm;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+
+  p {
+    margin: 0;
+  }
+}

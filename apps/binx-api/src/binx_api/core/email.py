@@ -149,3 +149,29 @@ async def send_meeting_cancelled_email(*, to: str, agency_name: str, title: str,
         subject=f"Meeting cancelled: {title}",
         body=(f"A meeting with {agency_name} has been cancelled.\n\n{title}\nWas scheduled for: {starts_at_local}"),
     )
+
+
+async def send_kickoff_sent_email(*, to: str, agency_name: str, project_name: str, kickoff_title: str) -> None:
+    # No link, same reasoning as send_invoice_issued_email — a portal
+    # contact already sees a live "kickoff" tab at /portal/projects/... once
+    # they sign in, so this is just the notice that it's ready for them.
+    await send_email(
+        to=to,
+        subject=f"{agency_name} needs a few answers to kick off {project_name}",
+        body=(
+            f"{agency_name} started “{kickoff_title}” for {project_name}.\n\n"
+            "A few quick questions will help set expectations before work gets underway — "
+            "sign in to your client portal to answer them."
+        ),
+    )
+
+
+async def send_kickoff_reminder_email(*, to: str, agency_name: str, project_name: str, kickoff_title: str) -> None:
+    await send_email(
+        to=to,
+        subject=f"Reminder: {agency_name} is still waiting on the {project_name} kickoff",
+        body=(
+            f"Just a friendly reminder — “{kickoff_title}” for {project_name} is still waiting on your answers.\n\n"
+            "Sign in to your client portal to finish it up."
+        ),
+    )

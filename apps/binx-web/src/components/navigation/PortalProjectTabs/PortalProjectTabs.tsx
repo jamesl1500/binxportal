@@ -29,6 +29,7 @@ const PortalProjectTabs = ({ projectId }: PortalProjectTabsProps) => {
     { href: base, label: "Overview" },
     { href: `${base}/board`, label: "Board" },
     { href: `${base}/canvas`, label: "Canvas" },
+    { href: `${base}/kickoff`, label: "Kickoff" },
   ];
 
   return (
