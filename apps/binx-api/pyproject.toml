@@ -39,6 +39,7 @@ dependencies = [
 [project.scripts]
 binx-api = "binx_api:main"
 binx-api-seed-e2e = "binx_api.scripts.seed_e2e:main"
+binx-api-seed-demo-client = "binx_api.scripts.seed_demo_client:main"
 binx-api-openapi = "binx_api.scripts.openapi:main"
 
 [build-system]
