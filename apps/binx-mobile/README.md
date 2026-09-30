@@ -1,20 +1,44 @@
-# Welcome to your Expo app 👋
+# binx-mobile
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+React Native (Expo) client for Binx Portal, currently focused on the client
+portal experience.
 
 ## Get started
 
-1. Install dependencies
+1. From the repo root, install dependencies (this is a pnpm workspace):
 
    ```bash
-   npm install
+   pnpm install
    ```
 
-2. Start the app
+2. Copy `.env.example` to `.env` and point `EXPO_PUBLIC_API_URL` at your
+   running `binx-api`. **To test in Expo Go on a physical phone**, this must
+   be your computer's LAN IP, not `localhost` — the phone can't resolve that
+   to your machine. Phone and computer need to be on the same Wi-Fi network.
+
+3. Start the app:
 
    ```bash
-   npx expo start
+   pnpm start
    ```
+
+   Scan the QR code with the Expo Go app (iOS/Android) to run it on your
+   phone.
+
+## Auth
+
+`src/lib/api.ts` / `src/lib/auth.ts` / `src/contexts/auth-context.tsx` wire
+the app up to binx-api's JWT auth (see `apps/binx-api/docs/AUTHENTICATION.md`):
+access + refresh tokens are stored on-device via `expo-secure-store`, and a
+401 transparently triggers a refresh-and-retry. `_layout.tsx` shows the login
+screen until there's a valid session, then the normal tab navigator.
+
+API types (`src/lib/api-schema.d.ts`) are generated from binx-api's OpenAPI
+schema — regenerate after any API change:
+
+```bash
+pnpm --filter binx-mobile gen:api
+```
 
 In the output, you'll find options to open the app in a
 
