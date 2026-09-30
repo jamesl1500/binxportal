@@ -35,6 +35,8 @@ interface ScheduleMeetingDialogProps {
   projects: ProjectOption[];
   defaultClientId?: string;
   defaultProjectId?: string;
+  /** A small text-style trigger ("+ Schedule") for card headers, e.g. the project dashboard's Meetings widget. */
+  compact?: boolean;
 }
 
 const ScheduleMeetingDialog = ({
@@ -43,6 +45,7 @@ const ScheduleMeetingDialog = ({
   projects,
   defaultClientId,
   defaultProjectId,
+  compact = false,
 }: ScheduleMeetingDialogProps) => {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -54,9 +57,14 @@ const ScheduleMeetingDialog = ({
 
   return (
     <>
-      <button type="button" className={styles.trigger} onClick={() => setOpen(true)}>
+      <button
+        type="button"
+        className={compact ? styles.compactTrigger : styles.trigger}
+        onClick={() => setOpen(true)}
+        aria-label={compact ? "Schedule meeting" : undefined}
+      >
         <Plus className={styles.plusIcon} aria-hidden="true" />
-        Schedule meeting
+        {compact ? "Schedule" : "Schedule meeting"}
       </button>
 
       <Dialog.Root open={open} onOpenChange={setOpen}>

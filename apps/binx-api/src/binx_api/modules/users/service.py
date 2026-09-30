@@ -20,7 +20,12 @@ from binx_api.modules.users.models import (
     UserProfile,
     UserTutorialProgress,
 )
-from binx_api.modules.users.schemas import DASHBOARD_WIDGET_IDS
+from binx_api.modules.users.schemas import (
+    DASHBOARD_WIDGET_IDS,
+    PROJECT_DASHBOARD_DEFAULT_HIDDEN,
+    PROJECT_DASHBOARD_DEFAULT_WIDE,
+    PROJECT_DASHBOARD_WIDGET_IDS,
+)
 
 settings = get_settings()
 
@@ -345,6 +350,44 @@ async def update_dashboard_layout(
     layout = await get_or_create_dashboard_layout(db, user)
     layout.widget_order = json.dumps(widget_order)
     layout.hidden_widgets = json.dumps(hidden_widgets)
+    await db.commit()
+    await db.refresh(layout)
+    return layout
+
+
+# ---- Project dashboard layout ----
+# Stored on the same UserDashboardLayout row (project_* columns), read with
+# the same "drop unknown ids, append missing ones" rule as the staff dashboard.
+
+
+def project_dashboard_widget_order(layout: UserDashboardLayout) -> list[str]:
+    stored = json.loads(layout.project_widget_order) if layout.project_widget_order else []
+    ordered = [widget_id for widget_id in stored if widget_id in PROJECT_DASHBOARD_WIDGET_IDS]
+    ordered += [widget_id for widget_id in PROJECT_DASHBOARD_WIDGET_IDS if widget_id not in ordered]
+    return ordered
+
+
+def _project_widget_subset(stored: str | None, default: list[str]) -> list[str]:
+    ids = default if stored is None else json.loads(stored)
+    return [widget_id for widget_id in ids if widget_id in PROJECT_DASHBOARD_WIDGET_IDS]
+
+
+def project_dashboard_hidden_widgets(layout: UserDashboardLayout) -> list[str]:
+    return _project_widget_subset(layout.project_hidden_widgets, PROJECT_DASHBOARD_DEFAULT_HIDDEN)
+
+
+def project_dashboard_wide_widgets(layout: UserDashboardLayout) -> list[str]:
+    return _project_widget_subset(layout.project_wide_widgets, PROJECT_DASHBOARD_DEFAULT_WIDE)
+
+
+# Full replace, same as update_dashboard_layout.
+async def update_project_dashboard_layout(
+    db: AsyncSession, user: User, *, widget_order: list[str], hidden_widgets: list[str], wide_widgets: list[str]
+) -> UserDashboardLayout:
+    layout = await get_or_create_dashboard_layout(db, user)
+    layout.project_widget_order = json.dumps(widget_order)
+    layout.project_hidden_widgets = json.dumps(hidden_widgets)
+    layout.project_wide_widgets = json.dumps(wide_widgets)
     await db.commit()
     await db.refresh(layout)
     return layout

@@ -43,6 +43,24 @@ export interface ProjectDetailsInput {
   defaultHourlyRateCents: number | null;
 }
 
+/** A role or tag to create together with a new project. */
+export interface ProjectLabelDraft {
+  name: string;
+  color: string;
+}
+
+/**
+ * The team setup the "New project" wizard creates alongside the project
+ * itself, in the same binx-api request (so it's all-or-nothing).
+ * `team[].roleName` refers to one of `roles` by name — they have no ids yet.
+ * The creator is always added; list them in `team` only to give them a role.
+ */
+export interface ProjectSetupInput {
+  tags: ProjectLabelDraft[];
+  roles: ProjectLabelDraft[];
+  team: { userId: string; roleName: string | null }[];
+}
+
 export type ProjectMember = Schemas["ProjectMemberRead"];
 /** A custom, per-project label for what a member does (e.g. "Project Manager"). */
 export type ProjectRole = Schemas["ProjectRoleRead"];
@@ -145,16 +163,29 @@ export const getAgencyProject = cache(async (agencyId: string, projectId: string
  *
  * Creates a project under an agency via `POST /agencies/{agencyId}/projects`.
  * Any member can call this — starting a project is day-to-day work, not
- * agency administration. binx-api seeds the default kanban columns.
+ * agency administration. binx-api seeds the default kanban columns, plus
+ * any `setup` (tags, roles, team) in the same transaction.
  *
  * @function createAgencyProject
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't a member of this agency.
  */
-export async function createAgencyProject(agencyId: string, input: ProjectDetailsInput): Promise<Project> {
+export async function createAgencyProject(
+  agencyId: string,
+  input: ProjectDetailsInput,
+  setup?: ProjectSetupInput,
+): Promise<Project> {
   const headers = await authHeader();
+  const payload = setup
+    ? {
+        ...toProjectPayload(input),
+        tags: setup.tags,
+        roles: setup.roles,
+        team: setup.team.map((seat) => ({ user_id: seat.userId, role_name: seat.roleName })),
+      }
+    : toProjectPayload(input);
 
   try {
-    const { data } = await api.post<Project>(`/agencies/${agencyId}/projects`, toProjectPayload(input), { headers });
+    const { data } = await api.post<Project>(`/agencies/${agencyId}/projects`, payload, { headers });
     return data;
   } catch (error) {
     throw apiError(error, "Unable to create project");

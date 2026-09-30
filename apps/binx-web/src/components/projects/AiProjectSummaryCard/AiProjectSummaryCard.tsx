@@ -60,18 +60,16 @@ const AiProjectSummaryCard = ({ agencyId, projectId }: AiProjectSummaryCardProps
   return (
     <div className={styles.card}>
       <div className={styles.head}>
-        <span className={styles.eyebrow}>
-          <Sparkles className={styles.eyebrowIcon} aria-hidden="true" />
-          AI status update
-        </span>
+        {!draft && !error && !isPending ? (
+          <p className={styles.hint}>Draft a client-ready status update from this project&apos;s board in one click.</p>
+        ) : (
+          <span />
+        )}
         <button type="button" className={styles.generate} onClick={handleGenerate} disabled={isPending}>
+          <Sparkles aria-hidden="true" />
           {isPending ? "Drafting…" : draft ? "Regenerate" : "Generate update"}
         </button>
       </div>
-
-      {!draft && !error && !isPending && (
-        <p className={styles.hint}>Draft a client-ready status update from this project&apos;s board in one click.</p>
-      )}
       {error && <p className={styles.error}>{error}</p>}
 
       {draft && (

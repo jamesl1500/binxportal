@@ -1,9 +1,10 @@
 /**
  * page.tsx - New Project
  *
- * Dedicated create page for a project: the fields, then — once created —
- * the same AI starter-task offer the old CreateProjectDialog showed before
- * landing on the project's own page.
+ * Dedicated create page for a project: a multi-step wizard (details → task
+ * tags → member roles → team → review, see NewProjectForm) so every project
+ * starts set up for the team, then the AI starter-task offer before landing
+ * on the project's own page.
  *
  * @module apps/binx-web/src/app/(app)/projects/new/page.tsx
  * @author Binx.io
@@ -12,7 +13,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { getCurrentAgencyContext } from "@/lib/agencies";
+import { getAgencyMembers, getCurrentAgencyContext } from "@/lib/agencies";
+import { getCurrentUser } from "@/lib/auth";
 import { getAgencyClients } from "@/lib/clients";
 import NewProjectForm from "@/components/forms/projects/NewProjectForm/NewProjectForm";
 
@@ -27,7 +29,14 @@ const NewProjectPage = async () => {
     redirect("/onboarding/two");
   }
 
-  const clients = await getAgencyClients(currentAgency.id);
+  const [clients, agencyMembers, user] = await Promise.all([
+    getAgencyClients(currentAgency.id),
+    getAgencyMembers(currentAgency.id),
+    getCurrentUser(),
+  ]);
+  if (!user) {
+    redirect("/auth/login");
+  }
 
   return (
     <div>
@@ -40,7 +49,8 @@ const NewProjectPage = async () => {
           <span className={styles.eyebrow}>Projects</span>
           <h1 className={styles.title}>New project</h1>
           <p className={styles.subtitle}>
-            Every project starts with a To Do, In Progress, and Done list — you can add more once it&apos;s created.
+            Set up the details, task tags, roles, and team in a few quick steps, so it&apos;s ready to work in from day
+            one.
           </p>
         </div>
       </div>
@@ -51,7 +61,12 @@ const NewProjectPage = async () => {
         </p>
       ) : (
         <div className={styles.formCard}>
-          <NewProjectForm agencyId={currentAgency.id} clients={clients} />
+          <NewProjectForm
+            agencyId={currentAgency.id}
+            clients={clients}
+            agencyMembers={agencyMembers}
+            currentUserId={user.id}
+          />
         </div>
       )}
     </div>

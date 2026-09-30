@@ -15,6 +15,23 @@ DASHBOARD_WIDGET_IDS: list[str] = [
     "upcoming_meetings",
 ]
 
+# The per-project dashboard's (/projects/{id}) customizable widgets. One layout
+# per user, applied to every project they open. Keep in sync with
+# apps/binx-web/src/components/projects/ProjectDashboardGrid/widgets.ts.
+PROJECT_DASHBOARD_WIDGET_IDS: list[str] = [
+    "overview",
+    "my_tasks",
+    "board",
+    "team",
+    "meetings",
+    "ai_summary",
+    "files",
+]
+# What a user who has never customized sees — a deliberately short default so
+# the page isn't a wall of cards; the rest are one click away in Customize.
+PROJECT_DASHBOARD_DEFAULT_HIDDEN: list[str] = ["ai_summary", "files"]
+PROJECT_DASHBOARD_DEFAULT_WIDE: list[str] = ["overview"]
+
 
 class UserRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -186,6 +203,38 @@ class DashboardLayoutUpdate(BaseModel):
             if len(set(ids)) != len(ids):
                 raise ValueError(f"{name} contains a duplicate widget id")
             unknown = set(ids) - set(DASHBOARD_WIDGET_IDS)
+            if unknown:
+                raise ValueError(f"{name} contains unknown widget id(s): {', '.join(sorted(unknown))}")
+        return self
+
+
+class ProjectDashboardLayoutRead(BaseModel):
+    """Same shape as DashboardLayoutRead plus wide_widgets — the widgets the
+    user stretched to the full grid width. hidden_widgets/wide_widgets fall
+    back to PROJECT_DASHBOARD_DEFAULT_* until the user first saves a layout."""
+
+    widget_order: list[str]
+    hidden_widgets: list[str]
+    wide_widgets: list[str]
+
+
+class ProjectDashboardLayoutUpdate(BaseModel):
+    """Full replace of all three fields together, same as DashboardLayoutUpdate."""
+
+    widget_order: list[str] = Field(max_length=len(PROJECT_DASHBOARD_WIDGET_IDS))
+    hidden_widgets: list[str] = Field(max_length=len(PROJECT_DASHBOARD_WIDGET_IDS))
+    wide_widgets: list[str] = Field(max_length=len(PROJECT_DASHBOARD_WIDGET_IDS))
+
+    @model_validator(mode="after")
+    def _valid_widget_ids(self) -> "ProjectDashboardLayoutUpdate":
+        for name, ids in (
+            ("widget_order", self.widget_order),
+            ("hidden_widgets", self.hidden_widgets),
+            ("wide_widgets", self.wide_widgets),
+        ):
+            if len(set(ids)) != len(ids):
+                raise ValueError(f"{name} contains a duplicate widget id")
+            unknown = set(ids) - set(PROJECT_DASHBOARD_WIDGET_IDS)
             if unknown:
                 raise ValueError(f"{name} contains unknown widget id(s): {', '.join(sorted(unknown))}")
         return self

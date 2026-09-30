@@ -1,4 +1,113 @@
 @use "../../../../styles/tokens" as t;
+@use "../../../../styles/mixins" as m;
+
+.wizard {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-8;
+}
+
+// ---- Stepper ----
+
+.stepper {
+  display: flex;
+  gap: t.$space-2;
+  margin: 0;
+  padding: 0 0 t.$space-5;
+  list-style: none;
+  overflow-x: auto;
+  border-bottom: 1px solid t.$color-border;
+}
+
+.stepperItem {
+  flex: 1;
+  min-width: max-content;
+
+  @media (max-width: 600px) {
+    flex: 0 0 auto;
+
+    &[data-state="current"] {
+      flex: 1;
+    }
+  }
+}
+
+.stepperButton {
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+  width: 100%;
+  padding: t.$space-1;
+  font: inherit;
+  color: t.$color-ink-faint;
+  background: none;
+  border: none;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: default;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+
+  .stepperItem[data-state="current"] & {
+    color: t.$color-ink;
+  }
+
+  .stepperItem[data-state="done"] & {
+    color: t.$color-ink-soft;
+
+    &:hover {
+      color: t.$color-ink;
+    }
+  }
+}
+
+.stepNumber {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  font-size: t.$font-size-xs;
+  font-weight: 700;
+  border: 1px solid t.$color-border-strong;
+  border-radius: 999px;
+
+  svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  .stepperItem[data-state="current"] & {
+    color: t.$color-accent-foreground;
+    background: t.$color-accent;
+    border-color: t.$color-accent;
+  }
+
+  .stepperItem[data-state="done"] & {
+    background: t.$color-paper;
+  }
+}
+
+.stepLabel {
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+
+  // Narrow screens: numbers only, plus the current step's name, so the
+  // whole stepper fits without scrolling the current step out of view.
+  @media (max-width: 600px) {
+    .stepperItem:not([data-state="current"]) & {
+      display: none;
+    }
+  }
+}
+
+// ---- Step content ----
 
 .stepTitle {
   margin: 0 0 t.$space-2;
@@ -8,8 +117,136 @@
 }
 
 .stepSubtitle {
-  margin: 0 0 t.$space-5;
+  margin: 0 0 t.$space-6;
   font-size: t.$font-size-sm;
   line-height: 1.5;
   color: t.$color-ink-soft;
+}
+
+.stepError {
+  margin: t.$space-5 0 0;
+  padding: t.$space-3;
+  font-size: t.$font-size-sm;
+  color: t.$color-danger;
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-radius: t.$radius-sm;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: t.$space-3;
+  margin-top: t.$space-8;
+  padding-top: t.$space-5;
+  border-top: 1px solid t.$color-border;
+}
+
+.back {
+  @include m.button-base;
+  background: none;
+  color: t.$color-ink-soft;
+  border-color: t.$color-border;
+
+  &:hover:not(:disabled) {
+    color: t.$color-ink;
+    background: rgba(10, 10, 11, 0.04);
+  }
+}
+
+.next {
+  @include m.button-base;
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+}
+
+// ---- Review ----
+
+.review {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+}
+
+.reviewRow {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr) auto;
+  align-items: start;
+  gap: t.$space-4;
+  padding: t.$space-4;
+  border-bottom: 1px solid t.$color-border;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  dt {
+    @include m.mono-label;
+    padding-top: 0.125rem;
+    color: t.$color-ink-soft;
+  }
+
+  dd {
+    margin: 0;
+    font-size: t.$font-size-sm;
+    line-height: 1.6;
+    color: t.$color-ink;
+  }
+
+  @media (max-width: 600px) {
+    grid-template-columns: minmax(0, 1fr) auto;
+
+    dd {
+      grid-column: 1 / -1;
+      grid-row: 2;
+    }
+  }
+}
+
+.edit {
+  padding: 0;
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  color: t.$color-ink-soft;
+  background: none;
+  border: none;
+  text-decoration: underline;
+  cursor: pointer;
+
+  &:hover {
+    color: t.$color-ink;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-2;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  padding: 0 t.$space-2;
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  border: 1px solid;
+  border-radius: 999px;
+}
+
+.teamList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }

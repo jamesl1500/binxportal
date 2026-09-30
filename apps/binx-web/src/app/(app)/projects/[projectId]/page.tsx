@@ -1,35 +1,51 @@
 /**
  * page.tsx - Project Dashboard
  *
- * The project overview: at-a-glance stat cards, a board progress summary
- * linking to the dedicated board page, and the team/files panels — all in
- * white cards on the page's paper background so each is clearly separated.
- * The [projectId] layout above this page already resolved the project and
- * renders the header/tabs; this page re-fetches it too (cache-deduped, see
- * getAgencyProject) since layouts can't pass data down to pages directly.
+ * The project overview, as a per-user customizable widget grid (see
+ * ProjectDashboardGrid): overview, my tasks, board, team, meetings, AI
+ * status update, and files. Each staff member chooses which widgets show,
+ * their order, and their width; that layout is theirs alone and follows them
+ * to every project. Widgets are compact summaries that link to the tab owning
+ * the full view (Board, Team, Files, …) rather than duplicating it here.
+ *
+ * Only the data for visible widgets is fetched — un-hiding one refreshes the
+ * route. The [projectId] layout above already resolved (and 404-checked) the
+ * project and renders the header/tabs; getAgencyProject is cache-deduped.
  *
  * @module apps/binx-web/src/app/(app)/projects/[projectId]/page.tsx
  * @author Binx.io
  */
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { getAgencyMembers, getCurrentAgencyContext } from "@/lib/agencies";
+import { getCurrentAgencyContext } from "@/lib/agencies";
+import { getCurrentUser } from "@/lib/auth";
 import { getMeetings } from "@/lib/meetings";
 import { getAgencyProject, getProjectBoard, getProjectFiles, getProjectMembers } from "@/lib/projects";
+import { getProjectDashboardLayout } from "@/lib/users";
 import ScheduleMeetingDialog from "@/components/forms/meetings/ScheduleMeetingDialog/ScheduleMeetingDialog";
 import UpcomingMeetingsCard from "@/components/meetings/UpcomingMeetingsCard/UpcomingMeetingsCard";
-import ProjectMembersPanel from "@/components/forms/projects/ProjectMembersPanel/ProjectMembersPanel";
 import AiProjectSummaryCard from "@/components/projects/AiProjectSummaryCard/AiProjectSummaryCard";
+import ProjectDashboardGrid from "@/components/projects/ProjectDashboardGrid/ProjectDashboardGrid";
+import {
+  DEFAULT_HIDDEN_PROJECT_WIDGETS,
+  DEFAULT_WIDE_PROJECT_WIDGETS,
+  PROJECT_WIDGET_IDS,
+  type ProjectWidgetId,
+} from "@/components/projects/ProjectDashboardGrid/widgets";
+import {
+  BoardWidget,
+  FilesWidget,
+  MyTasksWidget,
+  OverviewWidget,
+  TeamWidget,
+} from "@/components/projects/ProjectDashboardWidgets/ProjectDashboardWidgets";
 
 import styles from "./page.module.scss";
 
 interface ProjectDashboardPageProps {
   params: Promise<{ projectId: string }>;
-}
-
-function formatDate(iso: string): string {
-  return new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
 const ProjectDashboardPage = async ({ params }: ProjectDashboardPageProps) => {
@@ -39,135 +55,96 @@ const ProjectDashboardPage = async ({ params }: ProjectDashboardPageProps) => {
   if (!currentAgency) {
     redirect("/onboarding/two");
   }
+  const agencyId = currentAgency.id;
 
-  // Already resolved (and 404-checked) by the layout above — this call
-  // shares that same request-scoped fetch via cache(), so it's free.
-  const project = await getAgencyProject(currentAgency.id, projectId);
-
-  const [members, agencyMembers, board, files, meetings] = await Promise.all([
-    getProjectMembers(currentAgency.id, projectId),
-    getAgencyMembers(currentAgency.id),
-    getProjectBoard(currentAgency.id, projectId),
-    getProjectFiles(currentAgency.id, projectId),
-    getMeetings(currentAgency.id, {
-      projectId,
-      status: "scheduled",
-      fromDate: new Date().toISOString().slice(0, 10),
-    }),
+  const [project, layout] = await Promise.all([
+    getAgencyProject(agencyId, projectId),
+    // A layout hiccup shouldn't take the whole page down — fall back to the defaults.
+    getProjectDashboardLayout().catch(() => ({
+      widget_order: [...PROJECT_WIDGET_IDS] as string[],
+      hidden_widgets: DEFAULT_HIDDEN_PROJECT_WIDGETS as string[],
+      wide_widgets: DEFAULT_WIDE_PROJECT_WIDGETS as string[],
+    })),
   ]);
 
-  const totalTasks = board.reduce((sum, column) => sum + column.tasks.length, 0);
-  const timeline =
-    project.start_date || project.due_date
-      ? `${project.start_date ? formatDate(project.start_date) : "No start"} → ${project.due_date ? formatDate(project.due_date) : "No due date"}`
-      : "No dates set";
+  const visible = new Set(PROJECT_WIDGET_IDS.filter((id) => !layout.hidden_widgets.includes(id)));
+  const needsBoard = visible.has("overview") || visible.has("board") || visible.has("my_tasks");
+
+  const [board, members, files, meetings, user] = await Promise.all([
+    needsBoard ? getProjectBoard(agencyId, projectId) : null,
+    visible.has("team") ? getProjectMembers(agencyId, projectId) : null,
+    visible.has("files") ? getProjectFiles(agencyId, projectId) : null,
+    visible.has("meetings")
+      ? getMeetings(agencyId, { projectId, status: "scheduled", fromDate: new Date().toISOString().slice(0, 10) })
+      : null,
+    visible.has("my_tasks") ? getCurrentUser() : null,
+  ]);
+
+  const widgets: Partial<Record<ProjectWidgetId, ReactNode>> = {};
+  if (board) {
+    widgets.overview = <OverviewWidget project={project} board={board} />;
+    widgets.board = <BoardWidget board={board} />;
+    if (visible.has("my_tasks")) {
+      widgets.my_tasks = <MyTasksWidget projectId={project.id} board={board} userId={user?.id ?? null} />;
+    }
+  }
+  if (members) widgets.team = <TeamWidget members={members} />;
+  if (files) widgets.files = <FilesWidget projectId={project.id} files={files} />;
+  if (meetings) {
+    widgets.meetings = (
+      <UpcomingMeetingsCard meetings={meetings} limit={4} moreHref={`/clients/${project.client_id}/meetings`} />
+    );
+  }
+  if (visible.has("ai_summary")) {
+    widgets.ai_summary = <AiProjectSummaryCard agencyId={agencyId} projectId={project.id} />;
+  }
+
+  const headerActions: Partial<Record<ProjectWidgetId, ReactNode>> = {
+    overview: (
+      <Link href={`/projects/${project.id}/settings`} className={styles.cardLink}>
+        Edit details
+      </Link>
+    ),
+    my_tasks: (
+      <Link href="/dashboard/my-work" className={styles.cardLink}>
+        All my work
+      </Link>
+    ),
+    board: (
+      <Link href={`/projects/${project.id}/board`} className={styles.cardLink}>
+        Open board
+      </Link>
+    ),
+    team: (
+      <Link href={`/projects/${project.id}/team`} className={styles.cardLink}>
+        Manage team
+      </Link>
+    ),
+    meetings: (
+      <ScheduleMeetingDialog
+        agencyId={agencyId}
+        clients={[{ id: project.client_id, name: project.client_name }]}
+        projects={[{ id: project.id, name: project.name, client_id: project.client_id }]}
+        defaultClientId={project.client_id}
+        defaultProjectId={project.id}
+        compact
+      />
+    ),
+    files: (
+      <Link href={`/projects/${project.id}/files`} className={styles.cardLink}>
+        View files
+      </Link>
+    ),
+  };
 
   return (
-    <div>
-      <div className={styles.statGrid}>
-        <div className={styles.statCard}>
-          <span className={styles.statLabel}>Client</span>
-          <p className={styles.statValue}>{project.client_name}</p>
-        </div>
-        <div className={styles.statCard}>
-          <span className={styles.statLabel}>Timeline</span>
-          <p className={styles.statValue}>{timeline}</p>
-        </div>
-        <div className={styles.statCard}>
-          <span className={styles.statLabel}>Team</span>
-          <p className={styles.statValue}>
-            {members.length} {members.length === 1 ? "person" : "people"}
-          </p>
-        </div>
-        <div className={styles.statCard}>
-          <span className={styles.statLabel}>Tasks</span>
-          <p className={styles.statValue}>{totalTasks} total</p>
-        </div>
-      </div>
-
-      <AiProjectSummaryCard agencyId={currentAgency.id} projectId={project.id} />
-
-      <div className={styles.card}>
-        <div className={styles.cardHeader}>
-          <h2 className={styles.cardTitle}>Board</h2>
-          <Link href={`/projects/${project.id}/board`} className={styles.cardLink}>
-            Open board →
-          </Link>
-        </div>
-        {board.length === 0 ? (
-          <p className={styles.emptyText}>This board has no lists yet.</p>
-        ) : (
-          <ul className={styles.boardSummary}>
-            {board.map((column) => (
-              <li key={column.id} className={styles.boardSummaryRow}>
-                <span className={styles.boardSummaryName}>{column.name}</span>
-                <span className={styles.boardSummaryCount}>{column.tasks.length}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      <div className={styles.card}>
-        <div className={styles.cardHeader}>
-          <h2 className={styles.cardTitle}>Meetings</h2>
-          <ScheduleMeetingDialog
-            agencyId={currentAgency.id}
-            clients={[{ id: project.client_id, name: project.client_name }]}
-            projects={[{ id: project.id, name: project.name, client_id: project.client_id }]}
-            defaultClientId={project.client_id}
-            defaultProjectId={project.id}
-          />
-        </div>
-        <UpcomingMeetingsCard meetings={meetings} limit={4} moreHref={`/clients/${project.client_id}/meetings`} />
-      </div>
-
-      <div className={styles.row}>
-        <div className={styles.card}>
-          <div className={styles.cardHeader}>
-            <h2 className={styles.cardTitle}>Team</h2>
-          </div>
-          <p className={styles.cardSubtitle}>Who&apos;s actively working on this project.</p>
-          <ProjectMembersPanel
-            agencyId={currentAgency.id}
-            projectId={project.id}
-            members={members}
-            agencyMembers={agencyMembers}
-          />
-        </div>
-
-        <div className={styles.card}>
-          <div className={styles.cardHeader}>
-            <h2 className={styles.cardTitle}>Files</h2>
-            <Link href={`/projects/${project.id}/files`} className={styles.cardLink}>
-              View files →
-            </Link>
-          </div>
-          <p className={styles.cardSubtitle}>Briefs, assets, and deliverables shared for this project.</p>
-          {files.length === 0 ? (
-            <p className={styles.emptyText}>No files yet.</p>
-          ) : (
-            <ul className={styles.fileSummary}>
-              {files.slice(0, 4).map((file) => (
-                <li key={file.id} className={styles.fileSummaryRow}>
-                  {file.file_name}
-                </li>
-              ))}
-            </ul>
-          )}
-          {files.length > 4 && <p className={styles.fileSummaryMore}>+{files.length - 4} more</p>}
-        </div>
-      </div>
-
-      {project.description && (
-        <div className={styles.card}>
-          <div className={styles.cardHeader}>
-            <h2 className={styles.cardTitle}>Description</h2>
-          </div>
-          <p className={styles.description}>{project.description}</p>
-        </div>
-      )}
-    </div>
+    <ProjectDashboardGrid
+      initialOrder={layout.widget_order}
+      initialHidden={layout.hidden_widgets}
+      initialWide={layout.wide_widgets}
+      widgets={widgets}
+      headerActions={headerActions}
+    />
   );
 };
 

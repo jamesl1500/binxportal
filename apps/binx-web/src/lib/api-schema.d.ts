@@ -3655,6 +3655,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/users/me/project-dashboard-layout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Project Dashboard Layout */
+        get: operations["read_project_dashboard_layout_users_me_project_dashboard_layout_get"];
+        /** Write Project Dashboard Layout */
+        put: operations["write_project_dashboard_layout_users_me_project_dashboard_layout_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/users/me/qualifications": {
         parameters: {
             query?: never;
@@ -6672,6 +6690,8 @@ export interface components {
             due_date?: string | null;
             /** Name */
             name: string;
+            /** Roles */
+            roles?: components["schemas"]["ProjectLabelSeed"][];
             /** Start Date */
             start_date?: string | null;
             /**
@@ -6679,6 +6699,36 @@ export interface components {
              * @default planning
              */
             status: string;
+            /** Tags */
+            tags?: components["schemas"]["ProjectLabelSeed"][];
+            /** Team */
+            team?: components["schemas"]["ProjectTeamSeat"][];
+        };
+        /**
+         * ProjectDashboardLayoutRead
+         * @description Same shape as DashboardLayoutRead plus wide_widgets — the widgets the
+         *     user stretched to the full grid width. hidden_widgets/wide_widgets fall
+         *     back to PROJECT_DASHBOARD_DEFAULT_* until the user first saves a layout.
+         */
+        ProjectDashboardLayoutRead: {
+            /** Hidden Widgets */
+            hidden_widgets: string[];
+            /** Wide Widgets */
+            wide_widgets: string[];
+            /** Widget Order */
+            widget_order: string[];
+        };
+        /**
+         * ProjectDashboardLayoutUpdate
+         * @description Full replace of all three fields together, same as DashboardLayoutUpdate.
+         */
+        ProjectDashboardLayoutUpdate: {
+            /** Hidden Widgets */
+            hidden_widgets: string[];
+            /** Wide Widgets */
+            wide_widgets: string[];
+            /** Widget Order */
+            widget_order: string[];
         };
         /** ProjectFileRead */
         ProjectFileRead: {
@@ -6709,6 +6759,19 @@ export interface components {
             source_task_title?: string | null;
             /** Uploaded By Name */
             uploaded_by_name: string | null;
+        };
+        /**
+         * ProjectLabelSeed
+         * @description A role or tag to create alongside a new project (see ProjectCreate).
+         */
+        ProjectLabelSeed: {
+            /**
+             * Color
+             * @default #6e6e76
+             */
+            color: string;
+            /** Name */
+            name: string;
         };
         /** ProjectMemberCreate */
         ProjectMemberCreate: {
@@ -6864,6 +6927,20 @@ export interface components {
             color: string;
             /** Name */
             name: string;
+        };
+        /**
+         * ProjectTeamSeat
+         * @description A teammate to assign to a new project. role_name refers to one of the
+         *     ProjectCreate.roles by name, since those roles have no ids yet.
+         */
+        ProjectTeamSeat: {
+            /** Role Name */
+            role_name?: string | null;
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
         };
         /** ProjectUpdate */
         ProjectUpdate: {
@@ -17300,6 +17377,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserProfileRead"];
+                };
+            };
+        };
+    };
+    read_project_dashboard_layout_users_me_project_dashboard_layout_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectDashboardLayoutRead"];
+                };
+            };
+        };
+    };
+    write_project_dashboard_layout_users_me_project_dashboard_layout_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectDashboardLayoutUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectDashboardLayoutRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

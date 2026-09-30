@@ -1,13 +1,13 @@
 /**
  * ProjectForm.tsx
  *
- * Shared create/edit form for a project: name, client, status, description,
- * and optional start/due dates. Create and edit only differ in default
- * values and which server action they call — sharing one component keeps
- * the two in sync as fields are added. Used on the dedicated `/projects/new`
- * page via NewProjectForm (create) and directly on the project dashboard
- * (edit) — the caller owns any surrounding chrome, this only owns the
- * fields and submission.
+ * Shared create/edit form for a project's details: name, client, status,
+ * description, dates, and default rate. Sharing one component keeps the two
+ * in sync as fields are added. In edit mode (`project` given, project
+ * Settings) it saves via `updateProjectAction`. In create mode it's the first
+ * step of the NewProjectForm wizard: it only validates and hands the values
+ * to `onContinue` — nothing is created until the wizard's final step, so a
+ * project never exists without its tags, roles, and team.
  *
  * @module apps/binx-web/src/components/forms/projects/ProjectForm/ProjectForm.tsx
  * @author Binx.io
@@ -20,11 +20,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
-import { createProjectAction } from "@/app/(app)/projects/actions";
 import { updateProjectAction } from "@/app/(app)/projects/[projectId]/actions";
 import type { AgencyClient } from "@/lib/clients";
 import { PROJECT_STATUS_LABELS, PROJECT_STATUSES } from "@/lib/projects-client";
-import type { Project } from "@/lib/projects";
+import type { Project, ProjectDetailsInput } from "@/lib/projects";
 
 import styles from "./ProjectForm.module.scss";
 
@@ -51,19 +50,26 @@ type ProjectValues = z.infer<typeof projectSchema>;
 interface ProjectFormProps {
   agencyId: string;
   clients: AgencyClient[];
-  /** Omit for create mode; pass the project being edited for edit mode. */
+  /** Pass the project being edited for edit mode; omit for create mode. */
   project?: Project;
-  /**
-   * Called after a successful save. Optional — edit mode already shows its
-   * own inline success message and refreshes the route itself; callers only
-   * need this to react further, e.g. NewProjectForm showing the AI
-   * starter-task step.
-   */
+  /** Edit mode: called after a successful save (the form already shows its own success message). */
   onSuccess?: (project: Project) => void;
+  /** Create mode: called with the validated details — the caller decides when to actually create. */
+  onContinue?: (input: ProjectDetailsInput) => void;
+  /** Create mode: values to restore, e.g. when the wizard steps back to this form. */
+  initialValues?: ProjectDetailsInput;
   onCancel?: () => void;
 }
 
-const ProjectForm = ({ agencyId, clients, project, onSuccess, onCancel }: ProjectFormProps) => {
+const ProjectForm = ({
+  agencyId,
+  clients,
+  project,
+  onSuccess,
+  onContinue,
+  initialValues,
+  onCancel,
+}: ProjectFormProps) => {
   const isEdit = Boolean(project);
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -77,13 +83,15 @@ const ProjectForm = ({ agencyId, clients, project, onSuccess, onCancel }: Projec
   } = useForm<ProjectValues>({
     resolver: zodResolver(projectSchema),
     defaultValues: {
-      name: project?.name ?? "",
-      clientId: project?.client_id ?? clients[0]?.id ?? "",
-      status: project?.status ?? "planning",
-      description: project?.description ?? "",
-      startDate: project?.start_date ?? "",
-      dueDate: project?.due_date ?? "",
-      defaultHourlyRate: centsToInput(project?.default_hourly_rate_cents ?? null),
+      name: project?.name ?? initialValues?.name ?? "",
+      clientId: project?.client_id ?? initialValues?.clientId ?? clients[0]?.id ?? "",
+      status: project?.status ?? initialValues?.status ?? "planning",
+      description: project?.description ?? initialValues?.description ?? "",
+      startDate: project?.start_date ?? initialValues?.startDate ?? "",
+      dueDate: project?.due_date ?? initialValues?.dueDate ?? "",
+      defaultHourlyRate: centsToInput(
+        project?.default_hourly_rate_cents ?? initialValues?.defaultHourlyRateCents ?? null,
+      ),
     },
   });
 
@@ -91,7 +99,7 @@ const ProjectForm = ({ agencyId, clients, project, onSuccess, onCancel }: Projec
     setFormError(null);
     setSuccessMessage(null);
 
-    const input = {
+    const input: ProjectDetailsInput = {
       name: values.name.trim(),
       clientId: values.clientId,
       status: values.status as Project["status"],
@@ -101,20 +109,21 @@ const ProjectForm = ({ agencyId, clients, project, onSuccess, onCancel }: Projec
       defaultHourlyRateCents: values.defaultHourlyRate ? toCents(values.defaultHourlyRate) : null,
     };
 
+    if (!project) {
+      onContinue?.(input);
+      return;
+    }
+
     startTransition(async () => {
-      const result = project
-        ? await updateProjectAction(agencyId, project.id, input)
-        : await createProjectAction(agencyId, input);
+      const result = await updateProjectAction(agencyId, project.id, input);
 
       if (result.error || !result.project) {
         setFormError(result.error ?? "Unable to save project");
         return;
       }
 
-      if (isEdit) {
-        setSuccessMessage("Project updated.");
-        router.refresh();
-      }
+      setSuccessMessage("Project updated.");
+      router.refresh();
       onSuccess?.(result.project);
     });
   };
@@ -226,7 +235,7 @@ const ProjectForm = ({ agencyId, clients, project, onSuccess, onCancel }: Projec
           </button>
         )}
         <button type="submit" className={styles.submit} disabled={isPending || clients.length === 0}>
-          {isPending ? "Saving…" : isEdit ? "Save changes" : "Create project"}
+          {isPending ? "Saving…" : isEdit ? "Save changes" : "Continue"}
         </button>
       </div>
     </form>

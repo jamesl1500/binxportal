@@ -1,7 +1,7 @@
 import uuid
 from datetime import date, datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class ProjectRead(BaseModel):
@@ -25,6 +25,21 @@ class ProjectRead(BaseModel):
     created_at: datetime
 
 
+class ProjectLabelSeed(BaseModel):
+    """A role or tag to create alongside a new project (see ProjectCreate)."""
+
+    name: str = Field(min_length=1, max_length=100)
+    color: str = Field(default="#6e6e76", pattern="^#[0-9a-fA-F]{6}$")
+
+
+class ProjectTeamSeat(BaseModel):
+    """A teammate to assign to a new project. role_name refers to one of the
+    ProjectCreate.roles by name, since those roles have no ids yet."""
+
+    user_id: uuid.UUID
+    role_name: str | None = Field(default=None, max_length=100)
+
+
 class ProjectCreate(BaseModel):
     name: str = Field(min_length=1, max_length=255)
     client_id: uuid.UUID
@@ -33,6 +48,35 @@ class ProjectCreate(BaseModel):
     start_date: date | None = None
     due_date: date | None = None
     default_hourly_rate_cents: int | None = Field(default=None, ge=0)
+
+    # Optional setup created in the same transaction as the project, so the
+    # web "New project" wizard never leaves a half-configured project behind.
+    # Optional at the API level (older clients, scripts, and tests create bare
+    # projects); the wizard itself requires at least one tag and one role.
+    tags: list[ProjectLabelSeed] = Field(default_factory=list, max_length=50)
+    roles: list[ProjectLabelSeed] = Field(default_factory=list, max_length=50)
+    # The creator is always added; include them here only to give them a role.
+    team: list[ProjectTeamSeat] = Field(default_factory=list, max_length=100)
+
+    @model_validator(mode="after")
+    def _valid_setup(self) -> "ProjectCreate":
+        for kind, labels in (("tag", self.tags), ("role", self.roles)):
+            names = [label.name.strip().casefold() for label in labels]
+            if any(not name for name in names):
+                raise ValueError(f"A {kind} name can't be blank")
+            if len(set(names)) != len(names):
+                raise ValueError(f"Duplicate {kind} name")
+        if any(len(tag.name) > 50 for tag in self.tags):
+            raise ValueError("Tag names must be at most 50 characters")
+
+        user_ids = [seat.user_id for seat in self.team]
+        if len(set(user_ids)) != len(user_ids):
+            raise ValueError("The same person is listed twice in team")
+        role_names = {role.name.strip().casefold() for role in self.roles}
+        for seat in self.team:
+            if seat.role_name is not None and seat.role_name.strip().casefold() not in role_names:
+                raise ValueError(f"Unknown role {seat.role_name!r} in team — it must be one of roles")
+        return self
 
 
 class ProjectUpdate(BaseModel):

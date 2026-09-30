@@ -18,6 +18,8 @@ from binx_api.modules.users.schemas import (
     NotificationSettingsUpdate,
     PrivacySettingsRead,
     PrivacySettingsUpdate,
+    ProjectDashboardLayoutRead,
+    ProjectDashboardLayoutUpdate,
     QualificationsUpdate,
     TutorialProgressRead,
     TutorialProgressUpdate,
@@ -42,12 +44,16 @@ from binx_api.modules.users.service import (
     profile_education,
     profile_experience,
     profile_skills,
+    project_dashboard_hidden_widgets,
+    project_dashboard_wide_widgets,
+    project_dashboard_widget_order,
     save_user_image,
     tutorial_dismissed_popups,
     update_appearance_settings,
     update_dashboard_layout,
     update_notification_settings,
     update_privacy_settings,
+    update_project_dashboard_layout,
     update_qualifications,
     update_tutorial_progress,
     update_user_profile,
@@ -236,6 +242,34 @@ async def write_dashboard_layout(
         db, current_user, widget_order=data.widget_order, hidden_widgets=data.hidden_widgets
     )
     return _dashboard_layout_read(layout)
+
+
+def _project_dashboard_layout_read(layout) -> ProjectDashboardLayoutRead:
+    return ProjectDashboardLayoutRead(
+        widget_order=project_dashboard_widget_order(layout),
+        hidden_widgets=project_dashboard_hidden_widgets(layout),
+        wide_widgets=project_dashboard_wide_widgets(layout),
+    )
+
+
+@router.get("/me/project-dashboard-layout", response_model=ProjectDashboardLayoutRead)
+async def read_project_dashboard_layout(db: DbSession, current_user: CurrentUser) -> ProjectDashboardLayoutRead:
+    layout = await get_or_create_dashboard_layout(db, current_user)
+    return _project_dashboard_layout_read(layout)
+
+
+@router.put("/me/project-dashboard-layout", response_model=ProjectDashboardLayoutRead)
+async def write_project_dashboard_layout(
+    db: DbSession, current_user: CurrentUser, data: ProjectDashboardLayoutUpdate
+) -> ProjectDashboardLayoutRead:
+    layout = await update_project_dashboard_layout(
+        db,
+        current_user,
+        widget_order=data.widget_order,
+        hidden_widgets=data.hidden_widgets,
+        wide_widgets=data.wide_widgets,
+    )
+    return _project_dashboard_layout_read(layout)
 
 
 @router.patch("/me/password", response_model=MessageResponse)

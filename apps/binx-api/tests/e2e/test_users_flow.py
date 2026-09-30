@@ -233,6 +233,52 @@ class TestDashboardLayout:
         assert response.status_code == 422
 
 
+class TestProjectDashboardLayout:
+    async def test_read_returns_the_default_layout(self, auth_client) -> None:
+        from binx_api.modules.users.schemas import (
+            PROJECT_DASHBOARD_DEFAULT_HIDDEN,
+            PROJECT_DASHBOARD_DEFAULT_WIDE,
+            PROJECT_DASHBOARD_WIDGET_IDS,
+        )
+
+        response = await auth_client.get("/users/me/project-dashboard-layout")
+        assert response.status_code == 200
+        assert response.json() == {
+            "widget_order": PROJECT_DASHBOARD_WIDGET_IDS,
+            "hidden_widgets": PROJECT_DASHBOARD_DEFAULT_HIDDEN,
+            "wide_widgets": PROJECT_DASHBOARD_DEFAULT_WIDE,
+        }
+
+    async def test_put_persists_and_an_empty_hidden_list_stays_empty(self, auth_client) -> None:
+        from binx_api.modules.users.schemas import PROJECT_DASHBOARD_WIDGET_IDS
+
+        custom_order = list(reversed(PROJECT_DASHBOARD_WIDGET_IDS))
+        body = {"widget_order": custom_order, "hidden_widgets": [], "wide_widgets": ["board", "team"]}
+        response = await auth_client.put("/users/me/project-dashboard-layout", json=body)
+        assert response.status_code == 200
+        assert response.json() == body
+
+        # "Nothing hidden" is a real choice, not "fall back to the defaults".
+        follow_up = await auth_client.get("/users/me/project-dashboard-layout")
+        assert follow_up.json() == body
+
+        # Independent of the staff dashboard's own layout.
+        staff = await auth_client.get("/users/me/dashboard-layout")
+        assert staff.json()["hidden_widgets"] == []
+
+    async def test_rejects_an_unknown_or_duplicate_widget_id(self, auth_client) -> None:
+        unknown = await auth_client.put(
+            "/users/me/project-dashboard-layout",
+            json={"widget_order": [], "hidden_widgets": [], "wide_widgets": ["my_tasks", "needs_attention"]},
+        )
+        assert unknown.status_code == 422
+        duplicate = await auth_client.put(
+            "/users/me/project-dashboard-layout",
+            json={"widget_order": ["board", "board"], "hidden_widgets": [], "wide_widgets": []},
+        )
+        assert duplicate.status_code == 422
+
+
 class TestCredentialChanges:
     async def test_change_password_requires_the_current_one(self, auth_client) -> None:
         wrong = await auth_client.patch(

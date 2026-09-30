@@ -1,7 +1,8 @@
 /**
  * actions.ts - Projects
  *
- * Server action backing the "New project" dialog on the projects list page.
+ * Server action backing the multi-step "New project" wizard (/projects/new):
+ * creates the project together with its task tags, member roles, and team.
  * Detail-page mutations (update, delete, members, board, files) live in
  * app/(app)/projects/[projectId]/actions.ts instead, next to the page that
  * uses them.
@@ -12,7 +13,7 @@
 "use server";
 
 import { AuthApiError } from "@/lib/auth";
-import { createAgencyProject, Project, ProjectDetailsInput } from "@/lib/projects";
+import { createAgencyProject, Project, ProjectDetailsInput, ProjectSetupInput } from "@/lib/projects";
 
 export interface CreateProjectActionResult {
   error?: string;
@@ -22,9 +23,10 @@ export interface CreateProjectActionResult {
 export async function createProjectAction(
   agencyId: string,
   input: ProjectDetailsInput,
+  setup?: ProjectSetupInput,
 ): Promise<CreateProjectActionResult> {
   try {
-    const project = await createAgencyProject(agencyId, input);
+    const project = await createAgencyProject(agencyId, input, setup);
     return { project };
   } catch (error) {
     if (error instanceof AuthApiError) {

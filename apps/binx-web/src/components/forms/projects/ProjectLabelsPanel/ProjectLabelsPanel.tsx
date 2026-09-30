@@ -28,6 +28,7 @@ import {
   updateProjectRoleAction,
   updateProjectTagAction,
 } from "@/app/(app)/projects/[projectId]/actions";
+import LabelColorPicker, { DEFAULT_LABEL_COLOR } from "@/components/forms/projects/LabelColorPicker/LabelColorPicker";
 import type { ProjectRole, ProjectTag } from "@/lib/projects";
 
 import styles from "./ProjectLabelsPanel.module.scss";
@@ -43,11 +44,6 @@ interface ProjectLabelsPanelProps {
   kind: LabelKind;
   labels: Label[];
 }
-
-const DEFAULT_COLOR = "#6e6e76";
-
-/** A small, fixed palette so labels stay visually consistent across a project. */
-const PALETTE = ["#6e6e76", "#dc2626", "#ea580c", "#ca8a04", "#16a34a", "#0891b2", "#2563eb", "#7c3aed", "#db2777"];
 
 const CONFIG: Record<
   LabelKind,
@@ -90,30 +86,6 @@ const CONFIG: Record<
   },
 };
 
-interface ColorPickerProps {
-  value: string;
-  onChange: (color: string) => void;
-  label: string;
-}
-
-const ColorPicker = ({ value, onChange, label }: ColorPickerProps) => (
-  <div className={styles.colorPicker} role="radiogroup" aria-label={label}>
-    {PALETTE.map((color) => (
-      <button
-        key={color}
-        type="button"
-        role="radio"
-        aria-checked={value.toLowerCase() === color}
-        aria-label={color}
-        className={styles.swatch}
-        data-selected={value.toLowerCase() === color}
-        style={{ background: color }}
-        onClick={() => onChange(color)}
-      />
-    ))}
-  </div>
-);
-
 const ProjectLabelsPanel = ({ agencyId, projectId, kind, labels: initialLabels }: ProjectLabelsPanelProps) => {
   const router = useRouter();
   const config = CONFIG[kind];
@@ -124,11 +96,11 @@ const ProjectLabelsPanel = ({ agencyId, projectId, kind, labels: initialLabels }
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const [newName, setNewName] = useState("");
-  const [newColor, setNewColor] = useState(DEFAULT_COLOR);
+  const [newColor, setNewColor] = useState(DEFAULT_LABEL_COLOR);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
-  const [editColor, setEditColor] = useState(DEFAULT_COLOR);
+  const [editColor, setEditColor] = useState(DEFAULT_LABEL_COLOR);
 
   const handleCreate = (event: FormEvent) => {
     event.preventDefault();
@@ -147,7 +119,7 @@ const ProjectLabelsPanel = ({ agencyId, projectId, kind, labels: initialLabels }
       const created = (result.role ?? result.tag) as Label;
       setLabels((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
       setNewName("");
-      setNewColor(DEFAULT_COLOR);
+      setNewColor(DEFAULT_LABEL_COLOR);
       router.refresh();
     });
   };
@@ -221,7 +193,7 @@ const ProjectLabelsPanel = ({ agencyId, projectId, kind, labels: initialLabels }
                       onChange={(event) => setEditName(event.target.value)}
                       aria-label={`${config.noun} name`}
                     />
-                    <ColorPicker value={editColor} onChange={setEditColor} label={`${config.noun} colour`} />
+                    <LabelColorPicker value={editColor} onChange={setEditColor} label={`${config.noun} colour`} />
                     <div className={styles.editActions}>
                       <button type="submit" className={styles.iconConfirm} disabled={isBusy || !editName.trim()} aria-label="Save">
                         <Check aria-hidden="true" />
@@ -281,7 +253,7 @@ const ProjectLabelsPanel = ({ agencyId, projectId, kind, labels: initialLabels }
           onChange={(event) => setNewName(event.target.value)}
           aria-label={`New ${config.noun} name`}
         />
-        <ColorPicker value={newColor} onChange={setNewColor} label={`New ${config.noun} colour`} />
+        <LabelColorPicker value={newColor} onChange={setNewColor} label={`New ${config.noun} colour`} />
         <button
           type="submit"
           className={styles.addButton}

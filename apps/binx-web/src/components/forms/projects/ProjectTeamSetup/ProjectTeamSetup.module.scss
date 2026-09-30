@@ -1,0 +1,157 @@
+@use "../../../../styles/tokens" as t;
+@use "../../../../styles/mixins" as m;
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-5;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 14rem) 1.75rem;
+  align-items: center;
+  gap: t.$space-3;
+  padding: t.$space-3 t.$space-4;
+  border-bottom: 1px solid t.$color-border;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  @media (max-width: 600px) {
+    grid-template-columns: minmax(0, 1fr) 1.75rem;
+
+    .select {
+      grid-row: 2;
+      grid-column: 1 / -1;
+    }
+  }
+}
+
+.info {
+  min-width: 0;
+}
+
+.name {
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+  margin: 0;
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  color: t.$color-ink;
+}
+
+.youBadge {
+  @include m.mono-label;
+  padding: 0 t.$space-2;
+  font-size: 0.625rem;
+  color: t.$color-ink-soft;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  border-radius: 999px;
+}
+
+.meta {
+  margin: 0;
+  overflow: hidden;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.select {
+  @include m.input-base;
+  padding-top: t.$space-2;
+  padding-bottom: t.$space-2;
+  cursor: pointer;
+
+  &[aria-invalid="true"] {
+    border-color: t.$color-danger;
+  }
+}
+
+.remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: t.$space-1;
+  color: t.$color-ink-faint;
+  background: none;
+  border: none;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  &:hover {
+    color: t.$color-danger;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.removePlaceholder {
+  width: 1.75rem;
+}
+
+.addRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-3;
+
+  .select {
+    flex: 1 1 14rem;
+    min-width: 0;
+  }
+}
+
+.addButton {
+  @include m.button-base;
+  flex-shrink: 0;
+  padding: t.$space-2 t.$space-4;
+  color: t.$color-ink;
+  background: t.$color-surface;
+  border-color: t.$color-border-strong;
+
+  &:hover:not(:disabled) {
+    background: t.$color-paper;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
+.hint {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-faint;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

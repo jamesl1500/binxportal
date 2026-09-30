@@ -3,8 +3,8 @@
  *
  * The full team roster for a project: a sortable, searchable table of who's
  * assigned, the custom project role each person holds, and the controls to
- * assign or remove people. The dashboard teases the same roster inline
- * (ProjectMembersPanel); this gives it a direct, linkable page with room for
+ * assign or remove people. The dashboard's Team widget teases the same
+ * roster (read-only); this gives it a direct, linkable page with room for
  * every column.
  *
  * @module apps/binx-web/src/app/(app)/projects/[projectId]/team/page.tsx

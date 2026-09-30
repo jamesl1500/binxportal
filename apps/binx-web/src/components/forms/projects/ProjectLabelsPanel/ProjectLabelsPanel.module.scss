@@ -121,29 +121,6 @@
   flex: 1;
 }
 
-.colorPicker {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: t.$space-1;
-}
-
-.swatch {
-  width: 1.25rem;
-  height: 1.25rem;
-  padding: 0;
-  border: 2px solid transparent;
-  border-radius: 50%;
-  cursor: pointer;
-
-  &[data-selected="true"] {
-    border-color: t.$color-ink;
-  }
-
-  &:focus-visible {
-    @include m.focus-ring;
-  }
-}
-
 .addButton {
   @include m.button-base;
   background: t.$color-accent;

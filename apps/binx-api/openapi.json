@@ -8632,6 +8632,14 @@
             "title": "Name",
             "type": "string"
           },
+          "roles": {
+            "items": {
+              "$ref": "#/components/schemas/ProjectLabelSeed"
+            },
+            "maxItems": 50,
+            "title": "Roles",
+            "type": "array"
+          },
           "start_date": {
             "anyOf": [
               {
@@ -8649,6 +8657,22 @@
             "pattern": "^(planning|active|on_hold|waiting_on_client|completed|archived)$",
             "title": "Status",
             "type": "string"
+          },
+          "tags": {
+            "items": {
+              "$ref": "#/components/schemas/ProjectLabelSeed"
+            },
+            "maxItems": 50,
+            "title": "Tags",
+            "type": "array"
+          },
+          "team": {
+            "items": {
+              "$ref": "#/components/schemas/ProjectTeamSeat"
+            },
+            "maxItems": 100,
+            "title": "Team",
+            "type": "array"
           }
         },
         "required": [
@@ -8656,6 +8680,75 @@
           "client_id"
         ],
         "title": "ProjectCreate",
+        "type": "object"
+      },
+      "ProjectDashboardLayoutRead": {
+        "description": "Same shape as DashboardLayoutRead plus wide_widgets \u2014 the widgets the\nuser stretched to the full grid width. hidden_widgets/wide_widgets fall\nback to PROJECT_DASHBOARD_DEFAULT_* until the user first saves a layout.",
+        "properties": {
+          "hidden_widgets": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Hidden Widgets",
+            "type": "array"
+          },
+          "wide_widgets": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Wide Widgets",
+            "type": "array"
+          },
+          "widget_order": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Widget Order",
+            "type": "array"
+          }
+        },
+        "required": [
+          "widget_order",
+          "hidden_widgets",
+          "wide_widgets"
+        ],
+        "title": "ProjectDashboardLayoutRead",
+        "type": "object"
+      },
+      "ProjectDashboardLayoutUpdate": {
+        "description": "Full replace of all three fields together, same as DashboardLayoutUpdate.",
+        "properties": {
+          "hidden_widgets": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 7,
+            "title": "Hidden Widgets",
+            "type": "array"
+          },
+          "wide_widgets": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 7,
+            "title": "Wide Widgets",
+            "type": "array"
+          },
+          "widget_order": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 7,
+            "title": "Widget Order",
+            "type": "array"
+          }
+        },
+        "required": [
+          "widget_order",
+          "hidden_widgets",
+          "wide_widgets"
+        ],
+        "title": "ProjectDashboardLayoutUpdate",
         "type": "object"
       },
       "ProjectFileRead": {
@@ -8732,6 +8825,28 @@
           "created_at"
         ],
         "title": "ProjectFileRead",
+        "type": "object"
+      },
+      "ProjectLabelSeed": {
+        "description": "A role or tag to create alongside a new project (see ProjectCreate).",
+        "properties": {
+          "color": {
+            "default": "#6e6e76",
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "title": "Color",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "ProjectLabelSeed",
         "type": "object"
       },
       "ProjectMemberCreate": {
@@ -9104,6 +9219,33 @@
           "color"
         ],
         "title": "ProjectTagUpdate",
+        "type": "object"
+      },
+      "ProjectTeamSeat": {
+        "description": "A teammate to assign to a new project. role_name refers to one of the\nProjectCreate.roles by name, since those roles have no ids yet.",
+        "properties": {
+          "role_name": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role Name"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id"
+        ],
+        "title": "ProjectTeamSeat",
         "type": "object"
       },
       "ProjectUpdate": {
@@ -28797,6 +28939,76 @@
           }
         ],
         "summary": "Read Profile",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/users/me/project-dashboard-layout": {
+      "get": {
+        "operationId": "read_project_dashboard_layout_users_me_project_dashboard_layout_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectDashboardLayoutRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Read Project Dashboard Layout",
+        "tags": [
+          "users"
+        ]
+      },
+      "put": {
+        "operationId": "write_project_dashboard_layout_users_me_project_dashboard_layout_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectDashboardLayoutUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectDashboardLayoutRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Write Project Dashboard Layout",
         "tags": [
           "users"
         ]

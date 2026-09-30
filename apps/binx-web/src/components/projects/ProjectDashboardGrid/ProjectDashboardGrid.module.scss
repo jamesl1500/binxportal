@@ -1,0 +1,181 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: t.$space-3;
+  margin-bottom: t.$space-4;
+}
+
+.error {
+  font-size: t.$font-size-xs;
+  color: t.$color-danger;
+}
+
+.customizeButton,
+.resetButton {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-2;
+  padding: t.$space-2 t.$space-3;
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  color: t.$color-ink-soft;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  &:hover {
+    color: t.$color-ink;
+    border-color: t.$color-border-strong;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.resetButton {
+  border-color: transparent;
+  background: transparent;
+  text-decoration: underline;
+}
+
+.customizeHint {
+  margin: 0 0 t.$space-4;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+}
+
+.emptyNotice {
+  margin: 0;
+  padding: t.$space-8;
+  text-align: center;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-faint;
+  border: 1px dashed t.$color-border;
+  border-radius: t.$radius-lg;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: t.$space-5;
+  align-items: start;
+
+  @media (min-width: 900px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.card {
+  @include m.card-base;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-4;
+  min-width: 0;
+  padding: t.$space-5;
+
+  &[data-wide="true"] {
+    grid-column: 1 / -1;
+  }
+
+  &[data-dragging="true"] {
+    opacity: 0.5;
+  }
+
+  .grid[data-customizing="true"] & {
+    cursor: grab;
+    border-style: dashed;
+  }
+
+  &[data-hidden="true"] {
+    background: t.$color-paper;
+
+    .cardTitle {
+      color: t.$color-ink-faint;
+    }
+  }
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  gap: t.$space-3;
+}
+
+.cardTitle {
+  flex: 1;
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-ink;
+}
+
+.dragHandle {
+  display: inline-flex;
+  align-items: center;
+  color: t.$color-ink-faint;
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+.controls {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-1;
+}
+
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: t.$space-1;
+  color: t.$color-ink-soft;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  &:hover:not(:disabled) {
+    color: t.$color-ink;
+    border-color: t.$color-border;
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.customizeDescription {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+}
+
+.loading {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-faint;
+}

@@ -62,6 +62,7 @@ import {
   uploadProjectFile,
   uploadTaskFile,
 } from "@/lib/projects";
+import { updateProjectDashboardLayout } from "@/lib/users";
 
 function errorResult(error: unknown, fallback: string): { error: string } {
   if (error instanceof AuthApiError) {
@@ -647,5 +648,22 @@ export async function applyProjectTaskSuggestionsAction(
     return {};
   } catch (error) {
     return errorResult(error, "Unable to set up the task list");
+  }
+}
+
+// ---- Dashboard layout ----
+// Per-user, not per-project: the same layout applies to every project the
+// staff member opens, so it isn't keyed by agency/project.
+
+export async function updateProjectDashboardLayoutAction(
+  widgetOrder: string[],
+  hiddenWidgets: string[],
+  wideWidgets: string[],
+): Promise<{ error?: string }> {
+  try {
+    await updateProjectDashboardLayout(widgetOrder, hiddenWidgets, wideWidgets);
+    return {};
+  } catch (error) {
+    return errorResult(error, "Unable to save your dashboard layout");
   }
 }

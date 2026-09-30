@@ -112,7 +112,7 @@ class TestProjectCrudAndMembers:
         )
         assert created.status_code == 201
         project_id = created.json()["id"]
-        assert created.json()["member_count"] == 0  # count on read, not create
+        assert created.json()["member_count"] == 1  # the creator
 
         read = await client.get(f"{base}/{project_id}", headers=headers)
         assert read.json()["member_count"] == 1  # the creator
@@ -126,6 +126,76 @@ class TestProjectCrudAndMembers:
 
         assert (await client.delete(f"{base}/{project_id}", headers=headers)).status_code == 204
         assert (await client.get(f"{base}/{project_id}", headers=headers)).status_code == 404
+
+    async def test_create_with_tags_roles_and_team_in_one_request(self, client, user, db_session) -> None:
+        from tests.factories import add_agency_member, make_agency, make_user
+        from tests.factories import make_client as _make_client
+
+        headers = auth_headers(user)
+        agency = await make_agency(db_session, owner=user, name="Setup Agency")
+        client_row = await _make_client(db_session, agency=agency)
+        teammate = await make_user(db_session, full_name="Dana Designer")
+        await add_agency_member(db_session, agency=agency, user=teammate)
+        base = f"/agencies/{agency.id}/projects"
+
+        created = await client.post(
+            base,
+            json={
+                "name": "Set Up Project",
+                "client_id": str(client_row.id),
+                "tags": [{"name": "Bug", "color": "#dc2626"}, {"name": "Design"}],
+                "roles": [{"name": "Project Manager", "color": "#2563eb"}, {"name": "Designer"}],
+                "team": [
+                    {"user_id": str(user.id), "role_name": "project manager"},
+                    {"user_id": str(teammate.id), "role_name": "Designer"},
+                ],
+            },
+            headers=headers,
+        )
+        assert created.status_code == 201
+        assert created.json()["member_count"] == 2
+        project_base = f"{base}/{created.json()['id']}"
+
+        tags = (await client.get(f"{project_base}/tags", headers=headers)).json()
+        assert [(t["name"], t["color"]) for t in tags] == [("Bug", "#dc2626"), ("Design", "#6e6e76")]
+        roles = (await client.get(f"{project_base}/roles", headers=headers)).json()
+        assert [r["name"] for r in roles] == ["Designer", "Project Manager"]
+
+        members = (await client.get(f"{project_base}/members", headers=headers)).json()
+        assert {m["full_name"]: m["role_name"] for m in members} == {
+            user.full_name: "Project Manager",
+            "Dana Designer": "Designer",
+        }
+
+    async def test_create_rejects_bad_setup(self, client, user, db_session) -> None:
+        from tests.factories import make_agency, make_user
+        from tests.factories import make_client as _make_client
+
+        headers = auth_headers(user)
+        agency = await make_agency(db_session, owner=user, name="Strict Agency")
+        client_row = await _make_client(db_session, agency=agency)
+        outsider = await make_user(db_session)
+        base = f"/agencies/{agency.id}/projects"
+        payload = {"name": "Nope", "client_id": str(client_row.id)}
+
+        unknown_role = await client.post(
+            base,
+            json={**payload, "roles": [{"name": "Dev"}], "team": [{"user_id": str(user.id), "role_name": "PM"}]},
+            headers=headers,
+        )
+        assert unknown_role.status_code == 422
+
+        duplicate_tag = await client.post(
+            base, json={**payload, "tags": [{"name": "Bug"}, {"name": "bug"}]}, headers=headers
+        )
+        assert duplicate_tag.status_code == 422
+
+        not_a_member = await client.post(
+            base, json={**payload, "team": [{"user_id": str(outsider.id)}]}, headers=headers
+        )
+        assert not_a_member.status_code == 400
+        # Nothing half-created by the rejected requests.
+        assert (await client.get(base, headers=headers)).json() == []
 
     async def test_assign_a_project_role_to_a_member(self, client, user, project) -> None:
         _agency, proj = project

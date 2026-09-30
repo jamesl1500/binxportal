@@ -651,3 +651,76 @@ export async function updateDashboardLayout(
     throw error;
   }
 }
+
+// ---- Project dashboard layout ----------------------------------------------
+
+/**
+ * ProjectDashboardLayout
+ *
+ * The signed-in user's customization of the per-project dashboard
+ * (`/projects/[projectId]`) — order, hidden widgets, and which widgets span
+ * the full width. One layout per user, applied to every project they open.
+ *
+ * @interface ProjectDashboardLayout
+ */
+export type ProjectDashboardLayout = Schemas["ProjectDashboardLayoutRead"];
+
+/**
+ * getProjectDashboardLayout
+ *
+ * Fetches the layout via `GET /users/me/project-dashboard-layout`. Until the
+ * user first customizes, binx-api answers with its short default layout.
+ *
+ * @function getProjectDashboardLayout
+ * @throws {AuthApiError} - Thrown if not authenticated.
+ */
+export async function getProjectDashboardLayout(): Promise<ProjectDashboardLayout> {
+  const headers = await authHeader();
+
+  try {
+    const { data } = await api.get<ProjectDashboardLayout>("/users/me/project-dashboard-layout", { headers });
+    return data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new AuthApiError(
+        extractDetailMessage(error.response.data, "Unable to load your project dashboard layout"),
+        error.response.status,
+      );
+    }
+    throw error;
+  }
+}
+
+/**
+ * updateProjectDashboardLayout
+ *
+ * Replaces the layout wholesale via `PUT /users/me/project-dashboard-layout`,
+ * same full-replace contract as updateDashboardLayout.
+ *
+ * @function updateProjectDashboardLayout
+ * @throws {AuthApiError} - Thrown if not authenticated, or binx-api rejects the update.
+ */
+export async function updateProjectDashboardLayout(
+  widgetOrder: string[],
+  hiddenWidgets: string[],
+  wideWidgets: string[],
+): Promise<ProjectDashboardLayout> {
+  const headers = await authHeader();
+
+  try {
+    const { data } = await api.put<ProjectDashboardLayout>(
+      "/users/me/project-dashboard-layout",
+      { widget_order: widgetOrder, hidden_widgets: hiddenWidgets, wide_widgets: wideWidgets },
+      { headers },
+    );
+    return data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new AuthApiError(
+        extractDetailMessage(error.response.data, "Unable to update your project dashboard layout"),
+        error.response.status,
+      );
+    }
+    throw error;
+  }
+}

@@ -1,13 +1,12 @@
 @use "../../../styles/tokens" as t;
 @use "../../../styles/mixins" as m;
 
+// No card chrome of its own — it renders inside the project dashboard's
+// widget grid, which supplies the frame and the "AI status update" title.
 .card {
-  @include m.card-base;
-  padding: t.$space-5;
   display: flex;
   flex-direction: column;
   gap: t.$space-3;
-  margin-bottom: t.$space-6;
 }
 
 .head {
@@ -17,23 +16,15 @@
   gap: t.$space-3;
 }
 
-.eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: t.$space-2;
-  @include m.mono-label;
-  color: t.$color-ink-soft;
-}
-
-.eyebrowIcon {
-  width: 0.875rem;
-  height: 0.875rem;
-  color: t.$color-accent;
-}
-
 .generate {
   @include m.button-base;
+  flex-shrink: 0;
   padding: t.$space-2 t.$space-4;
+
+  svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
   background: t.$color-accent;
   color: t.$color-accent-foreground;
 

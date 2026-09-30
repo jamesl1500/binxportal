@@ -140,9 +140,26 @@ async def create_project(
     start_date,
     due_date,
     default_hourly_rate_cents: int | None = None,
+    tags: list[tuple[str, str]] | None = None,
+    roles: list[tuple[str, str]] | None = None,
+    team: list[tuple[uuid.UUID, str | None]] | None = None,
 ) -> Project:
+    """tags/roles are (name, color) pairs; team is (user_id, role name or
+    None) pairs, the role name matching one of `roles` (case-insensitive).
+    All of it lands in the same commit as the project itself."""
     await _check_can_create_project(db, agency)
     await agencies_service.get_client_or_404(db, agency.id, client_id)
+
+    team = team or []
+    teammate_ids = {user_id for user_id, _role in team if user_id != created_by.id}
+    if teammate_ids:
+        agency_member_ids = await db.execute(
+            select(AgencyMember.user_id).where(
+                AgencyMember.agency_id == agency.id, AgencyMember.user_id.in_(teammate_ids)
+            )
+        )
+        if set(agency_member_ids.scalars().all()) != teammate_ids:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Only agency members can be assigned to a project")
 
     slug = await _generate_unique_project_slug(db, agency.id, name)
     project = Project(
@@ -163,11 +180,27 @@ async def create_project(
     for index, list_name in enumerate(DEFAULT_TASK_LISTS):
         db.add(ProjectTaskList(project_id=project.id, name=list_name, position=index))
 
+    for name, color in tags or []:
+        db.add(ProjectTag(project_id=project.id, name=name.strip(), color=color))
+    role_rows: dict[str, ProjectRole] = {}
+    for name, color in roles or []:
+        role = ProjectRole(project_id=project.id, name=name.strip(), color=color)
+        db.add(role)
+        role_rows[role.name.casefold()] = role
+    await db.flush()  # populate role ids before members point at them
+
+    def _role_id(role_name: str | None) -> uuid.UUID | None:
+        return role_rows[role_name.strip().casefold()].id if role_name else None
+
     # The creator doesn't become a team member automatically just by being
     # created_by_id — that column is provenance ("who started this"), not
     # assignment. Without this, every new project starts showing 0 members
     # even to the person who just made it.
-    db.add(ProjectMember(project_id=project.id, user_id=created_by.id))
+    creator_role = next((role_name for user_id, role_name in team if user_id == created_by.id), None)
+    db.add(ProjectMember(project_id=project.id, user_id=created_by.id, role_id=_role_id(creator_role)))
+    for user_id, role_name in team:
+        if user_id != created_by.id:
+            db.add(ProjectMember(project_id=project.id, user_id=user_id, role_id=_role_id(role_name)))
 
     try:
         await db.commit()
@@ -176,6 +209,19 @@ async def create_project(
         raise HTTPException(status.HTTP_409_CONFLICT, "Could not create project, please try again") from None
 
     await db.refresh(project)
+
+    for user_id in teammate_ids:
+        await notifications_service.notify(
+            db,
+            user_id=user_id,
+            category=CATEGORY_PROJECTS,
+            event_type=EVENT_PROJECT_ADDED,
+            title=f"You were added to {project.name}",
+            body=f"{created_by.full_name} added you to the project.",
+            link=f"/projects/{project.id}",
+            agency_id=project.agency_id,
+            actor=created_by,
+        )
 
     await activity_service.log_agency_activity(
         db,

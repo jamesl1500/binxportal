@@ -70,16 +70,33 @@ test.describe("staff app", () => {
     await expect(staffPage.getByRole("button", { name: "Draft follow-up" })).toBeVisible();
   });
 
-  test("creating a project offers an AI starter task list", async ({ staffPage }) => {
+  test("the new-project wizard sets up tags, roles, and team, then offers AI starter tasks", async ({ staffPage }) => {
     await staffPage.goto("/projects");
     await staffPage.getByRole("link", { name: "New project" }).click();
     await staffPage.getByLabel("Project name").fill("Seasonal Campaign");
+    await staffPage.getByRole("button", { name: "Continue" }).click();
+
+    // Task tags and roles come pre-selected; the creator starts as Project Manager.
+    await expect(staffPage.getByRole("heading", { name: "Task tags" })).toBeVisible();
+    await staffPage.getByRole("button", { name: "Continue" }).click();
+    await expect(staffPage.getByRole("heading", { name: "Member roles" })).toBeVisible();
+    await staffPage.getByRole("button", { name: "Continue" }).click();
+    await expect(staffPage.getByRole("heading", { name: "Team", exact: true })).toBeVisible();
+    await staffPage.getByRole("button", { name: "Continue" }).click();
+
+    await expect(staffPage.getByRole("heading", { name: "Review" })).toBeVisible();
     await staffPage.getByRole("button", { name: "Create project" }).click();
 
-    await expect(staffPage.getByRole("heading", { name: "Seasonal Campaign created" })).toBeVisible();
+    await expect(staffPage.getByRole("heading", { name: "Seasonal Campaign is ready" })).toBeVisible();
     await expect(staffPage.getByText("Set up a starter task list with AI?")).toBeVisible();
     await staffPage.getByRole("button", { name: "Skip" }).click();
-    await expect(staffPage.getByRole("heading", { name: "Seasonal Campaign created" })).not.toBeVisible();
+    await expect(staffPage.getByRole("heading", { name: "Seasonal Campaign is ready" })).not.toBeVisible();
+
+    // Landed on the project's dashboard, already set up for the team.
+    await staffPage.waitForURL(/\/projects\/[0-9a-f-]{36}$/);
+    await staffPage.goto(`${staffPage.url()}/settings`);
+    await staffPage.getByRole("button", { name: "Task tags" }).click();
+    await expect(staffPage.getByText("Bug", { exact: true })).toBeVisible();
   });
 
   test("the message composer offers an AI draft-reply button", async ({ staffPage }) => {

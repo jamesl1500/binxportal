@@ -190,9 +190,13 @@ async def create_project(
         start_date=data.start_date,
         due_date=data.due_date,
         default_hourly_rate_cents=data.default_hourly_rate_cents,
+        tags=[(tag.name, tag.color) for tag in data.tags],
+        roles=[(role.name, role.color) for role in data.roles],
+        team=[(seat.user_id, seat.role_name) for seat in data.team],
     )
     client_name = await _resolve_client_name(db, project.client_id)
-    return _project_read(project, client_name, 0)
+    member_count = await service.count_project_members(db, project.id)
+    return _project_read(project, client_name, member_count)
 
 
 @router.get("/{project_id}", response_model=ProjectRead)

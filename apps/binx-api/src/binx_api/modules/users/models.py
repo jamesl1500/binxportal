@@ -167,3 +167,12 @@ class UserDashboardLayout(Base):
     # is appended at the end when the layout is read.
     widget_order: Mapped[str] = mapped_column(Text, default="[]")
     hidden_widgets: Mapped[str] = mapped_column(Text, default="[]")
+
+    # The same customization for the per-project dashboard (/projects/{id}),
+    # shared across every project the user opens. hidden/wide are nullable:
+    # NULL means "never customized", so the read falls back to
+    # PROJECT_DASHBOARD_DEFAULT_* (users/schemas.py) instead of "nothing
+    # hidden" — "[]" would be indistinguishable from a user who unhid everything.
+    project_widget_order: Mapped[str] = mapped_column(Text, default="[]", server_default="[]")
+    project_hidden_widgets: Mapped[str | None] = mapped_column(Text, default=None)
+    project_wide_widgets: Mapped[str | None] = mapped_column(Text, default=None)
