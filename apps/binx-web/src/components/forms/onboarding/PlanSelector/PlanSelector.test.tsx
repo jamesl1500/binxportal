@@ -64,7 +64,7 @@ describe("PlanSelector", () => {
     expect(screen.getByRole("button", { name: "Start with Pro" })).toBeInTheDocument();
   });
 
-  it("switches to Free via changePlanAction and routes to the dashboard", async () => {
+  it("switches to Free via changePlanAction and routes to the import step", async () => {
     changePlan.mockResolvedValueOnce({ subscription: {} as never });
     const user = userEvent.setup();
     render(<PlanSelector agencyId="a1" catalog={catalog} />);
@@ -72,7 +72,7 @@ describe("PlanSelector", () => {
     await user.click(screen.getByRole("button", { name: "Continue with Free" }));
 
     expect(changePlan).toHaveBeenCalledWith("a1", "free");
-    expect(push).toHaveBeenCalledWith("/dashboard");
+    expect(push).toHaveBeenCalledWith("/onboarding/four");
   });
 
   it("toasts an error from changePlanAction without routing away", async () => {
@@ -86,14 +86,14 @@ describe("PlanSelector", () => {
     expect(push).not.toHaveBeenCalled();
   });
 
-  it("starts a Checkout session for a paid plan, returning to the dashboard, and redirects", async () => {
+  it("starts a Checkout session for a paid plan, returning to the import step, and redirects", async () => {
     startCheckout.mockResolvedValueOnce({ redirectUrl: "https://checkout.stripe.test/abc" });
     const user = userEvent.setup();
     render(<PlanSelector agencyId="a1" catalog={catalog} />);
 
     await user.click(screen.getByRole("button", { name: "Start with Pro" }));
 
-    expect(startCheckout).toHaveBeenCalledWith("a1", "pro", "/dashboard");
+    expect(startCheckout).toHaveBeenCalledWith("a1", "pro", "/onboarding/four");
     expect(window.location.href).toBe("https://checkout.stripe.test/abc");
   });
 

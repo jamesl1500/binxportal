@@ -34,6 +34,12 @@ const STEPS = [
     title: "Choose your plan",
     text: "Free to start, upgrade any time.",
   },
+  {
+    href: "/onboarding/four",
+    index: "04",
+    title: "Bring your clients & team",
+    text: "Optional: import them from a spreadsheet.",
+  },
 ];
 
 const OnboardingSteps = () => {

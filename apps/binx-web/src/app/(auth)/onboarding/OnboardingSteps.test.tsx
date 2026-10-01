@@ -24,10 +24,18 @@ describe("OnboardingSteps", () => {
     expect(screen.getByText("Tell us about you").closest("li")).toHaveAttribute("data-active", "false");
   });
 
-  it("renders all three steps with their index labels", () => {
+  it("marks the optional import step active on /onboarding/four", () => {
+    mockedPathname.mockReturnValue("/onboarding/four");
     render(<OnboardingSteps />);
-    expect(screen.getByText("01")).toBeInTheDocument();
-    expect(screen.getByText("02")).toBeInTheDocument();
-    expect(screen.getByText("03")).toBeInTheDocument();
+
+    expect(screen.getByText("Bring your clients & team").closest("li")).toHaveAttribute("data-active", "true");
+    expect(screen.getByText("Choose your plan").closest("li")).toHaveAttribute("data-active", "false");
+  });
+
+  it("renders all four steps with their index labels", () => {
+    render(<OnboardingSteps />);
+    for (const index of ["01", "02", "03", "04"]) {
+      expect(screen.getByText(index)).toBeInTheDocument();
+    }
   });
 });

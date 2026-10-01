@@ -55,3 +55,33 @@
   font-size: t.$font-size-sm;
   color: t.$color-ink-soft;
 }
+
+.importHint {
+  margin: t.$space-4 0 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+
+  a {
+    font-weight: 600;
+    color: t.$color-ink;
+  }
+}
+
+.backLink {
+  display: inline-block;
+  margin-bottom: t.$space-4;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+  text-decoration: none;
+
+  &:hover {
+    color: t.$color-ink;
+  }
+}
+
+.importCard {
+  padding: t.$space-6;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+}

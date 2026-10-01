@@ -99,6 +99,40 @@ test.describe("staff app", () => {
     await expect(staffPage.getByText("Bug", { exact: true })).toBeVisible();
   });
 
+  test("clients can be bulk-imported from a CSV, skipping duplicates and stopping at the plan limit", async ({
+    staffPage,
+  }) => {
+    // The seeded demo agency is on Free (3 clients) and already has 2,
+    // including Fjord & Field — so exactly one new client fits.
+    await staffPage.goto("/clients");
+    await staffPage.getByRole("link", { name: "Import" }).click();
+
+    const csv = [
+      "Company,Email",
+      "Harbor Lights,hello@harborlights.example.com",
+      "fjord & field,",
+      "Northwind Co,",
+      "Extra Co,",
+    ].join("\n");
+    await staffPage
+      .getByLabel("Upload a clients spreadsheet")
+      .setInputFiles({ name: "clients.csv", mimeType: "text/csv", buffer: Buffer.from(csv) });
+
+    await expect(staffPage.getByRole("heading", { name: "Match your columns" })).toBeVisible();
+    await staffPage.getByRole("button", { name: "Review rows" }).click();
+
+    await expect(staffPage.getByRole("heading", { name: "Review" })).toBeVisible();
+    await expect(staffPage.getByText(/Your Free plan allows 3 clients and has room for 1 more/)).toBeVisible();
+    await staffPage.getByRole("button", { name: "Import 1 client" }).click();
+
+    await expect(staffPage.getByRole("heading", { name: "Imported 1 client" })).toBeVisible();
+    await expect(staffPage.getByRole("cell", { name: "fjord & field", exact: true })).toBeVisible(); // skipped: duplicate
+    await expect(staffPage.getByRole("cell", { name: "Northwind Co", exact: true })).toBeVisible(); // skipped: over the limit
+    await staffPage.getByRole("link", { name: "View clients" }).click();
+    await expect(staffPage.getByRole("link", { name: "Harbor Lights" })).toBeVisible();
+    await expect(staffPage.getByRole("link", { name: "Northwind Co" })).not.toBeVisible();
+  });
+
   test("the message composer offers an AI draft-reply button", async ({ staffPage }) => {
     await staffPage.goto("/messages");
     await staffPage.getByRole("button", { name: /Refresh — internal/ }).click();

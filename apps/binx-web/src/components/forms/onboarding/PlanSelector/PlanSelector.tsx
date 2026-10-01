@@ -6,7 +6,9 @@
  * onboarding-appropriate copy and actions instead of "current plan" —
  * there's no existing subscription yet, so Free goes straight through
  * `changePlanAction` (no Stripe involved) and every paid plan starts a
- * Checkout Session that returns to `/dashboard` instead of Settings > Plan.
+ * Checkout Session that returns to onboarding step four (bulk import)
+ * instead of Settings > Plan. Either way the next stop is step four, which
+ * comes after the plan so imports are checked against the chosen plan's limits.
  *
  * If the visitor arrived via a marketing pricing-page CTA, `PLAN_INTENT_STORAGE_KEY`
  * in `localStorage` carries which plan they clicked (see (marketing)/pricing/page.tsx
@@ -30,6 +32,8 @@ import { formatMoneyCents } from "@/lib/money";
 import { PLAN_INTENT_STORAGE_KEY } from "@/lib/plan-intent";
 
 import styles from "./PlanSelector.module.scss";
+
+const ONBOARDING_NEXT_STEP = "/onboarding/four";
 
 interface PlanSelectorProps {
   agencyId: string;
@@ -69,14 +73,14 @@ const PlanSelector = ({ agencyId, catalog }: PlanSelectorProps) => {
         toast.error(result.error);
         return;
       }
-      router.push("/dashboard");
+      router.push(ONBOARDING_NEXT_STEP);
     });
   };
 
   const handlePaid = (plan: string) => {
     setPendingPlan(plan);
     startTransition(async () => {
-      const result = await startPlanCheckoutAction(agencyId, plan, "/dashboard");
+      const result = await startPlanCheckoutAction(agencyId, plan, ONBOARDING_NEXT_STEP);
       if (result.error || !result.redirectUrl) {
         setPendingPlan(null);
         toast.error(result.error ?? "Something went wrong");

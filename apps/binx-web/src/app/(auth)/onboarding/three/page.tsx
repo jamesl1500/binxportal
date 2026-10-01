@@ -37,7 +37,7 @@ const OnboardingStepThreePage = async () => {
       </Link>
 
       <header className={styles.header}>
-        <span className={styles.eyebrow}>Step 3 of 3</span>
+        <span className={styles.eyebrow}>Step 3 of 4</span>
         <h1 className={styles.title}>Choose your plan</h1>
         <p className={styles.subtitle}>
           Free to start, no credit card required. Upgrade any time as your team grows.

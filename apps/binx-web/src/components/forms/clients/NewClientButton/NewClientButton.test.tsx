@@ -14,4 +14,9 @@ describe("NewClientButton", () => {
     render(<NewClientButton />);
     expect(screen.getByRole("link", { name: /new client/i })).toHaveAttribute("href", "/clients/new");
   });
+
+  it("offers the bulk importer", () => {
+    render(<NewClientButton />);
+    expect(screen.getByRole("link", { name: /import/i })).toHaveAttribute("href", "/clients/import");
+  });
 });

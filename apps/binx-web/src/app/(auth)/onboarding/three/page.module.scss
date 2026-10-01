@@ -39,3 +39,13 @@
   font-size: t.$font-size-sm;
   color: t.$color-ink-soft;
 }
+
+.notice {
+  margin: 0 0 t.$space-6;
+  padding: t.$space-3 t.$space-4;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+}

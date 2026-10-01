@@ -25,6 +25,9 @@ export const APP_SEGMENTS = [
   "billing",
   "clients",
   "dashboard",
+  // Server actions only (no page) today — listed so robots.test.ts stays
+  // happy and a future /imports page is covered without anyone remembering.
+  "imports",
   "invoices",
   "leads",
   "meetings",

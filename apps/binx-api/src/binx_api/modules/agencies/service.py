@@ -467,6 +467,38 @@ async def _is_already_member(db: AsyncSession, agency_id: uuid.UUID, email: str)
     return result.scalar_one_or_none() is not None
 
 
+# ---- Team size (plan limit) ----
+# A plan's max_team_members counts current members plus still-pending,
+# unexpired invitations — an invite is a reserved seat, otherwise a Free
+# agency could send unlimited invites and only hit the cap on acceptance.
+
+
+async def count_team_seats(db: AsyncSession, agency_id: uuid.UUID) -> int:
+    members = await db.execute(
+        select(func.count()).select_from(AgencyMember).where(AgencyMember.agency_id == agency_id)
+    )
+    pending = await db.execute(
+        select(func.count())
+        .select_from(AgencyInvitation)
+        .where(
+            AgencyInvitation.agency_id == agency_id,
+            AgencyInvitation.status == INVITATION_PENDING,
+            AgencyInvitation.expires_at > datetime.now(UTC),
+        )
+    )
+    return int(members.scalar_one()) + int(pending.scalar_one())
+
+
+async def _check_can_add_team_seat(db: AsyncSession, agency: Agency) -> None:
+    limits = await billing_service.get_plan_limits(db, agency.id)
+    billing_service.assert_within_limit(
+        await count_team_seats(db, agency.id),
+        limits.max_team_members,
+        resource="team members (including pending invites)",
+        plan_name=limits.name,
+    )
+
+
 # Invites someone to an agency by email. Re-issues (rather than duplicates) an
 # existing pending invite to the same address, so re-sending doesn't pile up
 # rows. Returns the raw token alongside the record — it's never persisted, so
@@ -488,6 +520,11 @@ async def create_invitation(
 
     raw_token = generate_opaque_token()
     expires_at = datetime.now(UTC) + timedelta(days=INVITATION_EXPIRE_DAYS)
+
+    # A re-issued live invite keeps its seat; a new one (or reviving an
+    # expired one, which count_team_seats no longer counts) takes another.
+    if invitation is None or invitation.expires_at <= datetime.now(UTC):
+        await _check_can_add_team_seat(db, agency)
 
     if invitation is None:
         invitation = AgencyInvitation(
@@ -635,6 +672,24 @@ async def _client_slug_taken(db: AsyncSession, agency_id: uuid.UUID, slug: str) 
         select(AgencyClient.id).where(AgencyClient.agency_id == agency_id, AgencyClient.slug == slug)
     )
     return result.scalar_one_or_none() is not None
+
+
+async def generate_client_slugs(db: AsyncSession, agency_id: uuid.UUID, names: list[str]) -> list[str]:
+    """Unique slugs for several new clients at once (bulk import) — one query
+    for the taken slugs, then deduped in memory, since per-name lookups can't
+    see the other not-yet-saved rows in the same batch."""
+    result = await db.execute(select(AgencyClient.slug).where(AgencyClient.agency_id == agency_id))
+    taken = set(result.scalars().all())
+    slugs: list[str] = []
+    for name in names:
+        base = _slugify(name)
+        slug, suffix = base, 2
+        while slug in taken:
+            slug = f"{base}-{suffix}"
+            suffix += 1
+        taken.add(slug)
+        slugs.append(slug)
+    return slugs
 
 
 async def _generate_unique_client_slug(db: AsyncSession, agency_id: uuid.UUID, name: str) -> str:

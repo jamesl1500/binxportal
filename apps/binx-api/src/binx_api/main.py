@@ -15,6 +15,7 @@ from binx_api.modules.boards.router import router as boards_router
 from binx_api.modules.client_portal.router import router as client_portal_router
 from binx_api.modules.dashboard.router import router as dashboard_router
 from binx_api.modules.files.router import router as files_router
+from binx_api.modules.imports.router import router as imports_router
 from binx_api.modules.invoicing.recurring_router import router as recurring_invoices_router
 from binx_api.modules.invoicing.router import router as invoicing_router
 from binx_api.modules.invoicing.webhooks_router import router as invoicing_webhooks_router
@@ -74,6 +75,7 @@ def create_app() -> FastAPI:
     app.include_router(recurring_invoices_router)
     app.include_router(kickoffs_router)
     app.include_router(kickoff_templates_router)
+    app.include_router(imports_router)
 
     return app
 

@@ -41,7 +41,9 @@ const TeamTabs = ({ canManage }: TeamTabsProps) => {
           href={tab.href}
           ref={tab.href === "/team/invitations" ? invitationsRef : undefined}
           className={styles.tab}
-          data-active={pathname === tab.href}
+          // Sub-pages (e.g. /team/invitations/import) keep their tab lit;
+          // "/team" itself only matches exactly, since every path starts with it.
+          data-active={tab.href === "/team" ? pathname === tab.href : pathname.startsWith(tab.href)}
         >
           {tab.label}
         </Link>

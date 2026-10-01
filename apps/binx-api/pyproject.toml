@@ -21,6 +21,9 @@ dependencies = [
     # Runtime, not just the test client: the Google Places client
     # (modules/leads/places.py) calls the Places API with it.
     "httpx>=0.28.1",
+    # Reads .xlsx uploads for bulk client/team imports (modules/imports) —
+    # read-only, values-only, so no formulas or macros are ever evaluated.
+    "openpyxl>=3.1.5",
     "passlib[bcrypt]>=1.7.4",
     "pydantic-settings>=2.15.0",
     "pydantic[email]>=2.13.4",

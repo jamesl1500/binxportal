@@ -734,6 +734,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agencies/{agency_id}/imports/clients": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import Clients */
+        post: operations["import_clients_agencies__agency_id__imports_clients_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/imports/team": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import Team */
+        post: operations["import_team_agencies__agency_id__imports_team_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/imports/{kind}/parse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Parse Import File */
+        post: operations["parse_import_file_agencies__agency_id__imports__kind__parse_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agencies/{agency_id}/invitations": {
         parameters: {
             query?: never;
@@ -4590,6 +4641,11 @@ export interface components {
             /** File */
             file?: string | null;
         };
+        /** Body_parse_import_file_agencies__agency_id__imports__kind__parse_post */
+        Body_parse_import_file_agencies__agency_id__imports__kind__parse_post: {
+            /** File */
+            file: string;
+        };
         /** Body_post_message_agencies__agency_id__conversations__conversation_id__messages_post */
         Body_post_message_agencies__agency_id__conversations__conversation_id__messages_post: {
             /**
@@ -4780,6 +4836,37 @@ export interface components {
              * Format: uuid
              */
             user_id: string;
+        };
+        /** ClientImportRequest */
+        ClientImportRequest: {
+            /**
+             * Dry Run
+             * @default true
+             */
+            dry_run: boolean;
+            /** Rows */
+            rows: components["schemas"]["ClientImportRow"][];
+        };
+        /** ClientImportRow */
+        ClientImportRow: {
+            /** Billing Address */
+            billing_address?: string | null;
+            /** Billing Email */
+            billing_email?: string | null;
+            /** Name */
+            name?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Primary Contact Email */
+            primary_contact_email?: string | null;
+            /** Primary Contact Name */
+            primary_contact_name?: string | null;
+            /** Primary Contact Phone */
+            primary_contact_phone?: string | null;
+            /** Row */
+            row: number;
+            /** Website */
+            website?: string | null;
         };
         /** ClientInvitationAccept */
         ClientInvitationAccept: {
@@ -5073,6 +5160,74 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** ImportFieldRead */
+        ImportFieldRead: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Required */
+            required: boolean;
+        };
+        /**
+         * ImportParseRead
+         * @description The raw sheet plus a suggested column → field mapping. The client lets
+         *     the user adjust the mapping, then sends mapped rows to the import endpoint.
+         */
+        ImportParseRead: {
+            /** Columns */
+            columns: string[];
+            /** Fields */
+            fields: components["schemas"]["ImportFieldRead"][];
+            /** Mapping */
+            mapping: {
+                [key: string]: number | null;
+            };
+            /** Rows */
+            rows: components["schemas"]["ImportParsedRow"][];
+        };
+        /** ImportParsedRow */
+        ImportParsedRow: {
+            /** Cells */
+            cells: string[];
+            /** Row */
+            row: number;
+        };
+        /** ImportResultRead */
+        ImportResultRead: {
+            /** Dry Run */
+            dry_run: boolean;
+            /** Duplicates */
+            duplicates: number;
+            /** Imported */
+            imported: number;
+            /** Invalid */
+            invalid: number;
+            /** Limit */
+            limit: number | null;
+            /** Over Limit */
+            over_limit: number;
+            /** Plan Name */
+            plan_name: string;
+            /** Remaining */
+            remaining: number | null;
+            /** Rows */
+            rows: components["schemas"]["ImportRowResult"][];
+        };
+        /** ImportRowResult */
+        ImportRowResult: {
+            /** Label */
+            label: string;
+            /** Message */
+            message?: string | null;
+            /** Row */
+            row: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "duplicate" | "invalid" | "over_limit";
         };
         /** InvoiceCreate */
         InvoiceCreate: {
@@ -7744,6 +7899,25 @@ export interface components {
             /** Title */
             title: string;
         };
+        /** TeamImportRequest */
+        TeamImportRequest: {
+            /**
+             * Dry Run
+             * @default true
+             */
+            dry_run: boolean;
+            /** Rows */
+            rows: components["schemas"]["TeamImportRow"][];
+        };
+        /** TeamImportRow */
+        TeamImportRow: {
+            /** Email */
+            email?: string | null;
+            /** Role */
+            role?: string | null;
+            /** Row */
+            row: number;
+        };
         /** TimeEntryRead */
         TimeEntryRead: {
             /** Amount Cents */
@@ -9975,6 +10149,112 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DashboardRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_clients_agencies__agency_id__imports_clients_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClientImportRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportResultRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_team_agencies__agency_id__imports_team_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TeamImportRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportResultRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    parse_import_file_agencies__agency_id__imports__kind__parse_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: "clients" | "team";
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_parse_import_file_agencies__agency_id__imports__kind__parse_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportParseRead"];
                 };
             };
             /** @description Validation Error */

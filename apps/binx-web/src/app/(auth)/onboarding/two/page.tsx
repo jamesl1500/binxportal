@@ -23,7 +23,7 @@ const OnboardingStepTwoPage = () => {
       </Link>
 
       <header className={styles.header}>
-        <span className={styles.eyebrow}>Step 2 of 3</span>
+        <span className={styles.eyebrow}>Step 2 of 4</span>
         <h1 className={styles.title}>Create your agency</h1>
         <p className={styles.subtitle}>
           This becomes your team&apos;s home base — you can rename it any time. Add clients, projects, and teammates

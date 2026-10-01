@@ -2601,6 +2601,20 @@
         "title": "Body_create_task_comment_agencies__agency_id__projects__project_id__tasks__task_id__comments_post",
         "type": "object"
       },
+      "Body_parse_import_file_agencies__agency_id__imports__kind__parse_post": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_parse_import_file_agencies__agency_id__imports__kind__parse_post",
+        "type": "object"
+      },
       "Body_post_message_agencies__agency_id__conversations__conversation_id__messages_post": {
         "properties": {
           "body": {
@@ -3096,6 +3110,139 @@
           "joined_at"
         ],
         "title": "ClientContactRead",
+        "type": "object"
+      },
+      "ClientImportRequest": {
+        "properties": {
+          "dry_run": {
+            "default": true,
+            "title": "Dry Run",
+            "type": "boolean"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ClientImportRow"
+            },
+            "maxItems": 500,
+            "minItems": 1,
+            "title": "Rows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "title": "ClientImportRequest",
+        "type": "object"
+      },
+      "ClientImportRow": {
+        "properties": {
+          "billing_address": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Billing Address"
+          },
+          "billing_email": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Billing Email"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "primary_contact_email": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primary Contact Email"
+          },
+          "primary_contact_name": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primary Contact Name"
+          },
+          "primary_contact_phone": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primary Contact Phone"
+          },
+          "row": {
+            "minimum": 1.0,
+            "title": "Row",
+            "type": "integer"
+          },
+          "website": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Website"
+          }
+        },
+        "required": [
+          "row"
+        ],
+        "title": "ClientImportRow",
         "type": "object"
       },
       "ClientInvitationAccept": {
@@ -3935,6 +4082,208 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "ImportFieldRead": {
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "required": {
+            "title": "Required",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "required"
+        ],
+        "title": "ImportFieldRead",
+        "type": "object"
+      },
+      "ImportParseRead": {
+        "description": "The raw sheet plus a suggested column \u2192 field mapping. The client lets\nthe user adjust the mapping, then sends mapped rows to the import endpoint.",
+        "properties": {
+          "columns": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Columns",
+            "type": "array"
+          },
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/ImportFieldRead"
+            },
+            "title": "Fields",
+            "type": "array"
+          },
+          "mapping": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Mapping",
+            "type": "object"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ImportParsedRow"
+            },
+            "title": "Rows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "columns",
+          "rows",
+          "fields",
+          "mapping"
+        ],
+        "title": "ImportParseRead",
+        "type": "object"
+      },
+      "ImportParsedRow": {
+        "properties": {
+          "cells": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Cells",
+            "type": "array"
+          },
+          "row": {
+            "title": "Row",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "row",
+          "cells"
+        ],
+        "title": "ImportParsedRow",
+        "type": "object"
+      },
+      "ImportResultRead": {
+        "properties": {
+          "dry_run": {
+            "title": "Dry Run",
+            "type": "boolean"
+          },
+          "duplicates": {
+            "title": "Duplicates",
+            "type": "integer"
+          },
+          "imported": {
+            "title": "Imported",
+            "type": "integer"
+          },
+          "invalid": {
+            "title": "Invalid",
+            "type": "integer"
+          },
+          "limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limit"
+          },
+          "over_limit": {
+            "title": "Over Limit",
+            "type": "integer"
+          },
+          "plan_name": {
+            "title": "Plan Name",
+            "type": "string"
+          },
+          "remaining": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remaining"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ImportRowResult"
+            },
+            "title": "Rows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "dry_run",
+          "rows",
+          "imported",
+          "duplicates",
+          "invalid",
+          "over_limit",
+          "plan_name",
+          "limit",
+          "remaining"
+        ],
+        "title": "ImportResultRead",
+        "type": "object"
+      },
+      "ImportRowResult": {
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "row": {
+            "title": "Row",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "duplicate",
+              "invalid",
+              "over_limit"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "row",
+          "label",
+          "status"
+        ],
+        "title": "ImportRowResult",
         "type": "object"
       },
       "InvoiceCreate": {
@@ -11593,6 +11942,67 @@
         "title": "TaskUpdate",
         "type": "object"
       },
+      "TeamImportRequest": {
+        "properties": {
+          "dry_run": {
+            "default": true,
+            "title": "Dry Run",
+            "type": "boolean"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/TeamImportRow"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Rows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "title": "TeamImportRequest",
+        "type": "object"
+      },
+      "TeamImportRow": {
+        "properties": {
+          "email": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "row": {
+            "minimum": 1.0,
+            "title": "Row",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "row"
+        ],
+        "title": "TeamImportRow",
+        "type": "object"
+      },
       "TimeEntryRead": {
         "properties": {
           "amount_cents": {
@@ -15852,6 +16262,193 @@
         "summary": "Dashboard Overview",
         "tags": [
           "dashboard"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/imports/clients": {
+      "post": {
+        "operationId": "import_clients_agencies__agency_id__imports_clients_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResultRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Import Clients",
+        "tags": [
+          "imports"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/imports/team": {
+      "post": {
+        "operationId": "import_team_agencies__agency_id__imports_team_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TeamImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResultRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Import Team",
+        "tags": [
+          "imports"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/imports/{kind}/parse": {
+      "post": {
+        "operationId": "parse_import_file_agencies__agency_id__imports__kind__parse_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "enum": [
+                "clients",
+                "team"
+              ],
+              "title": "Kind",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_parse_import_file_agencies__agency_id__imports__kind__parse_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportParseRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Parse Import File",
+        "tags": [
+          "imports"
         ]
       }
     },
