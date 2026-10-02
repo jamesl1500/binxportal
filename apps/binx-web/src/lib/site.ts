@@ -64,7 +64,7 @@ export const PLANS = [
     price: 49,
     blurb: "For a small studio finding its rhythm.",
     features: ["Everything in Free", "15 clients & 25 active projects", "250 leads", "10 team members", "Priority email support", "$50/mo of AI usage"],
-    cta: "Start Starter",
+    cta: "Start free trial",
     featured: false,
   },
   {
@@ -72,7 +72,7 @@ export const PLANS = [
     price: 149,
     blurb: "For an agency running many clients at once.",
     features: ["Everything in Starter", "60 clients & 150 active projects", "2,000 leads", "40 team members", "$200/mo of AI usage"],
-    cta: "Start Pro",
+    cta: "Start free trial",
     featured: true,
   },
   {
@@ -80,10 +80,14 @@ export const PLANS = [
     price: 399,
     blurb: "For a large team with no room for limits.",
     features: ["Everything in Pro", "Unlimited clients, projects & leads", "150 team members", "$750/mo of AI usage", "Onboarding help"],
-    cta: "Start Scale",
+    cta: "Start free trial",
     featured: false,
   },
 ] as const;
+
+/** Every paid tier's card-free trial — see binx-api's billing/service.py::start_trial. */
+export const TRIAL_DAYS = 14;
+export const TRIAL_DISCOUNT_PERCENT_OFF = 20;
 
 /** SoftwareApplication JSON-LD — lets search engines show Binx as an app with a price range. */
 export function softwareApplicationJsonLd(featureList: readonly string[]) {

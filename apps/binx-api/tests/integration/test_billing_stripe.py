@@ -13,6 +13,7 @@ seam.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 
 import pytest
@@ -145,6 +146,57 @@ class TestStartCheckout:
         with pytest.raises(HTTPException) as exc:
             await service.start_checkout(db_session, agency, plan="pro")
         assert exc.value.status_code == 400
+
+    async def test_applies_launch_discount_during_an_eligible_trial(
+        self, db_session, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _configure_stripe(monkeypatch)
+        monkeypatch.setattr(stripe_client.settings, "stripe_launch_discount_coupon_id", "coupon_launch20")
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        await service.start_trial(db_session, agency, plan="pro", actor=owner)
+
+        async def fake_create_customer(params):
+            return SimpleNamespace(id="cus_123")
+
+        captured: dict = {}
+
+        async def fake_create_checkout_session(params, *, stripe_account=None):
+            captured.update(params)
+            return SimpleNamespace(url="https://checkout.stripe.test/abc")
+
+        monkeypatch.setattr(stripe_client, "create_customer", fake_create_customer)
+        monkeypatch.setattr(stripe_client, "create_checkout_session", fake_create_checkout_session)
+
+        await service.start_checkout(db_session, agency, plan="pro")
+        assert captured["discounts"] == [{"coupon": "coupon_launch20"}]
+
+    async def test_no_discount_once_the_grace_window_has_passed(
+        self, db_session, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _configure_stripe(monkeypatch)
+        monkeypatch.setattr(stripe_client.settings, "stripe_launch_discount_coupon_id", "coupon_launch20")
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        await service.start_trial(db_session, agency, plan="pro", actor=owner)
+        subscription = await service.get_or_create_subscription(db_session, agency.id)
+        subscription.trial_discount_expires_at = datetime.now(UTC) - timedelta(seconds=1)
+        await db_session.commit()
+
+        async def fake_create_customer(params):
+            return SimpleNamespace(id="cus_123")
+
+        captured: dict = {}
+
+        async def fake_create_checkout_session(params, *, stripe_account=None):
+            captured.update(params)
+            return SimpleNamespace(url="https://checkout.stripe.test/abc")
+
+        monkeypatch.setattr(stripe_client, "create_customer", fake_create_customer)
+        monkeypatch.setattr(stripe_client, "create_checkout_session", fake_create_checkout_session)
+
+        await service.start_checkout(db_session, agency, plan="pro")
+        assert "discounts" not in captured
 
 
 class TestStartBillingPortal:

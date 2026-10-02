@@ -60,6 +60,11 @@ const SettingsPlanPage = async () => {
           canManage={isOwner}
           hasStripeCustomer={subscription.has_stripe_customer}
           hasStripeSubscription={subscription.has_stripe_subscription}
+          isTrialing={subscription.is_trialing}
+          trialPlan={subscription.trial_plan}
+          trialEndsAt={subscription.trial_ends_at}
+          hasUsedTrial={subscription.has_used_trial}
+          trialDiscountEligible={subscription.trial_discount_eligible}
         />
       </section>
     </div>

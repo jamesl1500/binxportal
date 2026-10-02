@@ -22,6 +22,7 @@ from binx_api.modules.billing.schemas import (
     PlanCheckoutRequest,
     PlanLimitsRead,
     PlanUsageRead,
+    StartTrialRequest,
     SubscriptionRead,
 )
 
@@ -41,12 +42,18 @@ async def _subscription_read(db: DbSession, agency: Agency) -> SubscriptionRead:
     return SubscriptionRead(
         plan=subscription.plan,
         status=subscription.status,
-        limits=_limits_read(subscription.plan),
+        limits=_limits_read(service.effective_plan_key(subscription)),
         usage=PlanUsageRead(**usage),
         plan_order=PLAN_ORDER,
         has_stripe_customer=subscription.stripe_customer_id is not None,
         has_stripe_subscription=subscription.stripe_subscription_id is not None,
         cancel_at_period_end=subscription.cancel_at_period_end,
+        trial_plan=subscription.trial_plan,
+        trial_ends_at=subscription.trial_ends_at,
+        is_trialing=service.trial_is_active(subscription),
+        has_used_trial=subscription.has_used_trial,
+        trial_discount_eligible=service.trial_discount_eligible(subscription),
+        trial_discount_expires_at=subscription.trial_discount_expires_at,
     )
 
 
@@ -67,6 +74,15 @@ async def change_plan(
 ) -> SubscriptionRead:
     agency, _role = agency_and_role
     await service.change_plan(db, agency, new_plan=data.plan, actor=current_user)
+    return await _subscription_read(db, agency)
+
+
+@router.post("/trial", response_model=SubscriptionRead)
+async def start_trial(
+    db: DbSession, data: StartTrialRequest, current_user: CurrentUser, agency_and_role: OwnerOnly
+) -> SubscriptionRead:
+    agency, _role = agency_and_role
+    await service.start_trial(db, agency, plan=data.plan, actor=current_user)
     return await _subscription_read(db, agency)
 
 

@@ -1538,6 +1538,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agencies/{agency_id}/plan/trial": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start Trial */
+        post: operations["start_trial_agencies__agency_id__plan_trial_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agencies/{agency_id}/profile": {
         parameters: {
             query?: never;
@@ -7656,6 +7673,11 @@ export interface components {
              */
             starts_at: string;
         };
+        /** StartTrialRequest */
+        StartTrialRequest: {
+            /** Plan */
+            plan: string;
+        };
         /** StripeConnectStatusRead */
         StripeConnectStatusRead: {
             /** Charges Enabled */
@@ -7691,6 +7713,16 @@ export interface components {
              * @default false
              */
             has_stripe_subscription: boolean;
+            /**
+             * Has Used Trial
+             * @default false
+             */
+            has_used_trial: boolean;
+            /**
+             * Is Trialing
+             * @default false
+             */
+            is_trialing: boolean;
             limits: components["schemas"]["PlanLimitsRead"];
             /** Plan */
             plan: string;
@@ -7698,6 +7730,17 @@ export interface components {
             plan_order: string[];
             /** Status */
             status: string;
+            /**
+             * Trial Discount Eligible
+             * @default false
+             */
+            trial_discount_eligible: boolean;
+            /** Trial Discount Expires At */
+            trial_discount_expires_at?: string | null;
+            /** Trial Ends At */
+            trial_ends_at?: string | null;
+            /** Trial Plan */
+            trial_plan?: string | null;
             usage: components["schemas"]["PlanUsageRead"];
         };
         /** TaskCommentRead */
@@ -12419,6 +12462,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CheckoutSessionRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_trial_agencies__agency_id__plan_trial_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StartTrialRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscriptionRead"];
                 };
             };
             /** @description Validation Error */

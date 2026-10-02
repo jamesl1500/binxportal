@@ -11351,6 +11351,21 @@
         "title": "SlotRead",
         "type": "object"
       },
+      "StartTrialRequest": {
+        "properties": {
+          "plan": {
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Plan",
+            "type": "string"
+          }
+        },
+        "required": [
+          "plan"
+        ],
+        "title": "StartTrialRequest",
+        "type": "object"
+      },
       "StripeConnectStatusRead": {
         "properties": {
           "charges_enabled": {
@@ -11422,6 +11437,16 @@
             "title": "Has Stripe Subscription",
             "type": "boolean"
           },
+          "has_used_trial": {
+            "default": false,
+            "title": "Has Used Trial",
+            "type": "boolean"
+          },
+          "is_trialing": {
+            "default": false,
+            "title": "Is Trialing",
+            "type": "boolean"
+          },
           "limits": {
             "$ref": "#/components/schemas/PlanLimitsRead"
           },
@@ -11439,6 +11464,46 @@
           "status": {
             "title": "Status",
             "type": "string"
+          },
+          "trial_discount_eligible": {
+            "default": false,
+            "title": "Trial Discount Eligible",
+            "type": "boolean"
+          },
+          "trial_discount_expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trial Discount Expires At"
+          },
+          "trial_ends_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trial Ends At"
+          },
+          "trial_plan": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trial Plan"
           },
           "usage": {
             "$ref": "#/components/schemas/PlanUsageRead"
@@ -20377,6 +20442,64 @@
           }
         ],
         "summary": "Start Checkout",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/plan/trial": {
+      "post": {
+        "operationId": "start_trial_agencies__agency_id__plan_trial_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartTrialRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Start Trial",
         "tags": [
           "billing"
         ]

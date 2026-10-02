@@ -109,6 +109,12 @@ class Settings(BaseSettings):
     stripe_price_id_starter: str | None = None
     stripe_price_id_pro: str | None = None
     stripe_price_id_scale: str | None = None
+    # A pre-created Stripe Coupon id (percent_off=20, duration=repeating,
+    # duration_in_months=3) applied to Checkout for the launch trial-to-paid
+    # discount — see billing/service.py::start_checkout. Same "unset means
+    # cleanly off" pattern as the price ids above: no coupon configured just
+    # means Checkout proceeds at full price.
+    stripe_launch_discount_coupon_id: str | None = None
     # Basis points of a client-invoice payment Binx keeps as a platform fee on
     # Connect "direct charge" payments. 0 = no fee today; see
     # invoicing/service.py::start_invoice_checkout.

@@ -11,7 +11,7 @@ the one exception is ``ai.client`` in ``change_plan``, imported lazily.
 from __future__ import annotations
 
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import stripe
 from fastapi import HTTPException, status
@@ -31,6 +31,8 @@ from binx_api.modules.billing.models import (
     PLAN_SCALE,
     PLAN_STARTER,
     PLANS,
+    TRIAL_DAYS,
+    TRIAL_DISCOUNT_GRACE_DAYS,
     AgencySubscription,
     PlanLimits,
     plan_limits,
@@ -75,9 +77,69 @@ async def get_or_create_subscription(db: AsyncSession, agency_id: uuid.UUID) -> 
     return subscription
 
 
+def trial_is_active(subscription: AgencySubscription) -> bool:
+    if subscription.trial_plan is None or subscription.trial_ends_at is None:
+        return False
+    return subscription.trial_ends_at > datetime.now(UTC)
+
+
+def trial_discount_eligible(subscription: AgencySubscription) -> bool:
+    """Whether converting right now still qualifies for the launch discount
+    — during the trial itself, or within the grace window after it ends."""
+    if subscription.trial_discount_expires_at is None:
+        return False
+    return subscription.trial_discount_expires_at > datetime.now(UTC)
+
+
+def effective_plan_key(subscription: AgencySubscription) -> str:
+    """The plan whose limits actually apply right now — the trial's plan
+    while an active card-free trial is running, otherwise the billed plan."""
+    if trial_is_active(subscription):
+        return subscription.trial_plan  # type: ignore[return-value]
+    return subscription.plan
+
+
 async def get_plan_limits(db: AsyncSession, agency_id: uuid.UUID) -> PlanLimits:
     subscription = await get_or_create_subscription(db, agency_id)
-    return plan_limits(subscription.plan)
+    return plan_limits(effective_plan_key(subscription))
+
+
+async def start_trial(db: AsyncSession, agency: Agency, *, plan: str, actor: User | None) -> AgencySubscription:
+    """Starts a 14-day, card-free trial of ``plan``. One trial per agency
+    ever — an agency that already has a live subscription has no reason to
+    trial a lower or equal tier, and an agency that already used its trial
+    can't start another."""
+    if plan not in PLANS or plan == PLAN_FREE:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Unknown or non-trialable plan")
+
+    subscription = await get_or_create_subscription(db, agency.id)
+    if subscription.has_used_trial:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "This agency has already used its free trial")
+    if subscription.stripe_subscription_id is not None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "This agency already has a paid subscription")
+
+    now = datetime.now(UTC)
+    subscription.trial_plan = plan
+    subscription.trial_ends_at = now + timedelta(days=TRIAL_DAYS)
+    subscription.trial_discount_expires_at = subscription.trial_ends_at + timedelta(days=TRIAL_DISCOUNT_GRACE_DAYS)
+    subscription.has_used_trial = True
+    await db.commit()
+    await db.refresh(subscription)
+
+    await activity_service.log_agency_activity(
+        db,
+        agency.id,
+        category=CATEGORY_SETTINGS,
+        event_type="trial_started",
+        visibility=VISIBILITY_ADMIN,
+        summary=(
+            f"{actor.full_name} started a {TRIAL_DAYS}-day trial of the {plan_limits(plan).name} plan"
+            if actor
+            else f"Started a {TRIAL_DAYS}-day trial of the {plan_limits(plan).name} plan"
+        ),
+        actor=actor,
+    )
+    return subscription
 
 
 def assert_within_limit(count: int, limit: int | None, *, resource: str, plan_name: str) -> None:
@@ -186,17 +248,21 @@ async def start_checkout(db: AsyncSession, agency: Agency, *, plan: str, return_
         await db.commit()
         await db.refresh(subscription)
 
-    session = await stripe_client.create_checkout_session(
-        {
-            "mode": "subscription",
-            "customer": subscription.stripe_customer_id,
-            "line_items": [{"price": price_id, "quantity": 1}],
-            "client_reference_id": str(agency.id),
-            "metadata": {"agency_id": str(agency.id)},
-            "success_url": f"{settings.frontend_url}{return_path}?checkout=success",
-            "cancel_url": f"{settings.frontend_url}{return_path}?checkout=cancel",
-        }
-    )
+    params: dict = {
+        "mode": "subscription",
+        "customer": subscription.stripe_customer_id,
+        "line_items": [{"price": price_id, "quantity": 1}],
+        "client_reference_id": str(agency.id),
+        "metadata": {"agency_id": str(agency.id)},
+        "success_url": f"{settings.frontend_url}{return_path}?checkout=success",
+        "cancel_url": f"{settings.frontend_url}{return_path}?checkout=cancel",
+    }
+    # The launch trial-to-paid discount: still within the trial or its grace
+    # window, and a coupon has actually been configured (see config.py).
+    if trial_discount_eligible(subscription) and settings.stripe_launch_discount_coupon_id:
+        params["discounts"] = [{"coupon": settings.stripe_launch_discount_coupon_id}]
+
+    session = await stripe_client.create_checkout_session(params)
     return session.url
 
 

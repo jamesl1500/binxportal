@@ -6,9 +6,10 @@
  * onboarding-appropriate copy and actions instead of "current plan" —
  * there's no existing subscription yet, so Free goes straight through
  * `changePlanAction` (no Stripe involved) and every paid plan starts a
- * Checkout Session that returns to onboarding step four (bulk import)
- * instead of Settings > Plan. Either way the next stop is step four, which
- * comes after the plan so imports are checked against the chosen plan's limits.
+ * card-free 14-day trial via `startPlanTrialAction` (no Stripe involved
+ * either) that returns straight to onboarding step four. Either way the
+ * next stop is step four (bulk import), which comes after the plan so
+ * imports are checked against the chosen plan's (or trial's) limits.
  *
  * If the visitor arrived via a marketing pricing-page CTA, `PLAN_INTENT_STORAGE_KEY`
  * in `localStorage` carries which plan they clicked (see (marketing)/pricing/page.tsx
@@ -25,7 +26,7 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { changePlanAction, startPlanCheckoutAction } from "@/app/(app)/settings/plan/actions";
+import { changePlanAction, startPlanTrialAction } from "@/app/(app)/settings/plan/actions";
 import type { PlanLimits } from "@/lib/billing";
 import { formatLimit, formatPlanPrice } from "@/lib/billing-client";
 import { formatMoneyCents } from "@/lib/money";
@@ -80,13 +81,13 @@ const PlanSelector = ({ agencyId, catalog }: PlanSelectorProps) => {
   const handlePaid = (plan: string) => {
     setPendingPlan(plan);
     startTransition(async () => {
-      const result = await startPlanCheckoutAction(agencyId, plan, ONBOARDING_NEXT_STEP);
-      if (result.error || !result.redirectUrl) {
-        setPendingPlan(null);
-        toast.error(result.error ?? "Something went wrong");
+      const result = await startPlanTrialAction(agencyId, plan);
+      setPendingPlan(null);
+      if (result.error) {
+        toast.error(result.error);
         return;
       }
-      window.location.assign(result.redirectUrl);
+      router.push(ONBOARDING_NEXT_STEP);
     });
   };
 
@@ -109,13 +110,14 @@ const PlanSelector = ({ agencyId, catalog }: PlanSelectorProps) => {
               <li>{formatLimit(plan.max_team_members)} team members</li>
               <li>{formatMoneyCents(plan.ai_monthly_budget_cents)} / mo AI</li>
             </ul>
+            {!isFree && <p className={styles.trialNote}>14 days free, no card needed</p>}
             <button
               type="button"
               className={isFree ? styles.freeButton : styles.switch}
               onClick={() => (isFree ? handleFree() : handlePaid(plan.key))}
               disabled={isPending}
             >
-              {isPendingThis ? "Setting up…" : isFree ? "Continue with Free" : `Start with ${plan.name}`}
+              {isPendingThis ? "Setting up…" : isFree ? "Continue with Free" : `Start ${plan.name} trial`}
             </button>
           </div>
         );
