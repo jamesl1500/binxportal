@@ -58,6 +58,12 @@
   color: t.$color-ink-soft;
 }
 
+.trialNote {
+  margin: 0;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+}
+
 .switch {
   @include m.button-base;
   margin-top: t.$space-1;

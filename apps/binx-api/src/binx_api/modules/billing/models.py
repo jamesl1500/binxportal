@@ -25,6 +25,14 @@ from binx_api.core.database import Base
 # see billing/service.py's webhook-driven mutators.
 SUBSCRIPTION_STATUSES: list[str] = ["active", "trialing", "past_due", "canceled"]
 
+# A card-free trial of a paid plan — see billing/service.py::start_trial.
+# Converting (via Checkout) during the trial or within the grace window after
+# it ends qualifies for the launch discount.
+TRIAL_DAYS = 14
+TRIAL_DISCOUNT_GRACE_DAYS = 14
+TRIAL_DISCOUNT_PERCENT_OFF = 20
+TRIAL_DISCOUNT_DURATION_MONTHS = 3
+
 PLAN_FREE = "free"
 PLAN_STARTER = "starter"
 PLAN_PRO = "pro"
@@ -135,3 +143,16 @@ class AgencySubscription(Base):
     # Surfaced by customer.subscription.updated when the owner cancels through
     # the Billing Portal — the subscription stays active until period end.
     cancel_at_period_end: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    # Card-free trial of a paid plan (see service.py::start_trial). trial_plan
+    # is the tier being trialed; effective plan limits resolve to it while
+    # trial_ends_at is in the future (service.py::get_plan_limits) — no
+    # periodic job needed, it's just read-time math. has_used_trial blocks a
+    # second trial once one has ever been started.
+    trial_plan: Mapped[str | None] = mapped_column(String(20), default=None)
+    trial_ends_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    # The deadline for the launch conversion discount — trial_ends_at plus the
+    # grace window, set once when the trial starts. Independent of which plan
+    # is ultimately purchased.
+    trial_discount_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    has_used_trial: Mapped[bool] = mapped_column(Boolean, default=False)

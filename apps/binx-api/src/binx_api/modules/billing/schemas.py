@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, Field
 
 
@@ -31,9 +33,30 @@ class SubscriptionRead(BaseModel):
     has_stripe_customer: bool = False
     has_stripe_subscription: bool = False
     cancel_at_period_end: bool = False
+    # Card-free trial state (billing/service.py::start_trial). trial_plan /
+    # trial_ends_at are set once the trial has ever been started, even after
+    # it ends — is_trialing is the one to branch UI on. discount_eligible
+    # tells the frontend whether converting right now still gets the launch
+    # discount, independent of which plan the trial was for.
+    trial_plan: str | None = None
+    trial_ends_at: datetime | None = None
+    is_trialing: bool = False
+    has_used_trial: bool = False
+    trial_discount_eligible: bool = False
+    trial_discount_expires_at: datetime | None = None
+    # Whether a real coupon is actually configured server-side — the
+    # frontend must gate any "you'll get 20% off" claim on this, since
+    # trial_discount_eligible alone is just a time window and stays true
+    # even when no coupon is set (start_checkout then just charges full
+    # price; see billing/service.py's module docstring on that pattern).
+    launch_discount_configured: bool = False
 
 
 class ChangePlanRequest(BaseModel):
+    plan: str = Field(min_length=1, max_length=20)
+
+
+class StartTrialRequest(BaseModel):
     plan: str = Field(min_length=1, max_length=20)
 
 

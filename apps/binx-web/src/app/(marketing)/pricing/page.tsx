@@ -10,14 +10,22 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { PLANS, breadcrumbJsonLd, marketingOpenGraph, softwareApplicationJsonLd } from "@/lib/site";
+import {
+  LAUNCH_DISCOUNT_ENABLED,
+  PLANS,
+  TRIAL_DAYS,
+  TRIAL_DISCOUNT_PERCENT_OFF,
+  breadcrumbJsonLd,
+  marketingOpenGraph,
+  softwareApplicationJsonLd,
+} from "@/lib/site";
 import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 
 import styles from "../marketing.module.scss";
 
 const TITLE = "Pricing";
 const DESCRIPTION =
-  "Simple, flat plans for agencies: start free, then Starter, Pro and Scale as you grow. Proposals, portal, invoicing and AI on every tier. No per-seat pricing.";
+  "Simple, flat plans for agencies: start free, then Starter, Pro and Scale as you grow. Every paid plan starts with a 14-day free trial, no card required. Proposals, portal, invoicing and AI on every tier.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -30,6 +38,12 @@ const FAQ = [
   {
     q: "Is there really a free plan?",
     a: "Yes. The Free plan doesn't expire and doesn't need a card. It's capped on clients, projects, leads and AI usage — when you outgrow it, upgrading takes a minute through Stripe's secure checkout.",
+  },
+  {
+    q: `Can I try Starter, Pro or Scale before paying?`,
+    a: LAUNCH_DISCOUNT_ENABLED
+      ? `Yes. Every paid plan starts with a ${TRIAL_DAYS}-day free trial — no card required. Upgrade during the trial, or within two weeks after it ends, and you'll get ${TRIAL_DISCOUNT_PERCENT_OFF}% off your first 3 months.`
+      : `Yes. Every paid plan starts with a ${TRIAL_DAYS}-day free trial — no card required. Upgrade whenever you're ready.`,
   },
   {
     q: "Do you charge per seat?",
@@ -91,6 +105,11 @@ const PricingPage = () => {
               Start free, upgrade when the work does. Every plan includes proposals, the client portal, invoicing and
               AI. The tiers just change how much of everything you get.
             </p>
+            <p className={styles.lead}>
+              {LAUNCH_DISCOUNT_ENABLED
+                ? `Trying Starter, Pro or Scale? Get ${TRIAL_DAYS} days free, no card required — convert during the trial or shortly after and take ${TRIAL_DISCOUNT_PERCENT_OFF}% off your first 3 months.`
+                : `Trying Starter, Pro or Scale? Get ${TRIAL_DAYS} days free, no card required.`}
+            </p>
           </div>
         </div>
       </section>
@@ -104,6 +123,7 @@ const PricingPage = () => {
                 <p className={styles.priceTag}>${plan.price}</p>
                 <p className={styles.pricePer}>{plan.price === 0 ? "forever" : "per month"}</p>
                 <p className={styles.priceBlurb}>{plan.blurb}</p>
+                {plan.price > 0 && <p className={styles.priceBlurb}>{TRIAL_DAYS} days free, no card needed.</p>}
                 <ul className={styles.priceList}>
                   {plan.features.map((feature) => (
                     <li key={feature}>{feature}</li>
