@@ -10,7 +10,7 @@
  * @module apps/binx-web/src/components/navigation/AppHeader/AppHeader.test.tsx
  * @author Binx.io
  */
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -131,5 +131,29 @@ describe("AppHeader", () => {
     await user.click(screen.getByRole("button", { name: "Open the guided tour" }));
 
     expect(mockedOpenTour).toHaveBeenCalledOnce();
+  });
+
+  it("opens the mobile nav disclosure with every destination, marks the active page, and closes on selection", async () => {
+    const user = userEvent.setup();
+    render(<AppHeader user={testUser} agencies={testAgencies} currentAgency={testAgencies[0]} unreadMessages={3} />);
+
+    const toggle = screen.getByRole("button", { name: "Open navigation" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+
+    await user.click(toggle);
+
+    expect(screen.getByRole("button", { name: "Close navigation" })).toHaveAttribute("aria-expanded", "true");
+
+    const mobileNav = screen.getByRole("navigation", { name: "Primary" });
+    expect(within(mobileNav).getByRole("link", { name: /Dashboard/ })).toHaveAttribute("aria-current", "page");
+    expect(within(mobileNav).getByRole("link", { name: "Leads" })).toHaveAttribute("href", "/leads");
+    expect(within(mobileNav).getByRole("link", { name: "Team" })).toHaveAttribute("href", "/team");
+    expect(within(mobileNav).getByRole("link", { name: "Proposals" })).toHaveAttribute("href", "/proposals");
+    expect(within(mobileNav).getByRole("link", { name: /Messages/ })).toHaveTextContent("3");
+
+    await user.click(within(mobileNav).getByRole("link", { name: "Leads" }));
+
+    expect(screen.getByRole("button", { name: "Open navigation" })).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("navigation", { name: "Primary" })).not.toBeInTheDocument();
   });
 });
