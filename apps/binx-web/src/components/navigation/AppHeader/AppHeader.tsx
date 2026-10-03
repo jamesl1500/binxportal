@@ -196,12 +196,15 @@ const AppHeader = ({
 
       {mobileNavOpen && (
         <nav id="app-mobile-nav" className={styles.mobileNav} aria-label="Primary">
-          {allLinks.map((link) => (
+          {allLinks.map((link) => {
+            const active = pathname === link.href || pathname.startsWith(`${link.href}/`);
+            return (
             <Link
               key={link.href}
               href={link.href}
               className={styles.mobileNavLink}
-              data-active={pathname === link.href || pathname.startsWith(`${link.href}/`)}
+              data-active={active}
+              aria-current={active ? "page" : undefined}
               onClick={() => setMobileNavOpen(false)}
             >
               {link.label}
@@ -209,7 +212,8 @@ const AppHeader = ({
                 <span className={styles.navBadge}>{unreadMessages > 99 ? "99+" : unreadMessages}</span>
               )}
             </Link>
-          ))}
+            );
+          })}
         </nav>
       )}
     </header>
