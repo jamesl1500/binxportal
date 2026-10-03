@@ -103,6 +103,33 @@ class PortalTaskListRead(BaseModel):
     tasks: list[PortalTaskRead]
 
 
+class PortalTeamProjectRead(BaseModel):
+    """One of the client's projects a team member is on, with the custom
+    project role they hold there ("Project Manager"), if any."""
+
+    id: uuid.UUID
+    name: str
+    role_name: str | None
+    role_color: str | None
+
+
+class PortalTeamMemberRead(BaseModel):
+    """An agency team member, as the client sees them on "My Team" (GET
+    /portal/team) — only people assigned to one of this client's projects.
+    `email`/`phone` are None when the member has chosen not to share them
+    (see service.list_portal_team). Photo bytes come from
+    GET /portal/team/{user_id}/avatar (proxied)."""
+
+    user_id: uuid.UUID
+    full_name: str
+    job_title: str | None
+    email: str | None
+    phone: str | None
+    has_avatar: bool
+    avatar_version: str | None
+    projects: list[PortalTeamProjectRead]
+
+
 class PortalPendingKickoffRead(BaseModel):
     """A sent kickoff still waiting on the client's answers — just enough
     for the portal to invite them in (the questions themselves come from
