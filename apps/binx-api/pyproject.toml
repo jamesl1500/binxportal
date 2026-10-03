@@ -32,6 +32,7 @@ dependencies = [
     # Only imported by `limits` (slowapi's dependency) when REDIS_URL is set —
     # see core/rate_limit.py. Unused, harmless dead weight otherwise.
     "redis>=5.0.0",
+    "sentry-sdk[fastapi]>=2.71.0",
     "slowapi>=0.1.10",
     "sqlalchemy>=2.0.52",
     "stripe>=13.0.0",

@@ -64,6 +64,10 @@ services:
       # never actually unset in production, since this line is a literal.
       SES_FROM_EMAIL: "Binx Portal <noreply@mail.binxportal.com>"
       AWS_REGION: us-east-2
+      # Cleanly off when unset (binx_api/core/config.py) — set SENTRY_DSN in
+      # the binxportal/app Secrets Manager secret to turn it on.
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      SENTRY_ENVIRONMENT: production
       # Local-disk upload dirs land on the named `uploads` volume below —
       # survives container replacement, backed up by the EBS snapshot plan
       # (see infra/lib/backup-stack.ts) alongside the db/redis volumes.

@@ -63,17 +63,22 @@ jobs:
       - id: ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Fetch the server-actions encryption key from Secrets Manager
+      - name: Fetch build-time values from Secrets Manager
         # File-based (secret-files, not secrets), so the value only ever
         # touches a local file on this ephemeral runner — never a workflow
         # expression, env var, or log line. binxportal/app is the single
         # source of truth for every production secret (see
         # infra/lib/secrets-stack.ts) — nothing is a GitHub secret anymore.
+        # NEXT_PUBLIC_SENTRY_DSN isn't actually sensitive (Sentry DSNs are
+        # meant to be public), but it's pulled from the same place for one
+        # source of truth; jq's `// empty` means a missing key builds with
+        # Sentry cleanly off instead of failing the step.
+        id: secrets
         run: |
-          aws secretsmanager get-secret-value --secret-id binxportal/app --region "$AWS_REGION" \
-            --query SecretString --output text \
-            | jq -r '.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY' > /tmp/next_actions_key
+          secret=$(aws secretsmanager get-secret-value --secret-id binxportal/app --region "$AWS_REGION" --query SecretString --output text)
+          echo "$secret" | jq -r '.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY' > /tmp/next_actions_key
           chmod 600 /tmp/next_actions_key
+          echo "sentry-dsn=$(echo "$secret" | jq -r '.NEXT_PUBLIC_SENTRY_DSN // empty')" >> "$GITHUB_OUTPUT"
 
       - id: tags
         run: |
@@ -115,6 +120,8 @@ jobs:
           build-args: |
             NEXT_PUBLIC_API_URL=https://api.binxportal.com/
             NEXT_PUBLIC_SITE_URL=https://www.binxportal.com
+            NEXT_PUBLIC_SENTRY_DSN=${{ steps.secrets.outputs.sentry-dsn }}
+            NEXT_PUBLIC_SENTRY_ENVIRONMENT=production
           # Same key on every build so an in-flight form submit against the
           # outgoing container doesn't fail post-deploy — see the Dockerfile.
           # File-based, from the step above — never a workflow expression.
