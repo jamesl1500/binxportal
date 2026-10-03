@@ -176,6 +176,45 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agencies/{agency_id}/ai/conversations/{conversation_id}/actions/{action_id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve Action
+         * @description Run a change the assistant proposed. A failure to apply (the lead was
+         *     deleted meanwhile, say) isn't an HTTP error — it comes back as the
+         *     action's ``failed`` status and ``result``, for the card to show.
+         */
+        post: operations["approve_action_agencies__agency_id__ai_conversations__conversation_id__actions__action_id__approve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/ai/conversations/{conversation_id}/actions/{action_id}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decline Action */
+        post: operations["decline_action_agencies__agency_id__ai_conversations__conversation_id__actions__action_id__decline_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agencies/{agency_id}/ai/conversations/{conversation_id}/messages": {
         parameters: {
             query?: never;
@@ -210,9 +249,32 @@ export interface paths {
          *     starts the HTTP status/headers are already sent, so an error mid-stream
          *     can't become an HTTP error response — it's relayed as an in-band
          *     ``{"type": "error"}`` event instead, and the generator ends there
-         *     (no ``done`` event follows an ``error``).
+         *     (no ``done`` event follows an ``error``). Each change the assistant makes
+         *     or proposes arrives as its own ``{"type": "action", "action": {...}}``
+         *     event as soon as it's handled.
          */
         post: operations["stream_conversation_message_agencies__agency_id__ai_conversations__conversation_id__messages_stream_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/ai/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Ai Preferences
+         * @description The caller's own "Ask AI" preferences — defaults if never saved.
+         */
+        get: operations["get_ai_preferences_agencies__agency_id__ai_preferences_get"];
+        /** Update Ai Preferences */
+        put: operations["update_ai_preferences_agencies__agency_id__ai_preferences_put"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -4196,6 +4258,30 @@ export interface components {
             /** Name */
             name: string;
         };
+        /** AiActionRead */
+        AiActionRead: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Result */
+            result: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "applied" | "declined" | "failed";
+            /** Summary */
+            summary: string;
+            /** Tool */
+            tool: string;
+        };
         /** AiBriefingRead */
         AiBriefingRead: {
             /** Briefing */
@@ -4230,6 +4316,11 @@ export interface components {
         };
         /** AiMessageRead */
         AiMessageRead: {
+            /**
+             * Actions
+             * @default []
+             */
+            actions: components["schemas"]["AiActionRead"][];
             /** Content */
             content: string;
             /**
@@ -4244,6 +4335,51 @@ export interface components {
             id: string;
             /** Role */
             role: string;
+        };
+        /** AiPreferencesRead */
+        AiPreferencesRead: {
+            /** Allow Actions */
+            allow_actions: boolean;
+            /** Confirm Actions */
+            confirm_actions: boolean;
+            /** Custom Instructions */
+            custom_instructions: string | null;
+            /**
+             * Response Length
+             * @enum {string}
+             */
+            response_length: "concise" | "balanced" | "detailed";
+            /**
+             * Tone
+             * @enum {string}
+             */
+            tone: "professional" | "friendly" | "casual";
+            /** Voice Auto Send */
+            voice_auto_send: boolean;
+        };
+        /**
+         * AiPreferencesUpdate
+         * @description A full replace — the settings dropdown always submits every field.
+         */
+        AiPreferencesUpdate: {
+            /** Allow Actions */
+            allow_actions: boolean;
+            /** Confirm Actions */
+            confirm_actions: boolean;
+            /** Custom Instructions */
+            custom_instructions?: string | null;
+            /**
+             * Response Length
+             * @enum {string}
+             */
+            response_length: "concise" | "balanced" | "detailed";
+            /**
+             * Tone
+             * @enum {string}
+             */
+            tone: "professional" | "friendly" | "casual";
+            /** Voice Auto Send */
+            voice_auto_send: boolean;
         };
         /** AiSettingsRead */
         AiSettingsRead: {
@@ -8565,6 +8701,72 @@ export interface operations {
             };
         };
     };
+    approve_action_agencies__agency_id__ai_conversations__conversation_id__actions__action_id__approve_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conversation_id: string;
+                action_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiActionRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    decline_action_agencies__agency_id__ai_conversations__conversation_id__actions__action_id__decline_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conversation_id: string;
+                action_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiActionRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_conversation_messages_agencies__agency_id__ai_conversations__conversation_id__messages_get: {
         parameters: {
             query?: never;
@@ -8656,6 +8858,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_ai_preferences_agencies__agency_id__ai_preferences_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiPreferencesRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_ai_preferences_agencies__agency_id__ai_preferences_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AiPreferencesUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiPreferencesRead"];
                 };
             };
             /** @description Validation Error */

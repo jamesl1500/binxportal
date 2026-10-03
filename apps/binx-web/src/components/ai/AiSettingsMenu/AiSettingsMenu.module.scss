@@ -1,0 +1,198 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: t.$space-2;
+  color: t.$color-ink-soft;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+  transition:
+    color t.$duration-fast t.$ease-standard,
+    border-color t.$duration-fast t.$ease-standard;
+
+  svg {
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+
+  &:hover:not(:disabled),
+  &[data-popup-open] {
+    color: t.$color-ink;
+    border-color: t.$color-border;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.4;
+  }
+}
+
+// Above the Ask AI dialog itself (z-index 70 — see AiModal.module.scss).
+.positioner {
+  z-index: 80;
+  outline: none;
+}
+
+.popup {
+  width: min(22rem, calc(100vw - 2rem));
+  max-height: min(34rem, calc(100vh - 4rem));
+  overflow-y: auto;
+  padding: t.$space-4;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  box-shadow: 0 8px 24px rgba(10, 10, 11, 0.12);
+  outline: none;
+  transition:
+    opacity t.$duration-fast t.$ease-standard,
+    transform t.$duration-fast t.$ease-standard;
+
+  &[data-starting-style],
+  &[data-ending-style] {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+}
+
+.title {
+  margin: 0 0 t.$space-3;
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  color: t.$color-ink;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-4;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+}
+
+.label {
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  color: t.$color-ink-soft;
+}
+
+.segmented {
+  display: flex;
+  padding: 2px;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+}
+
+.segment {
+  flex: 1;
+  padding: t.$space-1 t.$space-2;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+  background: transparent;
+  border: none;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+  transition:
+    color t.$duration-fast t.$ease-standard,
+    background-color t.$duration-fast t.$ease-standard;
+
+  &:hover {
+    color: t.$color-ink;
+  }
+
+  &[aria-checked="true"] {
+    color: t.$color-accent-foreground;
+    background: t.$color-accent;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.toggleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: t.$space-4;
+
+  &[data-disabled="true"] {
+    opacity: 0.5;
+  }
+}
+
+.toggleLabel {
+  display: block;
+  margin: 0 0 2px;
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  color: t.$color-ink;
+}
+
+.toggleHint {
+  margin: 0;
+  font-size: t.$font-size-xs;
+  line-height: 1.4;
+  color: t.$color-ink-soft;
+}
+
+// Same switch as Settings → AI (AiSettingsPanel.module.scss).
+.switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 1.25rem;
+  padding: 2px;
+  background: t.$color-border-strong;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color t.$duration-fast t.$ease-standard;
+
+  &[data-checked] {
+    background: t.$color-accent;
+  }
+
+  &[data-disabled] {
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.thumb {
+  width: 1rem;
+  height: 1rem;
+  background: t.$color-surface;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(10, 10, 11, 0.2);
+  transition: transform t.$duration-fast t.$ease-standard;
+
+  [data-checked] > & {
+    transform: translateX(1rem);
+  }
+}
+
+.textarea {
+  @include m.input-base;
+  padding: t.$space-2 t.$space-3;
+  resize: vertical;
+  font-family: inherit;
+}

@@ -14,10 +14,12 @@ import pytest
 
 from binx_api.modules.ai import client as ai_client
 from binx_api.modules.ai import service as ai_service
+from binx_api.modules.ai.models import ACTION_APPLIED, ACTION_FAILED, ACTION_PENDING
 from binx_api.modules.leads import places as places_client
 from binx_api.modules.leads import service as leads_service
 from binx_api.modules.messaging.models import SENDER_CLIENT
 from binx_api.modules.messaging.service import post_message
+from binx_api.modules.projects import service as projects_service
 from tests.factories import add_agency_member, make_agency, make_conversation, make_invoice, make_project, make_user
 
 pytestmark = pytest.mark.integration
@@ -42,6 +44,19 @@ def _text_message(text: str) -> SimpleNamespace:
 def _tool_use_message(tool_name: str, tool_input: dict, tool_use_id: str = "toolu_1") -> SimpleNamespace:
     block = SimpleNamespace(type="tool_use", id=tool_use_id, name=tool_name, input=tool_input)
     return SimpleNamespace(content=[block], usage=_fake_usage(), stop_reason="tool_use")
+
+
+def _capturing(*messages):
+    """Like :func:`_sequenced`, but also records each call's kwargs."""
+    calls: list[dict] = []
+    remaining = list(messages)
+
+    async def _call(**kwargs):
+        calls.append(kwargs)
+        assert remaining, "ran out of scripted responses"
+        return remaining.pop(0)
+
+    return _call, calls
 
 
 def _sequenced(*messages):
@@ -492,7 +507,7 @@ class TestAssistantReply:
         reply = await ai_service.assistant_reply(
             db_session, conversation, agency, actor=owner, user_message="Do we have any leads named acme?"
         )
-        assert reply == "You have 1 lead matching 'acme': Acme Co."
+        assert reply.content == "You have 1 lead matching 'acme': Acme Co."
 
         messages = await ai_service.list_conversation_messages(db_session, conversation.id)
         assert [(m.role, m.content) for m in messages] == [
@@ -521,4 +536,198 @@ class TestAssistantReply:
         reply = await ai_service.assistant_reply(
             db_session, conversation, agency, actor=owner, user_message="Keep digging"
         )
-        assert "wasn't able" in reply.lower() or "try narrowing" in reply.lower()
+        assert "wasn't able" in reply.content.lower() or "try narrowing" in reply.content.lower()
+
+
+async def _acme_lead(db, agency, owner):
+    return await leads_service.create_lead(
+        db,
+        agency,
+        actor=owner,
+        name="Acme Co",
+        contact_name=None,
+        contact_email=None,
+        contact_phone=None,
+        website=None,
+        source="manual",
+        estimated_value_cents=None,
+        notes=None,
+    )
+
+
+def _system_text(kwargs: dict) -> str:
+    system = kwargs["system"]
+    return system if isinstance(system, str) else "".join(block["text"] for block in system)
+
+
+class TestAssistantActions:
+    async def test_proposes_a_change_without_making_it_until_approved(
+        self, db_session, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _configure(monkeypatch)
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        lead = await _acme_lead(db_session, agency, owner)
+        conversation = await ai_service.create_conversation(db_session, agency.id, owner.id)
+
+        call, calls = _capturing(
+            _tool_use_message("update_lead_status", {"lead_id": str(lead.id), "status": "qualified"}),
+            _text_message("I've proposed moving Acme Co to qualified."),
+        )
+        monkeypatch.setattr(ai_client, "_call_anthropic", call)
+
+        reply = await ai_service.assistant_reply(
+            db_session, conversation, agency, actor=owner, user_message="Mark Acme as qualified"
+        )
+
+        tool_names = {tool["name"] for tool in calls[0]["tools"]}
+        assert {"search_leads", "update_lead_status", "create_task"} <= tool_names
+        result_block = calls[1]["messages"][-1]["content"][0]
+        assert json.loads(result_block["content"])["status"] == "awaiting_approval"
+
+        actions = (await ai_service.list_conversation_actions(db_session, conversation.id))[reply.id]
+        assert [(a.status, a.summary) for a in actions] == [
+            (ACTION_PENDING, 'Move the lead "Acme Co" from new to qualified')
+        ]
+        await db_session.refresh(lead)
+        assert lead.status == "new"  # nothing happened yet
+
+        approved = await ai_service.approve_action(db_session, actions[0], agency, actor=owner)
+        assert approved.status == ACTION_APPLIED
+        assert approved.result == 'Moved "Acme Co" to qualified.'
+        await db_session.refresh(lead)
+        assert lead.status == "qualified"
+
+    async def test_applies_immediately_when_the_member_turned_confirmations_off(
+        self, db_session, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _configure(monkeypatch)
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        project = await make_project(db_session, agency=agency, created_by=owner)
+        await ai_service.update_preferences(db_session, agency.id, owner.id, confirm_actions=False)
+        conversation = await ai_service.create_conversation(db_session, agency.id, owner.id)
+
+        monkeypatch.setattr(
+            ai_client,
+            "_call_anthropic",
+            _sequenced(
+                _tool_use_message(
+                    "create_task",
+                    {"project_id": str(project.id), "title": "Draft homepage copy", "due_date": "2026-10-15"},
+                ),
+                _text_message("Added it to To Do."),
+            ),
+        )
+        reply = await ai_service.assistant_reply(
+            db_session, conversation, agency, actor=owner, user_message="Add a task to draft homepage copy"
+        )
+
+        [action] = (await ai_service.list_conversation_actions(db_session, conversation.id))[reply.id]
+        assert action.status == ACTION_APPLIED
+        assert action.summary == 'Add the task "Draft homepage copy" to Website Redesign › To Do, due 2026-10-15'
+        board = await projects_service.get_project_board(db_session, project.id)
+        assert [task.title for task, *_rest in board[0][1]] == ["Draft homepage copy"]
+
+    async def test_a_bad_call_goes_back_to_claude_as_an_error_and_records_nothing(
+        self, db_session, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _configure(monkeypatch)
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        conversation = await ai_service.create_conversation(db_session, agency.id, owner.id)
+
+        call, calls = _capturing(
+            _tool_use_message("update_lead_status", {"lead_id": "Acme Co", "status": "won"}),
+            _text_message("I couldn't find that lead."),
+        )
+        monkeypatch.setattr(ai_client, "_call_anthropic", call)
+        await ai_service.assistant_reply(db_session, conversation, agency, actor=owner, user_message="Acme won!")
+
+        result_block = calls[1]["messages"][-1]["content"][0]
+        assert result_block["is_error"] is True
+        assert "lead_id must be an id" in result_block["content"]
+        assert await ai_service.list_conversation_actions(db_session, conversation.id) == {}
+
+    async def test_action_tools_are_withheld_when_the_member_turned_changes_off(
+        self, db_session, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _configure(monkeypatch)
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        await ai_service.update_preferences(
+            db_session,
+            agency.id,
+            owner.id,
+            allow_actions=False,
+            response_length="concise",
+            custom_instructions="Always answer in British English.",
+        )
+        conversation = await ai_service.create_conversation(db_session, agency.id, owner.id)
+
+        call, calls = _capturing(_text_message("I can't make changes — that's turned off."))
+        monkeypatch.setattr(ai_client, "_call_anthropic", call)
+        await ai_service.assistant_reply(db_session, conversation, agency, actor=owner, user_message="Create a lead")
+
+        tool_names = {tool["name"] for tool in calls[0]["tools"]}
+        assert "create_lead" not in tool_names
+        assert "search_leads" in tool_names
+        assert "read-only" in _system_text(calls[0])
+        assert "Always answer in British English." in _system_text(calls[0])
+        assert calls[0]["max_tokens"] == 800
+
+    async def test_approving_a_stale_proposal_fails_onto_the_card(
+        self, db_session, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _configure(monkeypatch)
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        lead = await _acme_lead(db_session, agency, owner)
+        conversation = await ai_service.create_conversation(db_session, agency.id, owner.id)
+        monkeypatch.setattr(
+            ai_client,
+            "_call_anthropic",
+            _sequenced(
+                _tool_use_message("add_lead_note", {"lead_id": str(lead.id), "body": "Called, left a voicemail."}),
+                _text_message("Proposed a note."),
+            ),
+        )
+        reply = await ai_service.assistant_reply(
+            db_session, conversation, agency, actor=owner, user_message="Note that I called Acme"
+        )
+        [action] = (await ai_service.list_conversation_actions(db_session, conversation.id))[reply.id]
+
+        await leads_service.delete_lead(db_session, lead)
+        approved = await ai_service.approve_action(db_session, action, agency, actor=owner)
+        assert approved.status == ACTION_FAILED
+        assert approved.result == "Lead not found"
+
+    async def test_later_turns_see_what_became_of_earlier_changes(
+        self, db_session, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _configure(monkeypatch)
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        lead = await _acme_lead(db_session, agency, owner)
+        conversation = await ai_service.create_conversation(db_session, agency.id, owner.id)
+        monkeypatch.setattr(
+            ai_client,
+            "_call_anthropic",
+            _sequenced(
+                _tool_use_message("update_lead_status", {"lead_id": str(lead.id), "status": "won"}),
+                _text_message("Proposed."),
+            ),
+        )
+        reply = await ai_service.assistant_reply(db_session, conversation, agency, actor=owner, user_message="Acme won")
+        [action] = (await ai_service.list_conversation_actions(db_session, conversation.id))[reply.id]
+        await ai_service.decline_action(db_session, action)
+
+        call, calls = _capturing(_text_message("Noted."))
+        monkeypatch.setattr(ai_client, "_call_anthropic", call)
+        await ai_service.assistant_reply(
+            db_session, conversation, agency, actor=owner, user_message="Did it go through?"
+        )
+
+        previous_reply = calls[0]["messages"][1]
+        assert previous_reply["role"] == "assistant"
+        assert 'Move the lead "Acme Co" from new to won (declined by the member)' in previous_reply["content"]

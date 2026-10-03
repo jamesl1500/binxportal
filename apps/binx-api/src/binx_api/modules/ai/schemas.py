@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -75,12 +76,43 @@ class AiConversationRead(BaseModel):
     updated_at: datetime | None = None
 
 
+class AiActionRead(BaseModel):
+    id: uuid.UUID
+    tool: str
+    summary: str
+    status: Literal["pending", "applied", "declined", "failed"]
+    result: str | None
+    created_at: datetime
+
+
 class AiMessageRead(BaseModel):
     id: uuid.UUID
     role: str
     content: str
     created_at: datetime
+    # Changes this (assistant) turn made or proposed — see AiAction.
+    actions: list[AiActionRead] = []
 
 
 class AiMessageCreate(BaseModel):
     message: str = Field(min_length=1, max_length=4000)
+
+
+class AiPreferencesRead(BaseModel):
+    response_length: Literal["concise", "balanced", "detailed"]
+    tone: Literal["professional", "friendly", "casual"]
+    allow_actions: bool
+    confirm_actions: bool
+    voice_auto_send: bool
+    custom_instructions: str | None
+
+
+class AiPreferencesUpdate(BaseModel):
+    """A full replace — the settings dropdown always submits every field."""
+
+    response_length: Literal["concise", "balanced", "detailed"]
+    tone: Literal["professional", "friendly", "casual"]
+    allow_actions: bool
+    confirm_actions: bool
+    voice_auto_send: bool
+    custom_instructions: str | None = Field(default=None, max_length=1000)

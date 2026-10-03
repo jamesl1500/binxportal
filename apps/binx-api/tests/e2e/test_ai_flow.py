@@ -8,12 +8,14 @@ path — nothing here makes a real network call.
 
 from __future__ import annotations
 
+import json
 from types import SimpleNamespace
 
 import pytest
 
 from binx_api.modules.agencies.models import ROLE_MEMBER, AgencyMember
 from binx_api.modules.ai import client as ai_client
+from binx_api.modules.leads.models import Lead
 from binx_api.modules.messaging.models import SENDER_CLIENT
 from binx_api.modules.messaging.service import create_conversation, post_message
 from tests.conftest import auth_headers
@@ -370,3 +372,147 @@ class TestMessageReplyDraft:
         )
         assert drafted.status_code == 200, drafted.text
         assert drafted.json() == {"draft": "We expect it done by Friday."}
+
+
+def _tool_use_message(tool_name: str, tool_input: dict) -> SimpleNamespace:
+    block = SimpleNamespace(type="tool_use", id="toolu_1", name=tool_name, input=tool_input)
+    return SimpleNamespace(content=[block], usage=_fake_usage(), stop_reason="tool_use")
+
+
+def _stub_stream(monkeypatch: pytest.MonkeyPatch, *messages: SimpleNamespace) -> None:
+    """Scripts ``complete_stream``: each call streams the next message's text
+    as deltas, then completes with it."""
+    remaining = list(messages)
+
+    async def _stream(*args, **kwargs):
+        message = remaining.pop(0)
+        for block in message.content:
+            if block.type == "text":
+                yield ai_client.TextDelta(text=block.text)
+        yield ai_client.TurnComplete(message=message)
+
+    monkeypatch.setattr(ai_client, "complete_stream", _stream)
+
+
+def _sse_events(body: str) -> list[dict]:
+    return [json.loads(chunk.removeprefix("data: ")) for chunk in body.split("\n\n") if chunk.startswith("data: ")]
+
+
+class TestPreferences:
+    async def test_defaults_then_save_scoped_to_the_member(self, client, team) -> None:
+        agency, owner, member = team
+        h = auth_headers(owner)
+        url = f"/agencies/{agency.id}/ai/preferences"
+
+        defaults = (await client.get(url, headers=h)).json()
+        assert defaults == {
+            "response_length": "balanced",
+            "tone": "professional",
+            "allow_actions": True,
+            "confirm_actions": True,
+            "voice_auto_send": True,
+            "custom_instructions": None,
+        }
+
+        saved = await client.put(
+            url,
+            json={
+                **defaults,
+                "response_length": "concise",
+                "tone": "casual",
+                "confirm_actions": False,
+                "custom_instructions": "  Use bullet points.  ",
+            },
+            headers=h,
+        )
+        assert saved.status_code == 200, saved.text
+        assert saved.json()["custom_instructions"] == "Use bullet points."
+        assert (await client.get(url, headers=h)).json()["tone"] == "casual"
+
+        # Someone else's preferences are untouched.
+        assert (await client.get(url, headers=auth_headers(member))).json() == defaults
+
+    async def test_rejects_an_unknown_choice(self, client, team) -> None:
+        agency, owner, _member = team
+        response = await client.put(
+            f"/agencies/{agency.id}/ai/preferences",
+            json={
+                "response_length": "epic",
+                "tone": "professional",
+                "allow_actions": True,
+                "confirm_actions": True,
+                "voice_auto_send": True,
+            },
+            headers=auth_headers(owner),
+        )
+        assert response.status_code == 422
+
+
+class TestActions:
+    async def test_stream_proposes_then_approve_applies_once(
+        self, client, team, db_session, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        agency, owner, member = team
+        _configure(monkeypatch)
+        h = auth_headers(owner)
+        lead = Lead(agency_id=agency.id, name="Acme Co")
+        db_session.add(lead)
+        await db_session.commit()
+        conversation_id = (await client.post(f"/agencies/{agency.id}/ai/conversations", headers=h)).json()["id"]
+        base = f"/agencies/{agency.id}/ai/conversations/{conversation_id}"
+
+        _stub_stream(
+            monkeypatch,
+            _tool_use_message("update_lead_status", {"lead_id": str(lead.id), "status": "won"}),
+            _text_message("I've proposed marking Acme Co as won."),
+        )
+        streamed = await client.post(f"{base}/messages/stream", json={"message": "Acme signed!"}, headers=h)
+        events = _sse_events(streamed.text)
+        assert [e["type"] for e in events] == ["action", "delta", "done"]
+        action = events[0]["action"]
+        assert action["status"] == "pending"
+        assert action["summary"] == 'Move the lead "Acme Co" from new to won'
+
+        messages = (await client.get(f"{base}/messages", headers=h)).json()
+        assert messages[1]["actions"][0]["id"] == action["id"]
+        assert messages[0]["actions"] == []
+
+        # Only the conversation's own member can act on it.
+        assert (
+            await client.post(f"{base}/actions/{action['id']}/approve", headers=auth_headers(member))
+        ).status_code == 404
+
+        approved = await client.post(f"{base}/actions/{action['id']}/approve", headers=h)
+        assert approved.status_code == 200, approved.text
+        assert approved.json()["status"] == "applied"
+        await db_session.refresh(lead)
+        assert lead.status == "won"
+
+        again = await client.post(f"{base}/actions/{action['id']}/approve", headers=h)
+        assert again.status_code == 409
+
+    async def test_decline_leaves_the_data_alone(
+        self, client, team, db_session, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        agency, owner, _member = team
+        _configure(monkeypatch)
+        h = auth_headers(owner)
+        lead = Lead(agency_id=agency.id, name="Acme Co")
+        db_session.add(lead)
+        await db_session.commit()
+        conversation_id = (await client.post(f"/agencies/{agency.id}/ai/conversations", headers=h)).json()["id"]
+        base = f"/agencies/{agency.id}/ai/conversations/{conversation_id}"
+
+        _stub_stream(
+            monkeypatch,
+            _tool_use_message("update_lead_status", {"lead_id": str(lead.id), "status": "lost"}),
+            _text_message("Proposed."),
+        )
+        events = _sse_events((await client.post(f"{base}/messages/stream", json={"message": "x"}, headers=h)).text)
+        action_id = events[0]["action"]["id"]
+
+        declined = await client.post(f"{base}/actions/{action_id}/decline", headers=h)
+        assert declined.json()["status"] == "declined"
+        await db_session.refresh(lead)
+        assert lead.status == "new"
+        assert (await client.post(f"{base}/actions/{action_id}/approve", headers=h)).status_code == 409

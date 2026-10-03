@@ -43,7 +43,11 @@ export type AiTaskSuggestions = Schemas["AiTaskSuggestionsRead"];
 
 export type AiConversation = Schemas["AiConversationRead"];
 
+export type AiAction = Schemas["AiActionRead"];
+
 export type AiMessage = Omit<Schemas["AiMessageRead"], "role"> & { role: "user" | "assistant" };
+
+export type AiPreferences = Schemas["AiPreferencesRead"];
 
 async function authHeader(): Promise<{ Authorization: string }> {
   const accessToken = await getAccessToken();
@@ -256,5 +260,61 @@ export async function deleteAiConversation(agencyId: string, conversationId: str
     await api.delete(`/agencies/${agencyId}/ai/conversations/${conversationId}`, { headers });
   } catch (error) {
     rethrow(error, "Unable to delete this conversation");
+  }
+}
+
+/**
+ * getAiPreferences
+ *
+ * The signed-in member's own "Ask AI" preferences (the modal's settings
+ * dropdown) — the defaults if they've never saved any.
+ *
+ * @function getAiPreferences
+ */
+export async function getAiPreferences(agencyId: string): Promise<AiPreferences> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.get<AiPreferences>(`/agencies/${agencyId}/ai/preferences`, { headers });
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to load your AI preferences");
+  }
+}
+
+export async function updateAiPreferences(agencyId: string, preferences: AiPreferences): Promise<AiPreferences> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.put<AiPreferences>(`/agencies/${agencyId}/ai/preferences`, preferences, { headers });
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to save your AI preferences");
+  }
+}
+
+/**
+ * resolveAiAction
+ *
+ * Approve (run) or decline a change the assistant proposed. A change that
+ * can't be applied any more still resolves — as an action with status
+ * `failed` and the reason in `result` — rather than throwing.
+ *
+ * @function resolveAiAction
+ */
+export async function resolveAiAction(
+  agencyId: string,
+  conversationId: string,
+  actionId: string,
+  decision: "approve" | "decline",
+): Promise<AiAction> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.post<AiAction>(
+      `/agencies/${agencyId}/ai/conversations/${conversationId}/actions/${actionId}/${decision}`,
+      undefined,
+      { headers },
+    );
+    return data;
+  } catch (error) {
+    rethrow(error, decision === "approve" ? "Unable to make that change" : "Unable to decline that change");
   }
 }
