@@ -8,6 +8,7 @@ avoid poking at global state the rest of the suite depends on.
 from __future__ import annotations
 
 import pytest
+from pydantic import ValidationError
 
 from binx_api.core.config import Settings, get_settings
 
@@ -38,3 +39,12 @@ def test_env_vars_override_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_unknown_env_vars_are_ignored(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("TOTALLY_UNRELATED_SETTING", "whatever")
     Settings(_env_file=None)  # extra="ignore" -> no ValidationError
+
+
+@pytest.mark.parametrize("value", ["-0.1", "1.1", "2"])
+def test_sentry_traces_sample_rate_rejects_out_of_range(value: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    # The Sentry SDK silently drops traces for a rate outside 0.0-1.0 rather
+    # than erroring, so this is caught here instead.
+    monkeypatch.setenv("SENTRY_TRACES_SAMPLE_RATE", value)
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None)
