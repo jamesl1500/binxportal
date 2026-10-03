@@ -11,7 +11,7 @@ describe("AppFooter", () => {
 
   it("links to privacy, terms, and support", () => {
     render(<AppFooter />);
-    const nav = screen.getByRole("navigation", { name: "Legal" });
+    const nav = screen.getByRole("navigation", { name: "Legal and support" });
     expect(nav.querySelector('a[href="/privacy"]')).not.toBeNull();
     expect(nav.querySelector('a[href="/terms"]')).not.toBeNull();
     expect(nav.querySelector('a[href="/contact"]')).not.toBeNull();
