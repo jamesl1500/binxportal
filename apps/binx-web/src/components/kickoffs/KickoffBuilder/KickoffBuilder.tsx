@@ -11,7 +11,7 @@
  * project and to keep editing one that hasn't been sent yet.
  *
  * @module apps/binx-web/src/components/kickoffs/KickoffBuilder/KickoffBuilder.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -21,7 +21,12 @@ import { Dialog } from "@base-ui/react/dialog";
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import type { KickoffDetail, KickoffQuestionInput, KickoffQuestionType, KickoffTemplate } from "@/lib/kickoffs";
+import type {
+  KickoffDetail,
+  KickoffQuestionInput,
+  KickoffQuestionType,
+  KickoffTemplate,
+} from "@/lib/kickoffs";
 import {
   createKickoffAction,
   createKickoffTemplateAction,
@@ -73,11 +78,18 @@ const TYPE_LABELS: Record<KickoffQuestionType, string> = {
   file_upload: "File upload",
 };
 
-const KickoffBuilder = ({ agencyId, projectId, kickoff, templates }: KickoffBuilderProps) => {
+const KickoffBuilder = ({
+  agencyId,
+  projectId,
+  kickoff,
+  templates,
+}: KickoffBuilderProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [title, setTitle] = useState(kickoff?.title ?? "Project kickoff");
-  const [introMessage, setIntroMessage] = useState(kickoff?.intro_message ?? "");
+  const [introMessage, setIntroMessage] = useState(
+    kickoff?.intro_message ?? "",
+  );
   const [questions, setQuestions] = useState<QuestionRow[]>(
     kickoff?.questions.length
       ? kickoff.questions.map((q) => ({
@@ -99,11 +111,15 @@ const KickoffBuilder = ({ agencyId, projectId, kickoff, templates }: KickoffBuil
   const isNew = kickoff === null;
 
   const updateQuestion = (key: string, patch: Partial<QuestionRow>) => {
-    setQuestions((rows) => rows.map((r) => (r.key === key ? { ...r, ...patch } : r)));
+    setQuestions((rows) =>
+      rows.map((r) => (r.key === key ? { ...r, ...patch } : r)),
+    );
   };
 
   const removeQuestion = (key: string) => {
-    setQuestions((rows) => (rows.length > 1 ? rows.filter((r) => r.key !== key) : rows));
+    setQuestions((rows) =>
+      rows.length > 1 ? rows.filter((r) => r.key !== key) : rows,
+    );
   };
 
   const applyTemplate = (id: string) => {
@@ -127,7 +143,10 @@ const KickoffBuilder = ({ agencyId, projectId, kickoff, templates }: KickoffBuil
   // kickoff out of draft, so the page swaps this builder for
   // KickoffStatusView on refresh — a dialog owned by this component would
   // unmount mid-read, while the app-level Toaster outlives the swap.
-  const run = (action: () => Promise<{ error?: string }>, onSuccess?: () => void) => {
+  const run = (
+    action: () => Promise<{ error?: string }>,
+    onSuccess?: () => void,
+  ) => {
     startTransition(async () => {
       const result = await action();
       if (result?.error) {
@@ -145,33 +164,43 @@ const KickoffBuilder = ({ agencyId, projectId, kickoff, templates }: KickoffBuil
       toast.error("Add at least one question");
       return;
     }
-    run(async () => {
-      if (isNew) {
-        const result = await createKickoffAction(agencyId, projectId, {
+    run(
+      async () => {
+        if (isNew) {
+          const result = await createKickoffAction(agencyId, projectId, {
+            title,
+            introMessage: introMessage.trim() || null,
+            questions: cleaned,
+            templateId: templateId || null,
+          });
+          return result;
+        }
+        return updateKickoffAction(agencyId, projectId, {
           title,
           introMessage: introMessage.trim() || null,
           questions: cleaned,
-          templateId: templateId || null,
         });
-        return result;
-      }
-      return updateKickoffAction(agencyId, projectId, { title, introMessage: introMessage.trim() || null, questions: cleaned });
-    }, () =>
-      toast.success(isNew ? "Kickoff draft created" : "Draft saved", {
-        description: "Only your team can see it until you send it to the client.",
-      }),
+      },
+      () =>
+        toast.success(isNew ? "Kickoff draft created" : "Draft saved", {
+          description:
+            "Only your team can see it until you send it to the client.",
+        }),
     );
   };
 
   const handleSend = () => {
-    run(async () => {
-      const result = await sendKickoffAction(agencyId, projectId);
-      if (!result.error) setSendOpen(false);
-      return result;
-    }, () =>
-      toast.success("Kickoff sent to your client", {
-        description: "We've emailed their portal contact. You'll see answers here as they come in.",
-      }),
+    run(
+      async () => {
+        const result = await sendKickoffAction(agencyId, projectId);
+        if (!result.error) setSendOpen(false);
+        return result;
+      },
+      () =>
+        toast.success("Kickoff sent to your client", {
+          description:
+            "We've emailed their portal contact. You'll see answers here as they come in.",
+        }),
     );
   };
 
@@ -206,23 +235,27 @@ const KickoffBuilder = ({ agencyId, projectId, kickoff, templates }: KickoffBuil
 
   return (
     <div className={styles.builder}>
-      {isNew && templates.length > 0 && questions.every((q) => q.label.trim() === "") && (
-        <label className={styles.field}>
-          <span className={styles.fieldLabel}>Start from a template (optional)</span>
-          <select
-            className={styles.select}
-            value={templateId}
-            onChange={(event) => applyTemplate(event.target.value)}
-          >
-            <option value="">Start from scratch</option>
-            {templates.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name} ({t.question_count} questions)
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
+      {isNew &&
+        templates.length > 0 &&
+        questions.every((q) => q.label.trim() === "") && (
+          <label className={styles.field}>
+            <span className={styles.fieldLabel}>
+              Start from a template (optional)
+            </span>
+            <select
+              className={styles.select}
+              value={templateId}
+              onChange={(event) => applyTemplate(event.target.value)}
+            >
+              <option value="">Start from scratch</option>
+              {templates.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name} ({t.question_count} questions)
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
 
       <label className={styles.field}>
         <span className={styles.fieldLabel}>Title</span>
@@ -256,19 +289,27 @@ const KickoffBuilder = ({ agencyId, projectId, kickoff, templates }: KickoffBuil
                 <select
                   className={styles.typeSelect}
                   value={q.type}
-                  onChange={(event) => updateQuestion(q.key, { type: event.target.value as KickoffQuestionType })}
+                  onChange={(event) =>
+                    updateQuestion(q.key, {
+                      type: event.target.value as KickoffQuestionType,
+                    })
+                  }
                 >
-                  {(Object.keys(TYPE_LABELS) as KickoffQuestionType[]).map((type) => (
-                    <option key={type} value={type}>
-                      {TYPE_LABELS[type]}
-                    </option>
-                  ))}
+                  {(Object.keys(TYPE_LABELS) as KickoffQuestionType[]).map(
+                    (type) => (
+                      <option key={type} value={type}>
+                        {TYPE_LABELS[type]}
+                      </option>
+                    ),
+                  )}
                 </select>
                 <label className={styles.requiredToggle}>
                   <input
                     type="checkbox"
                     checked={q.required}
-                    onChange={(event) => updateQuestion(q.key, { required: event.target.checked })}
+                    onChange={(event) =>
+                      updateQuestion(q.key, { required: event.target.checked })
+                    }
                   />
                   Required
                 </label>
@@ -285,7 +326,9 @@ const KickoffBuilder = ({ agencyId, projectId, kickoff, templates }: KickoffBuil
                 type="text"
                 className={styles.input}
                 value={q.label}
-                onChange={(event) => updateQuestion(q.key, { label: event.target.value })}
+                onChange={(event) =>
+                  updateQuestion(q.key, { label: event.target.value })
+                }
                 placeholder="Question"
                 maxLength={500}
               />
@@ -305,7 +348,11 @@ const KickoffBuilder = ({ agencyId, projectId, kickoff, templates }: KickoffBuil
               )}
             </div>
           ))}
-          <button type="button" className={styles.addButton} onClick={() => setQuestions((rows) => [...rows, newQuestion()])}>
+          <button
+            type="button"
+            className={styles.addButton}
+            onClick={() => setQuestions((rows) => [...rows, newQuestion()])}
+          >
             <Plus /> Add question
           </button>
         </div>
@@ -314,7 +361,12 @@ const KickoffBuilder = ({ agencyId, projectId, kickoff, templates }: KickoffBuil
       <div className={styles.actions}>
         <div className={styles.actionsLeft}>
           {!isNew && (
-            <button type="button" className={styles.ghostDanger} disabled={isPending} onClick={() => setDeleteOpen(true)}>
+            <button
+              type="button"
+              className={styles.ghostDanger}
+              disabled={isPending}
+              onClick={() => setDeleteOpen(true)}
+            >
               Delete
             </button>
           )}
@@ -328,7 +380,12 @@ const KickoffBuilder = ({ agencyId, projectId, kickoff, templates }: KickoffBuil
           </button>
         </div>
         <div className={styles.actionsRight}>
-          <button type="button" className={styles.ghost} disabled={isPending} onClick={handleSaveDraft}>
+          <button
+            type="button"
+            className={styles.ghost}
+            disabled={isPending}
+            onClick={handleSaveDraft}
+          >
             Save draft
           </button>
           <button
@@ -341,22 +398,42 @@ const KickoffBuilder = ({ agencyId, projectId, kickoff, templates }: KickoffBuil
           </button>
         </div>
       </div>
-      {isNew && <p className={styles.hint}>Save the draft first, then send it to the client.</p>}
+      {isNew && (
+        <p className={styles.hint}>
+          Save the draft first, then send it to the client.
+        </p>
+      )}
 
       <Dialog.Root open={sendOpen} onOpenChange={setSendOpen}>
         <Dialog.Portal>
           <Dialog.Backdrop className={styles.backdrop} />
-          <Dialog.Popup className={styles.dialog} aria-label="Send this kickoff">
-            <Dialog.Title className={styles.dialogTitle}>Send this kickoff?</Dialog.Title>
+          <Dialog.Popup
+            className={styles.dialog}
+            aria-label="Send this kickoff"
+          >
+            <Dialog.Title className={styles.dialogTitle}>
+              Send this kickoff?
+            </Dialog.Title>
             <Dialog.Description className={styles.dialogDescription}>
-              The client&apos;s primary portal contact gets an email and can answer it from their portal. Once sent,
-              the questions are frozen — the project moves to &ldquo;Waiting on client&rdquo; until they finish.
+              The client&apos;s primary portal contact gets an email and can
+              answer it from their portal. Once sent, the questions are frozen —
+              the project moves to &ldquo;Waiting on client&rdquo; until they
+              finish.
             </Dialog.Description>
             <div className={styles.dialogActions}>
-              <button type="button" className={styles.ghost} onClick={() => setSendOpen(false)}>
+              <button
+                type="button"
+                className={styles.ghost}
+                onClick={() => setSendOpen(false)}
+              >
                 Cancel
               </button>
-              <button type="button" className={styles.primary} disabled={isPending} onClick={handleSend}>
+              <button
+                type="button"
+                className={styles.primary}
+                disabled={isPending}
+                onClick={handleSend}
+              >
                 Send kickoff
               </button>
             </div>
@@ -367,14 +444,30 @@ const KickoffBuilder = ({ agencyId, projectId, kickoff, templates }: KickoffBuil
       <Dialog.Root open={deleteOpen} onOpenChange={setDeleteOpen}>
         <Dialog.Portal>
           <Dialog.Backdrop className={styles.backdrop} />
-          <Dialog.Popup className={styles.dialog} aria-label="Delete this kickoff">
-            <Dialog.Title className={styles.dialogTitle}>Delete this kickoff?</Dialog.Title>
-            <Dialog.Description className={styles.dialogDescription}>This can&apos;t be undone.</Dialog.Description>
+          <Dialog.Popup
+            className={styles.dialog}
+            aria-label="Delete this kickoff"
+          >
+            <Dialog.Title className={styles.dialogTitle}>
+              Delete this kickoff?
+            </Dialog.Title>
+            <Dialog.Description className={styles.dialogDescription}>
+              This can&apos;t be undone.
+            </Dialog.Description>
             <div className={styles.dialogActions}>
-              <button type="button" className={styles.ghost} onClick={() => setDeleteOpen(false)}>
+              <button
+                type="button"
+                className={styles.ghost}
+                onClick={() => setDeleteOpen(false)}
+              >
                 Cancel
               </button>
-              <button type="button" className={styles.dangerSolid} disabled={isPending} onClick={handleDelete}>
+              <button
+                type="button"
+                className={styles.dangerSolid}
+                disabled={isPending}
+                onClick={handleDelete}
+              >
                 Delete kickoff
               </button>
             </div>
@@ -385,11 +478,16 @@ const KickoffBuilder = ({ agencyId, projectId, kickoff, templates }: KickoffBuil
       <Dialog.Root open={saveTemplateOpen} onOpenChange={setSaveTemplateOpen}>
         <Dialog.Portal>
           <Dialog.Backdrop className={styles.backdrop} />
-          <Dialog.Popup className={styles.dialog} aria-label="Save these questions as a template">
-            <Dialog.Title className={styles.dialogTitle}>Save as a reusable template</Dialog.Title>
+          <Dialog.Popup
+            className={styles.dialog}
+            aria-label="Save these questions as a template"
+          >
+            <Dialog.Title className={styles.dialogTitle}>
+              Save as a reusable template
+            </Dialog.Title>
             <Dialog.Description className={styles.dialogDescription}>
-              The current question list gets saved to your agency&apos;s kickoff templates, so you can start future
-              projects from it.
+              The current question list gets saved to your agency&apos;s kickoff
+              templates, so you can start future projects from it.
             </Dialog.Description>
             <label className={styles.field}>
               <span className={styles.fieldLabel}>Template name</span>
@@ -402,10 +500,19 @@ const KickoffBuilder = ({ agencyId, projectId, kickoff, templates }: KickoffBuil
               />
             </label>
             <div className={styles.dialogActions}>
-              <button type="button" className={styles.ghost} onClick={() => setSaveTemplateOpen(false)}>
+              <button
+                type="button"
+                className={styles.ghost}
+                onClick={() => setSaveTemplateOpen(false)}
+              >
                 Cancel
               </button>
-              <button type="button" className={styles.primary} disabled={isPending} onClick={handleSaveTemplate}>
+              <button
+                type="button"
+                className={styles.primary}
+                disabled={isPending}
+                onClick={handleSaveTemplate}
+              >
                 Save template
               </button>
             </div>

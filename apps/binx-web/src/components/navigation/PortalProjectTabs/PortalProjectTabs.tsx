@@ -8,7 +8,7 @@
  * Team/Files/Settings).
  *
  * @module apps/binx-web/src/components/navigation/PortalProjectTabs/PortalProjectTabs.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -35,7 +35,12 @@ const PortalProjectTabs = ({ projectId }: PortalProjectTabsProps) => {
   return (
     <nav className={styles.tabs} aria-label="Project">
       {tabs.map((tab) => (
-        <Link key={tab.href} href={tab.href} className={styles.tab} data-active={pathname === tab.href}>
+        <Link
+          key={tab.href}
+          href={tab.href}
+          className={styles.tab}
+          data-active={pathname === tab.href}
+        >
           {tab.label}
         </Link>
       ))}

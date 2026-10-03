@@ -15,7 +15,7 @@
  * and forth; nothing is saved until "Create project".
  *
  * @module apps/binx-web/src/components/forms/projects/NewProjectForm/NewProjectForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -27,11 +27,17 @@ import { createProjectAction } from "@/app/(app)/projects/actions";
 import AiTaskSetup from "@/components/projects/AiTaskSetup/AiTaskSetup";
 import ProjectForm from "@/components/forms/projects/ProjectForm/ProjectForm";
 import ProjectLabelSetup from "@/components/forms/projects/ProjectLabelSetup/ProjectLabelSetup";
-import ProjectTeamSetup, { type TeamSeat } from "@/components/forms/projects/ProjectTeamSetup/ProjectTeamSetup";
+import ProjectTeamSetup, {
+  type TeamSeat,
+} from "@/components/forms/projects/ProjectTeamSetup/ProjectTeamSetup";
 import type { AgencyMember } from "@/lib/agencies";
 import type { AgencyClient } from "@/lib/clients";
 import { PROJECT_STATUS_LABELS } from "@/lib/projects-client";
-import type { Project, ProjectDetailsInput, ProjectLabelDraft } from "@/lib/projects";
+import type {
+  Project,
+  ProjectDetailsInput,
+  ProjectLabelDraft,
+} from "@/lib/projects";
 
 import styles from "./NewProjectForm.module.scss";
 
@@ -57,8 +63,12 @@ export const ROLE_SUGGESTIONS: ProjectLabelDraft[] = [
 
 // Pre-selected so the common case is a couple of clicks — still editable, and
 // still required: removing them all blocks Continue.
-const DEFAULT_TAGS = TAG_SUGGESTIONS.filter((tag) => ["Feature", "Bug", "Design", "Urgent"].includes(tag.name));
-const DEFAULT_ROLES = ROLE_SUGGESTIONS.filter((role) => ["Project Manager", "Designer", "Developer"].includes(role.name));
+const DEFAULT_TAGS = TAG_SUGGESTIONS.filter((tag) =>
+  ["Feature", "Bug", "Design", "Urgent"].includes(tag.name),
+);
+const DEFAULT_ROLES = ROLE_SUGGESTIONS.filter((role) =>
+  ["Project Manager", "Designer", "Developer"].includes(role.name),
+);
 
 const STEPS = [
   { id: "details", label: "Details" },
@@ -78,20 +88,33 @@ interface NewProjectFormProps {
 }
 
 function formatDate(iso: string | null): string {
-  return iso ? new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, { dateStyle: "medium" }) : "—";
+  return iso
+    ? new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, {
+        dateStyle: "medium",
+      })
+    : "—";
 }
 
 const LabelChips = ({ labels }: { labels: ProjectLabelDraft[] }) => (
   <ul className={styles.chips}>
     {labels.map((label) => (
-      <li key={label.name} className={styles.chip} style={{ borderColor: label.color, color: label.color }}>
+      <li
+        key={label.name}
+        className={styles.chip}
+        style={{ borderColor: label.color, color: label.color }}
+      >
         {label.name}
       </li>
     ))}
   </ul>
 );
 
-const NewProjectForm = ({ agencyId, clients, agencyMembers, currentUserId }: NewProjectFormProps) => {
+const NewProjectForm = ({
+  agencyId,
+  clients,
+  agencyMembers,
+  currentUserId,
+}: NewProjectFormProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -100,7 +123,9 @@ const NewProjectForm = ({ agencyId, clients, agencyMembers, currentUserId }: New
   const [details, setDetails] = useState<ProjectDetailsInput | null>(null);
   const [tags, setTags] = useState<ProjectLabelDraft[]>(DEFAULT_TAGS);
   const [roles, setRoles] = useState<ProjectLabelDraft[]>(DEFAULT_ROLES);
-  const [team, setTeam] = useState<TeamSeat[]>([{ userId: currentUserId, roleName: "Project Manager" }]);
+  const [team, setTeam] = useState<TeamSeat[]>([
+    { userId: currentUserId, roleName: "Project Manager" },
+  ]);
   const [stepError, setStepError] = useState<string | null>(null);
   const [showTeamErrors, setShowTeamErrors] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -110,12 +135,15 @@ const NewProjectForm = ({ agencyId, clients, agencyMembers, currentUserId }: New
 
   // Why `id` can't be left yet, or null if it's complete.
   const validate = (id: StepId): string | null => {
-    if (id === "details" && details === null) return "Fill in the project details first.";
+    if (id === "details" && details === null)
+      return "Fill in the project details first.";
     if (id === "tags" && tags.length === 0) {
       return "Add at least one task tag — the team uses them to sort work on the board.";
     }
-    if (id === "roles" && roles.length === 0) return "Add at least one member role.";
-    if (id === "team" && team.some((seat) => !seat.roleName)) return "Give everyone on the team a role.";
+    if (id === "roles" && roles.length === 0)
+      return "Add at least one member role.";
+    if (id === "team" && team.some((seat) => !seat.roleName))
+      return "Give everyone on the team a role.";
     return null;
   };
 
@@ -145,7 +173,11 @@ const NewProjectForm = ({ agencyId, clients, agencyMembers, currentUserId }: New
     setRoles(next);
     const names = new Set(next.map((role) => role.name));
     setTeam((seats) =>
-      seats.map((seat) => (seat.roleName && !names.has(seat.roleName) ? { ...seat, roleName: null } : seat)),
+      seats.map((seat) =>
+        seat.roleName && !names.has(seat.roleName)
+          ? { ...seat, roleName: null }
+          : seat,
+      ),
     );
   };
 
@@ -157,7 +189,11 @@ const NewProjectForm = ({ agencyId, clients, agencyMembers, currentUserId }: New
     if (!goTo("review") || !details) return;
     setCreateError(null);
     startTransition(async () => {
-      const result = await createProjectAction(agencyId, details, { tags, roles, team });
+      const result = await createProjectAction(agencyId, details, {
+        tags,
+        roles,
+        team,
+      });
       if (result.error || !result.project) {
         setCreateError(result.error ?? "Unable to create project");
         return;
@@ -171,8 +207,8 @@ const NewProjectForm = ({ agencyId, clients, agencyMembers, currentUserId }: New
       <>
         <h2 className={styles.stepTitle}>{createdProject.name} is ready</h2>
         <p className={styles.stepSubtitle}>
-          Tags, roles, and the team are set up. Want a head start on the board too? You can always add lists and tasks
-          by hand later.
+          Tags, roles, and the team are set up. Want a head start on the board
+          too? You can always add lists and tasks by hand later.
         </p>
         <AiTaskSetup
           agencyId={agencyId}
@@ -183,16 +219,26 @@ const NewProjectForm = ({ agencyId, clients, agencyMembers, currentUserId }: New
     );
   }
 
-  const clientName = clients.find((client) => client.id === details?.clientId)?.name ?? "—";
+  const clientName =
+    clients.find((client) => client.id === details?.clientId)?.name ?? "—";
   const memberName = (userId: string) =>
-    agencyMembers.find((member) => member.user_id === userId)?.full_name ?? "Unknown teammate";
+    agencyMembers.find((member) => member.user_id === userId)?.full_name ??
+    "Unknown teammate";
 
   const footer = (current: StepId) => (
     <div className={styles.footer}>
-      <button type="button" className={styles.back} onClick={() => goTo(STEPS[stepIndex - 1].id)}>
+      <button
+        type="button"
+        className={styles.back}
+        onClick={() => goTo(STEPS[stepIndex - 1].id)}
+      >
         Back
       </button>
-      <button type="button" className={styles.next} onClick={() => continueFrom(current)}>
+      <button
+        type="button"
+        className={styles.next}
+        onClick={() => continueFrom(current)}
+      >
         Continue
       </button>
     </div>
@@ -202,7 +248,12 @@ const NewProjectForm = ({ agencyId, clients, agencyMembers, currentUserId }: New
     <div className={styles.wizard}>
       <ol className={styles.stepper}>
         {STEPS.map((item, index) => {
-          const state = index === stepIndex ? "current" : index < stepIndex ? "done" : "upcoming";
+          const state =
+            index === stepIndex
+              ? "current"
+              : index < stepIndex
+                ? "done"
+                : "upcoming";
           return (
             <li key={item.id} className={styles.stepperItem} data-state={state}>
               <button
@@ -228,7 +279,8 @@ const NewProjectForm = ({ agencyId, clients, agencyMembers, currentUserId }: New
         <section>
           <h2 className={styles.stepTitle}>Project details</h2>
           <p className={styles.stepSubtitle}>
-            Every project starts with a To Do, In Progress, and Done list — you can add more once it&apos;s created.
+            Every project starts with a To Do, In Progress, and Done list — you
+            can add more once it&apos;s created.
           </p>
           <ProjectForm
             agencyId={agencyId}
@@ -238,7 +290,9 @@ const NewProjectForm = ({ agencyId, clients, agencyMembers, currentUserId }: New
               setDetails(input);
               // `details` in this render is still the old value, and the
               // later steps were checked when they were last left.
-              goTo(furthest > 1 ? STEPS[furthest].id : "tags", { validated: true });
+              goTo(furthest > 1 ? STEPS[furthest].id : "tags", {
+                validated: true,
+              });
             }}
             onCancel={() => router.push("/projects")}
           />
@@ -249,8 +303,8 @@ const NewProjectForm = ({ agencyId, clients, agencyMembers, currentUserId }: New
         <section>
           <h2 className={styles.stepTitle}>Task tags</h2>
           <p className={styles.stepSubtitle}>
-            Tags categorise cards on the board (“Bug”, “Design”, “Urgent”…). Pick at least one so the team can sort work
-            from day one.
+            Tags categorise cards on the board (“Bug”, “Design”, “Urgent”…).
+            Pick at least one so the team can sort work from day one.
           </p>
           <ProjectLabelSetup
             noun="tag"
@@ -263,7 +317,11 @@ const NewProjectForm = ({ agencyId, clients, agencyMembers, currentUserId }: New
             maxLength={50}
             placeholder='e.g. "Copy review"'
           />
-          {stepError && <p className={styles.stepError} role="alert">{stepError}</p>}
+          {stepError && (
+            <p className={styles.stepError} role="alert">
+              {stepError}
+            </p>
+          )}
           {footer("tags")}
         </section>
       )}
@@ -272,8 +330,8 @@ const NewProjectForm = ({ agencyId, clients, agencyMembers, currentUserId }: New
         <section>
           <h2 className={styles.stepTitle}>Member roles</h2>
           <p className={styles.stepSubtitle}>
-            Roles say who does what on this project. They&apos;re labels only — permissions still come from each
-            person&apos;s agency role.
+            Roles say who does what on this project. They&apos;re labels only —
+            permissions still come from each person&apos;s agency role.
           </p>
           <ProjectLabelSetup
             noun="role"
@@ -286,7 +344,11 @@ const NewProjectForm = ({ agencyId, clients, agencyMembers, currentUserId }: New
             maxLength={100}
             placeholder='e.g. "Web Developer"'
           />
-          {stepError && <p className={styles.stepError} role="alert">{stepError}</p>}
+          {stepError && (
+            <p className={styles.stepError} role="alert">
+              {stepError}
+            </p>
+          )}
           {footer("roles")}
         </section>
       )}
@@ -295,8 +357,8 @@ const NewProjectForm = ({ agencyId, clients, agencyMembers, currentUserId }: New
         <section>
           <h2 className={styles.stepTitle}>Team</h2>
           <p className={styles.stepSubtitle}>
-            Add the people working on this project and give each of them a role. They&apos;ll be notified once
-            it&apos;s created.
+            Add the people working on this project and give each of them a role.
+            They&apos;ll be notified once it&apos;s created.
           </p>
           <ProjectTeamSetup
             agencyMembers={agencyMembers}
@@ -309,7 +371,11 @@ const NewProjectForm = ({ agencyId, clients, agencyMembers, currentUserId }: New
             }}
             showErrors={showTeamErrors}
           />
-          {stepError && <p className={styles.stepError} role="alert">{stepError}</p>}
+          {stepError && (
+            <p className={styles.stepError} role="alert">
+              {stepError}
+            </p>
+          )}
           {footer("team")}
         </section>
       )}
@@ -317,19 +383,27 @@ const NewProjectForm = ({ agencyId, clients, agencyMembers, currentUserId }: New
       {step === "review" && details && (
         <section>
           <h2 className={styles.stepTitle}>Review</h2>
-          <p className={styles.stepSubtitle}>Everything below is created together. You can change any of it later.</p>
+          <p className={styles.stepSubtitle}>
+            Everything below is created together. You can change any of it
+            later.
+          </p>
 
           <dl className={styles.review}>
             <div className={styles.reviewRow}>
               <dt>Project</dt>
               <dd>
-                <strong>{details.name}</strong> for {clientName} · {PROJECT_STATUS_LABELS[details.status]}
+                <strong>{details.name}</strong> for {clientName} ·{" "}
+                {PROJECT_STATUS_LABELS[details.status]}
                 <br />
                 {details.startDate || details.dueDate
                   ? `${formatDate(details.startDate)} → ${formatDate(details.dueDate)}`
                   : "No dates set"}
               </dd>
-              <button type="button" className={styles.edit} onClick={() => goTo("details")}>
+              <button
+                type="button"
+                className={styles.edit}
+                onClick={() => goTo("details")}
+              >
                 Edit
               </button>
             </div>
@@ -338,7 +412,11 @@ const NewProjectForm = ({ agencyId, clients, agencyMembers, currentUserId }: New
               <dd>
                 <LabelChips labels={tags} />
               </dd>
-              <button type="button" className={styles.edit} onClick={() => goTo("tags")}>
+              <button
+                type="button"
+                className={styles.edit}
+                onClick={() => goTo("tags")}
+              >
                 Edit
               </button>
             </div>
@@ -347,7 +425,11 @@ const NewProjectForm = ({ agencyId, clients, agencyMembers, currentUserId }: New
               <dd>
                 <LabelChips labels={roles} />
               </dd>
-              <button type="button" className={styles.edit} onClick={() => goTo("roles")}>
+              <button
+                type="button"
+                className={styles.edit}
+                onClick={() => goTo("roles")}
+              >
                 Edit
               </button>
             </div>
@@ -358,24 +440,43 @@ const NewProjectForm = ({ agencyId, clients, agencyMembers, currentUserId }: New
                   {team.map((seat) => (
                     <li key={seat.userId}>
                       {memberName(seat.userId)}
-                      {seat.userId === currentUserId && " (you)"} — {seat.roleName}
+                      {seat.userId === currentUserId && " (you)"} —{" "}
+                      {seat.roleName}
                     </li>
                   ))}
                 </ul>
               </dd>
-              <button type="button" className={styles.edit} onClick={() => goTo("team")}>
+              <button
+                type="button"
+                className={styles.edit}
+                onClick={() => goTo("team")}
+              >
                 Edit
               </button>
             </div>
           </dl>
 
-          {createError && <p className={styles.stepError} role="alert">{createError}</p>}
+          {createError && (
+            <p className={styles.stepError} role="alert">
+              {createError}
+            </p>
+          )}
 
           <div className={styles.footer}>
-            <button type="button" className={styles.back} onClick={() => goTo("team")} disabled={isPending}>
+            <button
+              type="button"
+              className={styles.back}
+              onClick={() => goTo("team")}
+              disabled={isPending}
+            >
               Back
             </button>
-            <button type="button" className={styles.next} onClick={handleCreate} disabled={isPending}>
+            <button
+              type="button"
+              className={styles.next}
+              onClick={handleCreate}
+              disabled={isPending}
+            >
               {isPending ? "Creating…" : "Create project"}
             </button>
           </div>

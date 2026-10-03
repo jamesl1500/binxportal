@@ -7,7 +7,7 @@
  * authorizes it, same as the verify-email page.
  *
  * @module apps/binx-web/src/app/(auth)/auth/confirm-email/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -37,7 +37,10 @@ const ConfirmEmailPage = async ({ searchParams }: ConfirmEmailPageProps) => {
     try {
       newEmail = await getEmailChangeTarget(token);
     } catch (error) {
-      tokenError = error instanceof Error ? error.message : "This confirmation link is invalid or has expired.";
+      tokenError =
+        error instanceof Error
+          ? error.message
+          : "This confirmation link is invalid or has expired.";
     }
   }
 
@@ -46,7 +49,9 @@ const ConfirmEmailPage = async ({ searchParams }: ConfirmEmailPageProps) => {
       <header className={styles.header}>
         <span className={styles.eyebrow}>Confirm email change</span>
         <h1 className={styles.title}>Almost there</h1>
-        <p className={styles.subtitle}>Confirm the email address you&apos;d like to use going forward.</p>
+        <p className={styles.subtitle}>
+          Confirm the email address you&apos;d like to use going forward.
+        </p>
       </header>
 
       {token && newEmail ? (

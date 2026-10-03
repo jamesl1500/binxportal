@@ -6,7 +6,7 @@
  * is seeded with. Owner/admin only — members see a read-only summary.
  *
  * @module apps/binx-web/src/components/invoices/BillingSettingsForm/BillingSettingsForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -25,8 +25,17 @@ const schema = z.object({
   legalName: z.string().trim().max(255).optional().or(z.literal("")),
   address: z.string().trim().max(2048).optional().or(z.literal("")),
   taxId: z.string().trim().max(64).optional().or(z.literal("")),
-  contactEmail: z.string().trim().email("Enter a valid email").max(255).optional().or(z.literal("")),
-  currency: z.string().trim().regex(/^[A-Za-z]{3}$/, "3-letter currency code"),
+  contactEmail: z
+    .string()
+    .trim()
+    .email("Enter a valid email")
+    .max(255)
+    .optional()
+    .or(z.literal("")),
+  currency: z
+    .string()
+    .trim()
+    .regex(/^[A-Za-z]{3}$/, "3-letter currency code"),
   invoicePrefix: z.string().max(16),
   nextInvoiceNumber: z.number().int().min(1),
   numberPadding: z.number().int().min(1).max(9),
@@ -44,7 +53,11 @@ interface BillingSettingsFormProps {
   canManage: boolean;
 }
 
-const BillingSettingsForm = ({ agencyId, settings, canManage }: BillingSettingsFormProps) => {
+const BillingSettingsForm = ({
+  agencyId,
+  settings,
+  canManage,
+}: BillingSettingsFormProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
@@ -66,7 +79,9 @@ const BillingSettingsForm = ({ agencyId, settings, canManage }: BillingSettingsF
       nextInvoiceNumber: settings.next_invoice_number,
       numberPadding: settings.number_padding,
       defaultDueDays: settings.default_due_days,
-      defaultTaxRatePercent: Number.parseFloat(settings.default_tax_rate_percent),
+      defaultTaxRatePercent: Number.parseFloat(
+        settings.default_tax_rate_percent,
+      ),
       paymentInstructions: settings.payment_instructions ?? "",
       defaultNotes: settings.default_notes ?? "",
     },
@@ -75,7 +90,9 @@ const BillingSettingsForm = ({ agencyId, settings, canManage }: BillingSettingsF
   if (!canManage) {
     return (
       <div className={styles.readonly}>
-        <p className={styles.readonlyNote}>Only an owner or admin can change billing settings.</p>
+        <p className={styles.readonlyNote}>
+          Only an owner or admin can change billing settings.
+        </p>
         <dl className={styles.summary}>
           <div>
             <dt>Billing name</dt>
@@ -89,12 +106,18 @@ const BillingSettingsForm = ({ agencyId, settings, canManage }: BillingSettingsF
             <dt>Next number</dt>
             <dd>
               {settings.invoice_prefix}
-              {String(settings.next_invoice_number).padStart(settings.number_padding, "0")}
+              {String(settings.next_invoice_number).padStart(
+                settings.number_padding,
+                "0",
+              )}
             </dd>
           </div>
           <div>
             <dt>Default terms</dt>
-            <dd>Net {settings.default_due_days} days · {Number.parseFloat(settings.default_tax_rate_percent)}% tax</dd>
+            <dd>
+              Net {settings.default_due_days} days ·{" "}
+              {Number.parseFloat(settings.default_tax_rate_percent)}% tax
+            </dd>
           </div>
         </dl>
       </div>
@@ -131,18 +154,29 @@ const BillingSettingsForm = ({ agencyId, settings, canManage }: BillingSettingsF
   return (
     <form className={styles.form} onSubmit={handleSubmit(onSubmit)} noValidate>
       <fieldset className={styles.group}>
-        <legend className={styles.legend}>Invoice &ldquo;from&rdquo; block</legend>
+        <legend className={styles.legend}>
+          Invoice &ldquo;from&rdquo; block
+        </legend>
         <div className={styles.field}>
           <label className={styles.label} htmlFor="legalName">
             Billing name
           </label>
-          <input id="legalName" className={styles.input} {...register("legalName")} />
+          <input
+            id="legalName"
+            className={styles.input}
+            {...register("legalName")}
+          />
         </div>
         <div className={styles.field}>
           <label className={styles.label} htmlFor="address">
             Address
           </label>
-          <textarea id="address" className={styles.textarea} rows={3} {...register("address")} />
+          <textarea
+            id="address"
+            className={styles.textarea}
+            rows={3}
+            {...register("address")}
+          />
         </div>
         <div className={styles.row}>
           <div className={styles.field}>
@@ -155,8 +189,14 @@ const BillingSettingsForm = ({ agencyId, settings, canManage }: BillingSettingsF
             <label className={styles.label} htmlFor="contactEmail">
               Billing email
             </label>
-            <input id="contactEmail" className={styles.input} {...register("contactEmail")} />
-            {errors.contactEmail && <p className={styles.error}>{errors.contactEmail.message}</p>}
+            <input
+              id="contactEmail"
+              className={styles.input}
+              {...register("contactEmail")}
+            />
+            {errors.contactEmail && (
+              <p className={styles.error}>{errors.contactEmail.message}</p>
+            )}
           </div>
         </div>
       </fieldset>
@@ -168,14 +208,25 @@ const BillingSettingsForm = ({ agencyId, settings, canManage }: BillingSettingsF
             <label className={styles.label} htmlFor="currency">
               Currency
             </label>
-            <input id="currency" className={styles.input} maxLength={3} {...register("currency")} />
-            {errors.currency && <p className={styles.error}>{errors.currency.message}</p>}
+            <input
+              id="currency"
+              className={styles.input}
+              maxLength={3}
+              {...register("currency")}
+            />
+            {errors.currency && (
+              <p className={styles.error}>{errors.currency.message}</p>
+            )}
           </div>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="invoicePrefix">
               Number prefix
             </label>
-            <input id="invoicePrefix" className={styles.input} {...register("invoicePrefix")} />
+            <input
+              id="invoicePrefix"
+              className={styles.input}
+              {...register("invoicePrefix")}
+            />
           </div>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="nextInvoiceNumber">
@@ -250,7 +301,12 @@ const BillingSettingsForm = ({ agencyId, settings, canManage }: BillingSettingsF
           <label className={styles.label} htmlFor="defaultNotes">
             Default notes
           </label>
-          <textarea id="defaultNotes" className={styles.textarea} rows={2} {...register("defaultNotes")} />
+          <textarea
+            id="defaultNotes"
+            className={styles.textarea}
+            rows={2}
+            {...register("defaultNotes")}
+          />
         </div>
       </fieldset>
 

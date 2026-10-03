@@ -5,7 +5,7 @@
  * bad :invoiceId 404s.
  *
  * @module apps/binx-web/src/app/(app)/invoices/[invoiceId]/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -24,7 +24,9 @@ interface InvoicePageProps {
   params: Promise<{ invoiceId: string }>;
 }
 
-export async function generateMetadata({ params }: InvoicePageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: InvoicePageProps): Promise<Metadata> {
   const { invoiceId } = await params;
   try {
     const { currentAgency } = await getCurrentAgencyContext();
@@ -54,7 +56,8 @@ const InvoicePage = async ({ params }: InvoicePageProps) => {
     throw error;
   }
 
-  const canManage = currentAgency.role === "owner" || currentAgency.role === "admin";
+  const canManage =
+    currentAgency.role === "owner" || currentAgency.role === "admin";
 
   return (
     <div>

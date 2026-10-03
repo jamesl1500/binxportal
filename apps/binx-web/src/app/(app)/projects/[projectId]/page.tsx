@@ -13,7 +13,7 @@
  * project and renders the header/tabs; getAgencyProject is cache-deduped.
  *
  * @module apps/binx-web/src/app/(app)/projects/[projectId]/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { ReactNode } from "react";
 import Link from "next/link";
@@ -22,7 +22,12 @@ import { redirect } from "next/navigation";
 import { getCurrentAgencyContext } from "@/lib/agencies";
 import { getCurrentUser } from "@/lib/auth";
 import { getMeetings } from "@/lib/meetings";
-import { getAgencyProject, getProjectBoard, getProjectFiles, getProjectMembers } from "@/lib/projects";
+import {
+  getAgencyProject,
+  getProjectBoard,
+  getProjectFiles,
+  getProjectMembers,
+} from "@/lib/projects";
 import { getProjectDashboardLayout } from "@/lib/users";
 import ScheduleMeetingDialog from "@/components/forms/meetings/ScheduleMeetingDialog/ScheduleMeetingDialog";
 import UpcomingMeetingsCard from "@/components/meetings/UpcomingMeetingsCard/UpcomingMeetingsCard";
@@ -67,15 +72,22 @@ const ProjectDashboardPage = async ({ params }: ProjectDashboardPageProps) => {
     })),
   ]);
 
-  const visible = new Set(PROJECT_WIDGET_IDS.filter((id) => !layout.hidden_widgets.includes(id)));
-  const needsBoard = visible.has("overview") || visible.has("board") || visible.has("my_tasks");
+  const visible = new Set(
+    PROJECT_WIDGET_IDS.filter((id) => !layout.hidden_widgets.includes(id)),
+  );
+  const needsBoard =
+    visible.has("overview") || visible.has("board") || visible.has("my_tasks");
 
   const [board, members, files, meetings, user] = await Promise.all([
     needsBoard ? getProjectBoard(agencyId, projectId) : null,
     visible.has("team") ? getProjectMembers(agencyId, projectId) : null,
     visible.has("files") ? getProjectFiles(agencyId, projectId) : null,
     visible.has("meetings")
-      ? getMeetings(agencyId, { projectId, status: "scheduled", fromDate: new Date().toISOString().slice(0, 10) })
+      ? getMeetings(agencyId, {
+          projectId,
+          status: "scheduled",
+          fromDate: new Date().toISOString().slice(0, 10),
+        })
       : null,
     visible.has("my_tasks") ? getCurrentUser() : null,
   ]);
@@ -85,23 +97,39 @@ const ProjectDashboardPage = async ({ params }: ProjectDashboardPageProps) => {
     widgets.overview = <OverviewWidget project={project} board={board} />;
     widgets.board = <BoardWidget board={board} />;
     if (visible.has("my_tasks")) {
-      widgets.my_tasks = <MyTasksWidget projectId={project.id} board={board} userId={user?.id ?? null} />;
+      widgets.my_tasks = (
+        <MyTasksWidget
+          projectId={project.id}
+          board={board}
+          userId={user?.id ?? null}
+        />
+      );
     }
   }
   if (members) widgets.team = <TeamWidget members={members} />;
-  if (files) widgets.files = <FilesWidget projectId={project.id} files={files} />;
+  if (files)
+    widgets.files = <FilesWidget projectId={project.id} files={files} />;
   if (meetings) {
     widgets.meetings = (
-      <UpcomingMeetingsCard meetings={meetings} limit={4} moreHref={`/clients/${project.client_id}/meetings`} />
+      <UpcomingMeetingsCard
+        meetings={meetings}
+        limit={4}
+        moreHref={`/clients/${project.client_id}/meetings`}
+      />
     );
   }
   if (visible.has("ai_summary")) {
-    widgets.ai_summary = <AiProjectSummaryCard agencyId={agencyId} projectId={project.id} />;
+    widgets.ai_summary = (
+      <AiProjectSummaryCard agencyId={agencyId} projectId={project.id} />
+    );
   }
 
   const headerActions: Partial<Record<ProjectWidgetId, ReactNode>> = {
     overview: (
-      <Link href={`/projects/${project.id}/settings`} className={styles.cardLink}>
+      <Link
+        href={`/projects/${project.id}/settings`}
+        className={styles.cardLink}
+      >
         Edit details
       </Link>
     ),
@@ -124,7 +152,9 @@ const ProjectDashboardPage = async ({ params }: ProjectDashboardPageProps) => {
       <ScheduleMeetingDialog
         agencyId={agencyId}
         clients={[{ id: project.client_id, name: project.client_name }]}
-        projects={[{ id: project.id, name: project.name, client_id: project.client_id }]}
+        projects={[
+          { id: project.id, name: project.name, client_id: project.client_id },
+        ]}
         defaultClientId={project.client_id}
         defaultProjectId={project.id}
         compact

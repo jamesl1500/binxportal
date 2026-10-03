@@ -6,12 +6,16 @@
  * agency context; the token alone scopes every call.
  *
  * @module apps/binx-web/src/app/proposals/public/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 
 import { AuthApiError } from "@/lib/auth";
-import { declinePublicProposal, type ProposalPublic, signPublicProposal } from "@/lib/proposals";
+import {
+  declinePublicProposal,
+  type ProposalPublic,
+  signPublicProposal,
+} from "@/lib/proposals";
 
 function errorResult(error: unknown, fallback: string): { error: string } {
   if (error instanceof AuthApiError) {
@@ -31,7 +35,9 @@ export async function signPublicProposalAction(
   signerEmail: string,
 ): Promise<PublicProposalActionResult> {
   try {
-    return { proposal: await signPublicProposal(token, signerName, signerEmail) };
+    return {
+      proposal: await signPublicProposal(token, signerName, signerEmail),
+    };
   } catch (error) {
     return errorResult(error, "Unable to sign this proposal");
   }

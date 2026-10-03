@@ -7,7 +7,7 @@
  * live on the main /messages page now (filter by client there).
  *
  * @module apps/binx-web/src/components/navigation/ClientTabs/ClientTabs.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -36,7 +36,12 @@ const ClientTabs = ({ clientId }: ClientTabsProps) => {
   return (
     <nav className={styles.tabs} aria-label="Client">
       {tabs.map((tab) => (
-        <Link key={tab.href} href={tab.href} className={styles.tab} data-active={pathname === tab.href}>
+        <Link
+          key={tab.href}
+          href={tab.href}
+          className={styles.tab}
+          data-active={pathname === tab.href}
+        >
           {tab.label}
         </Link>
       ))}

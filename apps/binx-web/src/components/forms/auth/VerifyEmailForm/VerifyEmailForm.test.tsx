@@ -4,7 +4,7 @@
  * This module contains the tests for the VerifyEmailForm component.
  *
  * @module apps/binx-web/src/components/forms/auth/VerifyEmailForm/VerifyEmailForm.test.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 
 import { render, screen } from "@testing-library/react";
@@ -50,26 +50,42 @@ describe("VerifyEmailForm", () => {
 
     await user.click(screen.getByRole("button", { name: /verify email/i }));
 
-    expect(mockedVerifyEmailAction).toHaveBeenCalledWith("test-token", undefined);
+    expect(mockedVerifyEmailAction).toHaveBeenCalledWith(
+      "test-token",
+      undefined,
+    );
   });
 
   it("shows the server error for an invalid or expired token", async () => {
-    mockedVerifyEmailAction.mockResolvedValueOnce({ error: "Invalid or expired token" });
+    mockedVerifyEmailAction.mockResolvedValueOnce({
+      error: "Invalid or expired token",
+    });
     const user = userEvent.setup();
     render(<VerifyEmailForm token="bad-token" email="valid@example.com" />);
 
     await user.click(screen.getByRole("button", { name: /verify email/i }));
 
-    expect(await screen.findByText("Invalid or expired token")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Invalid or expired token"),
+    ).toBeInTheDocument();
   });
 
   it("threads a pending portal invite token through on verify", async () => {
     mockedVerifyEmailAction.mockResolvedValueOnce({});
     const user = userEvent.setup();
-    render(<VerifyEmailForm token="test-token" email="valid@example.com" portalInviteToken="inv-token" />);
+    render(
+      <VerifyEmailForm
+        token="test-token"
+        email="valid@example.com"
+        portalInviteToken="inv-token"
+      />,
+    );
 
     await user.click(screen.getByRole("button", { name: /verify email/i }));
 
-    expect(mockedVerifyEmailAction).toHaveBeenCalledWith("test-token", "inv-token");
+    expect(mockedVerifyEmailAction).toHaveBeenCalledWith(
+      "test-token",
+      "inv-token",
+    );
   });
 });

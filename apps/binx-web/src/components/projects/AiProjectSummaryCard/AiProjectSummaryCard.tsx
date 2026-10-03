@@ -8,7 +8,7 @@
  * email or message.
  *
  * @module apps/binx-web/src/components/projects/AiProjectSummaryCard/AiProjectSummaryCard.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -33,7 +33,10 @@ async function copyToClipboard(text: string): Promise<boolean> {
   }
 }
 
-const AiProjectSummaryCard = ({ agencyId, projectId }: AiProjectSummaryCardProps) => {
+const AiProjectSummaryCard = ({
+  agencyId,
+  projectId,
+}: AiProjectSummaryCardProps) => {
   const [isPending, startTransition] = useTransition();
   const [draft, setDraft] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -61,11 +64,19 @@ const AiProjectSummaryCard = ({ agencyId, projectId }: AiProjectSummaryCardProps
     <div className={styles.card}>
       <div className={styles.head}>
         {!draft && !error && !isPending ? (
-          <p className={styles.hint}>Draft a client-ready status update from this project&apos;s board in one click.</p>
+          <p className={styles.hint}>
+            Draft a client-ready status update from this project&apos;s board in
+            one click.
+          </p>
         ) : (
           <span />
         )}
-        <button type="button" className={styles.generate} onClick={handleGenerate} disabled={isPending}>
+        <button
+          type="button"
+          className={styles.generate}
+          onClick={handleGenerate}
+          disabled={isPending}
+        >
           <Sparkles aria-hidden="true" />
           {isPending ? "Drafting…" : draft ? "Regenerate" : "Generate update"}
         </button>

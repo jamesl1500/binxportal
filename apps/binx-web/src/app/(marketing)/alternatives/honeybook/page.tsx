@@ -6,7 +6,7 @@
  * business audience. Same shape as the Dubsado page.
  *
  * @module apps/binx-web/src/app/(marketing)/alternatives/honeybook/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -74,18 +74,30 @@ const faqJsonLd = {
 const HoneyBookAlternativePage = () => {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([faqJsonLd, breadcrumbJsonLd(TITLE, "/alternatives/honeybook")]) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify([
+            faqJsonLd,
+            breadcrumbJsonLd(TITLE, "/alternatives/honeybook"),
+          ]),
+        }}
+      />
 
       <section className={styles.hero}>
         <div className={styles.heroGlow} aria-hidden="true" />
         <div className={styles.container}>
           <div className={styles.heroInner}>
             <span className={styles.eyebrow}>HoneyBook alternative</span>
-            <h1 className={styles.h1}>A HoneyBook alternative built for a team, not one booking at a time.</h1>
+            <h1 className={styles.h1}>
+              A HoneyBook alternative built for a team, not one booking at a
+              time.
+            </h1>
             <p className={styles.lead}>
-              HoneyBook is built for an independent business managing one client relationship at a time.{" "}
-              {SITE.name} is built for an agency running several projects and people at once — with a client portal
-              that follows the work, not just the booking.
+              HoneyBook is built for an independent business managing one client
+              relationship at a time. {SITE.name} is built for an agency running
+              several projects and people at once — with a client portal that
+              follows the work, not just the booking.
             </p>
             <div className={`${styles.btnRow} ${styles.heroActions}`}>
               <Link href="/auth/signup" className={styles.btnPrimary}>
@@ -95,7 +107,9 @@ const HoneyBookAlternativePage = () => {
                 See everything it does
               </Link>
             </div>
-            <p className={styles.heroNote}>Free plan available · no card required.</p>
+            <p className={styles.heroNote}>
+              Free plan available · no card required.
+            </p>
           </div>
         </div>
       </section>
@@ -104,7 +118,9 @@ const HoneyBookAlternativePage = () => {
         <div className={styles.container}>
           <div className={styles.sectionHead}>
             <span className={styles.eyebrow}>Where it gets tight</span>
-            <h2 className={styles.h2}>Great at booking a client. Thinner once the project starts.</h2>
+            <h2 className={styles.h2}>
+              Great at booking a client. Thinner once the project starts.
+            </h2>
           </div>
           <div className={styles.grid}>
             {GAPS.map(({ icon: Icon, title, text }) => (
@@ -123,8 +139,12 @@ const HoneyBookAlternativePage = () => {
       <section className={`${styles.section} ${styles.sectionDark}`}>
         <div className={styles.container}>
           <div className={styles.sectionHead}>
-            <span className={`${styles.eyebrow} ${styles.eyebrowOnDark}`}>What you get instead</span>
-            <h2 className={styles.h2}>The booking is the start, not the whole thing.</h2>
+            <span className={`${styles.eyebrow} ${styles.eyebrowOnDark}`}>
+              What you get instead
+            </span>
+            <h2 className={styles.h2}>
+              The booking is the start, not the whole thing.
+            </h2>
           </div>
           <div className={styles.split}>
             <div className={styles.splitBody}>
@@ -140,7 +160,9 @@ const HoneyBookAlternativePage = () => {
               <ul className={styles.splitList}>
                 <li>Task boards with assignees and due dates per project</li>
                 <li>Everyone on the team sees the same client record</li>
-                <li>AI lead prospecting, proposals and invoicing under one login</li>
+                <li>
+                  AI lead prospecting, proposals and invoicing under one login
+                </li>
               </ul>
             </div>
           </div>
@@ -167,7 +189,10 @@ const HoneyBookAlternativePage = () => {
         </div>
       </section>
 
-      <MarketingCta heading="Bring your first client over and see." sub="Free plan, no card, no time limit." />
+      <MarketingCta
+        heading="Bring your first client over and see."
+        sub="Free plan, no card, no time limit."
+      />
     </>
   );
 };

@@ -6,7 +6,7 @@
  * `BoardCanvasActions` shape the canvas expects.
  *
  * @module apps/binx-web/src/components/boards/BoardStage/StaffBoardStage.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -24,7 +24,9 @@ import {
   withdrawApprovalAction,
 } from "@/app/(app)/projects/[projectId]/canvas/actions";
 import type { BoardItem } from "@/lib/boards-client";
-import BoardCanvas, { type BoardCanvasActions } from "@/components/boards/BoardCanvas/BoardCanvas";
+import BoardCanvas, {
+  type BoardCanvasActions,
+} from "@/components/boards/BoardCanvas/BoardCanvas";
 import BoardProvider from "@/components/boards/BoardProvider/BoardProvider";
 
 interface StaffBoardStageProps {
@@ -47,7 +49,8 @@ const StaffBoardStage = ({
 }: StaffBoardStageProps) => {
   const actions: BoardCanvasActions = {
     create: (input) => createBoardItemAction(agencyId, projectId, input),
-    update: (id, patch) => updateBoardItemAction(agencyId, projectId, id, patch),
+    update: (id, patch) =>
+      updateBoardItemAction(agencyId, projectId, id, patch),
     remove: (id) => deleteBoardItemAction(agencyId, projectId, id),
     uploadImage: (file, placement) => {
       const form = new FormData();
@@ -58,10 +61,12 @@ const StaffBoardStage = ({
       if (placement.height) form.append("height", String(placement.height));
       return uploadBoardImageAction(agencyId, projectId, form);
     },
-    toggleReaction: (id, kind) => toggleReactionAction(agencyId, projectId, id, kind),
+    toggleReaction: (id, kind) =>
+      toggleReactionAction(agencyId, projectId, id, kind),
     listComments: (id) => listCommentsAction(agencyId, projectId, id),
     addComment: (id, body) => addCommentAction(agencyId, projectId, id, body),
-    deleteComment: (id, commentId) => deleteCommentAction(agencyId, projectId, id, commentId),
+    deleteComment: (id, commentId) =>
+      deleteCommentAction(agencyId, projectId, id, commentId),
     requestApproval: (id) => requestApprovalAction(agencyId, projectId, id),
     withdrawApproval: (id) => withdrawApprovalAction(agencyId, projectId, id),
   };
@@ -71,11 +76,15 @@ const StaffBoardStage = ({
       boardId={boardId}
       currentUserId={currentUserId}
       initialItems={initialItems}
-      resync={async () => (await resyncBoardAction(agencyId, projectId)).items ?? null}
+      resync={async () =>
+        (await resyncBoardAction(agencyId, projectId)).items ?? null
+      }
     >
       <BoardCanvas
         actions={actions}
-        imageUrl={(fileId) => `/api/projects/${agencyId}/${projectId}/files/${fileId}`}
+        imageUrl={(fileId) =>
+          `/api/projects/${agencyId}/${projectId}/files/${fileId}`
+        }
         currentUserId={currentUserId}
         canModerate={canModerate}
         viewerKind="agency"

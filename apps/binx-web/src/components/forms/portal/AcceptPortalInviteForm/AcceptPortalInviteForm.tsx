@@ -6,7 +6,7 @@
  * no success state here — only an inline error.
  *
  * @module apps/binx-web/src/components/forms/portal/AcceptPortalInviteForm/AcceptPortalInviteForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -22,7 +22,10 @@ interface AcceptPortalInviteFormProps {
   preview: PortalInvitationPreview;
 }
 
-const AcceptPortalInviteForm = ({ token, preview }: AcceptPortalInviteFormProps) => {
+const AcceptPortalInviteForm = ({
+  token,
+  preview,
+}: AcceptPortalInviteFormProps) => {
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -53,7 +56,12 @@ const AcceptPortalInviteForm = ({ token, preview }: AcceptPortalInviteFormProps)
 
       {formError && <p className={styles.formError}>{formError}</p>}
 
-      <button className={styles.submit} type="button" onClick={handleAccept} disabled={isPending}>
+      <button
+        className={styles.submit}
+        type="button"
+        onClick={handleAccept}
+        disabled={isPending}
+      >
         {isPending ? "Joining…" : `Enter ${preview.client_name}'s portal`}
       </button>
     </div>

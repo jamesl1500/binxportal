@@ -7,7 +7,7 @@
  * Binx.
  *
  * @module apps/binx-web/src/app/(marketing)/alternatives/copilot-assembly/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -75,18 +75,31 @@ const faqJsonLd = {
 const CopilotAssemblyAlternativePage = () => {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([faqJsonLd, breadcrumbJsonLd(TITLE, "/alternatives/copilot-assembly")]) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify([
+            faqJsonLd,
+            breadcrumbJsonLd(TITLE, "/alternatives/copilot-assembly"),
+          ]),
+        }}
+      />
 
       <section className={styles.hero}>
         <div className={styles.heroGlow} aria-hidden="true" />
         <div className={styles.container}>
           <div className={styles.heroInner}>
-            <span className={styles.eyebrow}>Copilot & Assembly alternative</span>
-            <h1 className={styles.h1}>The client portal, plus everything that runs behind it.</h1>
+            <span className={styles.eyebrow}>
+              Copilot & Assembly alternative
+            </span>
+            <h1 className={styles.h1}>
+              The client portal, plus everything that runs behind it.
+            </h1>
             <p className={styles.lead}>
-              Tools like Copilot and Assembly are built around the client-facing portal. {SITE.name} gives you that
-              same portal — live progress, files, invoices — connected directly to the leads, project boards, and
-              invoicing your team actually runs the work with.
+              Tools like Copilot and Assembly are built around the client-facing
+              portal. {SITE.name} gives you that same portal — live progress,
+              files, invoices — connected directly to the leads, project boards,
+              and invoicing your team actually runs the work with.
             </p>
             <div className={`${styles.btnRow} ${styles.heroActions}`}>
               <Link href="/auth/signup" className={styles.btnPrimary}>
@@ -96,7 +109,9 @@ const CopilotAssemblyAlternativePage = () => {
                 See everything it does
               </Link>
             </div>
-            <p className={styles.heroNote}>Free plan available · no card required.</p>
+            <p className={styles.heroNote}>
+              Free plan available · no card required.
+            </p>
           </div>
         </div>
       </section>
@@ -105,7 +120,9 @@ const CopilotAssemblyAlternativePage = () => {
         <div className={styles.container}>
           <div className={styles.sectionHead}>
             <span className={styles.eyebrow}>Where it gets tight</span>
-            <h2 className={styles.h2}>A great portal is only half the workspace.</h2>
+            <h2 className={styles.h2}>
+              A great portal is only half the workspace.
+            </h2>
           </div>
           <div className={styles.grid}>
             {GAPS.map(({ icon: Icon, title, text }) => (
@@ -124,8 +141,12 @@ const CopilotAssemblyAlternativePage = () => {
       <section className={`${styles.section} ${styles.sectionDark}`}>
         <div className={styles.container}>
           <div className={styles.sectionHead}>
-            <span className={`${styles.eyebrow} ${styles.eyebrowOnDark}`}>One workspace, not two</span>
-            <h2 className={styles.h2}>The portal and the project share a client record.</h2>
+            <span className={`${styles.eyebrow} ${styles.eyebrowOnDark}`}>
+              One workspace, not two
+            </span>
+            <h2 className={styles.h2}>
+              The portal and the project share a client record.
+            </h2>
           </div>
           <div className={styles.split}>
             <div className={styles.splitBody}>
@@ -140,7 +161,10 @@ const CopilotAssemblyAlternativePage = () => {
               <h3 className={styles.h3}>The team side</h3>
               <ul className={styles.splitList}>
                 <li>Task boards and a shared canvas behind every portal</li>
-                <li>AI-found leads and signed proposals that become a client record</li>
+                <li>
+                  AI-found leads and signed proposals that become a client
+                  record
+                </li>
                 <li>Your invoice numbering, terms, and payment tracking</li>
               </ul>
             </div>
@@ -168,7 +192,10 @@ const CopilotAssemblyAlternativePage = () => {
         </div>
       </section>
 
-      <MarketingCta heading="Open your first client portal today." sub="Free plan, no card, no time limit." />
+      <MarketingCta
+        heading="Open your first client portal today."
+        sub="Free plan, no card, no time limit."
+      />
     </>
   );
 };

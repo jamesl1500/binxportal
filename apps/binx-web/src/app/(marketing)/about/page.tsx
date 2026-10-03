@@ -4,7 +4,7 @@
  * The short version of why Binx exists and what it's trying to be.
  *
  * @module apps/binx-web/src/app/(marketing)/about/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 
@@ -46,18 +46,26 @@ const PRINCIPLES = [
 const AboutPage = () => {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd(TITLE, "/about")) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbJsonLd(TITLE, "/about")),
+        }}
+      />
 
       <section className={styles.hero}>
         <div className={styles.heroGlow} aria-hidden="true" />
         <div className={styles.container}>
           <div className={styles.heroInner}>
             <span className={styles.eyebrow}>About</span>
-            <h1 className={styles.h1}>Built for the agencies that don&apos;t have an ops team.</h1>
+            <h1 className={styles.h1}>
+              Built for the agencies that don&apos;t have an ops team.
+            </h1>
             <p className={styles.lead}>
-              {SITE.name} started from a simple frustration: running a small agency means gluing together a CRM, a
-              task tool, a folder of files, an invoicing app and a pile of email — and the glue is a person&apos;s
-              week.
+              {SITE.name} started from a simple frustration: running a small
+              agency means gluing together a CRM, a task tool, a folder of
+              files, an invoicing app and a pile of email — and the glue is a
+              person&apos;s week.
             </p>
           </div>
         </div>
@@ -67,13 +75,16 @@ const AboutPage = () => {
         <div className={styles.narrow}>
           <div className={styles.prose}>
             <p>
-              So we built the thing we wanted: one workspace where a lead becomes a client becomes a project becomes
-              an invoice, without anyone re-typing a name. Where the client sees what they should and nothing they
-              shouldn&apos;t. Where the team opens one tab in the morning and knows what the day looks like.
+              So we built the thing we wanted: one workspace where a lead
+              becomes a client becomes a project becomes an invoice, without
+              anyone re-typing a name. Where the client sees what they should
+              and nothing they shouldn&apos;t. Where the team opens one tab in
+              the morning and knows what the day looks like.
             </p>
             <p>
-              {SITE.name} is young and moving fast. If something&apos;s missing or awkward, tell us — a lot of what&apos;s
-              here started as a note from someone running an agency.
+              {SITE.name} is young and moving fast. If something&apos;s missing
+              or awkward, tell us — a lot of what&apos;s here started as a note
+              from someone running an agency.
             </p>
           </div>
         </div>

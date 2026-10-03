@@ -12,7 +12,7 @@
  * up.
  *
  * @module apps/binx-web/src/components/team/TeamRoster/TeamRoster.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -54,7 +54,11 @@ function capitalize(value: string): string {
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+  return new Date(iso).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 }
 
 function formatActive(iso: string | null): string {
@@ -66,7 +70,12 @@ function formatActive(iso: string | null): string {
   return formatDate(iso);
 }
 
-const TeamRoster = ({ agencyId, members: initialMembers, currentUserId, canManage }: TeamRosterProps) => {
+const TeamRoster = ({
+  agencyId,
+  members: initialMembers,
+  currentUserId,
+  canManage,
+}: TeamRosterProps) => {
   const router = useRouter();
   const [members, setMembers] = useState(initialMembers);
   const [search, setSearch] = useState("");
@@ -96,18 +105,27 @@ const TeamRoster = ({ agencyId, members: initialMembers, currentUserId, canManag
         case "name":
           return a.full_name.localeCompare(b.full_name);
         case "role":
-          return ROLE_RANK[a.role] - ROLE_RANK[b.role] || a.full_name.localeCompare(b.full_name);
+          return (
+            ROLE_RANK[a.role] - ROLE_RANK[b.role] ||
+            a.full_name.localeCompare(b.full_name)
+          );
         case "joined":
-          return new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime();
+          return (
+            new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime()
+          );
         case "active":
-          return new Date(a.last_active_at ?? 0).getTime() - new Date(b.last_active_at ?? 0).getTime();
+          return (
+            new Date(a.last_active_at ?? 0).getTime() -
+            new Date(b.last_active_at ?? 0).getTime()
+          );
       }
     });
 
     return sortAsc ? sorted : sorted.reverse();
   }, [members, search, roleFilter, sortKey, sortAsc]);
 
-  const selectedMember = members.find((member) => member.id === selectedId) ?? null;
+  const selectedMember =
+    members.find((member) => member.id === selectedId) ?? null;
 
   const toggleSort = (key: SortKey) => {
     if (key === sortKey) {
@@ -124,7 +142,9 @@ const TeamRoster = ({ agencyId, members: initialMembers, currentUserId, canManag
   };
 
   const applyMemberUpdate = (updated: AgencyMember) => {
-    setMembers((prev) => prev.map((member) => (member.id === updated.id ? updated : member)));
+    setMembers((prev) =>
+      prev.map((member) => (member.id === updated.id ? updated : member)),
+    );
     router.refresh();
   };
 
@@ -136,7 +156,11 @@ const TeamRoster = ({ agencyId, members: initialMembers, currentUserId, canManag
   const handleInlineRole = (memberId: string, role: AgencyRole) => {
     setBusyRoleId(memberId);
     startSavingRole(async () => {
-      const result = await updateAgencyMemberRoleAction(agencyId, memberId, role);
+      const result = await updateAgencyMemberRoleAction(
+        agencyId,
+        memberId,
+        role,
+      );
       setBusyRoleId(null);
       if (result.error) {
         toast.error(result.error);
@@ -149,7 +173,8 @@ const TeamRoster = ({ agencyId, members: initialMembers, currentUserId, canManag
     });
   };
 
-  const sortIndicator = (key: SortKey) => (sortKey === key ? (sortAsc ? " ↑" : " ↓") : "");
+  const sortIndicator = (key: SortKey) =>
+    sortKey === key ? (sortAsc ? " ↑" : " ↓") : "";
 
   return (
     <div className={styles.wrapper}>
@@ -183,22 +208,38 @@ const TeamRoster = ({ agencyId, members: initialMembers, currentUserId, canManag
           <thead>
             <tr>
               <th className={styles.headCell}>
-                <button type="button" className={styles.sortButton} onClick={() => toggleSort("name")}>
+                <button
+                  type="button"
+                  className={styles.sortButton}
+                  onClick={() => toggleSort("name")}
+                >
                   Member{sortIndicator("name")}
                 </button>
               </th>
               <th className={styles.headCell}>
-                <button type="button" className={styles.sortButton} onClick={() => toggleSort("role")}>
+                <button
+                  type="button"
+                  className={styles.sortButton}
+                  onClick={() => toggleSort("role")}
+                >
                   Role{sortIndicator("role")}
                 </button>
               </th>
               <th className={styles.headCell}>
-                <button type="button" className={styles.sortButton} onClick={() => toggleSort("joined")}>
+                <button
+                  type="button"
+                  className={styles.sortButton}
+                  onClick={() => toggleSort("joined")}
+                >
                   Joined{sortIndicator("joined")}
                 </button>
               </th>
               <th className={styles.headCell}>
-                <button type="button" className={styles.sortButton} onClick={() => toggleSort("active")}>
+                <button
+                  type="button"
+                  className={styles.sortButton}
+                  onClick={() => toggleSort("active")}
+                >
                   Last active{sortIndicator("active")}
                 </button>
               </th>
@@ -229,7 +270,12 @@ const TeamRoster = ({ agencyId, members: initialMembers, currentUserId, canManag
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
                           className={styles.avatar}
-                          src={memberImageUrl(agencyId, member.id, "avatar", member.avatar_version)}
+                          src={memberImageUrl(
+                            agencyId,
+                            member.id,
+                            "avatar",
+                            member.avatar_version,
+                          )}
                           alt=""
                           aria-hidden="true"
                         />
@@ -242,27 +288,48 @@ const TeamRoster = ({ agencyId, members: initialMembers, currentUserId, canManag
                         <p className={styles.name}>
                           {member.full_name}
                           {member.is_verified && (
-                            <span className={styles.verified} title="Verified account" aria-label="Verified account">
+                            <span
+                              className={styles.verified}
+                              title="Verified account"
+                              aria-label="Verified account"
+                            >
                               ✓
                             </span>
                           )}
-                          {isSelf && <span className={styles.youBadge}>You</span>}
+                          {isSelf && (
+                            <span className={styles.youBadge}>You</span>
+                          )}
                         </p>
                         <p className={styles.sub}>
                           @{member.user_name}
-                          {member.title && <span className={styles.title}> · {member.title}</span>}
+                          {member.title && (
+                            <span className={styles.title}>
+                              {" "}
+                              · {member.title}
+                            </span>
+                          )}
                         </p>
-                        {member.email && <p className={styles.email}>{member.email}</p>}
+                        {member.email && (
+                          <p className={styles.email}>{member.email}</p>
+                        )}
                       </div>
                     </div>
                   </td>
-                  <td className={styles.cell} onClick={(event) => event.stopPropagation()}>
+                  <td
+                    className={styles.cell}
+                    onClick={(event) => event.stopPropagation()}
+                  >
                     {canManage && !isSelf ? (
                       <select
                         className={styles.roleSelect}
                         value={member.role}
                         disabled={isSavingRole && busyRoleId === member.id}
-                        onChange={(event) => handleInlineRole(member.id, event.target.value as AgencyRole)}
+                        onChange={(event) =>
+                          handleInlineRole(
+                            member.id,
+                            event.target.value as AgencyRole,
+                          )
+                        }
                         aria-label={`Role for ${member.full_name}`}
                       >
                         {ROLE_OPTIONS.map((role) => (
@@ -272,20 +339,29 @@ const TeamRoster = ({ agencyId, members: initialMembers, currentUserId, canManag
                         ))}
                       </select>
                     ) : (
-                      <span className={styles.roleBadge} data-role={member.role}>
+                      <span
+                        className={styles.roleBadge}
+                        data-role={member.role}
+                      >
                         {capitalize(member.role)}
                       </span>
                     )}
                   </td>
-                  <td className={`${styles.cell} ${styles.muted}`}>{formatDate(member.joined_at)}</td>
-                  <td className={`${styles.cell} ${styles.muted}`}>{formatActive(member.last_active_at)}</td>
+                  <td className={`${styles.cell} ${styles.muted}`}>
+                    {formatDate(member.joined_at)}
+                  </td>
+                  <td className={`${styles.cell} ${styles.muted}`}>
+                    {formatActive(member.last_active_at)}
+                  </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
 
-        {visible.length === 0 && <p className={styles.empty}>No members match your filters.</p>}
+        {visible.length === 0 && (
+          <p className={styles.empty}>No members match your filters.</p>
+        )}
       </div>
 
       <MemberDetailDrawer

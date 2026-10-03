@@ -7,7 +7,7 @@
  * with a current agency.
  *
  * @module apps/binx-web/src/app/(app)/projects/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -33,7 +33,9 @@ const ProjectsPage = async () => {
     getAgencyProjects(currentAgency.id),
     getAgencyClients(currentAgency.id),
   ]);
-  const activeCount = projects.filter((project) => project.status === "active").length;
+  const activeCount = projects.filter(
+    (project) => project.status === "active",
+  ).length;
 
   return (
     <div>
@@ -42,7 +44,8 @@ const ProjectsPage = async () => {
           <span className={styles.eyebrow}>Projects</span>
           <h1 className={styles.title}>Your projects</h1>
           <p className={styles.subtitle}>
-            {activeCount} active {activeCount === 1 ? "project" : "projects"} at {currentAgency.name}.
+            {activeCount} active {activeCount === 1 ? "project" : "projects"} at{" "}
+            {currentAgency.name}.
           </p>
         </div>
 
@@ -51,7 +54,8 @@ const ProjectsPage = async () => {
 
       {clients.length === 0 && (
         <p className={styles.notice}>
-          You&apos;ll need a client before you can start a project — add one from the Clients page first.
+          You&apos;ll need a client before you can start a project — add one
+          from the Clients page first.
         </p>
       )}
 

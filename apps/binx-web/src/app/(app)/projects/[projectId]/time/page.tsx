@@ -12,7 +12,7 @@
  * ProjectRead), so no extra lookup is needed to bill the client.
  *
  * @module apps/binx-web/src/app/(app)/projects/[projectId]/time/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -20,7 +20,11 @@ import { redirect } from "next/navigation";
 import { getCurrentAgencyContext } from "@/lib/agencies";
 import { formatMoneyCents } from "@/lib/money";
 import { getAgencyProject, getProjectBoard } from "@/lib/projects";
-import { getRunningTimer, getTimeEntries, getUninvoicedSummary } from "@/lib/time-tracking";
+import {
+  getRunningTimer,
+  getTimeEntries,
+  getUninvoicedSummary,
+} from "@/lib/time-tracking";
 import ManualEntryForm from "@/components/forms/projects/ManualEntryForm/ManualEntryForm";
 import TimeEntriesTable from "@/components/forms/projects/TimeEntriesTable/TimeEntriesTable";
 import TimerWidget from "@/components/forms/projects/TimerWidget/TimerWidget";
@@ -50,7 +54,9 @@ const ProjectTimePage = async ({ params }: ProjectTimePageProps) => {
     getUninvoicedSummary(currentAgency.id, projectId),
   ]);
 
-  const tasks = board.flatMap((column) => column.tasks.map((task) => ({ id: task.id, title: task.title })));
+  const tasks = board.flatMap((column) =>
+    column.tasks.map((task) => ({ id: task.id, title: task.title })),
+  );
 
   return (
     <div className={styles.page}>
@@ -61,11 +67,15 @@ const ProjectTimePage = async ({ params }: ProjectTimePageProps) => {
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Uninvoiced hours</span>
-          <p className={styles.statValue}>{(summary.total_minutes / 60).toFixed(1)}</p>
+          <p className={styles.statValue}>
+            {(summary.total_minutes / 60).toFixed(1)}
+          </p>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Uninvoiced billable amount</span>
-          <p className={styles.statValue}>{formatMoneyCents(summary.billable_amount_cents)}</p>
+          <p className={styles.statValue}>
+            {formatMoneyCents(summary.billable_amount_cents)}
+          </p>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Missing a rate</span>
@@ -74,8 +84,17 @@ const ProjectTimePage = async ({ params }: ProjectTimePageProps) => {
       </div>
 
       <div className={styles.actionsRow}>
-        <TimerWidget agencyId={currentAgency.id} projectId={project.id} tasks={tasks} runningTimer={runningTimer} />
-        <ManualEntryForm agencyId={currentAgency.id} projectId={project.id} tasks={tasks} />
+        <TimerWidget
+          agencyId={currentAgency.id}
+          projectId={project.id}
+          tasks={tasks}
+          runningTimer={runningTimer}
+        />
+        <ManualEntryForm
+          agencyId={currentAgency.id}
+          projectId={project.id}
+          tasks={tasks}
+        />
       </div>
 
       <div className={styles.card}>

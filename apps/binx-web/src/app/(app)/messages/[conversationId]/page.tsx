@@ -6,7 +6,7 @@
  * messages themselves are loaded client-side by <MessageThread>.
  *
  * @module apps/binx-web/src/app/(app)/messages/[conversationId]/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
@@ -29,7 +29,8 @@ const ConversationPage = async ({ params }: ConversationPageProps) => {
     redirect("/onboarding/two");
   }
 
-  const canModerate = currentAgency.role === "owner" || currentAgency.role === "admin";
+  const canModerate =
+    currentAgency.role === "owner" || currentAgency.role === "admin";
 
   let conversation;
   try {

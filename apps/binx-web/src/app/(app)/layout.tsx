@@ -12,7 +12,7 @@
  * `var(--app-accent, #{fallback})`.
  *
  * @module apps/binx-web/src/app/(app)/layout.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import React from "react";
 import type { Metadata } from "next";
@@ -54,18 +54,30 @@ const AppLayout = async ({ children }: { children: React.ReactNode }) => {
     redirect(portal ? "/portal" : "/onboarding/two");
   }
 
-  const [unreadMessages, notifications, appearance, tutorialProgress] = await Promise.all([
-    getUnreadMessageCount(currentAgency.id),
-    getNotifications({ limit: 8 }).catch(() => ({ items: [], unread_count: 0, has_more: false })),
-    getAppearanceSettings().catch(() => ({ accent_color: null })),
-    getTutorialProgress().catch(() => ({ tour_completed: true, dismissed_popups: [] })),
-  ]);
+  const [unreadMessages, notifications, appearance, tutorialProgress] =
+    await Promise.all([
+      getUnreadMessageCount(currentAgency.id),
+      getNotifications({ limit: 8 }).catch(() => ({
+        items: [],
+        unread_count: 0,
+        has_more: false,
+      })),
+      getAppearanceSettings().catch(() => ({ accent_color: null })),
+      getTutorialProgress().catch(() => ({
+        tour_completed: true,
+        dismissed_popups: [],
+      })),
+    ]);
 
   return (
     <TutorialProvider initialProgress={tutorialProgress}>
       <div
         className={styles.root}
-        style={{ "--app-accent": appearance.accent_color ?? undefined } as React.CSSProperties}
+        style={
+          {
+            "--app-accent": appearance.accent_color ?? undefined,
+          } as React.CSSProperties
+        }
       >
         <AppHeader
           user={user}

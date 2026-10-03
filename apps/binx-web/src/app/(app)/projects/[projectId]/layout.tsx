@@ -8,7 +8,7 @@
  * which is wrapped in React's `cache()`, so that's one request, not two.
  *
  * @module apps/binx-web/src/app/(app)/projects/[projectId]/layout.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -26,7 +26,11 @@ interface ProjectLayoutProps {
   params: Promise<{ projectId: string }>;
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ projectId: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ projectId: string }>;
+}): Promise<Metadata> {
   const { projectId } = await params;
   try {
     const { currentAgency } = await getCurrentAgencyContext();
@@ -34,7 +38,9 @@ export async function generateMetadata({ params }: { params: Promise<{ projectId
     const project = await getAgencyProject(currentAgency.id, projectId);
     // The project name becomes the title base for every tab under it
     // ("Board · Acme Rebrand", "Canvas · Acme Rebrand", …).
-    return { title: { default: project.name, template: `%s · ${project.name}` } };
+    return {
+      title: { default: project.name, template: `%s · ${project.name}` },
+    };
   } catch {
     return {};
   }
@@ -66,7 +72,9 @@ const ProjectLayout = async ({ children, params }: ProjectLayoutProps) => {
 
       <div className={styles.header}>
         <div>
-          <span className={styles.eyebrow}>Project · {project.client_name}</span>
+          <span className={styles.eyebrow}>
+            Project · {project.client_name}
+          </span>
           <h1 className={styles.title}>{project.name}</h1>
         </div>
         <span className={styles.statusBadge} data-status={project.status}>

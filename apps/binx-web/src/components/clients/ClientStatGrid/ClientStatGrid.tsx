@@ -5,7 +5,7 @@
  * Dashboard and Invoices tabs. Server component: it's static markup.
  *
  * @module apps/binx-web/src/components/clients/ClientStatGrid/ClientStatGrid.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import styles from "./ClientStatGrid.module.scss";
 

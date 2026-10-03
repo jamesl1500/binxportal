@@ -8,7 +8,7 @@
  * AiAction on the API side.
  *
  * @module apps/binx-web/src/components/ai/AiActionCard/AiActionCard.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -22,7 +22,10 @@ import styles from "./AiActionCard.module.scss";
 interface AiActionCardProps {
   action: AiAction;
   /** Resolves once the server has recorded the decision. */
-  onResolve: (actionId: string, decision: "approve" | "decline") => Promise<void>;
+  onResolve: (
+    actionId: string,
+    decision: "approve" | "decline",
+  ) => Promise<void>;
 }
 
 const STATUS_LABELS: Record<AiAction["status"], string> = {
@@ -59,7 +62,9 @@ const AiActionCard = ({ action, onResolve }: AiActionCardProps) => {
         <span className={styles.status}>{STATUS_LABELS[action.status]}</span>
       </div>
       <p className={styles.summary}>{action.summary}</p>
-      {action.status === "failed" && action.result && <p className={styles.result}>{action.result}</p>}
+      {action.status === "failed" && action.result && (
+        <p className={styles.result}>{action.result}</p>
+      )}
       {action.status === "pending" && (
         <div className={styles.buttons}>
           <button

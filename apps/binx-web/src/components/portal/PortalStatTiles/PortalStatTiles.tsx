@@ -6,7 +6,7 @@
  * markup.
  *
  * @module apps/binx-web/src/components/portal/PortalStatTiles/PortalStatTiles.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";

@@ -13,7 +13,7 @@
  * whether `MessagingProvider` happens to be mounted too.
  *
  * @module apps/binx-web/src/hooks/useRealtimeSocket.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -38,7 +38,9 @@ function wsBaseUrl(): string | null {
  * internally so passing an inline arrow function on every render doesn't
  * reconnect the socket.
  */
-export function useRealtimeSocket(onEvent: (event: RealtimeEvent) => void): RealtimeSocketStatus {
+export function useRealtimeSocket(
+  onEvent: (event: RealtimeEvent) => void,
+): RealtimeSocketStatus {
   const onEventRef = useRef(onEvent);
   useEffect(() => {
     onEventRef.current = onEvent;
@@ -65,7 +67,9 @@ export function useRealtimeSocket(onEvent: (event: RealtimeEvent) => void): Real
       setStatus("connecting");
       let ticket: string;
       try {
-        const response = await fetch("/api/messages/ws-ticket", { method: "POST" });
+        const response = await fetch("/api/messages/ws-ticket", {
+          method: "POST",
+        });
         if (!response.ok) throw new Error("ticket");
         ({ ticket } = await response.json());
       } catch {
@@ -86,7 +90,9 @@ export function useRealtimeSocket(onEvent: (event: RealtimeEvent) => void): Real
         return;
       }
 
-      socket = new WebSocket(`${base}/ws/messages?ticket=${encodeURIComponent(ticket)}`);
+      socket = new WebSocket(
+        `${base}/ws/messages?ticket=${encodeURIComponent(ticket)}`,
+      );
 
       socket.onopen = () => {
         attempt = 0;

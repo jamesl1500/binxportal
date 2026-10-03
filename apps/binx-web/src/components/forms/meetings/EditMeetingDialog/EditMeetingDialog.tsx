@@ -8,7 +8,7 @@
  * per table row, not once per page.
  *
  * @module apps/binx-web/src/components/forms/meetings/EditMeetingDialog/EditMeetingDialog.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -39,7 +39,12 @@ interface EditMeetingDialogProps {
   projects: ProjectOption[];
 }
 
-const EditMeetingDialog = ({ agencyId, meeting, clients, projects }: EditMeetingDialogProps) => {
+const EditMeetingDialog = ({
+  agencyId,
+  meeting,
+  clients,
+  projects,
+}: EditMeetingDialogProps) => {
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
@@ -50,7 +55,12 @@ const EditMeetingDialog = ({ agencyId, meeting, clients, projects }: EditMeeting
 
   return (
     <>
-      <button type="button" className={styles.trigger} onClick={() => setOpen(true)} aria-label="Edit meeting">
+      <button
+        type="button"
+        className={styles.trigger}
+        onClick={() => setOpen(true)}
+        aria-label="Edit meeting"
+      >
         <Pencil aria-hidden="true" />
         Edit
       </button>
@@ -59,7 +69,9 @@ const EditMeetingDialog = ({ agencyId, meeting, clients, projects }: EditMeeting
         <Dialog.Portal>
           <Dialog.Backdrop className={styles.backdrop} />
           <Dialog.Popup className={styles.dialog} aria-label="Edit meeting">
-            <Dialog.Title className={styles.dialogTitle}>Edit meeting</Dialog.Title>
+            <Dialog.Title className={styles.dialogTitle}>
+              Edit meeting
+            </Dialog.Title>
             <Dialog.Description className={styles.dialogDescription}>
               Rescheduling notifies the client of the new time.
             </Dialog.Description>

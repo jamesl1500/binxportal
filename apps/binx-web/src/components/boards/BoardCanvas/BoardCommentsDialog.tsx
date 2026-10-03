@@ -11,7 +11,7 @@
  * actions.
  *
  * @module apps/binx-web/src/components/boards/BoardCanvas/BoardCommentsDialog.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -39,7 +39,9 @@ interface BoardCommentsDialogProps {
 const cardLabel = (item: BoardItem): string => {
   if (item.type === "note") {
     const text = "text" in item.content ? item.content.text.trim() : "";
-    return text ? `“${text.slice(0, 40)}${text.length > 40 ? "…" : ""}”` : "this note";
+    return text
+      ? `“${text.slice(0, 40)}${text.length > 40 ? "…" : ""}”`
+      : "this note";
   }
   return "this image";
 };
@@ -114,7 +116,9 @@ const BoardCommentsDialog = ({
         <Dialog.Backdrop className={styles.backdrop} />
         <Dialog.Popup className={styles.dialog} aria-label="Card comments">
           <Dialog.Title className={styles.title}>Comments</Dialog.Title>
-          <Dialog.Description className={styles.subtitle}>On {cardLabel(item)}</Dialog.Description>
+          <Dialog.Description className={styles.subtitle}>
+            On {cardLabel(item)}
+          </Dialog.Description>
 
           <div className={styles.thread}>
             {loading ? (
@@ -126,14 +130,20 @@ const BoardCommentsDialog = ({
               </p>
             ) : (
               comments!.map((comment) => {
-                const canDelete = canModerate || comment.author_user_id === currentUserId;
+                const canDelete =
+                  canModerate || comment.author_user_id === currentUserId;
                 return (
                   <div key={comment.id} className={styles.comment}>
                     <div className={styles.commentHead}>
-                      <span className={styles.author} data-client={comment.author_kind === "client"}>
+                      <span
+                        className={styles.author}
+                        data-client={comment.author_kind === "client"}
+                      >
                         {comment.author_name}
                       </span>
-                      <span className={styles.time}>{relativeTime(comment.created_at)}</span>
+                      <span className={styles.time}>
+                        {relativeTime(comment.created_at)}
+                      </span>
                       {canDelete && (
                         <button
                           type="button"
@@ -175,7 +185,11 @@ const BoardCommentsDialog = ({
             />
             <div className={styles.composerActions}>
               <Dialog.Close className={styles.cancel}>Close</Dialog.Close>
-              <button type="submit" className={styles.send} disabled={!body.trim() || sending}>
+              <button
+                type="submit"
+                className={styles.send}
+                disabled={!body.trim() || sending}
+              >
                 {sending ? "Sending…" : "Comment"}
               </button>
             </div>

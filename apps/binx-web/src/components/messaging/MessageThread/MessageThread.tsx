@@ -8,7 +8,7 @@
  * kept live by the store; "Load earlier" pages backwards.
  *
  * @module apps/binx-web/src/components/messaging/MessageThread/MessageThread.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -34,7 +34,9 @@ import {
 import { useMessagingStore } from "@/stores/use-messaging-store";
 import { useMessaging } from "@/components/messaging/MessagingProvider/MessagingProvider";
 import MemberMultiSelect from "@/components/messaging/MemberMultiSelect/MemberMultiSelect";
-import MessageAvatar, { memberAvatarSrc } from "@/components/messaging/MessageAvatar/MessageAvatar";
+import MessageAvatar, {
+  memberAvatarSrc,
+} from "@/components/messaging/MessageAvatar/MessageAvatar";
 import MessageAttachmentView from "@/components/messaging/MessageAttachmentView/MessageAttachmentView";
 import MessageComposer from "@/components/messaging/MessageComposer/MessageComposer";
 
@@ -76,14 +78,22 @@ interface MessageThreadProps {
   canModerate: boolean;
 }
 
-const MessageThread = ({ conversation, onConversationChanged, canModerate }: MessageThreadProps) => {
+const MessageThread = ({
+  conversation,
+  onConversationChanged,
+  canModerate,
+}: MessageThreadProps) => {
   const { agencyId, currentUserId, members, memberByUserId } = useMessaging();
-  const messages = useMessagingStore((s) => s.messagesByConversation[conversation.id]);
+  const messages = useMessagingStore(
+    (s) => s.messagesByConversation[conversation.id],
+  );
   const hydrated = useMessagingStore((s) => s.hydrated.has(conversation.id));
   const setMessages = useMessagingStore((s) => s.setMessages);
   const prependMessages = useMessagingStore((s) => s.prependMessages);
   const markLocallyRead = useMessagingStore((s) => s.markLocallyRead);
-  const typing = useMessagingStore((s) => s.typingByConversation[conversation.id]);
+  const typing = useMessagingStore(
+    (s) => s.typingByConversation[conversation.id],
+  );
 
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [reachedStart, setReachedStart] = useState(false);
@@ -97,11 +107,14 @@ const MessageThread = ({ conversation, onConversationChanged, canModerate }: Mes
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  const activeParticipants = conversation.participants.filter((p) => p.left_at === null);
+  const activeParticipants = conversation.participants.filter(
+    (p) => p.left_at === null,
+  );
   const isGroup = conversation.kind === "group";
 
   const mentionHandles = useMemo(
-    () => new Set(conversation.participants.map((p) => p.user_name.toLowerCase())),
+    () =>
+      new Set(conversation.participants.map((p) => p.user_name.toLowerCase())),
     [conversation.participants],
   );
 
@@ -163,14 +176,20 @@ const MessageThread = ({ conversation, onConversationChanged, canModerate }: Mes
     const title = renameDraft.trim();
     setRenaming(false);
     if (!title || title === conversation.title) return;
-    const result = await renameConversationAction(agencyId, conversation.id, title);
+    const result = await renameConversationAction(
+      agencyId,
+      conversation.id,
+      title,
+    );
     if (result.error) toast.error(result.error);
     else onConversationChanged();
   };
 
   const handleAddPeople = async () => {
     if (addSelected.size === 0) return;
-    const result = await addParticipantsAction(agencyId, conversation.id, [...addSelected]);
+    const result = await addParticipantsAction(agencyId, conversation.id, [
+      ...addSelected,
+    ]);
     setAddOpen(false);
     setAddSelected(new Set());
     if (result.error) toast.error(result.error);
@@ -178,19 +197,31 @@ const MessageThread = ({ conversation, onConversationChanged, canModerate }: Mes
   };
 
   const handleToggleMute = async () => {
-    const result = await toggleMuteAction(agencyId, conversation.id, !conversation.is_muted);
+    const result = await toggleMuteAction(
+      agencyId,
+      conversation.id,
+      !conversation.is_muted,
+    );
     if (result.error) toast.error(result.error);
     else onConversationChanged();
   };
 
   const handleLeave = async () => {
-    const result = await removeParticipantAction(agencyId, conversation.id, currentUserId);
+    const result = await removeParticipantAction(
+      agencyId,
+      conversation.id,
+      currentUserId,
+    );
     if (result.error) toast.error(result.error);
     else onConversationChanged();
   };
 
   const handleRemove = async (userId: string) => {
-    const result = await removeParticipantAction(agencyId, conversation.id, userId);
+    const result = await removeParticipantAction(
+      agencyId,
+      conversation.id,
+      userId,
+    );
     if (result.error) toast.error(result.error);
     else onConversationChanged();
   };
@@ -199,12 +230,21 @@ const MessageThread = ({ conversation, onConversationChanged, canModerate }: Mes
     const body = editDraft.trim();
     setEditingId(null);
     if (!body) return;
-    const result = await editMessageAction(agencyId, conversation.id, messageId, body);
+    const result = await editMessageAction(
+      agencyId,
+      conversation.id,
+      messageId,
+      body,
+    );
     if (result.error) toast.error(result.error);
   };
 
   const handleDelete = async (messageId: string) => {
-    const result = await deleteMessageAction(agencyId, conversation.id, messageId);
+    const result = await deleteMessageAction(
+      agencyId,
+      conversation.id,
+      messageId,
+    );
     if (result.error) toast.error(result.error);
   };
 
@@ -218,8 +258,12 @@ const MessageThread = ({ conversation, onConversationChanged, canModerate }: Mes
   const typingNames = typers.map((t) => t.name);
 
   // Everyone but the caller, so a direct conversation shows the other person.
-  const headerPeople = activeParticipants.filter((p) => p.user_id !== currentUserId);
-  const stackPeople = (headerPeople.length > 0 ? headerPeople : activeParticipants).slice(0, HEADER_AVATARS);
+  const headerPeople = activeParticipants.filter(
+    (p) => p.user_id !== currentUserId,
+  );
+  const stackPeople = (
+    headerPeople.length > 0 ? headerPeople : activeParticipants
+  ).slice(0, HEADER_AVATARS);
   const stackOverflow = Math.max(0, headerPeople.length - HEADER_AVATARS);
 
   return (
@@ -234,7 +278,9 @@ const MessageThread = ({ conversation, onConversationChanged, canModerate }: Mes
               className={styles.stackAvatar}
             />
           ))}
-          {stackOverflow > 0 && <span className={styles.stackOverflow}>+{stackOverflow}</span>}
+          {stackOverflow > 0 && (
+            <span className={styles.stackOverflow}>+{stackOverflow}</span>
+          )}
         </div>
         <div className={styles.headerMain}>
           {renaming ? (
@@ -255,16 +301,25 @@ const MessageThread = ({ conversation, onConversationChanged, canModerate }: Mes
           <p className={styles.participants}>
             {activeParticipants.map((p) => p.full_name).join(", ")}
             {conversation.project_name && ` · ${conversation.project_name}`}
-            {!conversation.project_name && conversation.client_name && ` · ${conversation.client_name}`}
+            {!conversation.project_name &&
+              conversation.client_name &&
+              ` · ${conversation.client_name}`}
           </p>
         </div>
 
         <Menu.Root>
-          <Menu.Trigger className={styles.menuTrigger} aria-label="Conversation settings">
+          <Menu.Trigger
+            className={styles.menuTrigger}
+            aria-label="Conversation settings"
+          >
             <MoreHorizontal aria-hidden="true" />
           </Menu.Trigger>
           <Menu.Portal>
-            <Menu.Positioner className={styles.menuPositioner} sideOffset={6} align="end">
+            <Menu.Positioner
+              className={styles.menuPositioner}
+              sideOffset={6}
+              align="end"
+            >
               <Menu.Popup className={styles.menuPopup}>
                 {isGroup && (
                   <Menu.Item
@@ -278,15 +333,24 @@ const MessageThread = ({ conversation, onConversationChanged, canModerate }: Mes
                   </Menu.Item>
                 )}
                 {isGroup && (
-                  <Menu.Item className={styles.menuItem} onClick={() => setAddOpen(true)}>
+                  <Menu.Item
+                    className={styles.menuItem}
+                    onClick={() => setAddOpen(true)}
+                  >
                     Add people
                   </Menu.Item>
                 )}
-                <Menu.Item className={styles.menuItem} onClick={handleToggleMute}>
+                <Menu.Item
+                  className={styles.menuItem}
+                  onClick={handleToggleMute}
+                >
                   {conversation.is_muted ? "Unmute" : "Mute"} conversation
                 </Menu.Item>
                 {isGroup && (
-                  <Menu.Item className={`${styles.menuItem} ${styles.danger}`} onClick={handleLeave}>
+                  <Menu.Item
+                    className={`${styles.menuItem} ${styles.danger}`}
+                    onClick={handleLeave}
+                  >
                     Leave conversation
                   </Menu.Item>
                 )}
@@ -298,7 +362,12 @@ const MessageThread = ({ conversation, onConversationChanged, canModerate }: Mes
 
       <div className={styles.scroll} ref={scrollRef}>
         {!reachedStart && messages && messages.length > 0 && (
-          <button type="button" className={styles.loadOlder} onClick={handleLoadOlder} disabled={loadingOlder}>
+          <button
+            type="button"
+            className={styles.loadOlder}
+            onClick={handleLoadOlder}
+            disabled={loadingOlder}
+          >
             {loadingOlder ? "Loading…" : "Load earlier messages"}
           </button>
         )}
@@ -310,7 +379,12 @@ const MessageThread = ({ conversation, onConversationChanged, canModerate }: Mes
         ) : (
           messages.map((message, index) => {
             const previous = messages[index - 1];
-            const showDivider = !previous || !isSameDay(new Date(previous.created_at), new Date(message.created_at));
+            const showDivider =
+              !previous ||
+              !isSameDay(
+                new Date(previous.created_at),
+                new Date(message.created_at),
+              );
             const grouped =
               previous &&
               !showDivider &&
@@ -322,7 +396,9 @@ const MessageThread = ({ conversation, onConversationChanged, canModerate }: Mes
               <div key={message.id}>
                 {showDivider && (
                   <div className={styles.dayDivider}>
-                    <span>{format(new Date(message.created_at), "EEEE, MMM d")}</span>
+                    <span>
+                      {format(new Date(message.created_at), "EEEE, MMM d")}
+                    </span>
                   </div>
                 )}
                 {message.message_type === "system" ? (
@@ -332,7 +408,11 @@ const MessageThread = ({ conversation, onConversationChanged, canModerate }: Mes
                     message={message}
                     grouped={Boolean(grouped)}
                     mine={message.sender_id === currentUserId}
-                    member={message.sender_id ? memberByUserId.get(message.sender_id) : undefined}
+                    member={
+                      message.sender_id
+                        ? memberByUserId.get(message.sender_id)
+                        : undefined
+                    }
                     canModerate={canModerate}
                     agencyId={agencyId}
                     conversationId={conversation.id}
@@ -372,7 +452,8 @@ const MessageThread = ({ conversation, onConversationChanged, canModerate }: Mes
               <span />
             </span>
             <span className={styles.typingLabel}>
-              {typingNames.join(", ")} {typingNames.length === 1 ? "is" : "are"} typing…
+              {typingNames.join(", ")} {typingNames.length === 1 ? "is" : "are"}{" "}
+              typing…
             </span>
           </div>
         )}
@@ -384,8 +465,13 @@ const MessageThread = ({ conversation, onConversationChanged, canModerate }: Mes
       <Dialog.Root open={addOpen} onOpenChange={setAddOpen}>
         <Dialog.Portal>
           <Dialog.Backdrop className={styles.backdrop} />
-          <Dialog.Popup className={styles.dialog} aria-label="Add people to the conversation">
-            <Dialog.Title className={styles.dialogTitle}>Add people</Dialog.Title>
+          <Dialog.Popup
+            className={styles.dialog}
+            aria-label="Add people to the conversation"
+          >
+            <Dialog.Title className={styles.dialogTitle}>
+              Add people
+            </Dialog.Title>
             <MemberMultiSelect
               members={members}
               selected={addSelected}
@@ -393,7 +479,11 @@ const MessageThread = ({ conversation, onConversationChanged, canModerate }: Mes
               exclude={new Set(activeParticipants.map((p) => p.user_id))}
             />
             <div className={styles.dialogActions}>
-              <button type="button" className={styles.dialogCancel} onClick={() => setAddOpen(false)}>
+              <button
+                type="button"
+                className={styles.dialogCancel}
+                onClick={() => setAddOpen(false)}
+              >
                 Cancel
               </button>
               <button
@@ -412,7 +502,10 @@ const MessageThread = ({ conversation, onConversationChanged, canModerate }: Mes
                   .map((p) => (
                     <li key={p.user_id}>
                       <span>{p.full_name}</span>
-                      <button type="button" onClick={() => void handleRemove(p.user_id)}>
+                      <button
+                        type="button"
+                        onClick={() => void handleRemove(p.user_id)}
+                      >
                         Remove
                       </button>
                     </li>
@@ -466,23 +559,41 @@ const MessageRow = ({
   const createdAt = new Date(message.created_at);
 
   return (
-    <div className={styles.message} data-grouped={grouped} data-pending={pending} data-mine={mine}>
+    <div
+      className={styles.message}
+      data-grouped={grouped}
+      data-pending={pending}
+      data-mine={mine}
+    >
       <div className={styles.gutter}>
         {grouped ? (
           // Follow-ups in a run skip the avatar; the time shows on hover instead.
-          <time className={styles.gutterTime} dateTime={message.created_at} title={format(createdAt, "PPpp")}>
+          <time
+            className={styles.gutterTime}
+            dateTime={message.created_at}
+            title={format(createdAt, "PPpp")}
+          >
             {format(createdAt, "p")}
           </time>
         ) : (
-          <MessageAvatar name={message.sender_name} src={memberAvatarSrc(agencyId, member)} />
+          <MessageAvatar
+            name={message.sender_name}
+            src={memberAvatarSrc(agencyId, member)}
+          />
         )}
       </div>
 
       <div className={styles.content}>
         {!grouped && (
           <div className={styles.messageMeta}>
-            <span className={styles.sender}>{mine ? "You" : message.sender_name}</span>
-            <time className={styles.timestamp} dateTime={message.created_at} title={format(createdAt, "PPpp")}>
+            <span className={styles.sender}>
+              {mine ? "You" : message.sender_name}
+            </span>
+            <time
+              className={styles.timestamp}
+              dateTime={message.created_at}
+              title={format(createdAt, "PPpp")}
+            >
               {format(createdAt, "p")}
             </time>
           </div>
@@ -519,7 +630,9 @@ const MessageRow = ({
             {message.body && (
               <p className={styles.body}>
                 {renderBody(message.body, mentionHandles)}
-                {message.edited_at && <span className={styles.edited}> (edited)</span>}
+                {message.edited_at && (
+                  <span className={styles.edited}> (edited)</span>
+                )}
               </p>
             )}
             {message.attachments.length > 0 && (
@@ -541,11 +654,19 @@ const MessageRow = ({
         {!deleted && !pending && (mine || canModerate) && (
           <div className={styles.rowActions}>
             {mine && !editing && (
-              <button type="button" onClick={onStartEdit} aria-label="Edit message">
+              <button
+                type="button"
+                onClick={onStartEdit}
+                aria-label="Edit message"
+              >
                 <Pencil aria-hidden="true" />
               </button>
             )}
-            <button type="button" onClick={onDelete} aria-label="Delete message">
+            <button
+              type="button"
+              onClick={onDelete}
+              aria-label="Delete message"
+            >
               <Trash2 aria-hidden="true" />
             </button>
           </div>

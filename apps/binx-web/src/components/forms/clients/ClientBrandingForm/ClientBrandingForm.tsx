@@ -9,7 +9,7 @@
  * agency's own branding (see client_portal/service.py::portal_client_read).
  *
  * @module apps/binx-web/src/components/forms/clients/ClientBrandingForm/ClientBrandingForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -36,12 +36,20 @@ interface ClientBrandingFormProps {
 const DEFAULT_COLOR = "#0a0a0b";
 const HEX = /^#[0-9a-fA-F]{6}$/;
 
-const ClientBrandingForm = ({ agencyId, clientId, branding }: ClientBrandingFormProps) => {
+const ClientBrandingForm = ({
+  agencyId,
+  clientId,
+  branding,
+}: ClientBrandingFormProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [primaryColor, setPrimaryColor] = useState(branding.primary_color ?? "");
+  const [primaryColor, setPrimaryColor] = useState(
+    branding.primary_color ?? "",
+  );
   const [accentColor, setAccentColor] = useState(branding.accent_color ?? "");
-  const [welcomeMessage, setWelcomeMessage] = useState(branding.welcome_message ?? "");
+  const [welcomeMessage, setWelcomeMessage] = useState(
+    branding.welcome_message ?? "",
+  );
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
@@ -111,7 +119,11 @@ const ClientBrandingForm = ({ agencyId, clientId, branding }: ClientBrandingForm
               onChange={(event) => setPrimaryColor(event.target.value)}
             />
             {primaryColor && (
-              <button type="button" className={styles.clearColor} onClick={() => setPrimaryColor("")}>
+              <button
+                type="button"
+                className={styles.clearColor}
+                onClick={() => setPrimaryColor("")}
+              >
                 Clear
               </button>
             )}
@@ -138,7 +150,11 @@ const ClientBrandingForm = ({ agencyId, clientId, branding }: ClientBrandingForm
               onChange={(event) => setAccentColor(event.target.value)}
             />
             {accentColor && (
-              <button type="button" className={styles.clearColor} onClick={() => setAccentColor("")}>
+              <button
+                type="button"
+                className={styles.clearColor}
+                onClick={() => setAccentColor("")}
+              >
                 Clear
               </button>
             )}

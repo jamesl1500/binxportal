@@ -8,7 +8,7 @@
  * rather than establishing a new session.
  *
  * @module apps/binx-web/src/lib/projects.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 import axios from "axios";
 import { cache } from "react";
@@ -27,10 +27,17 @@ import {
 // Re-exported so server-side callers can import everything from this one
 // module — see lib/projects-client.ts for why these live there instead of
 // being defined here directly.
-export { getProjectFileDownloadUrl, getTaskFileDownloadUrl, PROJECT_STATUS_LABELS, PROJECT_STATUSES };
+export {
+  getProjectFileDownloadUrl,
+  getTaskFileDownloadUrl,
+  PROJECT_STATUS_LABELS,
+  PROJECT_STATUSES,
+};
 export type { ProjectStatus };
 
-export type Project = Omit<Schemas["ProjectRead"], "status"> & { status: ProjectStatus };
+export type Project = Omit<Schemas["ProjectRead"], "status"> & {
+  status: ProjectStatus;
+};
 
 /** Fields the create/edit form submits. */
 export interface ProjectDetailsInput {
@@ -92,7 +99,10 @@ async function authHeader(): Promise<{ Authorization: string }> {
 
 function apiError(error: unknown, fallback: string): AuthApiError | unknown {
   if (axios.isAxiosError(error) && error.response) {
-    return new AuthApiError(extractDetailMessage(error.response.data, fallback), error.response.status);
+    return new AuthApiError(
+      extractDetailMessage(error.response.data, fallback),
+      error.response.status,
+    );
   }
   return error;
 }
@@ -121,14 +131,20 @@ function toProjectPayload(input: ProjectDetailsInput) {
  * @function getAgencyProjects
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't a member of this agency.
  */
-export async function getAgencyProjects(agencyId: string, status?: ProjectStatus): Promise<Project[]> {
+export async function getAgencyProjects(
+  agencyId: string,
+  status?: ProjectStatus,
+): Promise<Project[]> {
   const headers = await authHeader();
 
   try {
-    const { data } = await api.get<Project[]>(`/agencies/${agencyId}/projects`, {
-      headers,
-      params: status ? { status_filter: status } : undefined,
-    });
+    const { data } = await api.get<Project[]>(
+      `/agencies/${agencyId}/projects`,
+      {
+        headers,
+        params: status ? { status_filter: status } : undefined,
+      },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to load projects");
@@ -147,16 +163,21 @@ export async function getAgencyProjects(agencyId: string, status?: ProjectStatus
  * @function getAgencyProject
  * @throws {AuthApiError} - Thrown if not authenticated, or the project doesn't exist in this agency.
  */
-export const getAgencyProject = cache(async (agencyId: string, projectId: string): Promise<Project> => {
-  const headers = await authHeader();
+export const getAgencyProject = cache(
+  async (agencyId: string, projectId: string): Promise<Project> => {
+    const headers = await authHeader();
 
-  try {
-    const { data } = await api.get<Project>(`/agencies/${agencyId}/projects/${projectId}`, { headers });
-    return data;
-  } catch (error) {
-    throw apiError(error, "Unable to load project");
-  }
-});
+    try {
+      const { data } = await api.get<Project>(
+        `/agencies/${agencyId}/projects/${projectId}`,
+        { headers },
+      );
+      return data;
+    } catch (error) {
+      throw apiError(error, "Unable to load project");
+    }
+  },
+);
 
 /**
  * createAgencyProject
@@ -180,12 +201,19 @@ export async function createAgencyProject(
         ...toProjectPayload(input),
         tags: setup.tags,
         roles: setup.roles,
-        team: setup.team.map((seat) => ({ user_id: seat.userId, role_name: seat.roleName })),
+        team: setup.team.map((seat) => ({
+          user_id: seat.userId,
+          role_name: seat.roleName,
+        })),
       }
     : toProjectPayload(input);
 
   try {
-    const { data } = await api.post<Project>(`/agencies/${agencyId}/projects`, payload, { headers });
+    const { data } = await api.post<Project>(
+      `/agencies/${agencyId}/projects`,
+      payload,
+      { headers },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to create project");
@@ -230,11 +258,16 @@ export async function updateAgencyProject(
  * @function deleteAgencyProject
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller lacks permission for this agency.
  */
-export async function deleteAgencyProject(agencyId: string, projectId: string): Promise<void> {
+export async function deleteAgencyProject(
+  agencyId: string,
+  projectId: string,
+): Promise<void> {
   const headers = await authHeader();
 
   try {
-    await api.delete(`/agencies/${agencyId}/projects/${projectId}`, { headers });
+    await api.delete(`/agencies/${agencyId}/projects/${projectId}`, {
+      headers,
+    });
   } catch (error) {
     throw apiError(error, "Unable to delete project");
   }
@@ -251,11 +284,17 @@ export async function deleteAgencyProject(agencyId: string, projectId: string): 
  * @function getProjectMembers
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't a member of this agency.
  */
-export async function getProjectMembers(agencyId: string, projectId: string): Promise<ProjectMember[]> {
+export async function getProjectMembers(
+  agencyId: string,
+  projectId: string,
+): Promise<ProjectMember[]> {
   const headers = await authHeader();
 
   try {
-    const { data } = await api.get<ProjectMember[]>(`/agencies/${agencyId}/projects/${projectId}/members`, { headers });
+    const { data } = await api.get<ProjectMember[]>(
+      `/agencies/${agencyId}/projects/${projectId}/members`,
+      { headers },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to load project members");
@@ -272,7 +311,11 @@ export async function getProjectMembers(agencyId: string, projectId: string): Pr
  * @function addProjectMember
  * @throws {AuthApiError} - Thrown if not authenticated, not an agency member, or already assigned.
  */
-export async function addProjectMember(agencyId: string, projectId: string, userId: string): Promise<ProjectMember> {
+export async function addProjectMember(
+  agencyId: string,
+  projectId: string,
+  userId: string,
+): Promise<ProjectMember> {
   const headers = await authHeader();
 
   try {
@@ -296,11 +339,18 @@ export async function addProjectMember(agencyId: string, projectId: string, user
  * @function removeProjectMember
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't a member of this agency.
  */
-export async function removeProjectMember(agencyId: string, projectId: string, memberId: string): Promise<void> {
+export async function removeProjectMember(
+  agencyId: string,
+  projectId: string,
+  memberId: string,
+): Promise<void> {
   const headers = await authHeader();
 
   try {
-    await api.delete(`/agencies/${agencyId}/projects/${projectId}/members/${memberId}`, { headers });
+    await api.delete(
+      `/agencies/${agencyId}/projects/${projectId}/members/${memberId}`,
+      { headers },
+    );
   } catch (error) {
     throw apiError(error, "Unable to remove this person from the project");
   }
@@ -317,11 +367,17 @@ export async function removeProjectMember(agencyId: string, projectId: string, m
  * @function getProjectBoard
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't a member of this agency.
  */
-export async function getProjectBoard(agencyId: string, projectId: string): Promise<BoardColumn[]> {
+export async function getProjectBoard(
+  agencyId: string,
+  projectId: string,
+): Promise<BoardColumn[]> {
   const headers = await authHeader();
 
   try {
-    const { data } = await api.get<BoardColumn[]>(`/agencies/${agencyId}/projects/${projectId}/board`, { headers });
+    const { data } = await api.get<BoardColumn[]>(
+      `/agencies/${agencyId}/projects/${projectId}/board`,
+      { headers },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to load the board");
@@ -337,7 +393,11 @@ export async function getProjectBoard(agencyId: string, projectId: string): Prom
  * @function createTaskList
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't a member of this agency.
  */
-export async function createTaskList(agencyId: string, projectId: string, name: string): Promise<TaskList> {
+export async function createTaskList(
+  agencyId: string,
+  projectId: string,
+  name: string,
+): Promise<TaskList> {
   const headers = await authHeader();
 
   try {
@@ -390,11 +450,18 @@ export async function renameTaskList(
  * @function deleteTaskList
  * @throws {AuthApiError} - Thrown if not authenticated, the column isn't empty, or it's the last one.
  */
-export async function deleteTaskList(agencyId: string, projectId: string, listId: string): Promise<void> {
+export async function deleteTaskList(
+  agencyId: string,
+  projectId: string,
+  listId: string,
+): Promise<void> {
   const headers = await authHeader();
 
   try {
-    await api.delete(`/agencies/${agencyId}/projects/${projectId}/task-lists/${listId}`, { headers });
+    await api.delete(
+      `/agencies/${agencyId}/projects/${projectId}/task-lists/${listId}`,
+      { headers },
+    );
   } catch (error) {
     throw apiError(error, "Unable to delete list");
   }
@@ -449,7 +516,11 @@ function toTaskPayload(input: TaskDetailsInput) {
  * @function createTask
  * @throws {AuthApiError} - Thrown if not authenticated, or the assignee isn't an agency member.
  */
-export async function createTask(agencyId: string, projectId: string, input: TaskDetailsInput): Promise<Task> {
+export async function createTask(
+  agencyId: string,
+  projectId: string,
+  input: TaskDetailsInput,
+): Promise<Task> {
   const headers = await authHeader();
 
   try {
@@ -534,11 +605,18 @@ export async function moveTask(
  * @function deleteTask
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't a member of this agency.
  */
-export async function deleteTask(agencyId: string, projectId: string, taskId: string): Promise<void> {
+export async function deleteTask(
+  agencyId: string,
+  projectId: string,
+  taskId: string,
+): Promise<void> {
   const headers = await authHeader();
 
   try {
-    await api.delete(`/agencies/${agencyId}/projects/${projectId}/tasks/${taskId}`, { headers });
+    await api.delete(
+      `/agencies/${agencyId}/projects/${projectId}/tasks/${taskId}`,
+      { headers },
+    );
   } catch (error) {
     throw apiError(error, "Unable to delete task");
   }
@@ -555,11 +633,17 @@ export async function deleteTask(agencyId: string, projectId: string, taskId: st
  * @function getProjectFiles
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't a member of this agency.
  */
-export async function getProjectFiles(agencyId: string, projectId: string): Promise<ProjectFile[]> {
+export async function getProjectFiles(
+  agencyId: string,
+  projectId: string,
+): Promise<ProjectFile[]> {
   const headers = await authHeader();
 
   try {
-    const { data } = await api.get<ProjectFile[]>(`/agencies/${agencyId}/projects/${projectId}/files`, { headers });
+    const { data } = await api.get<ProjectFile[]>(
+      `/agencies/${agencyId}/projects/${projectId}/files`,
+      { headers },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to load files");
@@ -576,7 +660,11 @@ export async function getProjectFiles(agencyId: string, projectId: string): Prom
  * @function uploadProjectFile
  * @throws {AuthApiError} - Thrown if not authenticated, or the file is too large.
  */
-export async function uploadProjectFile(agencyId: string, projectId: string, file: File): Promise<ProjectFile> {
+export async function uploadProjectFile(
+  agencyId: string,
+  projectId: string,
+  file: File,
+): Promise<ProjectFile> {
   const headers = await authHeader();
   const formData = new FormData();
   formData.append("file", file);
@@ -590,9 +678,13 @@ export async function uploadProjectFile(agencyId: string, projectId: string, fil
     // Explicit `undefined` here deletes the inherited header so axios sets
     // its own `multipart/form-data; boundary=...` — required, since the
     // boundary can't be set by hand.
-    const { data } = await api.post<ProjectFile>(`/agencies/${agencyId}/projects/${projectId}/files`, formData, {
-      headers: { ...headers, "Content-Type": undefined },
-    });
+    const { data } = await api.post<ProjectFile>(
+      `/agencies/${agencyId}/projects/${projectId}/files`,
+      formData,
+      {
+        headers: { ...headers, "Content-Type": undefined },
+      },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to upload file");
@@ -608,11 +700,18 @@ export async function uploadProjectFile(agencyId: string, projectId: string, fil
  * @function deleteProjectFile
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't a member of this agency.
  */
-export async function deleteProjectFile(agencyId: string, projectId: string, fileId: string): Promise<void> {
+export async function deleteProjectFile(
+  agencyId: string,
+  projectId: string,
+  fileId: string,
+): Promise<void> {
   const headers = await authHeader();
 
   try {
-    await api.delete(`/agencies/${agencyId}/projects/${projectId}/files/${fileId}`, { headers });
+    await api.delete(
+      `/agencies/${agencyId}/projects/${projectId}/files/${fileId}`,
+      { headers },
+    );
   } catch (error) {
     throw apiError(error, "Unable to delete file");
   }
@@ -637,7 +736,11 @@ export type TaskComment = Omit<Schemas["TaskCommentRead"], "author_type"> & {
  * @function getTaskComments
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't a member of this agency.
  */
-export async function getTaskComments(agencyId: string, projectId: string, taskId: string): Promise<TaskComment[]> {
+export async function getTaskComments(
+  agencyId: string,
+  projectId: string,
+  taskId: string,
+): Promise<TaskComment[]> {
   const headers = await authHeader();
 
   try {
@@ -710,7 +813,10 @@ export async function deleteTaskComment(
   const headers = await authHeader();
 
   try {
-    await api.delete(`/agencies/${agencyId}/projects/${projectId}/tasks/${taskId}/comments/${commentId}`, { headers });
+    await api.delete(
+      `/agencies/${agencyId}/projects/${projectId}/tasks/${taskId}/comments/${commentId}`,
+      { headers },
+    );
   } catch (error) {
     throw apiError(error, "Unable to delete comment");
   }
@@ -732,13 +838,20 @@ export type TaskFile = Schemas["TaskFileRead"];
  * @function getTaskFiles
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't a member of this agency.
  */
-export async function getTaskFiles(agencyId: string, projectId: string, taskId: string): Promise<TaskFile[]> {
+export async function getTaskFiles(
+  agencyId: string,
+  projectId: string,
+  taskId: string,
+): Promise<TaskFile[]> {
   const headers = await authHeader();
 
   try {
-    const { data } = await api.get<TaskFile[]>(`/agencies/${agencyId}/projects/${projectId}/tasks/${taskId}/files`, {
-      headers,
-    });
+    const { data } = await api.get<TaskFile[]>(
+      `/agencies/${agencyId}/projects/${projectId}/tasks/${taskId}/files`,
+      {
+        headers,
+      },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to load files");
@@ -756,7 +869,12 @@ export async function getTaskFiles(agencyId: string, projectId: string, taskId: 
  * @function uploadTaskFile
  * @throws {AuthApiError} - Thrown if not authenticated, the file type isn't allowed, or it's too large.
  */
-export async function uploadTaskFile(agencyId: string, projectId: string, taskId: string, file: File): Promise<TaskFile> {
+export async function uploadTaskFile(
+  agencyId: string,
+  projectId: string,
+  taskId: string,
+  file: File,
+): Promise<TaskFile> {
   const headers = await authHeader();
   const formData = new FormData();
   formData.append("file", file);
@@ -785,11 +903,19 @@ export async function uploadTaskFile(agencyId: string, projectId: string, taskId
  * @function deleteTaskFile
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't a member of this agency.
  */
-export async function deleteTaskFile(agencyId: string, projectId: string, taskId: string, fileId: string): Promise<void> {
+export async function deleteTaskFile(
+  agencyId: string,
+  projectId: string,
+  taskId: string,
+  fileId: string,
+): Promise<void> {
   const headers = await authHeader();
 
   try {
-    await api.delete(`/agencies/${agencyId}/projects/${projectId}/tasks/${taskId}/files/${fileId}`, { headers });
+    await api.delete(
+      `/agencies/${agencyId}/projects/${projectId}/tasks/${taskId}/files/${fileId}`,
+      { headers },
+    );
   } catch (error) {
     throw apiError(error, "Unable to delete file");
   }
@@ -841,11 +967,17 @@ export async function assignProjectMemberRole(
  * @function getProjectRoles
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't a member of this agency.
  */
-export async function getProjectRoles(agencyId: string, projectId: string): Promise<ProjectRole[]> {
+export async function getProjectRoles(
+  agencyId: string,
+  projectId: string,
+): Promise<ProjectRole[]> {
   const headers = await authHeader();
 
   try {
-    const { data } = await api.get<ProjectRole[]>(`/agencies/${agencyId}/projects/${projectId}/roles`, { headers });
+    const { data } = await api.get<ProjectRole[]>(
+      `/agencies/${agencyId}/projects/${projectId}/roles`,
+      { headers },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to load roles");
@@ -918,11 +1050,18 @@ export async function updateProjectRole(
  * @function deleteProjectRole
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't a member of this agency.
  */
-export async function deleteProjectRole(agencyId: string, projectId: string, roleId: string): Promise<void> {
+export async function deleteProjectRole(
+  agencyId: string,
+  projectId: string,
+  roleId: string,
+): Promise<void> {
   const headers = await authHeader();
 
   try {
-    await api.delete(`/agencies/${agencyId}/projects/${projectId}/roles/${roleId}`, { headers });
+    await api.delete(
+      `/agencies/${agencyId}/projects/${projectId}/roles/${roleId}`,
+      { headers },
+    );
   } catch (error) {
     throw apiError(error, "Unable to delete role");
   }
@@ -940,11 +1079,17 @@ export async function deleteProjectRole(agencyId: string, projectId: string, rol
  * @function getProjectTags
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't a member of this agency.
  */
-export async function getProjectTags(agencyId: string, projectId: string): Promise<ProjectTag[]> {
+export async function getProjectTags(
+  agencyId: string,
+  projectId: string,
+): Promise<ProjectTag[]> {
   const headers = await authHeader();
 
   try {
-    const { data } = await api.get<ProjectTag[]>(`/agencies/${agencyId}/projects/${projectId}/tags`, { headers });
+    const { data } = await api.get<ProjectTag[]>(
+      `/agencies/${agencyId}/projects/${projectId}/tags`,
+      { headers },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to load tags");
@@ -1017,11 +1162,18 @@ export async function updateProjectTag(
  * @function deleteProjectTag
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't a member of this agency.
  */
-export async function deleteProjectTag(agencyId: string, projectId: string, tagId: string): Promise<void> {
+export async function deleteProjectTag(
+  agencyId: string,
+  projectId: string,
+  tagId: string,
+): Promise<void> {
   const headers = await authHeader();
 
   try {
-    await api.delete(`/agencies/${agencyId}/projects/${projectId}/tags/${tagId}`, { headers });
+    await api.delete(
+      `/agencies/${agencyId}/projects/${projectId}/tags/${tagId}`,
+      { headers },
+    );
   } catch (error) {
     throw apiError(error, "Unable to delete tag");
   }

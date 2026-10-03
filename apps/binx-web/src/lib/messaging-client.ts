@@ -7,7 +7,7 @@
  * `lib/projects-client.ts`.
  *
  * @module apps/binx-web/src/lib/messaging-client.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 
 import type { Schemas } from "@/lib/api-types";
@@ -22,16 +22,24 @@ export type MessageAttachment = Schemas["MessageAttachmentRead"];
 
 // The API types `sender_kind` / `message_type` / `kind` as plain strings; the
 // narrower unions are kept so the UI's exhaustive checks still hold.
-export type Message = Omit<Schemas["MessageRead"], "sender_kind" | "message_type"> & {
+export type Message = Omit<
+  Schemas["MessageRead"],
+  "sender_kind" | "message_type"
+> & {
   sender_kind: "user" | "client";
   message_type: MessageType;
 };
 
 export type ConversationParticipant = Schemas["ParticipantRead"];
 
-export type Conversation = Omit<Schemas["ConversationRead"], "kind"> & { kind: ConversationKind };
+export type Conversation = Omit<Schemas["ConversationRead"], "kind"> & {
+  kind: ConversationKind;
+};
 
-export type ConversationDetail = Omit<Schemas["ConversationDetailRead"], "kind"> & { kind: ConversationKind };
+export type ConversationDetail = Omit<
+  Schemas["ConversationDetailRead"],
+  "kind"
+> & { kind: ConversationKind };
 
 /** A realtime event pushed over the messaging websocket (see binx-api's realtime.py). */
 export interface MessagingEvent {

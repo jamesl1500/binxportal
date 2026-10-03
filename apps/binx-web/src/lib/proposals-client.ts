@@ -7,7 +7,7 @@
  * `lib/auth.ts` — same reasoning as `lib/leads-client.ts`.
  *
  * @module apps/binx-web/src/lib/proposals-client.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 
 /** Keep in sync with binx-api's proposals/models.py PROPOSAL_STATUSES. */

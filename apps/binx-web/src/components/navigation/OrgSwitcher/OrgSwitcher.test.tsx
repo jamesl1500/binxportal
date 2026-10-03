@@ -8,7 +8,7 @@
  * only throws once the menu is actually opened).
  *
  * @module apps/binx-web/src/components/navigation/OrgSwitcher/OrgSwitcher.test.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -31,8 +31,20 @@ import OrgSwitcher from "./OrgSwitcher";
 const mockedSwitchAgencyAction = vi.mocked(switchAgencyAction);
 
 const agencies: AgencyRead[] = [
-  { id: "aaaaaaaa-1111-1111-1111-111111111111", name: "Acme Agency", slug: "acme-agency", role: "owner", has_logo: false },
-  { id: "bbbbbbbb-2222-2222-2222-222222222222", name: "Widgets Co", slug: "widgets-co", role: "member", has_logo: false },
+  {
+    id: "aaaaaaaa-1111-1111-1111-111111111111",
+    name: "Acme Agency",
+    slug: "acme-agency",
+    role: "owner",
+    has_logo: false,
+  },
+  {
+    id: "bbbbbbbb-2222-2222-2222-222222222222",
+    name: "Widgets Co",
+    slug: "widgets-co",
+    role: "member",
+    has_logo: false,
+  },
 ];
 
 beforeEach(() => {
@@ -43,7 +55,9 @@ describe("OrgSwitcher", () => {
   it("shows the current agency's name on the trigger", () => {
     render(<OrgSwitcher agencies={agencies} currentAgency={agencies[0]} />);
 
-    expect(screen.getByRole("button", { name: "Switch agency" })).toHaveTextContent("Acme Agency");
+    expect(
+      screen.getByRole("button", { name: "Switch agency" }),
+    ).toHaveTextContent("Acme Agency");
   });
 
   it("lists every agency and marks the current one as checked", async () => {
@@ -52,11 +66,12 @@ describe("OrgSwitcher", () => {
 
     await user.click(screen.getByRole("button", { name: "Switch agency" }));
 
-    expect(await screen.findByRole("menuitemradio", { name: "Acme Agency" })).toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
-    expect(screen.getByRole("menuitemradio", { name: "Widgets Co" })).toHaveAttribute("aria-checked", "false");
+    expect(
+      await screen.findByRole("menuitemradio", { name: "Acme Agency" }),
+    ).toHaveAttribute("aria-checked", "true");
+    expect(
+      screen.getByRole("menuitemradio", { name: "Widgets Co" }),
+    ).toHaveAttribute("aria-checked", "false");
   });
 
   it("switches to the selected agency and refreshes the route", async () => {
@@ -65,7 +80,9 @@ describe("OrgSwitcher", () => {
     render(<OrgSwitcher agencies={agencies} currentAgency={agencies[0]} />);
 
     await user.click(screen.getByRole("button", { name: "Switch agency" }));
-    await user.click(await screen.findByRole("menuitemradio", { name: "Widgets Co" }));
+    await user.click(
+      await screen.findByRole("menuitemradio", { name: "Widgets Co" }),
+    );
 
     expect(mockedSwitchAgencyAction).toHaveBeenCalledWith(agencies[1].id);
     expect(mockRefresh).toHaveBeenCalledOnce();
@@ -76,21 +93,29 @@ describe("OrgSwitcher", () => {
     render(<OrgSwitcher agencies={agencies} currentAgency={agencies[0]} />);
 
     await user.click(screen.getByRole("button", { name: "Switch agency" }));
-    await user.click(await screen.findByRole("menuitemradio", { name: "Acme Agency" }));
+    await user.click(
+      await screen.findByRole("menuitemradio", { name: "Acme Agency" }),
+    );
 
     expect(mockedSwitchAgencyAction).not.toHaveBeenCalled();
     expect(mockRefresh).not.toHaveBeenCalled();
   });
 
   it("shows an error and does not refresh if the switch is rejected", async () => {
-    mockedSwitchAgencyAction.mockResolvedValueOnce({ error: "You're not a member of that organization" });
+    mockedSwitchAgencyAction.mockResolvedValueOnce({
+      error: "You're not a member of that organization",
+    });
     const user = userEvent.setup();
     render(<OrgSwitcher agencies={agencies} currentAgency={agencies[0]} />);
 
     await user.click(screen.getByRole("button", { name: "Switch agency" }));
-    await user.click(await screen.findByRole("menuitemradio", { name: "Widgets Co" }));
+    await user.click(
+      await screen.findByRole("menuitemradio", { name: "Widgets Co" }),
+    );
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("You're not a member of that organization");
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "You're not a member of that organization",
+    );
     expect(mockRefresh).not.toHaveBeenCalled();
   });
 
@@ -100,9 +125,8 @@ describe("OrgSwitcher", () => {
 
     await user.click(screen.getByRole("button", { name: "Switch agency" }));
 
-    expect(await screen.findByRole("menuitem", { name: "Create agency" })).toHaveAttribute(
-      "href",
-      "/agencies/new",
-    );
+    expect(
+      await screen.findByRole("menuitem", { name: "Create agency" }),
+    ).toHaveAttribute("href", "/agencies/new");
   });
 });

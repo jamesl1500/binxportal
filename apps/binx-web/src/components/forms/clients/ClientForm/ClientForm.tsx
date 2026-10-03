@@ -9,7 +9,7 @@
  * any surrounding chrome, this only owns the fields and submission.
  *
  * @module apps/binx-web/src/components/forms/clients/ClientForm/ClientForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -19,20 +19,53 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
-import { createClientAction, updateClientAction } from "@/app/(app)/clients/actions";
+import {
+  createClientAction,
+  updateClientAction,
+} from "@/app/(app)/clients/actions";
 import type { AgencyClient } from "@/lib/clients";
 
 import styles from "./ClientForm.module.scss";
 
 const clientSchema = z.object({
-  name: z.string().trim().min(1, "Client name is required").max(255, "Must be at most 255 characters"),
-  primaryContactName: z.string().trim().max(255, "Must be at most 255 characters").optional(),
-  primaryContactEmail: z.email("Enter a valid email address").optional().or(z.literal("")),
-  primaryContactPhone: z.string().trim().max(32, "Must be at most 32 characters").optional(),
-  website: z.string().trim().max(2048, "Must be at most 2048 characters").optional(),
-  notes: z.string().trim().max(4096, "Must be at most 4096 characters").optional(),
-  billingEmail: z.email("Enter a valid email address").optional().or(z.literal("")),
-  billingAddress: z.string().trim().max(2048, "Must be at most 2048 characters").optional(),
+  name: z
+    .string()
+    .trim()
+    .min(1, "Client name is required")
+    .max(255, "Must be at most 255 characters"),
+  primaryContactName: z
+    .string()
+    .trim()
+    .max(255, "Must be at most 255 characters")
+    .optional(),
+  primaryContactEmail: z
+    .email("Enter a valid email address")
+    .optional()
+    .or(z.literal("")),
+  primaryContactPhone: z
+    .string()
+    .trim()
+    .max(32, "Must be at most 32 characters")
+    .optional(),
+  website: z
+    .string()
+    .trim()
+    .max(2048, "Must be at most 2048 characters")
+    .optional(),
+  notes: z
+    .string()
+    .trim()
+    .max(4096, "Must be at most 4096 characters")
+    .optional(),
+  billingEmail: z
+    .email("Enter a valid email address")
+    .optional()
+    .or(z.literal("")),
+  billingAddress: z
+    .string()
+    .trim()
+    .max(2048, "Must be at most 2048 characters")
+    .optional(),
 });
 
 type ClientValues = z.infer<typeof clientSchema>;
@@ -51,7 +84,12 @@ interface ClientFormProps {
   onCancel?: () => void;
 }
 
-const ClientForm = ({ agencyId, client, onSuccess, onCancel }: ClientFormProps) => {
+const ClientForm = ({
+  agencyId,
+  client,
+  onSuccess,
+  onCancel,
+}: ClientFormProps) => {
   const isEdit = Boolean(client);
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -139,7 +177,9 @@ const ClientForm = ({ agencyId, client, onSuccess, onCancel }: ClientFormProps) 
             aria-invalid={Boolean(errors.primaryContactName)}
             {...register("primaryContactName")}
           />
-          {errors.primaryContactName && <p className={styles.error}>{errors.primaryContactName.message}</p>}
+          {errors.primaryContactName && (
+            <p className={styles.error}>{errors.primaryContactName.message}</p>
+          )}
         </div>
 
         <div className={styles.field}>
@@ -156,7 +196,9 @@ const ClientForm = ({ agencyId, client, onSuccess, onCancel }: ClientFormProps) 
             aria-invalid={Boolean(errors.website)}
             {...register("website")}
           />
-          {errors.website && <p className={styles.error}>{errors.website.message}</p>}
+          {errors.website && (
+            <p className={styles.error}>{errors.website.message}</p>
+          )}
         </div>
       </div>
 
@@ -173,7 +215,9 @@ const ClientForm = ({ agencyId, client, onSuccess, onCancel }: ClientFormProps) 
             aria-invalid={Boolean(errors.primaryContactEmail)}
             {...register("primaryContactEmail")}
           />
-          {errors.primaryContactEmail && <p className={styles.error}>{errors.primaryContactEmail.message}</p>}
+          {errors.primaryContactEmail && (
+            <p className={styles.error}>{errors.primaryContactEmail.message}</p>
+          )}
         </div>
 
         <div className={styles.field}>
@@ -188,7 +232,9 @@ const ClientForm = ({ agencyId, client, onSuccess, onCancel }: ClientFormProps) 
             aria-invalid={Boolean(errors.primaryContactPhone)}
             {...register("primaryContactPhone")}
           />
-          {errors.primaryContactPhone && <p className={styles.error}>{errors.primaryContactPhone.message}</p>}
+          {errors.primaryContactPhone && (
+            <p className={styles.error}>{errors.primaryContactPhone.message}</p>
+          )}
         </div>
       </div>
 
@@ -206,7 +252,9 @@ const ClientForm = ({ agencyId, client, onSuccess, onCancel }: ClientFormProps) 
             aria-invalid={Boolean(errors.billingEmail)}
             {...register("billingEmail")}
           />
-          {errors.billingEmail && <p className={styles.error}>{errors.billingEmail.message}</p>}
+          {errors.billingEmail && (
+            <p className={styles.error}>{errors.billingEmail.message}</p>
+          )}
         </div>
 
         <div className={styles.field}>
@@ -220,7 +268,9 @@ const ClientForm = ({ agencyId, client, onSuccess, onCancel }: ClientFormProps) 
             aria-invalid={Boolean(errors.billingAddress)}
             {...register("billingAddress")}
           />
-          {errors.billingAddress && <p className={styles.error}>{errors.billingAddress.message}</p>}
+          {errors.billingAddress && (
+            <p className={styles.error}>{errors.billingAddress.message}</p>
+          )}
         </div>
       </div>
 
@@ -243,7 +293,12 @@ const ClientForm = ({ agencyId, client, onSuccess, onCancel }: ClientFormProps) 
 
       <div className={styles.actions}>
         {onCancel && (
-          <button type="button" className={styles.cancel} onClick={onCancel} disabled={isPending}>
+          <button
+            type="button"
+            className={styles.cancel}
+            onClick={onCancel}
+            disabled={isPending}
+          >
             Cancel
           </button>
         )}

@@ -8,7 +8,7 @@
  * (image bytes are the one exception; see app/api/users/me/.../route.ts).
  *
  * @module apps/binx-web/src/app/(app)/profile/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 
@@ -37,7 +37,9 @@ export interface UpdateProfileActionResult {
   error?: string;
 }
 
-export async function updateProfileAction(input: UpdateProfileActionInput): Promise<UpdateProfileActionResult> {
+export async function updateProfileAction(
+  input: UpdateProfileActionInput,
+): Promise<UpdateProfileActionResult> {
   try {
     await updateCurrentUserProfile({
       fullName: input.fullName,
@@ -100,7 +102,9 @@ export async function uploadUserImageAction(
   }
 }
 
-export async function removeUserImageAction(kind: UserImageKind): Promise<UserProfileActionResult> {
+export async function removeUserImageAction(
+  kind: UserImageKind,
+): Promise<UserProfileActionResult> {
   try {
     const profile = await removeUserImage(kind);
     return { profile };
@@ -117,7 +121,9 @@ export interface AppearanceActionResult {
   settings?: AppearanceSettings;
 }
 
-export async function updateAppearanceAction(accentColor: string | null): Promise<AppearanceActionResult> {
+export async function updateAppearanceAction(
+  accentColor: string | null,
+): Promise<AppearanceActionResult> {
   try {
     const settings = await updateAppearanceSettings(accentColor);
     return { settings };

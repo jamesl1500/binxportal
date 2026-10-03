@@ -6,7 +6,7 @@
  * projects that are on hold. Each row links to where it can be acted on.
  *
  * @module apps/binx-web/src/components/dashboard/AttentionCard/AttentionCard.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import Link from "next/link";
 import { AlertTriangle, PauseCircle, Receipt } from "lucide-react";
@@ -23,8 +23,17 @@ interface AttentionCardProps {
   onHoldProjects: Project[];
 }
 
-const AttentionCard = ({ overdueInvoices, overdueTaskCount, onHoldProjects }: AttentionCardProps) => {
-  const rows: { key: string; icon: typeof Receipt; label: string; href: string }[] = [];
+const AttentionCard = ({
+  overdueInvoices,
+  overdueTaskCount,
+  onHoldProjects,
+}: AttentionCardProps) => {
+  const rows: {
+    key: string;
+    icon: typeof Receipt;
+    label: string;
+    href: string;
+  }[] = [];
 
   for (const invoice of overdueInvoices.slice(0, 4)) {
     rows.push({

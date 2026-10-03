@@ -7,7 +7,7 @@
  * side if AI isn't available, so this never hard-fails.
  *
  * @module apps/binx-web/src/components/leads/AnalyzeAllButton/AnalyzeAllButton.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -39,14 +39,21 @@ const AnalyzeAllButton = ({ agencyId }: AnalyzeAllButtonProps) => {
         toast.success("Every open lead is already up to date");
       } else {
         const skipped = result.skipped > 0 ? `, ${result.skipped} skipped` : "";
-        toast.success(`Analyzed ${result.analyzed} lead${result.analyzed === 1 ? "" : "s"}${skipped}`);
+        toast.success(
+          `Analyzed ${result.analyzed} lead${result.analyzed === 1 ? "" : "s"}${skipped}`,
+        );
       }
       router.refresh();
     });
   };
 
   return (
-    <button type="button" className={styles.button} onClick={handleClick} disabled={isPending}>
+    <button
+      type="button"
+      className={styles.button}
+      onClick={handleClick}
+      disabled={isPending}
+    >
       <Sparkles aria-hidden="true" />
       {isPending ? "Analyzing…" : "Analyze open leads"}
     </button>

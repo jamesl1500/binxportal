@@ -11,7 +11,7 @@
  * linked to; an unknown or absent hash falls back to Details.
  *
  * @module apps/binx-web/src/components/leads/LeadTabs/LeadTabs.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -29,12 +29,18 @@ interface LeadTabsProps {
   eventCount?: number;
 }
 
-const LeadTabs = ({ details, timeline, analysis, eventCount = 0 }: LeadTabsProps) => {
-  const tabs: { id: TabId; label: string; panel: ReactNode; count?: number }[] = [
-    { id: "details", label: "Details", panel: details },
-    { id: "timeline", label: "Timeline", panel: timeline, count: eventCount },
-    { id: "ai", label: "AI analysis", panel: analysis },
-  ];
+const LeadTabs = ({
+  details,
+  timeline,
+  analysis,
+  eventCount = 0,
+}: LeadTabsProps) => {
+  const tabs: { id: TabId; label: string; panel: ReactNode; count?: number }[] =
+    [
+      { id: "details", label: "Details", panel: details },
+      { id: "timeline", label: "Timeline", panel: timeline, count: eventCount },
+      { id: "ai", label: "AI analysis", panel: analysis },
+    ];
 
   const [active, setActive] = useState<TabId>("details");
 
@@ -53,7 +59,11 @@ const LeadTabs = ({ details, timeline, analysis, eventCount = 0 }: LeadTabsProps
   const select = (id: TabId) => {
     setActive(id);
     // replaceState, not a real navigation — no scroll jump, no history spam.
-    window.history.replaceState(null, "", id === "details" ? window.location.pathname : `#${id}`);
+    window.history.replaceState(
+      null,
+      "",
+      id === "details" ? window.location.pathname : `#${id}`,
+    );
   };
 
   return (
@@ -73,7 +83,9 @@ const LeadTabs = ({ details, timeline, analysis, eventCount = 0 }: LeadTabsProps
             onClick={() => select(tab.id)}
           >
             {tab.label}
-            {tab.count ? <span className={styles.badge}>{tab.count}</span> : null}
+            {tab.count ? (
+              <span className={styles.badge}>{tab.count}</span>
+            ) : null}
           </button>
         ))}
       </div>

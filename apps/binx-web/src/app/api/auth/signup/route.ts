@@ -6,7 +6,7 @@
  * binx-api requires email verification before an account can sign in.
  *
  * @module apps/binx-web/src/app/api/auth/signup/route.ts
- * @author Binx.io
+ * @author Binx Portal
  * @route POST /api/auth/signup
  */
 import { NextRequest, NextResponse } from "next/server";
@@ -21,25 +21,41 @@ export async function POST(req: NextRequest) {
   let portalInviteToken: string | undefined;
 
   try {
-    ({ userName, email, fullName, password, portalInviteToken } = await req.json());
+    ({ userName, email, fullName, password, portalInviteToken } =
+      await req.json());
   } catch {
     return NextResponse.json({ message: "Invalid JSON body" }, { status: 400 });
   }
 
   if (!email || !fullName || !password) {
-    return NextResponse.json({ message: "All fields are required" }, { status: 400 });
+    return NextResponse.json(
+      { message: "All fields are required" },
+      { status: 400 },
+    );
   }
 
   try {
-    const message = await signup({ userName, email, fullName, password, portalInviteToken });
+    const message = await signup({
+      userName,
+      email,
+      fullName,
+      password,
+      portalInviteToken,
+    });
     return NextResponse.json({ message }, { status: 201 });
   } catch (error) {
     if (error instanceof AuthApiError) {
-      return NextResponse.json({ message: error.message }, { status: error.status });
+      return NextResponse.json(
+        { message: error.message },
+        { status: error.status },
+      );
     }
 
     return NextResponse.json(
-      { message: "Signup failed", error: error instanceof Error ? error.message : "Unknown error" },
+      {
+        message: "Signup failed",
+        error: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 500 },
     );
   }

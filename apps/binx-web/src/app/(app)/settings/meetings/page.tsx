@@ -8,7 +8,7 @@
  * summary. Mirrors settings/invoicing/page.tsx's structure.
  *
  * @module apps/binx-web/src/app/(app)/settings/meetings/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -29,7 +29,8 @@ const SettingsMeetingsPage = async () => {
     redirect("/onboarding/two");
   }
 
-  const canManage = currentAgency.role === "owner" || currentAgency.role === "admin";
+  const canManage =
+    currentAgency.role === "owner" || currentAgency.role === "admin";
 
   const [settings, rules] = await Promise.all([
     getMeetingSettings(currentAgency.id),
@@ -45,7 +46,11 @@ const SettingsMeetingsPage = async () => {
             ? `Defaults for meetings booked with ${currentAgency.name}, and whether clients can book themselves from their portal.`
             : "Only agency owners and admins can change meeting settings."}
         </p>
-        <MeetingSettingsForm agencyId={currentAgency.id} settings={settings} canManage={canManage} />
+        <MeetingSettingsForm
+          agencyId={currentAgency.id}
+          settings={settings}
+          canManage={canManage}
+        />
       </section>
 
       <section className={styles.section}>
@@ -55,7 +60,11 @@ const SettingsMeetingsPage = async () => {
             ? "The recurring hours clients can book an open slot in. Add more than one block on a day for a split schedule."
             : "The recurring hours clients can book an open slot in."}
         </p>
-        <AvailabilityRulesEditor agencyId={currentAgency.id} initialRules={rules} canManage={canManage} />
+        <AvailabilityRulesEditor
+          agencyId={currentAgency.id}
+          initialRules={rules}
+          canManage={canManage}
+        />
       </section>
     </div>
   );

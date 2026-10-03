@@ -7,7 +7,7 @@
  * summary. Same shape as BillingSettingsForm.
  *
  * @module apps/binx-web/src/components/settings/MeetingSettingsForm/MeetingSettingsForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -45,16 +45,29 @@ function timezoneOptions(): string[] {
   try {
     return Intl.supportedValuesOf("timeZone");
   } catch {
-    return ["UTC", "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles", "Europe/London"];
+    return [
+      "UTC",
+      "America/New_York",
+      "America/Chicago",
+      "America/Denver",
+      "America/Los_Angeles",
+      "Europe/London",
+    ];
   }
 }
 
-const MeetingSettingsForm = ({ agencyId, settings, canManage }: MeetingSettingsFormProps) => {
+const MeetingSettingsForm = ({
+  agencyId,
+  settings,
+  canManage,
+}: MeetingSettingsFormProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
-  const [selfBookingEnabled, setSelfBookingEnabled] = useState(settings.self_booking_enabled);
+  const [selfBookingEnabled, setSelfBookingEnabled] = useState(
+    settings.self_booking_enabled,
+  );
   const timezones = useMemo(() => timezoneOptions(), []);
 
   const {
@@ -74,7 +87,9 @@ const MeetingSettingsForm = ({ agencyId, settings, canManage }: MeetingSettingsF
   if (!canManage) {
     return (
       <div className={styles.readonly}>
-        <p className={styles.readonlyNote}>Only an owner or admin can change meeting settings.</p>
+        <p className={styles.readonlyNote}>
+          Only an owner or admin can change meeting settings.
+        </p>
         <dl className={styles.summary}>
           <div>
             <dt>Timezone</dt>
@@ -123,14 +138,20 @@ const MeetingSettingsForm = ({ agencyId, settings, canManage }: MeetingSettingsF
         <label className={styles.label} htmlFor="timezone">
           Timezone
         </label>
-        <select id="timezone" className={styles.select} {...register("timezone")}>
+        <select
+          id="timezone"
+          className={styles.select}
+          {...register("timezone")}
+        >
           {timezones.map((tz) => (
             <option key={tz} value={tz}>
               {tz}
             </option>
           ))}
         </select>
-        {errors.timezone && <p className={styles.error}>{errors.timezone.message}</p>}
+        {errors.timezone && (
+          <p className={styles.error}>{errors.timezone.message}</p>
+        )}
       </div>
 
       <div className={styles.row}>
@@ -178,7 +199,9 @@ const MeetingSettingsForm = ({ agencyId, settings, canManage }: MeetingSettingsF
       <div className={styles.switchRow}>
         <div>
           <p className={styles.label}>Self-service booking</p>
-          <p className={styles.hint}>Let clients book an open slot themselves from their portal.</p>
+          <p className={styles.hint}>
+            Let clients book an open slot themselves from their portal.
+          </p>
         </div>
         <Switch.Root
           checked={selfBookingEnabled}

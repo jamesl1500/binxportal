@@ -6,7 +6,7 @@
  * Plain authenticated mutations against `lib/clients.ts`.
  *
  * @module apps/binx-web/src/app/(app)/clients/[clientId]/settings/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 
@@ -31,7 +31,10 @@ export async function inviteClientContactAction(
   title: string | null,
 ): Promise<InviteClientContactResult> {
   try {
-    const invitation = await inviteClientContact(agencyId, clientId, { email, title });
+    const invitation = await inviteClientContact(agencyId, clientId, {
+      email,
+      title,
+    });
     return { invitation };
   } catch (error) {
     if (error instanceof AuthApiError) return { error: error.message };
@@ -45,7 +48,11 @@ export async function resendClientContactInvitationAction(
   invitationId: string,
 ): Promise<InviteClientContactResult> {
   try {
-    const invitation = await resendClientContactInvitation(agencyId, clientId, invitationId);
+    const invitation = await resendClientContactInvitation(
+      agencyId,
+      clientId,
+      invitationId,
+    );
     return { invitation };
   } catch (error) {
     if (error instanceof AuthApiError) return { error: error.message };

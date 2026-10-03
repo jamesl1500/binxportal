@@ -11,7 +11,7 @@
  * token-scoped public share page.
  *
  * @module apps/binx-web/src/app/robots.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { MetadataRoute } from "next";
 
@@ -45,7 +45,13 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: [...APP_SEGMENTS.map((segment) => `/${segment}`), "/portal", "/auth", "/onboarding", "/api"],
+      disallow: [
+        ...APP_SEGMENTS.map((segment) => `/${segment}`),
+        "/portal",
+        "/auth",
+        "/onboarding",
+        "/api",
+      ],
     },
     sitemap: `${SITE_URL}/sitemap.xml`,
     host: SITE_URL,

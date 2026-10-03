@@ -8,7 +8,7 @@
  * to /projects on success — there's no in-component success state to render.
  *
  * @module apps/binx-web/src/components/forms/projects/DeleteProjectForm/DeleteProjectForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -27,7 +27,11 @@ interface DeleteProjectFormProps {
   projectName: string;
 }
 
-const DeleteProjectForm = ({ agencyId, projectId, projectName }: DeleteProjectFormProps) => {
+const DeleteProjectForm = ({
+  agencyId,
+  projectId,
+  projectName,
+}: DeleteProjectFormProps) => {
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -75,7 +79,9 @@ const DeleteProjectForm = ({ agencyId, projectId, projectName }: DeleteProjectFo
           aria-invalid={Boolean(errors.confirmText)}
           {...register("confirmText")}
         />
-        {errors.confirmText && <p className={styles.error}>{errors.confirmText.message}</p>}
+        {errors.confirmText && (
+          <p className={styles.error}>{errors.confirmText.message}</p>
+        )}
       </div>
 
       {formError && <p className={styles.formError}>{formError}</p>}

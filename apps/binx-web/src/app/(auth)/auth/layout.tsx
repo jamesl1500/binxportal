@@ -1,10 +1,10 @@
 /**
  * layout.tsx - Auth Layout
- * 
+ *
  * This layout serves as the wrapper for all authentication-related pages. It provides a consistent structure and styling for the authentication flow.
- * 
+ *
  * @module apps/binx-web/src/app/(auth)/auth/layout.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import React from "react";
 import type { Metadata } from "next";
@@ -50,7 +50,9 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
         </Link>
 
         <div>
-          <h1 className={styles.headline}>Everything your team needs, in one place.</h1>
+          <h1 className={styles.headline}>
+            Everything your team needs, in one place.
+          </h1>
 
           <ol className={styles.features}>
             {FEATURES.map((feature) => (

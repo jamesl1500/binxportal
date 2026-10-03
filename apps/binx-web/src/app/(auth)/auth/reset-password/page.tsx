@@ -5,7 +5,7 @@
  * Renders the reset form, or an error if the token is missing.
  *
  * @module apps/binx-web/src/app/(auth)/auth/reset-password/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -28,13 +28,17 @@ const ResetPasswordPage = async ({ searchParams }: ResetPasswordPageProps) => {
       <header className={styles.header}>
         <span className={styles.eyebrow}>Reset your password</span>
         <h1 className={styles.title}>Choose a new password</h1>
-        <p className={styles.subtitle}>Make sure it&apos;s at least 8 characters long.</p>
+        <p className={styles.subtitle}>
+          Make sure it&apos;s at least 8 characters long.
+        </p>
       </header>
 
       {token ? (
         <ResetPasswordForm token={token} />
       ) : (
-        <p className={styles.formError}>This reset link is missing its token. Request a new one below.</p>
+        <p className={styles.formError}>
+          This reset link is missing its token. Request a new one below.
+        </p>
       )}
 
       <p className={styles.footer}>

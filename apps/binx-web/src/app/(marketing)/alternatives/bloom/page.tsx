@@ -6,13 +6,18 @@
  * Binx for a multi-person agency running several client types at once.
  *
  * @module apps/binx-web/src/app/(marketing)/alternatives/bloom/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
 import { LayoutGrid, PanelsTopLeft, Users } from "lucide-react";
 
-import { breadcrumbJsonLd, marketingOpenGraph, SITE, USE_CASE_PAGES } from "@/lib/site";
+import {
+  breadcrumbJsonLd,
+  marketingOpenGraph,
+  SITE,
+  USE_CASE_PAGES,
+} from "@/lib/site";
 import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 
 import styles from "../../marketing.module.scss";
@@ -29,7 +34,9 @@ export const metadata: Metadata = {
 };
 
 const RELATED_USE_CASES = USE_CASE_PAGES.filter(
-  (page) => page.href === "/for/design-studios" || page.href === "/for/freelance-collectives",
+  (page) =>
+    page.href === "/for/design-studios" ||
+    page.href === "/for/freelance-collectives",
 );
 
 const GAPS = [
@@ -78,18 +85,29 @@ const faqJsonLd = {
 const BloomAlternativePage = () => {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([faqJsonLd, breadcrumbJsonLd(TITLE, "/alternatives/bloom")]) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify([
+            faqJsonLd,
+            breadcrumbJsonLd(TITLE, "/alternatives/bloom"),
+          ]),
+        }}
+      />
 
       <section className={styles.hero}>
         <div className={styles.heroGlow} aria-hidden="true" />
         <div className={styles.container}>
           <div className={styles.heroInner}>
             <span className={styles.eyebrow}>Bloom.io alternative</span>
-            <h1 className={styles.h1}>A Bloom alternative built for a team, not one calendar.</h1>
+            <h1 className={styles.h1}>
+              A Bloom alternative built for a team, not one calendar.
+            </h1>
             <p className={styles.lead}>
-              Bloom is built around a single creative freelancer&apos;s bookings and pipeline. {SITE.name} is built
-              for a team — several people sharing clients and projects, with a portal and invoicing that scale past
-              one person&apos;s calendar.
+              Bloom is built around a single creative freelancer&apos;s bookings
+              and pipeline. {SITE.name} is built for a team — several people
+              sharing clients and projects, with a portal and invoicing that
+              scale past one person&apos;s calendar.
             </p>
             <div className={`${styles.btnRow} ${styles.heroActions}`}>
               <Link href="/auth/signup" className={styles.btnPrimary}>
@@ -99,7 +117,9 @@ const BloomAlternativePage = () => {
                 See everything it does
               </Link>
             </div>
-            <p className={styles.heroNote}>Free plan available · no card required.</p>
+            <p className={styles.heroNote}>
+              Free plan available · no card required.
+            </p>
           </div>
         </div>
       </section>
@@ -108,7 +128,9 @@ const BloomAlternativePage = () => {
         <div className={styles.container}>
           <div className={styles.sectionHead}>
             <span className={styles.eyebrow}>Where it gets tight</span>
-            <h2 className={styles.h2}>Great for one calendar. Thinner for a team.</h2>
+            <h2 className={styles.h2}>
+              Great for one calendar. Thinner for a team.
+            </h2>
           </div>
           <div className={styles.grid}>
             {GAPS.map(({ icon: Icon, title, text }) => (
@@ -127,8 +149,12 @@ const BloomAlternativePage = () => {
       <section className={`${styles.section} ${styles.sectionDark}`}>
         <div className={styles.container}>
           <div className={styles.sectionHead}>
-            <span className={`${styles.eyebrow} ${styles.eyebrowOnDark}`}>What you get instead</span>
-            <h2 className={styles.h2}>Built for however many people are actually doing the work.</h2>
+            <span className={`${styles.eyebrow} ${styles.eyebrowOnDark}`}>
+              What you get instead
+            </span>
+            <h2 className={styles.h2}>
+              Built for however many people are actually doing the work.
+            </h2>
           </div>
           <div className={styles.split}>
             <div className={styles.splitBody}>
@@ -144,7 +170,9 @@ const BloomAlternativePage = () => {
               <ul className={styles.splitList}>
                 <li>Task boards with assignees and due dates per project</li>
                 <li>Every client and project shared across the team</li>
-                <li>AI lead prospecting, proposals and invoicing under one login</li>
+                <li>
+                  AI lead prospecting, proposals and invoicing under one login
+                </li>
               </ul>
             </div>
           </div>
@@ -179,7 +207,10 @@ const BloomAlternativePage = () => {
         </div>
       </section>
 
-      <MarketingCta heading="Bring your first client over and see." sub="Free plan, no card, no time limit." />
+      <MarketingCta
+        heading="Bring your first client over and see."
+        sub="Free plan, no card, no time limit."
+      />
     </>
   );
 };

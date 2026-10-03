@@ -6,7 +6,7 @@
  * access token, map errors to `AuthApiError`.
  *
  * @module apps/binx-web/src/lib/leads.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 import axios from "axios";
 
@@ -112,7 +112,13 @@ export interface ImportLeadsResult {
 export interface LeadEvent {
   id: string;
   lead_id: string;
-  kind: "created" | "note" | "status_changed" | "owner_changed" | "converted" | "analyzed";
+  kind:
+    | "created"
+    | "note"
+    | "status_changed"
+    | "owner_changed"
+    | "converted"
+    | "analyzed";
   body: string;
   actor_name: string | null;
   created_at: string;
@@ -145,7 +151,10 @@ async function authHeader(): Promise<{ Authorization: string }> {
 
 function rethrow(error: unknown, fallback: string): never {
   if (axios.isAxiosError(error) && error.response) {
-    throw new AuthApiError(extractDetailMessage(error.response.data, fallback), error.response.status);
+    throw new AuthApiError(
+      extractDetailMessage(error.response.data, fallback),
+      error.response.status,
+    );
   }
   throw error;
 }
@@ -163,13 +172,23 @@ function toPayload(input: LeadInput) {
   };
 }
 
-export async function getLeads(agencyId: string, filter: LeadFilter = {}): Promise<LeadListItem[]> {
+export async function getLeads(
+  agencyId: string,
+  filter: LeadFilter = {},
+): Promise<LeadListItem[]> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<LeadListItem[]>(`/agencies/${agencyId}/leads`, {
-      headers,
-      params: { status: filter.status, owner_id: filter.ownerId, source: filter.source },
-    });
+    const { data } = await api.get<LeadListItem[]>(
+      `/agencies/${agencyId}/leads`,
+      {
+        headers,
+        params: {
+          status: filter.status,
+          owner_id: filter.ownerId,
+          source: filter.source,
+        },
+      },
+    );
     return data;
   } catch (error) {
     rethrow(error, "Unable to load leads");
@@ -179,34 +198,55 @@ export async function getLeads(agencyId: string, filter: LeadFilter = {}): Promi
 export async function getLead(agencyId: string, leadId: string): Promise<Lead> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<Lead>(`/agencies/${agencyId}/leads/${leadId}`, { headers });
+    const { data } = await api.get<Lead>(
+      `/agencies/${agencyId}/leads/${leadId}`,
+      { headers },
+    );
     return data;
   } catch (error) {
     rethrow(error, "Unable to load this lead");
   }
 }
 
-export async function createLead(agencyId: string, input: LeadInput): Promise<Lead> {
+export async function createLead(
+  agencyId: string,
+  input: LeadInput,
+): Promise<Lead> {
   const headers = await authHeader();
   try {
-    const { data } = await api.post<Lead>(`/agencies/${agencyId}/leads`, toPayload(input), { headers });
+    const { data } = await api.post<Lead>(
+      `/agencies/${agencyId}/leads`,
+      toPayload(input),
+      { headers },
+    );
     return data;
   } catch (error) {
     rethrow(error, "Unable to create the lead");
   }
 }
 
-export async function updateLead(agencyId: string, leadId: string, input: LeadInput): Promise<Lead> {
+export async function updateLead(
+  agencyId: string,
+  leadId: string,
+  input: LeadInput,
+): Promise<Lead> {
   const headers = await authHeader();
   try {
-    const { data } = await api.patch<Lead>(`/agencies/${agencyId}/leads/${leadId}`, toPayload(input), { headers });
+    const { data } = await api.patch<Lead>(
+      `/agencies/${agencyId}/leads/${leadId}`,
+      toPayload(input),
+      { headers },
+    );
     return data;
   } catch (error) {
     rethrow(error, "Unable to update the lead");
   }
 }
 
-export async function deleteLead(agencyId: string, leadId: string): Promise<void> {
+export async function deleteLead(
+  agencyId: string,
+  leadId: string,
+): Promise<void> {
   const headers = await authHeader();
   try {
     await api.delete(`/agencies/${agencyId}/leads/${leadId}`, { headers });
@@ -252,17 +292,27 @@ export async function assignLeadOwner(
   }
 }
 
-export async function getLeadEvents(agencyId: string, leadId: string): Promise<LeadEvent[]> {
+export async function getLeadEvents(
+  agencyId: string,
+  leadId: string,
+): Promise<LeadEvent[]> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<LeadEvent[]>(`/agencies/${agencyId}/leads/${leadId}/events`, { headers });
+    const { data } = await api.get<LeadEvent[]>(
+      `/agencies/${agencyId}/leads/${leadId}/events`,
+      { headers },
+    );
     return data;
   } catch (error) {
     rethrow(error, "Unable to load the timeline");
   }
 }
 
-export async function addLeadNote(agencyId: string, leadId: string, body: string): Promise<LeadEvent> {
+export async function addLeadNote(
+  agencyId: string,
+  leadId: string,
+  body: string,
+): Promise<LeadEvent> {
   const headers = await authHeader();
   try {
     const { data } = await api.post<LeadEvent>(
@@ -276,7 +326,10 @@ export async function addLeadNote(agencyId: string, leadId: string, body: string
   }
 }
 
-export async function convertLead(agencyId: string, leadId: string): Promise<AgencyClient> {
+export async function convertLead(
+  agencyId: string,
+  leadId: string,
+): Promise<AgencyClient> {
   const headers = await authHeader();
   try {
     const { data } = await api.post<AgencyClient>(
@@ -291,7 +344,10 @@ export async function convertLead(agencyId: string, leadId: string): Promise<Age
 }
 
 /** Scores + summarises a lead via a real Claude call (falls back to a completeness heuristic on binx-api if AI isn't available). */
-export async function analyzeLead(agencyId: string, leadId: string): Promise<Lead> {
+export async function analyzeLead(
+  agencyId: string,
+  leadId: string,
+): Promise<Lead> {
   const headers = await authHeader();
   try {
     const { data } = await api.post<Lead>(
@@ -306,10 +362,16 @@ export async function analyzeLead(agencyId: string, leadId: string): Promise<Lea
 }
 
 /** Analyzes every open lead that's unanalyzed or stale, in one pass (capped server-side). */
-export async function analyzeOpenLeads(agencyId: string): Promise<BulkAnalyzeResult> {
+export async function analyzeOpenLeads(
+  agencyId: string,
+): Promise<BulkAnalyzeResult> {
   const headers = await authHeader();
   try {
-    const { data } = await api.post<BulkAnalyzeResult>(`/agencies/${agencyId}/leads/analyze`, undefined, { headers });
+    const { data } = await api.post<BulkAnalyzeResult>(
+      `/agencies/${agencyId}/leads/analyze`,
+      undefined,
+      { headers },
+    );
     return data;
   } catch (error) {
     rethrow(error, "Unable to analyze the pipeline");
@@ -322,7 +384,10 @@ export async function analyzeOpenLeads(agencyId: string): Promise<BulkAnalyzeRes
  * ignored server-side in that case). Nothing is saved — the caller reviews
  * then imports.
  */
-export async function generateLeads(agencyId: string, brief: LeadGenerateBrief): Promise<ProspectCandidate[]> {
+export async function generateLeads(
+  agencyId: string,
+  brief: LeadGenerateBrief,
+): Promise<ProspectCandidate[]> {
   const headers = await authHeader();
   try {
     const { data } = await api.post<{ candidates: ProspectCandidate[] }>(
@@ -345,7 +410,10 @@ export async function generateLeads(agencyId: string, brief: LeadGenerateBrief):
 }
 
 /** Imports reviewed prospector candidates as leads (source="ai_generated"), skipping duplicates. */
-export async function importLeads(agencyId: string, candidates: ProspectCandidate[]): Promise<ImportLeadsResult> {
+export async function importLeads(
+  agencyId: string,
+  candidates: ProspectCandidate[],
+): Promise<ImportLeadsResult> {
   const headers = await authHeader();
   try {
     const { data } = await api.post<ImportLeadsResult>(
@@ -372,10 +440,15 @@ function criteriaPayload(input: LeadSearchCriteriaInput) {
 }
 
 /** Lists the agency's saved prospector searches, most recently created first. */
-export async function getLeadSearchCriteria(agencyId: string): Promise<LeadSearchCriteria[]> {
+export async function getLeadSearchCriteria(
+  agencyId: string,
+): Promise<LeadSearchCriteria[]> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<LeadSearchCriteria[]>(`/agencies/${agencyId}/leads/search-criteria`, { headers });
+    const { data } = await api.get<LeadSearchCriteria[]>(
+      `/agencies/${agencyId}/leads/search-criteria`,
+      { headers },
+    );
     return data;
   } catch (error) {
     rethrow(error, "Unable to load saved searches");
@@ -417,10 +490,16 @@ export async function updateLeadSearchCriteria(
   }
 }
 
-export async function deleteLeadSearchCriteria(agencyId: string, criteriaId: string): Promise<void> {
+export async function deleteLeadSearchCriteria(
+  agencyId: string,
+  criteriaId: string,
+): Promise<void> {
   const headers = await authHeader();
   try {
-    await api.delete(`/agencies/${agencyId}/leads/search-criteria/${criteriaId}`, { headers });
+    await api.delete(
+      `/agencies/${agencyId}/leads/search-criteria/${criteriaId}`,
+      { headers },
+    );
   } catch (error) {
     rethrow(error, "Unable to delete this saved search");
   }

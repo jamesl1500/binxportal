@@ -6,13 +6,20 @@
  * server; appends optimistically and refreshes.
  *
  * @module apps/binx-web/src/components/leads/LeadTimeline/LeadTimeline.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRightLeft, FileText, RefreshCw, Sparkles, StickyNote, UserRound } from "lucide-react";
+import {
+  ArrowRightLeft,
+  FileText,
+  RefreshCw,
+  Sparkles,
+  StickyNote,
+  UserRound,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { addLeadNoteAction } from "@/app/(app)/leads/actions";
@@ -36,10 +43,19 @@ const ICONS: Record<LeadEvent["kind"], typeof StickyNote> = {
 };
 
 function timestamp(iso: string): string {
-  return new Date(iso).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  return new Date(iso).toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
-const LeadTimeline = ({ agencyId, leadId, events: initial }: LeadTimelineProps) => {
+const LeadTimeline = ({
+  agencyId,
+  leadId,
+  events: initial,
+}: LeadTimelineProps) => {
   const router = useRouter();
   const [events, setEvents] = useState(initial);
   const [body, setBody] = useState("");
@@ -72,7 +88,11 @@ const LeadTimeline = ({ agencyId, leadId, events: initial }: LeadTimelineProps) 
           onChange={(event) => setBody(event.target.value)}
           aria-label="Add a note"
         />
-        <button type="submit" className={styles.add} disabled={isPending || !body.trim()}>
+        <button
+          type="submit"
+          className={styles.add}
+          disabled={isPending || !body.trim()}
+        >
           Add note
         </button>
       </form>

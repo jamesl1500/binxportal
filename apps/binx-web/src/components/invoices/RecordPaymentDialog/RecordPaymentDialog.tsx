@@ -6,7 +6,7 @@
  * flips the invoice to "paid" once payments cover the total.
  *
  * @module apps/binx-web/src/components/invoices/RecordPaymentDialog/RecordPaymentDialog.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -28,7 +28,12 @@ interface RecordPaymentDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const RecordPaymentDialog = ({ agencyId, invoice, open, onOpenChange }: RecordPaymentDialogProps) => {
+const RecordPaymentDialog = ({
+  agencyId,
+  invoice,
+  open,
+  onOpenChange,
+}: RecordPaymentDialogProps) => {
   const router = useRouter();
   const balance = Math.max(0, invoice.amount_due_cents);
 
@@ -70,7 +75,8 @@ const RecordPaymentDialog = ({ agencyId, invoice, open, onOpenChange }: RecordPa
         <Dialog.Popup className={styles.dialog} aria-label="Record a payment">
           <Dialog.Title className={styles.title}>Record a payment</Dialog.Title>
           <Dialog.Description className={styles.description}>
-            {invoice.number} · balance {formatMoneyCents(balance, invoice.currency)}
+            {invoice.number} · balance{" "}
+            {formatMoneyCents(balance, invoice.currency)}
           </Dialog.Description>
 
           <form className={styles.form} onSubmit={handleSubmit}>
@@ -120,10 +126,18 @@ const RecordPaymentDialog = ({ agencyId, invoice, open, onOpenChange }: RecordPa
             </label>
 
             <div className={styles.actions}>
-              <button type="button" className={styles.cancel} onClick={() => onOpenChange(false)}>
+              <button
+                type="button"
+                className={styles.cancel}
+                onClick={() => onOpenChange(false)}
+              >
                 Cancel
               </button>
-              <button type="submit" className={styles.submit} disabled={submitting}>
+              <button
+                type="submit"
+                className={styles.submit}
+                disabled={submitting}
+              >
                 {submitting ? "Recording…" : "Record payment"}
               </button>
             </div>

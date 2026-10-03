@@ -7,14 +7,20 @@
  * and renders the tab nav.
  *
  * @module apps/binx-web/src/app/(app)/team/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { getCurrentUser } from "@/lib/auth";
-import { getAgencyInvitations, getAgencyMembers, getCurrentAgencyContext } from "@/lib/agencies";
-import ClientStatGrid, { type ClientStat } from "@/components/clients/ClientStatGrid/ClientStatGrid";
+import {
+  getAgencyInvitations,
+  getAgencyMembers,
+  getCurrentAgencyContext,
+} from "@/lib/agencies";
+import ClientStatGrid, {
+  type ClientStat,
+} from "@/components/clients/ClientStatGrid/ClientStatGrid";
 import TeamRoster from "@/components/team/TeamRoster/TeamRoster";
 
 import styles from "./page.module.scss";
@@ -34,14 +40,16 @@ const TeamMembersPage = async () => {
     redirect("/onboarding/two");
   }
 
-  const canManage = currentAgency.role === "owner" || currentAgency.role === "admin";
+  const canManage =
+    currentAgency.role === "owner" || currentAgency.role === "admin";
 
   const [members, invitations] = await Promise.all([
     getAgencyMembers(currentAgency.id),
     canManage ? getAgencyInvitations(currentAgency.id) : Promise.resolve([]),
   ]);
 
-  const byRole = (role: string) => members.filter((member) => member.role === role).length;
+  const byRole = (role: string) =>
+    members.filter((member) => member.role === role).length;
 
   const stats: ClientStat[] = [
     { label: "Members", value: String(members.length) },
@@ -49,7 +57,13 @@ const TeamMembersPage = async () => {
     { label: "Admins", value: String(byRole("admin")) },
     { label: "Members (role)", value: String(byRole("member")) },
     ...(canManage
-      ? [{ label: "Pending invites", value: String(invitations.length), tone: invitations.length > 0 ? ("warn" as const) : undefined }]
+      ? [
+          {
+            label: "Pending invites",
+            value: String(invitations.length),
+            tone: invitations.length > 0 ? ("warn" as const) : undefined,
+          },
+        ]
       : []),
   ];
 

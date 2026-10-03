@@ -11,7 +11,7 @@
  * change.
  *
  * @module apps/binx-web/src/app/(app)/projects/[projectId]/time/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 
@@ -145,9 +145,17 @@ export async function createInvoiceFromTimeEntriesAction(
 ): Promise<CreateInvoiceFromTimeEntriesActionResult> {
   let invoice: InvoiceDetail;
   try {
-    invoice = await createInvoiceFromTimeEntries(agencyId, clientId, projectId, entryIds);
+    invoice = await createInvoiceFromTimeEntries(
+      agencyId,
+      clientId,
+      projectId,
+      entryIds,
+    );
   } catch (error) {
-    return errorResult(error, "Unable to create an invoice from these time entries");
+    return errorResult(
+      error,
+      "Unable to create an invoice from these time entries",
+    );
   }
   revalidateTimeTab(projectId);
   redirect(`/invoices/${invoice.id}`);

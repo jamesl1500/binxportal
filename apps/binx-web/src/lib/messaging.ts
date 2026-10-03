@@ -8,7 +8,7 @@
  * establishing a new session.
  *
  * @module apps/binx-web/src/lib/messaging.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 import axios from "axios";
 
@@ -43,7 +43,10 @@ async function authHeader(): Promise<{ Authorization: string }> {
 
 function apiError(error: unknown, fallback: string): AuthApiError | unknown {
   if (axios.isAxiosError(error) && error.response) {
-    return new AuthApiError(extractDetailMessage(error.response.data, fallback), error.response.status);
+    return new AuthApiError(
+      extractDetailMessage(error.response.data, fallback),
+      error.response.status,
+    );
   }
   return error;
 }
@@ -73,18 +76,24 @@ export interface ConversationFilter {
  * @function getConversations
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't a member of this agency.
  */
-export async function getConversations(agencyId: string, filter: ConversationFilter = {}): Promise<Conversation[]> {
+export async function getConversations(
+  agencyId: string,
+  filter: ConversationFilter = {},
+): Promise<Conversation[]> {
   const headers = await authHeader();
 
   try {
-    const { data } = await api.get<Conversation[]>(`/agencies/${agencyId}/conversations`, {
-      headers,
-      params: {
-        client_id: filter.clientId,
-        project_id: filter.projectId,
-        q: filter.q || undefined,
+    const { data } = await api.get<Conversation[]>(
+      `/agencies/${agencyId}/conversations`,
+      {
+        headers,
+        params: {
+          client_id: filter.clientId,
+          project_id: filter.projectId,
+          q: filter.q || undefined,
+        },
       },
-    });
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to load conversations");
@@ -124,7 +133,10 @@ export async function getUnreadMessageCount(agencyId: string): Promise<number> {
  * @function getConversation
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't a participant (404).
  */
-export async function getConversation(agencyId: string, conversationId: string): Promise<ConversationDetail> {
+export async function getConversation(
+  agencyId: string,
+  conversationId: string,
+): Promise<ConversationDetail> {
   const headers = await authHeader();
 
   try {
@@ -185,14 +197,22 @@ export async function createConversation(
 export async function updateConversation(
   agencyId: string,
   conversationId: string,
-  input: { title?: string | null; clientId?: string | null; projectId?: string | null },
+  input: {
+    title?: string | null;
+    clientId?: string | null;
+    projectId?: string | null;
+  },
 ): Promise<ConversationDetail> {
   const headers = await authHeader();
 
   try {
     const { data } = await api.patch<ConversationDetail>(
       `/agencies/${agencyId}/conversations/${conversationId}`,
-      { title: input.title ?? null, client_id: input.clientId ?? null, project_id: input.projectId ?? null },
+      {
+        title: input.title ?? null,
+        client_id: input.clientId ?? null,
+        project_id: input.projectId ?? null,
+      },
       { headers },
     );
     return data;
@@ -246,7 +266,10 @@ export async function removeConversationParticipant(
   const headers = await authHeader();
 
   try {
-    await api.delete(`/agencies/${agencyId}/conversations/${conversationId}/participants/${userId}`, { headers });
+    await api.delete(
+      `/agencies/${agencyId}/conversations/${conversationId}/participants/${userId}`,
+      { headers },
+    );
   } catch (error) {
     throw apiError(error, "Unable to remove this person");
   }
@@ -260,11 +283,18 @@ export async function removeConversationParticipant(
  *
  * @function markConversationRead
  */
-export async function markConversationRead(agencyId: string, conversationId: string): Promise<void> {
+export async function markConversationRead(
+  agencyId: string,
+  conversationId: string,
+): Promise<void> {
   const headers = await authHeader();
 
   try {
-    await api.post(`/agencies/${agencyId}/conversations/${conversationId}/read`, null, { headers });
+    await api.post(
+      `/agencies/${agencyId}/conversations/${conversationId}/read`,
+      null,
+      { headers },
+    );
   } catch (error) {
     throw apiError(error, "Unable to update read state");
   }
@@ -406,11 +436,18 @@ export async function editMessage(
  * @function deleteMessage
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller may not delete this message.
  */
-export async function deleteMessage(agencyId: string, conversationId: string, messageId: string): Promise<void> {
+export async function deleteMessage(
+  agencyId: string,
+  conversationId: string,
+  messageId: string,
+): Promise<void> {
   const headers = await authHeader();
 
   try {
-    await api.delete(`/agencies/${agencyId}/conversations/${conversationId}/messages/${messageId}`, { headers });
+    await api.delete(
+      `/agencies/${agencyId}/conversations/${conversationId}/messages/${messageId}`,
+      { headers },
+    );
   } catch (error) {
     throw apiError(error, "Unable to delete message");
   }
@@ -430,7 +467,11 @@ export async function getWsTicket(): Promise<string> {
   const headers = await authHeader();
 
   try {
-    const { data } = await api.post<{ ticket: string }>("/auth/ws-ticket", null, { headers });
+    const { data } = await api.post<{ ticket: string }>(
+      "/auth/ws-ticket",
+      null,
+      { headers },
+    );
     return data.ticket;
   } catch (error) {
     throw apiError(error, "Unable to open a live connection");

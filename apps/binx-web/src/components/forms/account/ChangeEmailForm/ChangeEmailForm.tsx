@@ -7,7 +7,7 @@
  * new address first (see app/(auth)/auth/confirm-email).
  *
  * @module apps/binx-web/src/components/forms/account/ChangeEmailForm/ChangeEmailForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -56,7 +56,9 @@ const ChangeEmailForm = ({ currentEmail }: ChangeEmailFormProps) => {
       if (result.error) {
         setFormError(result.error);
       } else {
-        setSuccessMessage(result.message ?? "Check your new inbox to confirm the change.");
+        setSuccessMessage(
+          result.message ?? "Check your new inbox to confirm the change.",
+        );
         reset();
       }
     });
@@ -68,7 +70,14 @@ const ChangeEmailForm = ({ currentEmail }: ChangeEmailFormProps) => {
         <label className={styles.label} htmlFor="currentEmail">
           Current email
         </label>
-        <input id="currentEmail" type="email" value={currentEmail} readOnly disabled className={styles.input} />
+        <input
+          id="currentEmail"
+          type="email"
+          value={currentEmail}
+          readOnly
+          disabled
+          className={styles.input}
+        />
       </div>
 
       <div className={styles.field}>
@@ -83,7 +92,9 @@ const ChangeEmailForm = ({ currentEmail }: ChangeEmailFormProps) => {
           aria-invalid={Boolean(errors.newEmail)}
           {...register("newEmail")}
         />
-        {errors.newEmail && <p className={styles.error}>{errors.newEmail.message}</p>}
+        {errors.newEmail && (
+          <p className={styles.error}>{errors.newEmail.message}</p>
+        )}
       </div>
 
       <div className={styles.field}>
@@ -98,7 +109,9 @@ const ChangeEmailForm = ({ currentEmail }: ChangeEmailFormProps) => {
           aria-invalid={Boolean(errors.currentPassword)}
           {...register("currentPassword")}
         />
-        {errors.currentPassword && <p className={styles.error}>{errors.currentPassword.message}</p>}
+        {errors.currentPassword && (
+          <p className={styles.error}>{errors.currentPassword.message}</p>
+        )}
       </div>
 
       {formError && <p className={styles.formError}>{formError}</p>}

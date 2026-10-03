@@ -19,15 +19,24 @@
  * existing values forward so an `updated` echo never wipes them.
  *
  * @module apps/binx-web/src/stores/use-board-store.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 import { create } from "zustand";
 
-import type { BoardComment, BoardEvent, BoardItem, BoardItemPatch } from "@/lib/boards-client";
+import type {
+  BoardComment,
+  BoardEvent,
+  BoardItem,
+  BoardItemPatch,
+} from "@/lib/boards-client";
 
 export type SocketStatus = "connecting" | "open" | "closed";
 
-const EMPTY_META = { reactions: {} as Record<string, number>, my_reactions: [] as string[], comment_count: 0 };
+const EMPTY_META = {
+  reactions: {} as Record<string, number>,
+  my_reactions: [] as string[],
+  comment_count: 0,
+};
 
 interface BoardState {
   boardId: string | null;
@@ -42,7 +51,11 @@ interface BoardState {
   upsertItem: (item: BoardItem) => void;
   patchItem: (id: string, patch: BoardItemPatch) => void;
   removeItem: (id: string) => void;
-  setReactions: (id: string, reactions: Record<string, number>, myReactions?: string[]) => void;
+  setReactions: (
+    id: string,
+    reactions: Record<string, number>,
+    myReactions?: string[],
+  ) => void;
   setComments: (itemId: string, comments: BoardComment[]) => void;
   addComment: (comment: BoardComment) => void;
   removeComment: (itemId: string, commentId: string) => void;
@@ -58,7 +71,10 @@ function orderedItems(state: BoardState): BoardItem[] {
 /** Merge a fresh card from the server/socket, keeping reaction+comment meta
  * that the item events don't carry (unless the incoming card actually has it —
  * the board GET does). */
-function mergeItem(existing: BoardItem | undefined, incoming: BoardItem): BoardItem {
+function mergeItem(
+  existing: BoardItem | undefined,
+  incoming: BoardItem,
+): BoardItem {
   if (!existing) return { ...EMPTY_META, ...incoming };
   return {
     ...incoming,
@@ -80,18 +96,30 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     set({
       boardId,
       currentUserId,
-      itemsById: Object.fromEntries(items.map((item) => [item.id, { ...EMPTY_META, ...item }])),
+      itemsById: Object.fromEntries(
+        items.map((item) => [item.id, { ...EMPTY_META, ...item }]),
+      ),
       commentsByItem: {},
       activeIds: new Set(),
     }),
 
   setItems: (items) =>
     set((state) => ({
-      itemsById: Object.fromEntries(items.map((item) => [item.id, mergeItem(state.itemsById[item.id], item)])),
+      itemsById: Object.fromEntries(
+        items.map((item) => [
+          item.id,
+          mergeItem(state.itemsById[item.id], item),
+        ]),
+      ),
     })),
 
   upsertItem: (item) =>
-    set((state) => ({ itemsById: { ...state.itemsById, [item.id]: mergeItem(state.itemsById[item.id], item) } })),
+    set((state) => ({
+      itemsById: {
+        ...state.itemsById,
+        [item.id]: mergeItem(state.itemsById[item.id], item),
+      },
+    })),
 
   patchItem: (id, patch) =>
     set((state) => {
@@ -124,7 +152,11 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       return {
         itemsById: {
           ...state.itemsById,
-          [id]: { ...existing, reactions, my_reactions: myReactions ?? existing.my_reactions },
+          [id]: {
+            ...existing,
+            reactions,
+            my_reactions: myReactions ?? existing.my_reactions,
+          },
         },
       };
     }),
@@ -133,7 +165,13 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     set((state) => ({
       commentsByItem: { ...state.commentsByItem, [itemId]: comments },
       itemsById: state.itemsById[itemId]
-        ? { ...state.itemsById, [itemId]: { ...state.itemsById[itemId], comment_count: comments.length } }
+        ? {
+            ...state.itemsById,
+            [itemId]: {
+              ...state.itemsById[itemId],
+              comment_count: comments.length,
+            },
+          }
         : state.itemsById,
     })),
 
@@ -146,7 +184,13 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       return {
         commentsByItem: { ...state.commentsByItem, [comment.item_id]: next },
         itemsById: item
-          ? { ...state.itemsById, [comment.item_id]: { ...item, comment_count: item.comment_count + 1 } }
+          ? {
+              ...state.itemsById,
+              [comment.item_id]: {
+                ...item,
+                comment_count: item.comment_count + 1,
+              },
+            }
           : state.itemsById,
       };
     }),
@@ -157,9 +201,17 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       const item = state.itemsById[itemId];
       const filtered = current?.filter((c) => c.id !== commentId);
       return {
-        commentsByItem: filtered ? { ...state.commentsByItem, [itemId]: filtered } : state.commentsByItem,
+        commentsByItem: filtered
+          ? { ...state.commentsByItem, [itemId]: filtered }
+          : state.commentsByItem,
         itemsById: item
-          ? { ...state.itemsById, [itemId]: { ...item, comment_count: Math.max(0, item.comment_count - 1) } }
+          ? {
+              ...state.itemsById,
+              [itemId]: {
+                ...item,
+                comment_count: Math.max(0, item.comment_count - 1),
+              },
+            }
           : state.itemsById,
       };
     }),
@@ -191,10 +243,17 @@ export const useBoardStore = create<BoardState>((set, get) => ({
         let myReactions = existing?.my_reactions;
         if (mine && existing) {
           myReactions = event.data.added
-            ? [...existing.my_reactions.filter((k) => k !== event.data.kind), event.data.kind]
+            ? [
+                ...existing.my_reactions.filter((k) => k !== event.data.kind),
+                event.data.kind,
+              ]
             : existing.my_reactions.filter((k) => k !== event.data.kind);
         }
-        get().setReactions(event.data.item_id, event.data.reactions, myReactions);
+        get().setReactions(
+          event.data.item_id,
+          event.data.reactions,
+          myReactions,
+        );
         return;
       }
       case "board.comment.created":

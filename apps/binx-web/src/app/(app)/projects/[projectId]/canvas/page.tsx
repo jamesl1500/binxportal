@@ -6,7 +6,7 @@
  * Distinct from the Kanban "Board" tab (structured columns of tasks).
  *
  * @module apps/binx-web/src/app/(app)/projects/[projectId]/canvas/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -29,7 +29,10 @@ const ProjectCanvasPage = async ({ params }: ProjectCanvasPageProps) => {
     redirect("/onboarding/two");
   }
 
-  const [board, currentUser] = await Promise.all([getBoard(currentAgency.id, projectId), getCurrentUser()]);
+  const [board, currentUser] = await Promise.all([
+    getBoard(currentAgency.id, projectId),
+    getCurrentUser(),
+  ]);
   if (!currentUser) {
     redirect("/auth/login");
   }
@@ -40,7 +43,9 @@ const ProjectCanvasPage = async ({ params }: ProjectCanvasPageProps) => {
       projectId={projectId}
       boardId={board.board_id}
       currentUserId={currentUser.id}
-      canModerate={currentAgency.role === "owner" || currentAgency.role === "admin"}
+      canModerate={
+        currentAgency.role === "owner" || currentAgency.role === "admin"
+      }
       initialItems={board.items}
     />
   );

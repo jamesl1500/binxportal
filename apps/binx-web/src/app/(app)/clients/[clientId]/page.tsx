@@ -6,17 +6,26 @@
  * threads. All real now — project data and invoicing both come from binx-api.
  *
  * @module apps/binx-web/src/app/(app)/clients/[clientId]/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getCurrentAgencyContext } from "@/lib/agencies";
 import { getAgencyClient } from "@/lib/clients";
-import { getInvoices, getInvoiceSummary, formatMoneyCents, formatCompactMoney, invoiceStatusLabel } from "@/lib/invoicing";
+import {
+  getInvoices,
+  getInvoiceSummary,
+  formatMoneyCents,
+  formatCompactMoney,
+  invoiceStatusLabel,
+} from "@/lib/invoicing";
 import { getMeetings } from "@/lib/meetings";
 import { getAgencyProjects } from "@/lib/projects";
-import { PROJECT_STATUS_LABELS, type ProjectStatus } from "@/lib/projects-client";
+import {
+  PROJECT_STATUS_LABELS,
+  type ProjectStatus,
+} from "@/lib/projects-client";
 import ClientStatGrid from "@/components/clients/ClientStatGrid/ClientStatGrid";
 import LineChart from "@/components/charts/LineChart/LineChart";
 import DonutChart from "@/components/charts/DonutChart/DonutChart";
@@ -56,55 +65,80 @@ const ClientDashboardPage = async ({ params }: ClientDashboardPageProps) => {
     redirect("/onboarding/two");
   }
 
-  const [client, allProjects, invoices, summary, upcomingMeetings] = await Promise.all([
-    getAgencyClient(currentAgency.id, clientId),
-    getAgencyProjects(currentAgency.id),
-    getInvoices(currentAgency.id, { clientId }),
-    getInvoiceSummary(currentAgency.id, clientId),
-    getMeetings(currentAgency.id, {
-      clientId,
-      status: "scheduled",
-      fromDate: new Date().toISOString().slice(0, 10),
-    }),
-  ]);
+  const [client, allProjects, invoices, summary, upcomingMeetings] =
+    await Promise.all([
+      getAgencyClient(currentAgency.id, clientId),
+      getAgencyProjects(currentAgency.id),
+      getInvoices(currentAgency.id, { clientId }),
+      getInvoiceSummary(currentAgency.id, clientId),
+      getMeetings(currentAgency.id, {
+        clientId,
+        status: "scheduled",
+        fromDate: new Date().toISOString().slice(0, 10),
+      }),
+    ]);
 
-  const projects = allProjects.filter((project) => project.client_id === clientId);
-  const activeProjects = projects.filter((project) => project.status === "active").length;
+  const projects = allProjects.filter(
+    (project) => project.client_id === clientId,
+  );
+  const activeProjects = projects.filter(
+    (project) => project.status === "active",
+  ).length;
   const currency = invoices[0]?.currency ?? "USD";
 
   const projectStatusCounts = new Map<ProjectStatus, number>();
   for (const project of projects) {
-    projectStatusCounts.set(project.status, (projectStatusCounts.get(project.status) ?? 0) + 1);
+    projectStatusCounts.set(
+      project.status,
+      (projectStatusCounts.get(project.status) ?? 0) + 1,
+    );
   }
-  const projectSegments = [...projectStatusCounts.entries()].map(([status, count]) => ({
-    label: PROJECT_STATUS_LABELS[status],
-    value: count,
-    color: PROJECT_STATUS_COLORS[status],
-  }));
+  const projectSegments = [...projectStatusCounts.entries()].map(
+    ([status, count]) => ({
+      label: PROJECT_STATUS_LABELS[status],
+      value: count,
+      color: PROJECT_STATUS_COLORS[status],
+    }),
+  );
 
   // Invoices grouped by their displayed status (draft / sent / overdue / partial / paid),
   // void excluded — it's not "billing activity".
-  const invoiceStatusGroups = new Map<string, { count: number; amount: number }>();
+  const invoiceStatusGroups = new Map<
+    string,
+    { count: number; amount: number }
+  >();
   for (const invoice of invoices) {
     if (invoice.display_status === "void") continue;
-    const group = invoiceStatusGroups.get(invoice.display_status) ?? { count: 0, amount: 0 };
+    const group = invoiceStatusGroups.get(invoice.display_status) ?? {
+      count: 0,
+      amount: 0,
+    };
     group.count += 1;
     group.amount += invoice.total_cents;
     invoiceStatusGroups.set(invoice.display_status, group);
   }
-  const invoiceSegments = [...invoiceStatusGroups.entries()].map(([status, group]) => ({
-    label: invoiceStatusLabel(status),
-    value: group.count,
-    color: INVOICE_STATUS_COLORS[status] ?? "#a1a1aa",
-    hint: formatCompactMoney(group.amount, currency),
-  }));
-  const billedInvoiceCount = [...invoiceStatusGroups.values()].reduce((total, g) => total + g.count, 0);
+  const invoiceSegments = [...invoiceStatusGroups.entries()].map(
+    ([status, group]) => ({
+      label: invoiceStatusLabel(status),
+      value: group.count,
+      color: INVOICE_STATUS_COLORS[status] ?? "#a1a1aa",
+      hint: formatCompactMoney(group.amount, currency),
+    }),
+  );
+  const billedInvoiceCount = [...invoiceStatusGroups.values()].reduce(
+    (total, g) => total + g.count,
+    0,
+  );
 
   return (
     <div className={styles.page}>
       <ClientStatGrid
         stats={[
-          { label: "Active projects", value: String(activeProjects), hint: `${projects.length} total` },
+          {
+            label: "Active projects",
+            value: String(activeProjects),
+            hint: `${projects.length} total`,
+          },
           {
             label: "Outstanding",
             value: formatMoneyCents(summary.outstanding_cents, currency),
@@ -119,14 +153,19 @@ const ClientDashboardPage = async ({ params }: ClientDashboardPageProps) => {
             value: formatMoneyCents(summary.paid_this_year_cents, currency),
             tone: "positive",
           },
-          { label: "Lifetime billed", value: formatMoneyCents(summary.lifetime_billed_cents, currency) },
+          {
+            label: "Lifetime billed",
+            value: formatMoneyCents(summary.lifetime_billed_cents, currency),
+          },
         ]}
       />
 
       <section className={styles.panel}>
         <div className={styles.panelHeader}>
           <h2 className={styles.panelTitle}>Collected revenue</h2>
-          <span className={styles.panelMeta}>Payments received, last 12 months</span>
+          <span className={styles.panelMeta}>
+            Payments received, last 12 months
+          </span>
         </div>
         <LineChart
           data={summary.monthly_paid}
@@ -139,7 +178,10 @@ const ClientDashboardPage = async ({ params }: ClientDashboardPageProps) => {
       <section className={styles.panel}>
         <div className={styles.panelHeader}>
           <h2 className={styles.panelTitle}>Upcoming meetings</h2>
-          <Link href={`/clients/${client.id}/meetings`} className={styles.panelLink}>
+          <Link
+            href={`/clients/${client.id}/meetings`}
+            className={styles.panelLink}
+          >
             View all
           </Link>
         </div>
@@ -171,7 +213,10 @@ const ClientDashboardPage = async ({ params }: ClientDashboardPageProps) => {
         <section className={styles.panel}>
           <div className={styles.panelHeader}>
             <h2 className={styles.panelTitle}>Invoices by status</h2>
-            <Link href={`/clients/${client.id}/invoices`} className={styles.panelLink}>
+            <Link
+              href={`/clients/${client.id}/invoices`}
+              className={styles.panelLink}
+            >
               View all
             </Link>
           </div>

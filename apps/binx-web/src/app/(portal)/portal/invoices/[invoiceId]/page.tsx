@@ -8,7 +8,7 @@
  * CheckoutResult.
  *
  * @module apps/binx-web/src/app/(portal)/portal/invoices/[invoiceId]/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -29,7 +29,9 @@ interface PortalInvoicePageProps {
   searchParams: Promise<{ checkout?: string; session_id?: string }>;
 }
 
-export async function generateMetadata({ params }: PortalInvoicePageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PortalInvoicePageProps): Promise<Metadata> {
   const { invoiceId } = await params;
   try {
     const invoice = await getPortalInvoice(invoiceId);
@@ -39,7 +41,10 @@ export async function generateMetadata({ params }: PortalInvoicePageProps): Prom
   }
 }
 
-const PortalInvoiceDetailPage = async ({ params, searchParams }: PortalInvoicePageProps) => {
+const PortalInvoiceDetailPage = async ({
+  params,
+  searchParams,
+}: PortalInvoicePageProps) => {
   const { invoiceId } = await params;
   const { checkout, session_id: sessionId } = await searchParams;
 
@@ -54,7 +59,8 @@ const PortalInvoiceDetailPage = async ({ params, searchParams }: PortalInvoicePa
   }
 
   const context = await getPortalContext();
-  const checkoutStatus = checkout === "success" || checkout === "cancel" ? checkout : undefined;
+  const checkoutStatus =
+    checkout === "success" || checkout === "cancel" ? checkout : undefined;
 
   return (
     <div className={styles.page}>

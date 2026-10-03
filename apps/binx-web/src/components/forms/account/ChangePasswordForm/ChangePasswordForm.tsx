@@ -6,7 +6,7 @@
  * `changePasswordAction` server action.
  *
  * @module apps/binx-web/src/components/forms/account/ChangePasswordForm/ChangePasswordForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -44,7 +44,11 @@ const ChangePasswordForm = () => {
     formState: { errors },
   } = useForm<ChangePasswordValues>({
     resolver: zodResolver(changePasswordSchema),
-    defaultValues: { currentPassword: "", newPassword: "", confirmNewPassword: "" },
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmNewPassword: "",
+    },
   });
 
   const onSubmit = (values: ChangePasswordValues) => {
@@ -80,7 +84,9 @@ const ChangePasswordForm = () => {
           aria-invalid={Boolean(errors.currentPassword)}
           {...register("currentPassword")}
         />
-        {errors.currentPassword && <p className={styles.error}>{errors.currentPassword.message}</p>}
+        {errors.currentPassword && (
+          <p className={styles.error}>{errors.currentPassword.message}</p>
+        )}
       </div>
 
       <div className={styles.field}>
@@ -95,7 +101,9 @@ const ChangePasswordForm = () => {
           aria-invalid={Boolean(errors.newPassword)}
           {...register("newPassword")}
         />
-        {errors.newPassword && <p className={styles.error}>{errors.newPassword.message}</p>}
+        {errors.newPassword && (
+          <p className={styles.error}>{errors.newPassword.message}</p>
+        )}
       </div>
 
       <div className={styles.field}>
@@ -110,7 +118,9 @@ const ChangePasswordForm = () => {
           aria-invalid={Boolean(errors.confirmNewPassword)}
           {...register("confirmNewPassword")}
         />
-        {errors.confirmNewPassword && <p className={styles.error}>{errors.confirmNewPassword.message}</p>}
+        {errors.confirmNewPassword && (
+          <p className={styles.error}>{errors.confirmNewPassword.message}</p>
+        )}
       </div>
 
       {formError && <p className={styles.formError}>{formError}</p>}

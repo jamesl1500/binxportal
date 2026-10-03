@@ -15,7 +15,7 @@
  * uses for Profile/Account/Agency settings), rather than a modal.
  *
  * @module apps/binx-web/src/components/navigation/OrgSwitcher/OrgSwitcher.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -78,18 +78,36 @@ const OrgSwitcher = ({ agencies, currentAgency }: OrgSwitcherProps) => {
   return (
     <div className={styles.wrapper}>
       <Menu.Root>
-        <Menu.Trigger className={styles.trigger} disabled={isPending} aria-label="Switch agency">
+        <Menu.Trigger
+          className={styles.trigger}
+          disabled={isPending}
+          aria-label="Switch agency"
+        >
           <AgencyMark agency={currentAgency} />
           <span className={styles.name}>{currentAgency.name}</span>
           <ChevronDown className={styles.chevron} aria-hidden="true" />
         </Menu.Trigger>
         <Menu.Portal>
-          <Menu.Positioner className={styles.positioner} sideOffset={8} align="start">
+          <Menu.Positioner
+            className={styles.positioner}
+            sideOffset={8}
+            align="start"
+          >
             <Menu.Popup className={styles.popup}>
-              <Menu.RadioGroup value={currentAgency.id} onValueChange={handleValueChange}>
-                <Menu.GroupLabel className={styles.groupLabel}>Agencies</Menu.GroupLabel>
+              <Menu.RadioGroup
+                value={currentAgency.id}
+                onValueChange={handleValueChange}
+              >
+                <Menu.GroupLabel className={styles.groupLabel}>
+                  Agencies
+                </Menu.GroupLabel>
                 {agencies.map((agency) => (
-                  <Menu.RadioItem key={agency.id} value={agency.id} className={styles.menuItem} closeOnClick>
+                  <Menu.RadioItem
+                    key={agency.id}
+                    value={agency.id}
+                    className={styles.menuItem}
+                    closeOnClick
+                  >
                     <AgencyMark agency={agency} />
                     <span className={styles.orgName}>{agency.name}</span>
                     <Menu.RadioItemIndicator className={styles.check}>

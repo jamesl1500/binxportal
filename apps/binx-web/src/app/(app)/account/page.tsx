@@ -5,7 +5,7 @@
  * guarded by the layout above; this page only needs the settings data.
  *
  * @module apps/binx-web/src/app/(app)/account/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 
@@ -28,14 +28,17 @@ const AccountPreferencesPage = async () => {
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Notifications</h2>
         <p className={styles.sectionSubtitle}>
-          Choose which emails you&apos;d like to receive, and what shows up in the in-app notification bell.
+          Choose which emails you&apos;d like to receive, and what shows up in
+          the in-app notification bell.
         </p>
         <NotificationSettingsForm settings={notificationSettings} />
       </section>
 
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Privacy</h2>
-        <p className={styles.sectionSubtitle}>Manage what your agency teammates can see about you.</p>
+        <p className={styles.sectionSubtitle}>
+          Manage what your agency teammates can see about you.
+        </p>
         <PrivacySettingsForm settings={privacySettings} />
       </section>
     </div>

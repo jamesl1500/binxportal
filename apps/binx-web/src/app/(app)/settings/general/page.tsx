@@ -4,7 +4,7 @@
  * The agency name (and read-only slug), plus the owner-only danger zone.
  *
  * @module apps/binx-web/src/app/(app)/settings/general/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -24,7 +24,8 @@ const SettingsGeneralPage = async () => {
     redirect("/onboarding/two");
   }
 
-  const canEdit = currentAgency.role === "owner" || currentAgency.role === "admin";
+  const canEdit =
+    currentAgency.role === "owner" || currentAgency.role === "admin";
   const isOwner = currentAgency.role === "owner";
 
   return (
@@ -32,11 +33,17 @@ const SettingsGeneralPage = async () => {
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>General</h2>
         <p className={styles.sectionSubtitle}>
-          {canEdit ? "Your agency's name. The URL slug is fixed." : "Only agency owners and admins can edit these settings."}
+          {canEdit
+            ? "Your agency's name. The URL slug is fixed."
+            : "Only agency owners and admins can edit these settings."}
         </p>
 
         {canEdit ? (
-          <AgencyGeneralForm agencyId={currentAgency.id} name={currentAgency.name} slug={currentAgency.slug} />
+          <AgencyGeneralForm
+            agencyId={currentAgency.id}
+            name={currentAgency.name}
+            slug={currentAgency.slug}
+          />
         ) : (
           <dl className={styles.readonlyList}>
             <div className={styles.readonlyRow}>
@@ -55,9 +62,13 @@ const SettingsGeneralPage = async () => {
         <section className={`${styles.section} ${styles.dangerZone}`}>
           <h2 className={styles.dangerZoneTitle}>Danger zone</h2>
           <p className={styles.sectionSubtitle}>
-            Permanently delete {currentAgency.name} and remove access for everyone in it. This can&apos;t be undone.
+            Permanently delete {currentAgency.name} and remove access for
+            everyone in it. This can&apos;t be undone.
           </p>
-          <DeleteAgencyForm agencyId={currentAgency.id} agencyName={currentAgency.name} />
+          <DeleteAgencyForm
+            agencyId={currentAgency.id}
+            agencyName={currentAgency.name}
+          />
         </section>
       )}
     </div>

@@ -9,7 +9,7 @@
  * `linkBase` pointed at the portal's own detail route).
  *
  * @module apps/binx-web/src/components/proposals/ProposalsTable/ProposalsTable.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -31,20 +31,42 @@ interface ProposalsTableProps {
   linkBase?: string;
 }
 
-type SortKey = "title" | "recipient" | "total_cents" | "display_status" | "created_at";
+type SortKey =
+  | "title"
+  | "recipient"
+  | "total_cents"
+  | "display_status"
+  | "created_at";
 type SortDirection = "asc" | "desc";
 
-const STATUS_ORDER = ["draft", "sent", "viewed", "signed", "declined", "expired"];
+const STATUS_ORDER = [
+  "draft",
+  "sent",
+  "viewed",
+  "signed",
+  "declined",
+  "expired",
+];
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  return new Date(iso).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 function recipientLabel(proposal: Proposal): string {
-  return proposal.client_name ?? proposal.lead_name ?? proposal.recipient_name ?? "—";
+  return (
+    proposal.client_name ?? proposal.lead_name ?? proposal.recipient_name ?? "—"
+  );
 }
 
-const ProposalsTable = ({ proposals, showClient = true, linkBase = "/proposals" }: ProposalsTableProps) => {
+const ProposalsTable = ({
+  proposals,
+  showClient = true,
+  linkBase = "/proposals",
+}: ProposalsTableProps) => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortKey, setSortKey] = useState<SortKey>("created_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -52,14 +74,18 @@ const ProposalsTable = ({ proposals, showClient = true, linkBase = "/proposals" 
   const statusCounts = useMemo(() => {
     const counts = new Map<string, number>();
     for (const proposal of proposals) {
-      counts.set(proposal.display_status, (counts.get(proposal.display_status) ?? 0) + 1);
+      counts.set(
+        proposal.display_status,
+        (counts.get(proposal.display_status) ?? 0) + 1,
+      );
     }
     return counts;
   }, [proposals]);
 
   const visible = useMemo(() => {
     const filtered = proposals.filter(
-      (proposal) => statusFilter === "all" || proposal.display_status === statusFilter,
+      (proposal) =>
+        statusFilter === "all" || proposal.display_status === statusFilter,
     );
     const direction = sortDirection === "asc" ? 1 : -1;
     return [...filtered].sort((a, b) => {
@@ -67,11 +93,15 @@ const ProposalsTable = ({ proposals, showClient = true, linkBase = "/proposals" 
       if (sortKey === "total_cents") {
         compared = a.total_cents - b.total_cents;
       } else if (sortKey === "display_status") {
-        compared = STATUS_ORDER.indexOf(a.display_status) - STATUS_ORDER.indexOf(b.display_status);
+        compared =
+          STATUS_ORDER.indexOf(a.display_status) -
+          STATUS_ORDER.indexOf(b.display_status);
       } else if (sortKey === "created_at") {
         compared = a.created_at.localeCompare(b.created_at);
       } else if (sortKey === "recipient") {
-        compared = recipientLabel(a).toLowerCase().localeCompare(recipientLabel(b).toLowerCase());
+        compared = recipientLabel(a)
+          .toLowerCase()
+          .localeCompare(recipientLabel(b).toLowerCase());
       } else {
         compared = a.title.toLowerCase().localeCompare(b.title.toLowerCase());
       }
@@ -86,14 +116,21 @@ const ProposalsTable = ({ proposals, showClient = true, linkBase = "/proposals" 
       return;
     }
     setSortKey(key);
-    setSortDirection(key === "total_cents" || key === "created_at" ? "desc" : "asc");
+    setSortDirection(
+      key === "total_cents" || key === "created_at" ? "desc" : "asc",
+    );
   };
 
   const ariaSort = (key: SortKey): "ascending" | "descending" | "none" =>
-    key === sortKey ? (sortDirection === "asc" ? "ascending" : "descending") : "none";
+    key === sortKey
+      ? sortDirection === "asc"
+        ? "ascending"
+        : "descending"
+      : "none";
 
   const SortIcon = ({ column }: { column: SortKey }) => {
-    if (column !== sortKey) return <ChevronsUpDown className={styles.sortIcon} aria-hidden="true" />;
+    if (column !== sortKey)
+      return <ChevronsUpDown className={styles.sortIcon} aria-hidden="true" />;
     return sortDirection === "asc" ? (
       <ArrowUp className={styles.sortIcon} aria-hidden="true" />
     ) : (
@@ -103,7 +140,10 @@ const ProposalsTable = ({ proposals, showClient = true, linkBase = "/proposals" 
 
   const columns: [SortKey, string][] = [
     ["title", "Proposal"],
-    ...((showClient ? [["recipient", "Client / lead"]] : []) as [SortKey, string][]),
+    ...((showClient ? [["recipient", "Client / lead"]] : []) as [
+      SortKey,
+      string,
+    ][]),
     ["total_cents", "Total"],
     ["display_status", "Status"],
     ["created_at", "Created"],
@@ -111,10 +151,12 @@ const ProposalsTable = ({ proposals, showClient = true, linkBase = "/proposals" 
 
   const filters = [
     { value: "all", label: `All (${proposals.length})` },
-    ...STATUS_ORDER.filter((status) => statusCounts.has(status)).map((status) => ({
-      value: status,
-      label: `${proposalStatusLabel(status)} (${statusCounts.get(status)})`,
-    })),
+    ...STATUS_ORDER.filter((status) => statusCounts.has(status)).map(
+      (status) => ({
+        value: status,
+        label: `${proposalStatusLabel(status)} (${statusCounts.get(status)})`,
+      }),
+    ),
   ];
 
   if (proposals.length === 0) {
@@ -123,7 +165,11 @@ const ProposalsTable = ({ proposals, showClient = true, linkBase = "/proposals" 
 
   return (
     <div className={styles.wrapper}>
-      <div className={styles.filters} role="group" aria-label="Filter proposals by status">
+      <div
+        className={styles.filters}
+        role="group"
+        aria-label="Filter proposals by status"
+      >
         {filters.map((filter) => (
           <button
             key={filter.value}
@@ -142,8 +188,16 @@ const ProposalsTable = ({ proposals, showClient = true, linkBase = "/proposals" 
           <thead>
             <tr>
               {columns.map(([key, label]) => (
-                <th key={key} className={styles.headCell} aria-sort={ariaSort(key)}>
-                  <button type="button" className={styles.sortButton} onClick={() => toggleSort(key)}>
+                <th
+                  key={key}
+                  className={styles.headCell}
+                  aria-sort={ariaSort(key)}
+                >
+                  <button
+                    type="button"
+                    className={styles.sortButton}
+                    onClick={() => toggleSort(key)}
+                  >
                     {label} <SortIcon column={key} />
                   </button>
                 </th>
@@ -154,27 +208,39 @@ const ProposalsTable = ({ proposals, showClient = true, linkBase = "/proposals" 
             {visible.map((proposal) => (
               <tr key={proposal.id} className={styles.row}>
                 <td className={styles.cell}>
-                  <Link href={`${linkBase}/${proposal.id}`} className={styles.titleLink}>
+                  <Link
+                    href={`${linkBase}/${proposal.id}`}
+                    className={styles.titleLink}
+                  >
                     {proposal.title}
                   </Link>
                 </td>
-                {showClient && <td className={styles.cell}>{recipientLabel(proposal)}</td>}
+                {showClient && (
+                  <td className={styles.cell}>{recipientLabel(proposal)}</td>
+                )}
                 <td className={`${styles.cell} ${styles.amount}`}>
                   {formatMoneyCents(proposal.total_cents, proposal.currency)}
                 </td>
                 <td className={styles.cell}>
-                  <span className={styles.status} data-status={proposal.display_status}>
+                  <span
+                    className={styles.status}
+                    data-status={proposal.display_status}
+                  >
                     {proposalStatusLabel(proposal.display_status)}
                   </span>
                 </td>
-                <td className={`${styles.cell} ${styles.nowrap}`}>{formatDate(proposal.created_at)}</td>
+                <td className={`${styles.cell} ${styles.nowrap}`}>
+                  {formatDate(proposal.created_at)}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      {visible.length === 0 && <p className={styles.empty}>No proposals with this status.</p>}
+      {visible.length === 0 && (
+        <p className={styles.empty}>No proposals with this status.</p>
+      )}
     </div>
   );
 };

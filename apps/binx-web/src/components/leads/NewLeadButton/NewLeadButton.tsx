@@ -7,7 +7,7 @@
  * same pattern as `invoices/NewInvoiceButton`.
  *
  * @module apps/binx-web/src/components/leads/NewLeadButton/NewLeadButton.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 

@@ -5,7 +5,7 @@
  * the signup nudge for people who are really just ready to start.
  *
  * @module apps/binx-web/src/app/(marketing)/contact/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -28,7 +28,12 @@ export const metadata: Metadata = {
 const ContactPage = () => {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd(TITLE, "/contact")) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbJsonLd(TITLE, "/contact")),
+        }}
+      />
 
       <section className={styles.hero}>
         <div className={styles.heroGlow} aria-hidden="true" />
@@ -37,8 +42,9 @@ const ContactPage = () => {
             <span className={styles.eyebrow}>Contact</span>
             <h1 className={styles.h1}>Talk to a human.</h1>
             <p className={styles.lead}>
-              Questions about whether {SITE.name} fits your agency, feedback on something rough, or a hand moving your
-              data over — we read everything.
+              Questions about whether {SITE.name} fits your agency, feedback on
+              something rough, or a hand moving your data over — we read
+              everything.
             </p>
           </div>
         </div>
@@ -56,18 +62,24 @@ const ContactPage = () => {
               </div>
               <div className={styles.contactRow}>
                 <span className={styles.contactLabel}>Response time</span>
-                <span className={styles.contactValue}>Usually within one business day.</span>
+                <span className={styles.contactValue}>
+                  Usually within one business day.
+                </span>
               </div>
               <div className={styles.contactRow}>
-                <span className={styles.contactLabel}>Sales &amp; migration</span>
+                <span className={styles.contactLabel}>
+                  Sales &amp; migration
+                </span>
                 <span className={styles.contactValue}>
-                  Moving from another tool? Say so and we&apos;ll help map it across.
+                  Moving from another tool? Say so and we&apos;ll help map it
+                  across.
                 </span>
               </div>
               <div className={styles.contactRow}>
                 <span className={styles.contactLabel}>Already a customer?</span>
                 <span className={styles.contactValue}>
-                  Use the in-app assistant or reply to any {SITE.name} email for the fastest route.
+                  Use the in-app assistant or reply to any {SITE.name} email for
+                  the fastest route.
                 </span>
               </div>
             </div>
@@ -75,7 +87,8 @@ const ContactPage = () => {
             <div>
               <h2 className={styles.h3}>Ready to just try it?</h2>
               <p className={styles.cardText}>
-                The free plan needs no card and takes a few minutes to set up. You can always email us after.
+                The free plan needs no card and takes a few minutes to set up.
+                You can always email us after.
               </p>
               <div className={styles.btnRow} style={{ marginTop: "1.25rem" }}>
                 <Link href="/auth/signup" className={styles.btnPrimary}>

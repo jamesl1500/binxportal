@@ -10,7 +10,7 @@
  * before that.
  *
  * @module apps/binx-web/src/app/(marketing)/terms/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";

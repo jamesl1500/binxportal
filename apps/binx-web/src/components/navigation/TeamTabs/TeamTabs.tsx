@@ -8,7 +8,7 @@
  * redirects non-admins, so this is presentation only.
  *
  * @module apps/binx-web/src/components/navigation/TeamTabs/TeamTabs.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -43,7 +43,11 @@ const TeamTabs = ({ canManage }: TeamTabsProps) => {
           className={styles.tab}
           // Sub-pages (e.g. /team/invitations/import) keep their tab lit;
           // "/team" itself only matches exactly, since every path starts with it.
-          data-active={tab.href === "/team" ? pathname === tab.href : pathname.startsWith(tab.href)}
+          data-active={
+            tab.href === "/team"
+              ? pathname === tab.href
+              : pathname.startsWith(tab.href)
+          }
         >
           {tab.label}
         </Link>

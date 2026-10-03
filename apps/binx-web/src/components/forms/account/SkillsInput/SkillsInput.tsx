@@ -6,7 +6,7 @@
  * the parent (QualificationsForm) owns the `skills` list.
  *
  * @module apps/binx-web/src/components/forms/account/SkillsInput/SkillsInput.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -24,7 +24,11 @@ interface SkillsInputProps {
 const MAX_SKILLS = 40;
 const MAX_SKILL_LENGTH = 50;
 
-const SkillsInput = ({ value, onChange, max = MAX_SKILLS }: SkillsInputProps) => {
+const SkillsInput = ({
+  value,
+  onChange,
+  max = MAX_SKILLS,
+}: SkillsInputProps) => {
   const [draft, setDraft] = useState("");
 
   const addSkill = () => {
@@ -70,7 +74,11 @@ const SkillsInput = ({ value, onChange, max = MAX_SKILLS }: SkillsInputProps) =>
           type="text"
           className={styles.input}
           aria-label="Add a skill"
-          placeholder={value.length === 0 ? "e.g. Python, Figma, project management" : "Add another…"}
+          placeholder={
+            value.length === 0
+              ? "e.g. Python, Figma, project management"
+              : "Add another…"
+          }
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           onKeyDown={handleKeyDown}

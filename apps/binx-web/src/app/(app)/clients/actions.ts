@@ -7,7 +7,7 @@
  * `lib/clients.ts` rather than going through an internal `/api/*` proxy route.
  *
  * @module apps/binx-web/src/app/(app)/clients/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 
@@ -95,7 +95,10 @@ export interface DeleteClientActionResult {
   error?: string;
 }
 
-export async function deleteClientAction(agencyId: string, clientId: string): Promise<DeleteClientActionResult> {
+export async function deleteClientAction(
+  agencyId: string,
+  clientId: string,
+): Promise<DeleteClientActionResult> {
   try {
     await deleteAgencyClient(agencyId, clientId);
   } catch (error) {
@@ -115,14 +118,20 @@ export interface ClientBrandingActionResult {
   branding?: ClientBranding;
 }
 
-function brandingError(error: unknown, fallback: string): ClientBrandingActionResult {
+function brandingError(
+  error: unknown,
+  fallback: string,
+): ClientBrandingActionResult {
   if (error instanceof AuthApiError) {
     return { error: error.message };
   }
   return { error: fallback };
 }
 
-export async function getClientBrandingAction(agencyId: string, clientId: string): Promise<ClientBrandingActionResult> {
+export async function getClientBrandingAction(
+  agencyId: string,
+  clientId: string,
+): Promise<ClientBrandingActionResult> {
   try {
     return { branding: await getClientBranding(agencyId, clientId) };
   } catch (error) {
@@ -158,7 +167,10 @@ export async function uploadClientLogoAction(
   }
 }
 
-export async function removeClientLogoAction(agencyId: string, clientId: string): Promise<ClientBrandingActionResult> {
+export async function removeClientLogoAction(
+  agencyId: string,
+  clientId: string,
+): Promise<ClientBrandingActionResult> {
   try {
     return { branding: await removeClientLogo(agencyId, clientId) };
   } catch (error) {

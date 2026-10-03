@@ -6,13 +6,17 @@
  * `lib/portal.ts`. binx-api broadcasts every change, so no `router.refresh()`.
  *
  * @module apps/binx-web/src/app/(portal)/portal/projects/[projectId]/canvas/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 
 import { AuthApiError } from "@/lib/auth";
 import type { BoardReactions, CreateBoardItemInput } from "@/lib/boards";
-import type { BoardComment, BoardItem, BoardItemPatch } from "@/lib/boards-client";
+import type {
+  BoardComment,
+  BoardItem,
+  BoardItemPatch,
+} from "@/lib/boards-client";
 import {
   addPortalBoardComment,
   createPortalBoardItem,
@@ -152,7 +156,9 @@ export async function decideApprovalAction(
   note?: string,
 ): Promise<{ item?: BoardItem; error?: string }> {
   try {
-    return { item: await decidePortalBoardApproval(projectId, itemId, decision, note) };
+    return {
+      item: await decidePortalBoardApproval(projectId, itemId, decision, note),
+    };
   } catch (error) {
     return fail(error, "Unable to record your decision");
   }

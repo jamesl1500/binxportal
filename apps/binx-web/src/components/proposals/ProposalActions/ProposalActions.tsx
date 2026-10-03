@@ -7,7 +7,7 @@
  * share-token URL instead. Delete and Send go through a confirm dialog.
  *
  * @module apps/binx-web/src/components/proposals/ProposalActions/ProposalActions.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -19,7 +19,10 @@ import { Copy } from "lucide-react";
 import { toast } from "sonner";
 
 import type { ProposalDetail } from "@/lib/proposals";
-import { deleteProposalAction, sendProposalAction } from "@/app/(app)/proposals/actions";
+import {
+  deleteProposalAction,
+  sendProposalAction,
+} from "@/app/(app)/proposals/actions";
 
 import styles from "./ProposalActions.module.scss";
 
@@ -50,7 +53,9 @@ const ProposalActions = ({ agencyId, proposal }: ProposalActionsProps) => {
   const [isPending, startTransition] = useTransition();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [sendOpen, setSendOpen] = useState(false);
-  const [recipientEmail, setRecipientEmail] = useState(proposal.recipient_email ?? "");
+  const [recipientEmail, setRecipientEmail] = useState(
+    proposal.recipient_email ?? "",
+  );
 
   const isDraft = proposal.status === "draft";
 
@@ -67,14 +72,20 @@ const ProposalActions = ({ agencyId, proposal }: ProposalActionsProps) => {
 
   const handleCopyLink = async () => {
     const ok = await copyToClipboard(proposal.share_url);
-    toast[ok ? "success" : "error"](ok ? "Share link copied" : "Couldn't copy the link");
+    toast[ok ? "success" : "error"](
+      ok ? "Share link copied" : "Couldn't copy the link",
+    );
   };
 
   return (
     <div className={styles.bar}>
       <div className={styles.left}>
         {!isDraft && (
-          <button type="button" className={styles.ghost} onClick={handleCopyLink}>
+          <button
+            type="button"
+            className={styles.ghost}
+            onClick={handleCopyLink}
+          >
             <Copy aria-hidden="true" /> Copy share link
           </button>
         )}
@@ -82,7 +93,10 @@ const ProposalActions = ({ agencyId, proposal }: ProposalActionsProps) => {
 
       <div className={styles.right}>
         {isDraft && (
-          <Link href={`/proposals/${proposal.id}/edit`} className={styles.ghost}>
+          <Link
+            href={`/proposals/${proposal.id}/edit`}
+            className={styles.ghost}
+          >
             Edit
           </Link>
         )}
@@ -97,33 +111,51 @@ const ProposalActions = ({ agencyId, proposal }: ProposalActionsProps) => {
           </button>
         )}
         {isDraft && (
-          <button type="button" className={styles.primary} onClick={() => setSendOpen(true)}>
+          <button
+            type="button"
+            className={styles.primary}
+            onClick={() => setSendOpen(true)}
+          >
             Send proposal
           </button>
         )}
 
         {!isDraft && STATUS_HINTS[proposal.display_status] && (
-          <span className={styles.hint}>{STATUS_HINTS[proposal.display_status]}</span>
+          <span className={styles.hint}>
+            {STATUS_HINTS[proposal.display_status]}
+          </span>
         )}
       </div>
 
       <Dialog.Root open={deleteOpen} onOpenChange={setDeleteOpen}>
         <Dialog.Portal>
           <Dialog.Backdrop className={styles.backdrop} />
-          <Dialog.Popup className={styles.dialog} aria-label="Delete this proposal">
-            <Dialog.Title className={styles.dialogTitle}>Delete {proposal.title}?</Dialog.Title>
+          <Dialog.Popup
+            className={styles.dialog}
+            aria-label="Delete this proposal"
+          >
+            <Dialog.Title className={styles.dialogTitle}>
+              Delete {proposal.title}?
+            </Dialog.Title>
             <Dialog.Description className={styles.dialogDescription}>
-              This can&apos;t be undone. The draft and its line items will be gone for good.
+              This can&apos;t be undone. The draft and its line items will be
+              gone for good.
             </Dialog.Description>
             <div className={styles.dialogActions}>
-              <button type="button" className={styles.ghost} onClick={() => setDeleteOpen(false)}>
+              <button
+                type="button"
+                className={styles.ghost}
+                onClick={() => setDeleteOpen(false)}
+              >
                 Cancel
               </button>
               <button
                 type="button"
                 className={styles.dangerSolid}
                 disabled={isPending}
-                onClick={() => run(() => deleteProposalAction(agencyId, proposal.id))}
+                onClick={() =>
+                  run(() => deleteProposalAction(agencyId, proposal.id))
+                }
               >
                 Delete proposal
               </button>
@@ -135,10 +167,16 @@ const ProposalActions = ({ agencyId, proposal }: ProposalActionsProps) => {
       <Dialog.Root open={sendOpen} onOpenChange={setSendOpen}>
         <Dialog.Portal>
           <Dialog.Backdrop className={styles.backdrop} />
-          <Dialog.Popup className={styles.dialog} aria-label="Send this proposal">
-            <Dialog.Title className={styles.dialogTitle}>Send {proposal.title}?</Dialog.Title>
+          <Dialog.Popup
+            className={styles.dialog}
+            aria-label="Send this proposal"
+          >
+            <Dialog.Title className={styles.dialogTitle}>
+              Send {proposal.title}?
+            </Dialog.Title>
             <Dialog.Description className={styles.dialogDescription}>
-              Once sent, the proposal can&apos;t be edited — the recipient signs or declines it from a share link.
+              Once sent, the proposal can&apos;t be edited — the recipient signs
+              or declines it from a share link.
             </Dialog.Description>
             <label className={styles.field}>
               <span className={styles.fieldLabel}>Recipient email</span>
@@ -152,7 +190,11 @@ const ProposalActions = ({ agencyId, proposal }: ProposalActionsProps) => {
               />
             </label>
             <div className={styles.dialogActions}>
-              <button type="button" className={styles.ghost} onClick={() => setSendOpen(false)}>
+              <button
+                type="button"
+                className={styles.ghost}
+                onClick={() => setSendOpen(false)}
+              >
                 Cancel
               </button>
               <button
@@ -161,7 +203,11 @@ const ProposalActions = ({ agencyId, proposal }: ProposalActionsProps) => {
                 disabled={isPending || recipientEmail.trim() === ""}
                 onClick={() =>
                   run(async () => {
-                    const result = await sendProposalAction(agencyId, proposal.id, recipientEmail.trim());
+                    const result = await sendProposalAction(
+                      agencyId,
+                      proposal.id,
+                      recipientEmail.trim(),
+                    );
                     if (!result.error) setSendOpen(false);
                     return result;
                   })

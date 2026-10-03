@@ -8,7 +8,7 @@
  * void).
  *
  * @module apps/binx-web/src/components/invoices/InvoiceTable/InvoiceTable.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -27,7 +27,13 @@ interface InvoiceTableProps {
   showClient?: boolean;
 }
 
-type SortKey = "number" | "client_name" | "issue_date" | "due_date" | "total_cents" | "display_status";
+type SortKey =
+  | "number"
+  | "client_name"
+  | "issue_date"
+  | "due_date"
+  | "total_cents"
+  | "display_status";
 type SortDirection = "asc" | "desc";
 
 const STATUS_ORDER = ["draft", "sent", "overdue", "partial", "paid", "void"];
@@ -48,14 +54,18 @@ const InvoiceTable = ({ invoices, showClient = true }: InvoiceTableProps) => {
   const statusCounts = useMemo(() => {
     const counts = new Map<string, number>();
     for (const invoice of invoices) {
-      counts.set(invoice.display_status, (counts.get(invoice.display_status) ?? 0) + 1);
+      counts.set(
+        invoice.display_status,
+        (counts.get(invoice.display_status) ?? 0) + 1,
+      );
     }
     return counts;
   }, [invoices]);
 
   const visible = useMemo(() => {
     const filtered = invoices.filter(
-      (invoice) => statusFilter === "all" || invoice.display_status === statusFilter,
+      (invoice) =>
+        statusFilter === "all" || invoice.display_status === statusFilter,
     );
     const direction = sortDirection === "asc" ? 1 : -1;
     return [...filtered].sort((a, b) => {
@@ -63,11 +73,15 @@ const InvoiceTable = ({ invoices, showClient = true }: InvoiceTableProps) => {
       if (sortKey === "total_cents") {
         compared = a.total_cents - b.total_cents;
       } else if (sortKey === "display_status") {
-        compared = STATUS_ORDER.indexOf(a.display_status) - STATUS_ORDER.indexOf(b.display_status);
+        compared =
+          STATUS_ORDER.indexOf(a.display_status) -
+          STATUS_ORDER.indexOf(b.display_status);
       } else if (sortKey === "issue_date" || sortKey === "due_date") {
         compared = a[sortKey].localeCompare(b[sortKey]);
       } else {
-        compared = a[sortKey].toLowerCase().localeCompare(b[sortKey].toLowerCase());
+        compared = a[sortKey]
+          .toLowerCase()
+          .localeCompare(b[sortKey].toLowerCase());
       }
       if (compared !== 0) return compared * direction;
       return b.issue_date.localeCompare(a.issue_date);
@@ -80,14 +94,23 @@ const InvoiceTable = ({ invoices, showClient = true }: InvoiceTableProps) => {
       return;
     }
     setSortKey(key);
-    setSortDirection(key === "total_cents" || key === "issue_date" || key === "due_date" ? "desc" : "asc");
+    setSortDirection(
+      key === "total_cents" || key === "issue_date" || key === "due_date"
+        ? "desc"
+        : "asc",
+    );
   };
 
   const ariaSort = (key: SortKey): "ascending" | "descending" | "none" =>
-    key === sortKey ? (sortDirection === "asc" ? "ascending" : "descending") : "none";
+    key === sortKey
+      ? sortDirection === "asc"
+        ? "ascending"
+        : "descending"
+      : "none";
 
   const SortIcon = ({ column }: { column: SortKey }) => {
-    if (column !== sortKey) return <ChevronsUpDown className={styles.sortIcon} aria-hidden="true" />;
+    if (column !== sortKey)
+      return <ChevronsUpDown className={styles.sortIcon} aria-hidden="true" />;
     return sortDirection === "asc" ? (
       <ArrowUp className={styles.sortIcon} aria-hidden="true" />
     ) : (
@@ -106,10 +129,12 @@ const InvoiceTable = ({ invoices, showClient = true }: InvoiceTableProps) => {
 
   const filters = [
     { value: "all", label: `All (${invoices.length})` },
-    ...STATUS_ORDER.filter((status) => statusCounts.has(status)).map((status) => ({
-      value: status,
-      label: `${invoiceStatusLabel(status)} (${statusCounts.get(status)})`,
-    })),
+    ...STATUS_ORDER.filter((status) => statusCounts.has(status)).map(
+      (status) => ({
+        value: status,
+        label: `${invoiceStatusLabel(status)} (${statusCounts.get(status)})`,
+      }),
+    ),
   ];
 
   if (invoices.length === 0) {
@@ -118,7 +143,11 @@ const InvoiceTable = ({ invoices, showClient = true }: InvoiceTableProps) => {
 
   return (
     <div className={styles.wrapper}>
-      <div className={styles.filters} role="group" aria-label="Filter invoices by status">
+      <div
+        className={styles.filters}
+        role="group"
+        aria-label="Filter invoices by status"
+      >
         {filters.map((filter) => (
           <button
             key={filter.value}
@@ -137,8 +166,16 @@ const InvoiceTable = ({ invoices, showClient = true }: InvoiceTableProps) => {
           <thead>
             <tr>
               {columns.map(([key, label]) => (
-                <th key={key} className={styles.headCell} aria-sort={ariaSort(key)}>
-                  <button type="button" className={styles.sortButton} onClick={() => toggleSort(key)}>
+                <th
+                  key={key}
+                  className={styles.headCell}
+                  aria-sort={ariaSort(key)}
+                >
+                  <button
+                    type="button"
+                    className={styles.sortButton}
+                    onClick={() => toggleSort(key)}
+                  >
                     {label} <SortIcon column={key} />
                   </button>
                 </th>
@@ -150,23 +187,36 @@ const InvoiceTable = ({ invoices, showClient = true }: InvoiceTableProps) => {
             {visible.map((invoice) => (
               <tr key={invoice.id} className={styles.row}>
                 <td className={styles.cell}>
-                  <Link href={`/invoices/${invoice.id}`} className={styles.number}>
+                  <Link
+                    href={`/invoices/${invoice.id}`}
+                    className={styles.number}
+                  >
                     {invoice.number}
                   </Link>
                 </td>
-                {showClient && <td className={styles.cell}>{invoice.client_name}</td>}
-                <td className={`${styles.cell} ${styles.nowrap}`}>{formatDate(invoice.issue_date)}</td>
-                <td className={`${styles.cell} ${styles.nowrap}`}>{formatDate(invoice.due_date)}</td>
+                {showClient && (
+                  <td className={styles.cell}>{invoice.client_name}</td>
+                )}
+                <td className={`${styles.cell} ${styles.nowrap}`}>
+                  {formatDate(invoice.issue_date)}
+                </td>
+                <td className={`${styles.cell} ${styles.nowrap}`}>
+                  {formatDate(invoice.due_date)}
+                </td>
                 <td className={`${styles.cell} ${styles.amount}`}>
                   {formatMoneyCents(invoice.total_cents, invoice.currency)}
                 </td>
                 <td className={styles.cell}>
-                  <span className={styles.status} data-status={invoice.display_status}>
+                  <span
+                    className={styles.status}
+                    data-status={invoice.display_status}
+                  >
                     {invoiceStatusLabel(invoice.display_status)}
                   </span>
                 </td>
                 <td className={`${styles.cell} ${styles.due}`}>
-                  {invoice.amount_due_cents > 0 && invoice.display_status !== "draft"
+                  {invoice.amount_due_cents > 0 &&
+                  invoice.display_status !== "draft"
                     ? `${formatMoneyCents(invoice.amount_due_cents, invoice.currency)} due`
                     : ""}
                 </td>
@@ -176,7 +226,9 @@ const InvoiceTable = ({ invoices, showClient = true }: InvoiceTableProps) => {
         </table>
       </div>
 
-      {visible.length === 0 && <p className={styles.empty}>No invoices with this status.</p>}
+      {visible.length === 0 && (
+        <p className={styles.empty}>No invoices with this status.</p>
+      )}
     </div>
   );
 };

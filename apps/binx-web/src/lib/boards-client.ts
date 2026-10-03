@@ -7,7 +7,7 @@
  * Sibling to `lib/messaging-client.ts`.
  *
  * @module apps/binx-web/src/lib/boards-client.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 
 import type { Schemas } from "@/lib/api-types";
@@ -22,7 +22,10 @@ export interface ImageContent {
   file_id: string;
   file_name?: string;
 }
-export type BoardItemContent = NoteContent | ImageContent | Record<string, never>;
+export type BoardItemContent =
+  | NoteContent
+  | ImageContent
+  | Record<string, never>;
 
 /** Keep in sync with binx-api's boards/models.py BOARD_APPROVAL_STATUSES. */
 export type BoardApprovalStatus = "pending" | "approved" | "changes_requested";
@@ -64,7 +67,9 @@ export const REACTION_EMOJI: string[] = ["👍", "❤️", "🎉", "👀", "🚀
 // `BoardItem` (above) stays hand-written — the canvas store depends on
 // `content` being the discriminated union and on `reactions` always being
 // present, both of which the generated `BoardItemRead` widens.
-export type Board = Omit<Schemas["BoardRead"], "items"> & { items: BoardItem[] };
+export type Board = Omit<Schemas["BoardRead"], "items"> & {
+  items: BoardItem[];
+};
 
 /** A patch the canvas sends on drag / resize / edit — every field optional. */
 export interface BoardItemPatch {
@@ -86,10 +91,20 @@ export type BoardEvent =
   | {
       type: "board.item.reaction";
       board_id: string;
-      data: { item_id: string; user_id: string; kind: string; added: boolean; reactions: Record<string, number> };
+      data: {
+        item_id: string;
+        user_id: string;
+        kind: string;
+        added: boolean;
+        reactions: Record<string, number>;
+      };
     }
   | { type: "board.comment.created"; board_id: string; data: BoardComment }
-  | { type: "board.comment.deleted"; board_id: string; data: { id: string; item_id: string } };
+  | {
+      type: "board.comment.deleted";
+      board_id: string;
+      data: { id: string; item_id: string };
+    };
 
 export const BOARD_EVENT_TYPES = new Set([
   "board.item.created",
@@ -138,9 +153,13 @@ export function screenToCanvas(
 }
 
 export function noteText(item: BoardItem): string {
-  return item.type === "note" ? String((item.content as NoteContent).text ?? "") : "";
+  return item.type === "note"
+    ? String((item.content as NoteContent).text ?? "")
+    : "";
 }
 
 export function imageFileId(item: BoardItem): string | null {
-  return item.type === "image" ? ((item.content as ImageContent).file_id ?? null) : null;
+  return item.type === "image"
+    ? ((item.content as ImageContent).file_id ?? null)
+    : null;
 }

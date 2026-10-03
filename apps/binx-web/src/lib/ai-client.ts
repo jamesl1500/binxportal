@@ -7,7 +7,7 @@
  * for the sibling pattern).
  *
  * @module apps/binx-web/src/lib/ai-client.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 
 export type AiFeature =

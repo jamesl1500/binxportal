@@ -6,7 +6,7 @@
  * whole set through `updateAgencyProfileAction`.
  *
  * @module apps/binx-web/src/components/forms/agency/AgencyPoliciesForm/AgencyPoliciesForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -34,7 +34,9 @@ const AgencyPoliciesForm = ({ agencyId, profile }: AgencyPoliciesFormProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [values, setValues] = useState<Record<string, string>>(() =>
-    Object.fromEntries(BLOCKS.map((block) => [block.key, profile[block.key] ?? ""])),
+    Object.fromEntries(
+      BLOCKS.map((block) => [block.key, profile[block.key] ?? ""]),
+    ),
   );
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -46,7 +48,9 @@ const AgencyPoliciesForm = ({ agencyId, profile }: AgencyPoliciesFormProps) => {
     startTransition(async () => {
       const result = await updateAgencyProfileAction(
         agencyId,
-        Object.fromEntries(BLOCKS.map((block) => [block.key, values[block.key].trim() || null])),
+        Object.fromEntries(
+          BLOCKS.map((block) => [block.key, values[block.key].trim() || null]),
+        ),
       );
       if (result.error) {
         setError(result.error);
@@ -70,7 +74,12 @@ const AgencyPoliciesForm = ({ agencyId, profile }: AgencyPoliciesFormProps) => {
             rows={6}
             maxLength={16384}
             value={values[block.key]}
-            onChange={(event) => setValues((prev) => ({ ...prev, [block.key]: event.target.value }))}
+            onChange={(event) =>
+              setValues((prev) => ({
+                ...prev,
+                [block.key]: event.target.value,
+              }))
+            }
           />
         </div>
       ))}

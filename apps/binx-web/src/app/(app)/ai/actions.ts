@@ -8,7 +8,7 @@
  * header's bell dropdown without a page of its own.
  *
  * @module apps/binx-web/src/app/(app)/ai/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 
@@ -40,7 +40,9 @@ export interface AiConversationsActionResult {
   conversations?: AiConversation[];
 }
 
-export async function listAiConversationsAction(agencyId: string): Promise<AiConversationsActionResult> {
+export async function listAiConversationsAction(
+  agencyId: string,
+): Promise<AiConversationsActionResult> {
   try {
     return { conversations: await listAiConversations(agencyId) };
   } catch (error) {
@@ -53,7 +55,9 @@ export interface AiConversationActionResult {
   conversation?: AiConversation;
 }
 
-export async function createAiConversationAction(agencyId: string): Promise<AiConversationActionResult> {
+export async function createAiConversationAction(
+  agencyId: string,
+): Promise<AiConversationActionResult> {
   try {
     return { conversation: await createAiConversation(agencyId) };
   } catch (error) {
@@ -71,7 +75,9 @@ export async function getAiConversationMessagesAction(
   conversationId: string,
 ): Promise<AiMessagesActionResult> {
   try {
-    return { messages: await getAiConversationMessages(agencyId, conversationId) };
+    return {
+      messages: await getAiConversationMessages(agencyId, conversationId),
+    };
   } catch (error) {
     return errorResult(error, "Unable to load this conversation");
   }
@@ -94,7 +100,10 @@ export async function sendAiMessageAction(
   }
 }
 
-export async function deleteAiConversationAction(agencyId: string, conversationId: string): Promise<{ error?: string }> {
+export async function deleteAiConversationAction(
+  agencyId: string,
+  conversationId: string,
+): Promise<{ error?: string }> {
   try {
     await deleteAiConversation(agencyId, conversationId);
   } catch (error) {
@@ -108,7 +117,9 @@ export interface AiPreferencesActionResult {
   preferences?: AiPreferences;
 }
 
-export async function getAiPreferencesAction(agencyId: string): Promise<AiPreferencesActionResult> {
+export async function getAiPreferencesAction(
+  agencyId: string,
+): Promise<AiPreferencesActionResult> {
   try {
     return { preferences: await getAiPreferences(agencyId) };
   } catch (error) {
@@ -139,8 +150,20 @@ export async function resolveAiActionAction(
   decision: "approve" | "decline",
 ): Promise<AiActionResult> {
   try {
-    return { action: await resolveAiAction(agencyId, conversationId, actionId, decision) };
+    return {
+      action: await resolveAiAction(
+        agencyId,
+        conversationId,
+        actionId,
+        decision,
+      ),
+    };
   } catch (error) {
-    return errorResult(error, decision === "approve" ? "Unable to make that change" : "Unable to decline that change");
+    return errorResult(
+      error,
+      decision === "approve"
+        ? "Unable to make that change"
+        : "Unable to decline that change",
+    );
   }
 }

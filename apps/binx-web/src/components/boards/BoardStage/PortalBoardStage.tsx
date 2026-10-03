@@ -6,7 +6,7 @@
  * proxy route. Portal contacts can't moderate — `canModerate` is always false.
  *
  * @module apps/binx-web/src/components/boards/BoardStage/PortalBoardStage.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -23,7 +23,9 @@ import {
   uploadPortalBoardImageAction,
 } from "@/app/(portal)/portal/projects/[projectId]/canvas/actions";
 import type { BoardItem } from "@/lib/boards-client";
-import BoardCanvas, { type BoardCanvasActions } from "@/components/boards/BoardCanvas/BoardCanvas";
+import BoardCanvas, {
+  type BoardCanvasActions,
+} from "@/components/boards/BoardCanvas/BoardCanvas";
 import BoardProvider from "@/components/boards/BoardProvider/BoardProvider";
 
 interface PortalBoardStageProps {
@@ -33,7 +35,12 @@ interface PortalBoardStageProps {
   initialItems: BoardItem[];
 }
 
-const PortalBoardStage = ({ projectId, boardId, currentUserId, initialItems }: PortalBoardStageProps) => {
+const PortalBoardStage = ({
+  projectId,
+  boardId,
+  currentUserId,
+  initialItems,
+}: PortalBoardStageProps) => {
   const actions: BoardCanvasActions = {
     create: (input) => createPortalBoardItemAction(projectId, input),
     update: (id, patch) => updatePortalBoardItemAction(projectId, id, patch),
@@ -47,11 +54,14 @@ const PortalBoardStage = ({ projectId, boardId, currentUserId, initialItems }: P
       if (placement.height) form.append("height", String(placement.height));
       return uploadPortalBoardImageAction(projectId, form);
     },
-    toggleReaction: (id, kind) => togglePortalReactionAction(projectId, id, kind),
+    toggleReaction: (id, kind) =>
+      togglePortalReactionAction(projectId, id, kind),
     listComments: (id) => listPortalCommentsAction(projectId, id),
     addComment: (id, body) => addPortalCommentAction(projectId, id, body),
-    deleteComment: (id, commentId) => deletePortalCommentAction(projectId, id, commentId),
-    decideApproval: (id, decision, note) => decideApprovalAction(projectId, id, decision, note),
+    deleteComment: (id, commentId) =>
+      deletePortalCommentAction(projectId, id, commentId),
+    decideApproval: (id, decision, note) =>
+      decideApprovalAction(projectId, id, decision, note),
   };
 
   return (
@@ -59,11 +69,15 @@ const PortalBoardStage = ({ projectId, boardId, currentUserId, initialItems }: P
       boardId={boardId}
       currentUserId={currentUserId}
       initialItems={initialItems}
-      resync={async () => (await resyncPortalBoardAction(projectId)).items ?? null}
+      resync={async () =>
+        (await resyncPortalBoardAction(projectId)).items ?? null
+      }
     >
       <BoardCanvas
         actions={actions}
-        imageUrl={(fileId) => `/api/portal/projects/${projectId}/board-images/${fileId}`}
+        imageUrl={(fileId) =>
+          `/api/portal/projects/${projectId}/board-images/${fileId}`
+        }
         currentUserId={currentUserId}
         canModerate={false}
         viewerKind="client"

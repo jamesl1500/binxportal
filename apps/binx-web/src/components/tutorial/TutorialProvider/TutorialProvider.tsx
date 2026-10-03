@@ -15,11 +15,18 @@
  * means the hint reappears next load, an acceptably low-stakes failure mode.
  *
  * @module apps/binx-web/src/components/tutorial/TutorialProvider/TutorialProvider.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import { updateTutorialProgressAction } from "@/app/(app)/actions";
 import type { TutorialProgress } from "@/lib/users";
@@ -46,12 +53,17 @@ interface TutorialProviderProps {
   children: React.ReactNode;
 }
 
-const TutorialProvider = ({ initialProgress, children }: TutorialProviderProps) => {
+const TutorialProvider = ({
+  initialProgress,
+  children,
+}: TutorialProviderProps) => {
   // Auto-opens on the first render for anyone who hasn't finished the tour
   // yet — safe as a plain initial value (not an effect) since it's seeded
   // server-side and matches the very first client render exactly, same as
   // the rest of this provider's state.
-  const [isTourOpen, setIsTourOpen] = useState(() => !initialProgress.tour_completed);
+  const [isTourOpen, setIsTourOpen] = useState(
+    () => !initialProgress.tour_completed,
+  );
   const [state, setState] = useState<TutorialState>({
     tourCompleted: initialProgress.tour_completed,
     dismissedPopups: initialProgress.dismissed_popups,
@@ -75,16 +87,23 @@ const TutorialProvider = ({ initialProgress, children }: TutorialProviderProps) 
   const closeTour = useCallback(() => setIsTourOpen(false), []);
 
   const markTourComplete = useCallback(() => {
-    setState((prev) => (prev.tourCompleted ? prev : { ...prev, tourCompleted: true }));
+    setState((prev) =>
+      prev.tourCompleted ? prev : { ...prev, tourCompleted: true },
+    );
   }, []);
 
   const dismissPopup = useCallback((id: string) => {
     setState((prev) =>
-      prev.dismissedPopups.includes(id) ? prev : { ...prev, dismissedPopups: [...prev.dismissedPopups, id] },
+      prev.dismissedPopups.includes(id)
+        ? prev
+        : { ...prev, dismissedPopups: [...prev.dismissedPopups, id] },
     );
   }, []);
 
-  const isPopupDismissed = useCallback((id: string) => state.dismissedPopups.includes(id), [state.dismissedPopups]);
+  const isPopupDismissed = useCallback(
+    (id: string) => state.dismissedPopups.includes(id),
+    [state.dismissedPopups],
+  );
 
   const value: TutorialContextValue = {
     isTourOpen,
@@ -96,7 +115,11 @@ const TutorialProvider = ({ initialProgress, children }: TutorialProviderProps) 
     dismissPopup,
   };
 
-  return <TutorialContext.Provider value={value}>{children}</TutorialContext.Provider>;
+  return (
+    <TutorialContext.Provider value={value}>
+      {children}
+    </TutorialContext.Provider>
+  );
 };
 
 export function useTutorial(): TutorialContextValue {

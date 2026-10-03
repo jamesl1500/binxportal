@@ -8,7 +8,7 @@
  * unit-testable without mocking the API.
  *
  * @module apps/binx-web/src/lib/portal-insights.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 import { formatMoneyCents } from "@/lib/money";
 import type {
@@ -171,7 +171,12 @@ export function initials(fullName: string): string {
 
 // ---- Needs your attention ----
 
-export type AttentionKind = "kickoff" | "proposal" | "invoice" | "message" | "meeting";
+export type AttentionKind =
+  | "kickoff"
+  | "proposal"
+  | "invoice"
+  | "message"
+  | "meeting";
 export type AttentionTone = "danger" | "warn" | "info";
 
 export interface AttentionItem {
@@ -308,7 +313,9 @@ export function buildAttentionItems({
 /** sessionStorage key for the kickoff invitation's Remind-me-later snooze. */
 export const KICKOFF_INVITE_STORAGE_KEY = "binx:portal-kickoff-invite";
 
-export function kickoffHref(kickoff: Pick<PortalPendingKickoff, "project_id">): string {
+export function kickoffHref(
+  kickoff: Pick<PortalPendingKickoff, "project_id">,
+): string {
   return `/portal/projects/${kickoff.project_id}/kickoff`;
 }
 
@@ -318,7 +325,9 @@ export function kickoffQuestionSummary(
 ): string {
   const { question_count: total, required_count: required } = kickoff;
   const count = `${total} question${total === 1 ? "" : "s"}`;
-  return required > 0 && required < total ? `${count} · ${required} required` : count;
+  return required > 0 && required < total
+    ? `${count} · ${required} required`
+    : count;
 }
 
 /**

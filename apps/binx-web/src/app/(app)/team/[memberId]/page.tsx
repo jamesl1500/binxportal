@@ -9,7 +9,7 @@
  * detail page, not another roster tab.
  *
  * @module apps/binx-web/src/app/(app)/team/[memberId]/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -25,7 +25,9 @@ interface MemberProfilePageProps {
   params: Promise<{ memberId: string }>;
 }
 
-export async function generateMetadata({ params }: MemberProfilePageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: MemberProfilePageProps): Promise<Metadata> {
   const { memberId } = await params;
   try {
     const { currentAgency } = await getCurrentAgencyContext();
@@ -61,7 +63,8 @@ const MemberProfilePage = async ({ params }: MemberProfilePageProps) => {
     throw error;
   }
 
-  const canManage = currentAgency.role === "owner" || currentAgency.role === "admin";
+  const canManage =
+    currentAgency.role === "owner" || currentAgency.role === "admin";
 
   return (
     <div>
@@ -79,7 +82,11 @@ const MemberProfilePage = async ({ params }: MemberProfilePageProps) => {
         )}
       </div>
 
-      <MemberProfile agencyId={currentAgency.id} member={member} isSelf={member.user_id === user.id} />
+      <MemberProfile
+        agencyId={currentAgency.id}
+        member={member}
+        isSelf={member.user_id === user.id}
+      />
     </div>
   );
 };

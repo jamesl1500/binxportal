@@ -9,7 +9,7 @@
  * failure and react differently.
  *
  * @module apps/binx-web/src/app/(portal)/portal/meetings/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 
@@ -25,7 +25,10 @@ import {
   type PortalSlot,
 } from "@/lib/portal";
 
-function errorResult(error: unknown, fallback: string): { error: string; status?: number } {
+function errorResult(
+  error: unknown,
+  fallback: string,
+): { error: string; status?: number } {
   if (error instanceof AuthApiError) {
     return { error: error.message, status: error.status };
   }
@@ -38,7 +41,10 @@ export interface PortalSlotsActionResult {
   slots?: PortalSlot[];
 }
 
-export async function getPortalAvailableSlotsAction(fromDate: string, toDate?: string): Promise<PortalSlotsActionResult> {
+export async function getPortalAvailableSlotsAction(
+  fromDate: string,
+  toDate?: string,
+): Promise<PortalSlotsActionResult> {
   try {
     const slots = await getPortalAvailableSlots(fromDate, toDate);
     return { slots };
@@ -53,7 +59,9 @@ export interface PortalMeetingActionResult {
   meeting?: PortalMeeting;
 }
 
-export async function bookPortalMeetingAction(input: PortalMeetingBookingInput): Promise<PortalMeetingActionResult> {
+export async function bookPortalMeetingAction(
+  input: PortalMeetingBookingInput,
+): Promise<PortalMeetingActionResult> {
   try {
     const meeting = await bookPortalMeeting(input);
     revalidatePath("/portal/meetings");
@@ -63,7 +71,9 @@ export async function bookPortalMeetingAction(input: PortalMeetingBookingInput):
   }
 }
 
-export async function cancelPortalMeetingAction(meetingId: string): Promise<PortalMeetingActionResult> {
+export async function cancelPortalMeetingAction(
+  meetingId: string,
+): Promise<PortalMeetingActionResult> {
   try {
     const meeting = await cancelPortalMeeting(meetingId);
     revalidatePath("/portal/meetings");

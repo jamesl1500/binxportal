@@ -8,7 +8,7 @@
  * the same pattern ProjectTabs / ClientTabs use.
  *
  * @module apps/binx-web/src/components/navigation/SettingsTabs/SettingsTabs.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -39,9 +39,16 @@ const SettingsTabs = () => {
     <nav className={styles.tabs} aria-label="Agency settings">
       {TAB_GROUPS.map((group, index) => (
         <Fragment key={group[0].href}>
-          {index > 0 && <span className={styles.groupDivider} aria-hidden="true" />}
+          {index > 0 && (
+            <span className={styles.groupDivider} aria-hidden="true" />
+          )}
           {group.map((tab) => (
-            <Link key={tab.href} href={tab.href} className={styles.tab} data-active={pathname === tab.href}>
+            <Link
+              key={tab.href}
+              href={tab.href}
+              className={styles.tab}
+              data-active={pathname === tab.href}
+            >
               {tab.label}
             </Link>
           ))}

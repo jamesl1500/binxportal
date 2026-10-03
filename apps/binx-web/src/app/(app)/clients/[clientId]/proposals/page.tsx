@@ -6,7 +6,7 @@
  * client.
  *
  * @module apps/binx-web/src/app/(app)/clients/[clientId]/proposals/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -46,7 +46,10 @@ const ClientProposalsPage = async ({ params }: ClientProposalsPageProps) => {
           <h2 className={styles.title}>Proposals</h2>
           <p className={styles.subtitle}>Proposals sent to {client.name}.</p>
         </div>
-        <Link href={`/proposals/new?client=${client.id}`} className={styles.newButton}>
+        <Link
+          href={`/proposals/new?client=${client.id}`}
+          className={styles.newButton}
+        >
           <Plus aria-hidden="true" />
           New proposal
         </Link>

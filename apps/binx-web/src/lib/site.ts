@@ -9,10 +9,12 @@
  * per environment; it falls back to localhost for dev.
  *
  * @module apps/binx-web/src/lib/site.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 
-export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
+export const SITE_URL = (
+  process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
+).replace(/\/$/, "");
 
 export const SITE = {
   name: "Binx",
@@ -55,7 +57,14 @@ export const PLANS = [
     name: "Free",
     price: 0,
     blurb: "For a solo operator or a first project.",
-    features: ["1 agency workspace", "Up to 3 clients & 3 active projects", "25 leads", "3 team members", "Client portal, proposals & invoicing", "$10/mo of AI usage"],
+    features: [
+      "1 agency workspace",
+      "Up to 3 clients & 3 active projects",
+      "25 leads",
+      "3 team members",
+      "Client portal, proposals & invoicing",
+      "$10/mo of AI usage",
+    ],
     cta: "Get started",
     featured: false,
   },
@@ -63,7 +72,14 @@ export const PLANS = [
     name: "Starter",
     price: 49,
     blurb: "For a small studio finding its rhythm.",
-    features: ["Everything in Free", "15 clients & 25 active projects", "250 leads", "10 team members", "Priority email support", "$50/mo of AI usage"],
+    features: [
+      "Everything in Free",
+      "15 clients & 25 active projects",
+      "250 leads",
+      "10 team members",
+      "Priority email support",
+      "$50/mo of AI usage",
+    ],
     cta: "Start free trial",
     featured: false,
   },
@@ -71,7 +87,13 @@ export const PLANS = [
     name: "Pro",
     price: 149,
     blurb: "For an agency running many clients at once.",
-    features: ["Everything in Starter", "60 clients & 150 active projects", "2,000 leads", "40 team members", "$200/mo of AI usage"],
+    features: [
+      "Everything in Starter",
+      "60 clients & 150 active projects",
+      "2,000 leads",
+      "40 team members",
+      "$200/mo of AI usage",
+    ],
     cta: "Start free trial",
     featured: true,
   },
@@ -79,7 +101,13 @@ export const PLANS = [
     name: "Scale",
     price: 399,
     blurb: "For a large team with no room for limits.",
-    features: ["Everything in Pro", "Unlimited clients, projects & leads", "150 team members", "$750/mo of AI usage", "Onboarding help"],
+    features: [
+      "Everything in Pro",
+      "Unlimited clients, projects & leads",
+      "150 team members",
+      "$750/mo of AI usage",
+      "Onboarding help",
+    ],
     cta: "Start free trial",
     featured: false,
   },
@@ -97,7 +125,8 @@ export const TRIAL_DISCOUNT_PERCENT_OFF = 20;
  * public flag so unauthenticated marketing copy doesn't promise it before
  * that coupon exists. Set it once the coupon is live.
  */
-export const LAUNCH_DISCOUNT_ENABLED = process.env.NEXT_PUBLIC_LAUNCH_DISCOUNT_ENABLED === "true";
+export const LAUNCH_DISCOUNT_ENABLED =
+  process.env.NEXT_PUBLIC_LAUNCH_DISCOUNT_ENABLED === "true";
 
 /** SoftwareApplication JSON-LD — lets search engines show Binx as an app with a price range. */
 export function softwareApplicationJsonLd(featureList: readonly string[]) {
@@ -150,9 +179,15 @@ export const MARKETING_NAV = [
 export const SEO_LANDING_PAGES = [
   { href: "/alternatives/dubsado", label: "Dubsado alternative" },
   { href: "/alternatives/honeybook", label: "HoneyBook alternative" },
-  { href: "/alternatives/copilot-assembly", label: "Copilot & Assembly alternative" },
+  {
+    href: "/alternatives/copilot-assembly",
+    label: "Copilot & Assembly alternative",
+  },
   { href: "/alternatives/bloom", label: "Bloom.io alternative" },
-  { href: "/compare/notion-stripe-drive", label: "vs. Notion + Stripe + Drive" },
+  {
+    href: "/compare/notion-stripe-drive",
+    label: "vs. Notion + Stripe + Drive",
+  },
   { href: "/free-client-portal", label: "Free client portal" },
 ] as const;
 
@@ -180,9 +215,18 @@ export const USE_CASE_PAGES = [
  *
  * @function marketingOpenGraph
  */
-export function marketingOpenGraph(title: string, description: string, path: string) {
+export function marketingOpenGraph(
+  title: string,
+  description: string,
+  path: string,
+) {
   const url = `${SITE_URL}${path}`;
-  const image = { url: `${SITE_URL}/opengraph-image`, width: 1200, height: 630, alt: SITE.ogImageAlt };
+  const image = {
+    url: `${SITE_URL}/opengraph-image`,
+    width: 1200,
+    height: 630,
+    alt: SITE.ogImageAlt,
+  };
   return {
     openGraph: {
       type: "website" as const,

@@ -7,7 +7,7 @@
  * AccountTabs / TeamTabs / ProjectTabs / ClientTabs use.
  *
  * @module apps/binx-web/src/components/navigation/ProfileTabs/ProfileTabs.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -29,7 +29,12 @@ const ProfileTabs = () => {
   return (
     <nav className={styles.tabs} aria-label="Profile">
       {TABS.map((tab) => (
-        <Link key={tab.href} href={tab.href} className={styles.tab} data-active={pathname === tab.href}>
+        <Link
+          key={tab.href}
+          href={tab.href}
+          className={styles.tab}
+          data-active={pathname === tab.href}
+        >
           {tab.label}
         </Link>
       ))}

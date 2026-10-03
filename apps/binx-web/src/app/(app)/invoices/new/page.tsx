@@ -5,7 +5,7 @@
  * per-client Invoices tab). binx-api assigns the number on creation.
  *
  * @module apps/binx-web/src/app/(app)/invoices/new/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -40,7 +40,9 @@ const NewInvoicePage = async ({ searchParams }: NewInvoicePageProps) => {
   ]);
 
   const orderedClients = presetClientId
-    ? [...clients].sort((a, b) => (a.id === presetClientId ? -1 : b.id === presetClientId ? 1 : 0))
+    ? [...clients].sort((a, b) =>
+        a.id === presetClientId ? -1 : b.id === presetClientId ? 1 : 0,
+      )
     : clients;
 
   return (
@@ -52,17 +54,24 @@ const NewInvoicePage = async ({ searchParams }: NewInvoicePageProps) => {
         <div>
           <span className={styles.eyebrow}>Invoices</span>
           <h1 className={styles.title}>New invoice</h1>
-          <p className={styles.subtitle}>Draft it here — you can review before issuing.</p>
+          <p className={styles.subtitle}>
+            Draft it here — you can review before issuing.
+          </p>
         </div>
       </div>
 
       {clients.length === 0 ? (
-        <p className={styles.notice}>Add a client from the Clients page before creating an invoice.</p>
+        <p className={styles.notice}>
+          Add a client from the Clients page before creating an invoice.
+        </p>
       ) : (
         <div className={styles.formCard}>
           <InvoiceForm
             agencyId={currentAgency.id}
-            clients={orderedClients.map((client) => ({ id: client.id, name: client.name }))}
+            clients={orderedClients.map((client) => ({
+              id: client.id,
+              name: client.name,
+            }))}
             projects={projects.map((project) => ({
               id: project.id,
               name: project.name,

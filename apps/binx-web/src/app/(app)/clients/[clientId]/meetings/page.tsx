@@ -7,7 +7,7 @@
  * structure.
  *
  * @module apps/binx-web/src/app/(app)/clients/[clientId]/meetings/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -44,7 +44,11 @@ const ClientMeetingsPage = async ({ params }: ClientMeetingsPageProps) => {
   const clientOptions = [{ id: client.id, name: client.name }];
   const projectOptions = projects
     .filter((project) => project.client_id === client.id)
-    .map((project) => ({ id: project.id, name: project.name, client_id: project.client_id }));
+    .map((project) => ({
+      id: project.id,
+      name: project.name,
+      client_id: project.client_id,
+    }));
 
   return (
     <div className={styles.page}>

@@ -7,7 +7,7 @@
  * whole team can see what's driving spend.
  *
  * @module apps/binx-web/src/app/(app)/settings/ai/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -28,8 +28,12 @@ const SettingsAiPage = async () => {
     redirect("/onboarding/two");
   }
 
-  const canEdit = currentAgency.role === "owner" || currentAgency.role === "admin";
-  const [settings, usage] = await Promise.all([getAiSettings(currentAgency.id), getAiUsage(currentAgency.id)]);
+  const canEdit =
+    currentAgency.role === "owner" || currentAgency.role === "admin";
+  const [settings, usage] = await Promise.all([
+    getAiSettings(currentAgency.id),
+    getAiUsage(currentAgency.id),
+  ]);
 
   return (
     <div>
@@ -42,12 +46,19 @@ const SettingsAiPage = async () => {
               : "Only agency owners and admins can change these settings."
             : "No Anthropic API key is configured for this environment — AI features are unavailable."}
         </p>
-        <AiSettingsPanel agencyId={currentAgency.id} settings={settings} canEdit={canEdit} />
+        <AiSettingsPanel
+          agencyId={currentAgency.id}
+          settings={settings}
+          canEdit={canEdit}
+        />
       </section>
 
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Usage</h2>
-        <p className={styles.sectionSubtitle}>This month&apos;s spend and the most recent AI calls across the agency.</p>
+        <p className={styles.sectionSubtitle}>
+          This month&apos;s spend and the most recent AI calls across the
+          agency.
+        </p>
         <AiUsagePanel usage={usage} />
       </section>
     </div>

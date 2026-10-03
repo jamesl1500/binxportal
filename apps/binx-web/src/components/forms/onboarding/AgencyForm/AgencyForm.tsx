@@ -6,7 +6,7 @@
  * app/(auth)/onboarding/two/actions.ts).
  *
  * @module apps/binx-web/src/components/forms/onboarding/AgencyForm/AgencyForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -20,7 +20,11 @@ import { createAgencyAction } from "@/app/(auth)/onboarding/two/actions";
 import styles from "./AgencyForm.module.scss";
 
 const agencySchema = z.object({
-  name: z.string().trim().min(1, "Agency name is required").max(255, "Must be at most 255 characters"),
+  name: z
+    .string()
+    .trim()
+    .min(1, "Agency name is required")
+    .max(255, "Must be at most 255 characters"),
 });
 
 type AgencyValues = z.infer<typeof agencySchema>;

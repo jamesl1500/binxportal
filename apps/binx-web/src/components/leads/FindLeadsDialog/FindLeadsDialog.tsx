@@ -9,7 +9,7 @@
  * ones as leads (source="ai_generated"). Duplicates are skipped server-side.
  *
  * @module apps/binx-web/src/components/leads/FindLeadsDialog/FindLeadsDialog.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -26,7 +26,11 @@ import {
   getLeadSearchCriteriaAction,
   importLeadsAction,
 } from "@/app/(app)/leads/actions";
-import type { LeadSearchCriteria, ProspectCandidate, ProspectSource } from "@/lib/leads";
+import type {
+  LeadSearchCriteria,
+  ProspectCandidate,
+  ProspectSource,
+} from "@/lib/leads";
 import { formatMoneyCents } from "@/lib/money";
 
 import styles from "./FindLeadsDialog.module.scss";
@@ -56,7 +60,9 @@ const FindLeadsDialog = ({ agencyId }: FindLeadsDialogProps) => {
 
   const [savedSearches, setSavedSearches] = useState<LeadSearchCriteria[]>([]);
 
-  const [candidates, setCandidates] = useState<ProspectCandidate[] | null>(null);
+  const [candidates, setCandidates] = useState<ProspectCandidate[] | null>(
+    null,
+  );
   const [chosen, setChosen] = useState<Set<number>>(new Set());
   const [error, setError] = useState<string | null>(null);
 
@@ -99,7 +105,15 @@ const FindLeadsDialog = ({ agencyId }: FindLeadsDialogProps) => {
     });
   };
 
-  const handleFind = () => runSearch({ industry, location, radiusMiles, companySize, keywords, count });
+  const handleFind = () =>
+    runSearch({
+      industry,
+      location,
+      radiusMiles,
+      companySize,
+      keywords,
+      count,
+    });
 
   const handleRunSaved = (criteria: LeadSearchCriteria) => {
     setIndustry(criteria.industry ?? "");
@@ -131,7 +145,10 @@ const FindLeadsDialog = ({ agencyId }: FindLeadsDialogProps) => {
         setError(result.error ?? "Unable to save this search");
         return;
       }
-      setSavedSearches((prev) => [result.criteria as LeadSearchCriteria, ...prev]);
+      setSavedSearches((prev) => [
+        result.criteria as LeadSearchCriteria,
+        ...prev,
+      ]);
       setSaveName("");
       toast.success(`Saved "${result.criteria.name}"`);
     });
@@ -183,7 +200,11 @@ const FindLeadsDialog = ({ agencyId }: FindLeadsDialogProps) => {
 
   return (
     <>
-      <button type="button" className={styles.trigger} onClick={() => setOpen(true)}>
+      <button
+        type="button"
+        className={styles.trigger}
+        onClick={() => setOpen(true)}
+      >
         <Sparkles className={styles.icon} aria-hidden="true" />
         Find leads
       </button>
@@ -191,8 +212,13 @@ const FindLeadsDialog = ({ agencyId }: FindLeadsDialogProps) => {
       <Dialog.Root open={open} onOpenChange={handleOpenChange}>
         <Dialog.Portal>
           <Dialog.Backdrop className={styles.backdrop} />
-          <Dialog.Popup className={styles.dialog} aria-label="Find leads with AI">
-            <Dialog.Title className={styles.dialogTitle}>Find leads with AI</Dialog.Title>
+          <Dialog.Popup
+            className={styles.dialog}
+            aria-label="Find leads with AI"
+          >
+            <Dialog.Title className={styles.dialogTitle}>
+              Find leads with AI
+            </Dialog.Title>
             <Dialog.Description className={styles.dialogDescription}>
               {candidates
                 ? "Review what the prospector found, then import the ones worth pursuing."
@@ -222,7 +248,10 @@ const FindLeadsDialog = ({ agencyId }: FindLeadsDialogProps) => {
                             onClick={() => handleDeleteSaved(criteria.id)}
                             disabled={isPending}
                           >
-                            <Trash2 className={styles.deleteIcon} aria-hidden="true" />
+                            <Trash2
+                              className={styles.deleteIcon}
+                              aria-hidden="true"
+                            />
                           </button>
                         </li>
                       ))}
@@ -256,7 +285,11 @@ const FindLeadsDialog = ({ agencyId }: FindLeadsDialogProps) => {
                     max={500}
                     value={radiusMiles ?? ""}
                     onChange={(event) =>
-                      setRadiusMiles(event.target.value ? Math.max(1, Number(event.target.value)) : undefined)
+                      setRadiusMiles(
+                        event.target.value
+                          ? Math.max(1, Number(event.target.value))
+                          : undefined,
+                      )
                     }
                     placeholder="Optional — narrows a location search"
                   />
@@ -271,7 +304,9 @@ const FindLeadsDialog = ({ agencyId }: FindLeadsDialogProps) => {
                   />
                 </label>
                 <label className={styles.field}>
-                  <span className={styles.label}>Keywords / what they&apos;d need</span>
+                  <span className={styles.label}>
+                    Keywords / what they&apos;d need
+                  </span>
                   <input
                     className={styles.input}
                     value={keywords}
@@ -287,7 +322,14 @@ const FindLeadsDialog = ({ agencyId }: FindLeadsDialogProps) => {
                     min={1}
                     max={10}
                     value={count}
-                    onChange={(event) => setCount(Math.max(1, Math.min(10, Number(event.target.value) || 5)))}
+                    onChange={(event) =>
+                      setCount(
+                        Math.max(
+                          1,
+                          Math.min(10, Number(event.target.value) || 5),
+                        ),
+                      )
+                    }
                   />
                 </label>
 
@@ -311,8 +353,15 @@ const FindLeadsDialog = ({ agencyId }: FindLeadsDialogProps) => {
                 {error && <p className={styles.error}>{error}</p>}
 
                 <div className={styles.actions}>
-                  <Dialog.Close className={styles.secondary}>Cancel</Dialog.Close>
-                  <button type="button" className={styles.primary} onClick={handleFind} disabled={isPending}>
+                  <Dialog.Close className={styles.secondary}>
+                    Cancel
+                  </Dialog.Close>
+                  <button
+                    type="button"
+                    className={styles.primary}
+                    onClick={handleFind}
+                    disabled={isPending}
+                  >
                     {isPending ? "Searching…" : "Find leads"}
                   </button>
                 </div>
@@ -321,18 +370,28 @@ const FindLeadsDialog = ({ agencyId }: FindLeadsDialogProps) => {
               <div className={styles.form}>
                 <ul className={styles.candidateList}>
                   {candidates.map((candidate, index) => (
-                    <li key={`${candidate.name}-${index}`} className={styles.candidate}>
+                    <li
+                      key={`${candidate.name}-${index}`}
+                      className={styles.candidate}
+                    >
                       <label className={styles.candidateHead}>
                         <input
                           type="checkbox"
                           checked={chosen.has(index)}
                           onChange={() => toggle(index)}
                         />
-                        <span className={styles.candidateName}>{candidate.name}</span>
-                        <span className={styles.candidateSource}>{SOURCE_LABELS[candidate.source]}</span>
+                        <span className={styles.candidateName}>
+                          {candidate.name}
+                        </span>
+                        <span className={styles.candidateSource}>
+                          {SOURCE_LABELS[candidate.source]}
+                        </span>
                         {candidate.estimated_value_cents != null && (
                           <span className={styles.candidateValue}>
-                            {formatMoneyCents(candidate.estimated_value_cents, "USD")}
+                            {formatMoneyCents(
+                              candidate.estimated_value_cents,
+                              "USD",
+                            )}
                           </span>
                         )}
                       </label>
@@ -346,7 +405,11 @@ const FindLeadsDialog = ({ agencyId }: FindLeadsDialogProps) => {
                           {candidate.website.replace(/^https?:\/\//, "")}
                         </a>
                       )}
-                      {candidate.rationale && <p className={styles.candidateWhy}>{candidate.rationale}</p>}
+                      {candidate.rationale && (
+                        <p className={styles.candidateWhy}>
+                          {candidate.rationale}
+                        </p>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -354,11 +417,23 @@ const FindLeadsDialog = ({ agencyId }: FindLeadsDialogProps) => {
                 {error && <p className={styles.error}>{error}</p>}
 
                 <div className={styles.actions}>
-                  <button type="button" className={styles.secondary} onClick={reset} disabled={isPending}>
+                  <button
+                    type="button"
+                    className={styles.secondary}
+                    onClick={reset}
+                    disabled={isPending}
+                  >
                     Back
                   </button>
-                  <button type="button" className={styles.primary} onClick={handleImport} disabled={isPending}>
-                    {isPending ? "Importing…" : `Import ${chosen.size} lead${chosen.size === 1 ? "" : "s"}`}
+                  <button
+                    type="button"
+                    className={styles.primary}
+                    onClick={handleImport}
+                    disabled={isPending}
+                  >
+                    {isPending
+                      ? "Importing…"
+                      : `Import ${chosen.size} lead${chosen.size === 1 ? "" : "s"}`}
                   </button>
                 </div>
               </div>

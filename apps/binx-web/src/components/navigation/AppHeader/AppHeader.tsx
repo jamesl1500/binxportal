@@ -9,7 +9,7 @@
  * elsewhere), styled to match this app's token-driven design system.
  *
  * @module apps/binx-web/src/components/navigation/AppHeader/AppHeader.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -106,11 +106,15 @@ const AppHeader = ({
               key={link.href}
               href={link.href}
               className={styles.navLink}
-              data-active={pathname === link.href || pathname.startsWith(`${link.href}/`)}
+              data-active={
+                pathname === link.href || pathname.startsWith(`${link.href}/`)
+              }
             >
               {link.label}
               {link.href === "/messages" && unreadMessages > 0 && (
-                <span className={styles.navBadge}>{unreadMessages > 99 ? "99+" : unreadMessages}</span>
+                <span className={styles.navBadge}>
+                  {unreadMessages > 99 ? "99+" : unreadMessages}
+                </span>
               )}
             </Link>
           ))}
@@ -121,7 +125,11 @@ const AppHeader = ({
               <ChevronDown className={styles.chevron} aria-hidden="true" />
             </Menu.Trigger>
             <Menu.Portal>
-              <Menu.Positioner className={styles.positioner} sideOffset={8} align="start">
+              <Menu.Positioner
+                className={styles.positioner}
+                sideOffset={8}
+                align="start"
+              >
                 <Menu.Popup className={styles.popup}>
                   {MANAGE_LINKS.map((link) => (
                     <Menu.LinkItem
@@ -149,15 +157,25 @@ const AppHeader = ({
           aria-label={mobileNavOpen ? "Close navigation" : "Open navigation"}
           onClick={() => setMobileNavOpen((open) => !open)}
         >
-          {mobileNavOpen ? <X aria-hidden="true" /> : <MenuIcon aria-hidden="true" />}
+          {mobileNavOpen ? (
+            <X aria-hidden="true" />
+          ) : (
+            <MenuIcon aria-hidden="true" />
+          )}
         </button>
 
         <TutorialLauncher />
         <AiAssistantLauncher agencyId={currentAgency.id} />
-        <NotificationBell initialUnreadCount={unreadNotifications} initialItems={notifications} />
+        <NotificationBell
+          initialUnreadCount={unreadNotifications}
+          initialItems={notifications}
+        />
 
         <Menu.Root>
-          <Menu.Trigger className={styles.accountTrigger} aria-label={`${user.full_name} account menu`}>
+          <Menu.Trigger
+            className={styles.accountTrigger}
+            aria-label={`${user.full_name} account menu`}
+          >
             <span className={styles.avatar} aria-hidden="true">
               {initial}
             </span>
@@ -167,17 +185,35 @@ const AppHeader = ({
             <ChevronDown className={styles.chevron} aria-hidden="true" />
           </Menu.Trigger>
           <Menu.Portal>
-            <Menu.Positioner className={styles.positioner} sideOffset={8} align="end">
+            <Menu.Positioner
+              className={styles.positioner}
+              sideOffset={8}
+              align="end"
+            >
               <Menu.Popup className={styles.popup}>
                 <Menu.Group>
-                  <Menu.GroupLabel className={styles.groupLabel}>{user.email}</Menu.GroupLabel>
-                  <Menu.LinkItem render={<Link href="/profile" />} className={styles.menuItem} closeOnClick>
+                  <Menu.GroupLabel className={styles.groupLabel}>
+                    {user.email}
+                  </Menu.GroupLabel>
+                  <Menu.LinkItem
+                    render={<Link href="/profile" />}
+                    className={styles.menuItem}
+                    closeOnClick
+                  >
                     Profile
                   </Menu.LinkItem>
-                  <Menu.LinkItem render={<Link href="/account" />} className={styles.menuItem} closeOnClick>
+                  <Menu.LinkItem
+                    render={<Link href="/account" />}
+                    className={styles.menuItem}
+                    closeOnClick
+                  >
                     Account settings
                   </Menu.LinkItem>
-                  <Menu.LinkItem render={<Link href="/settings" />} className={styles.menuItem} closeOnClick>
+                  <Menu.LinkItem
+                    render={<Link href="/settings" />}
+                    className={styles.menuItem}
+                    closeOnClick
+                  >
                     Agency settings
                   </Menu.LinkItem>
                 </Menu.Group>
@@ -195,23 +231,30 @@ const AppHeader = ({
       </div>
 
       {mobileNavOpen && (
-        <nav id="app-mobile-nav" className={styles.mobileNav} aria-label="Primary">
+        <nav
+          id="app-mobile-nav"
+          className={styles.mobileNav}
+          aria-label="Primary"
+        >
           {allLinks.map((link) => {
-            const active = pathname === link.href || pathname.startsWith(`${link.href}/`);
+            const active =
+              pathname === link.href || pathname.startsWith(`${link.href}/`);
             return (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={styles.mobileNavLink}
-              data-active={active}
-              aria-current={active ? "page" : undefined}
-              onClick={() => setMobileNavOpen(false)}
-            >
-              {link.label}
-              {link.href === "/messages" && unreadMessages > 0 && (
-                <span className={styles.navBadge}>{unreadMessages > 99 ? "99+" : unreadMessages}</span>
-              )}
-            </Link>
+              <Link
+                key={link.href}
+                href={link.href}
+                className={styles.mobileNavLink}
+                data-active={active}
+                aria-current={active ? "page" : undefined}
+                onClick={() => setMobileNavOpen(false)}
+              >
+                {link.label}
+                {link.href === "/messages" && unreadMessages > 0 && (
+                  <span className={styles.navBadge}>
+                    {unreadMessages > 99 ? "99+" : unreadMessages}
+                  </span>
+                )}
+              </Link>
             );
           })}
         </nav>

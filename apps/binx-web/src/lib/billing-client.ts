@@ -8,7 +8,7 @@
  * Keep `PLAN_ORDER` in sync with binx-api's billing/models.py::PLAN_ORDER.
  *
  * @module apps/binx-web/src/lib/billing-client.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 
 import type { Schemas } from "@/lib/api-types";

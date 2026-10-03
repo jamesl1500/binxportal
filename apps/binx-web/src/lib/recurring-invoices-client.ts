@@ -8,7 +8,7 @@
  * reasoning as `lib/leads-client.ts`.
  *
  * @module apps/binx-web/src/lib/recurring-invoices-client.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 
 export const RECURRING_INTERVAL_LABELS: Record<string, string> = {
@@ -20,7 +20,15 @@ export function recurringIntervalLabel(interval: string): string {
   return RECURRING_INTERVAL_LABELS[interval] ?? interval;
 }
 
-const WEEKDAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const WEEKDAY_LABELS = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
 
 export function weekdayLabel(weekday: number): string {
   return WEEKDAY_LABELS[weekday] ?? String(weekday);

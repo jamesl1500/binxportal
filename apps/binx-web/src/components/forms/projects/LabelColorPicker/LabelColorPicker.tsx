@@ -6,7 +6,7 @@
  * label looks the same wherever it was made.
  *
  * @module apps/binx-web/src/components/forms/projects/LabelColorPicker/LabelColorPicker.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -33,7 +33,11 @@ interface LabelColorPickerProps {
   label: string;
 }
 
-const LabelColorPicker = ({ value, onChange, label }: LabelColorPickerProps) => (
+const LabelColorPicker = ({
+  value,
+  onChange,
+  label,
+}: LabelColorPickerProps) => (
   <div className={styles.colorPicker} role="radiogroup" aria-label={label}>
     {LABEL_PALETTE.map((color) => (
       <button

@@ -6,7 +6,7 @@
  * closing CTA.
  *
  * @module apps/binx-web/src/app/(marketing)/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Image from "next/image";
@@ -23,7 +23,12 @@ import {
   Wand2,
 } from "lucide-react";
 
-import { SITE, USE_CASE_PAGES, marketingOpenGraph, softwareApplicationJsonLd } from "@/lib/site";
+import {
+  SITE,
+  USE_CASE_PAGES,
+  marketingOpenGraph,
+  softwareApplicationJsonLd,
+} from "@/lib/site";
 import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 
 import styles from "./marketing.module.scss";
@@ -134,7 +139,9 @@ const HomePage = () => {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApplicationJsonLd(FEATURE_LIST)) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(softwareApplicationJsonLd(FEATURE_LIST)),
+        }}
       />
 
       <section className={styles.hero}>
@@ -142,10 +149,14 @@ const HomePage = () => {
         <div className={styles.container}>
           <div className={styles.heroInner}>
             <span className={styles.eyebrow}>Agency operating system</span>
-            <h1 className={styles.h1}>Run the whole agency from one calm place.</h1>
+            <h1 className={styles.h1}>
+              Run the whole agency from one calm place.
+            </h1>
             <p className={styles.lead}>
-              {SITE.name} takes you from the first lead to the final invoice. Find prospects with AI, send proposals
-              clients sign online, run projects they approve in a live portal, and get paid, all in one workspace.
+              {SITE.name} takes you from the first lead to the final invoice.
+              Find prospects with AI, send proposals clients sign online, run
+              projects they approve in a live portal, and get paid, all in one
+              workspace.
             </p>
             <div className={`${styles.btnRow} ${styles.heroActions}`}>
               <Link href="/auth/signup" className={styles.btnPrimary}>
@@ -155,13 +166,17 @@ const HomePage = () => {
                 See everything it does
               </Link>
             </div>
-            <p className={styles.heroNote}>Free plan available · no card required · your data stays yours.</p>
+            <p className={styles.heroNote}>
+              Free plan available · no card required · your data stays yours.
+            </p>
           </div>
         </div>
       </section>
 
       <div className={styles.trust}>
-        <p className={styles.trustLabel}>Built for the way small agencies actually work</p>
+        <p className={styles.trustLabel}>
+          Built for the way small agencies actually work
+        </p>
         <div className={styles.trustRow}>
           {USE_CASE_PAGES.map((page) => (
             <Link key={page.href} href={page.href} className={styles.trustLink}>
@@ -174,11 +189,16 @@ const HomePage = () => {
       <section className={`${styles.section} ${styles.sectionDark}`}>
         <div className={styles.container}>
           <div className={styles.sectionHead}>
-            <span className={`${styles.eyebrow} ${styles.eyebrowOnDark}`}>Lead to paid</span>
-            <h2 className={styles.h2}>One thread from first hello to final invoice.</h2>
+            <span className={`${styles.eyebrow} ${styles.eyebrowOnDark}`}>
+              Lead to paid
+            </span>
+            <h2 className={styles.h2}>
+              One thread from first hello to final invoice.
+            </h2>
             <p className={`${styles.lead} ${styles.leadOnDark}`}>
-              Every step picks up where the last one left off, so a lead&apos;s details become the proposal, the
-              client, the project and the invoice without anyone re-typing them.
+              Every step picks up where the last one left off, so a lead&apos;s
+              details become the proposal, the client, the project and the
+              invoice without anyone re-typing them.
             </p>
           </div>
           <ol className={`${styles.steps} ${styles.stepsFour}`}>
@@ -197,10 +217,13 @@ const HomePage = () => {
         <div className={styles.container}>
           <div className={styles.sectionHead}>
             <span className={styles.eyebrow}>New in {SITE.name}</span>
-            <h2 className={styles.h2}>Win more work, and close the loop with clients.</h2>
+            <h2 className={styles.h2}>
+              Win more work, and close the loop with clients.
+            </h2>
             <p className={styles.lead}>
-              The latest additions cover the parts of agency life that used to happen in other tools: finding
-              clients, pitching them, and getting a clear yes on the work.
+              The latest additions cover the parts of agency life that used to
+              happen in other tools: finding clients, pitching them, and getting
+              a clear yes on the work.
             </p>
           </div>
 
@@ -216,9 +239,15 @@ const HomePage = () => {
                 <p className={styles.cardText}>{text}</p>
               </article>
             ))}
-            <Link href="/features" className={`${styles.card} ${styles.cardLink}`}>
+            <Link
+              href="/features"
+              className={`${styles.card} ${styles.cardLink}`}
+            >
               <h3 className={styles.cardTitle}>See the full feature tour</h3>
-              <p className={styles.cardText}>Everything Binx does, grouped by the part of the agency it serves.</p>
+              <p className={styles.cardText}>
+                Everything Binx does, grouped by the part of the agency it
+                serves.
+              </p>
               <span className={styles.cardLinkArrow}>
                 Explore features <ArrowRight aria-hidden="true" />
               </span>
@@ -231,10 +260,13 @@ const HomePage = () => {
         <div className={styles.container}>
           <div className={styles.sectionHead}>
             <span className={styles.eyebrow}>One workspace</span>
-            <h2 className={styles.h2}>Everything the agency runs on, together.</h2>
+            <h2 className={styles.h2}>
+              Everything the agency runs on, together.
+            </h2>
             <p className={styles.lead}>
-              No more stitching a CRM to a proposal tool to a task board to a folder of spreadsheets. It&apos;s all
-              here, and it all talks to itself.
+              No more stitching a CRM to a proposal tool to a task board to a
+              folder of spreadsheets. It&apos;s all here, and it all talks to
+              itself.
             </p>
           </div>
 
@@ -257,10 +289,13 @@ const HomePage = () => {
           <div className={styles.split}>
             <div className={styles.splitBody}>
               <span className={styles.eyebrow}>Client portal</span>
-              <h2 className={styles.h3}>Give clients a window, not your inbox.</h2>
+              <h2 className={styles.h3}>
+                Give clients a window, not your inbox.
+              </h2>
               <p className={styles.cardText}>
-                Every client gets a branded portal with exactly what they should see: project progress, shared
-                files, proposals to sign and invoices to pay. Nothing they shouldn&apos;t.
+                Every client gets a branded portal with exactly what they should
+                see: project progress, shared files, proposals to sign and
+                invoices to pay. Nothing they shouldn&apos;t.
               </p>
               <ul className={styles.splitList}>
                 <li>Live project status and shared files</li>
@@ -283,11 +318,14 @@ const HomePage = () => {
           <div className={`${styles.split} ${styles.splitAlt}`}>
             <div className={styles.splitBody}>
               <span className={styles.eyebrow}>Collaboration canvas</span>
-              <h2 className={styles.h3}>A shared wall, with sign-off built in.</h2>
+              <h2 className={styles.h3}>
+                A shared wall, with sign-off built in.
+              </h2>
               <p className={styles.cardText}>
-                Pin notes and images on a freeform canvas the team and the client arrange together in real time.
-                When a concept is ready, request approval on the card and get a clear yes or a note on what to
-                change.
+                Pin notes and images on a freeform canvas the team and the
+                client arrange together in real time. When a concept is ready,
+                request approval on the card and get a clear yes or a note on
+                what to change.
               </p>
               <ul className={styles.splitList}>
                 <li>Request, approve or reject any card</li>
@@ -309,10 +347,13 @@ const HomePage = () => {
           <div className={styles.split}>
             <div className={styles.splitBody}>
               <span className={styles.eyebrow}>Dashboard</span>
-              <h2 className={styles.h3}>Start the day on a screen you designed.</h2>
+              <h2 className={styles.h3}>
+                Start the day on a screen you designed.
+              </h2>
               <p className={styles.cardText}>
-                Drag widgets into the order you want, hide the ones you don&apos;t, and keep your own tasks and
-                quick actions a click away. Each teammate&apos;s layout is their own.
+                Drag widgets into the order you want, hide the ones you
+                don&apos;t, and keep your own tasks and quick actions a click
+                away. Each teammate&apos;s layout is their own.
               </p>
               <ul className={styles.splitList}>
                 <li>Drag-and-drop, hideable widgets</li>
@@ -336,8 +377,9 @@ const HomePage = () => {
               <span className={styles.eyebrow}>Invoicing</span>
               <h2 className={styles.h3}>Bill without leaving the workspace.</h2>
               <p className={styles.cardText}>
-                Your numbering, your terms, your currency. Pick the client and their details fill themselves in,
-                then send and watch payments land, with reminders you can draft in a click.
+                Your numbering, your terms, your currency. Pick the client and
+                their details fill themselves in, then send and watch payments
+                land, with reminders you can draft in a click.
               </p>
               <ul className={styles.splitList}>
                 <li>Recipient details auto-filled from the client</li>

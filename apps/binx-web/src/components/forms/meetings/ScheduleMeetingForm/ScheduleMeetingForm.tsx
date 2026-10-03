@@ -17,13 +17,16 @@
  * (including rescheduling) of a meeting for its existing client.
  *
  * @module apps/binx-web/src/components/forms/meetings/ScheduleMeetingForm/ScheduleMeetingForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
 import { useState, useTransition } from "react";
 
-import { createMeetingAction, updateMeetingAction } from "@/app/(app)/meetings/actions";
+import {
+  createMeetingAction,
+  updateMeetingAction,
+} from "@/app/(app)/meetings/actions";
 import type { Meeting } from "@/lib/meetings";
 
 import styles from "./ScheduleMeetingForm.module.scss";
@@ -81,14 +84,24 @@ const ScheduleMeetingForm = ({
   const isEdit = Boolean(meeting);
   const clientLocked = Boolean(defaultClientId) || isEdit;
 
-  const [clientId, setClientId] = useState(meeting?.client_id ?? defaultClientId ?? clients[0]?.id ?? "");
-  const [projectId, setProjectId] = useState(meeting?.project_id ?? defaultProjectId ?? "");
-  const [when, setWhen] = useState(meeting ? toDateTimeLocal(new Date(meeting.starts_at)) : defaultDateTimeLocal());
+  const [clientId, setClientId] = useState(
+    meeting?.client_id ?? defaultClientId ?? clients[0]?.id ?? "",
+  );
+  const [projectId, setProjectId] = useState(
+    meeting?.project_id ?? defaultProjectId ?? "",
+  );
+  const [when, setWhen] = useState(
+    meeting
+      ? toDateTimeLocal(new Date(meeting.starts_at))
+      : defaultDateTimeLocal(),
+  );
   const [title, setTitle] = useState(meeting?.title ?? "");
   const [notes, setNotes] = useState(meeting?.notes ?? "");
   const [location, setLocation] = useState(meeting?.location ?? "");
 
-  const clientProjects = projects.filter((project) => project.client_id === clientId);
+  const clientProjects = projects.filter(
+    (project) => project.client_id === clientId,
+  );
   const canSubmit = clientId !== "" && when !== "";
 
   const handleSubmit = (event: React.FormEvent) => {
@@ -121,7 +134,12 @@ const ScheduleMeetingForm = ({
           });
 
       if (result.error || !result.meeting) {
-        setFormError(result.error ?? (isEdit ? "Unable to update meeting" : "Unable to schedule meeting"));
+        setFormError(
+          result.error ??
+            (isEdit
+              ? "Unable to update meeting"
+              : "Unable to schedule meeting"),
+        );
         return;
       }
       onSuccess?.(result.meeting);
@@ -244,11 +262,20 @@ const ScheduleMeetingForm = ({
 
       <div className={styles.actions}>
         {onCancel && (
-          <button type="button" className={styles.cancel} onClick={onCancel} disabled={isPending}>
+          <button
+            type="button"
+            className={styles.cancel}
+            onClick={onCancel}
+            disabled={isPending}
+          >
             Cancel
           </button>
         )}
-        <button type="submit" className={styles.submit} disabled={!canSubmit || isPending}>
+        <button
+          type="submit"
+          className={styles.submit}
+          disabled={!canSubmit || isPending}
+        >
           {isPending ? "Saving…" : isEdit ? "Save changes" : "Schedule meeting"}
         </button>
       </div>

@@ -4,7 +4,7 @@
  * Entry point for requesting a password-reset email.
  *
  * @module apps/binx-web/src/app/(auth)/auth/forgot-password/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -21,7 +21,9 @@ const ForgotPasswordPage = () => {
       <header className={styles.header}>
         <span className={styles.eyebrow}>Reset your password</span>
         <h1 className={styles.title}>Forgot password?</h1>
-        <p className={styles.subtitle}>Enter your email and we&apos;ll send you a reset link.</p>
+        <p className={styles.subtitle}>
+          Enter your email and we&apos;ll send you a reset link.
+        </p>
       </header>
 
       <ForgotPasswordForm />

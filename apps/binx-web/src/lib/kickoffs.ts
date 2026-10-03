@@ -7,7 +7,7 @@
  * the current access token, errors normalized to AuthApiError.
  *
  * @module apps/binx-web/src/lib/kickoffs.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 import axios from "axios";
 
@@ -25,7 +25,10 @@ async function authHeader(): Promise<{ Authorization: string }> {
 
 function apiError(error: unknown, fallback: string): AuthApiError | unknown {
   if (axios.isAxiosError(error) && error.response) {
-    return new AuthApiError(extractDetailMessage(error.response.data, fallback), error.response.status);
+    return new AuthApiError(
+      extractDetailMessage(error.response.data, fallback),
+      error.response.status,
+    );
   }
   return error;
 }
@@ -54,15 +57,26 @@ export interface KickoffInput {
 }
 
 function toQuestionsPayload(questions: KickoffQuestionInput[]) {
-  return questions.map((q) => ({ type: q.type, label: q.label, options: q.options, required: q.required }));
+  return questions.map((q) => ({
+    type: q.type,
+    label: q.label,
+    options: q.options,
+    required: q.required,
+  }));
 }
 
 // ---- Kickoff (project-scoped) ----
 
-export async function getKickoff(agencyId: string, projectId: string): Promise<KickoffDetail | null> {
+export async function getKickoff(
+  agencyId: string,
+  projectId: string,
+): Promise<KickoffDetail | null> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<KickoffDetail>(`/agencies/${agencyId}/projects/${projectId}/kickoff`, { headers });
+    const { data } = await api.get<KickoffDetail>(
+      `/agencies/${agencyId}/projects/${projectId}/kickoff`,
+      { headers },
+    );
     return data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 404) {
@@ -95,12 +109,20 @@ export async function createKickoff(
   }
 }
 
-export async function updateKickoff(agencyId: string, projectId: string, input: KickoffInput): Promise<KickoffDetail> {
+export async function updateKickoff(
+  agencyId: string,
+  projectId: string,
+  input: KickoffInput,
+): Promise<KickoffDetail> {
   const headers = await authHeader();
   try {
     const { data } = await api.patch<KickoffDetail>(
       `/agencies/${agencyId}/projects/${projectId}/kickoff`,
-      { title: input.title, intro_message: input.introMessage, questions: toQuestionsPayload(input.questions) },
+      {
+        title: input.title,
+        intro_message: input.introMessage,
+        questions: toQuestionsPayload(input.questions),
+      },
       { headers },
     );
     return data;
@@ -109,16 +131,24 @@ export async function updateKickoff(agencyId: string, projectId: string, input: 
   }
 }
 
-export async function deleteKickoff(agencyId: string, projectId: string): Promise<void> {
+export async function deleteKickoff(
+  agencyId: string,
+  projectId: string,
+): Promise<void> {
   const headers = await authHeader();
   try {
-    await api.delete(`/agencies/${agencyId}/projects/${projectId}/kickoff`, { headers });
+    await api.delete(`/agencies/${agencyId}/projects/${projectId}/kickoff`, {
+      headers,
+    });
   } catch (error) {
     throw apiError(error, "Unable to delete kickoff");
   }
 }
 
-export async function sendKickoff(agencyId: string, projectId: string): Promise<KickoffDetail> {
+export async function sendKickoff(
+  agencyId: string,
+  projectId: string,
+): Promise<KickoffDetail> {
   const headers = await authHeader();
   try {
     const { data } = await api.post<KickoffDetail>(
@@ -132,7 +162,10 @@ export async function sendKickoff(agencyId: string, projectId: string): Promise<
   }
 }
 
-export async function nudgeKickoff(agencyId: string, projectId: string): Promise<KickoffDetail> {
+export async function nudgeKickoff(
+  agencyId: string,
+  projectId: string,
+): Promise<KickoffDetail> {
   const headers = await authHeader();
   try {
     const { data } = await api.post<KickoffDetail>(
@@ -166,22 +199,33 @@ export async function convertKickoff(
 
 // ---- Templates ----
 
-export async function getKickoffTemplates(agencyId: string): Promise<KickoffTemplate[]> {
+export async function getKickoffTemplates(
+  agencyId: string,
+): Promise<KickoffTemplate[]> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<KickoffTemplate[]>(`/agencies/${agencyId}/kickoff-templates`, { headers });
+    const { data } = await api.get<KickoffTemplate[]>(
+      `/agencies/${agencyId}/kickoff-templates`,
+      { headers },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to load kickoff templates");
   }
 }
 
-export async function getKickoffTemplate(agencyId: string, templateId: string): Promise<KickoffTemplateDetail> {
+export async function getKickoffTemplate(
+  agencyId: string,
+  templateId: string,
+): Promise<KickoffTemplateDetail> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<KickoffTemplateDetail>(`/agencies/${agencyId}/kickoff-templates/${templateId}`, {
-      headers,
-    });
+    const { data } = await api.get<KickoffTemplateDetail>(
+      `/agencies/${agencyId}/kickoff-templates/${templateId}`,
+      {
+        headers,
+      },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to load kickoff template");
@@ -202,7 +246,11 @@ export async function createKickoffTemplate(
   try {
     const { data } = await api.post<KickoffTemplateDetail>(
       `/agencies/${agencyId}/kickoff-templates`,
-      { name: input.name, description: input.description, questions: toQuestionsPayload(input.questions) },
+      {
+        name: input.name,
+        description: input.description,
+        questions: toQuestionsPayload(input.questions),
+      },
       { headers },
     );
     return data;
@@ -220,7 +268,11 @@ export async function updateKickoffTemplate(
   try {
     const { data } = await api.patch<KickoffTemplateDetail>(
       `/agencies/${agencyId}/kickoff-templates/${templateId}`,
-      { name: input.name, description: input.description, questions: toQuestionsPayload(input.questions) },
+      {
+        name: input.name,
+        description: input.description,
+        questions: toQuestionsPayload(input.questions),
+      },
       { headers },
     );
     return data;
@@ -229,10 +281,15 @@ export async function updateKickoffTemplate(
   }
 }
 
-export async function deleteKickoffTemplate(agencyId: string, templateId: string): Promise<void> {
+export async function deleteKickoffTemplate(
+  agencyId: string,
+  templateId: string,
+): Promise<void> {
   const headers = await authHeader();
   try {
-    await api.delete(`/agencies/${agencyId}/kickoff-templates/${templateId}`, { headers });
+    await api.delete(`/agencies/${agencyId}/kickoff-templates/${templateId}`, {
+      headers,
+    });
   } catch (error) {
     throw apiError(error, "Unable to delete kickoff template");
   }

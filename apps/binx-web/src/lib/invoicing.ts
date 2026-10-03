@@ -11,7 +11,7 @@
  * here and parsed at the edges.
  *
  * @module apps/binx-web/src/lib/invoicing.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 import axios from "axios";
 
@@ -50,7 +50,10 @@ async function authHeader(): Promise<{ Authorization: string }> {
 
 function apiError(error: unknown, fallback: string): AuthApiError | unknown {
   if (axios.isAxiosError(error) && error.response) {
-    return new AuthApiError(extractDetailMessage(error.response.data, fallback), error.response.status);
+    return new AuthApiError(
+      extractDetailMessage(error.response.data, fallback),
+      error.response.status,
+    );
   }
   return error;
 }
@@ -77,7 +80,10 @@ export interface BillingSettingsInput {
 
 // The API types `status` / `display_status` as plain strings; the narrower
 // unions from lib/money.ts are kept so exhaustive `switch`es still check.
-export type Invoice = Omit<Schemas["InvoiceRead"], "status" | "display_status"> & {
+export type Invoice = Omit<
+  Schemas["InvoiceRead"],
+  "status" | "display_status"
+> & {
   status: InvoiceStatus;
   display_status: InvoiceDisplayStatus;
 };
@@ -88,7 +94,10 @@ export type InvoicePayment = Schemas["PaymentRead"];
 
 export type InvoiceParty = Schemas["InvoiceParty"];
 
-export type InvoiceDetail = Omit<Schemas["InvoiceDetailRead"], "status" | "display_status"> & {
+export type InvoiceDetail = Omit<
+  Schemas["InvoiceDetailRead"],
+  "status" | "display_status"
+> & {
   status: InvoiceStatus;
   display_status: InvoiceDisplayStatus;
 };
@@ -149,10 +158,15 @@ function toSettingsPayload(input: BillingSettingsInput) {
  * @function getBillingSettings
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't a member of this agency.
  */
-export async function getBillingSettings(agencyId: string): Promise<BillingSettings> {
+export async function getBillingSettings(
+  agencyId: string,
+): Promise<BillingSettings> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<BillingSettings>(`/agencies/${agencyId}/billing-settings`, { headers });
+    const { data } = await api.get<BillingSettings>(
+      `/agencies/${agencyId}/billing-settings`,
+      { headers },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to load billing settings");
@@ -200,13 +214,19 @@ export async function updateBillingSettings(
  * @function getStripeConnectStatus
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't a member of this agency.
  */
-export async function getStripeConnectStatus(agencyId: string, afterReturn = false): Promise<StripeConnectStatus> {
+export async function getStripeConnectStatus(
+  agencyId: string,
+  afterReturn = false,
+): Promise<StripeConnectStatus> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<StripeConnectStatus>(`/agencies/${agencyId}/billing-settings/stripe/status`, {
-      headers,
-      params: afterReturn ? { stripe: "return" } : undefined,
-    });
+    const { data } = await api.get<StripeConnectStatus>(
+      `/agencies/${agencyId}/billing-settings/stripe/status`,
+      {
+        headers,
+        params: afterReturn ? { stripe: "return" } : undefined,
+      },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to load the Stripe connection status");
@@ -224,7 +244,9 @@ export async function getStripeConnectStatus(agencyId: string, afterReturn = fal
  * @function startStripeConnectOnboarding
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller lacks permission.
  */
-export async function startStripeConnectOnboarding(agencyId: string): Promise<string> {
+export async function startStripeConnectOnboarding(
+  agencyId: string,
+): Promise<string> {
   const headers = await authHeader();
   try {
     const { data } = await api.post<{ onboarding_url: string }>(
@@ -274,13 +296,23 @@ export interface InvoiceFilter {
  * @function getInvoices
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't a member of this agency.
  */
-export async function getInvoices(agencyId: string, filter: InvoiceFilter = {}): Promise<Invoice[]> {
+export async function getInvoices(
+  agencyId: string,
+  filter: InvoiceFilter = {},
+): Promise<Invoice[]> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<Invoice[]>(`/agencies/${agencyId}/invoices`, {
-      headers,
-      params: { status: filter.status, client_id: filter.clientId, project_id: filter.projectId },
-    });
+    const { data } = await api.get<Invoice[]>(
+      `/agencies/${agencyId}/invoices`,
+      {
+        headers,
+        params: {
+          status: filter.status,
+          client_id: filter.clientId,
+          project_id: filter.projectId,
+        },
+      },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to load invoices");
@@ -296,13 +328,19 @@ export async function getInvoices(agencyId: string, filter: InvoiceFilter = {}):
  * @function getInvoiceSummary
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't a member of this agency.
  */
-export async function getInvoiceSummary(agencyId: string, clientId?: string): Promise<InvoiceSummary> {
+export async function getInvoiceSummary(
+  agencyId: string,
+  clientId?: string,
+): Promise<InvoiceSummary> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<InvoiceSummary>(`/agencies/${agencyId}/invoices/summary`, {
-      headers,
-      params: clientId ? { client_id: clientId } : undefined,
-    });
+    const { data } = await api.get<InvoiceSummary>(
+      `/agencies/${agencyId}/invoices/summary`,
+      {
+        headers,
+        params: clientId ? { client_id: clientId } : undefined,
+      },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to load billing summary");
@@ -318,10 +356,16 @@ export async function getInvoiceSummary(agencyId: string, clientId?: string): Pr
  * @function getInvoice
  * @throws {AuthApiError} - Thrown if not authenticated, or the invoice doesn't exist in this agency.
  */
-export async function getInvoice(agencyId: string, invoiceId: string): Promise<InvoiceDetail> {
+export async function getInvoice(
+  agencyId: string,
+  invoiceId: string,
+): Promise<InvoiceDetail> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<InvoiceDetail>(`/agencies/${agencyId}/invoices/${invoiceId}`, { headers });
+    const { data } = await api.get<InvoiceDetail>(
+      `/agencies/${agencyId}/invoices/${invoiceId}`,
+      { headers },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to load invoice");
@@ -337,7 +381,10 @@ export async function getInvoice(agencyId: string, invoiceId: string): Promise<I
  * @function createInvoice
  * @throws {AuthApiError} - Thrown if not authenticated, or the client isn't in this agency.
  */
-export async function createInvoice(agencyId: string, input: InvoiceInput): Promise<InvoiceDetail> {
+export async function createInvoice(
+  agencyId: string,
+  input: InvoiceInput,
+): Promise<InvoiceDetail> {
   const headers = await authHeader();
   try {
     const { data } = await api.post<InvoiceDetail>(
@@ -416,7 +463,10 @@ export async function issueInvoice(
  * @function voidInvoice
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller lacks permission.
  */
-export async function voidInvoice(agencyId: string, invoiceId: string): Promise<InvoiceDetail> {
+export async function voidInvoice(
+  agencyId: string,
+  invoiceId: string,
+): Promise<InvoiceDetail> {
   const headers = await authHeader();
   try {
     const { data } = await api.post<InvoiceDetail>(
@@ -439,10 +489,15 @@ export async function voidInvoice(agencyId: string, invoiceId: string): Promise<
  * @function deleteInvoice
  * @throws {AuthApiError} - Thrown if not authenticated, lacking permission, or the invoice is issued.
  */
-export async function deleteInvoice(agencyId: string, invoiceId: string): Promise<void> {
+export async function deleteInvoice(
+  agencyId: string,
+  invoiceId: string,
+): Promise<void> {
   const headers = await authHeader();
   try {
-    await api.delete(`/agencies/${agencyId}/invoices/${invoiceId}`, { headers });
+    await api.delete(`/agencies/${agencyId}/invoices/${invoiceId}`, {
+      headers,
+    });
   } catch (error) {
     throw apiError(error, "Unable to delete invoice");
   }

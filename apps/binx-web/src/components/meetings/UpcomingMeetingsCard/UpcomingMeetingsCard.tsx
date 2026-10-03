@@ -9,7 +9,7 @@
  * already-sorted meetings — this component doesn't fetch or filter.
  *
  * @module apps/binx-web/src/components/meetings/UpcomingMeetingsCard/UpcomingMeetingsCard.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import Link from "next/link";
 
@@ -30,13 +30,22 @@ interface UpcomingMeetingsCardProps {
 }
 
 function startOfLocalDay(date: Date): number {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  return new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+  ).getTime();
 }
 
 function whenLabel(iso: string): string {
   const date = new Date(iso);
-  const days = Math.round((startOfLocalDay(date) - startOfLocalDay(new Date())) / 86_400_000);
-  const time = date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  const days = Math.round(
+    (startOfLocalDay(date) - startOfLocalDay(new Date())) / 86_400_000,
+  );
+  const time = date.toLocaleTimeString(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  });
   if (days === 0) return `Today, ${time}`;
   if (days === 1) return `Tomorrow, ${time}`;
   if (days > 1 && days <= 6) {
@@ -63,15 +72,20 @@ const UpcomingMeetingsCard = ({
     <div className={styles.wrap}>
       <ul className={styles.list}>
         {shown.map((meeting) => {
-          const meta = [showClient ? meeting.client_name : null, showProject ? meeting.project_name : null].filter(
-            Boolean,
-          );
+          const meta = [
+            showClient ? meeting.client_name : null,
+            showProject ? meeting.project_name : null,
+          ].filter(Boolean);
           return (
             <li key={meeting.id}>
               <Link href={moreHref} className={styles.row}>
                 <span className={styles.title}>{meeting.title}</span>
-                {meta.length > 0 && <span className={styles.meta}>{meta.join(" · ")}</span>}
-                <span className={styles.when}>{whenLabel(meeting.starts_at)}</span>
+                {meta.length > 0 && (
+                  <span className={styles.meta}>{meta.join(" · ")}</span>
+                )}
+                <span className={styles.when}>
+                  {whenLabel(meeting.starts_at)}
+                </span>
               </Link>
             </li>
           );

@@ -18,16 +18,29 @@
  * `onRetry` adds a "Try again" button to the failed/error states.
  *
  * @module apps/binx-web/src/components/portal/PaymentResultDialog/PaymentResultDialog.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
 import { Dialog } from "@base-ui/react/dialog";
-import { AlertTriangle, CheckCircle2, Clock, Loader2, XCircle, type LucideIcon } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  Loader2,
+  XCircle,
+  type LucideIcon,
+} from "lucide-react";
 
 import styles from "./PaymentResultDialog.module.scss";
 
-export type PaymentResultState = "confirming" | "paid" | "processing" | "failed" | "canceled" | "error";
+export type PaymentResultState =
+  | "confirming"
+  | "paid"
+  | "processing"
+  | "failed"
+  | "canceled"
+  | "error";
 
 interface PaymentResultDialogProps {
   state: PaymentResultState | null;
@@ -54,7 +67,9 @@ function copyFor({
   agencyName,
   amountLabel,
   message,
-}: Omit<PaymentResultDialogProps, "onClose" | "onRetry"> & { state: PaymentResultState }): Copy {
+}: Omit<PaymentResultDialogProps, "onClose" | "onRetry"> & {
+  state: PaymentResultState;
+}): Copy {
   switch (state) {
     case "confirming":
       return {
@@ -96,36 +111,61 @@ function copyFor({
         icon: AlertTriangle,
         tone: "danger",
         title: "Something went wrong",
-        body: message ?? `We couldn't reach Stripe. Please try again, or contact ${agencyName} if it keeps happening.`,
+        body:
+          message ??
+          `We couldn't reach Stripe. Please try again, or contact ${agencyName} if it keeps happening.`,
       };
   }
 }
 
-const PaymentResultDialog = ({ state, onClose, onRetry, ...rest }: PaymentResultDialogProps) => {
+const PaymentResultDialog = ({
+  state,
+  onClose,
+  onRetry,
+  ...rest
+}: PaymentResultDialogProps) => {
   const copy = state ? copyFor({ state, ...rest }) : null;
   const busy = state === "confirming";
-  const canRetry = Boolean(onRetry) && (state === "failed" || state === "error");
+  const canRetry =
+    Boolean(onRetry) && (state === "failed" || state === "error");
 
   return (
-    <Dialog.Root open={state !== null} onOpenChange={(open) => !open && !busy && onClose()}>
+    <Dialog.Root
+      open={state !== null}
+      onOpenChange={(open) => !open && !busy && onClose()}
+    >
       <Dialog.Portal>
         <Dialog.Backdrop className={styles.backdrop} />
-        <Dialog.Popup className={styles.dialog} data-tone={copy?.tone} aria-busy={busy}>
+        <Dialog.Popup
+          className={styles.dialog}
+          data-tone={copy?.tone}
+          aria-busy={busy}
+        >
           {copy && (
             <>
               <span className={styles.iconWrap} aria-hidden="true">
                 <copy.icon className={styles.icon} data-spin={busy} />
               </span>
               <Dialog.Title className={styles.title}>{copy.title}</Dialog.Title>
-              <Dialog.Description className={styles.body}>{copy.body}</Dialog.Description>
+              <Dialog.Description className={styles.body}>
+                {copy.body}
+              </Dialog.Description>
               {!busy && (
                 <div className={styles.actions}>
                   {canRetry && (
-                    <button type="button" className={styles.secondary} onClick={onRetry}>
+                    <button
+                      type="button"
+                      className={styles.secondary}
+                      onClick={onRetry}
+                    >
                       Try again
                     </button>
                   )}
-                  <button type="button" className={styles.primary} onClick={onClose}>
+                  <button
+                    type="button"
+                    className={styles.primary}
+                    onClick={onClose}
+                  >
                     {state === "paid" ? "View invoice" : "Close"}
                   </button>
                 </div>

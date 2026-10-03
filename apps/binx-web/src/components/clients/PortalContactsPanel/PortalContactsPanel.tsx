@@ -7,7 +7,7 @@
  * page's InvitationsPanel.
  *
  * @module apps/binx-web/src/components/clients/PortalContactsPanel/PortalContactsPanel.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -34,10 +34,19 @@ interface PortalContactsPanelProps {
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+  return new Date(iso).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 }
 
-const PortalContactsPanel = ({ agencyId, clientId, contacts, invitations }: PortalContactsPanelProps) => {
+const PortalContactsPanel = ({
+  agencyId,
+  clientId,
+  contacts,
+  invitations,
+}: PortalContactsPanelProps) => {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [title, setTitle] = useState("");
@@ -50,13 +59,21 @@ const PortalContactsPanel = ({ agencyId, clientId, contacts, invitations }: Port
     const trimmed = email.trim();
     if (!trimmed) return;
     startTransition(async () => {
-      const result = await inviteClientContactAction(agencyId, clientId, trimmed, title.trim() || null);
+      const result = await inviteClientContactAction(
+        agencyId,
+        clientId,
+        trimmed,
+        title.trim() || null,
+      );
       if (result.error) {
         toast.error(result.error);
         return;
       }
       if (result.invitation?.accept_url) {
-        setLinks((prev) => ({ ...prev, [result.invitation!.id]: result.invitation!.accept_url as string }));
+        setLinks((prev) => ({
+          ...prev,
+          [result.invitation!.id]: result.invitation!.accept_url as string,
+        }));
       }
       toast.success(`Invitation sent to ${trimmed}`);
       setEmail("");
@@ -68,14 +85,21 @@ const PortalContactsPanel = ({ agencyId, clientId, contacts, invitations }: Port
   const handleResend = (invitationId: string) => {
     setBusyId(invitationId);
     startTransition(async () => {
-      const result = await resendClientContactInvitationAction(agencyId, clientId, invitationId);
+      const result = await resendClientContactInvitationAction(
+        agencyId,
+        clientId,
+        invitationId,
+      );
       setBusyId(null);
       if (result.error) {
         toast.error(result.error);
         return;
       }
       if (result.invitation?.accept_url) {
-        setLinks((prev) => ({ ...prev, [invitationId]: result.invitation!.accept_url as string }));
+        setLinks((prev) => ({
+          ...prev,
+          [invitationId]: result.invitation!.accept_url as string,
+        }));
       }
       toast.success("Invitation re-sent");
     });
@@ -84,7 +108,11 @@ const PortalContactsPanel = ({ agencyId, clientId, contacts, invitations }: Port
   const handleRevoke = (invitationId: string) => {
     setBusyId(invitationId);
     startTransition(async () => {
-      const result = await revokeClientContactInvitationAction(agencyId, clientId, invitationId);
+      const result = await revokeClientContactInvitationAction(
+        agencyId,
+        clientId,
+        invitationId,
+      );
       setBusyId(null);
       if (result.error) {
         toast.error(result.error);
@@ -98,7 +126,11 @@ const PortalContactsPanel = ({ agencyId, clientId, contacts, invitations }: Port
   const handleRemove = (contactId: string, name: string) => {
     setBusyId(contactId);
     startTransition(async () => {
-      const result = await removeClientContactAction(agencyId, clientId, contactId);
+      const result = await removeClientContactAction(
+        agencyId,
+        clientId,
+        contactId,
+      );
       setBusyId(null);
       if (result.error) {
         toast.error(result.error);
@@ -139,7 +171,11 @@ const PortalContactsPanel = ({ agencyId, clientId, contacts, invitations }: Port
           onChange={(event) => setTitle(event.target.value)}
           aria-label="Contact title"
         />
-        <button type="submit" className={styles.invite} disabled={isPending || !email.trim()}>
+        <button
+          type="submit"
+          className={styles.invite}
+          disabled={isPending || !email.trim()}
+        >
           Invite
         </button>
       </form>
@@ -151,11 +187,14 @@ const PortalContactsPanel = ({ agencyId, clientId, contacts, invitations }: Port
               <div>
                 <p className={styles.name}>
                   {contact.full_name}
-                  {contact.is_primary && <span className={styles.badge}>Primary</span>}
+                  {contact.is_primary && (
+                    <span className={styles.badge}>Primary</span>
+                  )}
                 </p>
                 <p className={styles.meta}>
                   {contact.email}
-                  {contact.title && ` · ${contact.title}`} · joined {formatDate(contact.joined_at)}
+                  {contact.title && ` · ${contact.title}`} · joined{" "}
+                  {formatDate(contact.joined_at)}
                 </p>
               </div>
               <button
@@ -225,7 +264,9 @@ const PortalContactsPanel = ({ agencyId, clientId, contacts, invitations }: Port
       )}
 
       {contacts.length === 0 && invitations.length === 0 && (
-        <p className={styles.empty}>No portal contacts yet. Invite someone to give them portal access.</p>
+        <p className={styles.empty}>
+          No portal contacts yet. Invite someone to give them portal access.
+        </p>
       )}
     </div>
   );

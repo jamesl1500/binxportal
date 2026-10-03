@@ -8,7 +8,7 @@
  * per render, not two.
  *
  * @module apps/binx-web/src/app/(portal)/portal/projects/[projectId]/layout.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -27,19 +27,28 @@ interface PortalProjectLayoutProps {
   params: Promise<{ projectId: string }>;
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ projectId: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ projectId: string }>;
+}): Promise<Metadata> {
   const { projectId } = await params;
   try {
     const project = await getPortalProject(projectId);
     // The project name becomes the title base for every tab under it
     // ("Board · Rebrand", "Canvas · Rebrand", …).
-    return { title: { default: project.name, template: `%s · ${project.name}` } };
+    return {
+      title: { default: project.name, template: `%s · ${project.name}` },
+    };
   } catch {
     return {};
   }
 }
 
-const PortalProjectLayout = async ({ children, params }: PortalProjectLayoutProps) => {
+const PortalProjectLayout = async ({
+  children,
+  params,
+}: PortalProjectLayoutProps) => {
   const { projectId } = await params;
 
   let project;
@@ -52,7 +61,8 @@ const PortalProjectLayout = async ({ children, params }: PortalProjectLayoutProp
     throw error;
   }
 
-  const finished = project.status === "completed" || project.status === "archived";
+  const finished =
+    project.status === "completed" || project.status === "archived";
   const due = dueLabel(project.due_date, new Date(), { done: finished });
 
   return (
@@ -72,7 +82,9 @@ const PortalProjectLayout = async ({ children, params }: PortalProjectLayoutProp
               {due.label}
             </span>
           )}
-          <span className={styles.metaItem}>{project.progress.percent}% complete</span>
+          <span className={styles.metaItem}>
+            {project.progress.percent}% complete
+          </span>
         </div>
       </PortalPageHeader>
 

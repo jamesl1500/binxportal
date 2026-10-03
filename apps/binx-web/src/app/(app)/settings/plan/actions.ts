@@ -9,7 +9,7 @@
  * they return a Stripe-hosted URL for the browser to navigate to.
  *
  * @module apps/binx-web/src/app/(app)/settings/plan/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 
@@ -29,23 +29,39 @@ export interface ChangePlanActionResult {
   subscription?: Subscription;
 }
 
-export async function changePlanAction(agencyId: string, plan: string): Promise<ChangePlanActionResult> {
+export async function changePlanAction(
+  agencyId: string,
+  plan: string,
+): Promise<ChangePlanActionResult> {
   try {
     const subscription = await changePlan(agencyId, plan);
     revalidatePath("/settings/plan");
     return { subscription };
   } catch (error) {
-    return { error: error instanceof AuthApiError ? error.message : "Unable to change the plan" };
+    return {
+      error:
+        error instanceof AuthApiError
+          ? error.message
+          : "Unable to change the plan",
+    };
   }
 }
 
-export async function startPlanTrialAction(agencyId: string, plan: string): Promise<ChangePlanActionResult> {
+export async function startPlanTrialAction(
+  agencyId: string,
+  plan: string,
+): Promise<ChangePlanActionResult> {
   try {
     const subscription = await startPlanTrial(agencyId, plan);
     revalidatePath("/settings/plan");
     return { subscription };
   } catch (error) {
-    return { error: error instanceof AuthApiError ? error.message : "Unable to start the trial" };
+    return {
+      error:
+        error instanceof AuthApiError
+          ? error.message
+          : "Unable to start the trial",
+    };
   }
 }
 
@@ -63,15 +79,28 @@ export async function startPlanCheckoutAction(
     const redirectUrl = await createPlanCheckout(agencyId, plan, returnTo);
     return { redirectUrl };
   } catch (error) {
-    return { error: error instanceof AuthApiError ? error.message : "Unable to start checkout" };
+    return {
+      error:
+        error instanceof AuthApiError
+          ? error.message
+          : "Unable to start checkout",
+    };
   }
 }
 
-export async function openBillingPortalAction(agencyId: string, targetPlan?: string): Promise<RedirectActionResult> {
+export async function openBillingPortalAction(
+  agencyId: string,
+  targetPlan?: string,
+): Promise<RedirectActionResult> {
   try {
     const redirectUrl = await createBillingPortalSession(agencyId, targetPlan);
     return { redirectUrl };
   } catch (error) {
-    return { error: error instanceof AuthApiError ? error.message : "Unable to open the billing portal" };
+    return {
+      error:
+        error instanceof AuthApiError
+          ? error.message
+          : "Unable to open the billing portal",
+    };
   }
 }

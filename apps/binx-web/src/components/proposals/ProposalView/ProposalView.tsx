@@ -6,7 +6,7 @@
  * signature details or a decline reason.
  *
  * @module apps/binx-web/src/components/proposals/ProposalView/ProposalView.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -21,7 +21,11 @@ interface ProposalViewProps {
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+  return new Date(iso).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 }
 
 function quantityLabel(quantity: string): string {
@@ -72,7 +76,9 @@ const ProposalView = ({ proposal }: ProposalViewProps) => {
       <section>
         <h2 className={styles.sectionLabel}>Recipient</h2>
         <p className={styles.partyName}>{proposal.recipient_name ?? "—"}</p>
-        {proposal.recipient_email && <p className={styles.partyLine}>{proposal.recipient_email}</p>}
+        {proposal.recipient_email && (
+          <p className={styles.partyLine}>{proposal.recipient_email}</p>
+        )}
       </section>
 
       {proposal.content && (
@@ -96,9 +102,15 @@ const ProposalView = ({ proposal }: ProposalViewProps) => {
             {proposal.line_items.map((item) => (
               <tr key={item.id}>
                 <td>{item.description}</td>
-                <td className={styles.numCol}>{quantityLabel(item.quantity)}</td>
-                <td className={styles.numCol}>{formatMoneyCents(item.unit_price_cents, currency)}</td>
-                <td className={styles.numCol}>{formatMoneyCents(item.amount_cents, currency)}</td>
+                <td className={styles.numCol}>
+                  {quantityLabel(item.quantity)}
+                </td>
+                <td className={styles.numCol}>
+                  {formatMoneyCents(item.unit_price_cents, currency)}
+                </td>
+                <td className={styles.numCol}>
+                  {formatMoneyCents(item.amount_cents, currency)}
+                </td>
               </tr>
             ))}
             {proposal.line_items.length === 0 && (
@@ -135,15 +147,23 @@ const ProposalView = ({ proposal }: ProposalViewProps) => {
           <p className={styles.partyName}>
             {proposal.signature.signer_name} · {proposal.signature.signer_email}
           </p>
-          <p className={styles.partyLine}>Signed {formatDate(proposal.signature.signed_at)}</p>
+          <p className={styles.partyLine}>
+            Signed {formatDate(proposal.signature.signed_at)}
+          </p>
         </section>
       )}
 
       {proposal.status === "declined" && (
         <section className={styles.decision}>
           <h2 className={styles.sectionLabel}>Decline reason</h2>
-          <p className={styles.content}>{proposal.decline_reason ?? "No reason was given."}</p>
-          {proposal.decided_at && <p className={styles.partyLine}>Declined {formatDate(proposal.decided_at)}</p>}
+          <p className={styles.content}>
+            {proposal.decline_reason ?? "No reason was given."}
+          </p>
+          {proposal.decided_at && (
+            <p className={styles.partyLine}>
+              Declined {formatDate(proposal.decided_at)}
+            </p>
+          )}
         </section>
       )}
     </article>

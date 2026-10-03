@@ -7,7 +7,7 @@
  * current agency.
  *
  * @module apps/binx-web/src/app/(app)/clients/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -38,7 +38,8 @@ const ClientsPage = async () => {
           <span className={styles.eyebrow}>Clients</span>
           <h1 className={styles.title}>Your clients</h1>
           <p className={styles.subtitle}>
-            {activeCount} active {activeCount === 1 ? "client" : "clients"} at {currentAgency.name}.
+            {activeCount} active {activeCount === 1 ? "client" : "clients"} at{" "}
+            {currentAgency.name}.
           </p>
         </div>
 

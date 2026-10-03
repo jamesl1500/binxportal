@@ -7,7 +7,7 @@
  * on narrow screens. Server component — static markup.
  *
  * @module apps/binx-web/src/components/portal/PortalPageHeader/PortalPageHeader.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -24,7 +24,14 @@ interface PortalPageHeaderProps {
   children?: React.ReactNode;
 }
 
-const PortalPageHeader = ({ eyebrow, title, subtitle, back, actions, children }: PortalPageHeaderProps) => (
+const PortalPageHeader = ({
+  eyebrow,
+  title,
+  subtitle,
+  back,
+  actions,
+  children,
+}: PortalPageHeaderProps) => (
   <header className={styles.header}>
     {back && (
       <Link href={back.href} className={styles.back}>

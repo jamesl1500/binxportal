@@ -5,7 +5,7 @@
  * `/portal/messages/{id}`.
  *
  * @module apps/binx-web/src/app/(portal)/portal/messages/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";

@@ -7,7 +7,7 @@
  * message.
  *
  * @module apps/binx-web/src/components/messaging/NewConversationDialog/NewConversationDialog.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -78,7 +78,12 @@ const NewConversationDialog = () => {
 
   return (
     <>
-      <button type="button" ref={triggerRef} className={styles.trigger} onClick={() => setOpen(true)}>
+      <button
+        type="button"
+        ref={triggerRef}
+        className={styles.trigger}
+        onClick={() => setOpen(true)}
+      >
         <Plus className={styles.plusIcon} aria-hidden="true" />
         New message
       </button>
@@ -99,14 +104,23 @@ const NewConversationDialog = () => {
       >
         <Dialog.Portal>
           <Dialog.Backdrop className={styles.backdrop} />
-          <Dialog.Popup className={styles.dialog} aria-label="Start a conversation">
-            <Dialog.Title className={styles.dialogTitle}>New message</Dialog.Title>
+          <Dialog.Popup
+            className={styles.dialog}
+            aria-label="Start a conversation"
+          >
+            <Dialog.Title className={styles.dialogTitle}>
+              New message
+            </Dialog.Title>
             <Dialog.Description className={styles.dialogDescription}>
               Pick one teammate for a direct message, or several for a group.
             </Dialog.Description>
 
             <form className={styles.form} onSubmit={handleSubmit}>
-              <MemberMultiSelect members={members} selected={selected} onChange={setSelected} />
+              <MemberMultiSelect
+                members={members}
+                selected={selected}
+                onChange={setSelected}
+              />
 
               {isGroup && (
                 <label className={styles.field}>
@@ -124,7 +138,9 @@ const NewConversationDialog = () => {
 
               {clients.length > 0 && (
                 <label className={styles.field}>
-                  <span className={styles.label}>Link to a client (optional)</span>
+                  <span className={styles.label}>
+                    Link to a client (optional)
+                  </span>
                   <select
                     className={styles.input}
                     value={clientId}
@@ -165,7 +181,11 @@ const NewConversationDialog = () => {
                 >
                   Cancel
                 </button>
-                <button type="submit" className={styles.submit} disabled={selected.size === 0 || submitting}>
+                <button
+                  type="submit"
+                  className={styles.submit}
+                  disabled={selected.size === 0 || submitting}
+                >
                   {submitting ? "Starting…" : "Start conversation"}
                 </button>
               </div>

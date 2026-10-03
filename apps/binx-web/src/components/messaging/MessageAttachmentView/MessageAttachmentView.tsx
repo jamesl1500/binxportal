@@ -7,7 +7,7 @@
  * `getMessageAttachmentDownloadUrl`.
  *
  * @module apps/binx-web/src/components/messaging/MessageAttachmentView/MessageAttachmentView.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -37,12 +37,23 @@ const MessageAttachmentView = ({
   messageId,
   attachment,
 }: MessageAttachmentViewProps) => {
-  const href = getMessageAttachmentDownloadUrl(agencyId, conversationId, messageId, attachment.id);
+  const href = getMessageAttachmentDownloadUrl(
+    agencyId,
+    conversationId,
+    messageId,
+    attachment.id,
+  );
   const isImage = attachment.mime_type.startsWith("image/");
 
   if (isImage) {
     return (
-      <a className={styles.image} href={href} target="_blank" rel="noreferrer" title={attachment.file_name}>
+      <a
+        className={styles.image}
+        href={href}
+        target="_blank"
+        rel="noreferrer"
+        title={attachment.file_name}
+      >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={href} alt={attachment.file_name} loading="lazy" />
       </a>

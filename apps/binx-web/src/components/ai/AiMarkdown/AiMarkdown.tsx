@@ -9,7 +9,7 @@
  * meant to be copy/pasted as-is).
  *
  * @module apps/binx-web/src/components/ai/AiMarkdown/AiMarkdown.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -24,7 +24,9 @@ interface AiMarkdownProps {
 }
 
 const AiMarkdown = ({ content, className }: AiMarkdownProps) => (
-  <div className={className ? `${styles.markdown} ${className}` : styles.markdown}>
+  <div
+    className={className ? `${styles.markdown} ${className}` : styles.markdown}
+  >
     <Markdown remarkPlugins={[remarkGfm]}>{content}</Markdown>
   </div>
 );

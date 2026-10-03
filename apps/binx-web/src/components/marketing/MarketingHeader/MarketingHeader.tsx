@@ -6,7 +6,7 @@
  * link highlight and the mobile disclosure.
  *
  * @module apps/binx-web/src/components/marketing/MarketingHeader/MarketingHeader.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -38,7 +38,9 @@ const MarketingHeader = () => {
               key={item.href}
               href={item.href}
               className={styles.navLink}
-              data-active={pathname === item.href || pathname.startsWith(`${item.href}/`)}
+              data-active={
+                pathname === item.href || pathname.startsWith(`${item.href}/`)
+              }
             >
               {item.label}
             </Link>
@@ -68,15 +70,28 @@ const MarketingHeader = () => {
       {open && (
         <div className={styles.mobilePanel}>
           {MARKETING_NAV.map((item) => (
-            <Link key={item.href} href={item.href} className={styles.mobileLink} onClick={() => setOpen(false)}>
+            <Link
+              key={item.href}
+              href={item.href}
+              className={styles.mobileLink}
+              onClick={() => setOpen(false)}
+            >
               {item.label}
             </Link>
           ))}
           <div className={styles.mobileActions}>
-            <Link href="/auth/login" className={styles.signIn} onClick={() => setOpen(false)}>
+            <Link
+              href="/auth/login"
+              className={styles.signIn}
+              onClick={() => setOpen(false)}
+            >
               Sign in
             </Link>
-            <Link href="/auth/signup" className={styles.cta} onClick={() => setOpen(false)}>
+            <Link
+              href="/auth/signup"
+              className={styles.cta}
+              onClick={() => setOpen(false)}
+            >
               Get started
             </Link>
           </div>

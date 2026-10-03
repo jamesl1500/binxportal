@@ -4,14 +4,19 @@
  * Server actions shared across the authenticated app area.
  *
  * @module apps/binx-web/src/app/(app)/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 
 import { redirect } from "next/navigation";
 
 import { AuthApiError, logout } from "@/lib/auth";
-import { AgencyRead, createAgency, getMyAgencies, setCurrentAgencyId } from "@/lib/agencies";
+import {
+  AgencyRead,
+  createAgency,
+  getMyAgencies,
+  setCurrentAgencyId,
+} from "@/lib/agencies";
 import { TutorialProgress, updateTutorialProgress } from "@/lib/users";
 
 export async function logoutAction(): Promise<void> {
@@ -33,7 +38,9 @@ export interface SwitchAgencyActionResult {
  * Doesn't redirect; the caller (OrgSwitcher) refreshes the current route
  * instead, so switching orgs doesn't move you elsewhere in the app.
  */
-export async function switchAgencyAction(agencyId: string): Promise<SwitchAgencyActionResult> {
+export async function switchAgencyAction(
+  agencyId: string,
+): Promise<SwitchAgencyActionResult> {
   const agencies = await getMyAgencies();
   if (!agencies.some((agency) => agency.id === agencyId)) {
     return { error: "You're not a member of that organization" };
@@ -58,7 +65,9 @@ export interface CreateAgencyActionResult {
  * page (reachable from the org switcher), and the caller (NewAgencyForm)
  * navigates to the dashboard itself instead.
  */
-export async function createAgencyAction(name: string): Promise<CreateAgencyActionResult> {
+export async function createAgencyAction(
+  name: string,
+): Promise<CreateAgencyActionResult> {
   let agency: AgencyRead;
   try {
     agency = await createAgency(name);

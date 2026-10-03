@@ -7,7 +7,7 @@
  * even shown to them, this is the belt-and-braces guard.
  *
  * @module apps/binx-web/src/app/(app)/team/invitations/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -35,7 +35,8 @@ const TeamInvitationsPage = async () => {
     redirect("/onboarding/two");
   }
 
-  const canManage = currentAgency.role === "owner" || currentAgency.role === "admin";
+  const canManage =
+    currentAgency.role === "owner" || currentAgency.role === "admin";
 
   if (!canManage) {
     redirect("/team");
@@ -47,15 +48,20 @@ const TeamInvitationsPage = async () => {
     <div>
       <div className={styles.inviteBlock}>
         <h2 className={styles.sectionTitle}>Invite someone</h2>
-        <p className={styles.sectionSubtitle}>They&apos;ll get an email with a link to join {currentAgency.name}.</p>
+        <p className={styles.sectionSubtitle}>
+          They&apos;ll get an email with a link to join {currentAgency.name}.
+        </p>
         <InviteMemberForm agencyId={currentAgency.id} />
         <p className={styles.importHint}>
-          Inviting a whole team? <Link href="/team/invitations/import">Import from a spreadsheet</Link>
+          Inviting a whole team?{" "}
+          <Link href="/team/invitations/import">Import from a spreadsheet</Link>
         </p>
       </div>
 
       <h2 className={styles.sectionTitle}>Invitations</h2>
-      <p className={styles.sectionSubtitle}>Outstanding invites, and the ones that have been accepted or revoked.</p>
+      <p className={styles.sectionSubtitle}>
+        Outstanding invites, and the ones that have been accepted or revoked.
+      </p>
       <InvitationsPanel agencyId={currentAgency.id} invitations={invitations} />
     </div>
   );

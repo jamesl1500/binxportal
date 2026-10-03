@@ -6,7 +6,7 @@
  * here too, only for the current email ChangeEmailForm needs.
  *
  * @module apps/binx-web/src/app/(app)/account/security/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -36,21 +36,25 @@ const AccountSecurityPage = async () => {
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Email</h2>
         <p className={styles.sectionSubtitle}>
-          We&apos;ll email a confirmation link to your new address before the change takes effect.
+          We&apos;ll email a confirmation link to your new address before the
+          change takes effect.
         </p>
         <ChangeEmailForm currentEmail={user.email} />
       </section>
 
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Password</h2>
-        <p className={styles.sectionSubtitle}>Choose a strong password you don&apos;t use anywhere else.</p>
+        <p className={styles.sectionSubtitle}>
+          Choose a strong password you don&apos;t use anywhere else.
+        </p>
         <ChangePasswordForm />
       </section>
 
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Recent security activity</h2>
         <p className={styles.sectionSubtitle}>
-          Sign-ins and credential changes on your account. Only you can see this.
+          Sign-ins and credential changes on your account. Only you can see
+          this.
         </p>
         <SecurityActivityList initialPage={securityActivity} />
       </section>
@@ -58,7 +62,8 @@ const AccountSecurityPage = async () => {
       <section className={`${styles.section} ${styles.dangerZone}`}>
         <h2 className={styles.dangerZoneTitle}>Danger zone</h2>
         <p className={styles.sectionSubtitle}>
-          Permanently delete your account and everything tied to it. This can&apos;t be undone.
+          Permanently delete your account and everything tied to it. This
+          can&apos;t be undone.
         </p>
         <DeleteAccountForm />
       </section>

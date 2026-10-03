@@ -9,7 +9,7 @@
  * current zoom.
  *
  * @module apps/binx-web/src/components/boards/BoardCanvas/BoardItem.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -45,7 +45,15 @@ interface BoardItemProps {
   onError: (message: string) => void;
 }
 
-type Gesture = { mode: "move" | "resize"; startX: number; startY: number; origX: number; origY: number; origW: number; origH: number };
+type Gesture = {
+  mode: "move" | "resize";
+  startX: number;
+  startY: number;
+  origX: number;
+  origY: number;
+  origW: number;
+  origH: number;
+};
 
 const BoardItemView = ({
   item,
@@ -94,7 +102,10 @@ const BoardItemView = ({
   const bumpToFront = () => {
     // A cheap "bring to front": one past the current view is fine, the server
     // reconciles the exact value.
-    const maxZ = Math.max(0, ...Object.values(useBoardStore.getState().itemsById).map((i) => i.z));
+    const maxZ = Math.max(
+      0,
+      ...Object.values(useBoardStore.getState().itemsById).map((i) => i.z),
+    );
     if (item.z < maxZ) {
       patchItem(item.id, { z: maxZ + 1 });
       return maxZ + 1;
@@ -172,7 +183,9 @@ const BoardItemView = ({
       const z = (g as Gesture & { z?: number }).z ?? fresh.z;
       endGesture(() => actions.update(item.id, { x: fresh.x, y: fresh.y, z }));
     } else {
-      endGesture(() => actions.update(item.id, { width: fresh.width, height: fresh.height }));
+      endGesture(() =>
+        actions.update(item.id, { width: fresh.width, height: fresh.height }),
+      );
     }
   };
 
@@ -189,14 +202,18 @@ const BoardItemView = ({
     const next = textRef.current?.value ?? noteText(item);
     if (cancelledRef.current || next === noteText(item)) return;
     patchItem(item.id, { content: { text: next } }); // optimistic
-    void actions.update(item.id, { content: { text: next } }).then((r) => r.error && onError(r.error));
+    void actions
+      .update(item.id, { content: { text: next } })
+      .then((r) => r.error && onError(r.error));
   };
 
   const applyColor = (color: string) => {
     const clearing = color === DEFAULT_NOTE_COLOR && item.color === null;
     if (clearing) return;
     patchItem(item.id, { color });
-    void actions.update(item.id, { color }).then((r) => r.error && onError(r.error));
+    void actions
+      .update(item.id, { color })
+      .then((r) => r.error && onError(r.error));
   };
 
   const handleDelete = () => {
@@ -212,9 +229,14 @@ const BoardItemView = ({
 
   const toggleReaction = (kind: string) => {
     const has = item.my_reactions.includes(kind);
-    const optimisticMine = has ? item.my_reactions.filter((k) => k !== kind) : [...item.my_reactions, kind];
+    const optimisticMine = has
+      ? item.my_reactions.filter((k) => k !== kind)
+      : [...item.my_reactions, kind];
     const optimisticCounts = { ...item.reactions };
-    optimisticCounts[kind] = Math.max(0, (optimisticCounts[kind] ?? 0) + (has ? -1 : 1));
+    optimisticCounts[kind] = Math.max(
+      0,
+      (optimisticCounts[kind] ?? 0) + (has ? -1 : 1),
+    );
     if (optimisticCounts[kind] === 0) delete optimisticCounts[kind];
     setReactions(item.id, optimisticCounts, optimisticMine);
 
@@ -228,7 +250,9 @@ const BoardItemView = ({
     });
   };
 
-  const runApproval = (fn: () => Promise<{ item?: BoardItemModel; error?: string }>) => {
+  const runApproval = (
+    fn: () => Promise<{ item?: BoardItemModel; error?: string }>,
+  ) => {
     setApprovalBusy(true);
     void fn().then((r) => {
       setApprovalBusy(false);
@@ -258,7 +282,9 @@ const BoardItemView = ({
   const sendRequestedChanges = () => {
     if (!actions.decideApproval) return;
     const note = changesNote.trim();
-    runApproval(() => actions.decideApproval!(item.id, "changes_requested", note || undefined));
+    runApproval(() =>
+      actions.decideApproval!(item.id, "changes_requested", note || undefined),
+    );
     setRequestingChanges(false);
     setChangesNote("");
   };
@@ -275,7 +301,8 @@ const BoardItemView = ({
         width: item.width,
         height: item.height,
         zIndex: item.z,
-        background: item.type === "note" ? (item.color ?? DEFAULT_NOTE_COLOR) : undefined,
+        background:
+          item.type === "note" ? (item.color ?? DEFAULT_NOTE_COLOR) : undefined,
       }}
       onPointerDown={onPointerDownBody}
       onPointerMove={onPointerMove}
@@ -313,40 +340,57 @@ const BoardItemView = ({
               ? imageUrl(item.content.file_id)
               : ""
           }
-          alt={("file_name" in item.content && item.content.file_name) || "Canvas image"}
+          alt={
+            ("file_name" in item.content && item.content.file_name) ||
+            "Canvas image"
+          }
           draggable={false}
         />
       )}
 
       {/* Who dropped the card — a faint tag above it, revealed on hover/select
           (styling in .authorTag). */}
-      <span className={styles.authorTag} data-client={item.author_kind === "client"} aria-hidden="true">
+      <span
+        className={styles.authorTag}
+        data-client={item.author_kind === "client"}
+        aria-hidden="true"
+      >
         {item.created_by_name}
       </span>
 
       {/* Approval state — visible whenever set, not just on hover/select, so
           a resting board still shows what's waiting on the client. */}
       {item.approval_status && (
-        <div className={styles.approvalBadge} data-status={item.approval_status} onPointerDown={(e) => e.stopPropagation()}>
+        <div
+          className={styles.approvalBadge}
+          data-status={item.approval_status}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
           <span className={styles.approvalStatus}>
             {item.approval_status === "pending" && "Awaiting approval"}
             {item.approval_status === "approved" &&
-              (item.approval_decided_by_name ? `Approved by ${item.approval_decided_by_name}` : "Approved")}
+              (item.approval_decided_by_name
+                ? `Approved by ${item.approval_decided_by_name}`
+                : "Approved")}
             {item.approval_status === "changes_requested" &&
               (item.approval_decided_by_name
                 ? `Changes requested by ${item.approval_decided_by_name}`
                 : "Changes requested")}
           </span>
-          {item.approval_status === "changes_requested" && item.approval_note && (
-            <p className={styles.approvalNote}>“{item.approval_note}”</p>
-          )}
+          {item.approval_status === "changes_requested" &&
+            item.approval_note && (
+              <p className={styles.approvalNote}>“{item.approval_note}”</p>
+            )}
         </div>
       )}
 
       {/* Reaction pills sit above the card whenever there are any — visible
           without selecting, like Milanote / Figma. */}
       {Object.keys(item.reactions).length > 0 && (
-        <div className={styles.reactionPills} onPointerDown={(e) => e.stopPropagation()}>
+        <div
+          className={styles.reactionPills}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
           {REACTION_EMOJI.filter((e) => item.reactions[e]).map((emoji) => (
             <button
               key={emoji}
@@ -363,12 +407,19 @@ const BoardItemView = ({
 
       {selected && (
         <>
-          <div className={styles.itemBar} onPointerDown={(e) => e.stopPropagation()}>
+          <div
+            className={styles.itemBar}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
             {confirmingDelete ? (
               <div className={styles.confirmRow}>
                 <span className={styles.confirmText}>Delete this card?</span>
                 <div className={styles.confirmActions}>
-                  <button type="button" className={styles.confirmDelete} onClick={handleDelete}>
+                  <button
+                    type="button"
+                    className={styles.confirmDelete}
+                    onClick={handleDelete}
+                  >
                     Yes, delete
                   </button>
                   <button
@@ -391,7 +442,12 @@ const BoardItemView = ({
                   autoFocus
                 />
                 <div className={styles.confirmActions}>
-                  <button type="button" className={styles.confirmDelete} data-tone="changes" onClick={sendRequestedChanges}>
+                  <button
+                    type="button"
+                    className={styles.confirmDelete}
+                    data-tone="changes"
+                    onClick={sendRequestedChanges}
+                  >
                     Send
                   </button>
                   <button
@@ -469,33 +525,37 @@ const BoardItemView = ({
                         onClick={requestApproval}
                         disabled={approvalBusy}
                       >
-                        {item.approval_status ? "Request re-approval" : "Request approval"}
+                        {item.approval_status
+                          ? "Request re-approval"
+                          : "Request approval"}
                       </button>
                     )}
                   </>
                 )}
-                {viewerKind === "client" && actions.decideApproval && item.approval_status === "pending" && (
-                  <>
-                    <span className={styles.barDivider} aria-hidden="true" />
-                    <button
-                      type="button"
-                      className={styles.approvalButton}
-                      data-tone="approve"
-                      onClick={approve}
-                      disabled={approvalBusy}
-                    >
-                      Approve
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.approvalButton}
-                      onClick={() => setRequestingChanges(true)}
-                      disabled={approvalBusy}
-                    >
-                      Request changes
-                    </button>
-                  </>
-                )}
+                {viewerKind === "client" &&
+                  actions.decideApproval &&
+                  item.approval_status === "pending" && (
+                    <>
+                      <span className={styles.barDivider} aria-hidden="true" />
+                      <button
+                        type="button"
+                        className={styles.approvalButton}
+                        data-tone="approve"
+                        onClick={approve}
+                        disabled={approvalBusy}
+                      >
+                        Approve
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.approvalButton}
+                        onClick={() => setRequestingChanges(true)}
+                        disabled={approvalBusy}
+                      >
+                        Request changes
+                      </button>
+                    </>
+                  )}
                 <span className={styles.barDivider} aria-hidden="true" />
                 <button
                   type="button"

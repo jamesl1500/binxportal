@@ -4,7 +4,7 @@
  * The closing call-to-action band, reused at the foot of every marketing page.
  *
  * @module apps/binx-web/src/components/marketing/MarketingCta/MarketingCta.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import Link from "next/link";
 

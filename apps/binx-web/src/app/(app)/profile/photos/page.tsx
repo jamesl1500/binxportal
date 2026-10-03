@@ -5,7 +5,7 @@
  * guarded by the layout above; this page only needs the profile data.
  *
  * @module apps/binx-web/src/app/(app)/profile/photos/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 

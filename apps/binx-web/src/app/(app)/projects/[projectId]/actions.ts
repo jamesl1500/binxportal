@@ -9,13 +9,17 @@
  * app/api/projects/.../route.ts).
  *
  * @module apps/binx-web/src/app/(app)/projects/[projectId]/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 
 import { redirect } from "next/navigation";
 
-import { applyProjectTaskSuggestions, generateProjectSummary, suggestProjectTasks } from "@/lib/ai";
+import {
+  applyProjectTaskSuggestions,
+  generateProjectSummary,
+  suggestProjectTasks,
+} from "@/lib/ai";
 import type { AiTaskSuggestions } from "@/lib/ai";
 import { AuthApiError } from "@/lib/auth";
 import {
@@ -95,7 +99,10 @@ export interface DeleteProjectActionResult {
   error?: string;
 }
 
-export async function deleteProjectAction(agencyId: string, projectId: string): Promise<DeleteProjectActionResult> {
+export async function deleteProjectAction(
+  agencyId: string,
+  projectId: string,
+): Promise<DeleteProjectActionResult> {
   try {
     await deleteAgencyProject(agencyId, projectId);
   } catch (error) {
@@ -348,7 +355,13 @@ export async function addTaskCommentAction(
   file?: File | null,
 ): Promise<AddTaskCommentActionResult> {
   try {
-    const comment = await addTaskComment(agencyId, projectId, taskId, body, file);
+    const comment = await addTaskComment(
+      agencyId,
+      projectId,
+      taskId,
+      body,
+      file,
+    );
     return { comment };
   } catch (error) {
     return errorResult(error, "Unable to post comment");
@@ -444,7 +457,12 @@ export async function assignProjectMemberRoleAction(
   roleId: string | null,
 ): Promise<AssignProjectMemberRoleActionResult> {
   try {
-    const member = await assignProjectMemberRole(agencyId, projectId, memberId, roleId);
+    const member = await assignProjectMemberRole(
+      agencyId,
+      projectId,
+      memberId,
+      roleId,
+    );
     return { member };
   } catch (error) {
     return errorResult(error, "Unable to update this person's role");
@@ -458,7 +476,10 @@ export interface GetProjectRolesActionResult {
   roles?: ProjectRole[];
 }
 
-export async function getProjectRolesAction(agencyId: string, projectId: string): Promise<GetProjectRolesActionResult> {
+export async function getProjectRolesAction(
+  agencyId: string,
+  projectId: string,
+): Promise<GetProjectRolesActionResult> {
   try {
     const roles = await getProjectRoles(agencyId, projectId);
     return { roles };
@@ -494,7 +515,13 @@ export async function updateProjectRoleAction(
   color: string,
 ): Promise<ProjectRoleActionResult> {
   try {
-    const role = await updateProjectRole(agencyId, projectId, roleId, name, color);
+    const role = await updateProjectRole(
+      agencyId,
+      projectId,
+      roleId,
+      name,
+      color,
+    );
     return { role };
   } catch (error) {
     return errorResult(error, "Unable to update role");
@@ -525,7 +552,10 @@ export interface GetProjectTagsActionResult {
   tags?: ProjectTag[];
 }
 
-export async function getProjectTagsAction(agencyId: string, projectId: string): Promise<GetProjectTagsActionResult> {
+export async function getProjectTagsAction(
+  agencyId: string,
+  projectId: string,
+): Promise<GetProjectTagsActionResult> {
   try {
     const tags = await getProjectTags(agencyId, projectId);
     return { tags };

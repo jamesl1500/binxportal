@@ -7,7 +7,7 @@
  * `updateAgencyProfileAction`.
  *
  * @module apps/binx-web/src/components/forms/agency/AgencyBrandingForm/AgencyBrandingForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -130,7 +130,11 @@ const AgencyBrandingForm = ({ agencyId, profile }: AgencyBrandingFormProps) => {
               onChange={(event) => setColor(event.target.value)}
             />
             {color && (
-              <button type="button" className={styles.clearColor} onClick={() => setColor("")}>
+              <button
+                type="button"
+                className={styles.clearColor}
+                onClick={() => setColor("")}
+              >
                 Clear
               </button>
             )}

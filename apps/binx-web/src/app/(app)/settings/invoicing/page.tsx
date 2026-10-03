@@ -10,7 +10,7 @@
  * Plan tab; individual invoices are managed from the Invoices page.
  *
  * @module apps/binx-web/src/app/(app)/settings/invoicing/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -28,7 +28,9 @@ interface SettingsInvoicingPageProps {
   searchParams: Promise<{ stripe?: string }>;
 }
 
-const SettingsInvoicingPage = async ({ searchParams }: SettingsInvoicingPageProps) => {
+const SettingsInvoicingPage = async ({
+  searchParams,
+}: SettingsInvoicingPageProps) => {
   const { currentAgency } = await getCurrentAgencyContext();
 
   if (!currentAgency) {
@@ -36,7 +38,8 @@ const SettingsInvoicingPage = async ({ searchParams }: SettingsInvoicingPageProp
   }
 
   const { stripe } = await searchParams;
-  const canManage = currentAgency.role === "owner" || currentAgency.role === "admin";
+  const canManage =
+    currentAgency.role === "owner" || currentAgency.role === "admin";
 
   const [settings, stripeStatus] = await Promise.all([
     getBillingSettings(currentAgency.id),
@@ -48,10 +51,14 @@ const SettingsInvoicingPage = async ({ searchParams }: SettingsInvoicingPageProp
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Online payment</h2>
         <p className={styles.sectionSubtitle}>
-          Connect Stripe so clients can pay invoices directly from their portal — money settles into{" "}
-          {currentAgency.name}&apos;s own Stripe account.
+          Connect Stripe so clients can pay invoices directly from their portal
+          — money settles into {currentAgency.name}&apos;s own Stripe account.
         </p>
-        <StripeConnectPanel agencyId={currentAgency.id} status={stripeStatus} canManage={canManage} />
+        <StripeConnectPanel
+          agencyId={currentAgency.id}
+          status={stripeStatus}
+          canManage={canManage}
+        />
       </section>
 
       <section className={styles.section}>
@@ -61,7 +68,11 @@ const SettingsInvoicingPage = async ({ searchParams }: SettingsInvoicingPageProp
             ? `How invoices for ${currentAgency.name} look and are numbered. Manage individual invoices from the Invoices page.`
             : "Only agency owners and admins can change invoicing settings."}
         </p>
-        <BillingSettingsForm agencyId={currentAgency.id} settings={settings} canManage={canManage} />
+        <BillingSettingsForm
+          agencyId={currentAgency.id}
+          settings={settings}
+          canManage={canManage}
+        />
       </section>
     </div>
   );

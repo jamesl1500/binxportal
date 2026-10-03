@@ -13,7 +13,7 @@
  * failed badge fetch just means no badge — never a broken shell.
  *
  * @module apps/binx-web/src/app/(portal)/layout.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import React from "react";
 import type { Metadata } from "next";
@@ -55,7 +55,14 @@ const PortalLayout = async ({ children }: { children: React.ReactNode }) => {
     redirect("/dashboard");
   }
 
-  const [conversations, invoices, proposals, meetings, pendingKickoffs, tutorialProgress] = await Promise.all([
+  const [
+    conversations,
+    invoices,
+    proposals,
+    meetings,
+    pendingKickoffs,
+    tutorialProgress,
+  ] = await Promise.all([
     getPortalConversations().catch(() => []),
     getPortalInvoices().catch(() => []),
     getPortalProposals().catch(() => []),
@@ -63,24 +70,44 @@ const PortalLayout = async ({ children }: { children: React.ReactNode }) => {
     getPortalPendingKickoffs().catch(() => []),
     // Default to "tour already seen" on failure — better to skip a tour than
     // to pop it on every page load while the API is unhappy.
-    getTutorialProgress().catch(() => ({ tour_completed: true, dismissed_popups: [PORTAL_TOUR_ID] })),
+    getTutorialProgress().catch(() => ({
+      tour_completed: true,
+      dismissed_popups: [PORTAL_TOUR_ID],
+    })),
   ]);
-  const badges = buildBadges({ conversations, invoices, proposals, meetings, now: new Date() });
+  const badges = buildBadges({
+    conversations,
+    invoices,
+    proposals,
+    meetings,
+    now: new Date(),
+  });
 
   // A client's own branding overrides the agency's; unset falls back to the
   // agency's own AgencyProfile brand_color/logo, then the app default — see
   // client_portal/service.py::portal_client_read / portal_logo_path.
-  const primaryColor = context.client.primary_color ?? context.agency.brand_color ?? undefined;
+  const primaryColor =
+    context.client.primary_color ?? context.agency.brand_color ?? undefined;
   const accentColor = context.client.accent_color ?? undefined;
   const hasLogo = context.client.has_logo || context.agency.has_logo;
-  const logoVersion = (context.client.has_logo ? context.client.logo_version : context.agency.logo_version) ?? null;
-  const logoSrc = hasLogo ? `/api/portal/logo${logoVersion ? `?v=${encodeURIComponent(logoVersion)}` : ""}` : null;
+  const logoVersion =
+    (context.client.has_logo
+      ? context.client.logo_version
+      : context.agency.logo_version) ?? null;
+  const logoSrc = hasLogo
+    ? `/api/portal/logo${logoVersion ? `?v=${encodeURIComponent(logoVersion)}` : ""}`
+    : null;
 
   return (
     <PortalOnboardingProvider initialProgress={tutorialProgress}>
       <div
         className={styles.root}
-        style={{ "--portal-primary": primaryColor, "--portal-accent": accentColor } as React.CSSProperties}
+        style={
+          {
+            "--portal-primary": primaryColor,
+            "--portal-accent": accentColor,
+          } as React.CSSProperties
+        }
       >
         <PortalBrandVars primary={primaryColor} accent={accentColor} />
         <PortalSidebar

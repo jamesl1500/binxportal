@@ -8,7 +8,7 @@
  * through an internal `/api/*` proxy route.
  *
  * @module apps/binx-web/src/app/(auth)/auth/confirm-email/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 
@@ -19,7 +19,9 @@ export interface ConfirmEmailChangeActionResult {
   message?: string;
 }
 
-export async function confirmEmailChangeAction(token: string): Promise<ConfirmEmailChangeActionResult> {
+export async function confirmEmailChangeAction(
+  token: string,
+): Promise<ConfirmEmailChangeActionResult> {
   try {
     const message = await confirmEmailChange(token);
     return { message };

@@ -8,13 +8,18 @@
  * just resolves the data all of them need.
  *
  * @module apps/binx-web/src/app/(app)/clients/[clientId]/settings/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { getCurrentAgencyContext } from "@/lib/agencies";
-import { getAgencyClient, getClientBranding, getClientContactInvitations, getClientContacts } from "@/lib/clients";
+import {
+  getAgencyClient,
+  getClientBranding,
+  getClientContactInvitations,
+  getClientContacts,
+} from "@/lib/clients";
 import ClientSettingsTabs from "@/components/forms/clients/ClientSettingsTabs/ClientSettingsTabs";
 
 export const metadata: Metadata = { title: "Settings" };
@@ -32,7 +37,8 @@ const ClientSettingsPage = async ({ params }: ClientSettingsPageProps) => {
   }
 
   const client = await getAgencyClient(currentAgency.id, clientId);
-  const canManage = currentAgency.role === "owner" || currentAgency.role === "admin";
+  const canManage =
+    currentAgency.role === "owner" || currentAgency.role === "admin";
   const canDelete = canManage;
 
   const [contacts, invitations, branding] = canManage

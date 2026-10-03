@@ -11,7 +11,7 @@
  * observer. One measure, one axis — never a second y-scale.
  *
  * @module apps/binx-web/src/components/charts/LineChart/LineChart.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -39,7 +39,12 @@ interface LineChartProps {
 const VIEW_W = 640;
 const PAD = { top: 16, right: 16, bottom: 28, left: 16 };
 
-const LineChart = ({ data, ariaLabel, valueFormat = "number", height = 200 }: LineChartProps) => {
+const LineChart = ({
+  data,
+  ariaLabel,
+  valueFormat = "number",
+  height = 200,
+}: LineChartProps) => {
   const gradientId = useId();
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
@@ -55,7 +60,9 @@ const LineChart = ({ data, ariaLabel, valueFormat = "number", height = 200 }: Li
       y: PAD.top + plotH - (point.value / max) * plotH,
     }));
 
-    const linePath = points.map((point, index) => `${index === 0 ? "M" : "L"}${point.x},${point.y}`).join(" ");
+    const linePath = points
+      .map((point, index) => `${index === 0 ? "M" : "L"}${point.x},${point.y}`)
+      .join(" ");
     const areaPath =
       points.length > 0
         ? `${linePath} L${points[points.length - 1].x},${PAD.top + plotH} L${points[0].x},${PAD.top + plotH} Z`
@@ -114,19 +121,40 @@ const LineChart = ({ data, ariaLabel, valueFormat = "number", height = 200 }: Li
           y2={PAD.top + geometry.plotH}
         />
 
-        <path className={styles.area} d={geometry.areaPath} fill={`url(#${gradientId})`} />
+        <path
+          className={styles.area}
+          d={geometry.areaPath}
+          fill={`url(#${gradientId})`}
+        />
         <path className={styles.line} d={geometry.linePath} />
 
         {active && (
           <g>
-            <line className={styles.crosshair} x1={active.x} y1={PAD.top} x2={active.x} y2={PAD.top + geometry.plotH} />
-            <circle className={styles.marker} cx={active.x} cy={active.y} r={4} />
+            <line
+              className={styles.crosshair}
+              x1={active.x}
+              y1={PAD.top}
+              x2={active.x}
+              y2={PAD.top + geometry.plotH}
+            />
+            <circle
+              className={styles.marker}
+              cx={active.x}
+              cy={active.y}
+              r={4}
+            />
           </g>
         )}
 
         {geometry.points.map((point, index) =>
           index % geometry.labelEvery === 0 ? (
-            <text key={point.label + index} className={styles.tick} x={point.x} y={height - 8} textAnchor="middle">
+            <text
+              key={point.label + index}
+              className={styles.tick}
+              x={point.x}
+              y={height - 8}
+              textAnchor="middle"
+            >
               {point.label}
             </text>
           ) : null,
@@ -136,11 +164,15 @@ const LineChart = ({ data, ariaLabel, valueFormat = "number", height = 200 }: Li
       {active && (
         <div
           className={styles.tooltip}
-          style={{ left: `${Math.min(88, Math.max(12, (active.x / VIEW_W) * 100))}%` }}
+          style={{
+            left: `${Math.min(88, Math.max(12, (active.x / VIEW_W) * 100))}%`,
+          }}
           role="status"
         >
           <span className={styles.tooltipLabel}>{active.label}</span>
-          <span className={styles.tooltipValue}>{formatChartValue(active.value, valueFormat)}</span>
+          <span className={styles.tooltipValue}>
+            {formatChartValue(active.value, valueFormat)}
+          </span>
         </div>
       )}
     </figure>

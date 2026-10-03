@@ -7,7 +7,7 @@
  * actions use.
  *
  * @module apps/binx-web/src/app/(app)/meetings/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 
@@ -48,7 +48,10 @@ function revalidateMeetingSurfaces(meeting: Meeting): void {
   }
 }
 
-export async function createMeetingAction(agencyId: string, input: MeetingCreateInput): Promise<MeetingActionResult> {
+export async function createMeetingAction(
+  agencyId: string,
+  input: MeetingCreateInput,
+): Promise<MeetingActionResult> {
   try {
     const meeting = await createMeeting(agencyId, input);
     revalidateMeetingSurfaces(meeting);
@@ -72,7 +75,10 @@ export async function updateMeetingAction(
   }
 }
 
-export async function cancelMeetingAction(agencyId: string, meetingId: string): Promise<MeetingActionResult> {
+export async function cancelMeetingAction(
+  agencyId: string,
+  meetingId: string,
+): Promise<MeetingActionResult> {
   try {
     const meeting = await cancelMeeting(agencyId, meetingId);
     revalidateMeetingSurfaces(meeting);

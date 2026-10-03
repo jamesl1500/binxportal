@@ -8,7 +8,7 @@
  * since it creates a new invoice there.
  *
  * @module apps/binx-web/src/app/(app)/invoices/recurring/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 

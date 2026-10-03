@@ -6,7 +6,7 @@
  * dashboard) pre-filters the list to that client.
  *
  * @module apps/binx-web/src/app/(app)/messages/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -27,7 +27,8 @@ const MessagesPage = async ({ searchParams }: MessagesPageProps) => {
   }
 
   const { client } = await searchParams;
-  const canModerate = currentAgency.role === "owner" || currentAgency.role === "admin";
+  const canModerate =
+    currentAgency.role === "owner" || currentAgency.role === "admin";
 
   return (
     <MessagingInbox

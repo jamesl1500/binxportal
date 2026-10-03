@@ -4,7 +4,7 @@
  * Renders the form for verifying a user's email address.
  *
  * @module apps/binx-web/src/components/forms/auth/VerifyEmailForm/VerifyEmailForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -31,7 +31,11 @@ interface VerifyEmailFormProps {
  *
  * @returns {JSX.Element} The rendered verify email form component.
  */
-const VerifyEmailForm = ({ token, email, portalInviteToken }: VerifyEmailFormProps) => {
+const VerifyEmailForm = ({
+  token,
+  email,
+  portalInviteToken,
+}: VerifyEmailFormProps) => {
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -53,12 +57,24 @@ const VerifyEmailForm = ({ token, email, portalInviteToken }: VerifyEmailFormPro
         <label className={styles.label} htmlFor="email">
           Email
         </label>
-        <input className={styles.input} id="email" type="email" value={email ?? ""} readOnly disabled />
+        <input
+          className={styles.input}
+          id="email"
+          type="email"
+          value={email ?? ""}
+          readOnly
+          disabled
+        />
       </div>
 
       {formError && <p className={styles.formError}>{formError}</p>}
 
-      <button className={styles.submit} type="button" onClick={handleVerify} disabled={isPending}>
+      <button
+        className={styles.submit}
+        type="button"
+        onClick={handleVerify}
+        disabled={isPending}
+      >
         {isPending ? "Verifying…" : "Verify Email"}
       </button>
     </div>

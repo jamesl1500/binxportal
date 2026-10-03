@@ -10,11 +10,14 @@
  * not cents).
  *
  * @module apps/binx-web/src/components/charts/chartFormat.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 export type ChartValueFormat = "number" | "currency" | "currency-compact";
 
-export function formatChartValue(value: number, format: ChartValueFormat = "number"): string {
+export function formatChartValue(
+  value: number,
+  format: ChartValueFormat = "number",
+): string {
   switch (format) {
     case "currency":
       return new Intl.NumberFormat(undefined, {

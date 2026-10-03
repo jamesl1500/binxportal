@@ -12,7 +12,7 @@
  * the task panel's tag picker) pick the change up.
  *
  * @module apps/binx-web/src/components/forms/projects/ProjectLabelsPanel/ProjectLabelsPanel.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -28,7 +28,9 @@ import {
   updateProjectRoleAction,
   updateProjectTagAction,
 } from "@/app/(app)/projects/[projectId]/actions";
-import LabelColorPicker, { DEFAULT_LABEL_COLOR } from "@/components/forms/projects/LabelColorPicker/LabelColorPicker";
+import LabelColorPicker, {
+  DEFAULT_LABEL_COLOR,
+} from "@/components/forms/projects/LabelColorPicker/LabelColorPicker";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog/ConfirmDialog";
 import type { ProjectRole, ProjectTag } from "@/lib/projects";
 
@@ -54,7 +56,12 @@ const CONFIG: Record<
     placeholder: string;
     maxLength: number;
     emptyText: string;
-    create: (agencyId: string, projectId: string, name: string, color: string) => Promise<{ error?: string; role?: ProjectRole; tag?: ProjectTag }>;
+    create: (
+      agencyId: string,
+      projectId: string,
+      name: string,
+      color: string,
+    ) => Promise<{ error?: string; role?: ProjectRole; tag?: ProjectTag }>;
     update: (
       agencyId: string,
       projectId: string,
@@ -62,7 +69,11 @@ const CONFIG: Record<
       name: string,
       color: string,
     ) => Promise<{ error?: string; role?: ProjectRole; tag?: ProjectTag }>;
-    remove: (agencyId: string, projectId: string, id: string) => Promise<{ error?: string }>;
+    remove: (
+      agencyId: string,
+      projectId: string,
+      id: string,
+    ) => Promise<{ error?: string }>;
   }
 > = {
   role: {
@@ -70,7 +81,8 @@ const CONFIG: Record<
     nounPlural: "roles",
     placeholder: 'e.g. "Project Manager"',
     maxLength: 100,
-    emptyText: "No roles yet. Add ones like “Project Manager” or “Web Developer” to label who does what.",
+    emptyText:
+      "No roles yet. Add ones like “Project Manager” or “Web Developer” to label who does what.",
     create: createProjectRoleAction,
     update: updateProjectRoleAction,
     remove: deleteProjectRoleAction,
@@ -80,14 +92,20 @@ const CONFIG: Record<
     nounPlural: "tags",
     placeholder: 'e.g. "Bug"',
     maxLength: 50,
-    emptyText: "No tags yet. Add ones like “Bug”, “Design”, or “Urgent” to categorise tasks on the board.",
+    emptyText:
+      "No tags yet. Add ones like “Bug”, “Design”, or “Urgent” to categorise tasks on the board.",
     create: createProjectTagAction,
     update: updateProjectTagAction,
     remove: deleteProjectTagAction,
   },
 };
 
-const ProjectLabelsPanel = ({ agencyId, projectId, kind, labels: initialLabels }: ProjectLabelsPanelProps) => {
+const ProjectLabelsPanel = ({
+  agencyId,
+  projectId,
+  kind,
+  labels: initialLabels,
+}: ProjectLabelsPanelProps) => {
   const router = useRouter();
   const config = CONFIG[kind];
 
@@ -119,7 +137,9 @@ const ProjectLabelsPanel = ({ agencyId, projectId, kind, labels: initialLabels }
         return;
       }
       const created = (result.role ?? result.tag) as Label;
-      setLabels((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
+      setLabels((prev) =>
+        [...prev, created].sort((a, b) => a.name.localeCompare(b.name)),
+      );
       setNewName("");
       setNewColor(DEFAULT_LABEL_COLOR);
       router.refresh();
@@ -142,7 +162,13 @@ const ProjectLabelsPanel = ({ agencyId, projectId, kind, labels: initialLabels }
     setError(null);
     setBusyId(editingId);
     startTransition(async () => {
-      const result = await config.update(agencyId, projectId, editingId, name, editColor);
+      const result = await config.update(
+        agencyId,
+        projectId,
+        editingId,
+        name,
+        editColor,
+      );
       setBusyId(null);
       if (result.error) {
         setError(result.error);
@@ -150,7 +176,9 @@ const ProjectLabelsPanel = ({ agencyId, projectId, kind, labels: initialLabels }
       }
       const updated = (result.role ?? result.tag) as Label;
       setLabels((prev) =>
-        prev.map((label) => (label.id === updated.id ? updated : label)).sort((a, b) => a.name.localeCompare(b.name)),
+        prev
+          .map((label) => (label.id === updated.id ? updated : label))
+          .sort((a, b) => a.name.localeCompare(b.name)),
       );
       setEditingId(null);
       router.refresh();
@@ -202,9 +230,18 @@ const ProjectLabelsPanel = ({ agencyId, projectId, kind, labels: initialLabels }
                       onChange={(event) => setEditName(event.target.value)}
                       aria-label={`${config.noun} name`}
                     />
-                    <LabelColorPicker value={editColor} onChange={setEditColor} label={`${config.noun} colour`} />
+                    <LabelColorPicker
+                      value={editColor}
+                      onChange={setEditColor}
+                      label={`${config.noun} colour`}
+                    />
                     <div className={styles.editActions}>
-                      <button type="submit" className={styles.iconConfirm} disabled={isBusy || !editName.trim()} aria-label="Save">
+                      <button
+                        type="submit"
+                        className={styles.iconConfirm}
+                        disabled={isBusy || !editName.trim()}
+                        aria-label="Save"
+                      >
                         <Check aria-hidden="true" />
                       </button>
                       <button
@@ -223,8 +260,15 @@ const ProjectLabelsPanel = ({ agencyId, projectId, kind, labels: initialLabels }
 
             return (
               <li key={label.id} className={styles.row}>
-                <span className={styles.labelChip} style={{ borderColor: label.color, color: label.color }}>
-                  <span className={styles.labelDot} style={{ background: label.color }} aria-hidden="true" />
+                <span
+                  className={styles.labelChip}
+                  style={{ borderColor: label.color, color: label.color }}
+                >
+                  <span
+                    className={styles.labelDot}
+                    style={{ background: label.color }}
+                    aria-hidden="true"
+                  />
                   {label.name}
                 </span>
                 <div className={styles.rowActions}>
@@ -262,7 +306,11 @@ const ProjectLabelsPanel = ({ agencyId, projectId, kind, labels: initialLabels }
           onChange={(event) => setNewName(event.target.value)}
           aria-label={`New ${config.noun} name`}
         />
-        <LabelColorPicker value={newColor} onChange={setNewColor} label={`New ${config.noun} colour`} />
+        <LabelColorPicker
+          value={newColor}
+          onChange={setNewColor}
+          label={`New ${config.noun} colour`}
+        />
         <button
           type="submit"
           className={styles.addButton}

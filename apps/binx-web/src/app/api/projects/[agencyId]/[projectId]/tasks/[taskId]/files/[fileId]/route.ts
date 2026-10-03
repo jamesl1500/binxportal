@@ -8,7 +8,7 @@
  * binx-api's response back.
  *
  * @module apps/binx-web/src/app/api/projects/[agencyId]/[projectId]/tasks/[taskId]/files/[fileId]/route.ts
- * @author Binx.io
+ * @author Binx Portal
  * @route GET /api/projects/{agencyId}/{projectId}/tasks/{taskId}/files/{fileId}
  */
 import axios from "axios";
@@ -18,7 +18,12 @@ import { api } from "@/lib/api";
 import { AuthApiError, extractDetailMessage, getAccessToken } from "@/lib/auth";
 
 interface RouteParams {
-  params: Promise<{ agencyId: string; projectId: string; taskId: string; fileId: string }>;
+  params: Promise<{
+    agencyId: string;
+    projectId: string;
+    taskId: string;
+    fileId: string;
+  }>;
 }
 
 export async function GET(_req: NextRequest, { params }: RouteParams) {
@@ -32,14 +37,21 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
   try {
     const upstream = await api.get<ArrayBuffer>(
       `/agencies/${agencyId}/projects/${projectId}/tasks/${taskId}/files/${fileId}/download`,
-      { headers: { Authorization: `Bearer ${accessToken}` }, responseType: "arraybuffer" },
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        responseType: "arraybuffer",
+      },
     );
 
     return new NextResponse(upstream.data, {
       status: 200,
       headers: {
-        "Content-Type": String(upstream.headers["content-type"] ?? "application/octet-stream"),
-        "Content-Disposition": String(upstream.headers["content-disposition"] ?? "attachment"),
+        "Content-Type": String(
+          upstream.headers["content-type"] ?? "application/octet-stream",
+        ),
+        "Content-Disposition": String(
+          upstream.headers["content-disposition"] ?? "attachment",
+        ),
       },
     });
   } catch (error) {
@@ -55,7 +67,8 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ message }, { status: error.response.status });
     }
 
-    const message = error instanceof AuthApiError ? error.message : "Unable to download file";
+    const message =
+      error instanceof AuthApiError ? error.message : "Unable to download file";
     return NextResponse.json({ message }, { status: 500 });
   }
 }

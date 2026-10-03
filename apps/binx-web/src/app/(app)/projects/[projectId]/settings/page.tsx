@@ -8,14 +8,18 @@
  * scroll; this Server Component just resolves the data all four need.
  *
  * @module apps/binx-web/src/app/(app)/projects/[projectId]/settings/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { getCurrentAgencyContext } from "@/lib/agencies";
 import { getAgencyClients } from "@/lib/clients";
-import { getAgencyProject, getProjectRoles, getProjectTags } from "@/lib/projects";
+import {
+  getAgencyProject,
+  getProjectRoles,
+  getProjectTags,
+} from "@/lib/projects";
 import ProjectSettingsTabs from "@/components/forms/projects/ProjectSettingsTabs/ProjectSettingsTabs";
 
 export const metadata: Metadata = { title: "Settings" };

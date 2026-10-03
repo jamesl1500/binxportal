@@ -7,7 +7,7 @@
  * send + mark-read + a refetch for the poll.
  *
  * @module apps/binx-web/src/app/(portal)/portal/messages/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 
@@ -44,7 +44,9 @@ export interface PortalThreadResult {
   messages?: Message[];
 }
 
-export async function getPortalThreadAction(conversationId: string): Promise<PortalThreadResult> {
+export async function getPortalThreadAction(
+  conversationId: string,
+): Promise<PortalThreadResult> {
   try {
     const messages = await getPortalMessages(conversationId);
     return { messages };
@@ -56,7 +58,9 @@ export async function getPortalThreadAction(conversationId: string): Promise<Por
   }
 }
 
-export async function markPortalReadAction(conversationId: string): Promise<void> {
+export async function markPortalReadAction(
+  conversationId: string,
+): Promise<void> {
   try {
     await markPortalConversationRead(conversationId);
   } catch {

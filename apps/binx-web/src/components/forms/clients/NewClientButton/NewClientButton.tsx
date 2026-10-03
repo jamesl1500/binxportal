@@ -9,7 +9,7 @@
  * `invoices/NewInvoiceButton`.
  *
  * @module apps/binx-web/src/components/forms/clients/NewClientButton/NewClientButton.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 

@@ -8,7 +8,7 @@
  * uses the conversation-scoped participant route.
  *
  * @module apps/binx-web/src/components/messaging/MessageAvatar/MessageAvatar.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -28,8 +28,13 @@ export function initials(fullName: string): string {
 }
 
 /** The photo URL for an agency member, or null when they haven't set one (or aren't a member). */
-export function memberAvatarSrc(agencyId: string, member: AgencyMember | null | undefined): string | null {
-  return member?.has_avatar ? memberImageUrl(agencyId, member.id, "avatar", member.avatar_version) : null;
+export function memberAvatarSrc(
+  agencyId: string,
+  member: AgencyMember | null | undefined,
+): string | null {
+  return member?.has_avatar
+    ? memberImageUrl(agencyId, member.id, "avatar", member.avatar_version)
+    : null;
 }
 
 interface MessageAvatarProps {
@@ -39,7 +44,12 @@ interface MessageAvatarProps {
   className?: string;
 }
 
-const MessageAvatar = ({ name, src, size = "md", className }: MessageAvatarProps) => {
+const MessageAvatar = ({
+  name,
+  src,
+  size = "md",
+  className,
+}: MessageAvatarProps) => {
   // Remember which URL failed rather than a flag, so a new src gets a fresh try.
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const classes = [styles.avatar, className].filter(Boolean).join(" ");
@@ -47,7 +57,14 @@ const MessageAvatar = ({ name, src, size = "md", className }: MessageAvatarProps
   if (src && src !== failedSrc) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
-      <img className={classes} data-size={size} src={src} alt="" aria-hidden="true" onError={() => setFailedSrc(src)} />
+      <img
+        className={classes}
+        data-size={size}
+        src={src}
+        alt=""
+        aria-hidden="true"
+        onError={() => setFailedSrc(src)}
+      />
     );
   }
 

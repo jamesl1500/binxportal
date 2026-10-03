@@ -7,7 +7,7 @@
  * legend beside it with its label and value, and the legend is always shown.
  *
  * @module apps/binx-web/src/components/charts/DonutChart/DonutChart.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -36,7 +36,12 @@ const RADIUS = (SIZE - STROKE) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 const GAP = 2; // px of surface between segments
 
-const DonutChart = ({ segments, ariaLabel, centerPrimary, centerSecondary }: DonutChartProps) => {
+const DonutChart = ({
+  segments,
+  ariaLabel,
+  centerPrimary,
+  centerSecondary,
+}: DonutChartProps) => {
   const [activeLabel, setActiveLabel] = useState<string | null>(null);
 
   const total = segments.reduce((sum, segment) => sum + segment.value, 0);
@@ -53,7 +58,12 @@ const DonutChart = ({ segments, ariaLabel, centerPrimary, centerSecondary }: Don
   return (
     <figure className={styles.figure}>
       <div className={styles.chart}>
-        <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className={styles.svg} role="img" aria-label={ariaLabel}>
+        <svg
+          viewBox={`0 0 ${SIZE} ${SIZE}`}
+          className={styles.svg}
+          role="img"
+          aria-label={ariaLabel}
+        >
           <circle
             className={styles.track}
             cx={SIZE / 2}
@@ -82,8 +92,12 @@ const DonutChart = ({ segments, ariaLabel, centerPrimary, centerSecondary }: Don
         </svg>
         {(centerPrimary || centerSecondary) && (
           <div className={styles.center}>
-            {centerPrimary && <span className={styles.centerPrimary}>{centerPrimary}</span>}
-            {centerSecondary && <span className={styles.centerSecondary}>{centerSecondary}</span>}
+            {centerPrimary && (
+              <span className={styles.centerPrimary}>{centerPrimary}</span>
+            )}
+            {centerSecondary && (
+              <span className={styles.centerSecondary}>{centerSecondary}</span>
+            )}
           </div>
         )}
       </div>
@@ -96,11 +110,17 @@ const DonutChart = ({ segments, ariaLabel, centerPrimary, centerSecondary }: Don
             onPointerEnter={() => setActiveLabel(segment.label)}
             onPointerLeave={() => setActiveLabel(null)}
           >
-            <span className={styles.swatch} style={{ background: segment.color }} aria-hidden="true" />
+            <span
+              className={styles.swatch}
+              style={{ background: segment.color }}
+              aria-hidden="true"
+            />
             <span className={styles.legendLabel}>{segment.label}</span>
             <span className={styles.legendValue}>
               {segment.value}
-              {segment.hint && <span className={styles.legendHint}>{segment.hint}</span>}
+              {segment.hint && (
+                <span className={styles.legendHint}>{segment.hint}</span>
+              )}
             </span>
           </li>
         ))}

@@ -5,7 +5,7 @@
  * button that confirms the change using the token from the emailed link.
  *
  * @module apps/binx-web/src/components/forms/auth/ConfirmEmailChangeForm/ConfirmEmailChangeForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -22,7 +22,10 @@ interface ConfirmEmailChangeFormProps {
   newEmail: string;
 }
 
-const ConfirmEmailChangeForm = ({ token, newEmail }: ConfirmEmailChangeFormProps) => {
+const ConfirmEmailChangeForm = ({
+  token,
+  newEmail,
+}: ConfirmEmailChangeFormProps) => {
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -52,12 +55,24 @@ const ConfirmEmailChangeForm = ({ token, newEmail }: ConfirmEmailChangeFormProps
         <label className={styles.label} htmlFor="newEmail">
           New email
         </label>
-        <input className={styles.input} id="newEmail" type="email" value={newEmail} readOnly disabled />
+        <input
+          className={styles.input}
+          id="newEmail"
+          type="email"
+          value={newEmail}
+          readOnly
+          disabled
+        />
       </div>
 
       {formError && <p className={styles.formError}>{formError}</p>}
 
-      <button className={styles.submit} type="button" onClick={handleConfirm} disabled={isPending}>
+      <button
+        className={styles.submit}
+        type="button"
+        onClick={handleConfirm}
+        disabled={isPending}
+      >
         {isPending ? "Confirming…" : "Confirm email change"}
       </button>
     </div>

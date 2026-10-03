@@ -19,7 +19,7 @@
  * again.
  *
  * @module apps/binx-web/src/components/portal/PortalKickoffInvite/PortalKickoffInvite.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -63,7 +63,12 @@ function writeSnooze(key: string): void {
   }
 }
 
-const PortalKickoffInvite = ({ kickoffs, agencyName, contactFirstName, logoSrc }: PortalKickoffInviteProps) => {
+const PortalKickoffInvite = ({
+  kickoffs,
+  agencyName,
+  contactFirstName,
+  logoSrc,
+}: PortalKickoffInviteProps) => {
   const pathname = usePathname();
   const onboarding = useOptionalPortalOnboarding();
   const tourOpen = onboarding?.isTourOpen ?? false;
@@ -113,7 +118,9 @@ const PortalKickoffInvite = ({ kickoffs, agencyName, contactFirstName, logoSrc }
           <div className={styles.body}>
             <span className={styles.eyebrow}>Action needed · {agencyName}</span>
             <Dialog.Title className={styles.title}>
-              {single ? `Let's kick off ${first.project_name}` : `${kickoffs.length} kickoffs are waiting on you`}
+              {single
+                ? `Let's kick off ${first.project_name}`
+                : `${kickoffs.length} kickoffs are waiting on you`}
             </Dialog.Title>
             <Dialog.Description className={styles.description}>
               {single
@@ -124,7 +131,9 @@ const PortalKickoffInvite = ({ kickoffs, agencyName, contactFirstName, logoSrc }
             {single ? (
               <>
                 {first.intro_message && (
-                  <blockquote className={styles.intro}>{first.intro_message}</blockquote>
+                  <blockquote className={styles.intro}>
+                    {first.intro_message}
+                  </blockquote>
                 )}
                 <p className={styles.meta}>
                   <ClipboardList aria-hidden="true" />
@@ -135,14 +144,23 @@ const PortalKickoffInvite = ({ kickoffs, agencyName, contactFirstName, logoSrc }
               <ul className={styles.list}>
                 {kickoffs.map((kickoff) => (
                   <li key={kickoff.id}>
-                    <Link href={kickoffHref(kickoff)} className={styles.row} onClick={close}>
+                    <Link
+                      href={kickoffHref(kickoff)}
+                      className={styles.row}
+                      onClick={close}
+                    >
                       <span className={styles.rowText}>
-                        <span className={styles.rowTitle}>{kickoff.project_name}</span>
+                        <span className={styles.rowTitle}>
+                          {kickoff.project_name}
+                        </span>
                         <span className={styles.rowMeta}>
                           {kickoff.title} · {kickoffQuestionSummary(kickoff)}
                         </span>
                       </span>
-                      <ArrowRight className={styles.rowArrow} aria-hidden="true" />
+                      <ArrowRight
+                        className={styles.rowArrow}
+                        aria-hidden="true"
+                      />
                     </Link>
                   </li>
                 ))}
@@ -154,7 +172,11 @@ const PortalKickoffInvite = ({ kickoffs, agencyName, contactFirstName, logoSrc }
             <button type="button" className={styles.later} onClick={close}>
               Remind me later
             </button>
-            <Link href={kickoffHref(first)} className={styles.start} onClick={close}>
+            <Link
+              href={kickoffHref(first)}
+              className={styles.start}
+              onClick={close}
+            >
               {single ? "Start kickoff" : "Start the first one"}
               <ArrowRight aria-hidden="true" />
             </Link>

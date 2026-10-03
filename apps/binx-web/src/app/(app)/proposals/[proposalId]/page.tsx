@@ -5,7 +5,7 @@
  * :proposalId 404s.
  *
  * @module apps/binx-web/src/app/(app)/proposals/[proposalId]/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -23,7 +23,9 @@ interface ProposalPageProps {
   params: Promise<{ proposalId: string }>;
 }
 
-export async function generateMetadata({ params }: ProposalPageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: ProposalPageProps): Promise<Metadata> {
   const { proposalId } = await params;
   try {
     const { currentAgency } = await getCurrentAgencyContext();

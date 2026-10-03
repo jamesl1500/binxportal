@@ -8,7 +8,7 @@
  * Server component (static markup).
  *
  * @module apps/binx-web/src/components/portal/PortalTaskBoard/PortalTaskBoard.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { PortalTaskList } from "@/lib/portal";
 
@@ -19,7 +19,10 @@ interface PortalTaskBoardProps {
 }
 
 function formatDueDate(value: string): string {
-  return new Date(`${value}T00:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  return new Date(`${value}T00:00:00`).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
 }
 
 const PortalTaskBoard = ({ columns }: PortalTaskBoardProps) => {
@@ -40,11 +43,19 @@ const PortalTaskBoard = ({ columns }: PortalTaskBoardProps) => {
             {column.tasks.map((task) => (
               <li key={task.id} className={styles.task}>
                 <p className={styles.taskTitle}>{task.title}</p>
-                {task.description && <p className={styles.taskDescription}>{task.description}</p>}
-                {task.due_date && <span className={styles.taskDueDate}>Due {formatDueDate(task.due_date)}</span>}
+                {task.description && (
+                  <p className={styles.taskDescription}>{task.description}</p>
+                )}
+                {task.due_date && (
+                  <span className={styles.taskDueDate}>
+                    Due {formatDueDate(task.due_date)}
+                  </span>
+                )}
               </li>
             ))}
-            {column.tasks.length === 0 && <li className={styles.emptyColumn}>Nothing here yet</li>}
+            {column.tasks.length === 0 && (
+              <li className={styles.emptyColumn}>Nothing here yet</li>
+            )}
           </ul>
         </div>
       ))}

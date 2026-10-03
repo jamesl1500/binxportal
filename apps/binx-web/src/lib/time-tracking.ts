@@ -8,7 +8,7 @@
  * convention as `lib/invoicing.ts`.
  *
  * @module apps/binx-web/src/lib/time-tracking.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 import axios from "axios";
 
@@ -27,7 +27,10 @@ async function authHeader(): Promise<{ Authorization: string }> {
 
 function apiError(error: unknown, fallback: string): AuthApiError | unknown {
   if (axios.isAxiosError(error) && error.response) {
-    return new AuthApiError(extractDetailMessage(error.response.data, fallback), error.response.status);
+    return new AuthApiError(
+      extractDetailMessage(error.response.data, fallback),
+      error.response.status,
+    );
   }
   return error;
 }
@@ -83,10 +86,15 @@ export interface TimeEntryFilter {
  * @function getRunningTimer
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't a member of this agency.
  */
-export async function getRunningTimer(agencyId: string): Promise<TimeEntry | null> {
+export async function getRunningTimer(
+  agencyId: string,
+): Promise<TimeEntry | null> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<TimeEntry | null>(`/agencies/${agencyId}/time-entries/running`, { headers });
+    const { data } = await api.get<TimeEntry | null>(
+      `/agencies/${agencyId}/time-entries/running`,
+      { headers },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to load the running timer");
@@ -102,7 +110,10 @@ export async function getRunningTimer(agencyId: string): Promise<TimeEntry | nul
  * @function startTimer
  * @throws {AuthApiError} - Thrown if not authenticated, or a timer is already running.
  */
-export async function startTimer(agencyId: string, input: StartTimerInput): Promise<TimeEntry> {
+export async function startTimer(
+  agencyId: string,
+  input: StartTimerInput,
+): Promise<TimeEntry> {
   const headers = await authHeader();
   try {
     const { data } = await api.post<TimeEntry>(
@@ -130,12 +141,19 @@ export async function startTimer(agencyId: string, input: StartTimerInput): Prom
  * @function stopTimer
  * @throws {AuthApiError} - Thrown if not authenticated, or the entry isn't running.
  */
-export async function stopTimer(agencyId: string, entryId: string): Promise<TimeEntry> {
+export async function stopTimer(
+  agencyId: string,
+  entryId: string,
+): Promise<TimeEntry> {
   const headers = await authHeader();
   try {
-    const { data } = await api.post<TimeEntry>(`/agencies/${agencyId}/time-entries/${entryId}/stop`, null, {
-      headers,
-    });
+    const { data } = await api.post<TimeEntry>(
+      `/agencies/${agencyId}/time-entries/${entryId}/stop`,
+      null,
+      {
+        headers,
+      },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to stop the timer");
@@ -153,7 +171,10 @@ export async function stopTimer(agencyId: string, entryId: string): Promise<Time
  * @function logManualEntry
  * @throws {AuthApiError} - Thrown if not authenticated, or `endedAt` isn't after `startedAt`.
  */
-export async function logManualEntry(agencyId: string, input: ManualEntryInput): Promise<TimeEntry> {
+export async function logManualEntry(
+  agencyId: string,
+  input: ManualEntryInput,
+): Promise<TimeEntry> {
   const headers = await authHeader();
   try {
     const { data } = await api.post<TimeEntry>(
@@ -218,10 +239,15 @@ export async function updateTimeEntry(
  * @function deleteTimeEntry
  * @throws {AuthApiError} - Thrown if not authenticated, or the entry is already invoiced.
  */
-export async function deleteTimeEntry(agencyId: string, entryId: string): Promise<void> {
+export async function deleteTimeEntry(
+  agencyId: string,
+  entryId: string,
+): Promise<void> {
   const headers = await authHeader();
   try {
-    await api.delete(`/agencies/${agencyId}/time-entries/${entryId}`, { headers });
+    await api.delete(`/agencies/${agencyId}/time-entries/${entryId}`, {
+      headers,
+    });
   } catch (error) {
     throw apiError(error, "Unable to delete time entry");
   }
@@ -236,19 +262,25 @@ export async function deleteTimeEntry(agencyId: string, entryId: string): Promis
  * @function getTimeEntries
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't a member of this agency.
  */
-export async function getTimeEntries(agencyId: string, filter: TimeEntryFilter = {}): Promise<TimeEntry[]> {
+export async function getTimeEntries(
+  agencyId: string,
+  filter: TimeEntryFilter = {},
+): Promise<TimeEntry[]> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<TimeEntry[]>(`/agencies/${agencyId}/time-entries`, {
-      headers,
-      params: {
-        project_id: filter.projectId,
-        task_id: filter.taskId,
-        user_id: filter.userId,
-        billable: filter.billable,
-        uninvoiced: filter.uninvoiced,
+    const { data } = await api.get<TimeEntry[]>(
+      `/agencies/${agencyId}/time-entries`,
+      {
+        headers,
+        params: {
+          project_id: filter.projectId,
+          task_id: filter.taskId,
+          user_id: filter.userId,
+          billable: filter.billable,
+          uninvoiced: filter.uninvoiced,
+        },
       },
-    });
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to load time entries");
@@ -264,13 +296,19 @@ export async function getTimeEntries(agencyId: string, filter: TimeEntryFilter =
  * @function getUninvoicedSummary
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't a member of this agency.
  */
-export async function getUninvoicedSummary(agencyId: string, projectId: string): Promise<UninvoicedSummary> {
+export async function getUninvoicedSummary(
+  agencyId: string,
+  projectId: string,
+): Promise<UninvoicedSummary> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<UninvoicedSummary>(`/agencies/${agencyId}/time-entries/uninvoiced-summary`, {
-      headers,
-      params: { project_id: projectId },
-    });
+    const { data } = await api.get<UninvoicedSummary>(
+      `/agencies/${agencyId}/time-entries/uninvoiced-summary`,
+      {
+        headers,
+        params: { project_id: projectId },
+      },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to load the uninvoiced summary");
@@ -302,6 +340,9 @@ export async function createInvoiceFromTimeEntries(
     );
     return data;
   } catch (error) {
-    throw apiError(error, "Unable to create an invoice from these time entries");
+    throw apiError(
+      error,
+      "Unable to create an invoice from these time entries",
+    );
   }
 }

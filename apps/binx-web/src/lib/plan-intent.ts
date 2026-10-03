@@ -10,6 +10,6 @@
  * in the same browser.
  *
  * @module apps/binx-web/src/lib/plan-intent.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 export const PLAN_INTENT_STORAGE_KEY = "binx_plan_intent";

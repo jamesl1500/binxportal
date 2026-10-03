@@ -15,7 +15,7 @@
  * on the scrim.
  *
  * @module apps/binx-web/src/components/portal/PortalSidebar/PortalSidebar.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -32,13 +32,18 @@ import {
   Menu,
   MessageSquare,
   Receipt,
+  User,
   X,
   type LucideIcon,
 } from "lucide-react";
 
 import { logoutAction } from "@/app/(app)/actions";
 import { useOptionalPortalOnboarding } from "@/components/portal/PortalOnboardingProvider/PortalOnboardingProvider";
-import { initials, KICKOFF_INVITE_STORAGE_KEY, type PortalBadges } from "@/lib/portal-insights";
+import {
+  initials,
+  KICKOFF_INVITE_STORAGE_KEY,
+  type PortalBadges,
+} from "@/lib/portal-insights";
 
 import styles from "./PortalSidebar.module.scss";
 
@@ -63,7 +68,14 @@ interface NavItem {
   badgeLabel?: string;
 }
 
-const PortalSidebar = ({ agencyName, clientName, contactName, contactDetail, logoSrc, badges }: PortalSidebarProps) => {
+const PortalSidebar = ({
+  agencyName,
+  clientName,
+  contactName,
+  contactDetail,
+  logoSrc,
+  badges,
+}: PortalSidebarProps) => {
   const pathname = usePathname();
   const onboarding = useOptionalPortalOnboarding();
   const [isPending, startTransition] = useTransition();
@@ -79,7 +91,8 @@ const PortalSidebar = ({ agencyName, clientName, contactName, contactDetail, log
 
   useEffect(() => {
     if (!open) return;
-    const onKey = (event: KeyboardEvent) => event.key === "Escape" && setOpen(false);
+    const onKey = (event: KeyboardEvent) =>
+      event.key === "Escape" && setOpen(false);
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
@@ -90,6 +103,7 @@ const PortalSidebar = ({ agencyName, clientName, contactName, contactDetail, log
       items: [
         { href: "/portal", label: "Home", icon: Home },
         { href: "/portal/projects", label: "Projects", icon: FolderKanban },
+        { href: "/portal/my-team", label: "My Team", icon: User },
         {
           href: "/portal/messages",
           label: "Messages",
@@ -128,7 +142,8 @@ const PortalSidebar = ({ agencyName, clientName, contactName, contactDetail, log
     },
   ];
 
-  const isActive = (href: string) => (href === "/portal" ? pathname === href : pathname.startsWith(href));
+  const isActive = (href: string) =>
+    href === "/portal" ? pathname === href : pathname.startsWith(href);
 
   const signOut = () => {
     setOpen(false);
@@ -167,13 +182,19 @@ const PortalSidebar = ({ agencyName, clientName, contactName, contactDetail, log
           onClick={() => setOpen((v) => !v)}
         >
           {open ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
-          {!open && badges.messages + badges.proposals + badges.invoices > 0 && (
-            <span className={styles.menuDot} aria-hidden="true" />
-          )}
+          {!open &&
+            badges.messages + badges.proposals + badges.invoices > 0 && (
+              <span className={styles.menuDot} aria-hidden="true" />
+            )}
         </button>
       </div>
 
-      <div className={styles.scrim} data-open={open} aria-hidden="true" onClick={() => setOpen(false)} />
+      <div
+        className={styles.scrim}
+        data-open={open}
+        aria-hidden="true"
+        onClick={() => setOpen(false)}
+      />
 
       <aside id="portal-sidebar" className={styles.sidebar} data-open={open}>
         <div className={styles.brand}>
@@ -203,9 +224,16 @@ const PortalSidebar = ({ agencyName, clientName, contactName, contactDetail, log
                         <Icon className={styles.itemIcon} aria-hidden="true" />
                         <span className={styles.itemLabel}>{item.label}</span>
                         {item.badge ? (
-                          <span className={styles.badge} data-tone={item.tone ?? "default"}>
-                            <span aria-hidden="true">{item.badge > 99 ? "99+" : item.badge}</span>
-                            <span className={styles.srOnly}>, {item.badgeLabel}</span>
+                          <span
+                            className={styles.badge}
+                            data-tone={item.tone ?? "default"}
+                          >
+                            <span aria-hidden="true">
+                              {item.badge > 99 ? "99+" : item.badge}
+                            </span>
+                            <span className={styles.srOnly}>
+                              , {item.badgeLabel}
+                            </span>
                           </span>
                         ) : null}
                       </Link>
@@ -222,14 +250,20 @@ const PortalSidebar = ({ agencyName, clientName, contactName, contactDetail, log
             <LifeBuoy className={styles.helpIcon} aria-hidden="true" />
             <div className={styles.helpText}>
               <span className={styles.helpTitle}>Need a hand?</span>
-              <span className={styles.helpBody}>Message {agencyName} or retake the tour.</span>
+              <span className={styles.helpBody}>
+                Message {agencyName} or retake the tour.
+              </span>
             </div>
             <div className={styles.helpActions}>
               <Link href="/portal/messages" className={styles.helpLink}>
                 Message us
               </Link>
               {onboarding && (
-                <button type="button" className={styles.helpLink} onClick={onboarding.openTour}>
+                <button
+                  type="button"
+                  className={styles.helpLink}
+                  onClick={onboarding.openTour}
+                >
                   Take the tour
                 </button>
               )}
@@ -242,7 +276,9 @@ const PortalSidebar = ({ agencyName, clientName, contactName, contactDetail, log
             </span>
             <div className={styles.accountText}>
               <span className={styles.contact}>{contactName}</span>
-              {contactDetail && <span className={styles.contactDetail}>{contactDetail}</span>}
+              {contactDetail && (
+                <span className={styles.contactDetail}>{contactDetail}</span>
+              )}
             </div>
             <button
               type="button"

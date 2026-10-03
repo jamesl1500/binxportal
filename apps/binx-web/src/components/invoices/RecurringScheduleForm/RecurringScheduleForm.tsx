@@ -10,7 +10,7 @@
  * instead of edited in place.
  *
  * @module apps/binx-web/src/components/invoices/RecurringScheduleForm/RecurringScheduleForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -20,7 +20,10 @@ import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { formatMoneyCents } from "@/lib/money";
-import type { RecurringInterval, RecurringScheduleInput } from "@/lib/recurring-invoices";
+import type {
+  RecurringInterval,
+  RecurringScheduleInput,
+} from "@/lib/recurring-invoices";
 import { weekdayLabel } from "@/lib/recurring-invoices-client";
 import { createRecurringScheduleAction } from "@/app/(app)/invoices/recurring/actions";
 
@@ -55,7 +58,12 @@ interface LineRow {
 const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6];
 
 let rowCounter = 0;
-const newRow = (): LineRow => ({ key: `r${rowCounter++}`, description: "", quantity: "1", unitPrice: "" });
+const newRow = (): LineRow => ({
+  key: `r${rowCounter++}`,
+  description: "",
+  quantity: "1",
+  unitPrice: "",
+});
 
 function toCents(dollars: string): number {
   const n = Number.parseFloat(dollars);
@@ -78,7 +86,8 @@ const RecurringScheduleForm = ({
   const [clientId, setClientId] = useState(clients[0]?.id ?? "");
   const [projectId, setProjectId] = useState("");
   const [title, setTitle] = useState("");
-  const [intervalType, setIntervalType] = useState<RecurringInterval>("monthly");
+  const [intervalType, setIntervalType] =
+    useState<RecurringInterval>("monthly");
   const [intervalCount, setIntervalCount] = useState("1");
   const [dayOfMonth, setDayOfMonth] = useState("1");
   const [weekday, setWeekday] = useState("0");
@@ -92,20 +101,35 @@ const RecurringScheduleForm = ({
   const [submitting, setSubmitting] = useState(false);
 
   const totals = useMemo(() => {
-    const lineAmounts = rows.map((row) => roundHalfUp((Number.parseFloat(row.quantity) || 0) * toCents(row.unitPrice)));
+    const lineAmounts = rows.map((row) =>
+      roundHalfUp(
+        (Number.parseFloat(row.quantity) || 0) * toCents(row.unitPrice),
+      ),
+    );
     const subtotal = lineAmounts.reduce((sum, amount) => sum + amount, 0);
-    const tax = roundHalfUp((subtotal * (Number.parseFloat(taxRate) || 0)) / 100);
+    const tax = roundHalfUp(
+      (subtotal * (Number.parseFloat(taxRate) || 0)) / 100,
+    );
     return { lineAmounts, subtotal, tax, total: subtotal + tax };
   }, [rows, taxRate]);
 
-  const clientProjects = projects.filter((project) => project.client_id === clientId);
+  const clientProjects = projects.filter(
+    (project) => project.client_id === clientId,
+  );
   const canSubmit =
     clientId !== "" &&
     title.trim() !== "" &&
-    rows.some((row) => row.description.trim() !== "" && toCents(row.unitPrice) >= 0 && row.quantity);
+    rows.some(
+      (row) =>
+        row.description.trim() !== "" &&
+        toCents(row.unitPrice) >= 0 &&
+        row.quantity,
+    );
 
   const updateRow = (key: string, patch: Partial<LineRow>) => {
-    setRows((prev) => prev.map((row) => (row.key === key ? { ...row, ...patch } : row)));
+    setRows((prev) =>
+      prev.map((row) => (row.key === key ? { ...row, ...patch } : row)),
+    );
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -118,8 +142,12 @@ const RecurringScheduleForm = ({
       title: title.trim(),
       interval: intervalType,
       intervalCount: Number.parseInt(intervalCount, 10) || 1,
-      dayOfMonth: intervalType === "monthly" ? Number.parseInt(dayOfMonth, 10) || 1 : null,
-      weekday: intervalType === "weekly" ? Number.parseInt(weekday, 10) || 0 : null,
+      dayOfMonth:
+        intervalType === "monthly"
+          ? Number.parseInt(dayOfMonth, 10) || 1
+          : null,
+      weekday:
+        intervalType === "weekly" ? Number.parseInt(weekday, 10) || 0 : null,
       dueDays: Number.parseInt(dueDays, 10) || 0,
       taxRatePercent: taxRate || "0",
       notes: notes.trim() || null,
@@ -178,7 +206,11 @@ const RecurringScheduleForm = ({
 
         <label className={styles.field}>
           <span className={styles.label}>Project (optional)</span>
-          <select className={styles.input} value={projectId} onChange={(event) => setProjectId(event.target.value)}>
+          <select
+            className={styles.input}
+            value={projectId}
+            onChange={(event) => setProjectId(event.target.value)}
+          >
             <option value="">None</option>
             {clientProjects.map((project) => (
               <option key={project.id} value={project.id}>
@@ -245,7 +277,9 @@ const RecurringScheduleForm = ({
               onChange={(event) => setIntervalCount(event.target.value)}
               aria-label="Interval count"
             />
-            <span className={styles.inlineLabel}>{intervalType === "weekly" ? "week(s)" : "month(s)"}</span>
+            <span className={styles.inlineLabel}>
+              {intervalType === "weekly" ? "week(s)" : "month(s)"}
+            </span>
           </label>
 
           {intervalType === "monthly" ? (
@@ -257,11 +291,13 @@ const RecurringScheduleForm = ({
                 onChange={(event) => setDayOfMonth(event.target.value)}
                 aria-label="Day of month"
               >
-                {Array.from({ length: 28 }, (_, index) => index + 1).map((day) => (
-                  <option key={day} value={day}>
-                    {day}
-                  </option>
-                ))}
+                {Array.from({ length: 28 }, (_, index) => index + 1).map(
+                  (day) => (
+                    <option key={day} value={day}>
+                      {day}
+                    </option>
+                  ),
+                )}
               </select>
             </label>
           ) : (
@@ -298,7 +334,9 @@ const RecurringScheduleForm = ({
               className={styles.input}
               placeholder="e.g. Design retainer"
               value={row.description}
-              onChange={(event) => updateRow(row.key, { description: event.target.value })}
+              onChange={(event) =>
+                updateRow(row.key, { description: event.target.value })
+              }
               aria-label={`Line ${index + 1} description`}
             />
             <input
@@ -307,7 +345,9 @@ const RecurringScheduleForm = ({
               min="0"
               step="0.01"
               value={row.quantity}
-              onChange={(event) => updateRow(row.key, { quantity: event.target.value })}
+              onChange={(event) =>
+                updateRow(row.key, { quantity: event.target.value })
+              }
               aria-label={`Line ${index + 1} quantity`}
             />
             <input
@@ -317,14 +357,24 @@ const RecurringScheduleForm = ({
               step="0.01"
               placeholder="0.00"
               value={row.unitPrice}
-              onChange={(event) => updateRow(row.key, { unitPrice: event.target.value })}
+              onChange={(event) =>
+                updateRow(row.key, { unitPrice: event.target.value })
+              }
               aria-label={`Line ${index + 1} unit price`}
             />
-            <span className={styles.lineAmount}>{formatMoneyCents(totals.lineAmounts[index] ?? 0, currency)}</span>
+            <span className={styles.lineAmount}>
+              {formatMoneyCents(totals.lineAmounts[index] ?? 0, currency)}
+            </span>
             <button
               type="button"
               className={styles.removeRow}
-              onClick={() => setRows((prev) => (prev.length > 1 ? prev.filter((r) => r.key !== row.key) : prev))}
+              onClick={() =>
+                setRows((prev) =>
+                  prev.length > 1
+                    ? prev.filter((r) => r.key !== row.key)
+                    : prev,
+                )
+              }
               disabled={rows.length <= 1}
               aria-label={`Remove line ${index + 1}`}
             >
@@ -332,7 +382,11 @@ const RecurringScheduleForm = ({
             </button>
           </div>
         ))}
-        <button type="button" className={styles.addRow} onClick={() => setRows((prev) => [...prev, newRow()])}>
+        <button
+          type="button"
+          className={styles.addRow}
+          onClick={() => setRows((prev) => [...prev, newRow()])}
+        >
           <Plus aria-hidden="true" /> Add line
         </button>
       </div>
@@ -364,7 +418,11 @@ const RecurringScheduleForm = ({
           </label>
 
           <label className={styles.checkboxField}>
-            <input type="checkbox" checked={autoIssue} onChange={(event) => setAutoIssue(event.target.checked)} />
+            <input
+              type="checkbox"
+              checked={autoIssue}
+              onChange={(event) => setAutoIssue(event.target.checked)}
+            />
             Auto-issue generated invoices (skip the draft step)
           </label>
 
@@ -408,10 +466,18 @@ const RecurringScheduleForm = ({
       </div>
 
       <div className={styles.actions}>
-        <button type="button" className={styles.cancel} onClick={() => router.back()}>
+        <button
+          type="button"
+          className={styles.cancel}
+          onClick={() => router.back()}
+        >
           Cancel
         </button>
-        <button type="submit" className={styles.submit} disabled={!canSubmit || submitting}>
+        <button
+          type="submit"
+          className={styles.submit}
+          disabled={!canSubmit || submitting}
+        >
           {submitting ? "Saving…" : "Create schedule"}
         </button>
       </div>

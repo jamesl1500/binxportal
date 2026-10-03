@@ -7,7 +7,7 @@
  * state seeded by the initial profile data.
  *
  * @module apps/binx-web/src/components/forms/account/QualificationsForm/QualificationsForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -15,7 +15,11 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import { updateQualificationsAction } from "@/app/(app)/profile/actions";
-import type { EducationEntry, ExperienceEntry, UserProfileData } from "@/lib/users";
+import type {
+  EducationEntry,
+  ExperienceEntry,
+  UserProfileData,
+} from "@/lib/users";
 import EducationEntryList from "@/components/forms/account/EducationEntryList/EducationEntryList";
 import ExperienceEntryList from "@/components/forms/account/ExperienceEntryList/ExperienceEntryList";
 import SkillsInput from "@/components/forms/account/SkillsInput/SkillsInput";
@@ -30,8 +34,12 @@ const QualificationsForm = ({ profile }: QualificationsFormProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [skills, setSkills] = useState<string[]>(profile.skills);
-  const [experience, setExperience] = useState<ExperienceEntry[]>(profile.experience);
-  const [education, setEducation] = useState<EducationEntry[]>(profile.education);
+  const [experience, setExperience] = useState<ExperienceEntry[]>(
+    profile.experience,
+  );
+  const [education, setEducation] = useState<EducationEntry[]>(
+    profile.education,
+  );
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
@@ -40,7 +48,11 @@ const QualificationsForm = ({ profile }: QualificationsFormProps) => {
     setError(null);
     setSaved(false);
     startTransition(async () => {
-      const result = await updateQualificationsAction({ skills, experience, education });
+      const result = await updateQualificationsAction({
+        skills,
+        experience,
+        education,
+      });
       if (result.error) {
         setError(result.error);
         return;
@@ -55,20 +67,25 @@ const QualificationsForm = ({ profile }: QualificationsFormProps) => {
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Skills</h2>
         <p className={styles.sectionSubtitle}>
-          What you&apos;re good at — shown on your teammate profile so others know your capabilities.
+          What you&apos;re good at — shown on your teammate profile so others
+          know your capabilities.
         </p>
         <SkillsInput value={skills} onChange={setSkills} />
       </section>
 
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Experience</h2>
-        <p className={styles.sectionSubtitle}>Your work history, most relevant first.</p>
+        <p className={styles.sectionSubtitle}>
+          Your work history, most relevant first.
+        </p>
         <ExperienceEntryList value={experience} onChange={setExperience} />
       </section>
 
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Education</h2>
-        <p className={styles.sectionSubtitle}>Degrees, certifications, and where you studied.</p>
+        <p className={styles.sectionSubtitle}>
+          Degrees, certifications, and where you studied.
+        </p>
         <EducationEntryList value={education} onChange={setEducation} />
       </section>
 

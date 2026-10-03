@@ -1,11 +1,11 @@
 /**
  * Verify Email Page
- * 
+ *
  * Entry point for email verification. Redirects already-authenticated users to
  * the dashboard, otherwise renders the email verification form.
- * 
+ *
  * @module apps/binx-web/src/app/(auth)/auth/verify-email/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 
 import type { Metadata } from "next";
@@ -22,7 +22,9 @@ interface AuthVerifyEmailPageProps {
   searchParams: Promise<{ token?: string; portal_invite?: string }>;
 }
 
-const AuthVerifyEmailPage = async ({ searchParams }: AuthVerifyEmailPageProps) => {
+const AuthVerifyEmailPage = async ({
+  searchParams,
+}: AuthVerifyEmailPageProps) => {
   const { token, portal_invite: portalInviteToken } = await searchParams;
 
   // Look the token up (without consuming it) before rendering anything —
@@ -36,7 +38,10 @@ const AuthVerifyEmailPage = async ({ searchParams }: AuthVerifyEmailPageProps) =
     try {
       email = await getEmailVerificationTarget(token);
     } catch (error) {
-      tokenError = error instanceof Error ? error.message : "This verification link is invalid or has expired.";
+      tokenError =
+        error instanceof Error
+          ? error.message
+          : "This verification link is invalid or has expired.";
     }
   }
 
@@ -49,7 +54,11 @@ const AuthVerifyEmailPage = async ({ searchParams }: AuthVerifyEmailPageProps) =
       </header>
 
       {token && email ? (
-        <VerifyEmailForm token={token} email={email} portalInviteToken={portalInviteToken} />
+        <VerifyEmailForm
+          token={token}
+          email={email}
+          portalInviteToken={portalInviteToken}
+        />
       ) : (
         <p className={styles.formError}>{tokenError}</p>
       )}
@@ -62,6 +71,6 @@ const AuthVerifyEmailPage = async ({ searchParams }: AuthVerifyEmailPageProps) =
       </p>
     </div>
   );
-}
+};
 
 export default AuthVerifyEmailPage;

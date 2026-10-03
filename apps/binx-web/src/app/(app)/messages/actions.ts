@@ -8,7 +8,7 @@
  * action returns `{ error? , ...data }`, the same shape the project actions use.
  *
  * @module apps/binx-web/src/app/(app)/messages/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 
@@ -89,7 +89,11 @@ export async function renameConversationAction(
   title: string | null,
 ): Promise<ConversationActionResult> {
   try {
-    return { conversation: await updateConversation(agencyId, conversationId, { title }) };
+    return {
+      conversation: await updateConversation(agencyId, conversationId, {
+        title,
+      }),
+    };
   } catch (error) {
     return errorResult(error, "Unable to rename conversation");
   }
@@ -101,7 +105,13 @@ export async function addParticipantsAction(
   userIds: string[],
 ): Promise<ConversationActionResult> {
   try {
-    return { conversation: await addConversationParticipants(agencyId, conversationId, userIds) };
+    return {
+      conversation: await addConversationParticipants(
+        agencyId,
+        conversationId,
+        userIds,
+      ),
+    };
   } catch (error) {
     return errorResult(error, "Unable to add people");
   }
@@ -126,13 +136,22 @@ export async function toggleMuteAction(
   isMuted: boolean,
 ): Promise<ConversationActionResult> {
   try {
-    return { conversation: await setConversationMuted(agencyId, conversationId, isMuted) };
+    return {
+      conversation: await setConversationMuted(
+        agencyId,
+        conversationId,
+        isMuted,
+      ),
+    };
   } catch (error) {
     return errorResult(error, "Unable to update settings");
   }
 }
 
-export async function markReadAction(agencyId: string, conversationId: string): Promise<{ error?: string }> {
+export async function markReadAction(
+  agencyId: string,
+  conversationId: string,
+): Promise<{ error?: string }> {
   try {
     await markConversationRead(agencyId, conversationId);
     return {};
@@ -169,9 +188,13 @@ export async function sendMessageAction(
   formData: FormData,
 ): Promise<MessageActionResult> {
   const body = String(formData.get("body") ?? "");
-  const files = formData.getAll("files").filter((entry): entry is File => entry instanceof File && entry.size > 0);
+  const files = formData
+    .getAll("files")
+    .filter((entry): entry is File => entry instanceof File && entry.size > 0);
   try {
-    return { message: await sendMessage(agencyId, conversationId, body, files) };
+    return {
+      message: await sendMessage(agencyId, conversationId, body, files),
+    };
   } catch (error) {
     return errorResult(error, "Unable to send message");
   }
@@ -184,7 +207,9 @@ export async function editMessageAction(
   body: string,
 ): Promise<MessageActionResult> {
   try {
-    return { message: await editMessage(agencyId, conversationId, messageId, body) };
+    return {
+      message: await editMessage(agencyId, conversationId, messageId, body),
+    };
   } catch (error) {
     return errorResult(error, "Unable to edit message");
   }

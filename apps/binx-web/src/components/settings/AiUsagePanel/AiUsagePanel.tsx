@@ -8,7 +8,7 @@
  * it are owner/admin-gated.
  *
  * @module apps/binx-web/src/components/settings/AiUsagePanel/AiUsagePanel.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -36,14 +36,20 @@ function relativeTime(iso: string): string {
 const AiUsagePanel = ({ usage }: AiUsagePanelProps) => {
   const percent =
     usage.monthly_budget_cents > 0
-      ? Math.min(100, Math.round((usage.month_spent_cents / usage.monthly_budget_cents) * 100))
+      ? Math.min(
+          100,
+          Math.round(
+            (usage.month_spent_cents / usage.monthly_budget_cents) * 100,
+          ),
+        )
       : 0;
   const overBudget = usage.month_spent_cents >= usage.monthly_budget_cents;
 
   if (!usage.configured) {
     return (
       <div className={styles.notConfigured}>
-        No Anthropic API key is configured for this environment, so nothing has been spent.
+        No Anthropic API key is configured for this environment, so nothing has
+        been spent.
       </div>
     );
   }
@@ -53,20 +59,31 @@ const AiUsagePanel = ({ usage }: AiUsagePanelProps) => {
       <div className={styles.progressBlock}>
         <div className={styles.progressHead}>
           <span className={styles.progressLabel}>
-            {formatMoneyCents(usage.month_spent_cents)} of {formatMoneyCents(usage.monthly_budget_cents)} this month
+            {formatMoneyCents(usage.month_spent_cents)} of{" "}
+            {formatMoneyCents(usage.monthly_budget_cents)} this month
           </span>
           <span className={styles.progressPercent} data-over={overBudget}>
             {percent}%
           </span>
         </div>
         <div className={styles.progressTrack}>
-          <div className={styles.progressFill} data-over={overBudget} style={{ width: `${percent}%` }} />
+          <div
+            className={styles.progressFill}
+            data-over={overBudget}
+            style={{ width: `${percent}%` }}
+          />
         </div>
-        {overBudget && <p className={styles.overBudgetNote}>The monthly budget is used up — AI calls are blocked until it resets or is raised.</p>}
+        {overBudget && (
+          <p className={styles.overBudgetNote}>
+            The monthly budget is used up — AI calls are blocked until it resets
+            or is raised.
+          </p>
+        )}
       </div>
 
       <p className={styles.todayLine}>
-        Your requests today: <strong>{usage.today_request_count}</strong> of {usage.daily_user_request_cap}
+        Your requests today: <strong>{usage.today_request_count}</strong> of{" "}
+        {usage.daily_user_request_cap}
       </p>
 
       <div className={styles.tableWrap}>
@@ -96,7 +113,10 @@ const AiUsagePanel = ({ usage }: AiUsagePanelProps) => {
                   <td>{event.input_tokens + event.output_tokens}</td>
                   <td>{formatMoneyCents(event.cost_cents)}</td>
                   <td>
-                    <span className={styles.statusBadge} data-status={event.status}>
+                    <span
+                      className={styles.statusBadge}
+                      data-status={event.status}
+                    >
                       {event.status}
                     </span>
                   </td>

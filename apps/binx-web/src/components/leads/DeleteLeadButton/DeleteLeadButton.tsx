@@ -6,7 +6,7 @@
  * `deleteLeadAction` redirects to `/leads` on success.
  *
  * @module apps/binx-web/src/components/leads/DeleteLeadButton/DeleteLeadButton.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -24,7 +24,11 @@ interface DeleteLeadButtonProps {
   leadName: string;
 }
 
-const DeleteLeadButton = ({ agencyId, leadId, leadName }: DeleteLeadButtonProps) => {
+const DeleteLeadButton = ({
+  agencyId,
+  leadId,
+  leadName,
+}: DeleteLeadButtonProps) => {
   const [confirming, setConfirming] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -39,10 +43,20 @@ const DeleteLeadButton = ({ agencyId, leadId, leadName }: DeleteLeadButtonProps)
     return (
       <div className={styles.row}>
         <span className={styles.prompt}>Delete {leadName}?</span>
-        <button type="button" className={styles.delete} onClick={handleDelete} disabled={isPending}>
+        <button
+          type="button"
+          className={styles.delete}
+          onClick={handleDelete}
+          disabled={isPending}
+        >
           {isPending ? "Deleting…" : "Yes, delete"}
         </button>
-        <button type="button" className={styles.cancel} onClick={() => setConfirming(false)} disabled={isPending}>
+        <button
+          type="button"
+          className={styles.cancel}
+          onClick={() => setConfirming(false)}
+          disabled={isPending}
+        >
           Cancel
         </button>
       </div>
@@ -50,7 +64,11 @@ const DeleteLeadButton = ({ agencyId, leadId, leadName }: DeleteLeadButtonProps)
   }
 
   return (
-    <button type="button" className={styles.trigger} onClick={() => setConfirming(true)}>
+    <button
+      type="button"
+      className={styles.trigger}
+      onClick={() => setConfirming(true)}
+    >
       <Trash2 aria-hidden="true" /> Delete lead
     </button>
   );

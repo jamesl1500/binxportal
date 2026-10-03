@@ -7,7 +7,7 @@
  * to the dashboard — mirroring deleteAgencyAction's shape in app/(app)/settings/actions.ts.
  *
  * @module apps/binx-web/src/app/(auth)/auth/accept-invite/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 
@@ -20,7 +20,9 @@ export interface AcceptInviteActionResult {
   error?: string;
 }
 
-export async function acceptInviteAction(token: string): Promise<AcceptInviteActionResult> {
+export async function acceptInviteAction(
+  token: string,
+): Promise<AcceptInviteActionResult> {
   let agencyId: string;
 
   try {

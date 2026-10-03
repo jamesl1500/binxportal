@@ -8,14 +8,16 @@
  * (Once a project exists, ProjectLabelsPanel in Settings manages the real ones.)
  *
  * @module apps/binx-web/src/components/forms/projects/ProjectLabelSetup/ProjectLabelSetup.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
 import { FormEvent, useState } from "react";
 import { Check, Plus, X } from "lucide-react";
 
-import LabelColorPicker, { DEFAULT_LABEL_COLOR } from "@/components/forms/projects/LabelColorPicker/LabelColorPicker";
+import LabelColorPicker, {
+  DEFAULT_LABEL_COLOR,
+} from "@/components/forms/projects/LabelColorPicker/LabelColorPicker";
 import type { ProjectLabelDraft } from "@/lib/projects";
 
 import styles from "./ProjectLabelSetup.module.scss";
@@ -30,14 +32,23 @@ interface ProjectLabelSetupProps {
   placeholder: string;
 }
 
-const sameName = (a: string, b: string) => a.trim().toLocaleLowerCase() === b.trim().toLocaleLowerCase();
+const sameName = (a: string, b: string) =>
+  a.trim().toLocaleLowerCase() === b.trim().toLocaleLowerCase();
 
-const ProjectLabelSetup = ({ noun, suggestions, labels, onChange, maxLength, placeholder }: ProjectLabelSetupProps) => {
+const ProjectLabelSetup = ({
+  noun,
+  suggestions,
+  labels,
+  onChange,
+  maxLength,
+  placeholder,
+}: ProjectLabelSetupProps) => {
   const [newName, setNewName] = useState("");
   const [newColor, setNewColor] = useState(DEFAULT_LABEL_COLOR);
   const [error, setError] = useState<string | null>(null);
 
-  const isSelected = (name: string) => labels.some((label) => sameName(label.name, name));
+  const isSelected = (name: string) =>
+    labels.some((label) => sameName(label.name, name));
 
   const toggleSuggestion = (suggestion: ProjectLabelDraft) => {
     setError(null);
@@ -76,9 +87,17 @@ const ProjectLabelSetup = ({ noun, suggestions, labels, onChange, maxLength, pla
                 className={styles.suggestion}
                 aria-pressed={selected}
                 onClick={() => toggleSuggestion(suggestion)}
-                style={selected ? { borderColor: suggestion.color, color: suggestion.color } : undefined}
+                style={
+                  selected
+                    ? { borderColor: suggestion.color, color: suggestion.color }
+                    : undefined
+                }
               >
-                {selected ? <Check aria-hidden="true" /> : <Plus aria-hidden="true" />}
+                {selected ? (
+                  <Check aria-hidden="true" />
+                ) : (
+                  <Plus aria-hidden="true" />
+                )}
                 {suggestion.name}
               </button>
             );
@@ -97,11 +116,19 @@ const ProjectLabelSetup = ({ noun, suggestions, labels, onChange, maxLength, pla
             onChange={(event) => setNewName(event.target.value)}
             aria-label={`New ${noun} name`}
           />
-          <button type="submit" className={styles.addButton} disabled={!newName.trim()}>
+          <button
+            type="submit"
+            className={styles.addButton}
+            disabled={!newName.trim()}
+          >
             Add {noun}
           </button>
         </div>
-        <LabelColorPicker value={newColor} onChange={setNewColor} label={`New ${noun} colour`} />
+        <LabelColorPicker
+          value={newColor}
+          onChange={setNewColor}
+          label={`New ${noun} colour`}
+        />
       </form>
 
       {error && (
@@ -119,13 +146,23 @@ const ProjectLabelSetup = ({ noun, suggestions, labels, onChange, maxLength, pla
         ) : (
           <ul className={styles.selected}>
             {labels.map((label) => (
-              <li key={label.name} className={styles.chip} style={{ borderColor: label.color, color: label.color }}>
-                <span className={styles.dot} style={{ background: label.color }} aria-hidden="true" />
+              <li
+                key={label.name}
+                className={styles.chip}
+                style={{ borderColor: label.color, color: label.color }}
+              >
+                <span
+                  className={styles.dot}
+                  style={{ background: label.color }}
+                  aria-hidden="true"
+                />
                 {label.name}
                 <button
                   type="button"
                   className={styles.remove}
-                  onClick={() => onChange(labels.filter((item) => item !== label))}
+                  onClick={() =>
+                    onChange(labels.filter((item) => item !== label))
+                  }
                   aria-label={`Remove ${label.name}`}
                 >
                   <X aria-hidden="true" />

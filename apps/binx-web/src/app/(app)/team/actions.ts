@@ -8,7 +8,7 @@
  * `lib/agencies.ts` rather than going through an internal `/api/*` proxy route.
  *
  * @module apps/binx-web/src/app/(app)/team/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 
@@ -155,9 +155,13 @@ export interface InvitationHistoryActionResult {
   invitations?: AgencyInvitation[];
 }
 
-export async function getInvitationHistoryAction(agencyId: string): Promise<InvitationHistoryActionResult> {
+export async function getInvitationHistoryAction(
+  agencyId: string,
+): Promise<InvitationHistoryActionResult> {
   try {
-    const invitations = await getAgencyInvitations(agencyId, { includeAll: true });
+    const invitations = await getAgencyInvitations(agencyId, {
+      includeAll: true,
+    });
     return { invitations };
   } catch (error) {
     if (error instanceof AuthApiError) {

@@ -5,7 +5,7 @@
  * internal reset-password API route.
  *
  * @module apps/binx-web/src/app/(auth)/auth/reset-password/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  * @function resetPasswordAction - Server action to reset a password.
  */
 
@@ -20,15 +20,27 @@ export interface ResetPasswordActionResult {
   message?: string;
 }
 
-export async function resetPasswordAction(token: string, newPassword: string): Promise<ResetPasswordActionResult> {
+export async function resetPasswordAction(
+  token: string,
+  newPassword: string,
+): Promise<ResetPasswordActionResult> {
   const baseUrl = await getInternalBaseUrl();
 
   try {
-    const response = await axios.post(`${baseUrl}/api/auth/reset-password`, { token, newPassword });
-    return { message: response.data?.message ?? "Password reset successfully." };
+    const response = await axios.post(`${baseUrl}/api/auth/reset-password`, {
+      token,
+      newPassword,
+    });
+    return {
+      message: response.data?.message ?? "Password reset successfully.",
+    };
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
-      return { error: (error.response.data as { message?: string })?.message ?? "Unable to reset password" };
+      return {
+        error:
+          (error.response.data as { message?: string })?.message ??
+          "Unable to reset password",
+      };
     }
     return { error: "Unable to reset password" };
   }

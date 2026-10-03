@@ -15,7 +15,7 @@
  * (30 days) or until it's revoked — not just for one 30-minute access window.
  *
  * @module apps/binx-web/src/proxy.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 import { decodeJwt } from "jose";
 import { NextRequest, NextResponse } from "next/server";
@@ -104,7 +104,13 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     sameSite: "lax" as const,
     path: "/",
   };
-  response.cookies.set(ACCESS_TOKEN_COOKIE, tokens.access_token, { ...base, maxAge: ACCESS_TOKEN_MAX_AGE });
-  response.cookies.set(REFRESH_TOKEN_COOKIE, tokens.refresh_token, { ...base, maxAge: REFRESH_TOKEN_MAX_AGE });
+  response.cookies.set(ACCESS_TOKEN_COOKIE, tokens.access_token, {
+    ...base,
+    maxAge: ACCESS_TOKEN_MAX_AGE,
+  });
+  response.cookies.set(REFRESH_TOKEN_COOKIE, tokens.refresh_token, {
+    ...base,
+    maxAge: REFRESH_TOKEN_MAX_AGE,
+  });
   return response;
 }

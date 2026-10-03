@@ -9,7 +9,7 @@
  * backend rejects those with a 400, so there's nothing useful to offer.
  *
  * @module apps/binx-web/src/components/leads/AiFollowUpCard/AiFollowUpCard.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -37,7 +37,13 @@ async function copyToClipboard(text: string): Promise<boolean> {
   }
 }
 
-const AiFollowUpCard = ({ agencyId, leadId, status, contactEmail, leadName }: AiFollowUpCardProps) => {
+const AiFollowUpCard = ({
+  agencyId,
+  leadId,
+  status,
+  contactEmail,
+  leadName,
+}: AiFollowUpCardProps) => {
   const [isPending, startTransition] = useTransition();
   const [draft, setDraft] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -76,13 +82,20 @@ const AiFollowUpCard = ({ agencyId, leadId, status, contactEmail, leadName }: Ai
           <Sparkles className={styles.eyebrowIcon} aria-hidden="true" />
           AI follow-up
         </span>
-        <button type="button" className={styles.generate} onClick={handleGenerate} disabled={isPending}>
+        <button
+          type="button"
+          className={styles.generate}
+          onClick={handleGenerate}
+          disabled={isPending}
+        >
           {isPending ? "Drafting…" : draft ? "Regenerate" : "Draft follow-up"}
         </button>
       </div>
 
       {!draft && !error && !isPending && (
-        <p className={styles.hint}>Draft a warm, no-pressure check-in email for this lead in one click.</p>
+        <p className={styles.hint}>
+          Draft a warm, no-pressure check-in email for this lead in one click.
+        </p>
       )}
       {error && <p className={styles.error}>{error}</p>}
 

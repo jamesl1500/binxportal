@@ -7,7 +7,7 @@
  * plan's team-member limit.
  *
  * @module apps/binx-web/src/app/(app)/team/(roster)/invitations/import/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -37,8 +37,9 @@ const ImportInvitationsPage = async () => {
       </Link>
       <h2 className={styles.sectionTitle}>Invite from a spreadsheet</h2>
       <p className={styles.sectionSubtitle}>
-        One person per row: an email, and optionally a role (“admin” or “member” — blank means member). Everyone gets an
-        email invite to join {currentAgency.name}.
+        One person per row: an email, and optionally a role (“admin” or “member”
+        — blank means member). Everyone gets an email invite to join{" "}
+        {currentAgency.name}.
       </p>
       <div className={styles.importCard}>
         <BulkImportWizard

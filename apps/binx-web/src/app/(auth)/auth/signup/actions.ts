@@ -1,12 +1,12 @@
 /**
  * actions.ts - Signup
- * 
+ *
  * This file defines the server action for user signup in the Binx Web application.
  * It handles the account creation process by sending a POST request to the internal
  * signup API route and returning any error or success messages.
- * 
+ *
  * @module apps/binx-web/src/app/(auth)/auth/signup/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  * @function signupAction - Server action for user signup.
  */
 
@@ -18,9 +18,9 @@ import { getInternalBaseUrl } from "@/lib/auth";
 
 /**
  * SignupActionResult
- * 
+ *
  * Represents the result of the signup action, including any error or success messages.
- * 
+ *
  * @interface SignupActionResult
  */
 export interface SignupActionResult {
@@ -43,10 +43,18 @@ export async function signupAction(
       password,
       portalInviteToken,
     });
-    return { message: response.data?.message ?? "Account created. Check your email to verify your address." };
+    return {
+      message:
+        response.data?.message ??
+        "Account created. Check your email to verify your address.",
+    };
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
-      return { error: (error.response.data as { message?: string })?.message ?? "Unable to create account" };
+      return {
+        error:
+          (error.response.data as { message?: string })?.message ??
+          "Unable to create account",
+      };
     }
     return { error: "Unable to create account" };
   }

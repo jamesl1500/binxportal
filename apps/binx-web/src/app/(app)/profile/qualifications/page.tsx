@@ -6,7 +6,7 @@
  * layout above; this page only needs the profile data.
  *
  * @module apps/binx-web/src/app/(app)/profile/qualifications/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 

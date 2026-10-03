@@ -8,11 +8,15 @@
  * Icons live in the components — this stays free of React.
  *
  * @module apps/binx-web/src/lib/notifications-client.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 
 /** Keep in sync with binx-api's notifications/models.py `notification_categories`. */
-export type NotificationCategory = "team" | "invoicing" | "projects" | "messages";
+export type NotificationCategory =
+  | "team"
+  | "invoicing"
+  | "projects"
+  | "messages";
 
 export interface NotificationCategoryMeta {
   label: string;
@@ -20,7 +24,10 @@ export interface NotificationCategoryMeta {
   accent: string;
 }
 
-export const NOTIFICATION_CATEGORY_META: Record<NotificationCategory, NotificationCategoryMeta> = {
+export const NOTIFICATION_CATEGORY_META: Record<
+  NotificationCategory,
+  NotificationCategoryMeta
+> = {
   team: { label: "Team", accent: "var(--color-accent)" },
   invoicing: { label: "Invoicing", accent: "#0f9d58" },
   projects: { label: "Projects", accent: "#7c5cff" },
@@ -35,5 +42,8 @@ export function relativeTime(iso: string): string {
   if (seconds < 3600) return `${Math.round(seconds / 60)}m`;
   if (seconds < 86_400) return `${Math.round(seconds / 3600)}h`;
   if (seconds < 2_592_000) return `${Math.round(seconds / 86_400)}d`;
-  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  return new Date(iso).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
 }

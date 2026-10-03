@@ -8,7 +8,7 @@
  * can be hidden. All of that persists through PortalOnboardingProvider.
  *
  * @module apps/binx-web/src/components/portal/GettingStartedChecklist/GettingStartedChecklist.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -16,7 +16,11 @@ import Link from "next/link";
 import { Check, ChevronRight, PartyPopper, X } from "lucide-react";
 
 import { usePortalOnboarding } from "@/components/portal/PortalOnboardingProvider/PortalOnboardingProvider";
-import { PORTAL_CHECKLIST_ID, PORTAL_TOUR_ID, type ChecklistStep } from "@/lib/portal-insights";
+import {
+  PORTAL_CHECKLIST_ID,
+  PORTAL_TOUR_ID,
+  type ChecklistStep,
+} from "@/lib/portal-insights";
 
 import styles from "./GettingStartedChecklist.module.scss";
 
@@ -72,20 +76,28 @@ const GettingStartedChecklist = ({ steps }: { steps: ChecklistStep[] }) => {
       {allDone ? (
         <div className={styles.celebrate}>
           <PartyPopper className={styles.celebrateIcon} aria-hidden="true" />
-          <p>Nice work — you know your way around. You can hide this card now.</p>
+          <p>
+            Nice work — you know your way around. You can hide this card now.
+          </p>
         </div>
       ) : (
         <ol className={styles.steps}>
           {resolved.map((step) => {
             const content = (
               <>
-                <span className={styles.check} data-done={step.done} aria-hidden="true">
+                <span
+                  className={styles.check}
+                  data-done={step.done}
+                  aria-hidden="true"
+                >
                   {step.done && <Check />}
                 </span>
                 <span className={styles.stepText}>
                   <span className={styles.stepTitle}>
                     {step.title}
-                    {step.done && <span className={styles.srOnly}> (done)</span>}
+                    {step.done && (
+                      <span className={styles.srOnly}> (done)</span>
+                    )}
                   </span>
                   <span className={styles.stepBody}>{step.description}</span>
                 </span>
@@ -95,7 +107,12 @@ const GettingStartedChecklist = ({ steps }: { steps: ChecklistStep[] }) => {
             return (
               <li key={step.id}>
                 {step.action.type === "tour" ? (
-                  <button type="button" className={styles.step} data-done={step.done} onClick={openTour}>
+                  <button
+                    type="button"
+                    className={styles.step}
+                    data-done={step.done}
+                    onClick={openTour}
+                  >
                     {content}
                   </button>
                 ) : (
@@ -104,7 +121,8 @@ const GettingStartedChecklist = ({ steps }: { steps: ChecklistStep[] }) => {
                     className={styles.step}
                     data-done={step.done}
                     onClick={() => {
-                      if (step.action.type === "link" && step.action.markId) dismiss(step.action.markId);
+                      if (step.action.type === "link" && step.action.markId)
+                        dismiss(step.action.markId);
                     }}
                   >
                     {content}

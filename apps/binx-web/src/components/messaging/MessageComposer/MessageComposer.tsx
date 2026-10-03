@@ -13,7 +13,7 @@
  * messaging/service.py's _notify_mentions).
  *
  * @module apps/binx-web/src/components/messaging/MessageComposer/MessageComposer.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -21,7 +21,10 @@ import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Paperclip, SendHorizontal, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
 
-import { draftMessageReplyAction, sendMessageAction } from "@/app/(app)/messages/actions";
+import {
+  draftMessageReplyAction,
+  sendMessageAction,
+} from "@/app/(app)/messages/actions";
 import type { Message } from "@/lib/messaging-client";
 import { MESSAGE_UPLOAD_MAX_BYTES } from "@/lib/messaging-client";
 import { useMessagingStore } from "@/stores/use-messaging-store";
@@ -67,7 +70,11 @@ const MessageComposer = ({ conversationId }: MessageComposerProps) => {
     if (mentionQuery === null) return [];
     const q = mentionQuery.toLowerCase();
     return members
-      .filter((m) => m.user_name.toLowerCase().includes(q) || m.full_name.toLowerCase().includes(q))
+      .filter(
+        (m) =>
+          m.user_name.toLowerCase().includes(q) ||
+          m.full_name.toLowerCase().includes(q),
+      )
       .slice(0, MENTION_LIMIT);
   }, [mentionQuery, members]);
 
@@ -89,7 +96,10 @@ const MessageComposer = ({ conversationId }: MessageComposerProps) => {
   });
 
   const refreshMentionContext = (node: HTMLTextAreaElement) => {
-    const before = node.value.slice(0, node.selectionStart ?? node.value.length);
+    const before = node.value.slice(
+      0,
+      node.selectionStart ?? node.value.length,
+    );
     const match = before.match(MENTION_QUERY_RE);
     setMentionQuery(match ? match[1] : null);
     if (match) setMentionIndex(0);
@@ -114,7 +124,9 @@ const MessageComposer = ({ conversationId }: MessageComposerProps) => {
     const accepted: File[] = [];
     for (const file of incoming) {
       if (file.size > MESSAGE_UPLOAD_MAX_BYTES) {
-        toast.error(`${file.name} is over the ${MESSAGE_UPLOAD_MAX_BYTES / (1024 * 1024)}MB limit`);
+        toast.error(
+          `${file.name} is over the ${MESSAGE_UPLOAD_MAX_BYTES / (1024 * 1024)}MB limit`,
+        );
         continue;
       }
       accepted.push(file);
@@ -153,7 +165,11 @@ const MessageComposer = ({ conversationId }: MessageComposerProps) => {
     setSending(true);
     if (textareaRef.current) textareaRef.current.style.height = "auto";
     try {
-      const result = await sendMessageAction(agencyId, conversationId, formData);
+      const result = await sendMessageAction(
+        agencyId,
+        conversationId,
+        formData,
+      );
       removeOptimistic(conversationId, nonce);
       if (result.error) {
         toast.error(result.error);
@@ -195,7 +211,9 @@ const MessageComposer = ({ conversationId }: MessageComposerProps) => {
       }
       if (event.key === "ArrowUp") {
         event.preventDefault();
-        setMentionIndex((i) => (i - 1 + mentionMatches.length) % mentionMatches.length);
+        setMentionIndex(
+          (i) => (i - 1 + mentionMatches.length) % mentionMatches.length,
+        );
         return;
       }
       if (event.key === "Enter" || event.key === "Tab") {
@@ -250,7 +268,9 @@ const MessageComposer = ({ conversationId }: MessageComposerProps) => {
               <button
                 type="button"
                 className={styles.attachmentRemove}
-                onClick={() => setFiles((prev) => prev.filter((_, i) => i !== index))}
+                onClick={() =>
+                  setFiles((prev) => prev.filter((_, i) => i !== index))
+                }
                 aria-label={`Remove ${file.name}`}
               >
                 <X aria-hidden="true" />
@@ -262,7 +282,11 @@ const MessageComposer = ({ conversationId }: MessageComposerProps) => {
 
       <div className={styles.inputRow}>
         {mentionOpen && (
-          <ul className={styles.mentionMenu} role="listbox" aria-label="Mention a teammate">
+          <ul
+            className={styles.mentionMenu}
+            role="listbox"
+            aria-label="Mention a teammate"
+          >
             {mentionMatches.map((member, index) => (
               <li key={member.user_id}>
                 <button
@@ -278,7 +302,9 @@ const MessageComposer = ({ conversationId }: MessageComposerProps) => {
                   }}
                 >
                   <span className={styles.mentionName}>{member.full_name}</span>
-                  <span className={styles.mentionHandle}>@{member.user_name}</span>
+                  <span className={styles.mentionHandle}>
+                    @{member.user_name}
+                  </span>
                 </button>
               </li>
             ))}
@@ -318,7 +344,11 @@ const MessageComposer = ({ conversationId }: MessageComposerProps) => {
           ref={textareaRef}
           className={styles.textarea}
           rows={1}
-          placeholder={conversationTitle ? `Message ${conversationTitle}` : "Write a message"}
+          placeholder={
+            conversationTitle
+              ? `Message ${conversationTitle}`
+              : "Write a message"
+          }
           value={body}
           onChange={handleChange}
           onKeyDown={handleKeyDown}

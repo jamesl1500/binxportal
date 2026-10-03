@@ -8,7 +8,7 @@
  * to /clients on success — there's no in-component success state to render.
  *
  * @module apps/binx-web/src/components/forms/clients/DeleteClientForm/DeleteClientForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -27,7 +27,11 @@ interface DeleteClientFormProps {
   clientName: string;
 }
 
-const DeleteClientForm = ({ agencyId, clientId, clientName }: DeleteClientFormProps) => {
+const DeleteClientForm = ({
+  agencyId,
+  clientId,
+  clientName,
+}: DeleteClientFormProps) => {
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -75,7 +79,9 @@ const DeleteClientForm = ({ agencyId, clientId, clientName }: DeleteClientFormPr
           aria-invalid={Boolean(errors.confirmText)}
           {...register("confirmText")}
         />
-        {errors.confirmText && <p className={styles.error}>{errors.confirmText.message}</p>}
+        {errors.confirmText && (
+          <p className={styles.error}>{errors.confirmText.message}</p>
+        )}
       </div>
 
       {formError && <p className={styles.formError}>{formError}</p>}

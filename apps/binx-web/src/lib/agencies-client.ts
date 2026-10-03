@@ -6,12 +6,17 @@
  * org switcher are Client Components that need to build image URLs.
  *
  * @module apps/binx-web/src/lib/agencies-client.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 
 /** Keep in sync with binx-api's `agency_image_max_bytes` (core/config.py). */
 export const AGENCY_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
-export const AGENCY_IMAGE_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+export const AGENCY_IMAGE_MIME_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+];
 
 export type AgencyImageKind = "logo" | "cover";
 

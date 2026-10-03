@@ -7,7 +7,7 @@
  * via the `updatePrivacySettingsAction` server action.
  *
  * @module apps/binx-web/src/components/forms/account/PrivacySettingsForm/PrivacySettingsForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -50,7 +50,8 @@ const TOGGLE_ROWS: ToggleRow[] = [
   {
     key: "analytics_opt_out",
     label: "Opt out of usage analytics",
-    description: "Stop sharing anonymous product-usage data that helps us improve Binx.",
+    description:
+      "Stop sharing anonymous product-usage data that helps us improve Binx.",
   },
 ];
 
@@ -70,9 +71,15 @@ const PrivacySettingsForm = ({ settings }: PrivacySettingsFormProps) => {
     setValues((prev) => ({ ...prev, [key]: checked }));
   };
 
-  const handleVisibilityChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleVisibilityChange = (
+    event: React.ChangeEvent<HTMLSelectElement>,
+  ) => {
     clearMessages();
-    setValues((prev) => ({ ...prev, profile_visibility: event.target.value as PrivacySettings["profile_visibility"] }));
+    setValues((prev) => ({
+      ...prev,
+      profile_visibility: event.target
+        .value as PrivacySettings["profile_visibility"],
+    }));
   };
 
   const handleSave = () => {
@@ -96,7 +103,9 @@ const PrivacySettingsForm = ({ settings }: PrivacySettingsFormProps) => {
           <tr className={styles.row}>
             <td className={styles.info}>
               <p className={styles.label}>Profile visibility</p>
-              <p className={styles.description}>Who can see your full profile details, including your bio.</p>
+              <p className={styles.description}>
+                Who can see your full profile details, including your bio.
+              </p>
             </td>
             <td className={styles.control}>
               <select
@@ -135,7 +144,12 @@ const PrivacySettingsForm = ({ settings }: PrivacySettingsFormProps) => {
       {formError && <p className={styles.formError}>{formError}</p>}
       {successMessage && <p className={styles.formSuccess}>{successMessage}</p>}
 
-      <button type="button" className={styles.submit} onClick={handleSave} disabled={isPending}>
+      <button
+        type="button"
+        className={styles.submit}
+        onClick={handleSave}
+        disabled={isPending}
+      >
         {isPending ? "Saving…" : "Save changes"}
       </button>
     </div>

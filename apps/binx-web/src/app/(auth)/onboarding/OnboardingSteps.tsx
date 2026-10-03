@@ -7,7 +7,7 @@
  * sidebar's own progress copy never reflected where the user actually was.
  *
  * @module apps/binx-web/src/app/(auth)/onboarding/OnboardingSteps.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -48,7 +48,11 @@ const OnboardingSteps = () => {
   return (
     <ol className={styles.features}>
       {STEPS.map((step) => (
-        <li key={step.index} className={styles.feature} data-active={pathname === step.href}>
+        <li
+          key={step.index}
+          className={styles.feature}
+          data-active={pathname === step.href}
+        >
           <span className={styles.featureIndex}>{step.index}</span>
           <div>
             <p className={styles.featureTitle}>{step.title}</p>

@@ -8,7 +8,7 @@
  * making claims about a named competitor's product.
  *
  * @module apps/binx-web/src/app/(marketing)/compare/notion-stripe-drive/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -76,18 +76,29 @@ const faqJsonLd = {
 const ComparePage = () => {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([faqJsonLd, breadcrumbJsonLd(TITLE, "/compare/notion-stripe-drive")]) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify([
+            faqJsonLd,
+            breadcrumbJsonLd(TITLE, "/compare/notion-stripe-drive"),
+          ]),
+        }}
+      />
 
       <section className={styles.hero}>
         <div className={styles.heroGlow} aria-hidden="true" />
         <div className={styles.container}>
           <div className={styles.heroInner}>
             <span className={styles.eyebrow}>Binx vs. the DIY stack</span>
-            <h1 className={styles.h1}>Your real competitor is Notion + Stripe + Drive.</h1>
+            <h1 className={styles.h1}>
+              Your real competitor is Notion + Stripe + Drive.
+            </h1>
             <p className={styles.lead}>
-              Most small agencies aren&apos;t choosing between agency software — they&apos;re running client work
-              across a docs app, a payments dashboard, and a shared drive, stitched together by memory. It works,
-              until it doesn&apos;t.
+              Most small agencies aren&apos;t choosing between agency software —
+              they&apos;re running client work across a docs app, a payments
+              dashboard, and a shared drive, stitched together by memory. It
+              works, until it doesn&apos;t.
             </p>
             <div className={`${styles.btnRow} ${styles.heroActions}`}>
               <Link href="/auth/signup" className={styles.btnPrimary}>
@@ -97,7 +108,9 @@ const ComparePage = () => {
                 See everything it does
               </Link>
             </div>
-            <p className={styles.heroNote}>Free plan available · no card required.</p>
+            <p className={styles.heroNote}>
+              Free plan available · no card required.
+            </p>
           </div>
         </div>
       </section>
@@ -125,7 +138,9 @@ const ComparePage = () => {
         <div className={styles.container}>
           <div className={styles.sectionHead}>
             <span className={styles.eyebrow}>Where it breaks down</span>
-            <h2 className={styles.h2}>Each tool does its one job well. That&apos;s the problem.</h2>
+            <h2 className={styles.h2}>
+              Each tool does its one job well. That&apos;s the problem.
+            </h2>
           </div>
           <div className={styles.grid}>
             {PROBLEMS.map(({ icon: Icon, title, text }) => (
@@ -144,36 +159,46 @@ const ComparePage = () => {
       <section className={`${styles.section} ${styles.sectionDark}`}>
         <div className={styles.container}>
           <div className={styles.sectionHead}>
-            <span className={`${styles.eyebrow} ${styles.eyebrowOnDark}`}>One workspace instead</span>
-            <h2 className={styles.h2}>What Notion, Stripe, and Drive were standing in for.</h2>
+            <span className={`${styles.eyebrow} ${styles.eyebrowOnDark}`}>
+              One workspace instead
+            </span>
+            <h2 className={styles.h2}>
+              What Notion, Stripe, and Drive were standing in for.
+            </h2>
           </div>
           <div className={styles.gridTwo}>
             <article className={styles.card}>
               <h3 className={styles.cardTitle}>What Notion was for</h3>
               <p className={styles.cardText}>
-                Project docs and task tracking. In {SITE.name}, that&apos;s a real project — task boards, a
-                collaboration canvas the client can see, and files attached to the project they belong to.
+                Project docs and task tracking. In {SITE.name}, that&apos;s a
+                real project — task boards, a collaboration canvas the client
+                can see, and files attached to the project they belong to.
               </p>
             </article>
             <article className={styles.card}>
               <h3 className={styles.cardTitle}>What Stripe was for</h3>
               <p className={styles.cardText}>
-                Taking payment. {SITE.name} issues the invoice itself — your numbering, your terms — and the client
-                pays straight from their portal, with the payment reflected against that project automatically.
+                Taking payment. {SITE.name} issues the invoice itself — your
+                numbering, your terms — and the client pays straight from their
+                portal, with the payment reflected against that project
+                automatically.
               </p>
             </article>
             <article className={styles.card}>
               <h3 className={styles.cardTitle}>What Drive was for</h3>
               <p className={styles.cardText}>
-                Sharing files with the client. In {SITE.name}, files live on the project itself, visible in the
-                same portal as the invoice and the progress — no separate share link to manage or lose track of.
+                Sharing files with the client. In {SITE.name}, files live on the
+                project itself, visible in the same portal as the invoice and
+                the progress — no separate share link to manage or lose track
+                of.
               </p>
             </article>
             <article className={styles.card}>
               <h3 className={styles.cardTitle}>What none of them did</h3>
               <p className={styles.cardText}>
-                Give the client one place to see all of it, or give you a lead pipeline that turns into a client
-                automatically. That&apos;s the part a stack of single-purpose tools can&apos;t do by design.
+                Give the client one place to see all of it, or give you a lead
+                pipeline that turns into a client automatically. That&apos;s the
+                part a stack of single-purpose tools can&apos;t do by design.
               </p>
             </article>
           </div>
@@ -200,7 +225,10 @@ const ComparePage = () => {
         </div>
       </section>
 
-      <MarketingCta heading="Give one client one workspace." sub="Free plan, no card, no time limit." />
+      <MarketingCta
+        heading="Give one client one workspace."
+        sub="Free plan, no card, no time limit."
+      />
     </>
   );
 };

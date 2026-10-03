@@ -9,7 +9,7 @@
  * the backend rejects those with a 400, so there's nothing useful to offer.
  *
  * @module apps/binx-web/src/components/invoices/AiReminderCard/AiReminderCard.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -75,7 +75,12 @@ const AiReminderCard = ({ agencyId, invoice }: AiReminderCardProps) => {
           <Sparkles className={styles.eyebrowIcon} aria-hidden="true" />
           AI payment reminder
         </span>
-        <button type="button" className={styles.generate} onClick={handleGenerate} disabled={isPending}>
+        <button
+          type="button"
+          className={styles.generate}
+          onClick={handleGenerate}
+          disabled={isPending}
+        >
           {isPending ? "Drafting…" : draft ? "Regenerate" : "Draft reminder"}
         </button>
       </div>

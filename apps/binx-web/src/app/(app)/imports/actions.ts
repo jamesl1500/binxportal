@@ -6,13 +6,18 @@
  * folder; it's just the shared home for actions several routes call.
  *
  * @module apps/binx-web/src/app/(app)/imports/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 
 import { AuthApiError } from "@/lib/auth";
 import { parseImportFile, runImport } from "@/lib/imports";
-import type { ImportKind, ImportParseResult, ImportResult, MappedImportRow } from "@/lib/imports-client";
+import type {
+  ImportKind,
+  ImportParseResult,
+  ImportResult,
+  MappedImportRow,
+} from "@/lib/imports-client";
 
 function errorMessage(error: unknown, fallback: string): string {
   return error instanceof AuthApiError ? error.message : fallback;
@@ -54,7 +59,10 @@ export async function runImportAction(
     return { result: await runImport(agencyId, kind, rows, dryRun) };
   } catch (error) {
     return {
-      error: errorMessage(error, dryRun ? "Unable to check those rows" : "Unable to import"),
+      error: errorMessage(
+        error,
+        dryRun ? "Unable to check those rows" : "Unable to import",
+      ),
     };
   }
 }

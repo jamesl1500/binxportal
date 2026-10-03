@@ -9,7 +9,7 @@
  * so the page's stats and entries aren't pushed below an always-open form.
  *
  * @module apps/binx-web/src/components/forms/projects/ManualEntryForm/ManualEntryForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -205,7 +205,9 @@ const ManualEntryForm = ({
                   />
                 </label>
                 <label className={styles.field}>
-                  <span className={styles.label}>Hourly rate override (optional)</span>
+                  <span className={styles.label}>
+                    Hourly rate override (optional)
+                  </span>
                   <input
                     type="number"
                     step="0.01"

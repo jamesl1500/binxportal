@@ -9,7 +9,7 @@
  * the session cookie" split every other authenticated call in this app uses.
  *
  * @module apps/binx-web/src/app/api/projects/[agencyId]/[projectId]/files/[fileId]/route.ts
- * @author Binx.io
+ * @author Binx Portal
  * @route GET /api/projects/{agencyId}/{projectId}/files/{fileId}
  */
 import axios from "axios";
@@ -33,14 +33,21 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
   try {
     const upstream = await api.get<ArrayBuffer>(
       `/agencies/${agencyId}/projects/${projectId}/files/${fileId}/download`,
-      { headers: { Authorization: `Bearer ${accessToken}` }, responseType: "arraybuffer" },
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        responseType: "arraybuffer",
+      },
     );
 
     return new NextResponse(upstream.data, {
       status: 200,
       headers: {
-        "Content-Type": String(upstream.headers["content-type"] ?? "application/octet-stream"),
-        "Content-Disposition": String(upstream.headers["content-disposition"] ?? "attachment"),
+        "Content-Type": String(
+          upstream.headers["content-type"] ?? "application/octet-stream",
+        ),
+        "Content-Disposition": String(
+          upstream.headers["content-disposition"] ?? "attachment",
+        ),
       },
     });
   } catch (error) {
@@ -56,7 +63,8 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ message }, { status: error.response.status });
     }
 
-    const message = error instanceof AuthApiError ? error.message : "Unable to download file";
+    const message =
+      error instanceof AuthApiError ? error.message : "Unable to download file";
     return NextResponse.json({ message }, { status: 500 });
   }
 }

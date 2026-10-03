@@ -6,7 +6,7 @@
  * authenticated session.
  *
  * @module apps/binx-web/src/app/(auth)/onboarding/one/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import ProfileForm from "@/components/forms/onboarding/ProfileForm/ProfileForm";
@@ -21,7 +21,9 @@ const OnboardingStepOnePage = () => {
       <header className={styles.header}>
         <span className={styles.eyebrow}>Step 1 of 4</span>
         <h1 className={styles.title}>Tell us about you</h1>
-        <p className={styles.subtitle}>A couple of quick details to personalize your workspace.</p>
+        <p className={styles.subtitle}>
+          A couple of quick details to personalize your workspace.
+        </p>
       </header>
 
       <ProfileForm />

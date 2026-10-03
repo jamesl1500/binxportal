@@ -5,7 +5,7 @@
  * issued/paid/void invoice redirects back to its detail page.
  *
  * @module apps/binx-web/src/app/(app)/invoices/[invoiceId]/edit/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -69,7 +69,10 @@ const EditInvoicePage = async ({ params }: EditInvoicePageProps) => {
       <div className={styles.formCard}>
         <InvoiceForm
           agencyId={currentAgency.id}
-          clients={clients.map((client) => ({ id: client.id, name: client.name }))}
+          clients={clients.map((client) => ({
+            id: client.id,
+            name: client.name,
+          }))}
           projects={projects.map((project) => ({
             id: project.id,
             name: project.name,

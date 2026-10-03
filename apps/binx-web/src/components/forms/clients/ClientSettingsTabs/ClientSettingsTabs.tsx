@@ -13,13 +13,18 @@
  * "details" for an unknown, absent, or no-longer-visible hash.
  *
  * @module apps/binx-web/src/components/forms/clients/ClientSettingsTabs/ClientSettingsTabs.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
 
-import type { AgencyClient, ClientBranding, ClientContact, ClientContactInvitation } from "@/lib/clients";
+import type {
+  AgencyClient,
+  ClientBranding,
+  ClientContact,
+  ClientContactInvitation,
+} from "@/lib/clients";
 import ClientForm from "@/components/forms/clients/ClientForm/ClientForm";
 import ArchiveClientButton from "@/components/forms/clients/ArchiveClientButton/ArchiveClientButton";
 import ClientBrandingForm from "@/components/forms/clients/ClientBrandingForm/ClientBrandingForm";
@@ -50,11 +55,14 @@ const ClientSettingsTabs = ({
   branding,
 }: ClientSettingsTabsProps) => {
   const sections = useMemo(() => {
-    const list: { id: SectionId; label: string; danger?: boolean }[] = [{ id: "details", label: "Details" }];
+    const list: { id: SectionId; label: string; danger?: boolean }[] = [
+      { id: "details", label: "Details" },
+    ];
     if (canManage) list.push({ id: "portal", label: "Client portal" });
     if (canManage) list.push({ id: "branding", label: "Branding" });
     list.push({ id: "status", label: "Status" });
-    if (canDelete) list.push({ id: "danger", label: "Danger zone", danger: true });
+    if (canDelete)
+      list.push({ id: "danger", label: "Danger zone", danger: true });
     return list;
   }, [canManage, canDelete]);
 
@@ -65,7 +73,8 @@ const ClientSettingsTabs = ({
   useEffect(() => {
     const sync = () => {
       const fromHash = window.location.hash.replace("#", "");
-      if (sections.some((section) => section.id === fromHash)) setActive(fromHash as SectionId);
+      if (sections.some((section) => section.id === fromHash))
+        setActive(fromHash as SectionId);
     };
     sync();
     window.addEventListener("hashchange", sync);
@@ -75,7 +84,11 @@ const ClientSettingsTabs = ({
   const select = (id: SectionId) => {
     setActive(id);
     // replaceState, not a real navigation — no scroll jump, no history spam.
-    window.history.replaceState(null, "", id === "details" ? window.location.pathname : `#${id}`);
+    window.history.replaceState(
+      null,
+      "",
+      id === "details" ? window.location.pathname : `#${id}`,
+    );
   };
 
   return (
@@ -100,7 +113,9 @@ const ClientSettingsTabs = ({
         {active === "details" && (
           <section>
             <h2 className={styles.sectionTitle}>Details</h2>
-            <p className={styles.sectionSubtitle}>Contact info and notes any teammate can see and edit.</p>
+            <p className={styles.sectionSubtitle}>
+              Contact info and notes any teammate can see and edit.
+            </p>
             <ClientForm agencyId={agencyId} client={client} />
           </section>
         )}
@@ -109,10 +124,15 @@ const ClientSettingsTabs = ({
           <section>
             <h2 className={styles.sectionTitle}>Client portal</h2>
             <p className={styles.sectionSubtitle}>
-              Give people on {client.name}&apos;s side access to a client view of their projects, invoices and
-              messages.
+              Give people on {client.name}&apos;s side access to a client view
+              of their projects, invoices and messages.
             </p>
-            <PortalContactsPanel agencyId={agencyId} clientId={client.id} contacts={contacts} invitations={invitations} />
+            <PortalContactsPanel
+              agencyId={agencyId}
+              clientId={client.id}
+              contacts={contacts}
+              invitations={invitations}
+            />
           </section>
         )}
 
@@ -120,10 +140,15 @@ const ClientSettingsTabs = ({
           <section>
             <h2 className={styles.sectionTitle}>Branding</h2>
             <p className={styles.sectionSubtitle}>
-              Customize {client.name}&apos;s own portal with their colors, logo, and a welcome message. Anything
-              left blank falls back to your agency&apos;s own branding.
+              Customize {client.name}&apos;s own portal with their colors, logo,
+              and a welcome message. Anything left blank falls back to your
+              agency&apos;s own branding.
             </p>
-            <ClientBrandingForm agencyId={agencyId} clientId={client.id} branding={branding} />
+            <ClientBrandingForm
+              agencyId={agencyId}
+              clientId={client.id}
+              branding={branding}
+            />
           </section>
         )}
 
@@ -143,10 +168,14 @@ const ClientSettingsTabs = ({
           <section className={styles.dangerZone}>
             <h2 className={styles.dangerZoneTitle}>Danger zone</h2>
             <p className={styles.sectionSubtitle}>
-              Permanently delete {client.name} and everything tied to it. This can&apos;t be undone — archiving is
-              the reversible option above.
+              Permanently delete {client.name} and everything tied to it. This
+              can&apos;t be undone — archiving is the reversible option above.
             </p>
-            <DeleteClientForm agencyId={agencyId} clientId={client.id} clientName={client.name} />
+            <DeleteClientForm
+              agencyId={agencyId}
+              clientId={client.id}
+              clientName={client.name}
+            />
           </section>
         )}
       </div>

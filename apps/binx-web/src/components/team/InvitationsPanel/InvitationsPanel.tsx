@@ -8,7 +8,7 @@
  * caller — the Invitations page redirects everyone else.
  *
  * @module apps/binx-web/src/components/team/InvitationsPanel/InvitationsPanel.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -36,7 +36,11 @@ function capitalize(value: string): string {
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+  return new Date(iso).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 }
 
 async function copyToClipboard(text: string): Promise<boolean> {
@@ -48,13 +52,18 @@ async function copyToClipboard(text: string): Promise<boolean> {
   }
 }
 
-const InvitationsPanel = ({ agencyId, invitations: initialInvitations }: InvitationsPanelProps) => {
+const InvitationsPanel = ({
+  agencyId,
+  invitations: initialInvitations,
+}: InvitationsPanelProps) => {
   const router = useRouter();
   const [invitations, setInvitations] = useState(initialInvitations);
   // Accept links only exist right after a create/resend — keyed by invitation id.
   const [links, setLinks] = useState<Record<string, string>>(() =>
     Object.fromEntries(
-      initialInvitations.filter((invite) => invite.accept_url).map((invite) => [invite.id, invite.accept_url as string]),
+      initialInvitations
+        .filter((invite) => invite.accept_url)
+        .map((invite) => [invite.id, invite.accept_url as string]),
     ),
   );
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -75,9 +84,14 @@ const InvitationsPanel = ({ agencyId, invitations: initialInvitations }: Invitat
       }
       if (result.invitation) {
         const updated = result.invitation;
-        setInvitations((prev) => prev.map((invite) => (invite.id === invitationId ? updated : invite)));
+        setInvitations((prev) =>
+          prev.map((invite) => (invite.id === invitationId ? updated : invite)),
+        );
         if (updated.accept_url) {
-          setLinks((prev) => ({ ...prev, [invitationId]: updated.accept_url as string }));
+          setLinks((prev) => ({
+            ...prev,
+            [invitationId]: updated.accept_url as string,
+          }));
         }
         toast.success(`Invitation re-sent to ${updated.email}`);
       }
@@ -93,7 +107,9 @@ const InvitationsPanel = ({ agencyId, invitations: initialInvitations }: Invitat
         toast.error(result.error);
         return;
       }
-      setInvitations((prev) => prev.filter((invite) => invite.id !== invitationId));
+      setInvitations((prev) =>
+        prev.filter((invite) => invite.id !== invitationId),
+      );
       if (history) setHistory(null); // force a refetch next time it's opened
       toast.success("Invitation revoked");
       router.refresh();
@@ -104,7 +120,9 @@ const InvitationsPanel = ({ agencyId, invitations: initialInvitations }: Invitat
     const link = links[invitationId];
     if (!link) return;
     const ok = await copyToClipboard(link);
-    toast[ok ? "success" : "error"](ok ? "Accept link copied" : "Couldn't copy the link");
+    toast[ok ? "success" : "error"](
+      ok ? "Accept link copied" : "Couldn't copy the link",
+    );
   };
 
   const toggleHistory = () => {
@@ -119,7 +137,11 @@ const InvitationsPanel = ({ agencyId, invitations: initialInvitations }: Invitat
           return;
         }
         // Only the non-pending ones — pending are already in the table above.
-        setHistory((result.invitations ?? []).filter((invite) => invite.status !== "pending"));
+        setHistory(
+          (result.invitations ?? []).filter(
+            (invite) => invite.status !== "pending",
+          ),
+        );
       });
     }
   };
@@ -156,10 +178,14 @@ const InvitationsPanel = ({ agencyId, invitations: initialInvitations }: Invitat
                       )}
                     </td>
                     <td className={styles.cell}>
-                      <span className={styles.roleBadge}>{capitalize(invite.role)}</span>
+                      <span className={styles.roleBadge}>
+                        {capitalize(invite.role)}
+                      </span>
                     </td>
                     <td className={styles.cell}>{invite.invited_by_name}</td>
-                    <td className={`${styles.cell} ${styles.muted}`}>{formatDate(invite.created_at)}</td>
+                    <td className={`${styles.cell} ${styles.muted}`}>
+                      {formatDate(invite.created_at)}
+                    </td>
                     <td className={`${styles.cell} ${styles.muted}`}>
                       {invite.is_expired ? (
                         <span className={styles.expiredBadge}>Expired</span>
@@ -182,7 +208,11 @@ const InvitationsPanel = ({ agencyId, invitations: initialInvitations }: Invitat
                           className={styles.actionButton}
                           onClick={() => handleCopy(invite.id)}
                           disabled={!link}
-                          title={link ? "Copy the accept link" : "Resend to generate a link"}
+                          title={
+                            link
+                              ? "Copy the accept link"
+                              : "Resend to generate a link"
+                          }
                         >
                           <Copy aria-hidden="true" /> Copy link
                         </button>
@@ -223,11 +253,18 @@ const InvitationsPanel = ({ agencyId, invitations: initialInvitations }: Invitat
                 {history.map((invite) => (
                   <li key={invite.id} className={styles.historyItem}>
                     <span className={styles.emailText}>{invite.email}</span>
-                    <span className={styles.roleBadge}>{capitalize(invite.role)}</span>
-                    <span className={styles.historyStatus} data-status={invite.status}>
+                    <span className={styles.roleBadge}>
+                      {capitalize(invite.role)}
+                    </span>
+                    <span
+                      className={styles.historyStatus}
+                      data-status={invite.status}
+                    >
                       {capitalize(invite.status)}
                     </span>
-                    <span className={styles.muted}>{formatDate(invite.created_at)}</span>
+                    <span className={styles.muted}>
+                      {formatDate(invite.created_at)}
+                    </span>
                   </li>
                 ))}
               </ul>

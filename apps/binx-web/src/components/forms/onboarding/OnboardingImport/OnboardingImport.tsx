@@ -8,7 +8,7 @@
  * importers live on the Clients and Team pages for later.
  *
  * @module apps/binx-web/src/components/forms/onboarding/OnboardingImport/OnboardingImport.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -37,13 +37,15 @@ const TABS: {
     kind: "clients",
     label: "Clients",
     icon: Building2,
-    blurb: "Your client list from a CRM export or spreadsheet — only a name is required.",
+    blurb:
+      "Your client list from a CRM export or spreadsheet — only a name is required.",
   },
   {
     kind: "team",
     label: "Team",
     icon: Users,
-    blurb: "Teammates' emails (and optionally “admin” or “member”) — each gets an invite to join.",
+    blurb:
+      "Teammates' emails (and optionally “admin” or “member”) — each gets an invite to join.",
   },
 ];
 
@@ -114,7 +116,10 @@ const OnboardingImport = ({ agencyId, canInvite }: OnboardingImportProps) => {
             ? "Nice — you can import more any time from the Clients and Team pages."
             : "No spreadsheet handy? Skip this — you can import from the Clients and Team pages any time."}
         </p>
-        <Link href="/dashboard" className={total > 0 ? styles.finish : styles.skip}>
+        <Link
+          href="/dashboard"
+          className={total > 0 ? styles.finish : styles.skip}
+        >
           {total > 0 ? "Finish setup" : "Skip for now"}
         </Link>
       </div>

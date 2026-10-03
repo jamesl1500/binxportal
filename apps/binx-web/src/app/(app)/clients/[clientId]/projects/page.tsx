@@ -7,7 +7,7 @@
  * as everywhere else.
  *
  * @module apps/binx-web/src/app/(app)/clients/[clientId]/projects/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -39,7 +39,9 @@ const ClientProjectsPage = async ({ params }: ClientProjectsPageProps) => {
     getAgencyProjects(currentAgency.id),
   ]);
 
-  const projects = allProjects.filter((project) => project.client_id === clientId);
+  const projects = allProjects.filter(
+    (project) => project.client_id === clientId,
+  );
 
   return (
     <div>

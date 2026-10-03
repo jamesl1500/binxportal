@@ -8,7 +8,7 @@
  * (app)/account's tabs.
  *
  * @module apps/binx-web/src/app/(app)/profile/layout.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -18,7 +18,9 @@ import ProfileTabs from "@/components/navigation/ProfileTabs/ProfileTabs";
 
 import styles from "./page.module.scss";
 
-export const metadata: Metadata = { title: { default: "Profile", template: "%s · Binx" } };
+export const metadata: Metadata = {
+  title: { default: "Profile", template: "%s · Binx" },
+};
 
 const ProfileLayout = async ({ children }: { children: React.ReactNode }) => {
   const user = await getCurrentUser();
@@ -32,7 +34,8 @@ const ProfileLayout = async ({ children }: { children: React.ReactNode }) => {
       <span className={styles.eyebrow}>Profile</span>
       <h1 className={styles.title}>Your profile</h1>
       <p className={styles.subtitle}>
-        Update your personal details, photos, skills, and how the app looks for you.
+        Update your personal details, photos, skills, and how the app looks for
+        you.
       </p>
 
       <ProfileTabs />

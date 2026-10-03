@@ -7,7 +7,7 @@
  * Applied app-wide via --app-accent, set server-side in (app)/layout.tsx.
  *
  * @module apps/binx-web/src/components/forms/account/AppearanceForm/AppearanceForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -64,7 +64,8 @@ const AppearanceForm = ({ settings }: AppearanceFormProps) => {
           Accent color
         </label>
         <p className={styles.hint}>
-          Recolors primary buttons, active tabs, and links across the app — just for your own view.
+          Recolors primary buttons, active tabs, and links across the app — just
+          for your own view.
         </p>
         <div className={styles.colorRow}>
           <input

@@ -6,7 +6,7 @@
  * `usePathname`, the same pattern SettingsTabs / TeamTabs use.
  *
  * @module apps/binx-web/src/components/navigation/DashboardTabs/DashboardTabs.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 

@@ -6,12 +6,16 @@
  * these never call `router.refresh()`; the store reconciles from the event.
  *
  * @module apps/binx-web/src/app/(app)/projects/[projectId]/canvas/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 
 import { AuthApiError } from "@/lib/auth";
-import type { BoardComment, BoardItem, BoardItemPatch } from "@/lib/boards-client";
+import type {
+  BoardComment,
+  BoardItem,
+  BoardItemPatch,
+} from "@/lib/boards-client";
 import {
   type BoardReactions,
   type CreateBoardItemInput,
@@ -111,7 +115,9 @@ export async function toggleReactionAction(
   kind: string,
 ): Promise<{ result?: BoardReactions; error?: string }> {
   try {
-    return { result: await toggleBoardReaction(agencyId, projectId, itemId, kind) };
+    return {
+      result: await toggleBoardReaction(agencyId, projectId, itemId, kind),
+    };
   } catch (error) {
     return fail(error, "Unable to react");
   }
@@ -136,7 +142,9 @@ export async function addCommentAction(
   body: string,
 ): Promise<{ comment?: BoardComment; error?: string }> {
   try {
-    return { comment: await addBoardComment(agencyId, projectId, itemId, body) };
+    return {
+      comment: await addBoardComment(agencyId, projectId, itemId, body),
+    };
   } catch (error) {
     return fail(error, "Unable to add the comment");
   }

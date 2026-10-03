@@ -9,7 +9,7 @@
  * — the backend rejects any id outside that set.
  *
  * @module apps/binx-web/src/components/dashboard/widgets.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 
 export const DASHBOARD_WIDGET_IDS = [
@@ -27,7 +27,10 @@ export interface DashboardWidgetMeta {
   viewAllHref?: string;
 }
 
-export const DASHBOARD_WIDGET_META: Record<DashboardWidgetId, DashboardWidgetMeta> = {
+export const DASHBOARD_WIDGET_META: Record<
+  DashboardWidgetId,
+  DashboardWidgetMeta
+> = {
   my_tasks: { title: "My tasks", viewAllHref: "/dashboard/my-work" },
   needs_attention: { title: "Needs attention" },
   quick_actions: { title: "Quick actions" },

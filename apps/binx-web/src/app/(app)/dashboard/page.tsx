@@ -8,7 +8,7 @@
  * and Pulse tabs and the top-nav pages.
  *
  * @module apps/binx-web/src/app/(app)/dashboard/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import { redirect } from "next/navigation";
 
@@ -33,8 +33,14 @@ const DashboardOverviewPage = async () => {
 
   const [overview, upcomingMeetings, layout] = await Promise.all([
     getDashboard(agencyId),
-    getMeetings(agencyId, { status: "scheduled", fromDate: new Date().toISOString().slice(0, 10) }),
-    getDashboardLayout().catch(() => ({ widget_order: [...DASHBOARD_WIDGET_IDS], hidden_widgets: [] })),
+    getMeetings(agencyId, {
+      status: "scheduled",
+      fromDate: new Date().toISOString().slice(0, 10),
+    }),
+    getDashboardLayout().catch(() => ({
+      widget_order: [...DASHBOARD_WIDGET_IDS],
+      hidden_widgets: [],
+    })),
   ]);
   const {
     on_hold_projects: onHoldProjects,

@@ -11,7 +11,7 @@
  * recreated instead of edited in place (see the "recurring/new" page).
  *
  * @module apps/binx-web/src/components/invoices/RecurringScheduleActions/RecurringScheduleActions.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -37,7 +37,11 @@ interface RecurringScheduleActionsProps {
   canManage: boolean;
 }
 
-const RecurringScheduleActions = ({ agencyId, schedule, canManage }: RecurringScheduleActionsProps) => {
+const RecurringScheduleActions = ({
+  agencyId,
+  schedule,
+  canManage,
+}: RecurringScheduleActionsProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [runNowOpen, setRunNowOpen] = useState(false);
@@ -47,7 +51,10 @@ const RecurringScheduleActions = ({ agencyId, schedule, canManage }: RecurringSc
     return null;
   }
 
-  const run = (action: () => Promise<{ error?: string }>, successMessage?: string) => {
+  const run = (
+    action: () => Promise<{ error?: string }>,
+    successMessage?: string,
+  ) => {
     startTransition(async () => {
       const result = await action();
       if (result?.error) {
@@ -68,7 +75,12 @@ const RecurringScheduleActions = ({ agencyId, schedule, canManage }: RecurringSc
           type="button"
           className={styles.ghost}
           disabled={isPending}
-          onClick={() => run(() => pauseRecurringScheduleAction(agencyId, schedule.id), "Schedule paused")}
+          onClick={() =>
+            run(
+              () => pauseRecurringScheduleAction(agencyId, schedule.id),
+              "Schedule paused",
+            )
+          }
         >
           Pause
         </button>
@@ -77,30 +89,55 @@ const RecurringScheduleActions = ({ agencyId, schedule, canManage }: RecurringSc
           type="button"
           className={styles.ghost}
           disabled={isPending}
-          onClick={() => run(() => resumeRecurringScheduleAction(agencyId, schedule.id), "Schedule resumed")}
+          onClick={() =>
+            run(
+              () => resumeRecurringScheduleAction(agencyId, schedule.id),
+              "Schedule resumed",
+            )
+          }
         >
           Resume
         </button>
       )}
 
-      <button type="button" className={styles.ghost} disabled={isPending} onClick={() => setRunNowOpen(true)}>
+      <button
+        type="button"
+        className={styles.ghost}
+        disabled={isPending}
+        onClick={() => setRunNowOpen(true)}
+      >
         Run now
       </button>
 
-      <button type="button" className={styles.ghostDanger} disabled={isPending} onClick={() => setDeleteOpen(true)}>
+      <button
+        type="button"
+        className={styles.ghostDanger}
+        disabled={isPending}
+        onClick={() => setDeleteOpen(true)}
+      >
         Delete
       </button>
 
       <Dialog.Root open={runNowOpen} onOpenChange={setRunNowOpen}>
         <Dialog.Portal>
           <Dialog.Backdrop className={styles.backdrop} />
-          <Dialog.Popup className={styles.dialog} aria-label="Run this schedule now">
-            <Dialog.Title className={styles.dialogTitle}>Run &ldquo;{schedule.title}&rdquo; now?</Dialog.Title>
+          <Dialog.Popup
+            className={styles.dialog}
+            aria-label="Run this schedule now"
+          >
+            <Dialog.Title className={styles.dialogTitle}>
+              Run &ldquo;{schedule.title}&rdquo; now?
+            </Dialog.Title>
             <Dialog.Description className={styles.dialogDescription}>
-              This generates an invoice immediately, ignoring the next run date, and advances the schedule.
+              This generates an invoice immediately, ignoring the next run date,
+              and advances the schedule.
             </Dialog.Description>
             <div className={styles.dialogActions}>
-              <button type="button" className={styles.ghost} onClick={() => setRunNowOpen(false)}>
+              <button
+                type="button"
+                className={styles.ghost}
+                onClick={() => setRunNowOpen(false)}
+              >
                 Cancel
               </button>
               <button
@@ -109,7 +146,10 @@ const RecurringScheduleActions = ({ agencyId, schedule, canManage }: RecurringSc
                 disabled={isPending}
                 onClick={() =>
                   run(async () => {
-                    const result = await runRecurringScheduleNowAction(agencyId, schedule.id);
+                    const result = await runRecurringScheduleNowAction(
+                      agencyId,
+                      schedule.id,
+                    );
                     if (!result.error) setRunNowOpen(false);
                     return result;
                   }, "Invoice generated")
@@ -125,13 +165,23 @@ const RecurringScheduleActions = ({ agencyId, schedule, canManage }: RecurringSc
       <Dialog.Root open={deleteOpen} onOpenChange={setDeleteOpen}>
         <Dialog.Portal>
           <Dialog.Backdrop className={styles.backdrop} />
-          <Dialog.Popup className={styles.dialog} aria-label="Delete this schedule">
-            <Dialog.Title className={styles.dialogTitle}>Delete &ldquo;{schedule.title}&rdquo;?</Dialog.Title>
+          <Dialog.Popup
+            className={styles.dialog}
+            aria-label="Delete this schedule"
+          >
+            <Dialog.Title className={styles.dialogTitle}>
+              Delete &ldquo;{schedule.title}&rdquo;?
+            </Dialog.Title>
             <Dialog.Description className={styles.dialogDescription}>
-              This can&apos;t be undone. Invoices it already generated are untouched.
+              This can&apos;t be undone. Invoices it already generated are
+              untouched.
             </Dialog.Description>
             <div className={styles.dialogActions}>
-              <button type="button" className={styles.ghost} onClick={() => setDeleteOpen(false)}>
+              <button
+                type="button"
+                className={styles.ghost}
+                onClick={() => setDeleteOpen(false)}
+              >
                 Cancel
               </button>
               <button
@@ -140,7 +190,10 @@ const RecurringScheduleActions = ({ agencyId, schedule, canManage }: RecurringSc
                 disabled={isPending}
                 onClick={() =>
                   run(async () => {
-                    const result = await deleteRecurringScheduleAction(agencyId, schedule.id);
+                    const result = await deleteRecurringScheduleAction(
+                      agencyId,
+                      schedule.id,
+                    );
                     if (!result.error) setDeleteOpen(false);
                     return result;
                   }, "Schedule deleted")

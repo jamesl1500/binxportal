@@ -7,13 +7,21 @@
  * the server; every subsequent fetch goes through the notification actions.
  *
  * @module apps/binx-web/src/components/notifications/NotificationList/NotificationList.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { AtSign, Bell, FolderKanban, Receipt, Users, X, type LucideIcon } from "lucide-react";
+import {
+  AtSign,
+  Bell,
+  FolderKanban,
+  Receipt,
+  Users,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 
 import {
   dismissNotificationAction,
@@ -22,7 +30,11 @@ import {
   markNotificationReadAction,
 } from "@/app/(app)/notifications/actions";
 import type { AppNotification, NotificationPage } from "@/lib/notifications";
-import { NOTIFICATION_CATEGORY_META, relativeTime, type NotificationCategory } from "@/lib/notifications-client";
+import {
+  NOTIFICATION_CATEGORY_META,
+  relativeTime,
+  type NotificationCategory,
+} from "@/lib/notifications-client";
 
 import styles from "./NotificationList.module.scss";
 
@@ -64,7 +76,9 @@ const NotificationList = ({ initialPage }: NotificationListProps) => {
       }
       setUnreadCount(result.page.unread_count);
       setHasMore(result.page.has_more);
-      setItems((prev) => (offset === 0 ? result.page!.items : [...prev, ...result.page!.items]));
+      setItems((prev) =>
+        offset === 0 ? result.page!.items : [...prev, ...result.page!.items],
+      );
     });
   };
 
@@ -87,7 +101,11 @@ const NotificationList = ({ initialPage }: NotificationListProps) => {
     setItems((prev) =>
       filter === "unread"
         ? prev.filter((n) => n.id !== id)
-        : prev.map((n) => (n.id === id ? { ...n, read_at: n.read_at ?? new Date().toISOString() } : n)),
+        : prev.map((n) =>
+            n.id === id
+              ? { ...n, read_at: n.read_at ?? new Date().toISOString() }
+              : n,
+          ),
     );
     setUnreadCount((c) => Math.max(0, c - 1));
     if (callServer) void markNotificationReadAction(id);
@@ -101,7 +119,11 @@ const NotificationList = ({ initialPage }: NotificationListProps) => {
   };
 
   const markAll = () => {
-    setItems((prev) => prev.map((n) => (n.read_at ? n : { ...n, read_at: new Date().toISOString() })));
+    setItems((prev) =>
+      prev.map((n) =>
+        n.read_at ? n : { ...n, read_at: new Date().toISOString() },
+      ),
+    );
     setUnreadCount(0);
     if (filter === "unread") setItems([]);
     startTransition(async () => {
@@ -112,7 +134,11 @@ const NotificationList = ({ initialPage }: NotificationListProps) => {
   return (
     <div className={styles.wrapper}>
       <div className={styles.toolbar}>
-        <div className={styles.tabs} role="tablist" aria-label="Filter notifications">
+        <div
+          className={styles.tabs}
+          role="tablist"
+          aria-label="Filter notifications"
+        >
           <button
             type="button"
             role="tab"
@@ -134,7 +160,12 @@ const NotificationList = ({ initialPage }: NotificationListProps) => {
             Unread{unreadCount > 0 ? ` (${unreadCount})` : ""}
           </button>
         </div>
-        <button type="button" className={styles.markAll} onClick={markAll} disabled={unreadCount === 0}>
+        <button
+          type="button"
+          className={styles.markAll}
+          onClick={markAll}
+          disabled={unreadCount === 0}
+        >
           Mark all as read
         </button>
       </div>
@@ -155,19 +186,35 @@ const NotificationList = ({ initialPage }: NotificationListProps) => {
             const Icon = CATEGORY_ICON[notification.category] ?? Bell;
             const meta = NOTIFICATION_CATEGORY_META[notification.category];
             return (
-              <li key={notification.id} className={styles.row} data-unread={!notification.read_at}>
-                <button type="button" className={styles.rowMain} onClick={() => open(notification)}>
-                  <span className={styles.iconChip} style={{ color: meta?.accent }} aria-hidden="true">
+              <li
+                key={notification.id}
+                className={styles.row}
+                data-unread={!notification.read_at}
+              >
+                <button
+                  type="button"
+                  className={styles.rowMain}
+                  onClick={() => open(notification)}
+                >
+                  <span
+                    className={styles.iconChip}
+                    style={{ color: meta?.accent }}
+                    aria-hidden="true"
+                  >
                     <Icon />
                   </span>
                   <span className={styles.body}>
                     <span className={styles.title}>{notification.title}</span>
-                    {notification.body && <span className={styles.detail}>{notification.body}</span>}
+                    {notification.body && (
+                      <span className={styles.detail}>{notification.body}</span>
+                    )}
                     <span className={styles.meta}>
                       {meta?.label} · {relativeTime(notification.created_at)}
                     </span>
                   </span>
-                  {!notification.read_at && <span className={styles.dot} aria-hidden="true" />}
+                  {!notification.read_at && (
+                    <span className={styles.dot} aria-hidden="true" />
+                  )}
                 </button>
                 <button
                   type="button"

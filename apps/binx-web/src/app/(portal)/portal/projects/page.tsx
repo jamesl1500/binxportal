@@ -5,7 +5,7 @@
  * with progress and due dates (see PortalProjectList).
  *
  * @module apps/binx-web/src/app/(portal)/portal/projects/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 
@@ -18,8 +18,13 @@ import styles from "../page.module.scss";
 export const metadata: Metadata = { title: "Projects" };
 
 const PortalProjectsPage = async () => {
-  const [context, projects] = await Promise.all([getPortalContext(), getPortalProjects()]);
-  const active = projects.filter((project) => project.status === "active").length;
+  const [context, projects] = await Promise.all([
+    getPortalContext(),
+    getPortalProjects(),
+  ]);
+  const active = projects.filter(
+    (project) => project.status === "active",
+  ).length;
   const agencyName = context?.agency.name ?? "your agency";
 
   return (

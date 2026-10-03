@@ -7,7 +7,7 @@
  * actions use.
  *
  * @module apps/binx-web/src/app/(app)/settings/meetings/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 

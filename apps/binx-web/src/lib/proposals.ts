@@ -7,7 +7,7 @@
  * are decimal strings, same convention as `lib/invoicing.ts`.
  *
  * @module apps/binx-web/src/lib/proposals.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 import axios from "axios";
 
@@ -25,7 +25,10 @@ async function authHeader(): Promise<{ Authorization: string }> {
 
 function apiError(error: unknown, fallback: string): AuthApiError | unknown {
   if (axios.isAxiosError(error) && error.response) {
-    return new AuthApiError(extractDetailMessage(error.response.data, fallback), error.response.status);
+    return new AuthApiError(
+      extractDetailMessage(error.response.data, fallback),
+      error.response.status,
+    );
   }
   return error;
 }
@@ -84,33 +87,56 @@ export interface ProposalFilter {
   status?: string;
 }
 
-export async function getProposals(agencyId: string, filter: ProposalFilter = {}): Promise<Proposal[]> {
+export async function getProposals(
+  agencyId: string,
+  filter: ProposalFilter = {},
+): Promise<Proposal[]> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<Proposal[]>(`/agencies/${agencyId}/proposals`, {
-      headers,
-      params: { lead_id: filter.leadId, client_id: filter.clientId, status: filter.status },
-    });
+    const { data } = await api.get<Proposal[]>(
+      `/agencies/${agencyId}/proposals`,
+      {
+        headers,
+        params: {
+          lead_id: filter.leadId,
+          client_id: filter.clientId,
+          status: filter.status,
+        },
+      },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to load proposals");
   }
 }
 
-export async function getProposal(agencyId: string, proposalId: string): Promise<ProposalDetail> {
+export async function getProposal(
+  agencyId: string,
+  proposalId: string,
+): Promise<ProposalDetail> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<ProposalDetail>(`/agencies/${agencyId}/proposals/${proposalId}`, { headers });
+    const { data } = await api.get<ProposalDetail>(
+      `/agencies/${agencyId}/proposals/${proposalId}`,
+      { headers },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to load proposal");
   }
 }
 
-export async function createProposal(agencyId: string, input: ProposalInput): Promise<ProposalDetail> {
+export async function createProposal(
+  agencyId: string,
+  input: ProposalInput,
+): Promise<ProposalDetail> {
   const headers = await authHeader();
   try {
-    const { data } = await api.post<ProposalDetail>(`/agencies/${agencyId}/proposals`, toPayload(input), { headers });
+    const { data } = await api.post<ProposalDetail>(
+      `/agencies/${agencyId}/proposals`,
+      toPayload(input),
+      { headers },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to create proposal");
@@ -124,19 +150,28 @@ export async function updateProposal(
 ): Promise<ProposalDetail> {
   const headers = await authHeader();
   try {
-    const { data } = await api.patch<ProposalDetail>(`/agencies/${agencyId}/proposals/${proposalId}`, toPayload(input), {
-      headers,
-    });
+    const { data } = await api.patch<ProposalDetail>(
+      `/agencies/${agencyId}/proposals/${proposalId}`,
+      toPayload(input),
+      {
+        headers,
+      },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to update proposal");
   }
 }
 
-export async function deleteProposal(agencyId: string, proposalId: string): Promise<void> {
+export async function deleteProposal(
+  agencyId: string,
+  proposalId: string,
+): Promise<void> {
   const headers = await authHeader();
   try {
-    await api.delete(`/agencies/${agencyId}/proposals/${proposalId}`, { headers });
+    await api.delete(`/agencies/${agencyId}/proposals/${proposalId}`, {
+      headers,
+    });
   } catch (error) {
     throw apiError(error, "Unable to delete proposal");
   }
@@ -162,9 +197,13 @@ export async function sendProposal(
 
 // ---- Public (unauthenticated, token-scoped) ----
 
-export async function getPublicProposal(token: string): Promise<ProposalPublic> {
+export async function getPublicProposal(
+  token: string,
+): Promise<ProposalPublic> {
   try {
-    const { data } = await api.get<ProposalPublic>(`/proposals/public/${token}`);
+    const { data } = await api.get<ProposalPublic>(
+      `/proposals/public/${token}`,
+    );
     return data;
   } catch (error) {
     throw apiError(error, "This proposal link is invalid or has expired");
@@ -177,22 +216,30 @@ export async function signPublicProposal(
   signerEmail: string,
 ): Promise<ProposalPublic> {
   try {
-    const { data } = await api.post<ProposalPublic>(`/proposals/public/${token}/sign`, {
-      signer_name: signerName,
-      signer_email: signerEmail,
-    });
+    const { data } = await api.post<ProposalPublic>(
+      `/proposals/public/${token}/sign`,
+      {
+        signer_name: signerName,
+        signer_email: signerEmail,
+      },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to sign this proposal");
   }
 }
 
-export async function declinePublicProposal(token: string, reason: string | null): Promise<ProposalPublic> {
+export async function declinePublicProposal(
+  token: string,
+  reason: string | null,
+): Promise<ProposalPublic> {
   try {
-    const { data } = await api.post<ProposalPublic>(`/proposals/public/${token}/decline`, { reason });
+    const { data } = await api.post<ProposalPublic>(
+      `/proposals/public/${token}/decline`,
+      { reason },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to decline this proposal");
   }
 }
-

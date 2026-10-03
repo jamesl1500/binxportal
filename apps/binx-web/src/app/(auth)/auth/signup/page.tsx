@@ -13,7 +13,7 @@
  * see lib/plan-intent.ts — for onboarding step three to pick back up.
  *
  * @module apps/binx-web/src/app/(auth)/auth/signup/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -39,12 +39,16 @@ const AuthSignupPage = async ({ searchParams }: AuthSignupPageProps) => {
   }
 
   const { portal_invite: portalInviteToken, plan } = await searchParams;
-  const preview = portalInviteToken ? await previewPortalInvitation(portalInviteToken).catch(() => null) : null;
+  const preview = portalInviteToken
+    ? await previewPortalInvitation(portalInviteToken).catch(() => null)
+    : null;
 
   return (
     <div>
       <header className={styles.header}>
-        <span className={styles.eyebrow}>{preview ? "Client portal" : "Get started"}</span>
+        <span className={styles.eyebrow}>
+          {preview ? "Client portal" : "Get started"}
+        </span>
         <h1 className={styles.title}>Create your account</h1>
         <p className={styles.subtitle}>
           {preview

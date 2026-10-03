@@ -6,7 +6,7 @@
  * invoice" pre-fills the client.
  *
  * @module apps/binx-web/src/app/(app)/clients/[clientId]/invoices/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -15,7 +15,11 @@ import { Plus } from "lucide-react";
 
 import { getCurrentAgencyContext } from "@/lib/agencies";
 import { getAgencyClient } from "@/lib/clients";
-import { getInvoices, getInvoiceSummary, formatMoneyCents } from "@/lib/invoicing";
+import {
+  getInvoices,
+  getInvoiceSummary,
+  formatMoneyCents,
+} from "@/lib/invoicing";
 import ClientStatGrid from "@/components/clients/ClientStatGrid/ClientStatGrid";
 import InvoiceTable from "@/components/invoices/InvoiceTable/InvoiceTable";
 
@@ -49,7 +53,10 @@ const ClientInvoicesPage = async ({ params }: ClientInvoicesPageProps) => {
           <h2 className={styles.title}>Invoices</h2>
           <p className={styles.subtitle}>Billing history for {client.name}.</p>
         </div>
-        <Link href={`/invoices/new?client=${client.id}`} className={styles.newButton}>
+        <Link
+          href={`/invoices/new?client=${client.id}`}
+          className={styles.newButton}
+        >
           <Plus aria-hidden="true" />
           New invoice
         </Link>
@@ -71,8 +78,14 @@ const ClientInvoicesPage = async ({ params }: ClientInvoicesPageProps) => {
             value: formatMoneyCents(summary.paid_this_year_cents, currency),
             tone: "positive",
           },
-          { label: "Lifetime billed", value: formatMoneyCents(summary.lifetime_billed_cents, currency) },
-          { label: "Average invoice", value: formatMoneyCents(summary.average_invoice_cents, currency) },
+          {
+            label: "Lifetime billed",
+            value: formatMoneyCents(summary.lifetime_billed_cents, currency),
+          },
+          {
+            label: "Average invoice",
+            value: formatMoneyCents(summary.average_invoice_cents, currency),
+          },
         ]}
       />
 

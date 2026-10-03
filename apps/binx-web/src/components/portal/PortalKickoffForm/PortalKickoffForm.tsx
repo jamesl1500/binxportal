@@ -10,7 +10,7 @@
  * so the final submit only ever sends small JSON.
  *
  * @module apps/binx-web/src/components/portal/PortalKickoffForm/PortalKickoffForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 

@@ -10,10 +10,17 @@
  * them again here is free.
  *
  * @module apps/binx-web/src/app/(portal)/portal/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import Link from "next/link";
-import { ArrowRight, CalendarDays, FolderKanban, MessageSquare, Quote, Receipt } from "lucide-react";
+import {
+  ArrowRight,
+  CalendarDays,
+  FolderKanban,
+  MessageSquare,
+  Quote,
+  Receipt,
+} from "lucide-react";
 
 import { getCurrentUser } from "@/lib/auth";
 import { formatMoneyCents } from "@/lib/money";
@@ -40,16 +47,33 @@ import GettingStartedChecklist from "@/components/portal/GettingStartedChecklist
 import LocalTime from "@/components/portal/LocalTime/LocalTime";
 import PortalGreeting from "@/components/portal/PortalGreeting/PortalGreeting";
 import PortalProjectCard from "@/components/portal/PortalProjectCard/PortalProjectCard";
-import PortalStatTiles, { type PortalStat } from "@/components/portal/PortalStatTiles/PortalStatTiles";
+import PortalStatTiles, {
+  type PortalStat,
+} from "@/components/portal/PortalStatTiles/PortalStatTiles";
 
 import styles from "./home.module.scss";
 
 /** Projects the client cares about most first: in flight, then planned, then the rest. */
-const STATUS_ORDER: Record<string, number> = { active: 0, planning: 1, on_hold: 2, completed: 3, archived: 4 };
+const STATUS_ORDER: Record<string, number> = {
+  active: 0,
+  planning: 1,
+  on_hold: 2,
+  completed: 3,
+  archived: 4,
+};
 
 const PortalHomePage = async () => {
-  const [user, context, projects, invoices, proposals, conversations, meetings, meetingSettings, kickoffs] =
-    await Promise.all([
+  const [
+    user,
+    context,
+    projects,
+    invoices,
+    proposals,
+    conversations,
+    meetings,
+    meetingSettings,
+    kickoffs,
+  ] = await Promise.all([
     getCurrentUser(),
     getPortalContext(),
     getPortalProjects(),
@@ -66,7 +90,14 @@ const PortalHomePage = async () => {
   const agencyName = context.agency.name;
   const selfBooking = meetingSettings?.self_booking_enabled ?? false;
 
-  const attention = buildAttentionItems({ kickoffs, proposals, invoices, conversations, meetings, now });
+  const attention = buildAttentionItems({
+    kickoffs,
+    proposals,
+    invoices,
+    conversations,
+    meetings,
+    now,
+  });
   const checklist = buildChecklist({
     projects,
     proposals,
@@ -78,9 +109,17 @@ const PortalHomePage = async () => {
 
   const currency = invoices[0]?.currency ?? "USD";
   const unpaid = invoices.filter(isUnpaid);
-  const outstanding = unpaid.reduce((total, invoice) => total + invoice.amount_due_cents, 0);
-  const activeProjects = projects.filter((project) => project.status === "active");
-  const unread = conversations.reduce((total, conversation) => total + conversation.unread_count, 0);
+  const outstanding = unpaid.reduce(
+    (total, invoice) => total + invoice.amount_due_cents,
+    0,
+  );
+  const activeProjects = projects.filter(
+    (project) => project.status === "active",
+  );
+  const unread = conversations.reduce(
+    (total, conversation) => total + conversation.unread_count,
+    0,
+  );
   const upcoming = meetings
     .filter((meeting) => isUpcomingMeeting(meeting, now))
     .sort((a, b) => a.starts_at.localeCompare(b.starts_at));
@@ -96,7 +135,10 @@ const PortalHomePage = async () => {
     {
       label: "Outstanding",
       value: formatMoneyCents(outstanding, currency),
-      hint: unpaid.length > 0 ? `${unpaid.length} unpaid invoice${unpaid.length === 1 ? "" : "s"}` : "All paid up",
+      hint:
+        unpaid.length > 0
+          ? `${unpaid.length} unpaid invoice${unpaid.length === 1 ? "" : "s"}`
+          : "All paid up",
       href: "/portal/invoices",
       icon: Receipt,
       tone: outstanding > 0 ? "warn" : "positive",
@@ -111,7 +153,12 @@ const PortalHomePage = async () => {
     {
       label: "Upcoming meetings",
       value: String(upcoming.length),
-      hint: upcoming.length > 0 ? "Next one below" : selfBooking ? "Book a time any day" : "None scheduled",
+      hint:
+        upcoming.length > 0
+          ? "Next one below"
+          : selfBooking
+            ? "Book a time any day"
+            : "None scheduled",
       href: "/portal/meetings",
       icon: CalendarDays,
     },
@@ -126,10 +173,14 @@ const PortalHomePage = async () => {
 
   const featuredProjects = [...projects]
     .filter((project) => project.status !== "archived")
-    .sort((a, b) => (STATUS_ORDER[a.status] ?? 9) - (STATUS_ORDER[b.status] ?? 9))
+    .sort(
+      (a, b) => (STATUS_ORDER[a.status] ?? 9) - (STATUS_ORDER[b.status] ?? 9),
+    )
     .slice(0, 4);
   const recentConversations = [...conversations]
-    .sort((a, b) => (b.last_message_at ?? "").localeCompare(a.last_message_at ?? ""))
+    .sort((a, b) =>
+      (b.last_message_at ?? "").localeCompare(a.last_message_at ?? ""),
+    )
     .slice(0, 3);
 
   return (
@@ -155,8 +206,12 @@ const PortalHomePage = async () => {
         {context.client.welcome_message && (
           <figure className={styles.note}>
             <Quote className={styles.noteIcon} aria-hidden="true" />
-            <blockquote className={styles.noteBody}>{context.client.welcome_message}</blockquote>
-            <figcaption className={styles.noteFrom}>— The {agencyName} team</figcaption>
+            <blockquote className={styles.noteBody}>
+              {context.client.welcome_message}
+            </blockquote>
+            <figcaption className={styles.noteFrom}>
+              — The {agencyName} team
+            </figcaption>
           </figure>
         )}
       </section>
@@ -169,7 +224,9 @@ const PortalHomePage = async () => {
             <div className={styles.sectionHead}>
               <h2 id="attention-title" className={styles.sectionTitle}>
                 Needs your attention
-                {attention.length > 0 && <span className={styles.count}>{attention.length}</span>}
+                {attention.length > 0 && (
+                  <span className={styles.count}>{attention.length}</span>
+                )}
               </h2>
             </div>
             <AttentionList items={attention} />
@@ -186,7 +243,8 @@ const PortalHomePage = async () => {
             </div>
             {featuredProjects.length === 0 ? (
               <p className={styles.empty}>
-                No projects yet — they&apos;ll appear here as soon as {agencyName} kicks one off.
+                No projects yet — they&apos;ll appear here as soon as{" "}
+                {agencyName} kicks one off.
               </p>
             ) : (
               <ul className={styles.projectGrid}>
@@ -214,7 +272,8 @@ const PortalHomePage = async () => {
             </div>
             {upcoming.length === 0 ? (
               <p className={styles.panelEmpty}>
-                No meetings on the calendar.{selfBooking ? " Book one whenever you're ready." : ""}
+                No meetings on the calendar.
+                {selfBooking ? " Book one whenever you're ready." : ""}
               </p>
             ) : (
               <ul className={styles.meetingList}>
@@ -224,7 +283,9 @@ const PortalHomePage = async () => {
                       <CalendarDays />
                     </span>
                     <span className={styles.meetingText}>
-                      <span className={styles.meetingTitle}>{meeting.title}</span>
+                      <span className={styles.meetingTitle}>
+                        {meeting.title}
+                      </span>
                       <span className={styles.meetingMeta}>
                         <LocalTime iso={meeting.starts_at} />
                         {meeting.location && ` · ${meeting.location}`}
@@ -236,7 +297,10 @@ const PortalHomePage = async () => {
             )}
           </section>
 
-          <section className={styles.panel} aria-labelledby="conversations-title">
+          <section
+            className={styles.panel}
+            aria-labelledby="conversations-title"
+          >
             <div className={styles.sectionHead}>
               <h2 id="conversations-title" className={styles.panelTitle}>
                 Conversations
@@ -246,7 +310,9 @@ const PortalHomePage = async () => {
               </Link>
             </div>
             {recentConversations.length === 0 ? (
-              <p className={styles.panelEmpty}>No conversations yet. Say hello to {agencyName}!</p>
+              <p className={styles.panelEmpty}>
+                No conversations yet. Say hello to {agencyName}!
+              </p>
             ) : (
               <ul className={styles.conversationList}>
                 {recentConversations.map((conversation) => (
@@ -256,9 +322,12 @@ const PortalHomePage = async () => {
                       className={styles.conversation}
                       data-unread={conversation.unread_count > 0}
                     >
-                      <span className={styles.conversationTitle}>{conversation.title}</span>
+                      <span className={styles.conversationTitle}>
+                        {conversation.title}
+                      </span>
                       <span className={styles.conversationPreview}>
-                        {conversation.last_message_preview ?? conversation.participant_names.join(", ")}
+                        {conversation.last_message_preview ??
+                          conversation.participant_names.join(", ")}
                       </span>
                     </Link>
                   </li>

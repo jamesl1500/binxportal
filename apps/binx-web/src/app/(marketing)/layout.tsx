@@ -6,7 +6,7 @@
  * part of the app search engines should index.
  *
  * @module apps/binx-web/src/app/(marketing)/layout.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import { SITE, SITE_URL } from "@/lib/site";
 import MarketingHeader from "@/components/marketing/MarketingHeader/MarketingHeader";
@@ -37,7 +37,9 @@ const MarketingLayout = ({ children }: { children: React.ReactNode }) => {
     <div className={styles.shell}>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify([orgJsonLd, siteJsonLd]) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify([orgJsonLd, siteJsonLd]),
+        }}
       />
       <MarketingHeader />
       <main className={styles.main}>{children}</main>

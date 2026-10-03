@@ -8,7 +8,7 @@
  * OrgSwitcher dropdown's create-agency dialog.
  *
  * @module apps/binx-web/src/components/forms/agency/NewAgencyForm/NewAgencyForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -19,7 +19,12 @@ import CreateAgencyForm from "@/components/forms/agency/CreateAgencyForm/CreateA
 const NewAgencyForm = () => {
   const router = useRouter();
 
-  return <CreateAgencyForm onCreated={() => router.push("/dashboard")} onCancel={() => router.back()} />;
+  return (
+    <CreateAgencyForm
+      onCreated={() => router.push("/dashboard")}
+      onCancel={() => router.back()}
+    />
+  );
 };
 
 export default NewAgencyForm;

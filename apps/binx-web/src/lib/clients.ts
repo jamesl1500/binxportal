@@ -7,7 +7,7 @@
  * rather than establishing a new session.
  *
  * @module apps/binx-web/src/lib/clients.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 import axios from "axios";
 import { cache } from "react";
@@ -60,15 +60,23 @@ function toPayload(input: ClientDetailsInput) {
  * @function getAgencyClients
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't a member of this agency.
  */
-export async function getAgencyClients(agencyId: string): Promise<AgencyClient[]> {
+export async function getAgencyClients(
+  agencyId: string,
+): Promise<AgencyClient[]> {
   const headers = await authHeader();
 
   try {
-    const { data } = await api.get<AgencyClient[]>(`/agencies/${agencyId}/clients`, { headers });
+    const { data } = await api.get<AgencyClient[]>(
+      `/agencies/${agencyId}/clients`,
+      { headers },
+    );
     return data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
-      throw new AuthApiError(extractDetailMessage(error.response.data, "Unable to load clients"), error.response.status);
+      throw new AuthApiError(
+        extractDetailMessage(error.response.data, "Unable to load clients"),
+        error.response.status,
+      );
     }
     throw error;
   }
@@ -85,19 +93,27 @@ export async function getAgencyClients(agencyId: string): Promise<AgencyClient[]
  * @function getAgencyClient
  * @throws {AuthApiError} - Thrown if not authenticated, or the client doesn't exist in this agency.
  */
-export const getAgencyClient = cache(async (agencyId: string, clientId: string): Promise<AgencyClient> => {
-  const headers = await authHeader();
+export const getAgencyClient = cache(
+  async (agencyId: string, clientId: string): Promise<AgencyClient> => {
+    const headers = await authHeader();
 
-  try {
-    const { data } = await api.get<AgencyClient>(`/agencies/${agencyId}/clients/${clientId}`, { headers });
-    return data;
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response) {
-      throw new AuthApiError(extractDetailMessage(error.response.data, "Unable to load client"), error.response.status);
+    try {
+      const { data } = await api.get<AgencyClient>(
+        `/agencies/${agencyId}/clients/${clientId}`,
+        { headers },
+      );
+      return data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        throw new AuthApiError(
+          extractDetailMessage(error.response.data, "Unable to load client"),
+          error.response.status,
+        );
+      }
+      throw error;
     }
-    throw error;
-  }
-});
+  },
+);
 
 /**
  * createAgencyClient
@@ -109,15 +125,25 @@ export const getAgencyClient = cache(async (agencyId: string, clientId: string):
  * @function createAgencyClient
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't a member of this agency.
  */
-export async function createAgencyClient(agencyId: string, input: ClientDetailsInput): Promise<AgencyClient> {
+export async function createAgencyClient(
+  agencyId: string,
+  input: ClientDetailsInput,
+): Promise<AgencyClient> {
   const headers = await authHeader();
 
   try {
-    const { data } = await api.post<AgencyClient>(`/agencies/${agencyId}/clients`, toPayload(input), { headers });
+    const { data } = await api.post<AgencyClient>(
+      `/agencies/${agencyId}/clients`,
+      toPayload(input),
+      { headers },
+    );
     return data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
-      throw new AuthApiError(extractDetailMessage(error.response.data, "Unable to create client"), error.response.status);
+      throw new AuthApiError(
+        extractDetailMessage(error.response.data, "Unable to create client"),
+        error.response.status,
+      );
     }
     throw error;
   }
@@ -149,7 +175,10 @@ export async function updateAgencyClient(
     return data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
-      throw new AuthApiError(extractDetailMessage(error.response.data, "Unable to update client"), error.response.status);
+      throw new AuthApiError(
+        extractDetailMessage(error.response.data, "Unable to update client"),
+        error.response.status,
+      );
     }
     throw error;
   }
@@ -182,7 +211,10 @@ export async function setAgencyClientActive(
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new AuthApiError(
-        extractDetailMessage(error.response.data, "Unable to update client status"),
+        extractDetailMessage(
+          error.response.data,
+          "Unable to update client status",
+        ),
         error.response.status,
       );
     }
@@ -201,14 +233,20 @@ export async function setAgencyClientActive(
  * @function deleteAgencyClient
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller lacks permission for this agency.
  */
-export async function deleteAgencyClient(agencyId: string, clientId: string): Promise<void> {
+export async function deleteAgencyClient(
+  agencyId: string,
+  clientId: string,
+): Promise<void> {
   const headers = await authHeader();
 
   try {
     await api.delete(`/agencies/${agencyId}/clients/${clientId}`, { headers });
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
-      throw new AuthApiError(extractDetailMessage(error.response.data, "Unable to delete client"), error.response.status);
+      throw new AuthApiError(
+        extractDetailMessage(error.response.data, "Unable to delete client"),
+        error.response.status,
+      );
     }
     throw error;
   }
@@ -219,18 +257,27 @@ export async function deleteAgencyClient(agencyId: string, clientId: string): Pr
 /** Someone on the client's side with `/portal` access to this client. */
 export type ClientContact = Schemas["ClientContactRead"];
 
-export type ClientContactInvitation = Omit<Schemas["ClientInvitationRead"], "status"> & {
+export type ClientContactInvitation = Omit<
+  Schemas["ClientInvitationRead"],
+  "status"
+> & {
   status: "pending" | "accepted" | "revoked";
 };
 
 function contactError(error: unknown, fallback: string): never {
   if (axios.isAxiosError(error) && error.response) {
-    throw new AuthApiError(extractDetailMessage(error.response.data, fallback), error.response.status);
+    throw new AuthApiError(
+      extractDetailMessage(error.response.data, fallback),
+      error.response.status,
+    );
   }
   throw error;
 }
 
-export async function getClientContacts(agencyId: string, clientId: string): Promise<ClientContact[]> {
+export async function getClientContacts(
+  agencyId: string,
+  clientId: string,
+): Promise<ClientContact[]> {
   const headers = await authHeader();
   try {
     const { data } = await api.get<ClientContact[]>(
@@ -319,7 +366,10 @@ export async function removeClientContact(
 ): Promise<void> {
   const headers = await authHeader();
   try {
-    await api.delete(`/agencies/${agencyId}/clients/${clientId}/contacts/${contactId}`, { headers });
+    await api.delete(
+      `/agencies/${agencyId}/clients/${clientId}/contacts/${contactId}`,
+      { headers },
+    );
   } catch (error) {
     contactError(error, "Unable to remove the contact");
   }
@@ -330,12 +380,20 @@ export async function removeClientContact(
 export type ClientBranding = Schemas["ClientBrandingRead"];
 
 /** Every editable branding field — the form submits the full set each save, same as AgencyProfileInput. */
-export type ClientBrandingInput = Partial<Omit<ClientBranding, "client_id" | "has_logo" | "logo_version">>;
+export type ClientBrandingInput = Partial<
+  Omit<ClientBranding, "client_id" | "has_logo" | "logo_version">
+>;
 
-export async function getClientBranding(agencyId: string, clientId: string): Promise<ClientBranding> {
+export async function getClientBranding(
+  agencyId: string,
+  clientId: string,
+): Promise<ClientBranding> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<ClientBranding>(`/agencies/${agencyId}/clients/${clientId}/branding`, { headers });
+    const { data } = await api.get<ClientBranding>(
+      `/agencies/${agencyId}/clients/${clientId}/branding`,
+      { headers },
+    );
     return data;
   } catch (error) {
     contactError(error, "Unable to load branding");
@@ -360,7 +418,11 @@ export async function updateClientBranding(
   }
 }
 
-export async function uploadClientLogo(agencyId: string, clientId: string, file: File): Promise<ClientBranding> {
+export async function uploadClientLogo(
+  agencyId: string,
+  clientId: string,
+  file: File,
+): Promise<ClientBranding> {
   const headers = await authHeader();
   const formData = new FormData();
   formData.append("file", file);
@@ -376,12 +438,18 @@ export async function uploadClientLogo(agencyId: string, clientId: string, file:
   }
 }
 
-export async function removeClientLogo(agencyId: string, clientId: string): Promise<ClientBranding> {
+export async function removeClientLogo(
+  agencyId: string,
+  clientId: string,
+): Promise<ClientBranding> {
   const headers = await authHeader();
   try {
-    const { data } = await api.delete<ClientBranding>(`/agencies/${agencyId}/clients/${clientId}/branding/logo`, {
-      headers,
-    });
+    const { data } = await api.delete<ClientBranding>(
+      `/agencies/${agencyId}/clients/${clientId}/branding/logo`,
+      {
+        headers,
+      },
+    );
     return data;
   } catch (error) {
     contactError(error, "Unable to remove the logo");

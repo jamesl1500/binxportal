@@ -10,7 +10,7 @@
  * explanatory note instead of silently pretending to work.
  *
  * @module apps/binx-web/src/components/portal/PayInvoiceButton/PayInvoiceButton.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -46,7 +46,9 @@ const PayInvoiceButton = ({
     startTransition(async () => {
       const result = await payInvoiceAction(invoiceId);
       if (result.error || !result.checkoutUrl) {
-        setError(result.error ?? "We couldn't open Stripe Checkout. Please try again.");
+        setError(
+          result.error ?? "We couldn't open Stripe Checkout. Please try again.",
+        );
         return;
       }
       window.location.assign(result.checkoutUrl);
@@ -62,7 +64,9 @@ const PayInvoiceButton = ({
         disabled={isPending || !stripeReady}
         aria-disabled={!stripeReady}
       >
-        {isPending ? "Redirecting…" : `Pay ${formatMoneyCents(amountDueCents, currency)} now`}
+        {isPending
+          ? "Redirecting…"
+          : `Pay ${formatMoneyCents(amountDueCents, currency)} now`}
       </button>
       <PaymentResultDialog
         state={error ? "error" : null}
@@ -76,7 +80,10 @@ const PayInvoiceButton = ({
         }}
       />
       {!stripeReady && (
-        <p className={styles.note}>Online payment isn&apos;t set up yet — contact {agencyName} to arrange payment.</p>
+        <p className={styles.note}>
+          Online payment isn&apos;t set up yet — contact {agencyName} to arrange
+          payment.
+        </p>
       )}
     </div>
   );

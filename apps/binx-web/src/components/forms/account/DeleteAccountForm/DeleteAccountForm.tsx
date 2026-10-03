@@ -7,7 +7,7 @@
  * login — there's no in-component success state to render.
  *
  * @module apps/binx-web/src/components/forms/account/DeleteAccountForm/DeleteAccountForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -71,7 +71,9 @@ const DeleteAccountForm = () => {
           aria-invalid={Boolean(errors.currentPassword)}
           {...register("currentPassword")}
         />
-        {errors.currentPassword && <p className={styles.error}>{errors.currentPassword.message}</p>}
+        {errors.currentPassword && (
+          <p className={styles.error}>{errors.currentPassword.message}</p>
+        )}
       </div>
 
       <div className={styles.field}>
@@ -86,7 +88,9 @@ const DeleteAccountForm = () => {
           aria-invalid={Boolean(errors.confirmText)}
           {...register("confirmText")}
         />
-        {errors.confirmText && <p className={styles.error}>{errors.confirmText.message}</p>}
+        {errors.confirmText && (
+          <p className={styles.error}>{errors.confirmText.message}</p>
+        )}
       </div>
 
       {formError && <p className={styles.formError}>{formError}</p>}

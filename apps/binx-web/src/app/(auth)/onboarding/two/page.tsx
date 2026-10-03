@@ -5,7 +5,7 @@
  * success the agency-creating action redirects to /dashboard.
  *
  * @module apps/binx-web/src/app/(auth)/onboarding/two/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -26,8 +26,8 @@ const OnboardingStepTwoPage = () => {
         <span className={styles.eyebrow}>Step 2 of 4</span>
         <h1 className={styles.title}>Create your agency</h1>
         <p className={styles.subtitle}>
-          This becomes your team&apos;s home base — you can rename it any time. Add clients, projects, and teammates
-          once you&apos;re in.
+          This becomes your team&apos;s home base — you can rename it any time.
+          Add clients, projects, and teammates once you&apos;re in.
         </p>
       </header>
 

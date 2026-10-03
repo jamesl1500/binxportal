@@ -7,7 +7,7 @@
  * server snapshot keeps the two renders matching.
  *
  * @module apps/binx-web/src/components/portal/LocalTime/LocalTime.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 

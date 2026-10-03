@@ -6,7 +6,7 @@
  * can hold a ref for PageCoachmark to anchor to.
  *
  * @module apps/binx-web/src/components/invoices/NewInvoiceButton/NewInvoiceButton.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 

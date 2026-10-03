@@ -6,7 +6,7 @@
  * CreateClientDialog modal so staff can be linked straight here.
  *
  * @module apps/binx-web/src/app/(app)/clients/new/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -36,7 +36,9 @@ const NewClientPage = async () => {
         <div>
           <span className={styles.eyebrow}>Clients</span>
           <h1 className={styles.title}>New client</h1>
-          <p className={styles.subtitle}>Only the name is required — you can fill in the rest any time.</p>
+          <p className={styles.subtitle}>
+            Only the name is required — you can fill in the rest any time.
+          </p>
         </div>
       </div>
 

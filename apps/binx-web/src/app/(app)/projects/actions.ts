@@ -8,12 +8,17 @@
  * uses them.
  *
  * @module apps/binx-web/src/app/(app)/projects/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 
 import { AuthApiError } from "@/lib/auth";
-import { createAgencyProject, Project, ProjectDetailsInput, ProjectSetupInput } from "@/lib/projects";
+import {
+  createAgencyProject,
+  Project,
+  ProjectDetailsInput,
+  ProjectSetupInput,
+} from "@/lib/projects";
 
 export interface CreateProjectActionResult {
   error?: string;

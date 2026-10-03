@@ -9,7 +9,7 @@
  * any id outside that set.
  *
  * @module apps/binx-web/src/components/projects/ProjectDashboardGrid/widgets.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 
 export const PROJECT_WIDGET_IDS = [
@@ -24,7 +24,10 @@ export const PROJECT_WIDGET_IDS = [
 
 export type ProjectWidgetId = (typeof PROJECT_WIDGET_IDS)[number];
 
-export const DEFAULT_HIDDEN_PROJECT_WIDGETS: ProjectWidgetId[] = ["ai_summary", "files"];
+export const DEFAULT_HIDDEN_PROJECT_WIDGETS: ProjectWidgetId[] = [
+  "ai_summary",
+  "files",
+];
 export const DEFAULT_WIDE_PROJECT_WIDGETS: ProjectWidgetId[] = ["overview"];
 
 export interface ProjectWidgetMeta {
@@ -34,13 +37,31 @@ export interface ProjectWidgetMeta {
 }
 
 export const PROJECT_WIDGET_META: Record<ProjectWidgetId, ProjectWidgetMeta> = {
-  overview: { title: "Overview", description: "Client, timeline, progress, and the project brief." },
-  my_tasks: { title: "My tasks", description: "Open tasks on this project assigned to you." },
+  overview: {
+    title: "Overview",
+    description: "Client, timeline, progress, and the project brief.",
+  },
+  my_tasks: {
+    title: "My tasks",
+    description: "Open tasks on this project assigned to you.",
+  },
   board: { title: "Board", description: "How many tasks sit in each list." },
-  team: { title: "Team", description: "Who's on the project, and their roles." },
-  meetings: { title: "Meetings", description: "Upcoming meetings for this project." },
-  ai_summary: { title: "AI status update", description: "Draft a client-ready update from the board." },
-  files: { title: "Files", description: "The latest briefs, assets, and deliverables." },
+  team: {
+    title: "Team",
+    description: "Who's on the project, and their roles.",
+  },
+  meetings: {
+    title: "Meetings",
+    description: "Upcoming meetings for this project.",
+  },
+  ai_summary: {
+    title: "AI status update",
+    description: "Draft a client-ready update from the board.",
+  },
+  files: {
+    title: "Files",
+    description: "The latest briefs, assets, and deliverables.",
+  },
 };
 
 export function isProjectWidgetId(value: string): value is ProjectWidgetId {
@@ -48,7 +69,9 @@ export function isProjectWidgetId(value: string): value is ProjectWidgetId {
 }
 
 /** Filters/pads a possibly-stale stored order to exactly the known ids, same rule the backend applies. */
-export function normalizeProjectWidgetOrder(order: string[]): ProjectWidgetId[] {
+export function normalizeProjectWidgetOrder(
+  order: string[],
+): ProjectWidgetId[] {
   const known = order.filter(isProjectWidgetId);
   const missing = PROJECT_WIDGET_IDS.filter((id) => !known.includes(id));
   return [...known, ...missing];

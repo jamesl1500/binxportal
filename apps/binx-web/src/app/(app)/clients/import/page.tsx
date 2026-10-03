@@ -6,7 +6,7 @@
  * plan's client limit, only the rows that fit are imported.
  *
  * @module apps/binx-web/src/app/(app)/clients/import/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -37,14 +37,19 @@ const ImportClientsPage = async () => {
           <span className={styles.eyebrow}>Clients</span>
           <h1 className={styles.title}>Import clients</h1>
           <p className={styles.subtitle}>
-            Bring your client list over from a spreadsheet. Only the client name is required, and clients you already
-            have are skipped.
+            Bring your client list over from a spreadsheet. Only the client name
+            is required, and clients you already have are skipped.
           </p>
         </div>
       </div>
 
       <div className={styles.formCard}>
-        <BulkImportWizard agencyId={currentAgency.id} kind="clients" nextHref="/clients" nextLabel="View clients" />
+        <BulkImportWizard
+          agencyId={currentAgency.id}
+          kind="clients"
+          nextHref="/clients"
+          nextLabel="View clients"
+        />
       </div>
     </div>
   );

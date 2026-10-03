@@ -6,7 +6,7 @@
  * the actual authentication call (see lib/auth.ts).
  *
  * @module apps/binx-web/src/components/forms/auth/LoginForm/LoginForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -15,19 +15,22 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
-import { loginAction, resendVerificationAction } from "@/app/(auth)/auth/login/actions";
+import {
+  loginAction,
+  resendVerificationAction,
+} from "@/app/(auth)/auth/login/actions";
 import { useLoginPreferencesStore } from "@/stores/use-login-preferences-store";
 
 import styles from "./LoginForm.module.scss";
 
 /**
  * Login Schema
- * 
- * This schema defines the validation rules for the login form using Zod. 
- * It ensures that the email is a valid email address, 
- * the password is at least 8 characters long, and the rememberMe 
+ *
+ * This schema defines the validation rules for the login form using Zod.
+ * It ensures that the email is a valid email address,
+ * the password is at least 8 characters long, and the rememberMe
  * field is a boolean.
- * 
+ *
  * @constant {z.ZodObject} loginSchema - The Zod schema for validating login form inputs.
  */
 const loginSchema = z.object({
@@ -40,16 +43,20 @@ type LoginValues = z.infer<typeof loginSchema>;
 
 /**
  * LoginForm Component
- * 
+ *
  * This component renders a login form that allows users to enter their email,
  * password, and an option to remember their email for future logins. It uses react-hook-form for form state management and validation, and zustand for managing the remembered email state.
- * 
+ *
  * @component
  * @returns {JSX.Element} - The rendered login form component.
  */
 const LoginForm = () => {
-  const rememberedEmail = useLoginPreferencesStore((state) => state.rememberedEmail);
-  const setRememberedEmail = useLoginPreferencesStore((state) => state.setRememberedEmail);
+  const rememberedEmail = useLoginPreferencesStore(
+    (state) => state.rememberedEmail,
+  );
+  const setRememberedEmail = useLoginPreferencesStore(
+    (state) => state.setRememberedEmail,
+  );
 
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
@@ -132,11 +139,17 @@ const LoginForm = () => {
           aria-invalid={Boolean(errors.password)}
           {...register("password")}
         />
-        {errors.password && <p className={styles.error}>{errors.password.message}</p>}
+        {errors.password && (
+          <p className={styles.error}>{errors.password.message}</p>
+        )}
       </div>
 
       <label className={styles.checkboxRow}>
-        <input type="checkbox" className={styles.checkbox} {...register("rememberMe")} />
+        <input
+          type="checkbox"
+          className={styles.checkbox}
+          {...register("rememberMe")}
+        />
         Remember me on this device
       </label>
 

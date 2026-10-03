@@ -7,7 +7,7 @@
  * on the project's own page.
  *
  * @module apps/binx-web/src/app/(app)/projects/new/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -49,15 +49,16 @@ const NewProjectPage = async () => {
           <span className={styles.eyebrow}>Projects</span>
           <h1 className={styles.title}>New project</h1>
           <p className={styles.subtitle}>
-            Set up the details, task tags, roles, and team in a few quick steps, so it&apos;s ready to work in from day
-            one.
+            Set up the details, task tags, roles, and team in a few quick steps,
+            so it&apos;s ready to work in from day one.
           </p>
         </div>
       </div>
 
       {clients.length === 0 ? (
         <p className={styles.notice}>
-          You&apos;ll need a client before you can start a project — add one from the Clients page first.
+          You&apos;ll need a client before you can start a project — add one
+          from the Clients page first.
         </p>
       ) : (
         <div className={styles.formCard}>

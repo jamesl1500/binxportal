@@ -6,7 +6,7 @@
  * Every action returns `{ error?, ... }`, the same shape the project actions use.
  *
  * @module apps/binx-web/src/app/(app)/invoices/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 
@@ -59,7 +59,9 @@ export interface RedirectActionResult {
   redirectUrl?: string;
 }
 
-export async function startStripeConnectOnboardingAction(agencyId: string): Promise<RedirectActionResult> {
+export async function startStripeConnectOnboardingAction(
+  agencyId: string,
+): Promise<RedirectActionResult> {
   try {
     return { redirectUrl: await startStripeConnectOnboarding(agencyId) };
   } catch (error) {
@@ -72,7 +74,10 @@ export interface InvoiceActionResult {
   invoice?: InvoiceDetail;
 }
 
-export async function createInvoiceAction(agencyId: string, input: InvoiceInput): Promise<InvoiceActionResult> {
+export async function createInvoiceAction(
+  agencyId: string,
+  input: InvoiceInput,
+): Promise<InvoiceActionResult> {
   try {
     return { invoice: await createInvoice(agencyId, input) };
   } catch (error) {
@@ -99,13 +104,23 @@ export async function issueInvoiceAction(
   recipientEmail?: string | null,
 ): Promise<InvoiceActionResult> {
   try {
-    return { invoice: await issueInvoice(agencyId, invoiceId, sendNotice, recipientEmail) };
+    return {
+      invoice: await issueInvoice(
+        agencyId,
+        invoiceId,
+        sendNotice,
+        recipientEmail,
+      ),
+    };
   } catch (error) {
     return errorResult(error, "Unable to issue invoice");
   }
 }
 
-export async function voidInvoiceAction(agencyId: string, invoiceId: string): Promise<InvoiceActionResult> {
+export async function voidInvoiceAction(
+  agencyId: string,
+  invoiceId: string,
+): Promise<InvoiceActionResult> {
   try {
     return { invoice: await voidInvoice(agencyId, invoiceId) };
   } catch (error) {
@@ -113,7 +128,10 @@ export async function voidInvoiceAction(agencyId: string, invoiceId: string): Pr
   }
 }
 
-export async function deleteInvoiceAction(agencyId: string, invoiceId: string): Promise<{ error?: string }> {
+export async function deleteInvoiceAction(
+  agencyId: string,
+  invoiceId: string,
+): Promise<{ error?: string }> {
   try {
     await deleteInvoice(agencyId, invoiceId);
   } catch (error) {
@@ -140,7 +158,9 @@ export async function deleteInvoicePaymentAction(
   paymentId: string,
 ): Promise<InvoiceActionResult> {
   try {
-    return { invoice: await deleteInvoicePayment(agencyId, invoiceId, paymentId) };
+    return {
+      invoice: await deleteInvoicePayment(agencyId, invoiceId, paymentId),
+    };
   } catch (error) {
     return errorResult(error, "Unable to remove payment");
   }

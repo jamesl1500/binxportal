@@ -6,7 +6,7 @@
  * a signed-in session with a current agency.
  *
  * @module apps/binx-web/src/app/(app)/dashboard/layout.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import { redirect } from "next/navigation";
 
@@ -31,7 +31,8 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
   const myWork = await getMyWork(currentAgency.id).catch(() => null);
   const firstName = user.full_name.trim().split(/\s+/)[0] || user.full_name;
   const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const greeting =
+    hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   return (
     <div>
@@ -39,7 +40,9 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
       <h1 className={styles.title}>
         {greeting}, {firstName}.
       </h1>
-      <p className={styles.subtitle}>What&apos;s happening across {currentAgency.name}.</p>
+      <p className={styles.subtitle}>
+        What&apos;s happening across {currentAgency.name}.
+      </p>
 
       <div className={styles.tabsWrap}>
         <DashboardTabs myWorkCount={myWork?.total_open ?? 0} />

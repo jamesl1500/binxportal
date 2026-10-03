@@ -7,7 +7,7 @@
  * the tab's own path so the server component re-fetches after a mutation.
  *
  * @module apps/binx-web/src/app/(app)/projects/[projectId]/kickoff/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 
@@ -67,7 +67,10 @@ export async function updateKickoffAction(
   }
 }
 
-export async function deleteKickoffAction(agencyId: string, projectId: string): Promise<{ error?: string }> {
+export async function deleteKickoffAction(
+  agencyId: string,
+  projectId: string,
+): Promise<{ error?: string }> {
   try {
     await deleteKickoff(agencyId, projectId);
     revalidatePath(`/projects/${projectId}/kickoff`);
@@ -77,7 +80,10 @@ export async function deleteKickoffAction(agencyId: string, projectId: string): 
   }
 }
 
-export async function sendKickoffAction(agencyId: string, projectId: string): Promise<KickoffActionResult> {
+export async function sendKickoffAction(
+  agencyId: string,
+  projectId: string,
+): Promise<KickoffActionResult> {
   try {
     const kickoff = await sendKickoff(agencyId, projectId);
     revalidatePath(`/projects/${projectId}/kickoff`);
@@ -88,7 +94,10 @@ export async function sendKickoffAction(agencyId: string, projectId: string): Pr
   }
 }
 
-export async function nudgeKickoffAction(agencyId: string, projectId: string): Promise<KickoffActionResult> {
+export async function nudgeKickoffAction(
+  agencyId: string,
+  projectId: string,
+): Promise<KickoffActionResult> {
   try {
     const kickoff = await nudgeKickoff(agencyId, projectId);
     revalidatePath(`/projects/${projectId}/kickoff`);

@@ -10,14 +10,17 @@
  * not an actionable prompt).
  *
  * @module apps/binx-web/src/components/account/SecurityActivityList/SecurityActivityList.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
 import { useCallback, useState, useTransition } from "react";
 
 import { getMyActivityAction } from "@/app/(app)/activity/actions";
-import { useRealtimeSocket, type RealtimeEvent } from "@/hooks/useRealtimeSocket";
+import {
+  useRealtimeSocket,
+  type RealtimeEvent,
+} from "@/hooks/useRealtimeSocket";
 import type { ActivityEntry, ActivityPage } from "@/lib/activity";
 import { relativeTime } from "@/lib/notifications-client";
 
@@ -48,7 +51,10 @@ const SecurityActivityList = ({ initialPage }: SecurityActivityListProps) => {
   const loadMore = () => {
     setError(null);
     startTransition(async () => {
-      const result = await getMyActivityAction({ limit: PAGE_SIZE, offset: items.length });
+      const result = await getMyActivityAction({
+        limit: PAGE_SIZE,
+        offset: items.length,
+      });
       if (result.error || !result.page) {
         setError(result.error ?? "Unable to load more");
         return;
@@ -79,7 +85,11 @@ const SecurityActivityList = ({ initialPage }: SecurityActivityListProps) => {
         {items.map((entry) => (
           <li key={entry.id} className={styles.row}>
             <span className={styles.summary}>{entry.summary}</span>
-            <time className={styles.time} dateTime={entry.created_at} title={fullTimestamp(entry.created_at)}>
+            <time
+              className={styles.time}
+              dateTime={entry.created_at}
+              title={fullTimestamp(entry.created_at)}
+            >
               {relativeTime(entry.created_at)}
             </time>
           </li>
@@ -93,7 +103,12 @@ const SecurityActivityList = ({ initialPage }: SecurityActivityListProps) => {
       )}
 
       {hasMore && (
-        <button type="button" className={styles.loadMore} onClick={loadMore} disabled={isPending}>
+        <button
+          type="button"
+          className={styles.loadMore}
+          onClick={loadMore}
+          disabled={isPending}
+        >
           {isPending ? "Loading…" : "Load more"}
         </button>
       )}

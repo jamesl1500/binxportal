@@ -1,11 +1,11 @@
 /**
  * page.tsx - Login Page
- * 
+ *
  * This page serves as the default entry point for authentication. It checks if the user is already authenticated.
  * If the user is authenticated, they are redirected to the dashboard. If not, they are redirected to the login page.
- * 
+ *
  * @module apps/binx-web/src/app/(auth)/auth/login/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -32,7 +32,9 @@ const AuthLoginPage = async () => {
       <header className={styles.header}>
         <span className={styles.eyebrow}>Welcome back</span>
         <h1 className={styles.title}>Sign in to Binx</h1>
-        <p className={styles.subtitle}>Enter your credentials to access your workspace.</p>
+        <p className={styles.subtitle}>
+          Enter your credentials to access your workspace.
+        </p>
       </header>
 
       <LoginForm />

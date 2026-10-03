@@ -7,7 +7,7 @@
  * account-settings mutations.
  *
  * @module apps/binx-web/src/app/(app)/dashboard/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 
@@ -21,7 +21,10 @@ export interface AiBriefingActionResult {
   briefing?: string;
 }
 
-export async function getAiBriefingAction(agencyId: string, force = false): Promise<AiBriefingActionResult> {
+export async function getAiBriefingAction(
+  agencyId: string,
+  force = false,
+): Promise<AiBriefingActionResult> {
   try {
     return { briefing: await getAiBriefing(agencyId, force) };
   } catch (error) {

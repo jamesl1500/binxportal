@@ -8,7 +8,7 @@
  * to type.
  *
  * @module apps/binx-web/src/components/proposals/PortalProposalActions/PortalProposalActions.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -16,7 +16,10 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { declinePortalProposalAction, signPortalProposalAction } from "@/app/(portal)/portal/proposals/actions";
+import {
+  declinePortalProposalAction,
+  signPortalProposalAction,
+} from "@/app/(portal)/portal/proposals/actions";
 
 import styles from "./PortalProposalActions.module.scss";
 
@@ -48,7 +51,10 @@ const PortalProposalActions = ({ proposalId }: PortalProposalActionsProps) => {
     event.preventDefault();
     if (isPending) return;
     startTransition(async () => {
-      const result = await declinePortalProposalAction(proposalId, reason.trim() || null);
+      const result = await declinePortalProposalAction(
+        proposalId,
+        reason.trim() || null,
+      );
       if (result.error) {
         toast.error(result.error);
         return;
@@ -60,10 +66,20 @@ const PortalProposalActions = ({ proposalId }: PortalProposalActionsProps) => {
   if (mode === "choose") {
     return (
       <div className={styles.choose}>
-        <button type="button" className={styles.primary} disabled={isPending} onClick={handleSign}>
+        <button
+          type="button"
+          className={styles.primary}
+          disabled={isPending}
+          onClick={handleSign}
+        >
           {isPending ? "Signing…" : "Sign this proposal"}
         </button>
-        <button type="button" className={styles.ghost} disabled={isPending} onClick={() => setMode("decline")}>
+        <button
+          type="button"
+          className={styles.ghost}
+          disabled={isPending}
+          onClick={() => setMode("decline")}
+        >
           Decline
         </button>
       </div>
@@ -82,10 +98,19 @@ const PortalProposalActions = ({ proposalId }: PortalProposalActionsProps) => {
         />
       </label>
       <div className={styles.formActions}>
-        <button type="button" className={styles.ghost} disabled={isPending} onClick={() => setMode("choose")}>
+        <button
+          type="button"
+          className={styles.ghost}
+          disabled={isPending}
+          onClick={() => setMode("choose")}
+        >
           Back
         </button>
-        <button type="submit" className={styles.dangerSolid} disabled={isPending}>
+        <button
+          type="submit"
+          className={styles.dangerSolid}
+          disabled={isPending}
+        >
           {isPending ? "Declining…" : "Decline proposal"}
         </button>
       </div>

@@ -7,7 +7,7 @@
  * component — static markup.
  *
  * @module apps/binx-web/src/components/portal/AttentionList/AttentionList.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import Link from "next/link";
 import {
@@ -42,7 +42,8 @@ const AttentionList = ({ items }: { items: AttentionItem[] }) => {
         <div>
           <p className={styles.clearTitle}>You&apos;re all caught up</p>
           <p className={styles.clearBody}>
-            Nothing needs your attention right now. Anything that does will show up here.
+            Nothing needs your attention right now. Anything that does will show
+            up here.
           </p>
         </div>
       </div>
@@ -55,7 +56,11 @@ const AttentionList = ({ items }: { items: AttentionItem[] }) => {
         const Icon = ICONS[item.kind];
         return (
           <li key={item.id}>
-            <Link href={item.href} className={styles.item} data-tone={item.tone}>
+            <Link
+              href={item.href}
+              className={styles.item}
+              data-tone={item.tone}
+            >
               <span className={styles.iconWrap} aria-hidden="true">
                 <Icon />
               </span>

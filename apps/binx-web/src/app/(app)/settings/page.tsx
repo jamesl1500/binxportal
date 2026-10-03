@@ -5,7 +5,7 @@
  * details. Editing is owner/admin; members see a read-only summary.
  *
  * @module apps/binx-web/src/app/(app)/settings/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -40,19 +40,28 @@ const SettingsProfilePage = async () => {
     redirect("/onboarding/two");
   }
 
-  const canEdit = currentAgency.role === "owner" || currentAgency.role === "admin";
+  const canEdit =
+    currentAgency.role === "owner" || currentAgency.role === "admin";
   const profile = await getAgencyProfile(currentAgency.id);
 
   if (!canEdit) {
-    const rows = FIELDS.map(([key, label]) => ({ label, value: profile[key] })).filter(
-      (row) => row.value !== null && row.value !== "" && row.value !== undefined,
+    const rows = FIELDS.map(([key, label]) => ({
+      label,
+      value: profile[key],
+    })).filter(
+      (row) =>
+        row.value !== null && row.value !== "" && row.value !== undefined,
     );
 
     return (
       <div>
-        <p className={styles.sectionSubtitle}>Only agency owners and admins can edit these settings.</p>
+        <p className={styles.sectionSubtitle}>
+          Only agency owners and admins can edit these settings.
+        </p>
         {rows.length === 0 ? (
-          <p className={styles.sectionSubtitle}>No agency details have been filled in yet.</p>
+          <p className={styles.sectionSubtitle}>
+            No agency details have been filled in yet.
+          </p>
         ) : (
           <dl className={styles.readonlyList}>
             {rows.map((row) => (
@@ -71,13 +80,17 @@ const SettingsProfilePage = async () => {
     <div>
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Branding</h2>
-        <p className={styles.sectionSubtitle}>Your logo, cover image, brand colour, and tagline.</p>
+        <p className={styles.sectionSubtitle}>
+          Your logo, cover image, brand colour, and tagline.
+        </p>
         <AgencyBrandingForm agencyId={currentAgency.id} profile={profile} />
       </section>
 
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>About</h2>
-        <p className={styles.sectionSubtitle}>Who you are, where you are, and how to reach you.</p>
+        <p className={styles.sectionSubtitle}>
+          Who you are, where you are, and how to reach you.
+        </p>
         <AgencyProfileForm agencyId={currentAgency.id} profile={profile} />
       </section>
     </div>

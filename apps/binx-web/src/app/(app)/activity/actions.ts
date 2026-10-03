@@ -6,12 +6,17 @@
  * to `lib/activity.ts`.
  *
  * @module apps/binx-web/src/app/(app)/activity/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 
 import { AuthApiError } from "@/lib/auth";
-import { type ActivityPage, type ActivityQuery, getAgencyActivity, getMyActivity } from "@/lib/activity";
+import {
+  type ActivityPage,
+  type ActivityQuery,
+  getAgencyActivity,
+  getMyActivity,
+} from "@/lib/activity";
 
 export interface ActivityPageActionResult {
   error?: string;

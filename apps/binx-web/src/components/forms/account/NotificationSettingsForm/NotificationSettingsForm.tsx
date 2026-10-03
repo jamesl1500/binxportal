@@ -7,7 +7,7 @@
  * server action — there's no per-toggle autosave.
  *
  * @module apps/binx-web/src/components/forms/account/NotificationSettingsForm/NotificationSettingsForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -48,7 +48,8 @@ const GROUPS: SettingGroup[] = [
       {
         key: "email_client_activity",
         label: "Client activity",
-        description: "When a client uploads a file, leaves a comment, or updates a request.",
+        description:
+          "When a client uploads a file, leaves a comment, or updates a request.",
       },
       {
         key: "email_team_mentions",
@@ -58,7 +59,8 @@ const GROUPS: SettingGroup[] = [
       {
         key: "email_weekly_digest",
         label: "Weekly digest",
-        description: "A summary of your agency's activity, every Monday morning.",
+        description:
+          "A summary of your agency's activity, every Monday morning.",
       },
       {
         key: "email_security_alerts",
@@ -79,7 +81,8 @@ const GROUPS: SettingGroup[] = [
       {
         key: "inapp_invoicing",
         label: "Invoicing",
-        description: "When an invoice you drafted is issued, or a payment is recorded.",
+        description:
+          "When an invoice you drafted is issued, or a payment is recorded.",
       },
       {
         key: "inapp_projects",
@@ -100,17 +103,20 @@ const GROUPS: SettingGroup[] = [
   },
 ];
 
-const NotificationSettingsForm = ({ settings }: NotificationSettingsFormProps) => {
+const NotificationSettingsForm = ({
+  settings,
+}: NotificationSettingsFormProps) => {
   const [values, setValues] = useState(settings);
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const handleToggle = (key: keyof NotificationSettings) => (checked: boolean) => {
-    setFormError(null);
-    setSuccessMessage(null);
-    setValues((prev) => ({ ...prev, [key]: checked }));
-  };
+  const handleToggle =
+    (key: keyof NotificationSettings) => (checked: boolean) => {
+      setFormError(null);
+      setSuccessMessage(null);
+      setValues((prev) => ({ ...prev, [key]: checked }));
+    };
 
   const handleSave = () => {
     setFormError(null);
@@ -161,7 +167,12 @@ const NotificationSettingsForm = ({ settings }: NotificationSettingsFormProps) =
       {formError && <p className={styles.formError}>{formError}</p>}
       {successMessage && <p className={styles.formSuccess}>{successMessage}</p>}
 
-      <button type="button" className={styles.submit} onClick={handleSave} disabled={isPending}>
+      <button
+        type="button"
+        className={styles.submit}
+        onClick={handleSave}
+        disabled={isPending}
+      >
         {isPending ? "Saving…" : "Save changes"}
       </button>
     </div>

@@ -7,7 +7,7 @@
  * shaped like AiAssistantLauncher, its neighbor in AppHeader.
  *
  * @module apps/binx-web/src/components/tutorial/TutorialLauncher/TutorialLauncher.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 

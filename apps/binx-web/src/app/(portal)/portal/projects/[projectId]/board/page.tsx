@@ -6,7 +6,7 @@
  * layout above.
  *
  * @module apps/binx-web/src/app/(portal)/portal/projects/[projectId]/board/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";

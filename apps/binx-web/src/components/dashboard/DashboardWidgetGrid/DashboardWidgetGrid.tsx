@@ -11,7 +11,7 @@
  * order, it never fetches on its own.
  *
  * @module apps/binx-web/src/components/dashboard/DashboardWidgetGrid/DashboardWidgetGrid.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -61,18 +61,31 @@ const DashboardWidgetGrid = ({
   myTasks,
 }: DashboardWidgetGridProps) => {
   const [, startTransition] = useTransition();
-  const [order, setOrder] = useState<DashboardWidgetId[]>(() => normalizeWidgetOrder(initialOrder));
+  const [order, setOrder] = useState<DashboardWidgetId[]>(() =>
+    normalizeWidgetOrder(initialOrder),
+  );
   const [hidden, setHidden] = useState<Set<DashboardWidgetId>>(
-    () => new Set(initialHidden.filter((id): id is DashboardWidgetId => (DASHBOARD_WIDGET_IDS as readonly string[]).includes(id))),
+    () =>
+      new Set(
+        initialHidden.filter((id): id is DashboardWidgetId =>
+          (DASHBOARD_WIDGET_IDS as readonly string[]).includes(id),
+        ),
+      ),
   );
   const [customizing, setCustomizing] = useState(false);
   const [draggedId, setDraggedId] = useState<DashboardWidgetId | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const persist = (nextOrder: DashboardWidgetId[], nextHidden: Set<DashboardWidgetId>) => {
+  const persist = (
+    nextOrder: DashboardWidgetId[],
+    nextHidden: Set<DashboardWidgetId>,
+  ) => {
     setError(null);
     startTransition(async () => {
-      const result = await updateDashboardLayoutAction(nextOrder, Array.from(nextHidden));
+      const result = await updateDashboardLayoutAction(
+        nextOrder,
+        Array.from(nextHidden),
+      );
       if (result.error) setError(result.error);
     });
   };
@@ -121,11 +134,21 @@ const DashboardWidgetGrid = ({
       case "recent_activity":
         return <ActivityTeaser entries={activity} />;
       case "upcoming_meetings":
-        return <UpcomingMeetingsCard meetings={meetings} limit={5} moreHref="/meetings" showClient showProject />;
+        return (
+          <UpcomingMeetingsCard
+            meetings={meetings}
+            limit={5}
+            moreHref="/meetings"
+            showClient
+            showProject
+          />
+        );
     }
   };
 
-  const visibleOrder = customizing ? order : order.filter((id) => !hidden.has(id));
+  const visibleOrder = customizing
+    ? order
+    : order.filter((id) => !hidden.has(id));
 
   return (
     <div>
@@ -142,7 +165,11 @@ const DashboardWidgetGrid = ({
           onClick={() => setCustomizing((value) => !value)}
           aria-pressed={customizing}
         >
-          {customizing ? <Check aria-hidden="true" /> : <Settings2 aria-hidden="true" />}
+          {customizing ? (
+            <Check aria-hidden="true" />
+          ) : (
+            <Settings2 aria-hidden="true" />
+          )}
           {customizing ? "Done" : "Customize"}
         </button>
       </div>
@@ -185,10 +212,16 @@ const DashboardWidgetGrid = ({
                     type="button"
                     className={styles.visibilityToggle}
                     onClick={() => toggleHidden(id)}
-                    aria-label={isHidden ? `Show ${meta.title}` : `Hide ${meta.title}`}
+                    aria-label={
+                      isHidden ? `Show ${meta.title}` : `Hide ${meta.title}`
+                    }
                     aria-pressed={isHidden}
                   >
-                    {isHidden ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
+                    {isHidden ? (
+                      <EyeOff aria-hidden="true" />
+                    ) : (
+                      <Eye aria-hidden="true" />
+                    )}
                   </button>
                 ) : (
                   meta.viewAllHref && (
@@ -200,7 +233,9 @@ const DashboardWidgetGrid = ({
               </div>
 
               {isHidden && customizing ? (
-                <p className={styles.hiddenNotice}>Hidden from your dashboard.</p>
+                <p className={styles.hiddenNotice}>
+                  Hidden from your dashboard.
+                </p>
               ) : (
                 widgetBody(id)
               )}

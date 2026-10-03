@@ -7,7 +7,7 @@
  * nav live in the layout above.
  *
  * @module apps/binx-web/src/app/(portal)/portal/projects/[projectId]/kickoff/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 

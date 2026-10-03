@@ -6,7 +6,7 @@
  * first. `router.refresh()` after so the timeline + header stay in sync.
  *
  * @module apps/binx-web/src/components/leads/LeadStatusControl/LeadStatusControl.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -15,7 +15,11 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { changeLeadStatusAction } from "@/app/(app)/leads/actions";
-import { LEAD_STATUSES, LEAD_STATUS_META, type LeadStatus } from "@/lib/leads-client";
+import {
+  LEAD_STATUSES,
+  LEAD_STATUS_META,
+  type LeadStatus,
+} from "@/lib/leads-client";
 
 import styles from "./LeadStatusControl.module.scss";
 
@@ -27,7 +31,12 @@ interface LeadStatusControlProps {
   locked?: boolean;
 }
 
-const LeadStatusControl = ({ agencyId, leadId, status, locked }: LeadStatusControlProps) => {
+const LeadStatusControl = ({
+  agencyId,
+  leadId,
+  status,
+  locked,
+}: LeadStatusControlProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const meta = LEAD_STATUS_META[status];
@@ -37,10 +46,18 @@ const LeadStatusControl = ({ agencyId, leadId, status, locked }: LeadStatusContr
     let lostReason: string | null = null;
     if (next === "lost") {
       // Scaffold: a prompt is enough. Swap for an inline field later.
-      lostReason = typeof window !== "undefined" ? window.prompt("Why was this lead lost? (optional)") : null;
+      lostReason =
+        typeof window !== "undefined"
+          ? window.prompt("Why was this lead lost? (optional)")
+          : null;
     }
     startTransition(async () => {
-      const result = await changeLeadStatusAction(agencyId, leadId, next, lostReason);
+      const result = await changeLeadStatusAction(
+        agencyId,
+        leadId,
+        next,
+        lostReason,
+      );
       if (result.error) {
         toast.error(result.error);
         return;
@@ -52,14 +69,20 @@ const LeadStatusControl = ({ agencyId, leadId, status, locked }: LeadStatusContr
 
   if (locked) {
     return (
-      <span className={styles.pill} style={{ borderColor: meta?.accent, color: meta?.accent }}>
+      <span
+        className={styles.pill}
+        style={{ borderColor: meta?.accent, color: meta?.accent }}
+      >
         {meta?.label}
       </span>
     );
   }
 
   return (
-    <span className={styles.wrap} style={{ borderColor: meta?.accent, color: meta?.accent }}>
+    <span
+      className={styles.wrap}
+      style={{ borderColor: meta?.accent, color: meta?.accent }}
+    >
       <select
         className={styles.select}
         value={status}

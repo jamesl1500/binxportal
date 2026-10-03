@@ -9,7 +9,7 @@
  * or 429 (budget/cap exceeded) both surface as a normal, readable message.
  *
  * @module apps/binx-web/src/lib/ai.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 import axios from "axios";
 
@@ -28,12 +28,18 @@ export interface AiSettingsInput {
   dailyUserRequestCap: number;
 }
 
-export type AiUsageEvent = Omit<Schemas["AiUsageEventRead"], "feature" | "status"> & {
+export type AiUsageEvent = Omit<
+  Schemas["AiUsageEventRead"],
+  "feature" | "status"
+> & {
   feature: AiFeature;
   status: AiUsageStatus;
 };
 
-export type AiUsageSummary = Omit<Schemas["AiUsageSummaryRead"], "recent_events"> & {
+export type AiUsageSummary = Omit<
+  Schemas["AiUsageSummaryRead"],
+  "recent_events"
+> & {
   recent_events: AiUsageEvent[];
 };
 
@@ -45,7 +51,9 @@ export type AiConversation = Schemas["AiConversationRead"];
 
 export type AiAction = Schemas["AiActionRead"];
 
-export type AiMessage = Omit<Schemas["AiMessageRead"], "role"> & { role: "user" | "assistant" };
+export type AiMessage = Omit<Schemas["AiMessageRead"], "role"> & {
+  role: "user" | "assistant";
+};
 
 export type AiPreferences = Schemas["AiPreferencesRead"];
 
@@ -59,7 +67,10 @@ async function authHeader(): Promise<{ Authorization: string }> {
 
 function rethrow(error: unknown, fallback: string): never {
   if (axios.isAxiosError(error) && error.response) {
-    throw new AuthApiError(extractDetailMessage(error.response.data, fallback), error.response.status);
+    throw new AuthApiError(
+      extractDetailMessage(error.response.data, fallback),
+      error.response.status,
+    );
   }
   throw error;
 }
@@ -67,14 +78,20 @@ function rethrow(error: unknown, fallback: string): never {
 export async function getAiSettings(agencyId: string): Promise<AiSettings> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<AiSettings>(`/agencies/${agencyId}/ai/settings`, { headers });
+    const { data } = await api.get<AiSettings>(
+      `/agencies/${agencyId}/ai/settings`,
+      { headers },
+    );
     return data;
   } catch (error) {
     rethrow(error, "Unable to load AI settings");
   }
 }
 
-export async function updateAiSettings(agencyId: string, input: AiSettingsInput): Promise<AiSettings> {
+export async function updateAiSettings(
+  agencyId: string,
+  input: AiSettingsInput,
+): Promise<AiSettings> {
   const headers = await authHeader();
   try {
     const { data } = await api.patch<AiSettings>(
@@ -95,7 +112,10 @@ export async function updateAiSettings(agencyId: string, input: AiSettingsInput)
 export async function getAiUsage(agencyId: string): Promise<AiUsageSummary> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<AiUsageSummary>(`/agencies/${agencyId}/ai/usage`, { headers });
+    const { data } = await api.get<AiUsageSummary>(
+      `/agencies/${agencyId}/ai/usage`,
+      { headers },
+    );
     return data;
   } catch (error) {
     rethrow(error, "Unable to load AI usage");
@@ -111,20 +131,29 @@ export async function getAiUsage(agencyId: string): Promise<AiUsageSummary> {
  *
  * @function getAiBriefing
  */
-export async function getAiBriefing(agencyId: string, force = false): Promise<string> {
+export async function getAiBriefing(
+  agencyId: string,
+  force = false,
+): Promise<string> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<{ briefing: string }>(`/agencies/${agencyId}/ai/briefing`, {
-      headers,
-      params: { refresh: force || undefined },
-    });
+    const { data } = await api.get<{ briefing: string }>(
+      `/agencies/${agencyId}/ai/briefing`,
+      {
+        headers,
+        params: { refresh: force || undefined },
+      },
+    );
     return data.briefing;
   } catch (error) {
     rethrow(error, "Unable to generate a briefing");
   }
 }
 
-export async function generateProjectSummary(agencyId: string, projectId: string): Promise<string> {
+export async function generateProjectSummary(
+  agencyId: string,
+  projectId: string,
+): Promise<string> {
   const headers = await authHeader();
   try {
     const { data } = await api.post<{ draft: string }>(
@@ -138,7 +167,10 @@ export async function generateProjectSummary(agencyId: string, projectId: string
   }
 }
 
-export async function generateInvoiceReminder(agencyId: string, invoiceId: string): Promise<string> {
+export async function generateInvoiceReminder(
+  agencyId: string,
+  invoiceId: string,
+): Promise<string> {
   const headers = await authHeader();
   try {
     const { data } = await api.post<{ draft: string }>(
@@ -152,7 +184,10 @@ export async function generateInvoiceReminder(agencyId: string, invoiceId: strin
   }
 }
 
-export async function draftMessageReply(agencyId: string, conversationId: string): Promise<string> {
+export async function draftMessageReply(
+  agencyId: string,
+  conversationId: string,
+): Promise<string> {
   const headers = await authHeader();
   try {
     const { data } = await api.post<{ draft: string }>(
@@ -166,7 +201,10 @@ export async function draftMessageReply(agencyId: string, conversationId: string
   }
 }
 
-export async function suggestProjectTasks(agencyId: string, projectId: string): Promise<AiTaskSuggestions> {
+export async function suggestProjectTasks(
+  agencyId: string,
+  projectId: string,
+): Promise<AiTaskSuggestions> {
   const headers = await authHeader();
   try {
     const { data } = await api.post<AiTaskSuggestions>(
@@ -187,13 +225,20 @@ export async function applyProjectTaskSuggestions(
 ): Promise<void> {
   const headers = await authHeader();
   try {
-    await api.post(`/agencies/${agencyId}/projects/${projectId}/ai/tasks/apply`, suggestions, { headers });
+    await api.post(
+      `/agencies/${agencyId}/projects/${projectId}/ai/tasks/apply`,
+      suggestions,
+      { headers },
+    );
   } catch (error) {
     rethrow(error, "Unable to set up the task list");
   }
 }
 
-export async function generateLeadFollowup(agencyId: string, leadId: string): Promise<string> {
+export async function generateLeadFollowup(
+  agencyId: string,
+  leadId: string,
+): Promise<string> {
   const headers = await authHeader();
   try {
     const { data } = await api.post<{ draft: string }>(
@@ -207,27 +252,41 @@ export async function generateLeadFollowup(agencyId: string, leadId: string): Pr
   }
 }
 
-export async function listAiConversations(agencyId: string): Promise<AiConversation[]> {
+export async function listAiConversations(
+  agencyId: string,
+): Promise<AiConversation[]> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<AiConversation[]>(`/agencies/${agencyId}/ai/conversations`, { headers });
+    const { data } = await api.get<AiConversation[]>(
+      `/agencies/${agencyId}/ai/conversations`,
+      { headers },
+    );
     return data;
   } catch (error) {
     rethrow(error, "Unable to load conversations");
   }
 }
 
-export async function createAiConversation(agencyId: string): Promise<AiConversation> {
+export async function createAiConversation(
+  agencyId: string,
+): Promise<AiConversation> {
   const headers = await authHeader();
   try {
-    const { data } = await api.post<AiConversation>(`/agencies/${agencyId}/ai/conversations`, undefined, { headers });
+    const { data } = await api.post<AiConversation>(
+      `/agencies/${agencyId}/ai/conversations`,
+      undefined,
+      { headers },
+    );
     return data;
   } catch (error) {
     rethrow(error, "Unable to start a new conversation");
   }
 }
 
-export async function getAiConversationMessages(agencyId: string, conversationId: string): Promise<AiMessage[]> {
+export async function getAiConversationMessages(
+  agencyId: string,
+  conversationId: string,
+): Promise<AiMessage[]> {
   const headers = await authHeader();
   try {
     const { data } = await api.get<AiMessage[]>(
@@ -240,7 +299,11 @@ export async function getAiConversationMessages(agencyId: string, conversationId
   }
 }
 
-export async function sendAiMessage(agencyId: string, conversationId: string, message: string): Promise<AiMessage> {
+export async function sendAiMessage(
+  agencyId: string,
+  conversationId: string,
+  message: string,
+): Promise<AiMessage> {
   const headers = await authHeader();
   try {
     const { data } = await api.post<AiMessage>(
@@ -254,10 +317,16 @@ export async function sendAiMessage(agencyId: string, conversationId: string, me
   }
 }
 
-export async function deleteAiConversation(agencyId: string, conversationId: string): Promise<void> {
+export async function deleteAiConversation(
+  agencyId: string,
+  conversationId: string,
+): Promise<void> {
   const headers = await authHeader();
   try {
-    await api.delete(`/agencies/${agencyId}/ai/conversations/${conversationId}`, { headers });
+    await api.delete(
+      `/agencies/${agencyId}/ai/conversations/${conversationId}`,
+      { headers },
+    );
   } catch (error) {
     rethrow(error, "Unable to delete this conversation");
   }
@@ -271,20 +340,32 @@ export async function deleteAiConversation(agencyId: string, conversationId: str
  *
  * @function getAiPreferences
  */
-export async function getAiPreferences(agencyId: string): Promise<AiPreferences> {
+export async function getAiPreferences(
+  agencyId: string,
+): Promise<AiPreferences> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<AiPreferences>(`/agencies/${agencyId}/ai/preferences`, { headers });
+    const { data } = await api.get<AiPreferences>(
+      `/agencies/${agencyId}/ai/preferences`,
+      { headers },
+    );
     return data;
   } catch (error) {
     rethrow(error, "Unable to load your AI preferences");
   }
 }
 
-export async function updateAiPreferences(agencyId: string, preferences: AiPreferences): Promise<AiPreferences> {
+export async function updateAiPreferences(
+  agencyId: string,
+  preferences: AiPreferences,
+): Promise<AiPreferences> {
   const headers = await authHeader();
   try {
-    const { data } = await api.put<AiPreferences>(`/agencies/${agencyId}/ai/preferences`, preferences, { headers });
+    const { data } = await api.put<AiPreferences>(
+      `/agencies/${agencyId}/ai/preferences`,
+      preferences,
+      { headers },
+    );
     return data;
   } catch (error) {
     rethrow(error, "Unable to save your AI preferences");
@@ -315,6 +396,11 @@ export async function resolveAiAction(
     );
     return data;
   } catch (error) {
-    rethrow(error, decision === "approve" ? "Unable to make that change" : "Unable to decline that change");
+    rethrow(
+      error,
+      decision === "approve"
+        ? "Unable to make that change"
+        : "Unable to decline that change",
+    );
   }
 }

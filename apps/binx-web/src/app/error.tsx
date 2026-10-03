@@ -6,7 +6,7 @@
  * rendering (the site-wide 500 page).
  *
  * @module apps/binx-web/src/app/error.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -35,7 +35,11 @@ const ErrorPage = ({ error, retry }: ErrorPageProps) => {
         </p>
 
         <div className={styles.actions}>
-          <button type="button" className={styles.action} onClick={() => retry()}>
+          <button
+            type="button"
+            className={styles.action}
+            onClick={() => retry()}
+          >
             Try again
           </button>
           <Link href="/" className={styles.secondaryAction}>
@@ -43,7 +47,9 @@ const ErrorPage = ({ error, retry }: ErrorPageProps) => {
           </Link>
         </div>
 
-        {error.digest && <p className={styles.digest}>Reference: {error.digest}</p>}
+        {error.digest && (
+          <p className={styles.digest}>Reference: {error.digest}</p>
+        )}
       </div>
     </div>
   );

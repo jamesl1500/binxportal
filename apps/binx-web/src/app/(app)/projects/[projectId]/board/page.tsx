@@ -6,14 +6,18 @@
  * squeezed into a dashboard card).
  *
  * @module apps/binx-web/src/app/(app)/projects/[projectId]/board/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { getCurrentAgencyContext } from "@/lib/agencies";
 import { getCurrentUser } from "@/lib/auth";
-import { getProjectBoard, getProjectMembers, getProjectTags } from "@/lib/projects";
+import {
+  getProjectBoard,
+  getProjectMembers,
+  getProjectTags,
+} from "@/lib/projects";
 import KanbanBoard from "@/components/forms/projects/KanbanBoard/KanbanBoard";
 
 export const metadata: Metadata = { title: "Board" };
@@ -49,7 +53,9 @@ const ProjectBoardPage = async ({ params }: ProjectBoardPageProps) => {
       projectMembers={projectMembers}
       projectTags={projectTags}
       currentUserId={user.id}
-      canModerateComments={currentAgency.role === "owner" || currentAgency.role === "admin"}
+      canModerateComments={
+        currentAgency.role === "owner" || currentAgency.role === "admin"
+      }
     />
   );
 };

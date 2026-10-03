@@ -7,7 +7,7 @@
  * choice visible and explicit up front instead of leaving it silent.
  *
  * @module apps/binx-web/src/app/(auth)/onboarding/three/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -43,7 +43,8 @@ const OnboardingStepThreePage = async () => {
         <span className={styles.eyebrow}>Step 3 of 4</span>
         <h1 className={styles.title}>Choose your plan</h1>
         <p className={styles.subtitle}>
-          Free to start, no credit card required. Upgrade any time as your team grows.
+          Free to start, no credit card required. Upgrade any time as your team
+          grows.
         </p>
       </header>
 

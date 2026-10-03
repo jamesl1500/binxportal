@@ -8,13 +8,17 @@
  * every column.
  *
  * @module apps/binx-web/src/app/(app)/projects/[projectId]/team/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { getAgencyMembers, getCurrentAgencyContext } from "@/lib/agencies";
-import { getAgencyProject, getProjectMembers, getProjectRoles } from "@/lib/projects";
+import {
+  getAgencyProject,
+  getProjectMembers,
+  getProjectRoles,
+} from "@/lib/projects";
 import ProjectTeamTable from "@/components/forms/projects/ProjectTeamTable/ProjectTeamTable";
 
 import styles from "./page.module.scss";
@@ -45,7 +49,9 @@ const ProjectTeamPage = async ({ params }: ProjectTeamPageProps) => {
     <div>
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Team</h2>
-        <p className={styles.sectionSubtitle}>Who&apos;s actively working on {project.name}, and in what role.</p>
+        <p className={styles.sectionSubtitle}>
+          Who&apos;s actively working on {project.name}, and in what role.
+        </p>
         <ProjectTeamTable
           agencyId={currentAgency.id}
           projectId={project.id}

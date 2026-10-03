@@ -5,7 +5,7 @@
  * and the legal strip.
  *
  * @module apps/binx-web/src/components/marketing/MarketingFooter/MarketingFooter.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import Link from "next/link";
 
@@ -14,44 +14,45 @@ import BinxMark from "@/components/BinxMark/BinxMark";
 
 import styles from "./MarketingFooter.module.scss";
 
-const COLUMNS: { heading: string; links: { href: string; label: string }[] }[] = [
-  {
-    heading: "Product",
-    links: [
-      { href: "/features", label: "Features" },
-      { href: "/pricing", label: "Pricing" },
-      { href: "/auth/signup", label: "Get started" },
-      { href: "/auth/login", label: "Sign in" },
-    ],
-  },
-  {
-    heading: "Compare",
-    // Not in the primary nav (it'd clutter the header) — these SEO landing
-    // pages still need to be reachable by a real link, not just the
-    // sitemap, so a crawler actually finds and credits them.
-    links: [...SEO_LANDING_PAGES],
-  },
-  {
-    heading: "Use cases",
-    // Same reasoning as Compare above — before this, the only inbound link
-    // to any /for/* page sitewide was the homepage trust bar.
-    links: [...USE_CASE_PAGES],
-  },
-  {
-    heading: "Company",
-    links: [
-      { href: "/about", label: "About" },
-      { href: "/contact", label: "Contact" },
-    ],
-  },
-  {
-    heading: "Legal",
-    links: [
-      { href: "/privacy", label: "Privacy" },
-      { href: "/terms", label: "Terms" },
-    ],
-  },
-];
+const COLUMNS: { heading: string; links: { href: string; label: string }[] }[] =
+  [
+    {
+      heading: "Product",
+      links: [
+        { href: "/features", label: "Features" },
+        { href: "/pricing", label: "Pricing" },
+        { href: "/auth/signup", label: "Get started" },
+        { href: "/auth/login", label: "Sign in" },
+      ],
+    },
+    {
+      heading: "Compare",
+      // Not in the primary nav (it'd clutter the header) — these SEO landing
+      // pages still need to be reachable by a real link, not just the
+      // sitemap, so a crawler actually finds and credits them.
+      links: [...SEO_LANDING_PAGES],
+    },
+    {
+      heading: "Use cases",
+      // Same reasoning as Compare above — before this, the only inbound link
+      // to any /for/* page sitewide was the homepage trust bar.
+      links: [...USE_CASE_PAGES],
+    },
+    {
+      heading: "Company",
+      links: [
+        { href: "/about", label: "About" },
+        { href: "/contact", label: "Contact" },
+      ],
+    },
+    {
+      heading: "Legal",
+      links: [
+        { href: "/privacy", label: "Privacy" },
+        { href: "/terms", label: "Terms" },
+      ],
+    },
+  ];
 
 const MarketingFooter = () => {
   return (
@@ -67,10 +68,18 @@ const MarketingFooter = () => {
 
         <div className={styles.columns}>
           {COLUMNS.map((column) => (
-            <nav key={column.heading} className={styles.column} aria-label={column.heading}>
+            <nav
+              key={column.heading}
+              className={styles.column}
+              aria-label={column.heading}
+            >
               <p className={styles.columnHeading}>{column.heading}</p>
               {column.links.map((link) => (
-                <Link key={link.label} href={link.href} className={styles.columnLink}>
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  className={styles.columnLink}
+                >
                   {link.label}
                 </Link>
               ))}

@@ -8,7 +8,7 @@
  * re-resolves the current agency.
  *
  * @module apps/binx-web/src/app/(app)/activity/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -29,7 +29,8 @@ const ActivityPage = async () => {
     redirect("/onboarding/two");
   }
 
-  const canManage = currentAgency.role === "owner" || currentAgency.role === "admin";
+  const canManage =
+    currentAgency.role === "owner" || currentAgency.role === "admin";
   const page = await getAgencyActivity(currentAgency.id, { limit: 30 });
 
   return (

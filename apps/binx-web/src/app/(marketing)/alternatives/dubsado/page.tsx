@@ -8,7 +8,7 @@
  * team project management alongside the client-facing side.
  *
  * @module apps/binx-web/src/app/(marketing)/alternatives/dubsado/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -76,18 +76,29 @@ const faqJsonLd = {
 const DubsadoAlternativePage = () => {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([faqJsonLd, breadcrumbJsonLd(TITLE, "/alternatives/dubsado")]) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify([
+            faqJsonLd,
+            breadcrumbJsonLd(TITLE, "/alternatives/dubsado"),
+          ]),
+        }}
+      />
 
       <section className={styles.hero}>
         <div className={styles.heroGlow} aria-hidden="true" />
         <div className={styles.container}>
           <div className={styles.heroInner}>
             <span className={styles.eyebrow}>Dubsado alternative</span>
-            <h1 className={styles.h1}>A Dubsado alternative built for a whole agency, not one operator.</h1>
+            <h1 className={styles.h1}>
+              A Dubsado alternative built for a whole agency, not one operator.
+            </h1>
             <p className={styles.lead}>
-              Dubsado is a solid CRM and invoicing tool for a solo practice. {SITE.name} is built for the point past
-              that — a team running several client projects at once, with a client portal that shows real progress,
-              not just a form.
+              Dubsado is a solid CRM and invoicing tool for a solo practice.{" "}
+              {SITE.name} is built for the point past that — a team running
+              several client projects at once, with a client portal that shows
+              real progress, not just a form.
             </p>
             <div className={`${styles.btnRow} ${styles.heroActions}`}>
               <Link href="/auth/signup" className={styles.btnPrimary}>
@@ -97,7 +108,9 @@ const DubsadoAlternativePage = () => {
                 See everything it does
               </Link>
             </div>
-            <p className={styles.heroNote}>Free plan available · no card required.</p>
+            <p className={styles.heroNote}>
+              Free plan available · no card required.
+            </p>
           </div>
         </div>
       </section>
@@ -106,7 +119,9 @@ const DubsadoAlternativePage = () => {
         <div className={styles.container}>
           <div className={styles.sectionHead}>
             <span className={styles.eyebrow}>Where it gets tight</span>
-            <h2 className={styles.h2}>Great for booking the work. Thinner once you&apos;re running it.</h2>
+            <h2 className={styles.h2}>
+              Great for booking the work. Thinner once you&apos;re running it.
+            </h2>
           </div>
           <div className={styles.grid}>
             {GAPS.map(({ icon: Icon, title, text }) => (
@@ -125,16 +140,25 @@ const DubsadoAlternativePage = () => {
       <section className={`${styles.section} ${styles.sectionDark}`}>
         <div className={styles.container}>
           <div className={styles.sectionHead}>
-            <span className={`${styles.eyebrow} ${styles.eyebrowOnDark}`}>What you get instead</span>
-            <h2 className={styles.h2}>One workspace for the client and the team.</h2>
+            <span className={`${styles.eyebrow} ${styles.eyebrowOnDark}`}>
+              What you get instead
+            </span>
+            <h2 className={styles.h2}>
+              One workspace for the client and the team.
+            </h2>
           </div>
           <div className={styles.split}>
             <div className={styles.splitBody}>
               <h3 className={styles.h3}>The client side</h3>
               <ul className={styles.splitList}>
-                <li>A branded portal showing live project progress, not just paperwork</li>
+                <li>
+                  A branded portal showing live project progress, not just
+                  paperwork
+                </li>
                 <li>Invoices they can pay directly from the portal</li>
-                <li>Threaded messages tied to the project, not a shared inbox</li>
+                <li>
+                  Threaded messages tied to the project, not a shared inbox
+                </li>
               </ul>
             </div>
             <div className={styles.splitBody}>
@@ -142,7 +166,10 @@ const DubsadoAlternativePage = () => {
               <ul className={styles.splitList}>
                 <li>Task boards with assignees and due dates per project</li>
                 <li>A shared canvas the team and client arrange together</li>
-                <li>AI lead prospecting, proposals and invoicing on one client record</li>
+                <li>
+                  AI lead prospecting, proposals and invoicing on one client
+                  record
+                </li>
               </ul>
             </div>
           </div>
@@ -169,7 +196,10 @@ const DubsadoAlternativePage = () => {
         </div>
       </section>
 
-      <MarketingCta heading="Bring your first client over and see." sub="Free plan, no card, no time limit." />
+      <MarketingCta
+        heading="Bring your first client over and see."
+        sub="Free plan, no card, no time limit."
+      />
     </>
   );
 };

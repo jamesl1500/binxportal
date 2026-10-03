@@ -7,7 +7,7 @@
  * actions use.
  *
  * @module apps/binx-web/src/app/(app)/proposals/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 
@@ -35,7 +35,10 @@ export interface ProposalActionResult {
   proposal?: ProposalDetail;
 }
 
-export async function createProposalAction(agencyId: string, input: ProposalInput): Promise<ProposalActionResult> {
+export async function createProposalAction(
+  agencyId: string,
+  input: ProposalInput,
+): Promise<ProposalActionResult> {
   try {
     return { proposal: await createProposal(agencyId, input) };
   } catch (error) {
@@ -55,7 +58,10 @@ export async function updateProposalAction(
   }
 }
 
-export async function deleteProposalAction(agencyId: string, proposalId: string): Promise<{ error?: string }> {
+export async function deleteProposalAction(
+  agencyId: string,
+  proposalId: string,
+): Promise<{ error?: string }> {
   try {
     await deleteProposal(agencyId, proposalId);
   } catch (error) {
@@ -70,7 +76,9 @@ export async function sendProposalAction(
   recipientEmail: string | null,
 ): Promise<ProposalActionResult> {
   try {
-    return { proposal: await sendProposal(agencyId, proposalId, recipientEmail) };
+    return {
+      proposal: await sendProposal(agencyId, proposalId, recipientEmail),
+    };
   } catch (error) {
     return errorResult(error, "Unable to send proposal");
   }

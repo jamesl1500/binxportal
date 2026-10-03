@@ -11,7 +11,7 @@
  * offers "Mark all as read" and a link to the full `/notifications` page.
  *
  * @module apps/binx-web/src/components/notifications/NotificationBell/NotificationBell.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -19,7 +19,14 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Menu } from "@base-ui/react/menu";
-import { AtSign, Bell, FolderKanban, Receipt, Users, type LucideIcon } from "lucide-react";
+import {
+  AtSign,
+  Bell,
+  FolderKanban,
+  Receipt,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -28,9 +35,16 @@ import {
   markAllNotificationsReadAction,
   markNotificationReadAction,
 } from "@/app/(app)/notifications/actions";
-import { useRealtimeSocket, type RealtimeEvent } from "@/hooks/useRealtimeSocket";
+import {
+  useRealtimeSocket,
+  type RealtimeEvent,
+} from "@/hooks/useRealtimeSocket";
 import type { AppNotification } from "@/lib/notifications";
-import { NOTIFICATION_CATEGORY_META, relativeTime, type NotificationCategory } from "@/lib/notifications-client";
+import {
+  NOTIFICATION_CATEGORY_META,
+  relativeTime,
+  type NotificationCategory,
+} from "@/lib/notifications-client";
 
 import styles from "./NotificationBell.module.scss";
 
@@ -49,7 +63,10 @@ interface NotificationBellProps {
   initialItems: AppNotification[];
 }
 
-const NotificationBell = ({ initialUnreadCount, initialItems }: NotificationBellProps) => {
+const NotificationBell = ({
+  initialUnreadCount,
+  initialItems,
+}: NotificationBellProps) => {
   const router = useRouter();
   const [unreadCount, setUnreadCount] = useState(initialUnreadCount);
   const [items, setItems] = useState<AppNotification[]>(initialItems);
@@ -70,18 +87,23 @@ const NotificationBell = ({ initialUnreadCount, initialItems }: NotificationBell
     }
   }, []);
 
-  const handleRealtimeEvent = useCallback((event: RealtimeEvent) => {
-    if (event.type !== "notification.created") return;
-    const notification = event.data as AppNotification;
+  const handleRealtimeEvent = useCallback(
+    (event: RealtimeEvent) => {
+      if (event.type !== "notification.created") return;
+      const notification = event.data as AppNotification;
 
-    setItems((prev) => [notification, ...prev].slice(0, DROPDOWN_LIMIT));
-    setUnreadCount((count) => count + 1);
+      setItems((prev) => [notification, ...prev].slice(0, DROPDOWN_LIMIT));
+      setUnreadCount((count) => count + 1);
 
-    toast(notification.title, {
-      description: notification.body ?? undefined,
-      action: notification.link ? { label: "View", onClick: () => router.push(notification.link!) } : undefined,
-    });
-  }, [router]);
+      toast(notification.title, {
+        description: notification.body ?? undefined,
+        action: notification.link
+          ? { label: "View", onClick: () => router.push(notification.link!) }
+          : undefined,
+      });
+    },
+    [router],
+  );
 
   const socketStatus = useRealtimeSocket(handleRealtimeEvent);
 
@@ -114,7 +136,11 @@ const NotificationBell = ({ initialUnreadCount, initialItems }: NotificationBell
   const handleOpen = (notification: AppNotification) => {
     if (!notification.read_at) {
       setItems((prev) =>
-        prev.map((n) => (n.id === notification.id ? { ...n, read_at: new Date().toISOString() } : n)),
+        prev.map((n) =>
+          n.id === notification.id
+            ? { ...n, read_at: new Date().toISOString() }
+            : n,
+        ),
       );
       setUnreadCount((c) => Math.max(0, c - 1));
       void markNotificationReadAction(notification.id);
@@ -124,7 +150,11 @@ const NotificationBell = ({ initialUnreadCount, initialItems }: NotificationBell
   };
 
   const handleMarkAll = async () => {
-    setItems((prev) => prev.map((n) => (n.read_at ? n : { ...n, read_at: new Date().toISOString() })));
+    setItems((prev) =>
+      prev.map((n) =>
+        n.read_at ? n : { ...n, read_at: new Date().toISOString() },
+      ),
+    );
     setUnreadCount(0);
     await markAllNotificationsReadAction();
   };
@@ -135,18 +165,30 @@ const NotificationBell = ({ initialUnreadCount, initialItems }: NotificationBell
     <Menu.Root open={open} onOpenChange={handleOpenChange}>
       <Menu.Trigger
         className={styles.trigger}
-        aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications"}
+        aria-label={
+          unreadCount > 0
+            ? `Notifications, ${unreadCount} unread`
+            : "Notifications"
+        }
       >
         <Bell className={styles.bell} aria-hidden="true" />
         {unreadCount > 0 && <span className={styles.badge}>{badge}</span>}
       </Menu.Trigger>
       <Menu.Portal>
-        <Menu.Positioner className={styles.positioner} sideOffset={8} align="end">
+        <Menu.Positioner
+          className={styles.positioner}
+          sideOffset={8}
+          align="end"
+        >
           <Menu.Popup className={styles.popup}>
             <div className={styles.head}>
               <span className={styles.headTitle}>Notifications</span>
               {unreadCount > 0 && (
-                <button type="button" className={styles.markAll} onClick={handleMarkAll}>
+                <button
+                  type="button"
+                  className={styles.markAll}
+                  onClick={handleMarkAll}
+                >
                   Mark all as read
                 </button>
               )}
@@ -160,7 +202,8 @@ const NotificationBell = ({ initialUnreadCount, initialItems }: NotificationBell
               ) : (
                 items.map((notification) => {
                   const Icon = CATEGORY_ICON[notification.category] ?? Bell;
-                  const meta = NOTIFICATION_CATEGORY_META[notification.category];
+                  const meta =
+                    NOTIFICATION_CATEGORY_META[notification.category];
                   return (
                     <Menu.Item
                       key={notification.id}
@@ -168,15 +211,29 @@ const NotificationBell = ({ initialUnreadCount, initialItems }: NotificationBell
                       data-unread={!notification.read_at}
                       onClick={() => handleOpen(notification)}
                     >
-                      <span className={styles.iconChip} style={{ color: meta?.accent }} aria-hidden="true">
+                      <span
+                        className={styles.iconChip}
+                        style={{ color: meta?.accent }}
+                        aria-hidden="true"
+                      >
                         <Icon />
                       </span>
                       <span className={styles.body}>
-                        <span className={styles.itemTitle}>{notification.title}</span>
-                        {notification.body && <span className={styles.itemBody}>{notification.body}</span>}
-                        <span className={styles.time}>{relativeTime(notification.created_at)}</span>
+                        <span className={styles.itemTitle}>
+                          {notification.title}
+                        </span>
+                        {notification.body && (
+                          <span className={styles.itemBody}>
+                            {notification.body}
+                          </span>
+                        )}
+                        <span className={styles.time}>
+                          {relativeTime(notification.created_at)}
+                        </span>
                       </span>
-                      {!notification.read_at && <span className={styles.dot} aria-hidden="true" />}
+                      {!notification.read_at && (
+                        <span className={styles.dot} aria-hidden="true" />
+                      )}
                     </Menu.Item>
                   );
                 })

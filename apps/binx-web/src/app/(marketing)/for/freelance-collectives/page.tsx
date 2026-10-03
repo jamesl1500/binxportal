@@ -6,7 +6,7 @@
  * practice. Leans on the free tier and shared ownership of clients.
  *
  * @module apps/binx-web/src/app/(marketing)/for/freelance-collectives/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -79,17 +79,29 @@ const faqJsonLd = {
 const FreelanceCollectivesPage = () => {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([faqJsonLd, breadcrumbJsonLd(TITLE, "/for/freelance-collectives")]) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify([
+            faqJsonLd,
+            breadcrumbJsonLd(TITLE, "/for/freelance-collectives"),
+          ]),
+        }}
+      />
 
       <section className={styles.hero}>
         <div className={styles.heroGlow} aria-hidden="true" />
         <div className={styles.container}>
           <div className={styles.heroInner}>
             <span className={styles.eyebrow}>For freelance collectives</span>
-            <h1 className={styles.h1}>Shared clients, not one person&apos;s inbox.</h1>
+            <h1 className={styles.h1}>
+              Shared clients, not one person&apos;s inbox.
+            </h1>
             <p className={styles.lead}>
-              {SITE.name} gives a freelance collective one workspace the whole group owns — clients, projects and
-              invoicing shared across everyone, starting on a plan that costs nothing while you find your footing.
+              {SITE.name} gives a freelance collective one workspace the whole
+              group owns — clients, projects and invoicing shared across
+              everyone, starting on a plan that costs nothing while you find
+              your footing.
             </p>
             <div className={`${styles.btnRow} ${styles.heroActions}`}>
               <Link href="/auth/signup" className={styles.btnPrimary}>
@@ -99,7 +111,9 @@ const FreelanceCollectivesPage = () => {
                 See everything it does
               </Link>
             </div>
-            <p className={styles.heroNote}>Free plan available · no card required.</p>
+            <p className={styles.heroNote}>
+              Free plan available · no card required.
+            </p>
           </div>
         </div>
       </section>
@@ -128,11 +142,17 @@ const FreelanceCollectivesPage = () => {
         <div className={styles.container}>
           <div className={styles.split}>
             <div className={styles.splitBody}>
-              <span className={`${styles.eyebrow} ${styles.eyebrowOnDark}`}>Start free</span>
-              <h2 className={styles.h3}>No card, no seat fees while you&apos;re finding your rhythm.</h2>
+              <span className={`${styles.eyebrow} ${styles.eyebrowOnDark}`}>
+                Start free
+              </span>
+              <h2 className={styles.h3}>
+                No card, no seat fees while you&apos;re finding your rhythm.
+              </h2>
               <p className={styles.leadOnDark}>
-                The Free plan covers up to 3 team members, 3 clients and 3 active projects with no time limit —
-                room enough for a small collective to run real client work before deciding whether to upgrade.
+                The Free plan covers up to 3 team members, 3 clients and 3
+                active projects with no time limit — room enough for a small
+                collective to run real client work before deciding whether to
+                upgrade.
               </p>
             </div>
           </div>
@@ -154,13 +174,17 @@ const FreelanceCollectivesPage = () => {
             ))}
           </div>
           <p className={styles.faqRelated}>
-            Coming from Bloom? See the <Link href="/alternatives/bloom">Bloom.io alternative</Link> page, or{" "}
-            <Link href="/pricing">check the plans</Link>.
+            Coming from Bloom? See the{" "}
+            <Link href="/alternatives/bloom">Bloom.io alternative</Link> page,
+            or <Link href="/pricing">check the plans</Link>.
           </p>
         </div>
       </section>
 
-      <MarketingCta heading="Set up your collective's workspace." sub="Free plan, no card, no time limit." />
+      <MarketingCta
+        heading="Set up your collective's workspace."
+        sub="Free plan, no card, no time limit."
+      />
     </>
   );
 };

@@ -9,7 +9,7 @@
  * — it's just part of the JSON object binx-api stores, not a database key.
  *
  * @module apps/binx-web/src/components/forms/account/ExperienceEntryList/ExperienceEntryList.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -39,9 +39,15 @@ function blankEntry(): ExperienceEntry {
   };
 }
 
-const ExperienceEntryList = ({ value, onChange, max = MAX_ENTRIES }: ExperienceEntryListProps) => {
+const ExperienceEntryList = ({
+  value,
+  onChange,
+  max = MAX_ENTRIES,
+}: ExperienceEntryListProps) => {
   const update = (id: string, patch: Partial<ExperienceEntry>) => {
-    onChange(value.map((entry) => (entry.id === id ? { ...entry, ...patch } : entry)));
+    onChange(
+      value.map((entry) => (entry.id === id ? { ...entry, ...patch } : entry)),
+    );
   };
 
   const remove = (id: string) => {
@@ -63,11 +69,16 @@ const ExperienceEntryList = ({ value, onChange, max = MAX_ENTRIES }: ExperienceE
                 className={styles.input}
                 placeholder="Senior Developer"
                 value={entry.title}
-                onChange={(event) => update(entry.id, { title: event.target.value })}
+                onChange={(event) =>
+                  update(entry.id, { title: event.target.value })
+                }
               />
             </div>
             <div className={styles.field}>
-              <label className={styles.label} htmlFor={`${entry.id}-organization`}>
+              <label
+                className={styles.label}
+                htmlFor={`${entry.id}-organization`}
+              >
                 Organization
               </label>
               <input
@@ -76,14 +87,19 @@ const ExperienceEntryList = ({ value, onChange, max = MAX_ENTRIES }: ExperienceE
                 className={styles.input}
                 placeholder="Acme Co."
                 value={entry.organization}
-                onChange={(event) => update(entry.id, { organization: event.target.value })}
+                onChange={(event) =>
+                  update(entry.id, { organization: event.target.value })
+                }
               />
             </div>
           </div>
 
           <div className={styles.row}>
             <div className={styles.field}>
-              <label className={styles.label} htmlFor={`${entry.id}-start-year`}>
+              <label
+                className={styles.label}
+                htmlFor={`${entry.id}-start-year`}
+              >
                 Start year
               </label>
               <input
@@ -93,7 +109,9 @@ const ExperienceEntryList = ({ value, onChange, max = MAX_ENTRIES }: ExperienceE
                 min={1900}
                 max={2100}
                 value={entry.start_year}
-                onChange={(event) => update(entry.id, { start_year: Number(event.target.value) })}
+                onChange={(event) =>
+                  update(entry.id, { start_year: Number(event.target.value) })
+                }
               />
             </div>
             <div className={styles.field}>
@@ -110,14 +128,18 @@ const ExperienceEntryList = ({ value, onChange, max = MAX_ENTRIES }: ExperienceE
                   placeholder="Present"
                   disabled={entry.end_year === null}
                   value={entry.end_year ?? ""}
-                  onChange={(event) => update(entry.id, { end_year: Number(event.target.value) })}
+                  onChange={(event) =>
+                    update(entry.id, { end_year: Number(event.target.value) })
+                  }
                 />
                 <label className={styles.presentToggle}>
                   <input
                     type="checkbox"
                     checked={entry.end_year === null}
                     onChange={(event) =>
-                      update(entry.id, { end_year: event.target.checked ? null : CURRENT_YEAR })
+                      update(entry.id, {
+                        end_year: event.target.checked ? null : CURRENT_YEAR,
+                      })
                     }
                   />
                   Present
@@ -135,18 +157,28 @@ const ExperienceEntryList = ({ value, onChange, max = MAX_ENTRIES }: ExperienceE
               className={styles.textarea}
               rows={2}
               value={entry.description ?? ""}
-              onChange={(event) => update(entry.id, { description: event.target.value || null })}
+              onChange={(event) =>
+                update(entry.id, { description: event.target.value || null })
+              }
             />
           </div>
 
-          <button type="button" className={styles.remove} onClick={() => remove(entry.id)}>
+          <button
+            type="button"
+            className={styles.remove}
+            onClick={() => remove(entry.id)}
+          >
             <Trash2 aria-hidden="true" /> Remove
           </button>
         </div>
       ))}
 
       {value.length < max && (
-        <button type="button" className={styles.addButton} onClick={() => onChange([...value, blankEntry()])}>
+        <button
+          type="button"
+          className={styles.addButton}
+          onClick={() => onChange([...value, blankEntry()])}
+        >
           <Plus aria-hidden="true" /> Add experience
         </button>
       )}

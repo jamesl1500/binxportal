@@ -6,7 +6,7 @@
  * fast. Filtering is local; the list is small and already on the page.
  *
  * @module apps/binx-web/src/components/portal/PortalProjectList/PortalProjectList.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -20,7 +20,8 @@ import styles from "./PortalProjectList.module.scss";
 
 type Filter = "all" | "open" | "completed";
 
-const isOpen = (project: PortalProject) => project.status !== "completed" && project.status !== "archived";
+const isOpen = (project: PortalProject) =>
+  project.status !== "completed" && project.status !== "archived";
 
 const PortalProjectList = ({ projects }: { projects: PortalProject[] }) => {
   const [filter, setFilter] = useState<Filter>("all");
@@ -32,7 +33,11 @@ const PortalProjectList = ({ projects }: { projects: PortalProject[] }) => {
     completed: projects.length - projects.filter(isOpen).length,
   };
   const visible = projects.filter((project) =>
-    filter === "all" ? true : filter === "open" ? isOpen(project) : !isOpen(project),
+    filter === "all"
+      ? true
+      : filter === "open"
+        ? isOpen(project)
+        : !isOpen(project),
   );
 
   return (
@@ -50,7 +55,9 @@ const PortalProjectList = ({ projects }: { projects: PortalProject[] }) => {
 
       {visible.length === 0 ? (
         <p className={styles.empty}>
-          {filter === "completed" ? "Nothing's wrapped up yet." : "No projects in progress right now."}
+          {filter === "completed"
+            ? "Nothing's wrapped up yet."
+            : "No projects in progress right now."}
         </p>
       ) : (
         <ul className={styles.grid}>

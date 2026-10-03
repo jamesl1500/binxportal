@@ -16,7 +16,7 @@
  * reload doesn't replay the dialog; the check itself is idempotent anyway.
  *
  * @module apps/binx-web/src/components/portal/CheckoutResult/CheckoutResult.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -25,7 +25,9 @@ import { usePathname, useRouter } from "next/navigation";
 
 import { confirmPaymentAction } from "@/app/(portal)/portal/invoices/actions";
 import { formatMoneyCents } from "@/lib/money";
-import PaymentResultDialog, { type PaymentResultState } from "@/components/portal/PaymentResultDialog/PaymentResultDialog";
+import PaymentResultDialog, {
+  type PaymentResultState,
+} from "@/components/portal/PaymentResultDialog/PaymentResultDialog";
 
 interface CheckoutResultProps {
   status: "success" | "cancel" | undefined;
@@ -35,7 +37,13 @@ interface CheckoutResultProps {
   agencyName: string;
 }
 
-const CheckoutResult = ({ status, sessionId, invoiceId, invoiceNumber, agencyName }: CheckoutResultProps) => {
+const CheckoutResult = ({
+  status,
+  sessionId,
+  invoiceId,
+  invoiceNumber,
+  agencyName,
+}: CheckoutResultProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const [state, setState] = useState<PaymentResultState | null>(null);
@@ -53,7 +61,9 @@ const CheckoutResult = ({ status, sessionId, invoiceId, invoiceNumber, agencyNam
         return;
       }
       if (result.amountPaidCents !== undefined && result.currency) {
-        setAmountLabel(formatMoneyCents(result.amountPaidCents, result.currency));
+        setAmountLabel(
+          formatMoneyCents(result.amountPaidCents, result.currency),
+        );
       }
       // "open" = Checkout was never finished, i.e. nothing was charged.
       setState(result.outcome === "open" ? "canceled" : result.outcome);
@@ -88,7 +98,11 @@ const CheckoutResult = ({ status, sessionId, invoiceId, invoiceNumber, agencyNam
       amountLabel={amountLabel}
       message={message}
       onClose={() => setState(null)}
-      onRetry={state === "error" && sessionId ? () => void confirm(sessionId) : undefined}
+      onRetry={
+        state === "error" && sessionId
+          ? () => void confirm(sessionId)
+          : undefined
+      }
     />
   );
 };

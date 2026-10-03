@@ -8,7 +8,7 @@
  * dropdown's create-agency dialog.
  *
  * @module apps/binx-web/src/app/(app)/agencies/new/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -33,8 +33,9 @@ const NewAgencyPage = async () => {
         <span className={styles.eyebrow}>Agencies</span>
         <h1 className={styles.title}>Create a new agency</h1>
         <p className={styles.subtitle}>
-          Agencies keep clients, files, and teammates separate from each other. You&apos;ll be the owner of this
-          one, and can switch back to {currentAgency.name} — or any other agency — at any time.
+          Agencies keep clients, files, and teammates separate from each other.
+          You&apos;ll be the owner of this one, and can switch back to{" "}
+          {currentAgency.name} — or any other agency — at any time.
         </p>
       </div>
 

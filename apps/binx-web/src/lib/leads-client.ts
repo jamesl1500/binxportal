@@ -7,15 +7,31 @@
  * `next/headers`.
  *
  * @module apps/binx-web/src/lib/leads-client.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 
 /** Keep in sync with binx-api's leads/models.py LEAD_STATUSES. */
-export type LeadStatus = "new" | "contacted" | "qualified" | "proposal" | "won" | "lost";
-export type LeadSource = "manual" | "referral" | "inbound" | "import" | "ai_generated";
+export type LeadStatus =
+  | "new"
+  | "contacted"
+  | "qualified"
+  | "proposal"
+  | "won"
+  | "lost";
+export type LeadSource =
+  | "manual"
+  | "referral"
+  | "inbound"
+  | "import"
+  | "ai_generated";
 
 /** The pipeline stages, in order. "won"/"lost" are terminal and handled apart. */
-export const LEAD_PIPELINE: LeadStatus[] = ["new", "contacted", "qualified", "proposal"];
+export const LEAD_PIPELINE: LeadStatus[] = [
+  "new",
+  "contacted",
+  "qualified",
+  "proposal",
+];
 export const LEAD_STATUSES: LeadStatus[] = [...LEAD_PIPELINE, "won", "lost"];
 
 export interface LeadStatusMeta {

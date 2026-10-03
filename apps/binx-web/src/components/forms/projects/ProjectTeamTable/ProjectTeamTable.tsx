@@ -14,7 +14,7 @@
  * the array in the browser beats round-tripping to binx-api.
  *
  * @module apps/binx-web/src/components/forms/projects/ProjectTeamTable/ProjectTeamTable.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -58,7 +58,13 @@ function sortValue(member: ProjectMember, key: SortKey): string {
   return (member.role_name ?? "").toLowerCase();
 }
 
-const ProjectTeamTable = ({ agencyId, projectId, members, agencyMembers, roles }: ProjectTeamTableProps) => {
+const ProjectTeamTable = ({
+  agencyId,
+  projectId,
+  members,
+  agencyMembers,
+  roles,
+}: ProjectTeamTableProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -70,9 +76,13 @@ const ProjectTeamTable = ({ agencyId, projectId, members, agencyMembers, roles }
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
-  const assignedUserIds = useMemo(() => new Set(members.map((member) => member.user_id)), [members]);
+  const assignedUserIds = useMemo(
+    () => new Set(members.map((member) => member.user_id)),
+    [members],
+  );
   const assignable = useMemo(
-    () => agencyMembers.filter((member) => !assignedUserIds.has(member.user_id)),
+    () =>
+      agencyMembers.filter((member) => !assignedUserIds.has(member.user_id)),
     [agencyMembers, assignedUserIds],
   );
 
@@ -91,7 +101,9 @@ const ProjectTeamTable = ({ agencyId, projectId, members, agencyMembers, roles }
 
     const direction = sortDirection === "asc" ? 1 : -1;
     return [...filtered].sort((a, b) => {
-      const compared = sortValue(a, sortKey).localeCompare(sortValue(b, sortKey));
+      const compared = sortValue(a, sortKey).localeCompare(
+        sortValue(b, sortKey),
+      );
       // Empty values sort last regardless of direction, then fall back to name.
       if (compared !== 0) return compared * direction;
       return a.full_name.toLowerCase().localeCompare(b.full_name.toLowerCase());
@@ -108,10 +120,15 @@ const ProjectTeamTable = ({ agencyId, projectId, members, agencyMembers, roles }
   };
 
   const ariaSort = (key: SortKey): "ascending" | "descending" | "none" =>
-    key === sortKey ? (sortDirection === "asc" ? "ascending" : "descending") : "none";
+    key === sortKey
+      ? sortDirection === "asc"
+        ? "ascending"
+        : "descending"
+      : "none";
 
   const sortIcon = (column: SortKey) => {
-    if (column !== sortKey) return <ChevronsUpDown className={styles.sortIcon} aria-hidden="true" />;
+    if (column !== sortKey)
+      return <ChevronsUpDown className={styles.sortIcon} aria-hidden="true" />;
     return sortDirection === "asc" ? (
       <ArrowUp className={styles.sortIcon} aria-hidden="true" />
     ) : (
@@ -119,7 +136,10 @@ const ProjectTeamTable = ({ agencyId, projectId, members, agencyMembers, roles }
     );
   };
 
-  const runMutation = (memberId: string | null, action: () => Promise<{ error?: string }>) => {
+  const runMutation = (
+    memberId: string | null,
+    action: () => Promise<{ error?: string }>,
+  ) => {
     setError(null);
     setBusyId(memberId);
     startTransition(async () => {
@@ -136,25 +156,39 @@ const ProjectTeamTable = ({ agencyId, projectId, members, agencyMembers, roles }
   const handleAdd = () => {
     if (!selectedUserId) return;
     runMutation(null, async () => {
-      const result = await addProjectMemberAction(agencyId, projectId, selectedUserId);
+      const result = await addProjectMemberAction(
+        agencyId,
+        projectId,
+        selectedUserId,
+      );
       if (!result.error) setSelectedUserId("");
       return result;
     });
   };
 
   const handleRoleChange = (memberId: string, roleId: string) => {
-    runMutation(memberId, () => assignProjectMemberRoleAction(agencyId, projectId, memberId, roleId || null));
+    runMutation(memberId, () =>
+      assignProjectMemberRoleAction(
+        agencyId,
+        projectId,
+        memberId,
+        roleId || null,
+      ),
+    );
   };
 
   const handleRemove = async (memberId: string, fullName: string) => {
     const confirmed = await confirm({
       title: `Remove ${fullName} from this project?`,
-      description: "They come off this project's team. You can add them back later.",
+      description:
+        "They come off this project's team. You can add them back later.",
       confirmLabel: "Remove member",
       tone: "danger",
     });
     if (!confirmed) return;
-    runMutation(memberId, () => removeProjectMemberAction(agencyId, projectId, memberId));
+    runMutation(memberId, () =>
+      removeProjectMemberAction(agencyId, projectId, memberId),
+    );
   };
 
   return (
@@ -185,7 +219,12 @@ const ProjectTeamTable = ({ agencyId, projectId, members, agencyMembers, roles }
                 </option>
               ))}
             </select>
-            <button type="button" className={styles.add} onClick={handleAdd} disabled={isPending || !selectedUserId}>
+            <button
+              type="button"
+              className={styles.add}
+              onClick={handleAdd}
+              disabled={isPending || !selectedUserId}
+            >
               Assign
             </button>
           </div>
@@ -195,7 +234,10 @@ const ProjectTeamTable = ({ agencyId, projectId, members, agencyMembers, roles }
       {members.length === 0 ? (
         <div className={styles.emptyState}>
           <p className={styles.emptyTitle}>No one is assigned yet</p>
-          <p className={styles.emptyText}>Assign an agency teammate to start building this project&apos;s team.</p>
+          <p className={styles.emptyText}>
+            Assign an agency teammate to start building this project&apos;s
+            team.
+          </p>
         </div>
       ) : visible.length === 0 ? (
         <div className={styles.emptyState}>
@@ -206,19 +248,40 @@ const ProjectTeamTable = ({ agencyId, projectId, members, agencyMembers, roles }
         <table className={styles.table}>
           <thead>
             <tr>
-              <th className={`${styles.headCell} ${styles.sortable}`} aria-sort={ariaSort("name")}>
-                <button type="button" className={styles.sortButton} onClick={() => toggleSort("name")}>
+              <th
+                className={`${styles.headCell} ${styles.sortable}`}
+                aria-sort={ariaSort("name")}
+              >
+                <button
+                  type="button"
+                  className={styles.sortButton}
+                  onClick={() => toggleSort("name")}
+                >
                   Member {sortIcon("name")}
                 </button>
               </th>
               <th className={styles.headCell}>Contact</th>
-              <th className={`${styles.headCell} ${styles.sortable}`} aria-sort={ariaSort("job_title")}>
-                <button type="button" className={styles.sortButton} onClick={() => toggleSort("job_title")}>
+              <th
+                className={`${styles.headCell} ${styles.sortable}`}
+                aria-sort={ariaSort("job_title")}
+              >
+                <button
+                  type="button"
+                  className={styles.sortButton}
+                  onClick={() => toggleSort("job_title")}
+                >
                   Job title {sortIcon("job_title")}
                 </button>
               </th>
-              <th className={`${styles.headCell} ${styles.sortable}`} aria-sort={ariaSort("role")}>
-                <button type="button" className={styles.sortButton} onClick={() => toggleSort("role")}>
+              <th
+                className={`${styles.headCell} ${styles.sortable}`}
+                aria-sort={ariaSort("role")}
+              >
+                <button
+                  type="button"
+                  className={styles.sortButton}
+                  onClick={() => toggleSort("role")}
+                >
                   Project role {sortIcon("role")}
                 </button>
               </th>
@@ -240,25 +303,34 @@ const ProjectTeamTable = ({ agencyId, projectId, members, agencyMembers, roles }
                     </div>
                   </td>
                   <td className={styles.cell}>
-                    <a href={`mailto:${member.email}`} className={styles.contactDetail}>
+                    <a
+                      href={`mailto:${member.email}`}
+                      className={styles.contactDetail}
+                    >
                       {member.email}
                     </a>
                   </td>
                   <td className={styles.cell}>
-                    {member.job_title || <span className={styles.muted}>—</span>}
+                    {member.job_title || (
+                      <span className={styles.muted}>—</span>
+                    )}
                   </td>
                   <td className={styles.cell}>
                     <div className={styles.roleControl}>
                       <span
                         className={styles.roleDot}
-                        style={{ background: member.role_color ?? "transparent" }}
+                        style={{
+                          background: member.role_color ?? "transparent",
+                        }}
                         aria-hidden="true"
                       />
                       <select
                         className={styles.roleSelect}
                         value={member.role_id ?? ""}
                         disabled={isBusy}
-                        onChange={(event) => handleRoleChange(member.id, event.target.value)}
+                        onChange={(event) =>
+                          handleRoleChange(member.id, event.target.value)
+                        }
                         aria-label={`Project role for ${member.full_name}`}
                       >
                         <option value="">No role</option>
@@ -289,7 +361,8 @@ const ProjectTeamTable = ({ agencyId, projectId, members, agencyMembers, roles }
 
       {roles.length === 0 && members.length > 0 && (
         <p className={styles.hint}>
-          No custom roles yet — create them in <strong>Settings</strong> to label who does what on this project.
+          No custom roles yet — create them in <strong>Settings</strong> to
+          label who does what on this project.
         </p>
       )}
 

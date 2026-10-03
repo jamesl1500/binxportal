@@ -6,13 +6,18 @@
  * don't set any cookies — they just attach the existing access token.
  *
  * @module apps/binx-web/src/lib/users.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 import axios from "axios";
 
 import { api } from "@/lib/api";
 import type { Schemas } from "@/lib/api-types";
-import { AuthApiError, CurrentUser, extractDetailMessage, getAccessToken } from "@/lib/auth";
+import {
+  AuthApiError,
+  CurrentUser,
+  extractDetailMessage,
+  getAccessToken,
+} from "@/lib/auth";
 import type { UserImageKind } from "@/lib/users-client";
 
 export interface UpdateProfileInput {
@@ -46,7 +51,12 @@ export async function updateCurrentUserProfile({
   try {
     const { data } = await api.patch<CurrentUser>(
       "/users/me",
-      { full_name: fullName, phone_number: phoneNumber, job_title: jobTitle, summary },
+      {
+        full_name: fullName,
+        phone_number: phoneNumber,
+        job_title: jobTitle,
+        summary,
+      },
       { headers: { Authorization: `Bearer ${accessToken}` } },
     );
     return data;
@@ -77,7 +87,10 @@ export type NotificationSettings = Schemas["NotificationSettingsRead"];
  *
  * @interface PrivacySettings
  */
-export type PrivacySettings = Omit<Schemas["PrivacySettingsRead"], "profile_visibility"> & {
+export type PrivacySettings = Omit<
+  Schemas["PrivacySettingsRead"],
+  "profile_visibility"
+> & {
   profile_visibility: "team" | "private";
 };
 
@@ -103,12 +116,18 @@ export async function getNotificationSettings(): Promise<NotificationSettings> {
   const headers = await authHeader();
 
   try {
-    const { data } = await api.get<NotificationSettings>("/users/me/notification-settings", { headers });
+    const { data } = await api.get<NotificationSettings>(
+      "/users/me/notification-settings",
+      { headers },
+    );
     return data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new AuthApiError(
-        extractDetailMessage(error.response.data, "Unable to load notification settings"),
+        extractDetailMessage(
+          error.response.data,
+          "Unable to load notification settings",
+        ),
         error.response.status,
       );
     }
@@ -126,16 +145,25 @@ export async function getNotificationSettings(): Promise<NotificationSettings> {
  * @function updateNotificationSettings
  * @throws {AuthApiError} - Thrown if not authenticated, or binx-api rejects the update.
  */
-export async function updateNotificationSettings(settings: NotificationSettings): Promise<NotificationSettings> {
+export async function updateNotificationSettings(
+  settings: NotificationSettings,
+): Promise<NotificationSettings> {
   const headers = await authHeader();
 
   try {
-    const { data } = await api.put<NotificationSettings>("/users/me/notification-settings", settings, { headers });
+    const { data } = await api.put<NotificationSettings>(
+      "/users/me/notification-settings",
+      settings,
+      { headers },
+    );
     return data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new AuthApiError(
-        extractDetailMessage(error.response.data, "Unable to update notification settings"),
+        extractDetailMessage(
+          error.response.data,
+          "Unable to update notification settings",
+        ),
         error.response.status,
       );
     }
@@ -157,12 +185,18 @@ export async function getPrivacySettings(): Promise<PrivacySettings> {
   const headers = await authHeader();
 
   try {
-    const { data } = await api.get<PrivacySettings>("/users/me/privacy-settings", { headers });
+    const { data } = await api.get<PrivacySettings>(
+      "/users/me/privacy-settings",
+      { headers },
+    );
     return data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new AuthApiError(
-        extractDetailMessage(error.response.data, "Unable to load privacy settings"),
+        extractDetailMessage(
+          error.response.data,
+          "Unable to load privacy settings",
+        ),
         error.response.status,
       );
     }
@@ -180,16 +214,25 @@ export async function getPrivacySettings(): Promise<PrivacySettings> {
  * @function updatePrivacySettings
  * @throws {AuthApiError} - Thrown if not authenticated, or binx-api rejects the update.
  */
-export async function updatePrivacySettings(settings: PrivacySettings): Promise<PrivacySettings> {
+export async function updatePrivacySettings(
+  settings: PrivacySettings,
+): Promise<PrivacySettings> {
   const headers = await authHeader();
 
   try {
-    const { data } = await api.put<PrivacySettings>("/users/me/privacy-settings", settings, { headers });
+    const { data } = await api.put<PrivacySettings>(
+      "/users/me/privacy-settings",
+      settings,
+      { headers },
+    );
     return data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new AuthApiError(
-        extractDetailMessage(error.response.data, "Unable to update privacy settings"),
+        extractDetailMessage(
+          error.response.data,
+          "Unable to update privacy settings",
+        ),
         error.response.status,
       );
     }
@@ -203,7 +246,10 @@ export async function updatePrivacySettings(settings: PrivacySettings): Promise<
 // default" just means optional on *input*), so narrow the generated
 // optional-with-default fields to always-present-but-nullable — same
 // narrowing PrivacySettings below does for profile_visibility.
-export type ExperienceEntry = Omit<Schemas["ExperienceEntry"], "end_year" | "description"> & {
+export type ExperienceEntry = Omit<
+  Schemas["ExperienceEntry"],
+  "end_year" | "description"
+> & {
   end_year: number | null;
   description: string | null;
 };
@@ -225,7 +271,10 @@ export type EducationEntry = Omit<
  *
  * @interface UserProfileData
  */
-export type UserProfileData = Omit<Schemas["UserProfileRead"], "experience" | "education"> & {
+export type UserProfileData = Omit<
+  Schemas["UserProfileRead"],
+  "experience" | "education"
+> & {
   experience: ExperienceEntry[];
   education: EducationEntry[];
 };
@@ -250,12 +299,17 @@ export async function getUserProfile(): Promise<UserProfileData> {
   const headers = await authHeader();
 
   try {
-    const { data } = await api.get<UserProfileData>("/users/me/profile", { headers });
+    const { data } = await api.get<UserProfileData>("/users/me/profile", {
+      headers,
+    });
     return data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new AuthApiError(
-        extractDetailMessage(error.response.data, "Unable to load your profile"),
+        extractDetailMessage(
+          error.response.data,
+          "Unable to load your profile",
+        ),
         error.response.status,
       );
     }
@@ -273,20 +327,29 @@ export async function getUserProfile(): Promise<UserProfileData> {
  * @function updateQualifications
  * @throws {AuthApiError} - Thrown if not authenticated, or binx-api rejects the update.
  */
-export async function updateQualifications(input: QualificationsInput): Promise<UserProfileData> {
+export async function updateQualifications(
+  input: QualificationsInput,
+): Promise<UserProfileData> {
   const headers = await authHeader();
 
   try {
     const { data } = await api.patch<UserProfileData>(
       "/users/me/qualifications",
-      { skills: input.skills, experience: input.experience, education: input.education },
+      {
+        skills: input.skills,
+        experience: input.experience,
+        education: input.education,
+      },
       { headers },
     );
     return data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new AuthApiError(
-        extractDetailMessage(error.response.data, "Unable to save your skills and experience"),
+        extractDetailMessage(
+          error.response.data,
+          "Unable to save your skills and experience",
+        ),
         error.response.status,
       );
     }
@@ -304,7 +367,10 @@ export async function updateQualifications(input: QualificationsInput): Promise<
  * @function uploadUserImage
  * @throws {AuthApiError} - Thrown if not authenticated, the type isn't allowed, or it's too large.
  */
-export async function uploadUserImage(kind: UserImageKind, file: File): Promise<UserProfileData> {
+export async function uploadUserImage(
+  kind: UserImageKind,
+  file: File,
+): Promise<UserProfileData> {
   const headers = await authHeader();
   const formData = new FormData();
   formData.append("file", file);
@@ -312,13 +378,20 @@ export async function uploadUserImage(kind: UserImageKind, file: File): Promise<
   try {
     // Delete the inherited `Content-Type: application/json` so axios sets
     // its own multipart boundary.
-    const { data } = await api.put<UserProfileData>(`/users/me/${kind}`, formData, {
-      headers: { ...headers, "Content-Type": undefined },
-    });
+    const { data } = await api.put<UserProfileData>(
+      `/users/me/${kind}`,
+      formData,
+      {
+        headers: { ...headers, "Content-Type": undefined },
+      },
+    );
     return data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
-      throw new AuthApiError(extractDetailMessage(error.response.data, "Unable to upload image"), error.response.status);
+      throw new AuthApiError(
+        extractDetailMessage(error.response.data, "Unable to upload image"),
+        error.response.status,
+      );
     }
     throw error;
   }
@@ -332,15 +405,22 @@ export async function uploadUserImage(kind: UserImageKind, file: File): Promise<
  * @function removeUserImage
  * @throws {AuthApiError} - Thrown if not authenticated.
  */
-export async function removeUserImage(kind: UserImageKind): Promise<UserProfileData> {
+export async function removeUserImage(
+  kind: UserImageKind,
+): Promise<UserProfileData> {
   const headers = await authHeader();
 
   try {
-    const { data } = await api.delete<UserProfileData>(`/users/me/${kind}`, { headers });
+    const { data } = await api.delete<UserProfileData>(`/users/me/${kind}`, {
+      headers,
+    });
     return data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
-      throw new AuthApiError(extractDetailMessage(error.response.data, "Unable to remove image"), error.response.status);
+      throw new AuthApiError(
+        extractDetailMessage(error.response.data, "Unable to remove image"),
+        error.response.status,
+      );
     }
     throw error;
   }
@@ -372,12 +452,17 @@ export async function getAppearanceSettings(): Promise<AppearanceSettings> {
   const headers = await authHeader();
 
   try {
-    const { data } = await api.get<AppearanceSettings>("/users/me/appearance", { headers });
+    const { data } = await api.get<AppearanceSettings>("/users/me/appearance", {
+      headers,
+    });
     return data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new AuthApiError(
-        extractDetailMessage(error.response.data, "Unable to load appearance settings"),
+        extractDetailMessage(
+          error.response.data,
+          "Unable to load appearance settings",
+        ),
         error.response.status,
       );
     }
@@ -393,7 +478,9 @@ export async function getAppearanceSettings(): Promise<AppearanceSettings> {
  * @function updateAppearanceSettings
  * @throws {AuthApiError} - Thrown if not authenticated, or binx-api rejects the update.
  */
-export async function updateAppearanceSettings(accentColor: string | null): Promise<AppearanceSettings> {
+export async function updateAppearanceSettings(
+  accentColor: string | null,
+): Promise<AppearanceSettings> {
   const headers = await authHeader();
 
   try {
@@ -406,7 +493,10 @@ export async function updateAppearanceSettings(accentColor: string | null): Prom
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new AuthApiError(
-        extractDetailMessage(error.response.data, "Unable to update appearance settings"),
+        extractDetailMessage(
+          error.response.data,
+          "Unable to update appearance settings",
+        ),
         error.response.status,
       );
     }
@@ -439,12 +529,18 @@ export async function getTutorialProgress(): Promise<TutorialProgress> {
   const headers = await authHeader();
 
   try {
-    const { data } = await api.get<TutorialProgress>("/users/me/tutorial-progress", { headers });
+    const { data } = await api.get<TutorialProgress>(
+      "/users/me/tutorial-progress",
+      { headers },
+    );
     return data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new AuthApiError(
-        extractDetailMessage(error.response.data, "Unable to load tutorial progress"),
+        extractDetailMessage(
+          error.response.data,
+          "Unable to load tutorial progress",
+        ),
         error.response.status,
       );
     }
@@ -462,16 +558,25 @@ export async function getTutorialProgress(): Promise<TutorialProgress> {
  * @function updateTutorialProgress
  * @throws {AuthApiError} - Thrown if not authenticated, or binx-api rejects the update.
  */
-export async function updateTutorialProgress(progress: TutorialProgress): Promise<TutorialProgress> {
+export async function updateTutorialProgress(
+  progress: TutorialProgress,
+): Promise<TutorialProgress> {
   const headers = await authHeader();
 
   try {
-    const { data } = await api.put<TutorialProgress>("/users/me/tutorial-progress", progress, { headers });
+    const { data } = await api.put<TutorialProgress>(
+      "/users/me/tutorial-progress",
+      progress,
+      { headers },
+    );
     return data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new AuthApiError(
-        extractDetailMessage(error.response.data, "Unable to update tutorial progress"),
+        extractDetailMessage(
+          error.response.data,
+          "Unable to update tutorial progress",
+        ),
         error.response.status,
       );
     }
@@ -495,7 +600,10 @@ export interface RequestEmailChangeInput {
  * @function requestEmailChange
  * @throws {AuthApiError} - Thrown if not authenticated, the password is wrong, or the email is taken.
  */
-export async function requestEmailChange({ currentPassword, newEmail }: RequestEmailChangeInput): Promise<string> {
+export async function requestEmailChange({
+  currentPassword,
+  newEmail,
+}: RequestEmailChangeInput): Promise<string> {
   const headers = await authHeader();
 
   try {
@@ -508,7 +616,10 @@ export async function requestEmailChange({ currentPassword, newEmail }: RequestE
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new AuthApiError(
-        extractDetailMessage(error.response.data, "Unable to change your email"),
+        extractDetailMessage(
+          error.response.data,
+          "Unable to change your email",
+        ),
         error.response.status,
       );
     }
@@ -530,7 +641,10 @@ export interface ChangePasswordInput {
  * @function changePassword
  * @throws {AuthApiError} - Thrown if not authenticated, or the current password is wrong.
  */
-export async function changePassword({ currentPassword, newPassword }: ChangePasswordInput): Promise<void> {
+export async function changePassword({
+  currentPassword,
+  newPassword,
+}: ChangePasswordInput): Promise<void> {
   const headers = await authHeader();
 
   try {
@@ -542,7 +656,10 @@ export async function changePassword({ currentPassword, newPassword }: ChangePas
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new AuthApiError(
-        extractDetailMessage(error.response.data, "Unable to change your password"),
+        extractDetailMessage(
+          error.response.data,
+          "Unable to change your password",
+        ),
         error.response.status,
       );
     }
@@ -565,11 +682,17 @@ export async function deleteAccount(currentPassword: string): Promise<void> {
   const headers = await authHeader();
 
   try {
-    await api.delete("/users/me", { headers, data: { current_password: currentPassword } });
+    await api.delete("/users/me", {
+      headers,
+      data: { current_password: currentPassword },
+    });
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new AuthApiError(
-        extractDetailMessage(error.response.data, "Unable to delete your account"),
+        extractDetailMessage(
+          error.response.data,
+          "Unable to delete your account",
+        ),
         error.response.status,
       );
     }
@@ -605,12 +728,18 @@ export async function getDashboardLayout(): Promise<DashboardLayout> {
   const headers = await authHeader();
 
   try {
-    const { data } = await api.get<DashboardLayout>("/users/me/dashboard-layout", { headers });
+    const { data } = await api.get<DashboardLayout>(
+      "/users/me/dashboard-layout",
+      { headers },
+    );
     return data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new AuthApiError(
-        extractDetailMessage(error.response.data, "Unable to load your dashboard layout"),
+        extractDetailMessage(
+          error.response.data,
+          "Unable to load your dashboard layout",
+        ),
         error.response.status,
       );
     }
@@ -644,7 +773,10 @@ export async function updateDashboardLayout(
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new AuthApiError(
-        extractDetailMessage(error.response.data, "Unable to update your dashboard layout"),
+        extractDetailMessage(
+          error.response.data,
+          "Unable to update your dashboard layout",
+        ),
         error.response.status,
       );
     }
@@ -678,12 +810,18 @@ export async function getProjectDashboardLayout(): Promise<ProjectDashboardLayou
   const headers = await authHeader();
 
   try {
-    const { data } = await api.get<ProjectDashboardLayout>("/users/me/project-dashboard-layout", { headers });
+    const { data } = await api.get<ProjectDashboardLayout>(
+      "/users/me/project-dashboard-layout",
+      { headers },
+    );
     return data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new AuthApiError(
-        extractDetailMessage(error.response.data, "Unable to load your project dashboard layout"),
+        extractDetailMessage(
+          error.response.data,
+          "Unable to load your project dashboard layout",
+        ),
         error.response.status,
       );
     }
@@ -710,14 +848,21 @@ export async function updateProjectDashboardLayout(
   try {
     const { data } = await api.put<ProjectDashboardLayout>(
       "/users/me/project-dashboard-layout",
-      { widget_order: widgetOrder, hidden_widgets: hiddenWidgets, wide_widgets: wideWidgets },
+      {
+        widget_order: widgetOrder,
+        hidden_widgets: hiddenWidgets,
+        wide_widgets: wideWidgets,
+      },
       { headers },
     );
     return data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new AuthApiError(
-        extractDetailMessage(error.response.data, "Unable to update your project dashboard layout"),
+        extractDetailMessage(
+          error.response.data,
+          "Unable to update your project dashboard layout",
+        ),
         error.response.status,
       );
     }

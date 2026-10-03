@@ -6,7 +6,7 @@
  * or a proposal for another client 404s (binx-api scopes/filters this).
  *
  * @module apps/binx-web/src/app/(portal)/portal/proposals/[proposalId]/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -23,7 +23,9 @@ interface PortalProposalPageProps {
   params: Promise<{ proposalId: string }>;
 }
 
-export async function generateMetadata({ params }: PortalProposalPageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PortalProposalPageProps): Promise<Metadata> {
   const { proposalId } = await params;
   try {
     const proposal = await getPortalProposal(proposalId);
@@ -33,7 +35,9 @@ export async function generateMetadata({ params }: PortalProposalPageProps): Pro
   }
 }
 
-const PortalProposalDetailPage = async ({ params }: PortalProposalPageProps) => {
+const PortalProposalDetailPage = async ({
+  params,
+}: PortalProposalPageProps) => {
   const { proposalId } = await params;
 
   let proposal;
@@ -46,7 +50,8 @@ const PortalProposalDetailPage = async ({ params }: PortalProposalPageProps) => 
     throw error;
   }
 
-  const awaitingDecision = proposal.display_status === "sent" || proposal.display_status === "viewed";
+  const awaitingDecision =
+    proposal.display_status === "sent" || proposal.display_status === "viewed";
 
   return (
     <div className={styles.page}>
@@ -54,7 +59,11 @@ const PortalProposalDetailPage = async ({ params }: PortalProposalPageProps) => 
         back={{ href: "/portal/proposals", label: "All proposals" }}
         eyebrow="Proposal"
         title={proposal.title}
-        subtitle={awaitingDecision ? "Read it through, then sign or decline at the bottom." : undefined}
+        subtitle={
+          awaitingDecision
+            ? "Read it through, then sign or decline at the bottom."
+            : undefined
+        }
       />
 
       <ProposalView proposal={proposal} />

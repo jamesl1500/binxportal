@@ -5,7 +5,7 @@
  * forgot-password API route.
  *
  * @module apps/binx-web/src/app/(auth)/auth/forgot-password/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  * @function forgotPasswordAction - Server action to request a password reset.
  */
 
@@ -20,15 +20,27 @@ export interface ForgotPasswordActionResult {
   message?: string;
 }
 
-export async function forgotPasswordAction(email: string): Promise<ForgotPasswordActionResult> {
+export async function forgotPasswordAction(
+  email: string,
+): Promise<ForgotPasswordActionResult> {
   const baseUrl = await getInternalBaseUrl();
 
   try {
-    const response = await axios.post(`${baseUrl}/api/auth/forgot-password`, { email });
-    return { message: response.data?.message ?? "If that account exists, a reset link has been sent." };
+    const response = await axios.post(`${baseUrl}/api/auth/forgot-password`, {
+      email,
+    });
+    return {
+      message:
+        response.data?.message ??
+        "If that account exists, a reset link has been sent.",
+    };
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
-      return { error: (error.response.data as { message?: string })?.message ?? "Unable to process your request" };
+      return {
+        error:
+          (error.response.data as { message?: string })?.message ??
+          "Unable to process your request",
+      };
     }
     return { error: "Unable to process your request" };
   }

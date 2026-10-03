@@ -4,7 +4,7 @@
  * This module contains the server action for verifying a user's email address. It handles the form submission from the VerifyEmailForm component, validates the input, and performs the necessary server-side logic to verify the email — then, on success, signs the user in and sends them into staff onboarding, or back to accept a pending client-portal invite when one was threaded through from signup.
  *
  * @module apps/binx-web/src/app/(auth)/auth/verify-email/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 
 "use server";
@@ -43,11 +43,17 @@ export async function verifyEmailAction(
   const baseUrl = await getInternalBaseUrl();
 
   try {
-    const response = await axios.post(`${baseUrl}/api/auth/verify-email`, { token });
+    const response = await axios.post(`${baseUrl}/api/auth/verify-email`, {
+      token,
+    });
     await forwardSetCookies(response.headers["set-cookie"]);
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
-      return { error: (error.response.data as { message?: string })?.message ?? "Unable to verify email" };
+      return {
+        error:
+          (error.response.data as { message?: string })?.message ??
+          "Unable to verify email",
+      };
     }
     return { error: "Unable to verify email" };
   }
@@ -55,5 +61,9 @@ export async function verifyEmailAction(
   // A client-portal invitee goes straight back to accept it, never through
   // staff onboarding — see app/(auth)/auth/signup/page.tsx, which threaded
   // this token through in the first place.
-  redirect(portalInviteToken ? `/auth/portal-invite?token=${portalInviteToken}` : "/onboarding/one");
+  redirect(
+    portalInviteToken
+      ? `/auth/portal-invite?token=${portalInviteToken}`
+      : "/onboarding/one",
+  );
 }

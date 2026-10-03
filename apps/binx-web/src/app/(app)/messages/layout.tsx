@@ -9,7 +9,7 @@
  * store for every page below.
  *
  * @module apps/binx-web/src/app/(app)/messages/layout.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import { redirect } from "next/navigation";
 

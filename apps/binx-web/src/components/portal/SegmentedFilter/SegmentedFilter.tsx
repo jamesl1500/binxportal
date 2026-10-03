@@ -6,7 +6,7 @@
  * semantics for assistive tech and keyboard users.
  *
  * @module apps/binx-web/src/components/portal/SegmentedFilter/SegmentedFilter.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -25,7 +25,12 @@ interface SegmentedFilterProps<T extends string> {
   onChange: (value: T) => void;
 }
 
-const SegmentedFilter = <T extends string>({ label, value, options, onChange }: SegmentedFilterProps<T>) => (
+const SegmentedFilter = <T extends string>({
+  label,
+  value,
+  options,
+  onChange,
+}: SegmentedFilterProps<T>) => (
   <div className={styles.group} role="group" aria-label={label}>
     {options.map((option) => (
       <button
@@ -36,7 +41,9 @@ const SegmentedFilter = <T extends string>({ label, value, options, onChange }: 
         onClick={() => onChange(option.value)}
       >
         {option.label}
-        {option.count !== undefined && <span className={styles.count}>{option.count}</span>}
+        {option.count !== undefined && (
+          <span className={styles.count}>{option.count}</span>
+        )}
       </button>
     ))}
   </div>

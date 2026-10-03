@@ -6,7 +6,7 @@
  * refreshes.
  *
  * @module apps/binx-web/src/components/leads/LeadOwnerSelect/LeadOwnerSelect.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -25,7 +25,12 @@ interface LeadOwnerSelectProps {
   members: { user_id: string; full_name: string }[];
 }
 
-const LeadOwnerSelect = ({ agencyId, leadId, ownerId, members }: LeadOwnerSelectProps) => {
+const LeadOwnerSelect = ({
+  agencyId,
+  leadId,
+  ownerId,
+  members,
+}: LeadOwnerSelectProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 

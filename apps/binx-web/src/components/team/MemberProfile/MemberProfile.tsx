@@ -7,7 +7,7 @@
  * display, sibling to the editable QualificationsForm on /profile.
  *
  * @module apps/binx-web/src/components/team/MemberProfile/MemberProfile.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { AgencyMember } from "@/lib/agencies";
 import { memberImageUrl } from "@/lib/users-client";
@@ -33,7 +33,11 @@ function capitalize(value: string): string {
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+  return new Date(iso).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 }
 
 function yearRange(startYear: number | null, endYear: number | null): string {
@@ -43,7 +47,9 @@ function yearRange(startYear: number | null, endYear: number | null): string {
 
 const MemberProfile = ({ agencyId, member, isSelf }: MemberProfileProps) => {
   // "Present" (null end_year) sorts as the most recent.
-  const experience = [...member.experience].sort((a, b) => (b.end_year ?? Infinity) - (a.end_year ?? Infinity));
+  const experience = [...member.experience].sort(
+    (a, b) => (b.end_year ?? Infinity) - (a.end_year ?? Infinity),
+  );
 
   return (
     <div className={styles.wrapper}>
@@ -52,13 +58,17 @@ const MemberProfile = ({ agencyId, member, isSelf }: MemberProfileProps) => {
         data-has-cover={member.has_cover}
         style={
           member.has_cover
-            ? { backgroundImage: `url(${memberImageUrl(agencyId, member.id, "cover", member.cover_version)})` }
+            ? {
+                backgroundImage: `url(${memberImageUrl(agencyId, member.id, "cover", member.cover_version)})`,
+              }
             : undefined
         }
       >
         {/* A cover photo can be any color — this scrim guarantees the name/
             handle sitting on top of it (below) stay readable regardless. */}
-        {member.has_cover && <div className={styles.coverOverlay} aria-hidden="true" />}
+        {member.has_cover && (
+          <div className={styles.coverOverlay} aria-hidden="true" />
+        )}
       </div>
 
       <div className={styles.identity} data-has-cover={member.has_cover}>
@@ -66,7 +76,12 @@ const MemberProfile = ({ agencyId, member, isSelf }: MemberProfileProps) => {
           // eslint-disable-next-line @next/next/no-img-element
           <img
             className={styles.avatar}
-            src={memberImageUrl(agencyId, member.id, "avatar", member.avatar_version)}
+            src={memberImageUrl(
+              agencyId,
+              member.id,
+              "avatar",
+              member.avatar_version,
+            )}
             alt=""
           />
         ) : (
@@ -80,7 +95,11 @@ const MemberProfile = ({ agencyId, member, isSelf }: MemberProfileProps) => {
             {member.full_name}
             {isSelf && <span className={styles.youBadge}>You</span>}
             {member.is_verified && (
-              <span className={styles.verified} title="Verified account" aria-label="Verified account">
+              <span
+                className={styles.verified}
+                title="Verified account"
+                aria-label="Verified account"
+              >
                 ✓
               </span>
             )}
@@ -118,9 +137,14 @@ const MemberProfile = ({ agencyId, member, isSelf }: MemberProfileProps) => {
               <li key={entry.id} className={styles.timelineItem}>
                 <p className={styles.timelineTitle}>{entry.title}</p>
                 <p className={styles.timelineSubtitle}>
-                  {entry.organization} · {yearRange(entry.start_year, entry.end_year)}
+                  {entry.organization} ·{" "}
+                  {yearRange(entry.start_year, entry.end_year)}
                 </p>
-                {entry.description && <p className={styles.timelineDescription}>{entry.description}</p>}
+                {entry.description && (
+                  <p className={styles.timelineDescription}>
+                    {entry.description}
+                  </p>
+                )}
               </li>
             ))}
           </ul>
@@ -137,9 +161,14 @@ const MemberProfile = ({ agencyId, member, isSelf }: MemberProfileProps) => {
                 <p className={styles.timelineSubtitle}>
                   {entry.school}
                   {entry.field_of_study ? ` · ${entry.field_of_study}` : ""}
-                  {(entry.start_year || entry.end_year) && ` · ${yearRange(entry.start_year, entry.end_year)}`}
+                  {(entry.start_year || entry.end_year) &&
+                    ` · ${yearRange(entry.start_year, entry.end_year)}`}
                 </p>
-                {entry.description && <p className={styles.timelineDescription}>{entry.description}</p>}
+                {entry.description && (
+                  <p className={styles.timelineDescription}>
+                    {entry.description}
+                  </p>
+                )}
               </li>
             ))}
           </ul>

@@ -13,7 +13,7 @@
  * re-fetch so the taken slot disappears.
  *
  * @module apps/binx-web/src/components/portal/BookMeetingDialog/BookMeetingDialog.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -22,7 +22,10 @@ import { useRouter } from "next/navigation";
 import { Dialog } from "@base-ui/react/dialog";
 import { CalendarPlus } from "lucide-react";
 
-import { bookPortalMeetingAction, getPortalAvailableSlotsAction } from "@/app/(portal)/portal/meetings/actions";
+import {
+  bookPortalMeetingAction,
+  getPortalAvailableSlotsAction,
+} from "@/app/(portal)/portal/meetings/actions";
 import { groupSlotsByLocalDay, type Slot } from "@/lib/meetings-client";
 
 import styles from "./BookMeetingDialog.module.scss";
@@ -34,7 +37,10 @@ function todayIso(): string {
 }
 
 function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  return new Date(iso).toLocaleTimeString(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
 const BookMeetingDialog = () => {
@@ -138,7 +144,11 @@ const BookMeetingDialog = () => {
 
   return (
     <>
-      <button type="button" className={styles.trigger} onClick={() => handleOpenChange(true)}>
+      <button
+        type="button"
+        className={styles.trigger}
+        onClick={() => handleOpenChange(true)}
+      >
         <CalendarPlus className={styles.icon} aria-hidden="true" />
         Book a meeting
       </button>
@@ -147,30 +157,45 @@ const BookMeetingDialog = () => {
         <Dialog.Portal>
           <Dialog.Backdrop className={styles.backdrop} />
           <Dialog.Popup className={styles.dialog} aria-label="Book a meeting">
-            <Dialog.Title className={styles.dialogTitle}>Book a meeting</Dialog.Title>
+            <Dialog.Title className={styles.dialogTitle}>
+              Book a meeting
+            </Dialog.Title>
             <Dialog.Description className={styles.dialogDescription}>
               {step === "day" && "Pick a day with open time."}
               {step === "time" && `Pick a time on ${selectedDay}.`}
-              {step === "confirm" && selectedSlot && `Confirm your meeting on ${selectedDay} at ${formatTime(selectedSlot.starts_at)}.`}
+              {step === "confirm" &&
+                selectedSlot &&
+                `Confirm your meeting on ${selectedDay} at ${formatTime(selectedSlot.starts_at)}.`}
             </Dialog.Description>
 
-            {loading && <p className={styles.status}>Loading available times…</p>}
+            {loading && (
+              <p className={styles.status}>Loading available times…</p>
+            )}
 
             {!loading && step === "day" && (
               <div className={styles.form}>
                 {days.length === 0 && !error && (
-                  <p className={styles.status}>No open times right now — check back soon.</p>
+                  <p className={styles.status}>
+                    No open times right now — check back soon.
+                  </p>
                 )}
                 <div className={styles.dayGrid}>
                   {days.map((day) => (
-                    <button key={day} type="button" className={styles.dayButton} onClick={() => chooseDay(day)}>
+                    <button
+                      key={day}
+                      type="button"
+                      className={styles.dayButton}
+                      onClick={() => chooseDay(day)}
+                    >
                       {day}
                     </button>
                   ))}
                 </div>
                 {error && <p className={styles.error}>{error}</p>}
                 <div className={styles.actions}>
-                  <Dialog.Close className={styles.secondary}>Cancel</Dialog.Close>
+                  <Dialog.Close className={styles.secondary}>
+                    Cancel
+                  </Dialog.Close>
                 </div>
               </div>
             )}
@@ -191,7 +216,11 @@ const BookMeetingDialog = () => {
                 </div>
                 {error && <p className={styles.error}>{error}</p>}
                 <div className={styles.actions}>
-                  <button type="button" className={styles.secondary} onClick={() => setStep("day")}>
+                  <button
+                    type="button"
+                    className={styles.secondary}
+                    onClick={() => setStep("day")}
+                  >
                     Back
                   </button>
                 </div>
@@ -201,7 +230,9 @@ const BookMeetingDialog = () => {
             {step === "confirm" && selectedSlot && (
               <div className={styles.form}>
                 <label className={styles.field}>
-                  <span className={styles.label}>What&apos;s this about? (optional)</span>
+                  <span className={styles.label}>
+                    What&apos;s this about? (optional)
+                  </span>
                   <input
                     className={styles.input}
                     value={title}
@@ -222,10 +253,20 @@ const BookMeetingDialog = () => {
                 {error && <p className={styles.error}>{error}</p>}
 
                 <div className={styles.actions}>
-                  <button type="button" className={styles.secondary} onClick={() => setStep("time")} disabled={isPending}>
+                  <button
+                    type="button"
+                    className={styles.secondary}
+                    onClick={() => setStep("time")}
+                    disabled={isPending}
+                  >
                     Back
                   </button>
-                  <button type="button" className={styles.primary} onClick={handleBook} disabled={isPending}>
+                  <button
+                    type="button"
+                    className={styles.primary}
+                    onClick={handleBook}
+                    disabled={isPending}
+                  >
                     {isPending ? "Booking…" : "Confirm booking"}
                   </button>
                 </div>

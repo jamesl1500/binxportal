@@ -6,7 +6,7 @@
  * on success. Once converted this renders a link to the client instead.
  *
  * @module apps/binx-web/src/components/leads/ConvertLeadButton/ConvertLeadButton.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -59,20 +59,34 @@ const ConvertLeadButton = ({
   return (
     <div className={styles.wrap}>
       <p className={styles.blurb}>
-        Create a client from <strong>{leadName}</strong> — carries over the contact details and notes, marks this
-        lead <em>Won</em>.
+        Create a client from <strong>{leadName}</strong> — carries over the
+        contact details and notes, marks this lead <em>Won</em>.
       </p>
       {confirming ? (
         <div className={styles.confirmRow}>
-          <button type="button" className={styles.convert} onClick={handleConvert} disabled={isPending}>
+          <button
+            type="button"
+            className={styles.convert}
+            onClick={handleConvert}
+            disabled={isPending}
+          >
             {isPending ? "Converting…" : "Yes, convert"}
           </button>
-          <button type="button" className={styles.cancel} onClick={() => setConfirming(false)} disabled={isPending}>
+          <button
+            type="button"
+            className={styles.cancel}
+            onClick={() => setConfirming(false)}
+            disabled={isPending}
+          >
             Cancel
           </button>
         </div>
       ) : (
-        <button type="button" className={styles.convert} onClick={() => setConfirming(true)}>
+        <button
+          type="button"
+          className={styles.convert}
+          onClick={() => setConfirming(true)}
+        >
           Convert to client
         </button>
       )}

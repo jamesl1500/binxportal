@@ -8,13 +8,19 @@
  * specific agency (see agencies/dependencies.py's require_agency_role).
  *
  * @module apps/binx-web/src/app/(app)/settings/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 
 import { redirect } from "next/navigation";
 
-import { type AiSettings, type AiSettingsInput, getAiUsage, updateAiSettings, type AiUsageSummary } from "@/lib/ai";
+import {
+  type AiSettings,
+  type AiSettingsInput,
+  getAiUsage,
+  updateAiSettings,
+  type AiUsageSummary,
+} from "@/lib/ai";
 import { AuthApiError } from "@/lib/auth";
 import {
   type AgencyImageKind,
@@ -39,7 +45,10 @@ export interface UpdateAgencyActionResult {
   error?: string;
 }
 
-export async function updateAgencyAction(agencyId: string, name: string): Promise<UpdateAgencyActionResult> {
+export async function updateAgencyAction(
+  agencyId: string,
+  name: string,
+): Promise<UpdateAgencyActionResult> {
   try {
     await updateAgency(agencyId, name);
   } catch (error) {
@@ -52,7 +61,9 @@ export interface DeleteAgencyActionResult {
   error?: string;
 }
 
-export async function deleteAgencyAction(agencyId: string): Promise<DeleteAgencyActionResult> {
+export async function deleteAgencyAction(
+  agencyId: string,
+): Promise<DeleteAgencyActionResult> {
   try {
     await deleteAgency(agencyId);
   } catch (error) {
@@ -113,7 +124,10 @@ export interface AiSettingsActionResult {
   settings?: AiSettings;
 }
 
-export async function updateAiSettingsAction(agencyId: string, input: AiSettingsInput): Promise<AiSettingsActionResult> {
+export async function updateAiSettingsAction(
+  agencyId: string,
+  input: AiSettingsInput,
+): Promise<AiSettingsActionResult> {
   try {
     return { settings: await updateAiSettings(agencyId, input) };
   } catch (error) {
@@ -126,7 +140,9 @@ export interface AiUsageActionResult {
   usage?: AiUsageSummary;
 }
 
-export async function refreshAiUsageAction(agencyId: string): Promise<AiUsageActionResult> {
+export async function refreshAiUsageAction(
+  agencyId: string,
+): Promise<AiUsageActionResult> {
   try {
     return { usage: await getAiUsage(agencyId) };
   } catch (error) {

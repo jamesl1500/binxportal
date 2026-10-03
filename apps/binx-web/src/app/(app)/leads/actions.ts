@@ -7,7 +7,7 @@
  * `clients/actions.ts`.
  *
  * @module apps/binx-web/src/app/(app)/leads/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 
@@ -53,7 +53,10 @@ function fail(error: unknown, fallback: string): { error: string } {
   return { error: error instanceof AuthApiError ? error.message : fallback };
 }
 
-export async function createLeadAction(agencyId: string, input: LeadInput): Promise<LeadResult> {
+export async function createLeadAction(
+  agencyId: string,
+  input: LeadInput,
+): Promise<LeadResult> {
   try {
     return { lead: await createLead(agencyId, input) };
   } catch (error) {
@@ -61,7 +64,11 @@ export async function createLeadAction(agencyId: string, input: LeadInput): Prom
   }
 }
 
-export async function updateLeadAction(agencyId: string, leadId: string, input: LeadInput): Promise<LeadResult> {
+export async function updateLeadAction(
+  agencyId: string,
+  leadId: string,
+  input: LeadInput,
+): Promise<LeadResult> {
   try {
     return { lead: await updateLead(agencyId, leadId, input) };
   } catch (error) {
@@ -76,7 +83,9 @@ export async function changeLeadStatusAction(
   lostReason?: string | null,
 ): Promise<LeadResult> {
   try {
-    return { lead: await changeLeadStatus(agencyId, leadId, status, lostReason) };
+    return {
+      lead: await changeLeadStatus(agencyId, leadId, status, lostReason),
+    };
   } catch (error) {
     return fail(error, "Unable to change the status");
   }
@@ -94,7 +103,10 @@ export async function assignLeadOwnerAction(
   }
 }
 
-export async function analyzeLeadAction(agencyId: string, leadId: string): Promise<LeadResult> {
+export async function analyzeLeadAction(
+  agencyId: string,
+  leadId: string,
+): Promise<LeadResult> {
   try {
     return { lead: await analyzeLead(agencyId, leadId) };
   } catch (error) {
@@ -107,7 +119,10 @@ export interface LeadFollowupActionResult {
   draft?: string;
 }
 
-export async function generateLeadFollowupAction(agencyId: string, leadId: string): Promise<LeadFollowupActionResult> {
+export async function generateLeadFollowupAction(
+  agencyId: string,
+  leadId: string,
+): Promise<LeadFollowupActionResult> {
   try {
     return { draft: await generateLeadFollowup(agencyId, leadId) };
   } catch (error) {
@@ -120,7 +135,9 @@ export interface BulkAnalyzeActionResult {
   result?: BulkAnalyzeResult;
 }
 
-export async function analyzeOpenLeadsAction(agencyId: string): Promise<BulkAnalyzeActionResult> {
+export async function analyzeOpenLeadsAction(
+  agencyId: string,
+): Promise<BulkAnalyzeActionResult> {
   try {
     return { result: await analyzeOpenLeads(agencyId) };
   } catch (error) {
@@ -165,7 +182,11 @@ export interface AddNoteResult {
   event?: LeadEvent;
 }
 
-export async function addLeadNoteAction(agencyId: string, leadId: string, body: string): Promise<AddNoteResult> {
+export async function addLeadNoteAction(
+  agencyId: string,
+  leadId: string,
+  body: string,
+): Promise<AddNoteResult> {
   try {
     return { event: await addLeadNote(agencyId, leadId, body) };
   } catch (error) {
@@ -178,7 +199,10 @@ export interface ConvertResult {
   client?: AgencyClient;
 }
 
-export async function convertLeadAction(agencyId: string, leadId: string): Promise<ConvertResult> {
+export async function convertLeadAction(
+  agencyId: string,
+  leadId: string,
+): Promise<ConvertResult> {
   let client: AgencyClient;
   try {
     client = await convertLead(agencyId, leadId);
@@ -192,7 +216,10 @@ export interface DeleteLeadResult {
   error?: string;
 }
 
-export async function deleteLeadAction(agencyId: string, leadId: string): Promise<DeleteLeadResult> {
+export async function deleteLeadAction(
+  agencyId: string,
+  leadId: string,
+): Promise<DeleteLeadResult> {
   try {
     await deleteLead(agencyId, leadId);
   } catch (error) {
@@ -206,7 +233,9 @@ export interface SearchCriteriaListResult {
   criteria?: LeadSearchCriteria[];
 }
 
-export async function getLeadSearchCriteriaAction(agencyId: string): Promise<SearchCriteriaListResult> {
+export async function getLeadSearchCriteriaAction(
+  agencyId: string,
+): Promise<SearchCriteriaListResult> {
   try {
     return { criteria: await getLeadSearchCriteria(agencyId) };
   } catch (error) {
@@ -236,7 +265,9 @@ export async function updateLeadSearchCriteriaAction(
   input: LeadSearchCriteriaInput,
 ): Promise<SearchCriteriaResult> {
   try {
-    return { criteria: await updateLeadSearchCriteria(agencyId, criteriaId, input) };
+    return {
+      criteria: await updateLeadSearchCriteria(agencyId, criteriaId, input),
+    };
   } catch (error) {
     return fail(error, "Unable to update this saved search");
   }

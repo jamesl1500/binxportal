@@ -7,7 +7,7 @@
  * via `lib/notifications.ts`.
  *
  * @module apps/binx-web/src/app/(app)/notifications/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 
@@ -28,7 +28,9 @@ export interface NotificationPageActionResult {
   page?: NotificationPage;
 }
 
-export async function getNotificationsAction(query: NotificationQuery = {}): Promise<NotificationPageActionResult> {
+export async function getNotificationsAction(
+  query: NotificationQuery = {},
+): Promise<NotificationPageActionResult> {
   try {
     return { page: await getNotifications(query) };
   } catch (error) {
@@ -49,7 +51,9 @@ export interface MarkReadActionResult {
   notification?: AppNotification;
 }
 
-export async function markNotificationReadAction(notificationId: string): Promise<MarkReadActionResult> {
+export async function markNotificationReadAction(
+  notificationId: string,
+): Promise<MarkReadActionResult> {
   try {
     return { notification: await markNotificationRead(notificationId) };
   } catch (error) {
@@ -76,7 +80,9 @@ export async function markAllNotificationsReadAction(): Promise<SimpleActionResu
   }
 }
 
-export async function dismissNotificationAction(notificationId: string): Promise<SimpleActionResult> {
+export async function dismissNotificationAction(
+  notificationId: string,
+): Promise<SimpleActionResult> {
   try {
     await dismissNotification(notificationId);
     return {};

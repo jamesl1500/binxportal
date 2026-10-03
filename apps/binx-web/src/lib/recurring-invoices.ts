@@ -8,7 +8,7 @@
  * convention as `lib/invoicing.ts`.
  *
  * @module apps/binx-web/src/lib/recurring-invoices.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 import axios from "axios";
 
@@ -27,7 +27,10 @@ async function authHeader(): Promise<{ Authorization: string }> {
 
 function apiError(error: unknown, fallback: string): AuthApiError | unknown {
   if (axios.isAxiosError(error) && error.response) {
-    return new AuthApiError(extractDetailMessage(error.response.data, fallback), error.response.status);
+    return new AuthApiError(
+      extractDetailMessage(error.response.data, fallback),
+      error.response.status,
+    );
   }
   return error;
 }
@@ -97,13 +100,19 @@ function toPayload(input: RecurringScheduleInput) {
  * @function getRecurringSchedules
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't a member of this agency.
  */
-export async function getRecurringSchedules(agencyId: string, clientId?: string): Promise<RecurringSchedule[]> {
+export async function getRecurringSchedules(
+  agencyId: string,
+  clientId?: string,
+): Promise<RecurringSchedule[]> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<RecurringSchedule[]>(`/agencies/${agencyId}/recurring-invoices`, {
-      headers,
-      params: clientId ? { client_id: clientId } : undefined,
-    });
+    const { data } = await api.get<RecurringSchedule[]>(
+      `/agencies/${agencyId}/recurring-invoices`,
+      {
+        headers,
+        params: clientId ? { client_id: clientId } : undefined,
+      },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to load recurring invoices");
@@ -173,7 +182,10 @@ export async function updateRecurringSchedule(
  * @function pauseRecurringSchedule
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller lacks permission.
  */
-export async function pauseRecurringSchedule(agencyId: string, scheduleId: string): Promise<RecurringSchedule> {
+export async function pauseRecurringSchedule(
+  agencyId: string,
+  scheduleId: string,
+): Promise<RecurringSchedule> {
   const headers = await authHeader();
   try {
     const { data } = await api.post<RecurringSchedule>(
@@ -196,7 +208,10 @@ export async function pauseRecurringSchedule(agencyId: string, scheduleId: strin
  * @function resumeRecurringSchedule
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller lacks permission.
  */
-export async function resumeRecurringSchedule(agencyId: string, scheduleId: string): Promise<RecurringSchedule> {
+export async function resumeRecurringSchedule(
+  agencyId: string,
+  scheduleId: string,
+): Promise<RecurringSchedule> {
   const headers = await authHeader();
   try {
     const { data } = await api.post<RecurringSchedule>(
@@ -220,10 +235,15 @@ export async function resumeRecurringSchedule(agencyId: string, scheduleId: stri
  * @function deleteRecurringSchedule
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller lacks permission.
  */
-export async function deleteRecurringSchedule(agencyId: string, scheduleId: string): Promise<void> {
+export async function deleteRecurringSchedule(
+  agencyId: string,
+  scheduleId: string,
+): Promise<void> {
   const headers = await authHeader();
   try {
-    await api.delete(`/agencies/${agencyId}/recurring-invoices/${scheduleId}`, { headers });
+    await api.delete(`/agencies/${agencyId}/recurring-invoices/${scheduleId}`, {
+      headers,
+    });
   } catch (error) {
     throw apiError(error, "Unable to delete recurring invoice schedule");
   }
@@ -239,7 +259,10 @@ export async function deleteRecurringSchedule(agencyId: string, scheduleId: stri
  * @function runRecurringScheduleNow
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller lacks permission.
  */
-export async function runRecurringScheduleNow(agencyId: string, scheduleId: string): Promise<Invoice> {
+export async function runRecurringScheduleNow(
+  agencyId: string,
+  scheduleId: string,
+): Promise<Invoice> {
   const headers = await authHeader();
   try {
     const { data } = await api.post<Invoice>(
@@ -252,4 +275,3 @@ export async function runRecurringScheduleNow(agencyId: string, scheduleId: stri
     throw apiError(error, "Unable to generate invoice now");
   }
 }
-

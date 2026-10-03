@@ -7,7 +7,7 @@
  * a recessive baseline, per-bar hover tooltip. One measure, one axis.
  *
  * @module apps/binx-web/src/components/charts/BarChart/BarChart.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -33,7 +33,12 @@ interface BarChartProps {
 const VIEW_W = 640;
 const PAD = { top: 12, right: 8, bottom: 28, left: 8 };
 
-const BarChart = ({ data, ariaLabel, valueFormat = "number", height = 200 }: BarChartProps) => {
+const BarChart = ({
+  data,
+  ariaLabel,
+  valueFormat = "number",
+  height = 200,
+}: BarChartProps) => {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   const geometry = useMemo(() => {
@@ -67,7 +72,12 @@ const BarChart = ({ data, ariaLabel, valueFormat = "number", height = 200 }: Bar
 
   return (
     <figure className={styles.figure}>
-      <svg className={styles.svg} viewBox={`0 0 ${VIEW_W} ${height}`} role="img" aria-label={ariaLabel}>
+      <svg
+        className={styles.svg}
+        viewBox={`0 0 ${VIEW_W} ${height}`}
+        role="img"
+        aria-label={ariaLabel}
+      >
         <line
           className={styles.axis}
           x1={PAD.left}
@@ -90,7 +100,12 @@ const BarChart = ({ data, ariaLabel, valueFormat = "number", height = 200 }: Bar
               onPointerLeave={() => setActiveIndex(null)}
             />
             {index % geometry.labelEvery === 0 && (
-              <text className={styles.tick} x={bar.centerX} y={height - 8} textAnchor="middle">
+              <text
+                className={styles.tick}
+                x={bar.centerX}
+                y={height - 8}
+                textAnchor="middle"
+              >
                 {bar.label}
               </text>
             )}
@@ -101,11 +116,15 @@ const BarChart = ({ data, ariaLabel, valueFormat = "number", height = 200 }: Bar
       {active && (
         <div
           className={styles.tooltip}
-          style={{ left: `${Math.min(88, Math.max(12, (active.centerX / VIEW_W) * 100))}%` }}
+          style={{
+            left: `${Math.min(88, Math.max(12, (active.centerX / VIEW_W) * 100))}%`,
+          }}
           role="status"
         >
           <span className={styles.tooltipLabel}>{active.label}</span>
-          <span className={styles.tooltipValue}>{formatChartValue(active.value, valueFormat)}</span>
+          <span className={styles.tooltipValue}>
+            {formatChartValue(active.value, valueFormat)}
+          </span>
         </div>
       )}
     </figure>

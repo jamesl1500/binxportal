@@ -7,7 +7,7 @@
  * owner/admin-only Invitations tab.
  *
  * @module apps/binx-web/src/app/(app)/team/layout.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import { redirect } from "next/navigation";
 
@@ -23,7 +23,8 @@ const TeamLayout = async ({ children }: { children: React.ReactNode }) => {
     redirect("/onboarding/two");
   }
 
-  const canManage = currentAgency.role === "owner" || currentAgency.role === "admin";
+  const canManage =
+    currentAgency.role === "owner" || currentAgency.role === "admin";
 
   return (
     <div>

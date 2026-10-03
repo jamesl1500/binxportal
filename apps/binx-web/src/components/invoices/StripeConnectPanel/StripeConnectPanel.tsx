@@ -8,7 +8,7 @@
  * Read-only for anyone who isn't an owner/admin.
  *
  * @module apps/binx-web/src/components/invoices/StripeConnectPanel/StripeConnectPanel.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -27,7 +27,11 @@ interface StripeConnectPanelProps {
   canManage: boolean;
 }
 
-const StripeConnectPanel = ({ agencyId, status, canManage }: StripeConnectPanelProps) => {
+const StripeConnectPanel = ({
+  agencyId,
+  status,
+  canManage,
+}: StripeConnectPanelProps) => {
   const [isPending, startTransition] = useTransition();
 
   const handleConnect = () => {
@@ -49,24 +53,44 @@ const StripeConnectPanel = ({ agencyId, status, canManage }: StripeConnectPanelP
           Connected — clients can pay invoices online.
         </p>
         {status.onboarded_at && (
-          <p className={styles.detail}>Connected since {new Date(status.onboarded_at).toLocaleDateString()}.</p>
+          <p className={styles.detail}>
+            Connected since {new Date(status.onboarded_at).toLocaleDateString()}
+            .
+          </p>
         )}
       </div>
     );
   }
 
   return (
-    <div className={styles.panel} data-state={status.connected ? "pending" : "disconnected"}>
+    <div
+      className={styles.panel}
+      data-state={status.connected ? "pending" : "disconnected"}
+    >
       <p className={styles.statusLine}>
         <CircleAlert aria-hidden="true" className={styles.iconPending} />
-        {status.connected ? "Onboarding incomplete — clients can't pay online yet." : "Not connected to Stripe."}
+        {status.connected
+          ? "Onboarding incomplete — clients can't pay online yet."
+          : "Not connected to Stripe."}
       </p>
       {canManage ? (
-        <button type="button" className={styles.connectButton} onClick={handleConnect} disabled={isPending}>
-          {isPending ? "Redirecting…" : status.connected ? "Continue onboarding" : "Connect Stripe"}
+        <button
+          type="button"
+          className={styles.connectButton}
+          onClick={handleConnect}
+          disabled={isPending}
+        >
+          {isPending
+            ? "Redirecting…"
+            : status.connected
+              ? "Continue onboarding"
+              : "Connect Stripe"}
         </button>
       ) : (
-        <p className={styles.detail}>An owner or admin needs to connect Stripe before clients can pay online.</p>
+        <p className={styles.detail}>
+          An owner or admin needs to connect Stripe before clients can pay
+          online.
+        </p>
       )}
     </div>
   );

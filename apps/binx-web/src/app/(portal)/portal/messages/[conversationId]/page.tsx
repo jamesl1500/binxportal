@@ -5,13 +5,17 @@
  * so the thread pane renders immediately; a bad id 404s.
  *
  * @module apps/binx-web/src/app/(portal)/portal/messages/[conversationId]/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
 import { AuthApiError, getCurrentUser } from "@/lib/auth";
-import { getPortalConversation, getPortalConversations, getPortalMessages } from "@/lib/portal";
+import {
+  getPortalConversation,
+  getPortalConversations,
+  getPortalMessages,
+} from "@/lib/portal";
 import PortalMessages from "@/components/portal/PortalMessages/PortalMessages";
 import PortalPageHeader from "@/components/portal/PortalPageHeader/PortalPageHeader";
 
@@ -23,7 +27,9 @@ interface PortalConversationPageProps {
   params: Promise<{ conversationId: string }>;
 }
 
-const PortalConversationPage = async ({ params }: PortalConversationPageProps) => {
+const PortalConversationPage = async ({
+  params,
+}: PortalConversationPageProps) => {
   const { conversationId } = await params;
   const user = await getCurrentUser();
   if (!user) redirect("/auth/login");

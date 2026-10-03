@@ -8,7 +8,7 @@
  * ProjectLabelSetup; the wizard sends it with the create request.
  *
  * @module apps/binx-web/src/components/forms/projects/ProjectTeamSetup/ProjectTeamSetup.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -42,11 +42,20 @@ const ProjectTeamSetup = ({
 }: ProjectTeamSetupProps) => {
   const [selectedUserId, setSelectedUserId] = useState("");
 
-  const membersById = useMemo(() => new Map(agencyMembers.map((member) => [member.user_id, member])), [agencyMembers]);
-  const assignable = agencyMembers.filter((member) => !team.some((seat) => seat.userId === member.user_id));
+  const membersById = useMemo(
+    () => new Map(agencyMembers.map((member) => [member.user_id, member])),
+    [agencyMembers],
+  );
+  const assignable = agencyMembers.filter(
+    (member) => !team.some((seat) => seat.userId === member.user_id),
+  );
 
   const setRole = (userId: string, roleName: string) =>
-    onChange(team.map((seat) => (seat.userId === userId ? { ...seat, roleName: roleName || null } : seat)));
+    onChange(
+      team.map((seat) =>
+        seat.userId === userId ? { ...seat, roleName: roleName || null } : seat,
+      ),
+    );
 
   const handleAdd = () => {
     if (!selectedUserId) return;
@@ -70,7 +79,9 @@ const ProjectTeamSetup = ({
                   {name}
                   {isYou && <span className={styles.youBadge}>You</span>}
                 </p>
-                <p className={styles.meta}>{member?.job_title || member?.email}</p>
+                <p className={styles.meta}>
+                  {member?.job_title || member?.email}
+                </p>
               </div>
               <label className={styles.srOnly} htmlFor={selectId}>
                 Role for {name}
@@ -95,7 +106,9 @@ const ProjectTeamSetup = ({
                 <button
                   type="button"
                   className={styles.remove}
-                  onClick={() => onChange(team.filter((item) => item.userId !== seat.userId))}
+                  onClick={() =>
+                    onChange(team.filter((item) => item.userId !== seat.userId))
+                  }
                   aria-label={`Remove ${name} from the team`}
                 >
                   <X aria-hidden="true" />
@@ -121,12 +134,19 @@ const ProjectTeamSetup = ({
               </option>
             ))}
           </select>
-          <button type="button" className={styles.addButton} onClick={handleAdd} disabled={!selectedUserId}>
+          <button
+            type="button"
+            className={styles.addButton}
+            onClick={handleAdd}
+            disabled={!selectedUserId}
+          >
             Add to team
           </button>
         </div>
       ) : (
-        <p className={styles.hint}>Everyone at your agency is on this project.</p>
+        <p className={styles.hint}>
+          Everyone at your agency is on this project.
+        </p>
       )}
     </div>
   );

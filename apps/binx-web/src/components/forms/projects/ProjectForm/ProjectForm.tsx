@@ -10,7 +10,7 @@
  * project never exists without its tags, roles, and team.
  *
  * @module apps/binx-web/src/components/forms/projects/ProjectForm/ProjectForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -28,10 +28,18 @@ import type { Project, ProjectDetailsInput } from "@/lib/projects";
 import styles from "./ProjectForm.module.scss";
 
 const projectSchema = z.object({
-  name: z.string().trim().min(1, "Project name is required").max(255, "Must be at most 255 characters"),
+  name: z
+    .string()
+    .trim()
+    .min(1, "Project name is required")
+    .max(255, "Must be at most 255 characters"),
   clientId: z.string().min(1, "Choose a client"),
   status: z.enum(PROJECT_STATUSES as [string, ...string[]]),
-  description: z.string().trim().max(4096, "Must be at most 4096 characters").optional(),
+  description: z
+    .string()
+    .trim()
+    .max(4096, "Must be at most 4096 characters")
+    .optional(),
   startDate: z.string().optional(),
   dueDate: z.string().optional(),
   defaultHourlyRate: z.string().optional(),
@@ -84,13 +92,16 @@ const ProjectForm = ({
     resolver: zodResolver(projectSchema),
     defaultValues: {
       name: project?.name ?? initialValues?.name ?? "",
-      clientId: project?.client_id ?? initialValues?.clientId ?? clients[0]?.id ?? "",
+      clientId:
+        project?.client_id ?? initialValues?.clientId ?? clients[0]?.id ?? "",
       status: project?.status ?? initialValues?.status ?? "planning",
       description: project?.description ?? initialValues?.description ?? "",
       startDate: project?.start_date ?? initialValues?.startDate ?? "",
       dueDate: project?.due_date ?? initialValues?.dueDate ?? "",
       defaultHourlyRate: centsToInput(
-        project?.default_hourly_rate_cents ?? initialValues?.defaultHourlyRateCents ?? null,
+        project?.default_hourly_rate_cents ??
+          initialValues?.defaultHourlyRateCents ??
+          null,
       ),
     },
   });
@@ -106,7 +117,9 @@ const ProjectForm = ({
       description: values.description?.trim() || null,
       startDate: values.startDate || null,
       dueDate: values.dueDate || null,
-      defaultHourlyRateCents: values.defaultHourlyRate ? toCents(values.defaultHourlyRate) : null,
+      defaultHourlyRateCents: values.defaultHourlyRate
+        ? toCents(values.defaultHourlyRate)
+        : null,
     };
 
     if (!project) {
@@ -155,14 +168,18 @@ const ProjectForm = ({
             aria-invalid={Boolean(errors.clientId)}
             {...register("clientId")}
           >
-            {clients.length === 0 && <option value="">Add a client first</option>}
+            {clients.length === 0 && (
+              <option value="">Add a client first</option>
+            )}
             {clients.map((client) => (
               <option key={client.id} value={client.id}>
                 {client.name}
               </option>
             ))}
           </select>
-          {errors.clientId && <p className={styles.error}>{errors.clientId.message}</p>}
+          {errors.clientId && (
+            <p className={styles.error}>{errors.clientId.message}</p>
+          )}
         </div>
 
         <div className={styles.field}>
@@ -184,14 +201,24 @@ const ProjectForm = ({
           <label className={styles.label} htmlFor="startDate">
             Start date
           </label>
-          <input id="startDate" type="date" className={styles.input} {...register("startDate")} />
+          <input
+            id="startDate"
+            type="date"
+            className={styles.input}
+            {...register("startDate")}
+          />
         </div>
 
         <div className={styles.field}>
           <label className={styles.label} htmlFor="dueDate">
             Due date
           </label>
-          <input id="dueDate" type="date" className={styles.input} {...register("dueDate")} />
+          <input
+            id="dueDate"
+            type="date"
+            className={styles.input}
+            {...register("dueDate")}
+          />
         </div>
       </div>
 
@@ -208,7 +235,10 @@ const ProjectForm = ({
           className={styles.input}
           {...register("defaultHourlyRate")}
         />
-        <p className={styles.hint}>Used to bill time entries on this project when no rate is set on the entry itself.</p>
+        <p className={styles.hint}>
+          Used to bill time entries on this project when no rate is set on the
+          entry itself.
+        </p>
       </div>
 
       <div className={styles.field}>
@@ -222,7 +252,9 @@ const ProjectForm = ({
           aria-invalid={Boolean(errors.description)}
           {...register("description")}
         />
-        {errors.description && <p className={styles.error}>{errors.description.message}</p>}
+        {errors.description && (
+          <p className={styles.error}>{errors.description.message}</p>
+        )}
       </div>
 
       {formError && <p className={styles.formError}>{formError}</p>}
@@ -230,11 +262,20 @@ const ProjectForm = ({
 
       <div className={styles.actions}>
         {onCancel && (
-          <button type="button" className={styles.cancel} onClick={onCancel} disabled={isPending}>
+          <button
+            type="button"
+            className={styles.cancel}
+            onClick={onCancel}
+            disabled={isPending}
+          >
             Cancel
           </button>
         )}
-        <button type="submit" className={styles.submit} disabled={isPending || clients.length === 0}>
+        <button
+          type="submit"
+          className={styles.submit}
+          disabled={isPending || clients.length === 0}
+        >
           {isPending ? "Saving…" : isEdit ? "Save changes" : "Continue"}
         </button>
       </div>

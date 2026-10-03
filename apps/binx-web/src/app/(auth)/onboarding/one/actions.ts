@@ -7,7 +7,7 @@
  * an internal `/api/*` proxy route.
  *
  * @module apps/binx-web/src/app/(auth)/onboarding/one/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 

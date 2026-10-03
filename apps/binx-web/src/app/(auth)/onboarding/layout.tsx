@@ -8,7 +8,7 @@
  * same two-panel visual shell as the auth layout.
  *
  * @module apps/binx-web/src/app/(auth)/onboarding/layout.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import React from "react";
 import type { Metadata } from "next";
@@ -26,7 +26,11 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-const OnboardingLayout = async ({ children }: { children: React.ReactNode }) => {
+const OnboardingLayout = async ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
   const user = await getCurrentUser();
 
   if (!user) {

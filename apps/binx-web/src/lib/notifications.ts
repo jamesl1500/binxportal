@@ -7,7 +7,7 @@
  * (unlike `lib/messaging.ts`) none of these take an agency id.
  *
  * @module apps/binx-web/src/lib/notifications.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 import axios from "axios";
 
@@ -19,9 +19,14 @@ import type { NotificationCategory } from "@/lib/notifications-client";
 export type { NotificationCategory } from "@/lib/notifications-client";
 export { NOTIFICATION_CATEGORY_META } from "@/lib/notifications-client";
 
-export type AppNotification = Omit<Schemas["NotificationRead"], "category"> & { category: NotificationCategory };
+export type AppNotification = Omit<Schemas["NotificationRead"], "category"> & {
+  category: NotificationCategory;
+};
 
-export type NotificationPage = Omit<Schemas["NotificationListRead"], "items"> & { items: AppNotification[] };
+export type NotificationPage = Omit<
+  Schemas["NotificationListRead"],
+  "items"
+> & { items: AppNotification[] };
 
 async function authHeader(): Promise<{ Authorization: string }> {
   const accessToken = await getAccessToken();
@@ -33,7 +38,10 @@ async function authHeader(): Promise<{ Authorization: string }> {
 
 function apiError(error: unknown, fallback: string): AuthApiError | unknown {
   if (axios.isAxiosError(error) && error.response) {
-    return new AuthApiError(extractDetailMessage(error.response.data, fallback), error.response.status);
+    return new AuthApiError(
+      extractDetailMessage(error.response.data, fallback),
+      error.response.status,
+    );
   }
   return error;
 }
@@ -54,7 +62,9 @@ export interface NotificationQuery {
  * @function getNotifications
  * @throws {AuthApiError} - Thrown if not authenticated.
  */
-export async function getNotifications(query: NotificationQuery = {}): Promise<NotificationPage> {
+export async function getNotifications(
+  query: NotificationQuery = {},
+): Promise<NotificationPage> {
   const headers = await authHeader();
 
   try {
@@ -83,7 +93,10 @@ export async function getNotifications(query: NotificationQuery = {}): Promise<N
 export async function getUnreadNotificationCount(): Promise<number> {
   try {
     const headers = await authHeader();
-    const { data } = await api.get<{ unread_count: number }>("/notifications/unread-count", { headers });
+    const { data } = await api.get<{ unread_count: number }>(
+      "/notifications/unread-count",
+      { headers },
+    );
     return data.unread_count;
   } catch {
     return 0;
@@ -98,11 +111,17 @@ export async function getUnreadNotificationCount(): Promise<number> {
  * @function markNotificationRead
  * @throws {AuthApiError} - Thrown if not authenticated, or the notification isn't the caller's.
  */
-export async function markNotificationRead(notificationId: string): Promise<AppNotification> {
+export async function markNotificationRead(
+  notificationId: string,
+): Promise<AppNotification> {
   const headers = await authHeader();
 
   try {
-    const { data } = await api.post<AppNotification>(`/notifications/${notificationId}/read`, null, { headers });
+    const { data } = await api.post<AppNotification>(
+      `/notifications/${notificationId}/read`,
+      null,
+      { headers },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to update the notification");
@@ -135,7 +154,9 @@ export async function markAllNotificationsRead(): Promise<void> {
  * @function dismissNotification
  * @throws {AuthApiError} - Thrown if not authenticated, or the notification isn't the caller's.
  */
-export async function dismissNotification(notificationId: string): Promise<void> {
+export async function dismissNotification(
+  notificationId: string,
+): Promise<void> {
   const headers = await authHeader();
 
   try {

@@ -9,7 +9,7 @@
  * clears them on success since the account (and thus the session) is gone.
  *
  * @module apps/binx-web/src/app/(app)/account/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 
@@ -45,7 +45,9 @@ export async function updateNotificationSettingsAction(
   return {};
 }
 
-export async function updatePrivacySettingsAction(settings: PrivacySettings): Promise<UpdateSettingsActionResult> {
+export async function updatePrivacySettingsAction(
+  settings: PrivacySettings,
+): Promise<UpdateSettingsActionResult> {
   try {
     await updatePrivacySettings(settings);
   } catch (error) {
@@ -72,7 +74,10 @@ export async function requestEmailChangeAction(
   input: RequestEmailChangeActionInput,
 ): Promise<RequestEmailChangeActionResult> {
   try {
-    const message = await requestEmailChange({ currentPassword: input.currentPassword, newEmail: input.newEmail });
+    const message = await requestEmailChange({
+      currentPassword: input.currentPassword,
+      newEmail: input.newEmail,
+    });
     return { message };
   } catch (error) {
     if (error instanceof AuthApiError) {
@@ -87,7 +92,9 @@ export interface ChangePasswordActionInput {
   newPassword: string;
 }
 
-export async function changePasswordAction(input: ChangePasswordActionInput): Promise<UpdateSettingsActionResult> {
+export async function changePasswordAction(
+  input: ChangePasswordActionInput,
+): Promise<UpdateSettingsActionResult> {
   try {
     await changePassword(input);
   } catch (error) {
@@ -100,7 +107,9 @@ export async function changePasswordAction(input: ChangePasswordActionInput): Pr
   return {};
 }
 
-export async function deleteAccountAction(currentPassword: string): Promise<UpdateSettingsActionResult> {
+export async function deleteAccountAction(
+  currentPassword: string,
+): Promise<UpdateSettingsActionResult> {
   try {
     await deleteAccount(currentPassword);
   } catch (error) {

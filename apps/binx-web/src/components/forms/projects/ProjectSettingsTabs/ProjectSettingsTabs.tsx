@@ -12,7 +12,7 @@
  * "details" for an unknown or absent hash.
  *
  * @module apps/binx-web/src/components/forms/projects/ProjectSettingsTabs/ProjectSettingsTabs.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -47,7 +47,13 @@ function isSectionId(value: string): value is SectionId {
   return SECTIONS.some((section) => section.id === value);
 }
 
-const ProjectSettingsTabs = ({ agencyId, project, clients, roles, tags }: ProjectSettingsTabsProps) => {
+const ProjectSettingsTabs = ({
+  agencyId,
+  project,
+  clients,
+  roles,
+  tags,
+}: ProjectSettingsTabsProps) => {
   const [active, setActive] = useState<SectionId>("details");
 
   // Read the initial section from the URL hash on mount, and keep in step if
@@ -65,7 +71,11 @@ const ProjectSettingsTabs = ({ agencyId, project, clients, roles, tags }: Projec
   const select = (id: SectionId) => {
     setActive(id);
     // replaceState, not a real navigation — no scroll jump, no history spam.
-    window.history.replaceState(null, "", id === "details" ? window.location.pathname : `#${id}`);
+    window.history.replaceState(
+      null,
+      "",
+      id === "details" ? window.location.pathname : `#${id}`,
+    );
   };
 
   return (
@@ -90,8 +100,14 @@ const ProjectSettingsTabs = ({ agencyId, project, clients, roles, tags }: Projec
         {active === "details" && (
           <section>
             <h2 className={styles.sectionTitle}>Details</h2>
-            <p className={styles.sectionSubtitle}>Update this project&apos;s name, client, status, and timeline.</p>
-            <ProjectForm agencyId={agencyId} clients={clients} project={project} />
+            <p className={styles.sectionSubtitle}>
+              Update this project&apos;s name, client, status, and timeline.
+            </p>
+            <ProjectForm
+              agencyId={agencyId}
+              clients={clients}
+              project={project}
+            />
           </section>
         )}
 
@@ -99,10 +115,16 @@ const ProjectSettingsTabs = ({ agencyId, project, clients, roles, tags }: Projec
           <section>
             <h2 className={styles.sectionTitle}>Member roles</h2>
             <p className={styles.sectionSubtitle}>
-              Custom labels for what people do on this project — e.g. &ldquo;Project Manager&rdquo; or &ldquo;Web
-              Developer&rdquo;. Assign them to people on the Team tab.
+              Custom labels for what people do on this project — e.g.
+              &ldquo;Project Manager&rdquo; or &ldquo;Web Developer&rdquo;.
+              Assign them to people on the Team tab.
             </p>
-            <ProjectLabelsPanel agencyId={agencyId} projectId={project.id} kind="role" labels={roles} />
+            <ProjectLabelsPanel
+              agencyId={agencyId}
+              projectId={project.id}
+              kind="role"
+              labels={roles}
+            />
           </section>
         )}
 
@@ -110,10 +132,16 @@ const ProjectSettingsTabs = ({ agencyId, project, clients, roles, tags }: Projec
           <section>
             <h2 className={styles.sectionTitle}>Task tags</h2>
             <p className={styles.sectionSubtitle}>
-              Custom labels for categorising tasks — e.g. &ldquo;Bug&rdquo;, &ldquo;Design&rdquo;, or
-              &ldquo;Urgent&rdquo;. Apply them to tasks from the task panel.
+              Custom labels for categorising tasks — e.g. &ldquo;Bug&rdquo;,
+              &ldquo;Design&rdquo;, or &ldquo;Urgent&rdquo;. Apply them to tasks
+              from the task panel.
             </p>
-            <ProjectLabelsPanel agencyId={agencyId} projectId={project.id} kind="tag" labels={tags} />
+            <ProjectLabelsPanel
+              agencyId={agencyId}
+              projectId={project.id}
+              kind="tag"
+              labels={tags}
+            />
           </section>
         )}
 
@@ -121,10 +149,14 @@ const ProjectSettingsTabs = ({ agencyId, project, clients, roles, tags }: Projec
           <section className={styles.dangerZone}>
             <h2 className={styles.dangerZoneTitle}>Danger zone</h2>
             <p className={styles.sectionSubtitle}>
-              Permanently delete {project.name} and everything in it — its board, files, and team assignments. This
-              can&apos;t be undone.
+              Permanently delete {project.name} and everything in it — its
+              board, files, and team assignments. This can&apos;t be undone.
             </p>
-            <DeleteProjectForm agencyId={agencyId} projectId={project.id} projectName={project.name} />
+            <DeleteProjectForm
+              agencyId={agencyId}
+              projectId={project.id}
+              projectName={project.name}
+            />
           </section>
         )}
       </div>

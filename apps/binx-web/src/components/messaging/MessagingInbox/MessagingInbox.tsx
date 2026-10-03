@@ -6,7 +6,7 @@
  * top-level `/messages` route now — selecting a conversation drives the URL.
  *
  * @module apps/binx-web/src/components/messaging/MessagingInbox/MessagingInbox.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -49,7 +49,9 @@ const MessagingInbox = ({
   const activeId = routeConversationId ?? null;
 
   // Details fetched for conversations other than the server-seeded one.
-  const [fetched, setFetched] = useState<Record<string, ConversationDetail>>({});
+  const [fetched, setFetched] = useState<Record<string, ConversationDetail>>(
+    {},
+  );
 
   const detail = useMemo<ConversationDetail | null>(() => {
     if (!activeId) return null;
@@ -99,7 +101,11 @@ const MessagingInbox = ({
   };
 
   return (
-    <div className={styles.inbox} data-has-thread={Boolean(activeId)} data-fill={fillParent}>
+    <div
+      className={styles.inbox}
+      data-has-thread={Boolean(activeId)}
+      data-fill={fillParent}
+    >
       <div className={styles.listPane}>
         <ConversationList
           activeConversationId={activeId}
@@ -119,7 +125,9 @@ const MessagingInbox = ({
         ) : activeId ? (
           <p className={styles.placeholder}>Loading…</p>
         ) : (
-          <p className={styles.placeholder}>Select a conversation, or start a new one.</p>
+          <p className={styles.placeholder}>
+            Select a conversation, or start a new one.
+          </p>
         )}
       </div>
     </div>

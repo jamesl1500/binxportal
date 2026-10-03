@@ -11,7 +11,7 @@
  * and have qualified counsel review it before that.
  *
  * @module apps/binx-web/src/app/(marketing)/privacy/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";

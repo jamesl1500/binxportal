@@ -6,7 +6,7 @@
  * needs the appearance settings.
  *
  * @module apps/binx-web/src/app/(app)/profile/appearance/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 

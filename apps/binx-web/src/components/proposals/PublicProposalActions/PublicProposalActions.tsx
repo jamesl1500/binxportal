@@ -9,7 +9,7 @@
  * the token alone scopes the request.
  *
  * @module apps/binx-web/src/components/proposals/PublicProposalActions/PublicProposalActions.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -17,7 +17,10 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { declinePublicProposalAction, signPublicProposalAction } from "@/app/proposals/public/actions";
+import {
+  declinePublicProposalAction,
+  signPublicProposalAction,
+} from "@/app/proposals/public/actions";
 
 import styles from "./PublicProposalActions.module.scss";
 
@@ -28,7 +31,10 @@ interface PublicProposalActionsProps {
 
 type Mode = "choose" | "sign" | "decline";
 
-const PublicProposalActions = ({ token, recipientName }: PublicProposalActionsProps) => {
+const PublicProposalActions = ({
+  token,
+  recipientName,
+}: PublicProposalActionsProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [mode, setMode] = useState<Mode>("choose");
@@ -38,9 +44,14 @@ const PublicProposalActions = ({ token, recipientName }: PublicProposalActionsPr
 
   const handleSign = (event: React.FormEvent) => {
     event.preventDefault();
-    if (signerName.trim() === "" || signerEmail.trim() === "" || isPending) return;
+    if (signerName.trim() === "" || signerEmail.trim() === "" || isPending)
+      return;
     startTransition(async () => {
-      const result = await signPublicProposalAction(token, signerName.trim(), signerEmail.trim());
+      const result = await signPublicProposalAction(
+        token,
+        signerName.trim(),
+        signerEmail.trim(),
+      );
       if (result.error) {
         toast.error(result.error);
         return;
@@ -53,7 +64,10 @@ const PublicProposalActions = ({ token, recipientName }: PublicProposalActionsPr
     event.preventDefault();
     if (isPending) return;
     startTransition(async () => {
-      const result = await declinePublicProposalAction(token, reason.trim() || null);
+      const result = await declinePublicProposalAction(
+        token,
+        reason.trim() || null,
+      );
       if (result.error) {
         toast.error(result.error);
         return;
@@ -65,10 +79,18 @@ const PublicProposalActions = ({ token, recipientName }: PublicProposalActionsPr
   if (mode === "choose") {
     return (
       <div className={styles.choose}>
-        <button type="button" className={styles.primary} onClick={() => setMode("sign")}>
+        <button
+          type="button"
+          className={styles.primary}
+          onClick={() => setMode("sign")}
+        >
           Sign this proposal
         </button>
-        <button type="button" className={styles.ghost} onClick={() => setMode("decline")}>
+        <button
+          type="button"
+          className={styles.ghost}
+          onClick={() => setMode("decline")}
+        >
           Decline
         </button>
       </div>
@@ -98,13 +120,19 @@ const PublicProposalActions = ({ token, recipientName }: PublicProposalActionsPr
           />
         </label>
         <div className={styles.formActions}>
-          <button type="button" className={styles.ghost} onClick={() => setMode("choose")}>
+          <button
+            type="button"
+            className={styles.ghost}
+            onClick={() => setMode("choose")}
+          >
             Back
           </button>
           <button
             type="submit"
             className={styles.primary}
-            disabled={isPending || signerName.trim() === "" || signerEmail.trim() === ""}
+            disabled={
+              isPending || signerName.trim() === "" || signerEmail.trim() === ""
+            }
           >
             {isPending ? "Signing…" : "Sign proposal"}
           </button>
@@ -125,10 +153,18 @@ const PublicProposalActions = ({ token, recipientName }: PublicProposalActionsPr
         />
       </label>
       <div className={styles.formActions}>
-        <button type="button" className={styles.ghost} onClick={() => setMode("choose")}>
+        <button
+          type="button"
+          className={styles.ghost}
+          onClick={() => setMode("choose")}
+        >
           Back
         </button>
-        <button type="submit" className={styles.dangerSolid} disabled={isPending}>
+        <button
+          type="submit"
+          className={styles.dangerSolid}
+          disabled={isPending}
+        >
           {isPending ? "Declining…" : "Decline proposal"}
         </button>
       </div>

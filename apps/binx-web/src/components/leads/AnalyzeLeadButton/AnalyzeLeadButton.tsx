@@ -8,7 +8,7 @@
  * budget/cap is used up), so this never hard-fails.
  *
  * @module apps/binx-web/src/components/leads/AnalyzeLeadButton/AnalyzeLeadButton.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -27,7 +27,11 @@ interface AnalyzeLeadButtonProps {
   analyzed: boolean;
 }
 
-const AnalyzeLeadButton = ({ agencyId, leadId, analyzed }: AnalyzeLeadButtonProps) => {
+const AnalyzeLeadButton = ({
+  agencyId,
+  leadId,
+  analyzed,
+}: AnalyzeLeadButtonProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -44,7 +48,12 @@ const AnalyzeLeadButton = ({ agencyId, leadId, analyzed }: AnalyzeLeadButtonProp
   };
 
   return (
-    <button type="button" className={styles.button} onClick={handleClick} disabled={isPending}>
+    <button
+      type="button"
+      className={styles.button}
+      onClick={handleClick}
+      disabled={isPending}
+    >
       <Sparkles aria-hidden="true" />
       {isPending ? "Analyzing…" : analyzed ? "Re-analyze" : "Analyze"}
     </button>

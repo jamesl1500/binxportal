@@ -13,7 +13,7 @@
  * info, though both stay plain free text the staff member can override.
  *
  * @module apps/binx-web/src/components/proposals/ProposalForm/ProposalForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -24,7 +24,10 @@ import { toast } from "sonner";
 
 import type { ProposalDetail, ProposalInput } from "@/lib/proposals";
 import { formatMoneyCents } from "@/lib/money";
-import { createProposalAction, updateProposalAction } from "@/app/(app)/proposals/actions";
+import {
+  createProposalAction,
+  updateProposalAction,
+} from "@/app/(app)/proposals/actions";
 
 import styles from "./ProposalForm.module.scss";
 
@@ -52,7 +55,12 @@ interface LineRow {
 }
 
 let rowCounter = 0;
-const newRow = (): LineRow => ({ key: `r${rowCounter++}`, description: "", quantity: "1", unitPrice: "" });
+const newRow = (): LineRow => ({
+  key: `r${rowCounter++}`,
+  description: "",
+  quantity: "1",
+  unitPrice: "",
+});
 
 function toCents(dollars: string): number {
   const n = Number.parseFloat(dollars);
@@ -65,18 +73,31 @@ function roundHalfUp(value: number): number {
   return Math.round(value);
 }
 
-const ProposalForm = ({ agencyId, clients, proposal, initialClientId = null }: ProposalFormProps) => {
+const ProposalForm = ({
+  agencyId,
+  clients,
+  proposal,
+  initialClientId = null,
+}: ProposalFormProps) => {
   const router = useRouter();
   const isEdit = Boolean(proposal);
 
-  const [clientId, setClientId] = useState(proposal?.client_id ?? initialClientId ?? "");
+  const [clientId, setClientId] = useState(
+    proposal?.client_id ?? initialClientId ?? "",
+  );
   const [title, setTitle] = useState(proposal?.title ?? "");
-  const [recipientName, setRecipientName] = useState(proposal?.recipient_name ?? "");
-  const [recipientEmail, setRecipientEmail] = useState(proposal?.recipient_email ?? "");
+  const [recipientName, setRecipientName] = useState(
+    proposal?.recipient_name ?? "",
+  );
+  const [recipientEmail, setRecipientEmail] = useState(
+    proposal?.recipient_email ?? "",
+  );
   const [content, setContent] = useState(proposal?.content ?? "");
   const [currency, setCurrency] = useState(proposal?.currency ?? "USD");
   const [taxRate, setTaxRate] = useState(proposal?.tax_rate_percent ?? "0");
-  const [validUntil, setValidUntil] = useState(proposal?.valid_until ? proposal.valid_until.slice(0, 10) : "");
+  const [validUntil, setValidUntil] = useState(
+    proposal?.valid_until ? proposal.valid_until.slice(0, 10) : "",
+  );
   const [rows, setRows] = useState<LineRow[]>(
     proposal && proposal.line_items.length > 0
       ? proposal.line_items.map((item) => ({
@@ -90,18 +111,31 @@ const ProposalForm = ({ agencyId, clients, proposal, initialClientId = null }: P
   const [submitting, setSubmitting] = useState(false);
 
   const totals = useMemo(() => {
-    const lineAmounts = rows.map((row) => roundHalfUp((Number.parseFloat(row.quantity) || 0) * toCents(row.unitPrice)));
+    const lineAmounts = rows.map((row) =>
+      roundHalfUp(
+        (Number.parseFloat(row.quantity) || 0) * toCents(row.unitPrice),
+      ),
+    );
     const subtotal = lineAmounts.reduce((sum, amount) => sum + amount, 0);
-    const tax = roundHalfUp((subtotal * (Number.parseFloat(taxRate) || 0)) / 100);
+    const tax = roundHalfUp(
+      (subtotal * (Number.parseFloat(taxRate) || 0)) / 100,
+    );
     return { lineAmounts, subtotal, tax, total: subtotal + tax };
   }, [rows, taxRate]);
 
   const canSubmit =
     title.trim() !== "" &&
-    rows.some((row) => row.description.trim() !== "" && toCents(row.unitPrice) >= 0 && row.quantity);
+    rows.some(
+      (row) =>
+        row.description.trim() !== "" &&
+        toCents(row.unitPrice) >= 0 &&
+        row.quantity,
+    );
 
   const updateRow = (key: string, patch: Partial<LineRow>) => {
-    setRows((prev) => prev.map((row) => (row.key === key ? { ...row, ...patch } : row)));
+    setRows((prev) =>
+      prev.map((row) => (row.key === key ? { ...row, ...patch } : row)),
+    );
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -240,7 +274,9 @@ const ProposalForm = ({ agencyId, clients, proposal, initialClientId = null }: P
               className={styles.input}
               placeholder="e.g. Discovery workshop"
               value={row.description}
-              onChange={(event) => updateRow(row.key, { description: event.target.value })}
+              onChange={(event) =>
+                updateRow(row.key, { description: event.target.value })
+              }
               aria-label={`Line ${index + 1} description`}
             />
             <input
@@ -249,7 +285,9 @@ const ProposalForm = ({ agencyId, clients, proposal, initialClientId = null }: P
               min="0"
               step="0.01"
               value={row.quantity}
-              onChange={(event) => updateRow(row.key, { quantity: event.target.value })}
+              onChange={(event) =>
+                updateRow(row.key, { quantity: event.target.value })
+              }
               aria-label={`Line ${index + 1} quantity`}
             />
             <input
@@ -259,14 +297,24 @@ const ProposalForm = ({ agencyId, clients, proposal, initialClientId = null }: P
               step="0.01"
               placeholder="0.00"
               value={row.unitPrice}
-              onChange={(event) => updateRow(row.key, { unitPrice: event.target.value })}
+              onChange={(event) =>
+                updateRow(row.key, { unitPrice: event.target.value })
+              }
               aria-label={`Line ${index + 1} unit price`}
             />
-            <span className={styles.lineAmount}>{formatMoneyCents(totals.lineAmounts[index] ?? 0, currency)}</span>
+            <span className={styles.lineAmount}>
+              {formatMoneyCents(totals.lineAmounts[index] ?? 0, currency)}
+            </span>
             <button
               type="button"
               className={styles.removeRow}
-              onClick={() => setRows((prev) => (prev.length > 1 ? prev.filter((r) => r.key !== row.key) : prev))}
+              onClick={() =>
+                setRows((prev) =>
+                  prev.length > 1
+                    ? prev.filter((r) => r.key !== row.key)
+                    : prev,
+                )
+              }
               disabled={rows.length <= 1}
               aria-label={`Remove line ${index + 1}`}
             >
@@ -274,7 +322,11 @@ const ProposalForm = ({ agencyId, clients, proposal, initialClientId = null }: P
             </button>
           </div>
         ))}
-        <button type="button" className={styles.addRow} onClick={() => setRows((prev) => [...prev, newRow()])}>
+        <button
+          type="button"
+          className={styles.addRow}
+          onClick={() => setRows((prev) => [...prev, newRow()])}
+        >
           <Plus aria-hidden="true" /> Add line
         </button>
       </div>
@@ -287,7 +339,9 @@ const ProposalForm = ({ agencyId, clients, proposal, initialClientId = null }: P
               className={styles.input}
               maxLength={3}
               value={currency}
-              onChange={(event) => setCurrency(event.target.value.toUpperCase())}
+              onChange={(event) =>
+                setCurrency(event.target.value.toUpperCase())
+              }
             />
           </label>
 
@@ -324,10 +378,18 @@ const ProposalForm = ({ agencyId, clients, proposal, initialClientId = null }: P
       </div>
 
       <div className={styles.actions}>
-        <button type="button" className={styles.cancel} onClick={() => router.back()}>
+        <button
+          type="button"
+          className={styles.cancel}
+          onClick={() => router.back()}
+        >
           Cancel
         </button>
-        <button type="submit" className={styles.submit} disabled={!canSubmit || submitting}>
+        <button
+          type="submit"
+          className={styles.submit}
+          disabled={!canSubmit || submitting}
+        >
           {submitting ? "Saving…" : isEdit ? "Save draft" : "Create draft"}
         </button>
       </div>

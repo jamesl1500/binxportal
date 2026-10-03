@@ -7,7 +7,7 @@
  * a snapshot, and a danger zone.
  *
  * @module apps/binx-web/src/app/(app)/leads/[leadId]/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -36,7 +36,9 @@ interface LeadDetailPageProps {
   params: Promise<{ leadId: string }>;
 }
 
-export async function generateMetadata({ params }: LeadDetailPageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: LeadDetailPageProps): Promise<Metadata> {
   const { leadId } = await params;
   try {
     const { currentAgency } = await getCurrentAgencyContext();
@@ -55,7 +57,8 @@ const LeadDetailPage = async ({ params }: LeadDetailPageProps) => {
     redirect("/onboarding/two");
   }
   const agencyId = currentAgency.id;
-  const canManage = currentAgency.role === "owner" || currentAgency.role === "admin";
+  const canManage =
+    currentAgency.role === "owner" || currentAgency.role === "admin";
 
   let lead;
   try {
@@ -65,7 +68,10 @@ const LeadDetailPage = async ({ params }: LeadDetailPageProps) => {
     throw error;
   }
 
-  const [events, members] = await Promise.all([getLeadEvents(agencyId, leadId), getAgencyMembers(agencyId)]);
+  const [events, members] = await Promise.all([
+    getLeadEvents(agencyId, leadId),
+    getAgencyMembers(agencyId),
+  ]);
   const converted = Boolean(lead.converted_client_id);
 
   return (
@@ -78,15 +84,25 @@ const LeadDetailPage = async ({ params }: LeadDetailPageProps) => {
         <div>
           <h1 className={styles.title}>{lead.name}</h1>
           <div className={styles.headerMeta}>
-            <LeadStatusControl agencyId={agencyId} leadId={lead.id} status={lead.status} locked={converted} />
+            <LeadStatusControl
+              agencyId={agencyId}
+              leadId={lead.id}
+              status={lead.status}
+              locked={converted}
+            />
             <LeadOwnerSelect
               agencyId={agencyId}
               leadId={lead.id}
               ownerId={lead.owner_id}
-              members={members.map((member) => ({ user_id: member.user_id, full_name: member.full_name }))}
+              members={members.map((member) => ({
+                user_id: member.user_id,
+                full_name: member.full_name,
+              }))}
             />
             <LeadScoreBadge score={lead.score} />
-            <span className={styles.source}>{LEAD_SOURCE_LABELS[lead.source] ?? lead.source}</span>
+            <span className={styles.source}>
+              {LEAD_SOURCE_LABELS[lead.source] ?? lead.source}
+            </span>
           </div>
         </div>
       </header>
@@ -104,7 +120,11 @@ const LeadDetailPage = async ({ params }: LeadDetailPageProps) => {
             timeline={
               <section className={styles.card}>
                 <h2 className={styles.cardTitle}>Timeline</h2>
-                <LeadTimeline agencyId={agencyId} leadId={lead.id} events={events} />
+                <LeadTimeline
+                  agencyId={agencyId}
+                  leadId={lead.id}
+                  events={events}
+                />
               </section>
             }
             analysis={
@@ -112,16 +132,27 @@ const LeadDetailPage = async ({ params }: LeadDetailPageProps) => {
                 <section className={styles.card}>
                   <div className={styles.cardHead}>
                     <h2 className={styles.cardTitle}>AI analysis</h2>
-                    <AnalyzeLeadButton agencyId={agencyId} leadId={lead.id} analyzed={Boolean(lead.ai_analyzed_at)} />
+                    <AnalyzeLeadButton
+                      agencyId={agencyId}
+                      leadId={lead.id}
+                      analyzed={Boolean(lead.ai_analyzed_at)}
+                    />
                   </div>
                   {lead.ai_analyzed_at ? (
                     <>
                       {lead.ai_fit && (
                         <div className={styles.aiMeta}>
-                          <span className={styles.fitChip}>{lead.ai_fit} fit</span>
+                          <span className={styles.fitChip}>
+                            {lead.ai_fit} fit
+                          </span>
                         </div>
                       )}
-                      {lead.ai_summary && <AiMarkdown content={lead.ai_summary} className={styles.aiSummary} />}
+                      {lead.ai_summary && (
+                        <AiMarkdown
+                          content={lead.ai_summary}
+                          className={styles.aiSummary}
+                        />
+                      )}
                       {lead.ai_talking_points.length > 0 && (
                         <div className={styles.aiBlock}>
                           <p className={styles.aiBlockLabel}>Talking points</p>
@@ -141,8 +172,10 @@ const LeadDetailPage = async ({ params }: LeadDetailPageProps) => {
                     </>
                   ) : (
                     <p className={styles.muted}>
-                      Not analyzed yet. Run it to score the lead, fetch their website if they have one, and get a
-                      suggested next step. (Falls back to a quick completeness check if AI isn&apos;t available right now.)
+                      Not analyzed yet. Run it to score the lead, fetch their
+                      website if they have one, and get a suggested next step.
+                      (Falls back to a quick completeness check if AI isn&apos;t
+                      available right now.)
                     </p>
                   )}
                 </section>
@@ -190,7 +223,11 @@ const LeadDetailPage = async ({ params }: LeadDetailPageProps) => {
                 <dt>Website</dt>
                 <dd>
                   {lead.website ? (
-                    <a href={lead.website} target="_blank" rel="noopener noreferrer">
+                    <a
+                      href={lead.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       {lead.website.replace(/^https?:\/\//, "")}
                     </a>
                   ) : (
@@ -218,8 +255,15 @@ const LeadDetailPage = async ({ params }: LeadDetailPageProps) => {
           {canManage && (
             <section className={`${styles.card} ${styles.danger}`}>
               <h2 className={styles.cardTitle}>Danger zone</h2>
-              <p className={styles.muted}>Deleting a lead removes it and its timeline. This can&apos;t be undone.</p>
-              <DeleteLeadButton agencyId={agencyId} leadId={lead.id} leadName={lead.name} />
+              <p className={styles.muted}>
+                Deleting a lead removes it and its timeline. This can&apos;t be
+                undone.
+              </p>
+              <DeleteLeadButton
+                agencyId={agencyId}
+                leadId={lead.id}
+                leadName={lead.name}
+              />
             </section>
           )}
         </aside>

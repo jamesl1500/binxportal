@@ -6,7 +6,7 @@
  * for the whole list plus the upload control.
  *
  * @module apps/binx-web/src/app/(app)/projects/[projectId]/files/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -41,8 +41,14 @@ const ProjectFilesPage = async ({ params }: ProjectFilesPageProps) => {
     <div>
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Files</h2>
-        <p className={styles.sectionSubtitle}>Briefs, assets, and deliverables shared for {project.name}.</p>
-        <ProjectFilesTable agencyId={currentAgency.id} projectId={project.id} files={files} />
+        <p className={styles.sectionSubtitle}>
+          Briefs, assets, and deliverables shared for {project.name}.
+        </p>
+        <ProjectFilesTable
+          agencyId={currentAgency.id}
+          projectId={project.id}
+          files={files}
+        />
       </section>
     </div>
   );

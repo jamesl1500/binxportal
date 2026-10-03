@@ -6,17 +6,26 @@
  * working surface.
  *
  * @module apps/binx-web/src/app/(app)/dashboard/pulse/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { getCurrentAgencyContext } from "@/lib/agencies";
-import { formatMoneyCents, formatCompactMoney, invoiceStatusLabel } from "@/lib/money";
+import {
+  formatMoneyCents,
+  formatCompactMoney,
+  invoiceStatusLabel,
+} from "@/lib/money";
 import { getInvoices, getInvoiceSummary } from "@/lib/invoicing";
 import { getAgencyProjects } from "@/lib/projects";
-import { PROJECT_STATUS_LABELS, type ProjectStatus } from "@/lib/projects-client";
-import ClientStatGrid, { type ClientStat } from "@/components/clients/ClientStatGrid/ClientStatGrid";
+import {
+  PROJECT_STATUS_LABELS,
+  type ProjectStatus,
+} from "@/lib/projects-client";
+import ClientStatGrid, {
+  type ClientStat,
+} from "@/components/clients/ClientStatGrid/ClientStatGrid";
 import LineChart from "@/components/charts/LineChart/LineChart";
 import DonutChart from "@/components/charts/DonutChart/DonutChart";
 
@@ -55,36 +64,55 @@ const PulsePage = async () => {
   const currency = invoices[0]?.currency ?? "USD";
 
   const stats: ClientStat[] = [
-    { label: "Paid this year", value: formatMoneyCents(summary.paid_this_year_cents, currency) },
-    { label: "Lifetime billed", value: formatMoneyCents(summary.lifetime_billed_cents, currency) },
-    { label: "Average invoice", value: formatMoneyCents(summary.average_invoice_cents, currency) },
+    {
+      label: "Paid this year",
+      value: formatMoneyCents(summary.paid_this_year_cents, currency),
+    },
+    {
+      label: "Lifetime billed",
+      value: formatMoneyCents(summary.lifetime_billed_cents, currency),
+    },
+    {
+      label: "Average invoice",
+      value: formatMoneyCents(summary.average_invoice_cents, currency),
+    },
     { label: "Drafts", value: String(summary.draft_count) },
   ];
 
   const statusCounts = new Map<ProjectStatus, number>();
   for (const project of projects) {
-    statusCounts.set(project.status, (statusCounts.get(project.status) ?? 0) + 1);
+    statusCounts.set(
+      project.status,
+      (statusCounts.get(project.status) ?? 0) + 1,
+    );
   }
-  const projectSegments = [...statusCounts.entries()].map(([status, count]) => ({
-    label: PROJECT_STATUS_LABELS[status],
-    value: count,
-    color: PROJECT_STATUS_COLORS[status],
-  }));
+  const projectSegments = [...statusCounts.entries()].map(
+    ([status, count]) => ({
+      label: PROJECT_STATUS_LABELS[status],
+      value: count,
+      color: PROJECT_STATUS_COLORS[status],
+    }),
+  );
 
   const invoiceGroups = new Map<string, { count: number; amount: number }>();
   for (const invoice of invoices) {
     if (invoice.display_status === "void") continue;
-    const group = invoiceGroups.get(invoice.display_status) ?? { count: 0, amount: 0 };
+    const group = invoiceGroups.get(invoice.display_status) ?? {
+      count: 0,
+      amount: 0,
+    };
     group.count += 1;
     group.amount += invoice.total_cents;
     invoiceGroups.set(invoice.display_status, group);
   }
-  const invoiceSegments = [...invoiceGroups.entries()].map(([status, group]) => ({
-    label: invoiceStatusLabel(status),
-    value: group.count,
-    color: INVOICE_STATUS_COLORS[status] ?? "#a1a1aa",
-    hint: formatCompactMoney(group.amount, currency),
-  }));
+  const invoiceSegments = [...invoiceGroups.entries()].map(
+    ([status, group]) => ({
+      label: invoiceStatusLabel(status),
+      value: group.count,
+      color: INVOICE_STATUS_COLORS[status] ?? "#a1a1aa",
+      hint: formatCompactMoney(group.amount, currency),
+    }),
+  );
 
   return (
     <div>
@@ -130,7 +158,10 @@ const PulsePage = async () => {
             <DonutChart
               segments={invoiceSegments}
               ariaLabel="Invoices grouped by status"
-              centerPrimary={formatCompactMoney(summary.outstanding_cents, currency)}
+              centerPrimary={formatCompactMoney(
+                summary.outstanding_cents,
+                currency,
+              )}
               centerSecondary="Outstanding"
             />
           ) : (

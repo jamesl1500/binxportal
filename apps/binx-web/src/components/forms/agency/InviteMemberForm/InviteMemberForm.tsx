@@ -7,7 +7,7 @@
  * a full navigation.
  *
  * @module apps/binx-web/src/components/forms/agency/InviteMemberForm/InviteMemberForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -83,14 +83,20 @@ const InviteMemberForm = ({ agencyId }: InviteMemberFormProps) => {
             aria-invalid={Boolean(errors.email)}
             {...register("email")}
           />
-          {errors.email && <p className={styles.error}>{errors.email.message}</p>}
+          {errors.email && (
+            <p className={styles.error}>{errors.email.message}</p>
+          )}
         </div>
 
         <div className={styles.field}>
           <label className={styles.label} htmlFor="invite-role">
             Role
           </label>
-          <select id="invite-role" className={styles.select} {...register("role")}>
+          <select
+            id="invite-role"
+            className={styles.select}
+            {...register("role")}
+          >
             <option value="member">Member</option>
             <option value="admin">Admin</option>
           </select>

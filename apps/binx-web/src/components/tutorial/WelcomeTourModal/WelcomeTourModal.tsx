@@ -13,7 +13,7 @@
  * layout.
  *
  * @module apps/binx-web/src/components/tutorial/WelcomeTourModal/WelcomeTourModal.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -136,9 +136,15 @@ const WelcomeTourModal = () => {
           </div>
 
           <Dialog.Title className={styles.title}>{step.title}</Dialog.Title>
-          <Dialog.Description className={styles.description}>{step.body}</Dialog.Description>
+          <Dialog.Description className={styles.description}>
+            {step.body}
+          </Dialog.Description>
 
-          <div className={styles.dots} role="tablist" aria-label="Tour progress">
+          <div
+            className={styles.dots}
+            role="tablist"
+            aria-label="Tour progress"
+          >
             {TOUR_STEPS.map((tourStep, index) => (
               <span
                 key={tourStep.title}
@@ -150,7 +156,12 @@ const WelcomeTourModal = () => {
           </div>
 
           <div className={styles.footer}>
-            <button type="button" className={styles.back} onClick={handleBack} disabled={currentIndex === 0}>
+            <button
+              type="button"
+              className={styles.back}
+              onClick={handleBack}
+              disabled={currentIndex === 0}
+            >
               Back
             </button>
             <button type="button" className={styles.next} onClick={handleNext}>

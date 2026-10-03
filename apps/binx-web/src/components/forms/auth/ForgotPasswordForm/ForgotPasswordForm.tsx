@@ -6,7 +6,7 @@
  * request (see lib/auth.ts).
  *
  * @module apps/binx-web/src/components/forms/auth/ForgotPasswordForm/ForgotPasswordForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 

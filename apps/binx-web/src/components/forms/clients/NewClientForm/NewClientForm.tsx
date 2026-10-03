@@ -7,7 +7,7 @@
  * dialog-hosted create flow didn't. Replaces the old CreateClientDialog.
  *
  * @module apps/binx-web/src/components/forms/clients/NewClientForm/NewClientForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -22,7 +22,12 @@ interface NewClientFormProps {
 const NewClientForm = ({ agencyId }: NewClientFormProps) => {
   const router = useRouter();
 
-  return <ClientForm agencyId={agencyId} onSuccess={(client) => router.push(`/clients/${client.id}`)} />;
+  return (
+    <ClientForm
+      agencyId={agencyId}
+      onSuccess={(client) => router.push(`/clients/${client.id}`)}
+    />
+  );
 };
 
 export default NewClientForm;

@@ -9,21 +9,27 @@
  * whichever lands first wins, idempotently).
  *
  * @module apps/binx-web/src/app/(portal)/portal/invoices/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 
 import { revalidatePath } from "next/cache";
 
 import { AuthApiError } from "@/lib/auth";
-import { confirmPortalInvoicePayment, startPortalInvoiceCheckout, type PortalCheckoutOutcome } from "@/lib/portal";
+import {
+  confirmPortalInvoicePayment,
+  startPortalInvoiceCheckout,
+  type PortalCheckoutOutcome,
+} from "@/lib/portal";
 
 export interface PayInvoiceActionResult {
   error?: string;
   checkoutUrl?: string;
 }
 
-export async function payInvoiceAction(invoiceId: string): Promise<PayInvoiceActionResult> {
+export async function payInvoiceAction(
+  invoiceId: string,
+): Promise<PayInvoiceActionResult> {
   try {
     const checkoutUrl = await startPortalInvoiceCheckout(invoiceId);
     return { checkoutUrl };
@@ -42,9 +48,15 @@ export interface ConfirmPaymentActionResult {
   currency?: string;
 }
 
-export async function confirmPaymentAction(invoiceId: string, sessionId: string): Promise<ConfirmPaymentActionResult> {
+export async function confirmPaymentAction(
+  invoiceId: string,
+  sessionId: string,
+): Promise<ConfirmPaymentActionResult> {
   try {
-    const { outcome, invoice } = await confirmPortalInvoicePayment(invoiceId, sessionId);
+    const { outcome, invoice } = await confirmPortalInvoicePayment(
+      invoiceId,
+      sessionId,
+    );
     if (outcome === "paid") {
       // The invoice page (and the sidebar's unpaid badge) should reflect it.
       revalidatePath("/portal", "layout");
@@ -53,7 +65,11 @@ export async function confirmPaymentAction(invoiceId: string, sessionId: string)
       .filter((payment) => payment.method === "stripe")
       .sort((a, b) => a.created_at.localeCompare(b.created_at))
       .at(-1);
-    return { outcome, amountPaidCents: lastPayment?.amount_cents, currency: invoice.currency };
+    return {
+      outcome,
+      amountPaidCents: lastPayment?.amount_cents,
+      currency: invoice.currency,
+    };
   } catch (error) {
     if (error instanceof AuthApiError) {
       return { error: error.message };

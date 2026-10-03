@@ -5,7 +5,7 @@
  * permanent redirect so old links and bookmarks keep working.
  *
  * @module apps/binx-web/src/app/(app)/billing/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import { redirect } from "next/navigation";
 

@@ -8,7 +8,7 @@
  * Saves via the `updateProfileAction` server action.
  *
  * @module apps/binx-web/src/components/forms/account/EditProfileForm/EditProfileForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -23,10 +23,26 @@ import type { CurrentUser } from "@/lib/auth";
 import styles from "./EditProfileForm.module.scss";
 
 const profileSchema = z.object({
-  fullName: z.string().trim().min(1, "Full name is required").max(255, "Must be at most 255 characters"),
-  jobTitle: z.string().trim().max(255, "Must be at most 255 characters").optional(),
-  phoneNumber: z.string().trim().max(32, "Must be at most 32 characters").optional(),
-  summary: z.string().trim().max(1024, "Must be at most 1024 characters").optional(),
+  fullName: z
+    .string()
+    .trim()
+    .min(1, "Full name is required")
+    .max(255, "Must be at most 255 characters"),
+  jobTitle: z
+    .string()
+    .trim()
+    .max(255, "Must be at most 255 characters")
+    .optional(),
+  phoneNumber: z
+    .string()
+    .trim()
+    .max(32, "Must be at most 32 characters")
+    .optional(),
+  summary: z
+    .string()
+    .trim()
+    .max(1024, "Must be at most 1024 characters")
+    .optional(),
 });
 
 type ProfileValues = z.infer<typeof profileSchema>;
@@ -89,7 +105,9 @@ const EditProfileForm = ({ user }: EditProfileFormProps) => {
             aria-invalid={Boolean(errors.fullName)}
             {...register("fullName")}
           />
-          {errors.fullName && <p className={styles.error}>{errors.fullName.message}</p>}
+          {errors.fullName && (
+            <p className={styles.error}>{errors.fullName.message}</p>
+          )}
         </div>
 
         <div className={styles.field}>
@@ -104,7 +122,9 @@ const EditProfileForm = ({ user }: EditProfileFormProps) => {
             aria-invalid={Boolean(errors.jobTitle)}
             {...register("jobTitle")}
           />
-          {errors.jobTitle && <p className={styles.error}>{errors.jobTitle.message}</p>}
+          {errors.jobTitle && (
+            <p className={styles.error}>{errors.jobTitle.message}</p>
+          )}
         </div>
       </div>
 
@@ -113,14 +133,28 @@ const EditProfileForm = ({ user }: EditProfileFormProps) => {
           <label className={styles.label} htmlFor="email">
             Email
           </label>
-          <input id="email" type="email" value={user.email} readOnly disabled className={styles.input} />
+          <input
+            id="email"
+            type="email"
+            value={user.email}
+            readOnly
+            disabled
+            className={styles.input}
+          />
         </div>
 
         <div className={styles.field}>
           <label className={styles.label} htmlFor="userName">
             Username
           </label>
-          <input id="userName" type="text" value={user.user_name} readOnly disabled className={styles.input} />
+          <input
+            id="userName"
+            type="text"
+            value={user.user_name}
+            readOnly
+            disabled
+            className={styles.input}
+          />
         </div>
       </div>
 
@@ -136,7 +170,9 @@ const EditProfileForm = ({ user }: EditProfileFormProps) => {
           aria-invalid={Boolean(errors.phoneNumber)}
           {...register("phoneNumber")}
         />
-        {errors.phoneNumber && <p className={styles.error}>{errors.phoneNumber.message}</p>}
+        {errors.phoneNumber && (
+          <p className={styles.error}>{errors.phoneNumber.message}</p>
+        )}
       </div>
 
       <div className={styles.field}>
@@ -150,7 +186,9 @@ const EditProfileForm = ({ user }: EditProfileFormProps) => {
           aria-invalid={Boolean(errors.summary)}
           {...register("summary")}
         />
-        {errors.summary && <p className={styles.error}>{errors.summary.message}</p>}
+        {errors.summary && (
+          <p className={styles.error}>{errors.summary.message}</p>
+        )}
       </div>
 
       {formError && <p className={styles.formError}>{formError}</p>}

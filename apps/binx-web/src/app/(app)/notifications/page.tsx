@@ -6,7 +6,7 @@
  * session; `getCurrentUser` here is just the belt-and-braces redirect.
  *
  * @module apps/binx-web/src/app/(app)/notifications/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -34,7 +34,8 @@ const NotificationsPage = async () => {
       <span className={styles.eyebrow}>Notifications</span>
       <h1 className={styles.title}>What&apos;s happened</h1>
       <p className={styles.subtitle}>
-        Invites, invoices, project assignments and mentions from across your agencies.{" "}
+        Invites, invoices, project assignments and mentions from across your
+        agencies.{" "}
         <Link href="/account" className={styles.link}>
           Manage what shows up here
         </Link>

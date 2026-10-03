@@ -6,7 +6,7 @@
  * the list page fetches every lead once (an agency's pipeline is small).
  *
  * @module apps/binx-web/src/components/leads/LeadsTable/LeadsTable.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -15,7 +15,11 @@ import Link from "next/link";
 
 import { formatMoneyCents } from "@/lib/money";
 import type { LeadListItem } from "@/lib/leads";
-import { LEAD_SOURCE_LABELS, LEAD_STATUS_META, type LeadStatus } from "@/lib/leads-client";
+import {
+  LEAD_SOURCE_LABELS,
+  LEAD_STATUS_META,
+  type LeadStatus,
+} from "@/lib/leads-client";
 
 import styles from "./LeadsTable.module.scss";
 
@@ -43,7 +47,10 @@ function relativeDay(iso: string | null): string {
   if (days <= 0) return "Today";
   if (days === 1) return "Yesterday";
   if (days < 30) return `${days}d ago`;
-  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  return new Date(iso).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
 }
 
 function displayUrl(url: string): string {
@@ -58,7 +65,8 @@ const LeadsTable = ({ leads }: LeadsTableProps) => {
   const owners = useMemo(() => {
     const seen = new Map<string, string>();
     for (const lead of leads) {
-      if (lead.owner_id && lead.owner_name) seen.set(lead.owner_id, lead.owner_name);
+      if (lead.owner_id && lead.owner_name)
+        seen.set(lead.owner_id, lead.owner_name);
     }
     return [...seen.entries()].sort((a, b) => a[1].localeCompare(b[1]));
   }, [leads]);
@@ -66,10 +74,21 @@ const LeadsTable = ({ leads }: LeadsTableProps) => {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return leads.filter((lead) => {
-      if (statusFilter === "open" && !LEAD_STATUS_META[lead.status]?.open) return false;
-      if (statusFilter !== "open" && statusFilter !== "all" && lead.status !== statusFilter) return false;
+      if (statusFilter === "open" && !LEAD_STATUS_META[lead.status]?.open)
+        return false;
+      if (
+        statusFilter !== "open" &&
+        statusFilter !== "all" &&
+        lead.status !== statusFilter
+      )
+        return false;
       if (ownerFilter === "unassigned" && lead.owner_id) return false;
-      if (ownerFilter !== "all" && ownerFilter !== "unassigned" && lead.owner_id !== ownerFilter) return false;
+      if (
+        ownerFilter !== "all" &&
+        ownerFilter !== "unassigned" &&
+        lead.owner_id !== ownerFilter
+      )
+        return false;
       if (!q) return true;
       return (
         lead.name.toLowerCase().includes(q) ||
@@ -84,7 +103,9 @@ const LeadsTable = ({ leads }: LeadsTableProps) => {
     return (
       <div className={styles.empty}>
         <p className={styles.emptyTitle}>No leads yet</p>
-        <p className={styles.emptyText}>Add your first prospect to start building a pipeline.</p>
+        <p className={styles.emptyText}>
+          Add your first prospect to start building a pipeline.
+        </p>
       </div>
     );
   }
@@ -92,7 +113,11 @@ const LeadsTable = ({ leads }: LeadsTableProps) => {
   return (
     <div className={styles.wrapper}>
       <div className={styles.toolbar}>
-        <div className={styles.chips} role="group" aria-label="Filter by status">
+        <div
+          className={styles.chips}
+          role="group"
+          aria-label="Filter by status"
+        >
           {STATUS_FILTERS.map((filter) => (
             <button
               key={filter.key}
@@ -153,25 +178,48 @@ const LeadsTable = ({ leads }: LeadsTableProps) => {
                 return (
                   <tr key={lead.id} className={styles.row}>
                     <td className={styles.cell}>
-                      <Link href={`/leads/${lead.id}`} className={styles.leadLink}>
+                      <Link
+                        href={`/leads/${lead.id}`}
+                        className={styles.leadLink}
+                      >
                         <span className={styles.name}>{lead.name}</span>
-                        {lead.website && <span className={styles.sub}>{displayUrl(lead.website)}</span>}
-                        {lead.contact_name && <span className={styles.sub}>{lead.contact_name}</span>}
+                        {lead.website && (
+                          <span className={styles.sub}>
+                            {displayUrl(lead.website)}
+                          </span>
+                        )}
+                        {lead.contact_name && (
+                          <span className={styles.sub}>
+                            {lead.contact_name}
+                          </span>
+                        )}
                       </Link>
                     </td>
                     <td className={styles.cell}>
-                      <span className={styles.status} style={{ borderColor: meta?.accent, color: meta?.accent }}>
+                      <span
+                        className={styles.status}
+                        style={{
+                          borderColor: meta?.accent,
+                          color: meta?.accent,
+                        }}
+                      >
                         {meta?.label ?? lead.status}
                       </span>
                     </td>
-                    <td className={`${styles.cell} ${styles.muted}`}>{lead.owner_name ?? "Unassigned"}</td>
-                    <td className={`${styles.cell} ${styles.muted}`}>{LEAD_SOURCE_LABELS[lead.source] ?? lead.source}</td>
+                    <td className={`${styles.cell} ${styles.muted}`}>
+                      {lead.owner_name ?? "Unassigned"}
+                    </td>
+                    <td className={`${styles.cell} ${styles.muted}`}>
+                      {LEAD_SOURCE_LABELS[lead.source] ?? lead.source}
+                    </td>
                     <td className={`${styles.cell} ${styles.muted}`}>
                       {lead.estimated_value_cents != null
                         ? formatMoneyCents(lead.estimated_value_cents, "USD")
                         : "—"}
                     </td>
-                    <td className={`${styles.cell} ${styles.muted}`}>{relativeDay(lead.last_activity_at)}</td>
+                    <td className={`${styles.cell} ${styles.muted}`}>
+                      {relativeDay(lead.last_activity_at)}
+                    </td>
                   </tr>
                 );
               })}

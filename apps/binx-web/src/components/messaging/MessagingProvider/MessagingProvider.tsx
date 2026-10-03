@@ -13,11 +13,19 @@
  * reconciles.
  *
  * @module apps/binx-web/src/components/messaging/MessagingProvider/MessagingProvider.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import type { AgencyMember } from "@/lib/agencies";
 import type { Conversation, MessagingEvent } from "@/lib/messaging-client";
@@ -155,7 +163,9 @@ const MessagingProvider = ({
         return;
       }
 
-      const socket = new WebSocket(`${base}/ws/messages?ticket=${encodeURIComponent(ticket)}`);
+      const socket = new WebSocket(
+        `${base}/ws/messages?ticket=${encodeURIComponent(ticket)}`,
+      );
       socketRef.current = socket;
 
       socket.onopen = () => {
@@ -216,7 +226,10 @@ const MessagingProvider = ({
     document.addEventListener("visibilitychange", onVisible);
     const interval = setInterval(() => {
       pruneTyping();
-      if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
+      if (
+        !socketRef.current ||
+        socketRef.current.readyState !== WebSocket.OPEN
+      ) {
         void refreshConversations();
       }
     }, 20_000);
@@ -229,11 +242,16 @@ const MessagingProvider = ({
   const sendTyping = useCallback((conversationId: string) => {
     const socket = socketRef.current;
     if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify({ type: "typing", conversation_id: conversationId }));
+      socket.send(
+        JSON.stringify({ type: "typing", conversation_id: conversationId }),
+      );
     }
   }, []);
 
-  const memberByUserId = useMemo(() => new Map(members.map((member) => [member.user_id, member])), [members]);
+  const memberByUserId = useMemo(
+    () => new Map(members.map((member) => [member.user_id, member])),
+    [members],
+  );
   const otherMembers = useMemo(
     () => members.filter((member) => member.user_id !== currentUserId),
     [members, currentUserId],
@@ -262,7 +280,11 @@ const MessagingProvider = ({
     ],
   );
 
-  return <MessagingContext.Provider value={value}>{children}</MessagingContext.Provider>;
+  return (
+    <MessagingContext.Provider value={value}>
+      {children}
+    </MessagingContext.Provider>
+  );
 };
 
 export default MessagingProvider;

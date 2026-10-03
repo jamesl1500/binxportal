@@ -6,7 +6,7 @@
  * relative timestamp. The full feed (filters, pagination) lives at /activity.
  *
  * @module apps/binx-web/src/components/dashboard/ActivityTeaser/ActivityTeaser.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { ActivityEntry } from "@/lib/activity";
 import { relativeTime } from "@/lib/notifications-client";
@@ -21,7 +21,9 @@ function initials(name: string | null): string {
   if (!name) return "•";
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "•";
-  return ((parts[0][0] ?? "") + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase();
+  return (
+    (parts[0][0] ?? "") + (parts.length > 1 ? parts[parts.length - 1][0] : "")
+  ).toUpperCase();
 }
 
 const ActivityTeaser = ({ entries }: ActivityTeaserProps) => {
@@ -38,7 +40,9 @@ const ActivityTeaser = ({ entries }: ActivityTeaserProps) => {
           </span>
           <div className={styles.body}>
             <p className={styles.summary}>{entry.summary}</p>
-            <span className={styles.time}>{relativeTime(entry.created_at)}</span>
+            <span className={styles.time}>
+              {relativeTime(entry.created_at)}
+            </span>
           </div>
         </li>
       ))}

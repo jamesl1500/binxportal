@@ -11,7 +11,7 @@
  * Selecting a row routes to `/messages/{id}`.
  *
  * @module apps/binx-web/src/components/messaging/ConversationList/ConversationList.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -43,7 +43,11 @@ function relativeTime(iso: string | null): string {
   }
 }
 
-const ConversationList = ({ activeConversationId, onSelect, initialClientId }: ConversationListProps) => {
+const ConversationList = ({
+  activeConversationId,
+  onSelect,
+  initialClientId,
+}: ConversationListProps) => {
   const conversations = useMessagingStore((s) => s.conversations);
   const filters = useMessagingStore((s) => s.conversationFilters);
   const setFilters = useMessagingStore((s) => s.setConversationFilters);
@@ -59,14 +63,19 @@ const ConversationList = ({ activeConversationId, onSelect, initialClientId }: C
   // Only offer clients/members that actually appear in the caller's threads,
   // so the dropdowns stay short and every option yields a result.
   const clientOptions = useMemo(() => {
-    const present = new Set(conversations.map((c) => c.client_id).filter(Boolean) as string[]);
+    const present = new Set(
+      conversations.map((c) => c.client_id).filter(Boolean) as string[],
+    );
     const byId = new Map(clients.map((client) => [client.id, client.name]));
     return [...present]
       .map((id) => ({ id, name: byId.get(id) ?? "Unknown client" }))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [conversations, clients]);
 
-  const hasUnlinked = useMemo(() => conversations.some((c) => c.client_id === null), [conversations]);
+  const hasUnlinked = useMemo(
+    () => conversations.some((c) => c.client_id === null),
+    [conversations],
+  );
 
   const memberOptions = useMemo(() => {
     const present = new Set(conversations.flatMap((c) => c.participant_names));
@@ -80,8 +89,17 @@ const ConversationList = ({ activeConversationId, onSelect, initialClientId }: C
     const q = filters.search.trim().toLowerCase();
     return conversations.filter((c) => {
       if (filters.clientId === NO_CLIENT && c.client_id !== null) return false;
-      if (filters.clientId && filters.clientId !== NO_CLIENT && c.client_id !== filters.clientId) return false;
-      if (filters.memberName && !c.participant_names.includes(filters.memberName)) return false;
+      if (
+        filters.clientId &&
+        filters.clientId !== NO_CLIENT &&
+        c.client_id !== filters.clientId
+      )
+        return false;
+      if (
+        filters.memberName &&
+        !c.participant_names.includes(filters.memberName)
+      )
+        return false;
       if (!q) return true;
       return (
         c.title.toLowerCase().includes(q) ||
@@ -91,7 +109,9 @@ const ConversationList = ({ activeConversationId, onSelect, initialClientId }: C
     });
   }, [conversations, filters]);
 
-  const filtersActive = Boolean(filters.search || filters.clientId || filters.memberName);
+  const filtersActive = Boolean(
+    filters.search || filters.clientId || filters.memberName,
+  );
 
   return (
     <div className={styles.pane}>
@@ -112,7 +132,9 @@ const ConversationList = ({ activeConversationId, onSelect, initialClientId }: C
           <select
             className={styles.filter}
             value={filters.clientId ?? ""}
-            onChange={(event) => setFilters({ clientId: event.target.value || null })}
+            onChange={(event) =>
+              setFilters({ clientId: event.target.value || null })
+            }
             aria-label="Filter by client"
           >
             <option value="">All clients</option>
@@ -127,7 +149,9 @@ const ConversationList = ({ activeConversationId, onSelect, initialClientId }: C
           <select
             className={styles.filter}
             value={filters.memberName ?? ""}
-            onChange={(event) => setFilters({ memberName: event.target.value || null })}
+            onChange={(event) =>
+              setFilters({ memberName: event.target.value || null })
+            }
             aria-label="Filter by teammate"
           >
             <option value="">Anyone</option>
@@ -142,7 +166,9 @@ const ConversationList = ({ activeConversationId, onSelect, initialClientId }: C
             <button
               type="button"
               className={styles.clearFilters}
-              onClick={() => setFilters({ search: "", clientId: null, memberName: null })}
+              onClick={() =>
+                setFilters({ search: "", clientId: null, memberName: null })
+              }
             >
               <X aria-hidden="true" /> Clear
             </button>
@@ -169,16 +195,26 @@ const ConversationList = ({ activeConversationId, onSelect, initialClientId }: C
               >
                 <span className={styles.rowTop}>
                   <span className={styles.title}>
-                    {conversation.kind === "group" && <Users className={styles.groupIcon} aria-hidden="true" />}
+                    {conversation.kind === "group" && (
+                      <Users className={styles.groupIcon} aria-hidden="true" />
+                    )}
                     {conversation.title}
-                    {conversation.is_muted && <BellOff className={styles.muteIcon} aria-label="Muted" />}
+                    {conversation.is_muted && (
+                      <BellOff className={styles.muteIcon} aria-label="Muted" />
+                    )}
                   </span>
-                  <span className={styles.time}>{relativeTime(conversation.last_message_at)}</span>
+                  <span className={styles.time}>
+                    {relativeTime(conversation.last_message_at)}
+                  </span>
                 </span>
                 <span className={styles.rowBottom}>
-                  <span className={styles.preview}>{conversation.last_message_preview ?? "No messages yet"}</span>
+                  <span className={styles.preview}>
+                    {conversation.last_message_preview ?? "No messages yet"}
+                  </span>
                   {conversation.unread_count > 0 && (
-                    <span className={styles.badge}>{conversation.unread_count}</span>
+                    <span className={styles.badge}>
+                      {conversation.unread_count}
+                    </span>
                   )}
                 </span>
                 {(conversation.client_name || conversation.project_name) && (

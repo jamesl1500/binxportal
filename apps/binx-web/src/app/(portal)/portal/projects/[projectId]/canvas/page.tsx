@@ -6,7 +6,7 @@
  * and tab nav live in the layout above.
  *
  * @module apps/binx-web/src/app/(portal)/portal/projects/[projectId]/canvas/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -27,9 +27,15 @@ const PortalCanvasPage = async ({ params }: PortalCanvasPageProps) => {
   let board;
   let currentUser;
   try {
-    [board, currentUser] = await Promise.all([getPortalBoard(projectId), getCurrentUser()]);
+    [board, currentUser] = await Promise.all([
+      getPortalBoard(projectId),
+      getCurrentUser(),
+    ]);
   } catch (error) {
-    if (error instanceof AuthApiError && (error.status === 404 || error.status === 403)) {
+    if (
+      error instanceof AuthApiError &&
+      (error.status === 404 || error.status === 403)
+    ) {
       notFound();
     }
     throw error;

@@ -5,7 +5,7 @@
  * serves.
  *
  * @module apps/binx-web/src/app/(marketing)/features/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import {
@@ -41,7 +41,12 @@ export const metadata: Metadata = {
   ...marketingOpenGraph(TITLE, DESCRIPTION, "/features"),
 };
 
-type Feature = { icon: typeof Bell; title: string; text: string; isNew?: boolean };
+type Feature = {
+  icon: typeof Bell;
+  title: string;
+  text: string;
+  isNew?: boolean;
+};
 
 const GROUPS: { eyebrow: string; heading: string; items: Feature[] }[] = [
   {
@@ -166,7 +171,9 @@ const FeaturesPage = () => {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd(TITLE, "/features")) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbJsonLd(TITLE, "/features")),
+        }}
       />
 
       <section className={styles.hero}>
@@ -176,8 +183,10 @@ const FeaturesPage = () => {
             <span className={styles.eyebrow}>Features</span>
             <h1 className={styles.h1}>One tool, the whole agency.</h1>
             <p className={styles.lead}>
-              From the first prospect to the final invoice, everything below shares one login, one client list and
-              one set of permissions, so the pieces work together instead of just sitting next to each other.
+              From the first prospect to the final invoice, everything below
+              shares one login, one client list and one set of permissions, so
+              the pieces work together instead of just sitting next to each
+              other.
             </p>
           </div>
         </div>
@@ -208,7 +217,10 @@ const FeaturesPage = () => {
         </section>
       ))}
 
-      <MarketingCta heading="See it with your own projects." sub="Spin up a workspace and add a client — it takes a few minutes." />
+      <MarketingCta
+        heading="See it with your own projects."
+        sub="Spin up a workspace and add a client — it takes a few minutes."
+      />
     </>
   );
 };

@@ -11,7 +11,7 @@
  * blur) through `onChange`; the modal owns the state and the save.
  *
  * @module apps/binx-web/src/components/ai/AiSettingsMenu/AiSettingsMenu.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -51,7 +51,12 @@ interface SegmentedProps<T extends string> {
   onSelect: (value: T) => void;
 }
 
-function Segmented<T extends string>({ label, options, value, onSelect }: SegmentedProps<T>) {
+function Segmented<T extends string>({
+  label,
+  options,
+  value,
+  onSelect,
+}: SegmentedProps<T>) {
   return (
     <div className={styles.field} role="radiogroup" aria-label={label}>
       <span className={styles.label}>{label}</span>
@@ -81,10 +86,19 @@ interface ToggleProps {
   onCheckedChange: (checked: boolean) => void;
 }
 
-function Toggle({ label, hint, checked, disabled, onCheckedChange }: ToggleProps) {
+function Toggle({
+  label,
+  hint,
+  checked,
+  disabled,
+  onCheckedChange,
+}: ToggleProps) {
   const id = useId();
   return (
-    <div className={styles.toggleRow} data-disabled={disabled ? "true" : undefined}>
+    <div
+      className={styles.toggleRow}
+      data-disabled={disabled ? "true" : undefined}
+    >
       <div>
         <label className={styles.toggleLabel} htmlFor={id}>
           {label}
@@ -106,14 +120,24 @@ function Toggle({ label, hint, checked, disabled, onCheckedChange }: ToggleProps
 
 /** The popup's body — mounted fresh each time the dropdown opens, so the
  * instructions draft starts from the saved value every time. */
-function SettingsForm({ preferences, onChange }: { preferences: AiPreferences; onChange: AiSettingsMenuProps["onChange"] }) {
+function SettingsForm({
+  preferences,
+  onChange,
+}: {
+  preferences: AiPreferences;
+  onChange: AiSettingsMenuProps["onChange"];
+}) {
   const instructionsId = useId();
-  const [instructions, setInstructions] = useState(preferences.custom_instructions ?? "");
-  const update = (patch: Partial<AiPreferences>) => onChange({ ...preferences, ...patch });
+  const [instructions, setInstructions] = useState(
+    preferences.custom_instructions ?? "",
+  );
+  const update = (patch: Partial<AiPreferences>) =>
+    onChange({ ...preferences, ...patch });
 
   const saveInstructions = () => {
     const next = instructions.trim() || null;
-    if (next !== preferences.custom_instructions) update({ custom_instructions: next });
+    if (next !== preferences.custom_instructions)
+      update({ custom_instructions: next });
   };
 
   return (
@@ -124,7 +148,12 @@ function SettingsForm({ preferences, onChange }: { preferences: AiPreferences; o
         value={preferences.response_length}
         onSelect={(response_length) => update({ response_length })}
       />
-      <Segmented label="Tone" options={TONES} value={preferences.tone} onSelect={(tone) => update({ tone })} />
+      <Segmented
+        label="Tone"
+        options={TONES}
+        value={preferences.tone}
+        onSelect={(tone) => update({ tone })}
+      />
 
       <Toggle
         label="Let AI make changes"
@@ -167,14 +196,26 @@ function SettingsForm({ preferences, onChange }: { preferences: AiPreferences; o
 
 const AiSettingsMenu = ({ preferences, onChange }: AiSettingsMenuProps) => (
   <Popover.Root>
-    <Popover.Trigger className={styles.trigger} aria-label="AI settings" disabled={!preferences}>
+    <Popover.Trigger
+      className={styles.trigger}
+      aria-label="AI settings"
+      disabled={!preferences}
+    >
       <Settings2 aria-hidden="true" />
     </Popover.Trigger>
     <Popover.Portal>
-      <Popover.Positioner className={styles.positioner} sideOffset={8} align="end">
+      <Popover.Positioner
+        className={styles.positioner}
+        sideOffset={8}
+        align="end"
+      >
         <Popover.Popup className={styles.popup}>
-          <Popover.Title className={styles.title}>Your AI settings</Popover.Title>
-          {preferences && <SettingsForm preferences={preferences} onChange={onChange} />}
+          <Popover.Title className={styles.title}>
+            Your AI settings
+          </Popover.Title>
+          {preferences && (
+            <SettingsForm preferences={preferences} onChange={onChange} />
+          )}
         </Popover.Popup>
       </Popover.Positioner>
     </Popover.Portal>

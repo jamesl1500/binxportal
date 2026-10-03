@@ -11,7 +11,7 @@
  * status rather than an action to configure.
  *
  * @module apps/binx-web/src/components/forms/projects/TimerWidget/TimerWidget.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -20,7 +20,10 @@ import { useRouter } from "next/navigation";
 import { Dialog } from "@base-ui/react/dialog";
 import { toast } from "sonner";
 
-import { startTimerAction, stopTimerAction } from "@/app/(app)/projects/[projectId]/time/actions";
+import {
+  startTimerAction,
+  stopTimerAction,
+} from "@/app/(app)/projects/[projectId]/time/actions";
 import type { TimeEntry } from "@/lib/time-tracking";
 
 import styles from "./TimerWidget.module.scss";
@@ -48,7 +51,12 @@ function formatElapsed(ms: number): string {
   return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
 }
 
-const TimerWidget = ({ agencyId, projectId, tasks, runningTimer }: TimerWidgetProps) => {
+const TimerWidget = ({
+  agencyId,
+  projectId,
+  tasks,
+  runningTimer,
+}: TimerWidgetProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [now, setNow] = useState(() => Date.now());
@@ -102,7 +110,11 @@ const TimerWidget = ({ agencyId, projectId, tasks, runningTimer }: TimerWidgetPr
   const handleStop = () => {
     if (!runningTimer) return;
     startTransition(async () => {
-      const result = await stopTimerAction(agencyId, projectId, runningTimer.id);
+      const result = await stopTimerAction(
+        agencyId,
+        projectId,
+        runningTimer.id,
+      );
       if (result.error) {
         toast.error(result.error);
         return;
@@ -120,16 +132,28 @@ const TimerWidget = ({ agencyId, projectId, tasks, runningTimer }: TimerWidgetPr
           <span className={styles.elapsed} aria-live="polite">
             {elapsedLabel}
           </span>
-          <span className={styles.badge} data-billable={runningTimer.is_billable}>
+          <span
+            className={styles.badge}
+            data-billable={runningTimer.is_billable}
+          >
             {runningTimer.is_billable ? "Billable" : "Non-billable"}
           </span>
         </div>
         <p className={styles.meta}>
-          {onThisProject ? "Running on this project" : `Running on ${runningTimer.project_name}`}
+          {onThisProject
+            ? "Running on this project"
+            : `Running on ${runningTimer.project_name}`}
           {runningTimer.task_title ? ` · ${runningTimer.task_title}` : ""}
         </p>
-        {runningTimer.description && <p className={styles.description}>{runningTimer.description}</p>}
-        <button type="button" className={styles.stop} onClick={handleStop} disabled={isPending}>
+        {runningTimer.description && (
+          <p className={styles.description}>{runningTimer.description}</p>
+        )}
+        <button
+          type="button"
+          className={styles.stop}
+          onClick={handleStop}
+          disabled={isPending}
+        >
           {isPending ? "Stopping…" : "Stop timer"}
         </button>
       </div>
@@ -138,7 +162,11 @@ const TimerWidget = ({ agencyId, projectId, tasks, runningTimer }: TimerWidgetPr
 
   return (
     <>
-      <button type="button" className={styles.startTrigger} onClick={() => setDialogOpen(true)}>
+      <button
+        type="button"
+        className={styles.startTrigger}
+        onClick={() => setDialogOpen(true)}
+      >
         Start timer
       </button>
 
@@ -146,7 +174,9 @@ const TimerWidget = ({ agencyId, projectId, tasks, runningTimer }: TimerWidgetPr
         <Dialog.Portal>
           <Dialog.Backdrop className={styles.backdrop} />
           <Dialog.Popup className={styles.dialog} aria-label="Start timer">
-            <Dialog.Title className={styles.dialogTitle}>Start timer</Dialog.Title>
+            <Dialog.Title className={styles.dialogTitle}>
+              Start timer
+            </Dialog.Title>
             <form
               className={styles.dialogForm}
               onSubmit={(event) => {
@@ -192,10 +222,19 @@ const TimerWidget = ({ agencyId, projectId, tasks, runningTimer }: TimerWidgetPr
                 Billable
               </label>
               <div className={styles.dialogActions}>
-                <button type="button" className={styles.ghost} onClick={() => setDialogOpen(false)} disabled={isPending}>
+                <button
+                  type="button"
+                  className={styles.ghost}
+                  onClick={() => setDialogOpen(false)}
+                  disabled={isPending}
+                >
                   Cancel
                 </button>
-                <button type="submit" className={styles.start} disabled={isPending}>
+                <button
+                  type="submit"
+                  className={styles.start}
+                  disabled={isPending}
+                >
                   {isPending ? "Starting…" : "Start"}
                 </button>
               </div>

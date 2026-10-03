@@ -8,29 +8,47 @@
  * glanceable overview instead of a second copy of every tab.
  *
  * @module apps/binx-web/src/components/projects/ProjectDashboardWidgets/ProjectDashboardWidgets.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import Link from "next/link";
 
-import type { BoardColumn, Project, ProjectFile, ProjectMember, Task } from "@/lib/projects";
+import type {
+  BoardColumn,
+  Project,
+  ProjectFile,
+  ProjectMember,
+  Task,
+} from "@/lib/projects";
 
 import styles from "./ProjectDashboardWidgets.module.scss";
 
 const DAY_MS = 86_400_000;
 
 function formatDate(iso: string): string {
-  return new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  return new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 function daysUntil(iso: string): number {
   const today = new Date();
-  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  const start = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+  ).getTime();
   return Math.round((new Date(`${iso}T00:00:00`).getTime() - start) / DAY_MS);
 }
 
 function dueLabel(iso: string): { text: string; overdue: boolean } {
   const days = daysUntil(iso);
-  if (days < 0) return { text: `${-days} day${days === -1 ? "" : "s"} overdue`, overdue: true };
+  if (days < 0)
+    return {
+      text: `${-days} day${days === -1 ? "" : "s"} overdue`,
+      overdue: true,
+    };
   if (days === 0) return { text: "Due today", overdue: false };
   if (days === 1) return { text: "Due tomorrow", overdue: false };
   return { text: `Due in ${days} days`, overdue: false };
@@ -39,11 +57,16 @@ function dueLabel(iso: string): { text: string; overdue: boolean } {
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "?";
-  return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase();
+  return (
+    parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : "")
+  ).toUpperCase();
 }
 
 /** Done = tasks in the board's last list, the same rule binx-api's My Work uses. */
-export function boardProgress(board: BoardColumn[]): { done: number; total: number } {
+export function boardProgress(board: BoardColumn[]): {
+  done: number;
+  total: number;
+} {
   const total = board.reduce((sum, column) => sum + column.tasks.length, 0);
   const done = board.length > 0 ? board[board.length - 1].tasks.length : 0;
   return { done, total };
@@ -67,7 +90,10 @@ export const OverviewWidget = ({ project, board }: OverviewWidgetProps) => {
         <div className={styles.fact}>
           <dt>Client</dt>
           <dd>
-            <Link href={`/clients/${project.client_id}`} className={styles.inlineLink}>
+            <Link
+              href={`/clients/${project.client_id}`}
+              className={styles.inlineLink}
+            >
               {project.client_name}
             </Link>
           </dd>
@@ -88,7 +114,8 @@ export const OverviewWidget = ({ project, board }: OverviewWidgetProps) => {
         <div className={styles.fact}>
           <dt>Team</dt>
           <dd>
-            {project.member_count} {project.member_count === 1 ? "person" : "people"}
+            {project.member_count}{" "}
+            {project.member_count === 1 ? "person" : "people"}
           </dd>
         </div>
       </dl>
@@ -96,7 +123,11 @@ export const OverviewWidget = ({ project, board }: OverviewWidgetProps) => {
       <div className={styles.progress}>
         <div className={styles.progressLabel}>
           <span>Progress</span>
-          <span>{total === 0 ? "No tasks yet" : `${done} of ${total} tasks done · ${percent}%`}</span>
+          <span>
+            {total === 0
+              ? "No tasks yet"
+              : `${done} of ${total} tasks done · ${percent}%`}
+          </span>
         </div>
         <div
           className={styles.progressTrack}
@@ -106,11 +137,16 @@ export const OverviewWidget = ({ project, board }: OverviewWidgetProps) => {
           aria-valuemax={100}
           aria-valuenow={percent}
         >
-          <span className={styles.progressFill} style={{ width: `${percent}%` }} />
+          <span
+            className={styles.progressFill}
+            style={{ width: `${percent}%` }}
+          />
         </div>
       </div>
 
-      {project.description && <p className={styles.description}>{project.description}</p>}
+      {project.description && (
+        <p className={styles.description}>{project.description}</p>
+      )}
     </div>
   );
 };
@@ -124,16 +160,25 @@ interface MyTasksWidgetProps {
   limit?: number;
 }
 
-export const MyTasksWidget = ({ projectId, board, userId, limit = 5 }: MyTasksWidgetProps) => {
+export const MyTasksWidget = ({
+  projectId,
+  board,
+  userId,
+  limit = 5,
+}: MyTasksWidgetProps) => {
   // Everything but the last ("done") list, in board order, soonest due first.
   const open: Array<Task & { listName: string }> = board
     .slice(0, -1)
-    .flatMap((column) => column.tasks.map((task) => ({ ...task, listName: column.name })))
+    .flatMap((column) =>
+      column.tasks.map((task) => ({ ...task, listName: column.name })),
+    )
     .filter((task) => userId !== null && task.assignee_id === userId)
     .sort((a, b) => (a.due_date ?? "9999").localeCompare(b.due_date ?? "9999"));
 
   if (open.length === 0) {
-    return <p className={styles.empty}>Nothing assigned to you here right now.</p>;
+    return (
+      <p className={styles.empty}>Nothing assigned to you here right now.</p>
+    );
   }
 
   const shown = open.slice(0, limit);
@@ -144,10 +189,16 @@ export const MyTasksWidget = ({ projectId, board, userId, limit = 5 }: MyTasksWi
           const due = task.due_date ? dueLabel(task.due_date) : null;
           return (
             <li key={task.id} className={styles.listRow}>
-              <Link href={`/projects/${projectId}/board`} className={styles.rowMain}>
+              <Link
+                href={`/projects/${projectId}/board`}
+                className={styles.rowMain}
+              >
                 {task.title}
               </Link>
-              <span className={styles.rowMeta} data-overdue={due?.overdue ?? false}>
+              <span
+                className={styles.rowMeta}
+                data-overdue={due?.overdue ?? false}
+              >
                 {due ? due.text : task.listName}
               </span>
             </li>
@@ -188,9 +239,17 @@ export const BoardWidget = ({ board }: { board: BoardColumn[] }) => {
 
 // ---- Team ----
 
-export const TeamWidget = ({ members, limit = 6 }: { members: ProjectMember[]; limit?: number }) => {
+export const TeamWidget = ({
+  members,
+  limit = 6,
+}: {
+  members: ProjectMember[];
+  limit?: number;
+}) => {
   if (members.length === 0) {
-    return <p className={styles.empty}>No one is assigned to this project yet.</p>;
+    return (
+      <p className={styles.empty}>No one is assigned to this project yet.</p>
+    );
   }
   const shown = members.slice(0, limit);
 
@@ -206,7 +265,10 @@ export const TeamWidget = ({ members, limit = 6 }: { members: ProjectMember[]; l
             {member.role_name ? (
               <span
                 className={styles.roleChip}
-                style={{ borderColor: member.role_color ?? undefined, color: member.role_color ?? undefined }}
+                style={{
+                  borderColor: member.role_color ?? undefined,
+                  color: member.role_color ?? undefined,
+                }}
               >
                 {member.role_name}
               </span>
@@ -216,14 +278,24 @@ export const TeamWidget = ({ members, limit = 6 }: { members: ProjectMember[]; l
           </li>
         ))}
       </ul>
-      {members.length > shown.length && <p className={styles.more}>+{members.length - shown.length} more</p>}
+      {members.length > shown.length && (
+        <p className={styles.more}>+{members.length - shown.length} more</p>
+      )}
     </>
   );
 };
 
 // ---- Files ----
 
-export const FilesWidget = ({ projectId, files, limit = 5 }: { projectId: string; files: ProjectFile[]; limit?: number }) => {
+export const FilesWidget = ({
+  projectId,
+  files,
+  limit = 5,
+}: {
+  projectId: string;
+  files: ProjectFile[];
+  limit?: number;
+}) => {
   if (files.length === 0) {
     return <p className={styles.empty}>No files yet.</p>;
   }

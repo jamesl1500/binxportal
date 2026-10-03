@@ -8,7 +8,7 @@
  * one (issued invoices are never editable — the page redirects away).
  *
  * @module apps/binx-web/src/components/invoices/InvoiceForm/InvoiceForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -17,9 +17,16 @@ import { useRouter } from "next/navigation";
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import type { BillingSettings, InvoiceDetail, InvoiceInput } from "@/lib/invoicing";
+import type {
+  BillingSettings,
+  InvoiceDetail,
+  InvoiceInput,
+} from "@/lib/invoicing";
 import { formatMoneyCents } from "@/lib/money";
-import { createInvoiceAction, updateInvoiceAction } from "@/app/(app)/invoices/actions";
+import {
+  createInvoiceAction,
+  updateInvoiceAction,
+} from "@/app/(app)/invoices/actions";
 
 import styles from "./InvoiceForm.module.scss";
 
@@ -52,7 +59,12 @@ interface LineRow {
 type DiscountKind = "none" | "amount" | "percent";
 
 let rowCounter = 0;
-const newRow = (): LineRow => ({ key: `r${rowCounter++}`, description: "", quantity: "1", unitPrice: "" });
+const newRow = (): LineRow => ({
+  key: `r${rowCounter++}`,
+  description: "",
+  quantity: "1",
+  unitPrice: "",
+});
 
 function toCents(dollars: string): number {
   const n = Number.parseFloat(dollars);
@@ -73,12 +85,20 @@ function addDays(iso: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-const InvoiceForm = ({ agencyId, clients, projects, billingSettings, invoice }: InvoiceFormProps) => {
+const InvoiceForm = ({
+  agencyId,
+  clients,
+  projects,
+  billingSettings,
+  invoice,
+}: InvoiceFormProps) => {
   const router = useRouter();
   const isEdit = Boolean(invoice);
   const currency = invoice?.currency ?? billingSettings.currency;
 
-  const [clientId, setClientId] = useState(invoice?.client_id ?? clients[0]?.id ?? "");
+  const [clientId, setClientId] = useState(
+    invoice?.client_id ?? clients[0]?.id ?? "",
+  );
   const [projectId, setProjectId] = useState(invoice?.project_id ?? "");
   const [issueDate, setIssueDate] = useState(invoice?.issue_date ?? todayIso());
   const [dueDate, setDueDate] = useState(
@@ -95,7 +115,11 @@ const InvoiceForm = ({ agencyId, clients, projects, billingSettings, invoice }: 
       : [newRow()],
   );
   const [discountKind, setDiscountKind] = useState<DiscountKind>(
-    invoice?.discount_amount_cents != null ? "amount" : invoice?.discount_percent != null ? "percent" : "none",
+    invoice?.discount_amount_cents != null
+      ? "amount"
+      : invoice?.discount_percent != null
+        ? "percent"
+        : "none",
   );
   const [discountValue, setDiscountValue] = useState(
     invoice?.discount_amount_cents != null
@@ -105,34 +129,56 @@ const InvoiceForm = ({ agencyId, clients, projects, billingSettings, invoice }: 
         : "",
   );
   const [taxRate, setTaxRate] = useState(
-    invoice?.tax_rate_percent ?? billingSettings.default_tax_rate_percent ?? "0",
+    invoice?.tax_rate_percent ??
+      billingSettings.default_tax_rate_percent ??
+      "0",
   );
-  const [notes, setNotes] = useState(invoice?.notes ?? billingSettings.default_notes ?? "");
+  const [notes, setNotes] = useState(
+    invoice?.notes ?? billingSettings.default_notes ?? "",
+  );
   const [paymentInstructions, setPaymentInstructions] = useState(
     invoice?.payment_instructions ?? billingSettings.payment_instructions ?? "",
   );
   const [submitting, setSubmitting] = useState(false);
 
   const totals = useMemo(() => {
-    const lineAmounts = rows.map((row) => roundHalfUp((Number.parseFloat(row.quantity) || 0) * toCents(row.unitPrice)));
+    const lineAmounts = rows.map((row) =>
+      roundHalfUp(
+        (Number.parseFloat(row.quantity) || 0) * toCents(row.unitPrice),
+      ),
+    );
     const subtotal = lineAmounts.reduce((sum, amount) => sum + amount, 0);
     let discount = 0;
     if (discountKind === "amount") {
       discount = Math.min(toCents(discountValue), subtotal);
     } else if (discountKind === "percent") {
-      discount = roundHalfUp((subtotal * (Number.parseFloat(discountValue) || 0)) / 100);
+      discount = roundHalfUp(
+        (subtotal * (Number.parseFloat(discountValue) || 0)) / 100,
+      );
     }
     const taxable = subtotal - discount;
-    const tax = roundHalfUp((taxable * (Number.parseFloat(taxRate) || 0)) / 100);
+    const tax = roundHalfUp(
+      (taxable * (Number.parseFloat(taxRate) || 0)) / 100,
+    );
     return { lineAmounts, subtotal, discount, tax, total: taxable + tax };
   }, [rows, discountKind, discountValue, taxRate]);
 
-  const clientProjects = projects.filter((project) => project.client_id === clientId);
+  const clientProjects = projects.filter(
+    (project) => project.client_id === clientId,
+  );
   const canSubmit =
-    clientId !== "" && rows.some((row) => row.description.trim() !== "" && toCents(row.unitPrice) >= 0 && row.quantity);
+    clientId !== "" &&
+    rows.some(
+      (row) =>
+        row.description.trim() !== "" &&
+        toCents(row.unitPrice) >= 0 &&
+        row.quantity,
+    );
 
   const updateRow = (key: string, patch: Partial<LineRow>) => {
-    setRows((prev) => prev.map((row) => (row.key === key ? { ...row, ...patch } : row)));
+    setRows((prev) =>
+      prev.map((row) => (row.key === key ? { ...row, ...patch } : row)),
+    );
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -144,7 +190,8 @@ const InvoiceForm = ({ agencyId, clients, projects, billingSettings, invoice }: 
       projectId: projectId || null,
       issueDate,
       dueDate,
-      discountAmountCents: discountKind === "amount" ? toCents(discountValue) : null,
+      discountAmountCents:
+        discountKind === "amount" ? toCents(discountValue) : null,
       discountPercent: discountKind === "percent" ? discountValue || "0" : null,
       taxRatePercent: taxRate || "0",
       notes: notes.trim() || null,
@@ -252,7 +299,9 @@ const InvoiceForm = ({ agencyId, clients, projects, billingSettings, invoice }: 
               className={styles.input}
               placeholder="e.g. Design retainer — March"
               value={row.description}
-              onChange={(event) => updateRow(row.key, { description: event.target.value })}
+              onChange={(event) =>
+                updateRow(row.key, { description: event.target.value })
+              }
               aria-label={`Line ${index + 1} description`}
             />
             <input
@@ -261,7 +310,9 @@ const InvoiceForm = ({ agencyId, clients, projects, billingSettings, invoice }: 
               min="0"
               step="0.01"
               value={row.quantity}
-              onChange={(event) => updateRow(row.key, { quantity: event.target.value })}
+              onChange={(event) =>
+                updateRow(row.key, { quantity: event.target.value })
+              }
               aria-label={`Line ${index + 1} quantity`}
             />
             <input
@@ -271,14 +322,24 @@ const InvoiceForm = ({ agencyId, clients, projects, billingSettings, invoice }: 
               step="0.01"
               placeholder="0.00"
               value={row.unitPrice}
-              onChange={(event) => updateRow(row.key, { unitPrice: event.target.value })}
+              onChange={(event) =>
+                updateRow(row.key, { unitPrice: event.target.value })
+              }
               aria-label={`Line ${index + 1} unit price`}
             />
-            <span className={styles.lineAmount}>{formatMoneyCents(totals.lineAmounts[index] ?? 0, currency)}</span>
+            <span className={styles.lineAmount}>
+              {formatMoneyCents(totals.lineAmounts[index] ?? 0, currency)}
+            </span>
             <button
               type="button"
               className={styles.removeRow}
-              onClick={() => setRows((prev) => (prev.length > 1 ? prev.filter((r) => r.key !== row.key) : prev))}
+              onClick={() =>
+                setRows((prev) =>
+                  prev.length > 1
+                    ? prev.filter((r) => r.key !== row.key)
+                    : prev,
+                )
+              }
               disabled={rows.length <= 1}
               aria-label={`Remove line ${index + 1}`}
             >
@@ -286,7 +347,11 @@ const InvoiceForm = ({ agencyId, clients, projects, billingSettings, invoice }: 
             </button>
           </div>
         ))}
-        <button type="button" className={styles.addRow} onClick={() => setRows((prev) => [...prev, newRow()])}>
+        <button
+          type="button"
+          className={styles.addRow}
+          onClick={() => setRows((prev) => [...prev, newRow()])}
+        >
           <Plus aria-hidden="true" /> Add line
         </button>
       </div>
@@ -299,7 +364,9 @@ const InvoiceForm = ({ agencyId, clients, projects, billingSettings, invoice }: 
               <select
                 className={styles.input}
                 value={discountKind}
-                onChange={(event) => setDiscountKind(event.target.value as DiscountKind)}
+                onChange={(event) =>
+                  setDiscountKind(event.target.value as DiscountKind)
+                }
               >
                 <option value="none">None</option>
                 <option value="amount">Flat amount</option>
@@ -379,10 +446,18 @@ const InvoiceForm = ({ agencyId, clients, projects, billingSettings, invoice }: 
       </div>
 
       <div className={styles.actions}>
-        <button type="button" className={styles.cancel} onClick={() => router.back()}>
+        <button
+          type="button"
+          className={styles.cancel}
+          onClick={() => router.back()}
+        >
           Cancel
         </button>
-        <button type="submit" className={styles.submit} disabled={!canSubmit || submitting}>
+        <button
+          type="submit"
+          className={styles.submit}
+          disabled={!canSubmit || submitting}
+        >
           {submitting ? "Saving…" : isEdit ? "Save draft" : "Create draft"}
         </button>
       </div>

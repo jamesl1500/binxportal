@@ -15,15 +15,25 @@
  * disabled: they're removed by detaching them from the task.
  *
  * @module apps/binx-web/src/components/forms/projects/ProjectFilesTable/ProjectFilesTable.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowDown, ArrowUp, ChevronsUpDown, Download, Trash2, Upload } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ChevronsUpDown,
+  Download,
+  Trash2,
+  Upload,
+} from "lucide-react";
 
-import { deleteProjectFileAction, uploadProjectFileAction } from "@/app/(app)/projects/[projectId]/actions";
+import {
+  deleteProjectFileAction,
+  uploadProjectFileAction,
+} from "@/app/(app)/projects/[projectId]/actions";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog/ConfirmDialog";
 import { getProjectFileDownloadUrl } from "@/lib/projects-client";
 import type { ProjectFile } from "@/lib/projects";
@@ -46,27 +56,38 @@ function formatSize(bytes: number): string {
 }
 
 function formatUploadedAt(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  return new Date(iso).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 /** A short, human label for a MIME type — "PDF", "PNG image", "Word document", … */
 function fileKind(mimeType: string): string {
   const map: Record<string, string> = {
     "application/pdf": "PDF",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "Word document",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+      "Word document",
     "application/msword": "Word document",
     "application/zip": "Archive",
     "text/plain": "Text",
     "text/csv": "CSV",
   };
   if (map[mimeType]) return map[mimeType];
-  if (mimeType.startsWith("image/")) return `${mimeType.slice(6).toUpperCase()} image`;
-  if (mimeType.startsWith("video/")) return `${mimeType.slice(6).toUpperCase()} video`;
+  if (mimeType.startsWith("image/"))
+    return `${mimeType.slice(6).toUpperCase()} image`;
+  if (mimeType.startsWith("video/"))
+    return `${mimeType.slice(6).toUpperCase()} video`;
   const subtype = mimeType.split("/")[1];
   return subtype ? subtype.toUpperCase() : "File";
 }
 
-const ProjectFilesTable = ({ agencyId, projectId, files }: ProjectFilesTableProps) => {
+const ProjectFilesTable = ({
+  agencyId,
+  projectId,
+  files,
+}: ProjectFilesTableProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -96,11 +117,16 @@ const ProjectFilesTable = ({ agencyId, projectId, files }: ProjectFilesTableProp
       if (sortKey === "size") {
         compared = a.size - b.size;
       } else if (sortKey === "created_at") {
-        compared = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        compared =
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
       } else if (sortKey === "uploaded_by") {
-        compared = (a.uploaded_by_name ?? "").toLowerCase().localeCompare((b.uploaded_by_name ?? "").toLowerCase());
+        compared = (a.uploaded_by_name ?? "")
+          .toLowerCase()
+          .localeCompare((b.uploaded_by_name ?? "").toLowerCase());
       } else {
-        compared = a.file_name.toLowerCase().localeCompare(b.file_name.toLowerCase());
+        compared = a.file_name
+          .toLowerCase()
+          .localeCompare(b.file_name.toLowerCase());
       }
       if (compared !== 0) return compared * direction;
       return a.file_name.toLowerCase().localeCompare(b.file_name.toLowerCase());
@@ -117,10 +143,15 @@ const ProjectFilesTable = ({ agencyId, projectId, files }: ProjectFilesTableProp
   };
 
   const ariaSort = (key: SortKey): "ascending" | "descending" | "none" =>
-    key === sortKey ? (sortDirection === "asc" ? "ascending" : "descending") : "none";
+    key === sortKey
+      ? sortDirection === "asc"
+        ? "ascending"
+        : "descending"
+      : "none";
 
   const sortIcon = (column: SortKey) => {
-    if (column !== sortKey) return <ChevronsUpDown className={styles.sortIcon} aria-hidden="true" />;
+    if (column !== sortKey)
+      return <ChevronsUpDown className={styles.sortIcon} aria-hidden="true" />;
     return sortDirection === "asc" ? (
       <ArrowUp className={styles.sortIcon} aria-hidden="true" />
     ) : (
@@ -147,7 +178,8 @@ const ProjectFilesTable = ({ agencyId, projectId, files }: ProjectFilesTableProp
   const handleDelete = async (fileId: string, fileName: string) => {
     const confirmed = await confirm({
       title: `Delete ${fileName}?`,
-      description: "The file is removed from this project. This can't be undone.",
+      description:
+        "The file is removed from this project. This can't be undone.",
       confirmLabel: "Delete file",
       tone: "danger",
     });
@@ -182,14 +214,21 @@ const ProjectFilesTable = ({ agencyId, projectId, files }: ProjectFilesTableProp
         <label className={styles.uploadTrigger}>
           <Upload aria-hidden="true" />
           {isPending ? "Uploading…" : "Upload a file"}
-          <input type="file" className={styles.uploadInput} onChange={handleUpload} disabled={isPending} />
+          <input
+            type="file"
+            className={styles.uploadInput}
+            onChange={handleUpload}
+            disabled={isPending}
+          />
         </label>
       </div>
 
       {files.length === 0 ? (
         <div className={styles.emptyState}>
           <p className={styles.emptyTitle}>No files yet</p>
-          <p className={styles.emptyText}>Upload briefs, assets, or deliverables to share them with the team.</p>
+          <p className={styles.emptyText}>
+            Upload briefs, assets, or deliverables to share them with the team.
+          </p>
         </div>
       ) : visible.length === 0 ? (
         <div className={styles.emptyState}>
@@ -200,24 +239,52 @@ const ProjectFilesTable = ({ agencyId, projectId, files }: ProjectFilesTableProp
         <table className={styles.table}>
           <thead>
             <tr>
-              <th className={`${styles.headCell} ${styles.sortable}`} aria-sort={ariaSort("file_name")}>
-                <button type="button" className={styles.sortButton} onClick={() => toggleSort("file_name")}>
+              <th
+                className={`${styles.headCell} ${styles.sortable}`}
+                aria-sort={ariaSort("file_name")}
+              >
+                <button
+                  type="button"
+                  className={styles.sortButton}
+                  onClick={() => toggleSort("file_name")}
+                >
                   Name {sortIcon("file_name")}
                 </button>
               </th>
               <th className={styles.headCell}>Type</th>
-              <th className={`${styles.headCell} ${styles.sortable}`} aria-sort={ariaSort("size")}>
-                <button type="button" className={styles.sortButton} onClick={() => toggleSort("size")}>
+              <th
+                className={`${styles.headCell} ${styles.sortable}`}
+                aria-sort={ariaSort("size")}
+              >
+                <button
+                  type="button"
+                  className={styles.sortButton}
+                  onClick={() => toggleSort("size")}
+                >
                   Size {sortIcon("size")}
                 </button>
               </th>
-              <th className={`${styles.headCell} ${styles.sortable}`} aria-sort={ariaSort("uploaded_by")}>
-                <button type="button" className={styles.sortButton} onClick={() => toggleSort("uploaded_by")}>
+              <th
+                className={`${styles.headCell} ${styles.sortable}`}
+                aria-sort={ariaSort("uploaded_by")}
+              >
+                <button
+                  type="button"
+                  className={styles.sortButton}
+                  onClick={() => toggleSort("uploaded_by")}
+                >
                   Uploaded by {sortIcon("uploaded_by")}
                 </button>
               </th>
-              <th className={`${styles.headCell} ${styles.sortable}`} aria-sort={ariaSort("created_at")}>
-                <button type="button" className={styles.sortButton} onClick={() => toggleSort("created_at")}>
+              <th
+                className={`${styles.headCell} ${styles.sortable}`}
+                aria-sort={ariaSort("created_at")}
+              >
+                <button
+                  type="button"
+                  className={styles.sortButton}
+                  onClick={() => toggleSort("created_at")}
+                >
                   Added {sortIcon("created_at")}
                 </button>
               </th>
@@ -244,14 +311,26 @@ const ProjectFilesTable = ({ agencyId, projectId, files }: ProjectFilesTableProp
                     )}
                   </td>
                   <td className={styles.cell}>{fileKind(file.mime_type)}</td>
-                  <td className={`${styles.cell} ${styles.nowrap}`}>{formatSize(file.size)}</td>
-                  <td className={styles.cell}>{file.uploaded_by_name || <span className={styles.muted}>—</span>}</td>
-                  <td className={`${styles.cell} ${styles.nowrap}`}>{formatUploadedAt(file.created_at)}</td>
+                  <td className={`${styles.cell} ${styles.nowrap}`}>
+                    {formatSize(file.size)}
+                  </td>
+                  <td className={styles.cell}>
+                    {file.uploaded_by_name || (
+                      <span className={styles.muted}>—</span>
+                    )}
+                  </td>
+                  <td className={`${styles.cell} ${styles.nowrap}`}>
+                    {formatUploadedAt(file.created_at)}
+                  </td>
                   <td className={styles.cell}>
                     <div className={styles.actions}>
                       <a
                         className={styles.download}
-                        href={getProjectFileDownloadUrl(agencyId, projectId, file.id)}
+                        href={getProjectFileDownloadUrl(
+                          agencyId,
+                          projectId,
+                          file.id,
+                        )}
                         aria-label={`Download ${file.file_name}`}
                       >
                         <Download aria-hidden="true" />

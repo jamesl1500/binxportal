@@ -9,7 +9,7 @@
  * client or a teammate scheduled it.
  *
  * @module apps/binx-web/src/components/meetings/MeetingsTable/MeetingsTable.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -58,7 +58,13 @@ function formatWhen(iso: string): string {
   });
 }
 
-const MeetingsTable = ({ agencyId, meetings, clients, projects, showClient = true }: MeetingsTableProps) => {
+const MeetingsTable = ({
+  agencyId,
+  meetings,
+  clients,
+  projects,
+  showClient = true,
+}: MeetingsTableProps) => {
   const router = useRouter();
   const [filter, setFilter] = useState<Filter>("upcoming");
   const [isPending, startTransition] = useTransition();
@@ -70,10 +76,13 @@ const MeetingsTable = ({ agencyId, meetings, clients, projects, showClient = tru
       if (filter === "cancelled") return meeting.status === "cancelled";
       if (filter === "all") return true;
       if (meeting.status === "cancelled") return false;
-      return filter === "upcoming" ? isUpcoming(meeting.starts_at) : !isUpcoming(meeting.starts_at);
+      return filter === "upcoming"
+        ? isUpcoming(meeting.starts_at)
+        : !isUpcoming(meeting.starts_at);
     });
     return [...filtered].sort((a, b) => {
-      const diff = new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime();
+      const diff =
+        new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime();
       return filter === "past" ? -diff : diff;
     });
   }, [meetings, filter]);
@@ -140,24 +149,33 @@ const MeetingsTable = ({ agencyId, meetings, clients, projects, showClient = tru
                 <td className={styles.cell}>{meeting.title}</td>
                 {showClient && (
                   <td className={styles.cell}>
-                    <Link href={`/clients/${meeting.client_id}/meetings`} className={styles.clientLink}>
+                    <Link
+                      href={`/clients/${meeting.client_id}/meetings`}
+                      className={styles.clientLink}
+                    >
                       {meeting.client_name}
                     </Link>
                   </td>
                 )}
                 <td className={styles.cell}>
                   {meeting.project_id ? (
-                    <Link href={`/projects/${meeting.project_id}`} className={styles.clientLink}>
+                    <Link
+                      href={`/projects/${meeting.project_id}`}
+                      className={styles.clientLink}
+                    >
                       {meeting.project_name}
                     </Link>
                   ) : (
                     "—"
                   )}
                 </td>
-                <td className={`${styles.cell} ${styles.nowrap}`}>{formatWhen(meeting.starts_at)}</td>
+                <td className={`${styles.cell} ${styles.nowrap}`}>
+                  {formatWhen(meeting.starts_at)}
+                </td>
                 <td className={styles.cell}>{meeting.location || "—"}</td>
                 <td className={styles.cell}>
-                  {meeting.created_by_name ?? (meeting.created_by_kind === "client" ? "Client" : "Team")}
+                  {meeting.created_by_name ??
+                    (meeting.created_by_kind === "client" ? "Client" : "Team")}
                 </td>
                 <td className={styles.cell}>
                   <span className={styles.status} data-status={meeting.status}>
@@ -167,14 +185,21 @@ const MeetingsTable = ({ agencyId, meetings, clients, projects, showClient = tru
                 <td className={styles.cell}>
                   {meeting.status === "scheduled" && (
                     <div className={styles.rowActions}>
-                      <EditMeetingDialog agencyId={agencyId} meeting={meeting} clients={clients} projects={projects} />
+                      <EditMeetingDialog
+                        agencyId={agencyId}
+                        meeting={meeting}
+                        clients={clients}
+                        projects={projects}
+                      />
                       <button
                         type="button"
                         className={styles.cancelButton}
                         onClick={() => handleCancel(meeting.id)}
                         disabled={isPending && cancellingId === meeting.id}
                       >
-                        {isPending && cancellingId === meeting.id ? "Cancelling…" : "Cancel"}
+                        {isPending && cancellingId === meeting.id
+                          ? "Cancelling…"
+                          : "Cancel"}
                       </button>
                     </div>
                   )}
@@ -185,7 +210,9 @@ const MeetingsTable = ({ agencyId, meetings, clients, projects, showClient = tru
         </table>
       </div>
 
-      {visible.length === 0 && <p className={styles.empty}>No meetings in this view.</p>}
+      {visible.length === 0 && (
+        <p className={styles.empty}>No meetings in this view.</p>
+      )}
     </div>
   );
 };

@@ -10,7 +10,7 @@
  * session for updating a card or viewing invoice history.
  *
  * @module apps/binx-web/src/components/settings/PlanPanel/PlanPanel.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -18,7 +18,11 @@ import { useState, useTransition } from "react";
 import { Check } from "lucide-react";
 import { toast } from "sonner";
 
-import { openBillingPortalAction, startPlanCheckoutAction, startPlanTrialAction } from "@/app/(app)/settings/plan/actions";
+import {
+  openBillingPortalAction,
+  startPlanCheckoutAction,
+  startPlanTrialAction,
+} from "@/app/(app)/settings/plan/actions";
 import type { PlanLimits, Subscription } from "@/lib/billing";
 import { formatLimit, formatPlanPrice } from "@/lib/billing-client";
 import { formatMoneyCents } from "@/lib/money";
@@ -90,7 +94,9 @@ const PlanPanel = ({
         toast.error(result.error);
         return;
       }
-      toast.success(`Your 14-day trial of ${catalog.find((p) => p.key === plan)?.name ?? plan} has started.`);
+      toast.success(
+        `Your 14-day trial of ${catalog.find((p) => p.key === plan)?.name ?? plan} has started.`,
+      );
     });
   };
 
@@ -105,9 +111,15 @@ const PlanPanel = ({
       {isTrialing && trialEndsAt && (
         <div className={styles.trialBanner}>
           <p>
-            Your trial of <strong>{catalog.find((p) => p.key === trialPlan)?.name ?? trialPlan}</strong> ends in{" "}
-            {daysRemaining(trialEndsAt)} day{daysRemaining(trialEndsAt) === 1 ? "" : "s"}.{" "}
-            {trialDiscountEligible && launchDiscountConfigured && "Upgrade now and get 20% off your first 3 months."}
+            Your trial of{" "}
+            <strong>
+              {catalog.find((p) => p.key === trialPlan)?.name ?? trialPlan}
+            </strong>{" "}
+            ends in {daysRemaining(trialEndsAt)} day
+            {daysRemaining(trialEndsAt) === 1 ? "" : "s"}.{" "}
+            {trialDiscountEligible &&
+              launchDiscountConfigured &&
+              "Upgrade now and get 20% off your first 3 months."}
           </p>
           {canManage && trialPlan && (
             <button
@@ -116,34 +128,53 @@ const PlanPanel = ({
               onClick={() => handleSwitch(trialPlan)}
               disabled={isPending}
             >
-              {isPending && pendingPlan === trialPlan ? "Redirecting…" : "Upgrade now"}
+              {isPending && pendingPlan === trialPlan
+                ? "Redirecting…"
+                : "Upgrade now"}
             </button>
           )}
         </div>
       )}
       {hasStripeCustomer && (
-        <button type="button" className={styles.manageBilling} onClick={handleManageBilling} disabled={isPending}>
+        <button
+          type="button"
+          className={styles.manageBilling}
+          onClick={handleManageBilling}
+          disabled={isPending}
+        >
           Manage billing
         </button>
       )}
       <div className={styles.grid}>
         {catalog.map((plan) => {
           const isCurrent = plan.key === currentPlan;
-          const isTrialingThis = isTrialing && plan.key === trialPlan && plan.key !== currentPlan;
+          const isTrialingThis =
+            isTrialing && plan.key === trialPlan && plan.key !== currentPlan;
           const canTrialThis =
-            !hasUsedTrial && !hasStripeSubscription && plan.key !== "free" && plan.key !== currentPlan;
+            !hasUsedTrial &&
+            !hasStripeSubscription &&
+            plan.key !== "free" &&
+            plan.key !== currentPlan;
           return (
-            <div key={plan.key} className={styles.card} data-current={isCurrent}>
+            <div
+              key={plan.key}
+              className={styles.card}
+              data-current={isCurrent}
+            >
               <div className={styles.cardHead}>
                 <span className={styles.name}>{plan.name}</span>
-                <span className={styles.price}>{formatPlanPrice(plan.price_cents_month)}</span>
+                <span className={styles.price}>
+                  {formatPlanPrice(plan.price_cents_month)}
+                </span>
               </div>
               <ul className={styles.limits}>
                 <li>{formatLimit(plan.max_clients)} clients</li>
                 <li>{formatLimit(plan.max_active_projects)} active projects</li>
                 <li>{formatLimit(plan.max_leads)} leads</li>
                 <li>{formatLimit(plan.max_team_members)} team members</li>
-                <li>{formatMoneyCents(plan.ai_monthly_budget_cents)} / mo AI</li>
+                <li>
+                  {formatMoneyCents(plan.ai_monthly_budget_cents)} / mo AI
+                </li>
               </ul>
               {isCurrent ? (
                 <p className={styles.currentTag}>
@@ -159,7 +190,9 @@ const PlanPanel = ({
                     onClick={() => handleSwitch(plan.key)}
                     disabled={isPending}
                   >
-                    {isPending && pendingPlan === plan.key ? "Redirecting…" : "Switch to this plan"}
+                    {isPending && pendingPlan === plan.key
+                      ? "Redirecting…"
+                      : "Switch to this plan"}
                   </button>
                   {canTrialThis && (
                     <button
@@ -168,7 +201,9 @@ const PlanPanel = ({
                       onClick={() => handleStartTrial(plan.key)}
                       disabled={isPending}
                     >
-                      {isPending && pendingPlan === plan.key ? "Starting…" : "Start 14-day free trial"}
+                      {isPending && pendingPlan === plan.key
+                        ? "Starting…"
+                        : "Start 14-day free trial"}
                     </button>
                   )}
                 </>

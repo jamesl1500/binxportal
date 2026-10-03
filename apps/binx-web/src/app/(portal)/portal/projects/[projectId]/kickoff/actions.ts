@@ -7,14 +7,19 @@
  * action.
  *
  * @module apps/binx-web/src/app/(portal)/portal/projects/[projectId]/kickoff/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 
 import { revalidatePath } from "next/cache";
 
 import { AuthApiError } from "@/lib/auth";
-import { type PortalKickoff, type PortalKickoffAnswerInput, submitPortalKickoffAnswers, uploadPortalKickoffFile } from "@/lib/portal";
+import {
+  type PortalKickoff,
+  type PortalKickoffAnswerInput,
+  submitPortalKickoffAnswers,
+  uploadPortalKickoffFile,
+} from "@/lib/portal";
 
 function errorResult(error: unknown, fallback: string): { error: string } {
   if (error instanceof AuthApiError) {

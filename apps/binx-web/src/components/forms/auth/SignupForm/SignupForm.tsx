@@ -7,7 +7,7 @@
  * confirmation message instead of redirecting.
  *
  * @module apps/binx-web/src/components/forms/auth/SignupForm/SignupForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -49,7 +49,11 @@ interface SignupFormProps {
   planIntent?: string;
 }
 
-const SignupForm = ({ portalInviteToken, lockedEmail, planIntent }: SignupFormProps) => {
+const SignupForm = ({
+  portalInviteToken,
+  lockedEmail,
+  planIntent,
+}: SignupFormProps) => {
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -83,7 +87,12 @@ const SignupForm = ({ portalInviteToken, lockedEmail, planIntent }: SignupFormPr
     setSuccessMessage(null);
 
     startTransition(async () => {
-      const result = await signupAction(values.email, values.fullName, values.password, portalInviteToken);
+      const result = await signupAction(
+        values.email,
+        values.fullName,
+        values.password,
+        portalInviteToken,
+      );
 
       if (result?.error) {
         setFormError(result.error);
@@ -113,7 +122,9 @@ const SignupForm = ({ portalInviteToken, lockedEmail, planIntent }: SignupFormPr
           aria-invalid={Boolean(errors.fullName)}
           {...register("fullName")}
         />
-        {errors.fullName && <p className={styles.error}>{errors.fullName.message}</p>}
+        {errors.fullName && (
+          <p className={styles.error}>{errors.fullName.message}</p>
+        )}
       </div>
 
       <div className={styles.field}>
@@ -129,7 +140,11 @@ const SignupForm = ({ portalInviteToken, lockedEmail, planIntent }: SignupFormPr
           readOnly={Boolean(lockedEmail)}
           {...register("email")}
         />
-        {lockedEmail && <p className={styles.hint}>This invite is for {lockedEmail} — sign up with this address.</p>}
+        {lockedEmail && (
+          <p className={styles.hint}>
+            This invite is for {lockedEmail} — sign up with this address.
+          </p>
+        )}
         {errors.email && <p className={styles.error}>{errors.email.message}</p>}
       </div>
 
@@ -145,7 +160,9 @@ const SignupForm = ({ portalInviteToken, lockedEmail, planIntent }: SignupFormPr
           aria-invalid={Boolean(errors.password)}
           {...register("password")}
         />
-        {errors.password && <p className={styles.error}>{errors.password.message}</p>}
+        {errors.password && (
+          <p className={styles.error}>{errors.password.message}</p>
+        )}
       </div>
 
       <div className={styles.field}>
@@ -160,7 +177,9 @@ const SignupForm = ({ portalInviteToken, lockedEmail, planIntent }: SignupFormPr
           aria-invalid={Boolean(errors.confirmPassword)}
           {...register("confirmPassword")}
         />
-        {errors.confirmPassword && <p className={styles.error}>{errors.confirmPassword.message}</p>}
+        {errors.confirmPassword && (
+          <p className={styles.error}>{errors.confirmPassword.message}</p>
+        )}
       </div>
 
       {formError && <p className={styles.formError}>{formError}</p>}

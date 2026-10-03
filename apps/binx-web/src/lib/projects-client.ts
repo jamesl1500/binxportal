@@ -12,9 +12,15 @@
  * the `next/headers` build error it causes) into the browser bundle.
  *
  * @module apps/binx-web/src/lib/projects-client.ts
- * @author Binx.io
+ * @author Binx Portal
  */
-export type ProjectStatus = "planning" | "active" | "on_hold" | "waiting_on_client" | "completed" | "archived";
+export type ProjectStatus =
+  | "planning"
+  | "active"
+  | "on_hold"
+  | "waiting_on_client"
+  | "completed"
+  | "archived";
 
 export const PROJECT_STATUSES: ProjectStatus[] = [
   "planning",
@@ -48,7 +54,11 @@ export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
  *
  * @function getProjectFileDownloadUrl
  */
-export function getProjectFileDownloadUrl(agencyId: string, projectId: string, fileId: string): string {
+export function getProjectFileDownloadUrl(
+  agencyId: string,
+  projectId: string,
+  fileId: string,
+): string {
   return `/api/projects/${agencyId}/${projectId}/files/${fileId}`;
 }
 
@@ -60,6 +70,11 @@ export function getProjectFileDownloadUrl(agencyId: string, projectId: string, f
  *
  * @function getTaskFileDownloadUrl
  */
-export function getTaskFileDownloadUrl(agencyId: string, projectId: string, taskId: string, fileId: string): string {
+export function getTaskFileDownloadUrl(
+  agencyId: string,
+  projectId: string,
+  taskId: string,
+  fileId: string,
+): string {
   return `/api/projects/${agencyId}/${projectId}/tasks/${taskId}/files/${fileId}`;
 }

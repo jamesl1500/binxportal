@@ -11,15 +11,26 @@
  * would be far too noisy (compare NotificationBell, which does toast).
  *
  * @module apps/binx-web/src/components/activity/ActivityFeed/ActivityFeed.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
 import { useCallback, useState, useTransition } from "react";
-import { AtSign, FileText, FolderKanban, Receipt, Settings, Users, type LucideIcon } from "lucide-react";
+import {
+  AtSign,
+  FileText,
+  FolderKanban,
+  Receipt,
+  Settings,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 
 import { getAgencyActivityAction } from "@/app/(app)/activity/actions";
-import { useRealtimeSocket, type RealtimeEvent } from "@/hooks/useRealtimeSocket";
+import {
+  useRealtimeSocket,
+  type RealtimeEvent,
+} from "@/hooks/useRealtimeSocket";
 import type { ActivityEntry, ActivityPage } from "@/lib/activity";
 import {
   ACTIVITY_CATEGORY_META,
@@ -47,7 +58,9 @@ function initials(name: string | null): string {
   if (!name) return "•";
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "•";
-  return ((parts[0][0] ?? "") + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase();
+  return (
+    (parts[0][0] ?? "") + (parts.length > 1 ? parts[parts.length - 1][0] : "")
+  ).toUpperCase();
 }
 
 interface ActivityFeedProps {
@@ -75,7 +88,9 @@ const ActivityFeed = ({ agencyId, initialPage }: ActivityFeedProps) => {
         return;
       }
       setHasMore(result.page.has_more);
-      setItems((prev) => (offset === 0 ? result.page!.items : [...prev, ...result.page!.items]));
+      setItems((prev) =>
+        offset === 0 ? result.page!.items : [...prev, ...result.page!.items],
+      );
     });
   };
 
@@ -103,7 +118,11 @@ const ActivityFeed = ({ agencyId, initialPage }: ActivityFeedProps) => {
 
   return (
     <div className={styles.wrapper}>
-      <div className={styles.chips} role="group" aria-label="Filter activity by area">
+      <div
+        className={styles.chips}
+        role="group"
+        aria-label="Filter activity by area"
+      >
         <button
           type="button"
           className={styles.chip}
@@ -148,12 +167,19 @@ const ActivityFeed = ({ agencyId, initialPage }: ActivityFeedProps) => {
                 <div className={styles.body}>
                   <p className={styles.summary}>{entry.summary}</p>
                   <p className={styles.meta}>
-                    <span className={styles.tag} style={{ color: meta?.accent }}>
+                    <span
+                      className={styles.tag}
+                      style={{ color: meta?.accent }}
+                    >
                       <Icon className={styles.tagIcon} aria-hidden="true" />
                       {meta?.label}
                     </span>
-                    <span className={styles.time}>{relativeTime(entry.created_at)}</span>
-                    {entry.visibility === "admin" && <span className={styles.adminTag}>Admins only</span>}
+                    <span className={styles.time}>
+                      {relativeTime(entry.created_at)}
+                    </span>
+                    {entry.visibility === "admin" && (
+                      <span className={styles.adminTag}>Admins only</span>
+                    )}
                   </p>
                 </div>
               </li>

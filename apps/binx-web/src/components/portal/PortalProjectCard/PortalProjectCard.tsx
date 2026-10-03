@@ -7,7 +7,7 @@
  * No hooks, so it renders from server and client components alike.
  *
  * @module apps/binx-web/src/components/portal/PortalProjectCard/PortalProjectCard.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import Link from "next/link";
 import { CalendarClock } from "lucide-react";
@@ -25,7 +25,8 @@ interface PortalProjectCardProps {
 }
 
 const PortalProjectCard = ({ project, now }: PortalProjectCardProps) => {
-  const finished = project.status === "completed" || project.status === "archived";
+  const finished =
+    project.status === "completed" || project.status === "archived";
   const due = dueLabel(project.due_date, now, { done: finished });
 
   return (
@@ -36,7 +37,9 @@ const PortalProjectCard = ({ project, now }: PortalProjectCardProps) => {
           {projectStatusLabel(project.status)}
         </span>
       </span>
-      {project.description && <span className={styles.description}>{project.description}</span>}
+      {project.description && (
+        <span className={styles.description}>{project.description}</span>
+      )}
       <ProjectProgress progress={project.progress} compact />
       {due && (
         <span className={styles.due} data-tone={due.tone}>

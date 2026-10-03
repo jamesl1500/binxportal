@@ -11,7 +11,7 @@
  * portal's per-client branding.
  *
  * @module apps/binx-web/src/components/portal/PortalWelcomeTour/PortalWelcomeTour.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -47,7 +47,11 @@ interface TourStep {
   body: string;
 }
 
-function buildSteps({ agencyName, clientName, contactFirstName }: PortalWelcomeTourProps): TourStep[] {
+function buildSteps({
+  agencyName,
+  clientName,
+  contactFirstName,
+}: PortalWelcomeTourProps): TourStep[] {
   return [
     {
       icon: Sparkles,
@@ -118,11 +122,15 @@ const PortalWelcomeTour = (props: PortalWelcomeTourProps) => {
   const isLast = currentIndex === steps.length - 1;
   const Icon = step.icon;
 
-  const next = () => (isLast ? finishTour() : setCurrentIndex((index) => index + 1));
+  const next = () =>
+    isLast ? finishTour() : setCurrentIndex((index) => index + 1);
   const back = () => setCurrentIndex((index) => Math.max(0, index - 1));
 
   return (
-    <Dialog.Root open={isTourOpen} onOpenChange={(open) => !open && finishTour()}>
+    <Dialog.Root
+      open={isTourOpen}
+      onOpenChange={(open) => !open && finishTour()}
+    >
       <Dialog.Portal>
         <Dialog.Backdrop className={styles.backdrop} />
         <Dialog.Popup className={styles.dialog} aria-label="Portal tour">
@@ -144,13 +152,23 @@ const PortalWelcomeTour = (props: PortalWelcomeTourProps) => {
           <div className={styles.body}>
             <span className={styles.eyebrow}>{step.eyebrow}</span>
             <Dialog.Title className={styles.title}>{step.title}</Dialog.Title>
-            <Dialog.Description className={styles.description}>{step.body}</Dialog.Description>
+            <Dialog.Description className={styles.description}>
+              {step.body}
+            </Dialog.Description>
           </div>
 
           <div className={styles.footer}>
-            <div className={styles.dots} aria-label={`Step ${currentIndex + 1} of ${steps.length}`} role="img">
+            <div
+              className={styles.dots}
+              aria-label={`Step ${currentIndex + 1} of ${steps.length}`}
+              role="img"
+            >
               {steps.map((tourStep, index) => (
-                <span key={tourStep.eyebrow} className={styles.dot} data-active={index === currentIndex} />
+                <span
+                  key={tourStep.eyebrow}
+                  className={styles.dot}
+                  data-active={index === currentIndex}
+                />
               ))}
             </div>
             <div className={styles.buttons}>

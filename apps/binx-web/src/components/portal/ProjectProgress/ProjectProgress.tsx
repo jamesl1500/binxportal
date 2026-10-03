@@ -6,7 +6,7 @@
  * markup); the numbers come from binx-api's portal project rollup.
  *
  * @module apps/binx-web/src/components/portal/ProjectProgress/ProjectProgress.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { PortalBoardColumn, PortalProgress } from "@/lib/portal";
 
@@ -19,14 +19,28 @@ interface ProjectProgressProps {
   compact?: boolean;
 }
 
-const ProjectProgress = ({ progress, columns, compact }: ProjectProgressProps) => {
+const ProjectProgress = ({
+  progress,
+  columns,
+  compact,
+}: ProjectProgressProps) => {
   return (
     <div className={styles.wrap} data-compact={Boolean(compact)}>
-      <div className={styles.bar} role="progressbar" aria-valuenow={progress.percent} aria-valuemin={0} aria-valuemax={100}>
-        <span className={styles.fill} style={{ width: `${progress.percent}%` }} />
+      <div
+        className={styles.bar}
+        role="progressbar"
+        aria-valuenow={progress.percent}
+        aria-valuemin={0}
+        aria-valuemax={100}
+      >
+        <span
+          className={styles.fill}
+          style={{ width: `${progress.percent}%` }}
+        />
       </div>
       <p className={styles.caption}>
-        {progress.done_tasks} / {progress.total_tasks} tasks done · {progress.percent}%
+        {progress.done_tasks} / {progress.total_tasks} tasks done ·{" "}
+        {progress.percent}%
       </p>
 
       {columns && columns.length > 0 && (

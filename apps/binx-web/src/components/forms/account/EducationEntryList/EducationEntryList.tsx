@@ -6,7 +6,7 @@
  * ExperienceEntryList.
  *
  * @module apps/binx-web/src/components/forms/account/EducationEntryList/EducationEntryList.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -36,9 +36,15 @@ function blankEntry(): EducationEntry {
   };
 }
 
-const EducationEntryList = ({ value, onChange, max = MAX_ENTRIES }: EducationEntryListProps) => {
+const EducationEntryList = ({
+  value,
+  onChange,
+  max = MAX_ENTRIES,
+}: EducationEntryListProps) => {
   const update = (id: string, patch: Partial<EducationEntry>) => {
-    onChange(value.map((entry) => (entry.id === id ? { ...entry, ...patch } : entry)));
+    onChange(
+      value.map((entry) => (entry.id === id ? { ...entry, ...patch } : entry)),
+    );
   };
 
   const remove = (id: string) => {
@@ -60,7 +66,9 @@ const EducationEntryList = ({ value, onChange, max = MAX_ENTRIES }: EducationEnt
                 className={styles.input}
                 placeholder="State University"
                 value={entry.school}
-                onChange={(event) => update(entry.id, { school: event.target.value })}
+                onChange={(event) =>
+                  update(entry.id, { school: event.target.value })
+                }
               />
             </div>
             <div className={styles.field}>
@@ -73,7 +81,9 @@ const EducationEntryList = ({ value, onChange, max = MAX_ENTRIES }: EducationEnt
                 className={styles.input}
                 placeholder="B.S. Computer Science"
                 value={entry.degree}
-                onChange={(event) => update(entry.id, { degree: event.target.value })}
+                onChange={(event) =>
+                  update(entry.id, { degree: event.target.value })
+                }
               />
             </div>
           </div>
@@ -88,11 +98,18 @@ const EducationEntryList = ({ value, onChange, max = MAX_ENTRIES }: EducationEnt
                 type="text"
                 className={styles.input}
                 value={entry.field_of_study ?? ""}
-                onChange={(event) => update(entry.id, { field_of_study: event.target.value || null })}
+                onChange={(event) =>
+                  update(entry.id, {
+                    field_of_study: event.target.value || null,
+                  })
+                }
               />
             </div>
             <div className={styles.field}>
-              <label className={styles.label} htmlFor={`${entry.id}-start-year`}>
+              <label
+                className={styles.label}
+                htmlFor={`${entry.id}-start-year`}
+              >
                 Years
               </label>
               <div className={styles.yearRow}>
@@ -105,7 +122,11 @@ const EducationEntryList = ({ value, onChange, max = MAX_ENTRIES }: EducationEnt
                   placeholder="Start"
                   value={entry.start_year ?? ""}
                   onChange={(event) =>
-                    update(entry.id, { start_year: event.target.value ? Number(event.target.value) : null })
+                    update(entry.id, {
+                      start_year: event.target.value
+                        ? Number(event.target.value)
+                        : null,
+                    })
                   }
                 />
                 <span className={styles.yearSeparator}>–</span>
@@ -118,7 +139,11 @@ const EducationEntryList = ({ value, onChange, max = MAX_ENTRIES }: EducationEnt
                   placeholder="End"
                   value={entry.end_year ?? ""}
                   onChange={(event) =>
-                    update(entry.id, { end_year: event.target.value ? Number(event.target.value) : null })
+                    update(entry.id, {
+                      end_year: event.target.value
+                        ? Number(event.target.value)
+                        : null,
+                    })
                   }
                 />
               </div>
@@ -134,18 +159,28 @@ const EducationEntryList = ({ value, onChange, max = MAX_ENTRIES }: EducationEnt
               className={styles.textarea}
               rows={2}
               value={entry.description ?? ""}
-              onChange={(event) => update(entry.id, { description: event.target.value || null })}
+              onChange={(event) =>
+                update(entry.id, { description: event.target.value || null })
+              }
             />
           </div>
 
-          <button type="button" className={styles.remove} onClick={() => remove(entry.id)}>
+          <button
+            type="button"
+            className={styles.remove}
+            onClick={() => remove(entry.id)}
+          >
             <Trash2 aria-hidden="true" /> Remove
           </button>
         </div>
       ))}
 
       {value.length < max && (
-        <button type="button" className={styles.addButton} onClick={() => onChange([...value, blankEntry()])}>
+        <button
+          type="button"
+          className={styles.addButton}
+          onClick={() => onChange([...value, blankEntry()])}
+        >
           <Plus aria-hidden="true" /> Add education
         </button>
       )}

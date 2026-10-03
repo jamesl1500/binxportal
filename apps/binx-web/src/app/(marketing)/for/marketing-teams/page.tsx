@@ -6,7 +6,7 @@
  * campaigns from one place.
  *
  * @module apps/binx-web/src/app/(marketing)/for/marketing-teams/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -79,17 +79,28 @@ const faqJsonLd = {
 const MarketingTeamsPage = () => {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([faqJsonLd, breadcrumbJsonLd(TITLE, "/for/marketing-teams")]) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify([
+            faqJsonLd,
+            breadcrumbJsonLd(TITLE, "/for/marketing-teams"),
+          ]),
+        }}
+      />
 
       <section className={styles.hero}>
         <div className={styles.heroGlow} aria-hidden="true" />
         <div className={styles.container}>
           <div className={styles.heroInner}>
             <span className={styles.eyebrow}>For marketing teams</span>
-            <h1 className={styles.h1}>Run every client&apos;s campaigns from one pipeline.</h1>
+            <h1 className={styles.h1}>
+              Run every client&apos;s campaigns from one pipeline.
+            </h1>
             <p className={styles.lead}>
-              {SITE.name} gives a marketing team a real lead pipeline, a project board per client or campaign, and
-              a portal that answers the &quot;where are we&quot; question before the client has to ask.
+              {SITE.name} gives a marketing team a real lead pipeline, a project
+              board per client or campaign, and a portal that answers the
+              &quot;where are we&quot; question before the client has to ask.
             </p>
             <div className={`${styles.btnRow} ${styles.heroActions}`}>
               <Link href="/auth/signup" className={styles.btnPrimary}>
@@ -99,7 +110,9 @@ const MarketingTeamsPage = () => {
                 See everything it does
               </Link>
             </div>
-            <p className={styles.heroNote}>Free plan available · no card required.</p>
+            <p className={styles.heroNote}>
+              Free plan available · no card required.
+            </p>
           </div>
         </div>
       </section>
@@ -108,7 +121,9 @@ const MarketingTeamsPage = () => {
         <div className={styles.container}>
           <div className={styles.sectionHead}>
             <span className={styles.eyebrow}>Built around the work</span>
-            <h2 className={styles.h2}>From the first lead to the monthly report.</h2>
+            <h2 className={styles.h2}>
+              From the first lead to the monthly report.
+            </h2>
           </div>
           <div className={styles.grid}>
             {CAPABILITIES.map(({ icon: Icon, title, text }) => (
@@ -128,11 +143,17 @@ const MarketingTeamsPage = () => {
         <div className={styles.container}>
           <div className={styles.split}>
             <div className={styles.splitBody}>
-              <span className={`${styles.eyebrow} ${styles.eyebrowOnDark}`}>Multiple clients, one view</span>
-              <h2 className={styles.h3}>Every retainer, one place to check on.</h2>
+              <span className={`${styles.eyebrow} ${styles.eyebrowOnDark}`}>
+                Multiple clients, one view
+              </span>
+              <h2 className={styles.h3}>
+                Every retainer, one place to check on.
+              </h2>
               <p className={styles.leadOnDark}>
-                Switch between agencies — sorry, clients — without switching tools. Leads, active campaigns and
-                overdue invoices all show up on one dashboard, so nothing slips because it was in a different tab.
+                Switch between agencies — sorry, clients — without switching
+                tools. Leads, active campaigns and overdue invoices all show up
+                on one dashboard, so nothing slips because it was in a different
+                tab.
               </p>
             </div>
           </div>
@@ -154,13 +175,17 @@ const MarketingTeamsPage = () => {
             ))}
           </div>
           <p className={styles.faqRelated}>
-            Coming from a CRM like Dubsado? See the <Link href="/alternatives/dubsado">Dubsado alternative</Link>{" "}
-            page, or <Link href="/pricing">check the plans</Link>.
+            Coming from a CRM like Dubsado? See the{" "}
+            <Link href="/alternatives/dubsado">Dubsado alternative</Link> page,
+            or <Link href="/pricing">check the plans</Link>.
           </p>
         </div>
       </section>
 
-      <MarketingCta heading="Put your next campaign on a board." sub="Free plan, no card, no time limit." />
+      <MarketingCta
+        heading="Put your next campaign on a board."
+        sub="Free plan, no card, no time limit."
+      />
     </>
   );
 };

@@ -19,11 +19,17 @@
  * neutral tone is for reversible ones (archive) and plain notices.
  *
  * @module apps/binx-web/src/components/ui/ConfirmDialog/ConfirmDialog.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { AlertDialog } from "@base-ui/react/alert-dialog";
 import { AlertTriangle, Info } from "lucide-react";
 
@@ -72,19 +78,31 @@ const ConfirmDialog = ({
               <Icon className={styles.icon} />
             </span>
             <div className={styles.text}>
-              <AlertDialog.Title className={styles.title}>{title}</AlertDialog.Title>
+              <AlertDialog.Title className={styles.title}>
+                {title}
+              </AlertDialog.Title>
               {description && (
-                <AlertDialog.Description className={styles.description}>{description}</AlertDialog.Description>
+                <AlertDialog.Description className={styles.description}>
+                  {description}
+                </AlertDialog.Description>
               )}
             </div>
           </div>
           <div className={styles.actions}>
             {!hideCancel && (
-              <button type="button" className={styles.cancel} onClick={onCancel}>
+              <button
+                type="button"
+                className={styles.cancel}
+                onClick={onCancel}
+              >
                 {cancelLabel}
               </button>
             )}
-            <button type="button" className={styles.confirm} onClick={onConfirm}>
+            <button
+              type="button"
+              className={styles.confirm}
+              onClick={onConfirm}
+            >
               {confirmLabel ?? (hideCancel ? "OK" : "Confirm")}
             </button>
           </div>
@@ -132,7 +150,10 @@ export function useConfirmDialog() {
     [],
   );
 
-  const confirm = useCallback((options: ConfirmOptions) => ask({ ...options, hideCancel: false }), [ask]);
+  const confirm = useCallback(
+    (options: ConfirmOptions) => ask({ ...options, hideCancel: false }),
+    [ask],
+  );
   const alert = useCallback(
     async (options: AlertOptions) => {
       await ask({ ...options, hideCancel: true });
@@ -141,7 +162,12 @@ export function useConfirmDialog() {
   );
 
   const dialog = request ? (
-    <ConfirmDialog {...request} open={open} onConfirm={() => settle(true)} onCancel={() => settle(false)} />
+    <ConfirmDialog
+      {...request}
+      open={open}
+      onConfirm={() => settle(true)}
+      onCancel={() => settle(false)}
+    />
   ) : null;
 
   return { confirm, alert, dialog };

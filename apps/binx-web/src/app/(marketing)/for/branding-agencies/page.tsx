@@ -6,7 +6,7 @@
  * moodboards/brand concept presentation.
  *
  * @module apps/binx-web/src/app/(marketing)/for/branding-agencies/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -79,17 +79,29 @@ const faqJsonLd = {
 const BrandingAgenciesPage = () => {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([faqJsonLd, breadcrumbJsonLd(TITLE, "/for/branding-agencies")]) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify([
+            faqJsonLd,
+            breadcrumbJsonLd(TITLE, "/for/branding-agencies"),
+          ]),
+        }}
+      />
 
       <section className={styles.hero}>
         <div className={styles.heroGlow} aria-hidden="true" />
         <div className={styles.container}>
           <div className={styles.heroInner}>
             <span className={styles.eyebrow}>For branding agencies</span>
-            <h1 className={styles.h1}>A brand engagement deserves a workspace, not a folder.</h1>
+            <h1 className={styles.h1}>
+              A brand engagement deserves a workspace, not a folder.
+            </h1>
             <p className={styles.lead}>
-              {SITE.name} gives a branding agency a live canvas for presenting concepts, a portal that delivers the
-              final brand properly, and invoicing that matches how project-based brand work is actually sold.
+              {SITE.name} gives a branding agency a live canvas for presenting
+              concepts, a portal that delivers the final brand properly, and
+              invoicing that matches how project-based brand work is actually
+              sold.
             </p>
             <div className={`${styles.btnRow} ${styles.heroActions}`}>
               <Link href="/auth/signup" className={styles.btnPrimary}>
@@ -99,7 +111,9 @@ const BrandingAgenciesPage = () => {
                 See everything it does
               </Link>
             </div>
-            <p className={styles.heroNote}>Free plan available · no card required.</p>
+            <p className={styles.heroNote}>
+              Free plan available · no card required.
+            </p>
           </div>
         </div>
       </section>
@@ -108,7 +122,9 @@ const BrandingAgenciesPage = () => {
         <div className={styles.container}>
           <div className={styles.sectionHead}>
             <span className={styles.eyebrow}>Built around the work</span>
-            <h2 className={styles.h2}>From first concept to final brand delivery.</h2>
+            <h2 className={styles.h2}>
+              From first concept to final brand delivery.
+            </h2>
           </div>
           <div className={styles.grid}>
             {CAPABILITIES.map(({ icon: Icon, title, text }) => (
@@ -128,11 +144,16 @@ const BrandingAgenciesPage = () => {
         <div className={styles.container}>
           <div className={styles.split}>
             <div className={styles.splitBody}>
-              <span className={`${styles.eyebrow} ${styles.eyebrowOnDark}`}>Client experience</span>
-              <h2 className={styles.h3}>The last impression matters as much as the first.</h2>
+              <span className={`${styles.eyebrow} ${styles.eyebrowOnDark}`}>
+                Client experience
+              </span>
+              <h2 className={styles.h3}>
+                The last impression matters as much as the first.
+              </h2>
               <p className={styles.leadOnDark}>
-                A client who gets their finished brand in a branded, organised portal remembers that — and it&apos;s
-                the same portal that made the concept review painless three months earlier.
+                A client who gets their finished brand in a branded, organised
+                portal remembers that — and it&apos;s the same portal that made
+                the concept review painless three months earlier.
               </p>
             </div>
           </div>
@@ -155,13 +176,18 @@ const BrandingAgenciesPage = () => {
           </div>
           <p className={styles.faqRelated}>
             Comparing client-portal tools? See the{" "}
-            <Link href="/alternatives/copilot-assembly">Copilot &amp; Assembly alternative</Link> page, or{" "}
-            <Link href="/pricing">check the plans</Link>.
+            <Link href="/alternatives/copilot-assembly">
+              Copilot &amp; Assembly alternative
+            </Link>{" "}
+            page, or <Link href="/pricing">check the plans</Link>.
           </p>
         </div>
       </section>
 
-      <MarketingCta heading="Present your next concept properly." sub="Free plan, no card, no time limit." />
+      <MarketingCta
+        heading="Present your next concept properly."
+        sub="Free plan, no card, no time limit."
+      />
     </>
   );
 };

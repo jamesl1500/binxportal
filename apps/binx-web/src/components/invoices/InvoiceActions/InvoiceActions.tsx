@@ -10,7 +10,7 @@
  * but overridable per-send.
  *
  * @module apps/binx-web/src/components/invoices/InvoiceActions/InvoiceActions.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -40,18 +40,26 @@ interface InvoiceActionsProps {
   clientHasEmail: boolean;
 }
 
-const InvoiceActions = ({ agencyId, invoice, canManage, clientHasEmail }: InvoiceActionsProps) => {
+const InvoiceActions = ({
+  agencyId,
+  invoice,
+  canManage,
+  clientHasEmail,
+}: InvoiceActionsProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [issueOpen, setIssueOpen] = useState(false);
   const [voidOpen, setVoidOpen] = useState(false);
   const [sendNotice, setSendNotice] = useState(false);
-  const [recipientEmail, setRecipientEmail] = useState(invoice.bill_to.email ?? "");
+  const [recipientEmail, setRecipientEmail] = useState(
+    invoice.bill_to.email ?? "",
+  );
 
   const isDraft = invoice.status === "draft";
   const isVoid = invoice.status === "void";
-  const isOpenForPayment = invoice.status === "sent" || invoice.status === "paid";
+  const isOpenForPayment =
+    invoice.status === "sent" || invoice.status === "paid";
 
   const run = (action: () => Promise<{ error?: string }>) => {
     startTransition(async () => {
@@ -67,7 +75,11 @@ const InvoiceActions = ({ agencyId, invoice, canManage, clientHasEmail }: Invoic
   return (
     <div className={styles.bar}>
       <div className={styles.left}>
-        <button type="button" className={styles.ghost} onClick={() => window.print()}>
+        <button
+          type="button"
+          className={styles.ghost}
+          onClick={() => window.print()}
+        >
           <Printer aria-hidden="true" /> Print / Save as PDF
         </button>
       </div>
@@ -89,24 +101,42 @@ const InvoiceActions = ({ agencyId, invoice, canManage, clientHasEmail }: Invoic
           </button>
         )}
         {isDraft && canManage && (
-          <button type="button" className={styles.primary} onClick={() => setIssueOpen(true)}>
+          <button
+            type="button"
+            className={styles.primary}
+            onClick={() => setIssueOpen(true)}
+          >
             Issue invoice
           </button>
         )}
 
         {isOpenForPayment && (
-          <button type="button" className={styles.primary} onClick={() => setPaymentOpen(true)}>
+          <button
+            type="button"
+            className={styles.primary}
+            onClick={() => setPaymentOpen(true)}
+          >
             Record payment
           </button>
         )}
         {isOpenForPayment && canManage && (
-          <button type="button" className={styles.ghostDanger} onClick={() => setVoidOpen(true)}>
+          <button
+            type="button"
+            className={styles.ghostDanger}
+            onClick={() => setVoidOpen(true)}
+          >
             Void
           </button>
         )}
 
-        {isDraft && !canManage && <span className={styles.hint}>An owner or admin issues invoices.</span>}
-        {isVoid && <span className={styles.hint}>This invoice was voided.</span>}
+        {isDraft && !canManage && (
+          <span className={styles.hint}>
+            An owner or admin issues invoices.
+          </span>
+        )}
+        {isVoid && (
+          <span className={styles.hint}>This invoice was voided.</span>
+        )}
       </div>
 
       <RecordPaymentDialog
@@ -119,10 +149,16 @@ const InvoiceActions = ({ agencyId, invoice, canManage, clientHasEmail }: Invoic
       <Dialog.Root open={issueOpen} onOpenChange={setIssueOpen}>
         <Dialog.Portal>
           <Dialog.Backdrop className={styles.backdrop} />
-          <Dialog.Popup className={styles.dialog} aria-label="Issue this invoice">
-            <Dialog.Title className={styles.dialogTitle}>Issue {invoice.number}?</Dialog.Title>
+          <Dialog.Popup
+            className={styles.dialog}
+            aria-label="Issue this invoice"
+          >
+            <Dialog.Title className={styles.dialogTitle}>
+              Issue {invoice.number}?
+            </Dialog.Title>
             <Dialog.Description className={styles.dialogDescription}>
-              Once issued, the invoice can&apos;t be edited — only payments recorded, or the whole thing voided.
+              Once issued, the invoice can&apos;t be edited — only payments
+              recorded, or the whole thing voided.
             </Dialog.Description>
             <label className={styles.checkboxRow}>
               <input
@@ -149,13 +185,19 @@ const InvoiceActions = ({ agencyId, invoice, canManage, clientHasEmail }: Invoic
               </label>
             )}
             <div className={styles.dialogActions}>
-              <button type="button" className={styles.ghost} onClick={() => setIssueOpen(false)}>
+              <button
+                type="button"
+                className={styles.ghost}
+                onClick={() => setIssueOpen(false)}
+              >
                 Cancel
               </button>
               <button
                 type="button"
                 className={styles.primary}
-                disabled={isPending || (sendNotice && recipientEmail.trim() === "")}
+                disabled={
+                  isPending || (sendNotice && recipientEmail.trim() === "")
+                }
                 onClick={() =>
                   run(async () => {
                     const result = await issueInvoiceAction(
@@ -179,13 +221,23 @@ const InvoiceActions = ({ agencyId, invoice, canManage, clientHasEmail }: Invoic
       <Dialog.Root open={voidOpen} onOpenChange={setVoidOpen}>
         <Dialog.Portal>
           <Dialog.Backdrop className={styles.backdrop} />
-          <Dialog.Popup className={styles.dialog} aria-label="Void this invoice">
-            <Dialog.Title className={styles.dialogTitle}>Void {invoice.number}?</Dialog.Title>
+          <Dialog.Popup
+            className={styles.dialog}
+            aria-label="Void this invoice"
+          >
+            <Dialog.Title className={styles.dialogTitle}>
+              Void {invoice.number}?
+            </Dialog.Title>
             <Dialog.Description className={styles.dialogDescription}>
-              The invoice keeps its number for your records but becomes read-only. This can&apos;t be undone.
+              The invoice keeps its number for your records but becomes
+              read-only. This can&apos;t be undone.
             </Dialog.Description>
             <div className={styles.dialogActions}>
-              <button type="button" className={styles.ghost} onClick={() => setVoidOpen(false)}>
+              <button
+                type="button"
+                className={styles.ghost}
+                onClick={() => setVoidOpen(false)}
+              >
                 Cancel
               </button>
               <button
@@ -194,7 +246,10 @@ const InvoiceActions = ({ agencyId, invoice, canManage, clientHasEmail }: Invoic
                 disabled={isPending}
                 onClick={() =>
                   run(async () => {
-                    const result = await voidInvoiceAction(agencyId, invoice.id);
+                    const result = await voidInvoiceAction(
+                      agencyId,
+                      invoice.id,
+                    );
                     if (!result.error) setVoidOpen(false);
                     return result;
                   })

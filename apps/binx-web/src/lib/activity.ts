@@ -8,7 +8,7 @@
  * written by producers across the backend, never from the client.
  *
  * @module apps/binx-web/src/lib/activity.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 import axios from "axios";
 
@@ -18,14 +18,22 @@ import { AuthApiError, extractDetailMessage, getAccessToken } from "@/lib/auth";
 import type { ActivityCategory } from "@/lib/activity-client";
 
 export type { ActivityCategory } from "@/lib/activity-client";
-export { ACTIVITY_CATEGORY_META, AGENCY_ACTIVITY_CATEGORIES } from "@/lib/activity-client";
+export {
+  ACTIVITY_CATEGORY_META,
+  AGENCY_ACTIVITY_CATEGORIES,
+} from "@/lib/activity-client";
 
-export type ActivityEntry = Omit<Schemas["ActivityLogRead"], "category" | "visibility"> & {
+export type ActivityEntry = Omit<
+  Schemas["ActivityLogRead"],
+  "category" | "visibility"
+> & {
   category: ActivityCategory;
   visibility: "team" | "admin";
 };
 
-export type ActivityPage = Omit<Schemas["ActivityLogListRead"], "items"> & { items: ActivityEntry[] };
+export type ActivityPage = Omit<Schemas["ActivityLogListRead"], "items"> & {
+  items: ActivityEntry[];
+};
 
 async function authHeader(): Promise<{ Authorization: string }> {
   const accessToken = await getAccessToken();
@@ -37,7 +45,10 @@ async function authHeader(): Promise<{ Authorization: string }> {
 
 function apiError(error: unknown, fallback: string): AuthApiError | unknown {
   if (axios.isAxiosError(error) && error.response) {
-    return new AuthApiError(extractDetailMessage(error.response.data, fallback), error.response.status);
+    return new AuthApiError(
+      extractDetailMessage(error.response.data, fallback),
+      error.response.status,
+    );
   }
   return error;
 }
@@ -58,13 +69,23 @@ export interface ActivityQuery {
  * @function getAgencyActivity
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't a member of this agency.
  */
-export async function getAgencyActivity(agencyId: string, query: ActivityQuery = {}): Promise<ActivityPage> {
+export async function getAgencyActivity(
+  agencyId: string,
+  query: ActivityQuery = {},
+): Promise<ActivityPage> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<ActivityPage>(`/agencies/${agencyId}/activity`, {
-      headers,
-      params: { category: query.category, limit: query.limit, offset: query.offset },
-    });
+    const { data } = await api.get<ActivityPage>(
+      `/agencies/${agencyId}/activity`,
+      {
+        headers,
+        params: {
+          category: query.category,
+          limit: query.limit,
+          offset: query.offset,
+        },
+      },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to load activity");
@@ -80,7 +101,9 @@ export async function getAgencyActivity(agencyId: string, query: ActivityQuery =
  * @function getMyActivity
  * @throws {AuthApiError} - Thrown if not authenticated.
  */
-export async function getMyActivity(query: { limit?: number; offset?: number } = {}): Promise<ActivityPage> {
+export async function getMyActivity(
+  query: { limit?: number; offset?: number } = {},
+): Promise<ActivityPage> {
   const headers = await authHeader();
   try {
     const { data } = await api.get<ActivityPage>("/activity/me", {

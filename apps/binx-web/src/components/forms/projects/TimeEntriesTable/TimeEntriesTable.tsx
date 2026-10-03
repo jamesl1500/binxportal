@@ -9,7 +9,7 @@
  * invoice in one go.
  *
  * @module apps/binx-web/src/components/forms/projects/TimeEntriesTable/TimeEntriesTable.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 

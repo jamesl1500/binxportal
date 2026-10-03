@@ -6,7 +6,7 @@
  * the portal.
  *
  * @module apps/binx-web/src/app/(auth)/auth/portal-invite/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 
@@ -19,7 +19,9 @@ export interface AcceptPortalInviteResult {
   error?: string;
 }
 
-export async function acceptPortalInviteAction(token: string): Promise<AcceptPortalInviteResult> {
+export async function acceptPortalInviteAction(
+  token: string,
+): Promise<AcceptPortalInviteResult> {
   try {
     await acceptPortalInvitation(token);
   } catch (error) {

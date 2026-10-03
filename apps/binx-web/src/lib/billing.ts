@@ -8,7 +8,7 @@
  * `AuthApiError`.
  *
  * @module apps/binx-web/src/lib/billing.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 import axios from "axios";
 
@@ -32,7 +32,10 @@ async function authHeader(): Promise<{ Authorization: string }> {
 
 function rethrow(error: unknown, fallback: string): never {
   if (axios.isAxiosError(error) && error.response) {
-    throw new AuthApiError(extractDetailMessage(error.response.data, fallback), error.response.status);
+    throw new AuthApiError(
+      extractDetailMessage(error.response.data, fallback),
+      error.response.status,
+    );
   }
   throw error;
 }
@@ -40,7 +43,9 @@ function rethrow(error: unknown, fallback: string): never {
 export async function getSubscription(agencyId: string): Promise<Subscription> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<Subscription>(`/agencies/${agencyId}/plan`, { headers });
+    const { data } = await api.get<Subscription>(`/agencies/${agencyId}/plan`, {
+      headers,
+    });
     return data;
   } catch (error) {
     rethrow(error, "Unable to load the plan");
@@ -50,17 +55,27 @@ export async function getSubscription(agencyId: string): Promise<Subscription> {
 export async function getPlanCatalog(agencyId: string): Promise<PlanLimits[]> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<PlanLimits[]>(`/agencies/${agencyId}/plan/catalog`, { headers });
+    const { data } = await api.get<PlanLimits[]>(
+      `/agencies/${agencyId}/plan/catalog`,
+      { headers },
+    );
     return data;
   } catch (error) {
     rethrow(error, "Unable to load the plan catalog");
   }
 }
 
-export async function changePlan(agencyId: string, plan: string): Promise<Subscription> {
+export async function changePlan(
+  agencyId: string,
+  plan: string,
+): Promise<Subscription> {
   const headers = await authHeader();
   try {
-    const { data } = await api.post<Subscription>(`/agencies/${agencyId}/plan`, { plan }, { headers });
+    const { data } = await api.post<Subscription>(
+      `/agencies/${agencyId}/plan`,
+      { plan },
+      { headers },
+    );
     return data;
   } catch (error) {
     rethrow(error, "Unable to change the plan");
@@ -75,10 +90,17 @@ export async function changePlan(agencyId: string, plan: string): Promise<Subscr
  * the agency's effective plan limits immediately. One trial per agency ever;
  * see binx-api's billing/service.py::start_trial for the guards.
  */
-export async function startPlanTrial(agencyId: string, plan: string): Promise<Subscription> {
+export async function startPlanTrial(
+  agencyId: string,
+  plan: string,
+): Promise<Subscription> {
   const headers = await authHeader();
   try {
-    const { data } = await api.post<Subscription>(`/agencies/${agencyId}/plan/trial`, { plan }, { headers });
+    const { data } = await api.post<Subscription>(
+      `/agencies/${agencyId}/plan/trial`,
+      { plan },
+      { headers },
+    );
     return data;
   } catch (error) {
     rethrow(error, "Unable to start the trial");
@@ -95,7 +117,11 @@ export async function startPlanTrial(agencyId: string, plan: string): Promise<Su
  * overrides where the browser lands after paying or backing out (defaults to
  * Settings > Plan) — onboarding passes "/dashboard" instead.
  */
-export async function createPlanCheckout(agencyId: string, plan: string, returnTo?: string): Promise<string> {
+export async function createPlanCheckout(
+  agencyId: string,
+  plan: string,
+  returnTo?: string,
+): Promise<string> {
   const headers = await authHeader();
   try {
     const { data } = await api.post<{ checkout_url: string }>(
@@ -117,7 +143,10 @@ export async function createPlanCheckout(agencyId: string, plan: string, returnT
  * plain "manage billing" link; with one, deep-links into the portal's
  * cancel (`targetPlan: "free"`) or change-subscription flow.
  */
-export async function createBillingPortalSession(agencyId: string, targetPlan?: string): Promise<string> {
+export async function createBillingPortalSession(
+  agencyId: string,
+  targetPlan?: string,
+): Promise<string> {
   const headers = await authHeader();
   try {
     const { data } = await api.post<{ portal_url: string }>(

@@ -20,7 +20,7 @@
  * with nothing set.
  *
  * @module apps/binx-web/src/components/forms/onboarding/PlanSelector/PlanSelector.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -28,7 +28,11 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { changePlanAction, startPlanCheckoutAction, startPlanTrialAction } from "@/app/(app)/settings/plan/actions";
+import {
+  changePlanAction,
+  startPlanCheckoutAction,
+  startPlanTrialAction,
+} from "@/app/(app)/settings/plan/actions";
 import type { PlanLimits } from "@/lib/billing";
 import { formatLimit, formatPlanPrice } from "@/lib/billing-client";
 import { formatMoneyCents } from "@/lib/money";
@@ -106,7 +110,11 @@ const PlanSelector = ({
   const handleCheckout = (plan: string) => {
     setPendingPlan(plan);
     startTransition(async () => {
-      const result = await startPlanCheckoutAction(agencyId, plan, ONBOARDING_NEXT_STEP);
+      const result = await startPlanCheckoutAction(
+        agencyId,
+        plan,
+        ONBOARDING_NEXT_STEP,
+      );
       if (result.error || !result.redirectUrl) {
         setPendingPlan(null);
         toast.error(result.error ?? "Something went wrong");
@@ -116,7 +124,8 @@ const PlanSelector = ({
     });
   };
 
-  const handlePaid = (plan: string) => (canTrial ? handleTrial(plan) : handleCheckout(plan));
+  const handlePaid = (plan: string) =>
+    canTrial ? handleTrial(plan) : handleCheckout(plan);
 
   return (
     <div className={styles.grid}>
@@ -129,13 +138,23 @@ const PlanSelector = ({
         // a real Stripe subscription exists.
         const isCurrent = plan.key === currentPlan && currentPlan !== "free";
         const isPendingThis = isPending && pendingPlan === plan.key;
-        const paidLabel = canTrial ? `Start ${plan.name} trial` : `Switch to ${plan.name}`;
+        const paidLabel = canTrial
+          ? `Start ${plan.name} trial`
+          : `Switch to ${plan.name}`;
         return (
-          <div key={plan.key} className={styles.card} data-intent={plan.key === intentPlan}>
-            {plan.key === intentPlan && <p className={styles.intentBadge}>You were looking at this one</p>}
+          <div
+            key={plan.key}
+            className={styles.card}
+            data-intent={plan.key === intentPlan}
+          >
+            {plan.key === intentPlan && (
+              <p className={styles.intentBadge}>You were looking at this one</p>
+            )}
             <div className={styles.cardHead}>
               <span className={styles.name}>{plan.name}</span>
-              <span className={styles.price}>{formatPlanPrice(plan.price_cents_month)}</span>
+              <span className={styles.price}>
+                {formatPlanPrice(plan.price_cents_month)}
+              </span>
             </div>
             <ul className={styles.limits}>
               <li>{formatLimit(plan.max_clients)} clients</li>
@@ -144,7 +163,9 @@ const PlanSelector = ({
               <li>{formatLimit(plan.max_team_members)} team members</li>
               <li>{formatMoneyCents(plan.ai_monthly_budget_cents)} / mo AI</li>
             </ul>
-            {!isFree && canTrial && <p className={styles.trialNote}>14 days free, no card needed</p>}
+            {!isFree && canTrial && (
+              <p className={styles.trialNote}>14 days free, no card needed</p>
+            )}
             {isCurrent ? (
               <p className={styles.trialNote}>Your current plan</p>
             ) : (
@@ -154,7 +175,11 @@ const PlanSelector = ({
                 onClick={() => (isFree ? handleFree() : handlePaid(plan.key))}
                 disabled={isPending}
               >
-                {isPendingThis ? "Setting up…" : isFree ? "Continue with Free" : paidLabel}
+                {isPendingThis
+                  ? "Setting up…"
+                  : isFree
+                    ? "Continue with Free"
+                    : paidLabel}
               </button>
             )}
           </div>

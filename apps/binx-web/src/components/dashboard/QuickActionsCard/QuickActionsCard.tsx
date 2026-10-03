@@ -7,7 +7,7 @@
  * lives) — no new creation flow is introduced here.
  *
  * @module apps/binx-web/src/components/dashboard/QuickActionsCard/QuickActionsCard.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import Link from "next/link";
 import { FolderKanban, ListChecks, Receipt, UserPlus } from "lucide-react";
@@ -15,10 +15,25 @@ import { FolderKanban, ListChecks, Receipt, UserPlus } from "lucide-react";
 import styles from "./QuickActionsCard.module.scss";
 
 const ACTIONS = [
-  { key: "project", icon: FolderKanban, label: "New project", href: "/projects" },
+  {
+    key: "project",
+    icon: FolderKanban,
+    label: "New project",
+    href: "/projects",
+  },
   { key: "client", icon: UserPlus, label: "New client", href: "/clients" },
-  { key: "invoice", icon: Receipt, label: "New invoice", href: "/invoices/new" },
-  { key: "my-work", icon: ListChecks, label: "My work", href: "/dashboard/my-work" },
+  {
+    key: "invoice",
+    icon: Receipt,
+    label: "New invoice",
+    href: "/invoices/new",
+  },
+  {
+    key: "my-work",
+    icon: ListChecks,
+    label: "My work",
+    href: "/dashboard/my-work",
+  },
 ] as const;
 
 const QuickActionsCard = () => {

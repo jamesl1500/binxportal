@@ -7,7 +7,7 @@
  * regenerating it would silently break any links built on it).
  *
  * @module apps/binx-web/src/components/forms/agency/AgencyGeneralForm/AgencyGeneralForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -22,7 +22,11 @@ import { updateAgencyAction } from "@/app/(app)/settings/actions";
 import styles from "./AgencyGeneralForm.module.scss";
 
 const agencyGeneralSchema = z.object({
-  name: z.string().trim().min(1, "Name is required").max(255, "Must be at most 255 characters"),
+  name: z
+    .string()
+    .trim()
+    .min(1, "Name is required")
+    .max(255, "Must be at most 255 characters"),
 });
 
 type AgencyGeneralValues = z.infer<typeof agencyGeneralSchema>;
@@ -33,7 +37,11 @@ interface AgencyGeneralFormProps {
   slug: string;
 }
 
-const AgencyGeneralForm = ({ agencyId, name, slug }: AgencyGeneralFormProps) => {
+const AgencyGeneralForm = ({
+  agencyId,
+  name,
+  slug,
+}: AgencyGeneralFormProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
@@ -86,7 +94,14 @@ const AgencyGeneralForm = ({ agencyId, name, slug }: AgencyGeneralFormProps) => 
         <label className={styles.label} htmlFor="slug">
           URL slug
         </label>
-        <input id="slug" type="text" value={slug} readOnly disabled className={styles.input} />
+        <input
+          id="slug"
+          type="text"
+          value={slug}
+          readOnly
+          disabled
+          className={styles.input}
+        />
       </div>
 
       {formError && <p className={styles.formError}>{formError}</p>}

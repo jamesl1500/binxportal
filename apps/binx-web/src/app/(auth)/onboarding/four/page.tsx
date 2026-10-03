@@ -7,7 +7,7 @@
  * Paid plans arrive here back from Stripe Checkout (`?checkout=success|cancel`).
  *
  * @module apps/binx-web/src/app/(auth)/onboarding/four/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -24,7 +24,9 @@ interface OnboardingStepFourPageProps {
   searchParams: Promise<{ checkout?: string }>;
 }
 
-const OnboardingStepFourPage = async ({ searchParams }: OnboardingStepFourPageProps) => {
+const OnboardingStepFourPage = async ({
+  searchParams,
+}: OnboardingStepFourPageProps) => {
   const { currentAgency } = await getCurrentAgencyContext();
 
   if (!currentAgency) {
@@ -32,7 +34,8 @@ const OnboardingStepFourPage = async ({ searchParams }: OnboardingStepFourPagePr
   }
 
   const { checkout } = await searchParams;
-  const canInvite = currentAgency.role === "owner" || currentAgency.role === "admin";
+  const canInvite =
+    currentAgency.role === "owner" || currentAgency.role === "admin";
 
   return (
     <div>
@@ -44,19 +47,21 @@ const OnboardingStepFourPage = async ({ searchParams }: OnboardingStepFourPagePr
         <span className={styles.eyebrow}>Step 4 of 4 · Optional</span>
         <h1 className={styles.title}>Bring your clients &amp; team</h1>
         <p className={styles.subtitle}>
-          Have them in a spreadsheet already? Import them now so {currentAgency.name} is ready from day one.
+          Have them in a spreadsheet already? Import them now so{" "}
+          {currentAgency.name} is ready from day one.
         </p>
       </header>
 
       {checkout === "success" && (
         <p className={styles.notice}>
-          Thanks — your plan upgrade is being confirmed. If an import says you&apos;re over a limit, give it a moment
-          and try again.
+          Thanks — your plan upgrade is being confirmed. If an import says
+          you&apos;re over a limit, give it a moment and try again.
         </p>
       )}
       {checkout === "cancel" && (
         <p className={styles.notice}>
-          Checkout was cancelled, so you&apos;re on the Free plan for now — you can upgrade any time in Settings → Plan.
+          Checkout was cancelled, so you&apos;re on the Free plan for now — you
+          can upgrade any time in Settings → Plan.
         </p>
       )}
 

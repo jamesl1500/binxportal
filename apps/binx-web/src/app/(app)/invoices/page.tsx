@@ -6,14 +6,19 @@
  * signed-in session with a current agency.
  *
  * @module apps/binx-web/src/app/(app)/invoices/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getCurrentAgencyContext } from "@/lib/agencies";
-import { getInvoices, getInvoiceSummary, getBillingSettings, formatMoneyCents } from "@/lib/invoicing";
+import {
+  getInvoices,
+  getInvoiceSummary,
+  getBillingSettings,
+  formatMoneyCents,
+} from "@/lib/invoicing";
 import ClientStatGrid from "@/components/clients/ClientStatGrid/ClientStatGrid";
 import InvoiceTable from "@/components/invoices/InvoiceTable/InvoiceTable";
 import NewInvoiceButton from "@/components/invoices/NewInvoiceButton/NewInvoiceButton";
@@ -43,8 +48,11 @@ const InvoicesPage = async () => {
           <span className={styles.eyebrow}>Invoices</span>
           <h1 className={styles.title}>Invoices</h1>
           <p className={styles.subtitle}>
-            {summary.open_count} open{summary.overdue_count > 0 ? `, ${summary.overdue_count} overdue` : ""} ·{" "}
-            {summary.draft_count} draft{summary.draft_count === 1 ? "" : "s"}
+            {summary.open_count} open
+            {summary.overdue_count > 0
+              ? `, ${summary.overdue_count} overdue`
+              : ""}{" "}
+            · {summary.draft_count} draft{summary.draft_count === 1 ? "" : "s"}
           </p>
         </div>
 
@@ -76,8 +84,14 @@ const InvoicesPage = async () => {
               value: formatMoneyCents(summary.paid_this_year_cents, currency),
               tone: "positive",
             },
-            { label: "Lifetime billed", value: formatMoneyCents(summary.lifetime_billed_cents, currency) },
-            { label: "Average invoice", value: formatMoneyCents(summary.average_invoice_cents, currency) },
+            {
+              label: "Lifetime billed",
+              value: formatMoneyCents(summary.lifetime_billed_cents, currency),
+            },
+            {
+              label: "Average invoice",
+              value: formatMoneyCents(summary.average_invoice_cents, currency),
+            },
           ]}
         />
       </div>

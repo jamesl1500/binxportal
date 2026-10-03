@@ -6,7 +6,7 @@
  * localStorage) so they can't be read by client-side JS.
  *
  * @module apps/binx-web/src/lib/auth.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 import axios from "axios";
 import { cookies, headers } from "next/headers";
@@ -47,7 +47,11 @@ export function extractDetailMessage(data: unknown, fallback: string): string {
 
   if (Array.isArray(detail)) {
     const messages = detail
-      .map((entry) => (entry && typeof entry === "object" && "msg" in entry ? String(entry.msg) : null))
+      .map((entry) =>
+        entry && typeof entry === "object" && "msg" in entry
+          ? String(entry.msg)
+          : null,
+      )
       .filter((msg): msg is string => Boolean(msg));
     if (messages.length > 0) return messages.join(" ");
   }
@@ -115,8 +119,13 @@ export async function getInternalBaseUrl(): Promise<string> {
   if (configured) return configured.replace(/\/$/, "");
 
   const headerList = await headers();
-  const host = headerList.get("x-forwarded-host") ?? headerList.get("host") ?? "localhost:3000";
-  const protocol = headerList.get("x-forwarded-proto") ?? (process.env.NODE_ENV === "production" ? "https" : "http");
+  const host =
+    headerList.get("x-forwarded-host") ??
+    headerList.get("host") ??
+    "localhost:3000";
+  const protocol =
+    headerList.get("x-forwarded-proto") ??
+    (process.env.NODE_ENV === "production" ? "https" : "http");
   return `${protocol}://${host}`;
 }
 
@@ -127,7 +136,9 @@ export async function getInternalBaseUrl(): Promise<string> {
  * context — its `cookies().set()` calls land on that nested response, not on
  * the Server Action's response, so they must be forwarded by hand.
  */
-export async function forwardSetCookies(setCookieHeaders: string[] | undefined): Promise<void> {
+export async function forwardSetCookies(
+  setCookieHeaders: string[] | undefined,
+): Promise<void> {
   if (!setCookieHeaders || setCookieHeaders.length === 0) return;
 
   const cookieStore = await cookies();
@@ -149,7 +160,10 @@ export async function forwardSetCookies(setCookieHeaders: string[] | undefined):
           options.path = rawValue;
           break;
         case "samesite":
-          options.sameSite = rawValue?.toLowerCase() as "lax" | "strict" | "none";
+          options.sameSite = rawValue?.toLowerCase() as
+            | "lax"
+            | "strict"
+            | "none";
           break;
         case "httponly":
           options.httpOnly = true;
@@ -241,8 +255,10 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
 
-    if( !data || !data.id) {
-      throw new Error("Failed to fetch current user: Invalid response from server");
+    if (!data || !data.id) {
+      throw new Error(
+        "Failed to fetch current user: Invalid response from server",
+      );
     }
 
     return data;
@@ -300,12 +316,15 @@ export async function login(
     // Surface binx-api's actual reason (e.g. "Incorrect email or password") instead
     // of axios's generic "Request failed with status code 401".
     if (axios.isAxiosError(error) && error.response) {
-      throw new AuthApiError(extractDetailMessage(error.response.data, "Unable to sign in"), error.response.status);
+      throw new AuthApiError(
+        extractDetailMessage(error.response.data, "Unable to sign in"),
+        error.response.status,
+      );
     }
     throw error;
   }
 
-  if( !data || !data.access_token || !data.refresh_token) {
+  if (!data || !data.access_token || !data.refresh_token) {
     throw new Error("Login failed: Invalid response from server");
   }
 
@@ -341,7 +360,13 @@ export interface SignupInput {
  * @function signup
  * @throws {AuthApiError} - Thrown with binx-api's reason (e.g. "Email already registered").
  */
-export async function signup({ userName, email, fullName, password, portalInviteToken }: SignupInput): Promise<string> {
+export async function signup({
+  userName,
+  email,
+  fullName,
+  password,
+  portalInviteToken,
+}: SignupInput): Promise<string> {
   try {
     const { data } = await api.post<{ message: string }>("/auth/signup", {
       user_name: userName,
@@ -374,12 +399,18 @@ export async function signup({ userName, email, fullName, password, portalInvite
  */
 export async function requestPasswordReset(email: string): Promise<string> {
   try {
-    const { data } = await api.post<{ message: string }>("/auth/forgot-password", { email });
+    const { data } = await api.post<{ message: string }>(
+      "/auth/forgot-password",
+      { email },
+    );
     return data.message;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new AuthApiError(
-        extractDetailMessage(error.response.data, "Unable to process your request"),
+        extractDetailMessage(
+          error.response.data,
+          "Unable to process your request",
+        ),
         error.response.status,
       );
     }
@@ -399,12 +430,18 @@ export async function requestPasswordReset(email: string): Promise<string> {
  */
 export async function resendVerification(email: string): Promise<string> {
   try {
-    const { data } = await api.post<{ message: string }>("/auth/resend-verification", { email });
+    const { data } = await api.post<{ message: string }>(
+      "/auth/resend-verification",
+      { email },
+    );
     return data.message;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new AuthApiError(
-        extractDetailMessage(error.response.data, "Unable to process your request"),
+        extractDetailMessage(
+          error.response.data,
+          "Unable to process your request",
+        ),
         error.response.status,
       );
     }
@@ -420,12 +457,18 @@ export async function resendVerification(email: string): Promise<string> {
  * @function resetPassword
  * @throws {AuthApiError} - Thrown with binx-api's reason (e.g. "Invalid or expired token").
  */
-export async function resetPassword(token: string, newPassword: string): Promise<string> {
+export async function resetPassword(
+  token: string,
+  newPassword: string,
+): Promise<string> {
   try {
-    const { data } = await api.post<{ message: string }>("/auth/reset-password", {
-      token,
-      new_password: newPassword,
-    });
+    const { data } = await api.post<{ message: string }>(
+      "/auth/reset-password",
+      {
+        token,
+        new_password: newPassword,
+      },
+    );
     return data.message;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
@@ -463,14 +506,21 @@ export async function logout(): Promise<void> {
  * @returns {Promise<string>} The email address the token belongs to.
  * @throws {AuthApiError} - Thrown if the token is missing/invalid/expired.
  */
-export async function getEmailVerificationTarget(token: string): Promise<string> {
+export async function getEmailVerificationTarget(
+  token: string,
+): Promise<string> {
   try {
-    const { data } = await api.get<{ email: string }>("/auth/verify-email", { params: { token } });
+    const { data } = await api.get<{ email: string }>("/auth/verify-email", {
+      params: { token },
+    });
     return data.email;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new AuthApiError(
-        extractDetailMessage(error.response.data, "Invalid or expired verification link"),
+        extractDetailMessage(
+          error.response.data,
+          "Invalid or expired verification link",
+        ),
         error.response.status,
       );
     }
@@ -495,7 +545,10 @@ export async function verifyEmail(token: string): Promise<string> {
   let data: TokenPair & { message: string };
 
   try {
-    ({ data } = await api.post<TokenPair & { message: string }>("/auth/verify-email", { token }));
+    ({ data } = await api.post<TokenPair & { message: string }>(
+      "/auth/verify-email",
+      { token },
+    ));
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new AuthApiError(
@@ -528,12 +581,18 @@ export async function verifyEmail(token: string): Promise<string> {
  */
 export async function getEmailChangeTarget(token: string): Promise<string> {
   try {
-    const { data } = await api.get<{ new_email: string }>("/auth/confirm-email", { params: { token } });
+    const { data } = await api.get<{ new_email: string }>(
+      "/auth/confirm-email",
+      { params: { token } },
+    );
     return data.new_email;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new AuthApiError(
-        extractDetailMessage(error.response.data, "Invalid or expired confirmation link"),
+        extractDetailMessage(
+          error.response.data,
+          "Invalid or expired confirmation link",
+        ),
         error.response.status,
       );
     }
@@ -555,12 +614,18 @@ export async function getEmailChangeTarget(token: string): Promise<string> {
  */
 export async function confirmEmailChange(token: string): Promise<string> {
   try {
-    const { data } = await api.post<{ message: string }>("/auth/confirm-email", { token });
+    const { data } = await api.post<{ message: string }>(
+      "/auth/confirm-email",
+      { token },
+    );
     return data.message;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new AuthApiError(
-        extractDetailMessage(error.response.data, "Unable to confirm email change"),
+        extractDetailMessage(
+          error.response.data,
+          "Unable to confirm email change",
+        ),
         error.response.status,
       );
     }

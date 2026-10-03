@@ -6,11 +6,14 @@
  * branding uses.
  *
  * @module apps/binx-web/src/components/forms/account/PhotosForm/PhotosForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
-import { removeUserImageAction, uploadUserImageAction } from "@/app/(app)/profile/actions";
+import {
+  removeUserImageAction,
+  uploadUserImageAction,
+} from "@/app/(app)/profile/actions";
 import type { UserProfileData } from "@/lib/users";
 import { userImageUrl } from "@/lib/users-client";
 import ImageUploadField from "@/components/forms/agency/ImageUploadField/ImageUploadField";

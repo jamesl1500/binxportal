@@ -6,7 +6,7 @@
  * owns the fields, this owns the dialog chrome and refresh-on-success.
  *
  * @module apps/binx-web/src/components/forms/meetings/ScheduleMeetingDialog/ScheduleMeetingDialog.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -70,8 +70,13 @@ const ScheduleMeetingDialog = ({
       <Dialog.Root open={open} onOpenChange={setOpen}>
         <Dialog.Portal>
           <Dialog.Backdrop className={styles.backdrop} />
-          <Dialog.Popup className={styles.dialog} aria-label="Schedule a meeting">
-            <Dialog.Title className={styles.dialogTitle}>Schedule a meeting</Dialog.Title>
+          <Dialog.Popup
+            className={styles.dialog}
+            aria-label="Schedule a meeting"
+          >
+            <Dialog.Title className={styles.dialogTitle}>
+              Schedule a meeting
+            </Dialog.Title>
             <Dialog.Description className={styles.dialogDescription}>
               This is scheduled immediately — the client will be notified.
             </Dialog.Description>

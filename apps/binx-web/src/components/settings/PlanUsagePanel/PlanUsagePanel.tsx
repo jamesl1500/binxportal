@@ -6,7 +6,7 @@
  * the plan's AI budget. An unlimited cap (Scale) renders as a plain count.
  *
  * @module apps/binx-web/src/components/settings/PlanUsagePanel/PlanUsagePanel.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -28,12 +28,30 @@ interface Row {
   render: (value: number) => string;
 }
 
-const PlanUsagePanel = ({ subscription, aiSpentCents }: PlanUsagePanelProps) => {
+const PlanUsagePanel = ({
+  subscription,
+  aiSpentCents,
+}: PlanUsagePanelProps) => {
   const { limits, usage } = subscription;
   const rows: Row[] = [
-    { label: "Clients", used: usage.clients, limit: limits.max_clients, render: String },
-    { label: "Active projects", used: usage.active_projects, limit: limits.max_active_projects, render: String },
-    { label: "Leads", used: usage.leads, limit: limits.max_leads, render: String },
+    {
+      label: "Clients",
+      used: usage.clients,
+      limit: limits.max_clients,
+      render: String,
+    },
+    {
+      label: "Active projects",
+      used: usage.active_projects,
+      limit: limits.max_active_projects,
+      render: String,
+    },
+    {
+      label: "Leads",
+      used: usage.leads,
+      limit: limits.max_leads,
+      render: String,
+    },
     {
       label: "AI budget (this month)",
       used: aiSpentCents,
@@ -46,7 +64,9 @@ const PlanUsagePanel = ({ subscription, aiSpentCents }: PlanUsagePanelProps) => 
     <ul className={styles.list}>
       {rows.map((row) => {
         const percent =
-          row.limit && row.limit > 0 ? Math.min(100, Math.round((row.used / row.limit) * 100)) : 0;
+          row.limit && row.limit > 0
+            ? Math.min(100, Math.round((row.used / row.limit) * 100))
+            : 0;
         const atLimit = row.limit != null && row.used >= row.limit;
         return (
           <li key={row.label} className={styles.row}>
@@ -59,7 +79,11 @@ const PlanUsagePanel = ({ subscription, aiSpentCents }: PlanUsagePanelProps) => 
               </span>
             </div>
             <div className={styles.track}>
-              <div className={styles.fill} data-at-limit={atLimit} style={{ width: `${percent}%` }} />
+              <div
+                className={styles.fill}
+                data-at-limit={atLimit}
+                style={{ width: `${percent}%` }}
+              />
             </div>
           </li>
         );

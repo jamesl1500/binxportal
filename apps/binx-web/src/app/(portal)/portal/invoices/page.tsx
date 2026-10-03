@@ -6,7 +6,7 @@
  * the filterable list (see PortalInvoiceList).
  *
  * @module apps/binx-web/src/app/(portal)/portal/invoices/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import { AlertTriangle, CheckCircle2, Wallet } from "lucide-react";
@@ -16,7 +16,9 @@ import { getPortalInvoices } from "@/lib/portal";
 import { isUnpaid } from "@/lib/portal-insights";
 import PortalInvoiceList from "@/components/portal/PortalInvoiceList/PortalInvoiceList";
 import PortalPageHeader from "@/components/portal/PortalPageHeader/PortalPageHeader";
-import PortalStatTiles, { type PortalStat } from "@/components/portal/PortalStatTiles/PortalStatTiles";
+import PortalStatTiles, {
+  type PortalStat,
+} from "@/components/portal/PortalStatTiles/PortalStatTiles";
 
 import styles from "../page.module.scss";
 
@@ -26,9 +28,13 @@ const PortalInvoicesPage = async () => {
   const invoices = await getPortalInvoices();
   const currency = invoices[0]?.currency ?? "USD";
   const unpaid = invoices.filter(isUnpaid);
-  const overdue = unpaid.filter((invoice) => invoice.display_status === "overdue");
-  const sum = (list: typeof invoices, pick: (invoice: (typeof invoices)[number]) => number) =>
-    list.reduce((total, invoice) => total + pick(invoice), 0);
+  const overdue = unpaid.filter(
+    (invoice) => invoice.display_status === "overdue",
+  );
+  const sum = (
+    list: typeof invoices,
+    pick: (invoice: (typeof invoices)[number]) => number,
+  ) => list.reduce((total, invoice) => total + pick(invoice), 0);
 
   const outstanding = sum(unpaid, (invoice) => invoice.amount_due_cents);
   const stats: PortalStat[] = [
@@ -41,14 +47,20 @@ const PortalInvoicesPage = async () => {
     },
     {
       label: "Overdue",
-      value: formatMoneyCents(sum(overdue, (invoice) => invoice.amount_due_cents), currency),
+      value: formatMoneyCents(
+        sum(overdue, (invoice) => invoice.amount_due_cents),
+        currency,
+      ),
       hint: overdue.length > 0 ? `${overdue.length} past due` : "Nothing late",
       icon: AlertTriangle,
       tone: overdue.length > 0 ? "warn" : "default",
     },
     {
       label: "Paid to date",
-      value: formatMoneyCents(sum(invoices, (invoice) => invoice.amount_paid_cents), currency),
+      value: formatMoneyCents(
+        sum(invoices, (invoice) => invoice.amount_paid_cents),
+        currency,
+      ),
       hint: `Across ${invoices.length} invoice${invoices.length === 1 ? "" : "s"}`,
       icon: CheckCircle2,
       tone: "positive",

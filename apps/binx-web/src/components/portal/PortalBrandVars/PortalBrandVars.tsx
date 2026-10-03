@@ -11,7 +11,7 @@
  * inherits a client's colors.
  *
  * @module apps/binx-web/src/components/portal/PortalBrandVars/PortalBrandVars.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 

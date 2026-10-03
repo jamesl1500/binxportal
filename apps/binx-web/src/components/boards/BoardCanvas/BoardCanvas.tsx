@@ -11,7 +11,7 @@
  * Live state lives in `useBoardStore`, kept current by `BoardProvider`.
  *
  * @module apps/binx-web/src/components/boards/BoardCanvas/BoardCanvas.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -19,7 +19,11 @@ import { useMemo, useRef, useState } from "react";
 import { Image as ImageIcon, Minus, Plus, StickyNote } from "lucide-react";
 import { toast } from "sonner";
 
-import type { BoardComment, BoardItem, BoardItemPatch } from "@/lib/boards-client";
+import type {
+  BoardComment,
+  BoardItem,
+  BoardItemPatch,
+} from "@/lib/boards-client";
 import {
   clamp,
   DEFAULT_NOTE_COLOR,
@@ -36,21 +40,38 @@ import BoardItemView from "@/components/boards/BoardCanvas/BoardItem";
 import styles from "./BoardCanvas.module.scss";
 
 export interface BoardCanvasActions {
-  create: (input: CreateBoardItemInput) => Promise<{ item?: BoardItem; error?: string }>;
-  update: (id: string, patch: BoardItemPatch) => Promise<{ item?: BoardItem; error?: string }>;
+  create: (
+    input: CreateBoardItemInput,
+  ) => Promise<{ item?: BoardItem; error?: string }>;
+  update: (
+    id: string,
+    patch: BoardItemPatch,
+  ) => Promise<{ item?: BoardItem; error?: string }>;
   remove: (id: string) => Promise<{ error?: string }>;
   uploadImage: (
     file: File,
     placement: { x: number; y: number; width?: number; height?: number },
   ) => Promise<{ item?: BoardItem; error?: string }>;
-  toggleReaction: (id: string, kind: string) => Promise<{ result?: BoardReactions; error?: string }>;
-  listComments: (id: string) => Promise<{ comments?: BoardComment[]; error?: string }>;
-  addComment: (id: string, body: string) => Promise<{ comment?: BoardComment; error?: string }>;
+  toggleReaction: (
+    id: string,
+    kind: string,
+  ) => Promise<{ result?: BoardReactions; error?: string }>;
+  listComments: (
+    id: string,
+  ) => Promise<{ comments?: BoardComment[]; error?: string }>;
+  addComment: (
+    id: string,
+    body: string,
+  ) => Promise<{ comment?: BoardComment; error?: string }>;
   deleteComment: (id: string, commentId: string) => Promise<{ error?: string }>;
   /** Agency side only — asks the client to review this card. */
-  requestApproval?: (id: string) => Promise<{ item?: BoardItem; error?: string }>;
+  requestApproval?: (
+    id: string,
+  ) => Promise<{ item?: BoardItem; error?: string }>;
   /** Agency side only — clears the card's approval state. */
-  withdrawApproval?: (id: string) => Promise<{ item?: BoardItem; error?: string }>;
+  withdrawApproval?: (
+    id: string,
+  ) => Promise<{ item?: BoardItem; error?: string }>;
   /** Client-portal side only — approves or asks for changes on a pending card. */
   decideApproval?: (
     id: string,
@@ -71,7 +92,13 @@ interface BoardCanvasProps {
 
 const IMAGE_TARGET = 360;
 
-const BoardCanvas = ({ actions, imageUrl, currentUserId, canModerate, viewerKind }: BoardCanvasProps) => {
+const BoardCanvas = ({
+  actions,
+  imageUrl,
+  currentUserId,
+  canModerate,
+  viewerKind,
+}: BoardCanvasProps) => {
   const itemsById = useBoardStore((s) => s.itemsById);
   const items = useMemo(
     () => Object.values(itemsById).sort((a, b) => a.z - b.z),
@@ -83,15 +110,31 @@ const BoardCanvas = ({ actions, imageUrl, currentUserId, canModerate, viewerKind
 
   const surfaceRef = useRef<HTMLDivElement | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
-  const panRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
+  const panRef = useRef<{
+    startX: number;
+    startY: number;
+    origX: number;
+    origY: number;
+  } | null>(null);
 
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const viewportCentre = () => {
-    const rect = surfaceRef.current?.getBoundingClientRect() ?? { left: 0, top: 0, width: 800, height: 600 };
-    return screenToCanvas(rect.left + rect.width / 2, rect.top + rect.height / 2, rect, pan, zoom);
+    const rect = surfaceRef.current?.getBoundingClientRect() ?? {
+      left: 0,
+      top: 0,
+      width: 800,
+      height: 600,
+    };
+    return screenToCanvas(
+      rect.left + rect.width / 2,
+      rect.top + rect.height / 2,
+      rect,
+      pan,
+      zoom,
+    );
   };
 
   const notify = (message: string) => toast.error(message);
@@ -123,7 +166,12 @@ const BoardCanvas = ({ actions, imageUrl, currentUserId, canModerate, viewerKind
       width = Math.round(dims.width * scale);
       height = Math.round(dims.height * scale);
     }
-    const placement = { x: centre.x - width / 2, y: centre.y - height / 2, width, height };
+    const placement = {
+      x: centre.x - width / 2,
+      y: centre.y - height / 2,
+      width,
+      height,
+    };
     const pending = toast.loading("Uploading image…");
     const { item, error } = await actions.uploadImage(file, placement);
     toast.dismiss(pending);
@@ -133,16 +181,28 @@ const BoardCanvas = ({ actions, imageUrl, currentUserId, canModerate, viewerKind
   };
 
   const onSurfacePointerDown = (event: React.PointerEvent) => {
-    if (event.target !== surfaceRef.current && !(event.target as HTMLElement).dataset.surface) return;
+    if (
+      event.target !== surfaceRef.current &&
+      !(event.target as HTMLElement).dataset.surface
+    )
+      return;
     setSelectedId(null);
     (event.target as HTMLElement).setPointerCapture(event.pointerId);
-    panRef.current = { startX: event.clientX, startY: event.clientY, origX: pan.x, origY: pan.y };
+    panRef.current = {
+      startX: event.clientX,
+      startY: event.clientY,
+      origX: pan.x,
+      origY: pan.y,
+    };
   };
 
   const onSurfacePointerMove = (event: React.PointerEvent) => {
     const p = panRef.current;
     if (!p) return;
-    setPan({ x: p.origX + (event.clientX - p.startX), y: p.origY + (event.clientY - p.startY) });
+    setPan({
+      x: p.origX + (event.clientX - p.startX),
+      y: p.origY + (event.clientY - p.startY),
+    });
   };
 
   const onSurfacePointerUp = () => {
@@ -153,20 +213,31 @@ const BoardCanvas = ({ actions, imageUrl, currentUserId, canModerate, viewerKind
     if (event.ctrlKey || event.metaKey) {
       event.preventDefault();
       const rect = surfaceRef.current!.getBoundingClientRect();
-      const next = clamp(zoom * (event.deltaY < 0 ? 1.1 : 0.9), MIN_ZOOM, MAX_ZOOM);
+      const next = clamp(
+        zoom * (event.deltaY < 0 ? 1.1 : 0.9),
+        MIN_ZOOM,
+        MAX_ZOOM,
+      );
       // Keep the point under the cursor fixed while zooming.
-      const cursor = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+      const cursor = {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top,
+      };
       setPan({
         x: cursor.x - ((cursor.x - pan.x) / zoom) * next,
         y: cursor.y - ((cursor.y - pan.y) / zoom) * next,
       });
       setZoom(next);
     } else {
-      setPan((prev) => ({ x: prev.x - event.deltaX, y: prev.y - event.deltaY }));
+      setPan((prev) => ({
+        x: prev.x - event.deltaX,
+        y: prev.y - event.deltaY,
+      }));
     }
   };
 
-  const stepZoom = (factor: number) => setZoom((z) => clamp(z * factor, MIN_ZOOM, MAX_ZOOM));
+  const stepZoom = (factor: number) =>
+    setZoom((z) => clamp(z * factor, MIN_ZOOM, MAX_ZOOM));
 
   return (
     <div className={styles.wrapper}>
@@ -174,19 +245,37 @@ const BoardCanvas = ({ actions, imageUrl, currentUserId, canModerate, viewerKind
         <button type="button" className={styles.tool} onClick={handleAddNote}>
           <StickyNote aria-hidden="true" /> Note
         </button>
-        <button type="button" className={styles.tool} onClick={() => fileRef.current?.click()}>
+        <button
+          type="button"
+          className={styles.tool}
+          onClick={() => fileRef.current?.click()}
+        >
           <ImageIcon aria-hidden="true" /> Image
         </button>
         <span className={styles.divider} aria-hidden="true" />
-        <button type="button" className={styles.zoomButton} onClick={() => stepZoom(0.9)} aria-label="Zoom out">
+        <button
+          type="button"
+          className={styles.zoomButton}
+          onClick={() => stepZoom(0.9)}
+          aria-label="Zoom out"
+        >
           <Minus aria-hidden="true" />
         </button>
         <span className={styles.zoomLevel}>{Math.round(zoom * 100)}%</span>
-        <button type="button" className={styles.zoomButton} onClick={() => stepZoom(1.1)} aria-label="Zoom in">
+        <button
+          type="button"
+          className={styles.zoomButton}
+          onClick={() => stepZoom(1.1)}
+          aria-label="Zoom in"
+        >
           <Plus aria-hidden="true" />
         </button>
         <span className={styles.status} data-status={socketStatus}>
-          {socketStatus === "open" ? "Live" : socketStatus === "connecting" ? "Connecting…" : "Offline"}
+          {socketStatus === "open"
+            ? "Live"
+            : socketStatus === "connecting"
+              ? "Connecting…"
+              : "Offline"}
         </span>
       </div>
 
@@ -213,7 +302,9 @@ const BoardCanvas = ({ actions, imageUrl, currentUserId, canModerate, viewerKind
       >
         <div
           className={styles.world}
-          style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }}
+          style={{
+            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+          }}
         >
           {items.map((item) => (
             <BoardItemView
@@ -231,7 +322,8 @@ const BoardCanvas = ({ actions, imageUrl, currentUserId, canModerate, viewerKind
                 notify(message);
                 // A failed create/delete may have left a phantom — a resync
                 // reconciles, but drop the obvious case now.
-                if (!useBoardStore.getState().itemsById[item.id]) removeItem(item.id);
+                if (!useBoardStore.getState().itemsById[item.id])
+                  removeItem(item.id);
               }}
             />
           ))}
@@ -239,7 +331,8 @@ const BoardCanvas = ({ actions, imageUrl, currentUserId, canModerate, viewerKind
 
         {items.length === 0 && (
           <p className={styles.empty} data-surface="true">
-            An empty canvas. Add a note or drop an image — everyone on the project sees it live.
+            An empty canvas. Add a note or drop an image — everyone on the
+            project sees it live.
           </p>
         )}
       </div>

@@ -6,7 +6,7 @@
  * board. Server component: static markup from the `/my-work` rollup.
  *
  * @module apps/binx-web/src/components/dashboard/MyTasksCard/MyTasksCard.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import Link from "next/link";
 
@@ -33,7 +33,9 @@ function dueLabel(task: MyTask): string {
 
 const MyTasksCard = ({ tasks, limit }: MyTasksCardProps) => {
   if (tasks.length === 0) {
-    return <p className={styles.empty}>Nothing assigned to you right now. 🎉</p>;
+    return (
+      <p className={styles.empty}>Nothing assigned to you right now. 🎉</p>
+    );
   }
 
   const shown = limit ? tasks.slice(0, limit) : tasks;
@@ -44,7 +46,11 @@ const MyTasksCard = ({ tasks, limit }: MyTasksCardProps) => {
       <ul className={styles.list}>
         {shown.map((task) => (
           <li key={task.id}>
-            <Link href={`/projects/${task.project_id}/board`} className={styles.row} data-overdue={task.overdue}>
+            <Link
+              href={`/projects/${task.project_id}/board`}
+              className={styles.row}
+              data-overdue={task.overdue}
+            >
               <span className={styles.title}>{task.title}</span>
               <span className={styles.meta}>
                 {task.project_name} · {task.list_name}

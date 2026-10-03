@@ -7,27 +7,33 @@
  * Relative-time formatting is shared from `lib/notifications-client`.
  *
  * @module apps/binx-web/src/lib/activity-client.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 
 /** Keep in sync with binx-api's activity/models.py category constants. */
-export type ActivityCategory = "team" | "clients" | "projects" | "invoicing" | "settings" | "security";
+export type ActivityCategory =
+  | "team"
+  | "clients"
+  | "projects"
+  | "invoicing"
+  | "settings"
+  | "security";
 
 /** The categories that appear on the agency-wide feed (security is account-only). */
-export const AGENCY_ACTIVITY_CATEGORIES: Exclude<ActivityCategory, "security">[] = [
-  "team",
-  "clients",
-  "projects",
-  "invoicing",
-  "settings",
-];
+export const AGENCY_ACTIVITY_CATEGORIES: Exclude<
+  ActivityCategory,
+  "security"
+>[] = ["team", "clients", "projects", "invoicing", "settings"];
 
 export interface ActivityCategoryMeta {
   label: string;
   accent: string;
 }
 
-export const ACTIVITY_CATEGORY_META: Record<ActivityCategory, ActivityCategoryMeta> = {
+export const ACTIVITY_CATEGORY_META: Record<
+  ActivityCategory,
+  ActivityCategoryMeta
+> = {
   team: { label: "Team", accent: "var(--color-accent)" },
   clients: { label: "Clients", accent: "#2f7de0" },
   projects: { label: "Projects", accent: "#7c5cff" },

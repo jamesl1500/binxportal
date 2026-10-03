@@ -10,11 +10,15 @@
  * that a full route refetch can't give.
  *
  * @module apps/binx-web/src/stores/use-messaging-store.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 import { create } from "zustand";
 
-import type { Conversation, Message, MessagingEvent } from "@/lib/messaging-client";
+import type {
+  Conversation,
+  Message,
+  MessagingEvent,
+} from "@/lib/messaging-client";
 
 export type SocketStatus = "connecting" | "open" | "closed";
 
@@ -74,7 +78,14 @@ function sortConversations(list: Conversation[]): Conversation[] {
 function mergeMessage(existing: Message[], incoming: Message): Message[] {
   const withoutOptimisticEcho = incoming.id.startsWith("optimistic-")
     ? existing
-    : existing.filter((m) => !(m.id.startsWith("optimistic-") && m.body === incoming.body && m.sender_id === incoming.sender_id));
+    : existing.filter(
+        (m) =>
+          !(
+            m.id.startsWith("optimistic-") &&
+            m.body === incoming.body &&
+            m.sender_id === incoming.sender_id
+          ),
+      );
   const index = withoutOptimisticEcho.findIndex((m) => m.id === incoming.id);
   if (index >= 0) {
     const next = [...withoutOptimisticEcho];
@@ -82,7 +93,8 @@ function mergeMessage(existing: Message[], incoming: Message): Message[] {
     return next;
   }
   return [...withoutOptimisticEcho, incoming].sort(
-    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    (a, b) =>
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
   );
 }
 
@@ -96,12 +108,15 @@ export const useMessagingStore = create<MessagingState>((set, get) => ({
   conversationFilters: { search: "", clientId: null, memberName: null },
 
   setConversationFilters: (patch) =>
-    set((state) => ({ conversationFilters: { ...state.conversationFilters, ...patch } })),
+    set((state) => ({
+      conversationFilters: { ...state.conversationFilters, ...patch },
+    })),
 
   seed: (currentUserId, conversations) =>
     set({ currentUserId, conversations: sortConversations(conversations) }),
 
-  setConversations: (conversations) => set({ conversations: sortConversations(conversations) }),
+  setConversations: (conversations) =>
+    set({ conversations: sortConversations(conversations) }),
 
   upsertConversation: (conversation) =>
     set((state) => {
@@ -113,7 +128,10 @@ export const useMessagingStore = create<MessagingState>((set, get) => ({
 
   setMessages: (conversationId, messages) =>
     set((state) => ({
-      messagesByConversation: { ...state.messagesByConversation, [conversationId]: messages },
+      messagesByConversation: {
+        ...state.messagesByConversation,
+        [conversationId]: messages,
+      },
       hydrated: new Set(state.hydrated).add(conversationId),
     })),
 
@@ -122,7 +140,12 @@ export const useMessagingStore = create<MessagingState>((set, get) => ({
       const current = state.messagesByConversation[conversationId] ?? [];
       const seen = new Set(current.map((m) => m.id));
       const merged = [...older.filter((m) => !seen.has(m.id)), ...current];
-      return { messagesByConversation: { ...state.messagesByConversation, [conversationId]: merged } };
+      return {
+        messagesByConversation: {
+          ...state.messagesByConversation,
+          [conversationId]: merged,
+        },
+      };
     }),
 
   upsertMessage: (conversationId, message) =>
@@ -142,7 +165,9 @@ export const useMessagingStore = create<MessagingState>((set, get) => ({
       return {
         messagesByConversation: {
           ...state.messagesByConversation,
-          [conversationId]: current.filter((m) => m.id !== `optimistic-${nonce}`),
+          [conversationId]: current.filter(
+            (m) => m.id !== `optimistic-${nonce}`,
+          ),
         },
       };
     }),
@@ -169,8 +194,12 @@ export const useMessagingStore = create<MessagingState>((set, get) => ({
     set((state) => {
       const cutoff = Date.now() - 6000;
       const next: Record<string, TypingState> = {};
-      for (const [conversationId, typers] of Object.entries(state.typingByConversation)) {
-        const kept = Object.fromEntries(Object.entries(typers).filter(([, v]) => v.at > cutoff));
+      for (const [conversationId, typers] of Object.entries(
+        state.typingByConversation,
+      )) {
+        const kept = Object.fromEntries(
+          Object.entries(typers).filter(([, v]) => v.at > cutoff),
+        );
         if (Object.keys(kept).length > 0) next[conversationId] = kept;
       }
       return { typingByConversation: next };
@@ -220,7 +249,12 @@ export const useMessagingStore = create<MessagingState>((set, get) => ({
               ...s.messagesByConversation,
               [conversationId]: current.map((m) =>
                 m.id === id
-                  ? { ...m, deleted_at: new Date().toISOString(), body: "", attachments: [] }
+                  ? {
+                      ...m,
+                      deleted_at: new Date().toISOString(),
+                      body: "",
+                      attachments: [],
+                    }
                   : m,
               ),
             },
@@ -229,15 +263,22 @@ export const useMessagingStore = create<MessagingState>((set, get) => ({
         break;
       }
       case "conversation.read": {
-        const userId = String((event.data as Record<string, unknown>)?.user_id ?? "");
-        if (userId === state.currentUserId) get().markLocallyRead(conversationId);
+        const userId = String(
+          (event.data as Record<string, unknown>)?.user_id ?? "",
+        );
+        if (userId === state.currentUserId)
+          get().markLocallyRead(conversationId);
         break;
       }
       case "typing": {
         const data = (event.data ?? {}) as Record<string, unknown>;
         const userId = String(data.user_id ?? "");
         if (userId && userId !== state.currentUserId) {
-          get().noteTyping(conversationId, userId, String(data.user_name ?? "Someone"));
+          get().noteTyping(
+            conversationId,
+            userId,
+            String(data.user_name ?? "Someone"),
+          );
         }
         break;
       }

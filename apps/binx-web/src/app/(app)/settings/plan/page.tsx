@@ -8,7 +8,7 @@
  * Stripe Billing Portal (existing subscriber) — see PlanPanel.
  *
  * @module apps/binx-web/src/app/(app)/settings/plan/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -42,16 +42,22 @@ const SettingsPlanPage = async () => {
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Plan &amp; usage</h2>
         <p className={styles.sectionSubtitle}>
-          {currentAgency.name} is on the <strong>{subscription.limits.name}</strong> plan. Usage is measured
+          {currentAgency.name} is on the{" "}
+          <strong>{subscription.limits.name}</strong> plan. Usage is measured
           against that tier&apos;s limits.
         </p>
-        <PlanUsagePanel subscription={subscription} aiSpentCents={usage.month_spent_cents} />
+        <PlanUsagePanel
+          subscription={subscription}
+          aiSpentCents={usage.month_spent_cents}
+        />
       </section>
 
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Plans</h2>
         <p className={styles.sectionSubtitle}>
-          {isOwner ? "Switch plans at any time." : "Only the agency owner can change the plan."}
+          {isOwner
+            ? "Switch plans at any time."
+            : "Only the agency owner can change the plan."}
         </p>
         <PlanPanel
           agencyId={currentAgency.id}

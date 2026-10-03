@@ -12,7 +12,7 @@
  * projects/TaskDetailPanel so the content doesn't vanish mid-animation.
  *
  * @module apps/binx-web/src/components/team/MemberDetailDrawer/MemberDetailDrawer.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -59,7 +59,11 @@ function capitalize(value: string): string {
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+  return new Date(iso).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 }
 
 function formatRelative(iso: string): string {
@@ -92,7 +96,9 @@ const MemberDetailDrawer = ({
   // Reseed the editable fields whenever a different member is opened — done
   // during render (React's "adjust state on prop change"), same as
   // TaskDetailPanel. `undefined` so the first non-null member always seeds.
-  const [seededMemberId, setSeededMemberId] = useState<string | undefined>(undefined);
+  const [seededMemberId, setSeededMemberId] = useState<string | undefined>(
+    undefined,
+  );
   if (member && member.id !== seededMemberId) {
     setSeededMemberId(member.id);
     setTitle(member.title ?? "");
@@ -105,15 +111,20 @@ const MemberDetailDrawer = ({
   const currentMember = member;
   const isSelf = currentMember.user_id === currentUserId;
   const detailsDirty =
-    (currentMember.title ?? "") !== title.trim() || (currentMember.admin_notes ?? "") !== adminNotes.trim();
+    (currentMember.title ?? "") !== title.trim() ||
+    (currentMember.admin_notes ?? "") !== adminNotes.trim();
 
   const handleSaveDetails = (event: FormEvent) => {
     event.preventDefault();
     startSavingDetails(async () => {
-      const result = await updateMemberDetailsAction(agencyId, currentMember.id, {
-        title: title.trim() || null,
-        adminNotes: adminNotes.trim() || null,
-      });
+      const result = await updateMemberDetailsAction(
+        agencyId,
+        currentMember.id,
+        {
+          title: title.trim() || null,
+          adminNotes: adminNotes.trim() || null,
+        },
+      );
       if (result.error) {
         toast.error(result.error);
         return;
@@ -128,14 +139,20 @@ const MemberDetailDrawer = ({
   const handleRoleChange = (role: AgencyRole) => {
     if (role === currentMember.role) return;
     startSavingRole(async () => {
-      const result = await updateAgencyMemberRoleAction(agencyId, currentMember.id, role);
+      const result = await updateAgencyMemberRoleAction(
+        agencyId,
+        currentMember.id,
+        role,
+      );
       if (result.error) {
         toast.error(result.error);
         return;
       }
       if (result.member) {
         onMemberUpdated(result.member);
-        toast.success(`${currentMember.full_name} is now ${role === "admin" ? "an" : "a"} ${role}`);
+        toast.success(
+          `${currentMember.full_name} is now ${role === "admin" ? "an" : "a"} ${role}`,
+        );
       }
     });
   };
@@ -154,10 +171,17 @@ const MemberDetailDrawer = ({
   };
 
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange} onOpenChangeComplete={(isOpen) => !isOpen && onClosed()}>
+    <Dialog.Root
+      open={open}
+      onOpenChange={onOpenChange}
+      onOpenChangeComplete={(isOpen) => !isOpen && onClosed()}
+    >
       <Dialog.Portal>
         <Dialog.Backdrop className={styles.backdrop} />
-        <Dialog.Popup className={styles.panel} aria-label={`Member: ${currentMember.full_name}`}>
+        <Dialog.Popup
+          className={styles.panel}
+          aria-label={`Member: ${currentMember.full_name}`}
+        >
           <div className={styles.header}>
             <span className={styles.eyebrow}>Team member</span>
             <Dialog.Close className={styles.closeButton} aria-label="Close">
@@ -170,7 +194,12 @@ const MemberDetailDrawer = ({
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 className={styles.avatar}
-                src={memberImageUrl(agencyId, currentMember.id, "avatar", currentMember.avatar_version)}
+                src={memberImageUrl(
+                  agencyId,
+                  currentMember.id,
+                  "avatar",
+                  currentMember.avatar_version,
+                )}
                 alt=""
                 aria-hidden="true"
               />
@@ -184,7 +213,11 @@ const MemberDetailDrawer = ({
                 {currentMember.full_name}
                 {isSelf && <span className={styles.youBadge}>You</span>}
                 {currentMember.is_verified && (
-                  <span className={styles.verified} title="Verified account" aria-label="Verified account">
+                  <span
+                    className={styles.verified}
+                    title="Verified account"
+                    aria-label="Verified account"
+                  >
                     ✓
                   </span>
                 )}
@@ -196,7 +229,10 @@ const MemberDetailDrawer = ({
             </div>
           </div>
 
-          <Link href={`/team/${currentMember.id}`} className={styles.viewProfileLink}>
+          <Link
+            href={`/team/${currentMember.id}`}
+            className={styles.viewProfileLink}
+          >
             View full profile →
           </Link>
 
@@ -210,25 +246,35 @@ const MemberDetailDrawer = ({
             <dl className={styles.metaList}>
               <div className={styles.metaItem}>
                 <dt className={styles.metaLabel}>Personal title</dt>
-                <dd className={styles.metaValue}>{currentMember.job_title ?? "—"}</dd>
+                <dd className={styles.metaValue}>
+                  {currentMember.job_title ?? "—"}
+                </dd>
               </div>
               <div className={styles.metaItem}>
                 <dt className={styles.metaLabel}>Email</dt>
-                <dd className={styles.metaValue}>{currentMember.email ?? "Hidden"}</dd>
+                <dd className={styles.metaValue}>
+                  {currentMember.email ?? "Hidden"}
+                </dd>
               </div>
               <div className={styles.metaItem}>
                 <dt className={styles.metaLabel}>Phone</dt>
-                <dd className={styles.metaValue}>{currentMember.phone ?? "Hidden"}</dd>
+                <dd className={styles.metaValue}>
+                  {currentMember.phone ?? "Hidden"}
+                </dd>
               </div>
               <div className={styles.metaItem}>
                 <dt className={styles.metaLabel}>Last active</dt>
                 <dd className={styles.metaValue}>
-                  {currentMember.last_active_at ? formatRelative(currentMember.last_active_at) : "Hidden"}
+                  {currentMember.last_active_at
+                    ? formatRelative(currentMember.last_active_at)
+                    : "Hidden"}
                 </dd>
               </div>
               <div className={styles.metaItem}>
                 <dt className={styles.metaLabel}>Member since</dt>
-                <dd className={styles.metaValue}>{formatDate(currentMember.joined_at)}</dd>
+                <dd className={styles.metaValue}>
+                  {formatDate(currentMember.joined_at)}
+                </dd>
               </div>
             </dl>
           </section>
@@ -240,7 +286,9 @@ const MemberDetailDrawer = ({
                 className={styles.roleSelect}
                 value={currentMember.role}
                 disabled={isSavingRole}
-                onChange={(event) => handleRoleChange(event.target.value as AgencyRole)}
+                onChange={(event) =>
+                  handleRoleChange(event.target.value as AgencyRole)
+                }
                 aria-label={`Role for ${currentMember.full_name}`}
               >
                 {ROLE_OPTIONS.map((role) => (
@@ -249,7 +297,10 @@ const MemberDetailDrawer = ({
                   </option>
                 ))}
               </select>
-              <p className={styles.hint}>Admins can manage the roster and settings. Owners can also delete the agency.</p>
+              <p className={styles.hint}>
+                Admins can manage the roster and settings. Owners can also
+                delete the agency.
+              </p>
             </section>
           )}
 
@@ -283,7 +334,9 @@ const MemberDetailDrawer = ({
                     placeholder="Internal — only owners and admins can see this."
                     onChange={(event) => setAdminNotes(event.target.value)}
                   />
-                  <p className={styles.hint}>Only owners and admins can see these notes.</p>
+                  <p className={styles.hint}>
+                    Only owners and admins can see these notes.
+                  </p>
                 </div>
                 <button
                   type="submit"
@@ -301,7 +354,9 @@ const MemberDetailDrawer = ({
               <h3 className={styles.sectionTitle}>Danger zone</h3>
               {confirmingRemove ? (
                 <div className={styles.confirmRow}>
-                  <p className={styles.confirmText}>Remove {currentMember.full_name} from the agency?</p>
+                  <p className={styles.confirmText}>
+                    Remove {currentMember.full_name} from the agency?
+                  </p>
                   <div className={styles.confirmActions}>
                     <button
                       type="button"

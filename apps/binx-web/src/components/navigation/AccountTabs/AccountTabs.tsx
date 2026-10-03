@@ -7,7 +7,7 @@
  * ProjectTabs / ClientTabs use.
  *
  * @module apps/binx-web/src/components/navigation/AccountTabs/AccountTabs.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -27,7 +27,12 @@ const AccountTabs = () => {
   return (
     <nav className={styles.tabs} aria-label="Account settings">
       {TABS.map((tab) => (
-        <Link key={tab.href} href={tab.href} className={styles.tab} data-active={pathname === tab.href}>
+        <Link
+          key={tab.href}
+          href={tab.href}
+          className={styles.tab}
+          data-active={pathname === tab.href}
+        >
           {tab.label}
         </Link>
       ))}

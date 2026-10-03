@@ -9,7 +9,7 @@
  * embeds it. Source: public/binx-mark-mono.svg.
  *
  * @module apps/binx-web/src/components/BinxMark/BinxMark.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 interface BinxMarkProps {
   className?: string;

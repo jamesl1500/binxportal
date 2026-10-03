@@ -8,7 +8,7 @@
  * Component can't hold.
  *
  * @module apps/binx-web/src/components/portal/PortalMeetingsList/PortalMeetingsList.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -66,20 +66,27 @@ const PortalMeetingsList = ({ meetings }: PortalMeetingsListProps) => {
       {error && <p className={styles.error}>{error}</p>}
       <ul className={styles.list}>
         {sorted.map((meeting) => {
-          const canCancel = meeting.status === "scheduled" && isUpcoming(meeting.starts_at);
+          const canCancel =
+            meeting.status === "scheduled" && isUpcoming(meeting.starts_at);
           return (
             <li key={meeting.id} className={styles.row}>
               <div className={styles.info}>
                 <span className={styles.title}>{meeting.title}</span>
-                <span className={styles.when}>{formatWhen(meeting.starts_at)}</span>
-                {meeting.location && <span className={styles.location}>{meeting.location}</span>}
+                <span className={styles.when}>
+                  {formatWhen(meeting.starts_at)}
+                </span>
+                {meeting.location && (
+                  <span className={styles.location}>{meeting.location}</span>
+                )}
               </div>
               <div className={styles.meta}>
                 <span className={styles.status} data-status={meeting.status}>
                   {meeting.status === "cancelled" ? "Cancelled" : "Scheduled"}
                 </span>
                 <span className={styles.bookedBy}>
-                  {meeting.created_by_kind === "client" ? "You booked this" : "Scheduled for you"}
+                  {meeting.created_by_kind === "client"
+                    ? "You booked this"
+                    : "Scheduled for you"}
                 </span>
                 {canCancel && (
                   <button
@@ -88,7 +95,9 @@ const PortalMeetingsList = ({ meetings }: PortalMeetingsListProps) => {
                     onClick={() => handleCancel(meeting.id)}
                     disabled={isPending && cancellingId === meeting.id}
                   >
-                    {isPending && cancellingId === meeting.id ? "Cancelling…" : "Cancel"}
+                    {isPending && cancellingId === meeting.id
+                      ? "Cancelling…"
+                      : "Cancel"}
                   </button>
                 )}
               </div>

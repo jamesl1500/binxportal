@@ -8,7 +8,7 @@
  * Menu.Group throws at render time, but only once the menu actually opens).
  *
  * @module apps/binx-web/src/components/navigation/AppHeader/AppHeader.test.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -51,8 +51,20 @@ const testUser: CurrentUser = {
 };
 
 const testAgencies: AgencyRead[] = [
-  { id: "aaaaaaaa-1111-1111-1111-111111111111", name: "Acme Agency", slug: "acme-agency", role: "owner", has_logo: false },
-  { id: "bbbbbbbb-2222-2222-2222-222222222222", name: "Widgets Co", slug: "widgets-co", role: "member", has_logo: false },
+  {
+    id: "aaaaaaaa-1111-1111-1111-111111111111",
+    name: "Acme Agency",
+    slug: "acme-agency",
+    role: "owner",
+    has_logo: false,
+  },
+  {
+    id: "bbbbbbbb-2222-2222-2222-222222222222",
+    name: "Widgets Co",
+    slug: "widgets-co",
+    role: "member",
+    has_logo: false,
+  },
 ];
 
 beforeEach(() => {
@@ -69,31 +81,64 @@ const NAV_QUERY = { hidden: true } as const;
 
 describe("AppHeader", () => {
   it("renders the primary nav links", () => {
-    render(<AppHeader user={testUser} agencies={testAgencies} currentAgency={testAgencies[0]} />);
+    render(
+      <AppHeader
+        user={testUser}
+        agencies={testAgencies}
+        currentAgency={testAgencies[0]}
+      />,
+    );
 
-    expect(screen.getByRole("link", { name: "Dashboard", ...NAV_QUERY })).toHaveAttribute("href", "/dashboard");
-    expect(screen.getByRole("link", { name: "Clients", ...NAV_QUERY })).toHaveAttribute("href", "/clients");
-    expect(screen.getByRole("link", { name: "Projects", ...NAV_QUERY })).toHaveAttribute("href", "/projects");
+    expect(
+      screen.getByRole("link", { name: "Dashboard", ...NAV_QUERY }),
+    ).toHaveAttribute("href", "/dashboard");
+    expect(
+      screen.getByRole("link", { name: "Clients", ...NAV_QUERY }),
+    ).toHaveAttribute("href", "/clients");
+    expect(
+      screen.getByRole("link", { name: "Projects", ...NAV_QUERY }),
+    ).toHaveAttribute("href", "/projects");
   });
 
   it("shows the current agency in the org switcher", () => {
-    render(<AppHeader user={testUser} agencies={testAgencies} currentAgency={testAgencies[1]} />);
+    render(
+      <AppHeader
+        user={testUser}
+        agencies={testAgencies}
+        currentAgency={testAgencies[1]}
+      />,
+    );
 
-    expect(screen.getByRole("button", { name: "Switch agency" })).toHaveTextContent("Widgets Co");
+    expect(
+      screen.getByRole("button", { name: "Switch agency" }),
+    ).toHaveTextContent("Widgets Co");
   });
 
   it("opens the Manage dropdown and shows its links", async () => {
     const user = userEvent.setup();
-    render(<AppHeader user={testUser} agencies={testAgencies} currentAgency={testAgencies[0]} />);
+    render(
+      <AppHeader
+        user={testUser}
+        agencies={testAgencies}
+        currentAgency={testAgencies[0]}
+      />,
+    );
 
-    await user.click(screen.getByRole("button", { name: /manage/i, ...NAV_QUERY }));
+    await user.click(
+      screen.getByRole("button", { name: /manage/i, ...NAV_QUERY }),
+    );
 
     // The popup itself is portaled to document.body, outside the
     // responsively-hidden <nav>, so no hidden:true needed here. Menu.LinkItem
     // renders an <a> but exposes role="menuitem" (correct per the ARIA menu
     // pattern), not "link".
-    expect(await screen.findByRole("menuitem", { name: "Team" })).toHaveAttribute("href", "/team");
-    expect(screen.getByRole("menuitem", { name: "Proposals" })).toHaveAttribute("href", "/proposals");
+    expect(
+      await screen.findByRole("menuitem", { name: "Team" }),
+    ).toHaveAttribute("href", "/team");
+    expect(screen.getByRole("menuitem", { name: "Proposals" })).toHaveAttribute(
+      "href",
+      "/proposals",
+    );
   });
 
   // Regression test for: "Base UI: MenuGroupContext is missing. Menu group
@@ -103,57 +148,119 @@ describe("AppHeader", () => {
   // catch this class of bug — the menu has to actually be opened.
   it("opens the account dropdown and shows profile, settings, and sign out", async () => {
     const user = userEvent.setup();
-    render(<AppHeader user={testUser} agencies={testAgencies} currentAgency={testAgencies[0]} />);
+    render(
+      <AppHeader
+        user={testUser}
+        agencies={testAgencies}
+        currentAgency={testAgencies[0]}
+      />,
+    );
 
-    await user.click(screen.getByRole("button", { name: `${testUser.full_name} account menu` }));
+    await user.click(
+      screen.getByRole("button", {
+        name: `${testUser.full_name} account menu`,
+      }),
+    );
 
     expect(await screen.findByText(testUser.email)).toBeInTheDocument();
-    expect(screen.getByRole("menuitem", { name: "Profile" })).toHaveAttribute("href", "/profile");
-    expect(screen.getByRole("menuitem", { name: "Account settings" })).toHaveAttribute("href", "/account");
-    expect(screen.getByRole("menuitem", { name: "Agency settings" })).toHaveAttribute("href", "/settings");
-    expect(screen.getByRole("menuitem", { name: /sign out/i })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Profile" })).toHaveAttribute(
+      "href",
+      "/profile",
+    );
+    expect(
+      screen.getByRole("menuitem", { name: "Account settings" }),
+    ).toHaveAttribute("href", "/account");
+    expect(
+      screen.getByRole("menuitem", { name: "Agency settings" }),
+    ).toHaveAttribute("href", "/settings");
+    expect(
+      screen.getByRole("menuitem", { name: /sign out/i }),
+    ).toBeInTheDocument();
   });
 
   it("calls logoutAction when sign out is clicked", async () => {
     const user = userEvent.setup();
-    render(<AppHeader user={testUser} agencies={testAgencies} currentAgency={testAgencies[0]} />);
+    render(
+      <AppHeader
+        user={testUser}
+        agencies={testAgencies}
+        currentAgency={testAgencies[0]}
+      />,
+    );
 
-    await user.click(screen.getByRole("button", { name: `${testUser.full_name} account menu` }));
-    await user.click(await screen.findByRole("menuitem", { name: /sign out/i }));
+    await user.click(
+      screen.getByRole("button", {
+        name: `${testUser.full_name} account menu`,
+      }),
+    );
+    await user.click(
+      await screen.findByRole("menuitem", { name: /sign out/i }),
+    );
 
     expect(mockedLogoutAction).toHaveBeenCalledOnce();
   });
 
   it("opens the guided tour from the help launcher", async () => {
     const user = userEvent.setup();
-    render(<AppHeader user={testUser} agencies={testAgencies} currentAgency={testAgencies[0]} />);
+    render(
+      <AppHeader
+        user={testUser}
+        agencies={testAgencies}
+        currentAgency={testAgencies[0]}
+      />,
+    );
 
-    await user.click(screen.getByRole("button", { name: "Open the guided tour" }));
+    await user.click(
+      screen.getByRole("button", { name: "Open the guided tour" }),
+    );
 
     expect(mockedOpenTour).toHaveBeenCalledOnce();
   });
 
   it("opens the mobile nav disclosure with every destination, marks the active page, and closes on selection", async () => {
     const user = userEvent.setup();
-    render(<AppHeader user={testUser} agencies={testAgencies} currentAgency={testAgencies[0]} unreadMessages={3} />);
+    render(
+      <AppHeader
+        user={testUser}
+        agencies={testAgencies}
+        currentAgency={testAgencies[0]}
+        unreadMessages={3}
+      />,
+    );
 
     const toggle = screen.getByRole("button", { name: "Open navigation" });
     expect(toggle).toHaveAttribute("aria-expanded", "false");
 
     await user.click(toggle);
 
-    expect(screen.getByRole("button", { name: "Close navigation" })).toHaveAttribute("aria-expanded", "true");
+    expect(
+      screen.getByRole("button", { name: "Close navigation" }),
+    ).toHaveAttribute("aria-expanded", "true");
 
     const mobileNav = screen.getByRole("navigation", { name: "Primary" });
-    expect(within(mobileNav).getByRole("link", { name: /Dashboard/ })).toHaveAttribute("aria-current", "page");
-    expect(within(mobileNav).getByRole("link", { name: "Leads" })).toHaveAttribute("href", "/leads");
-    expect(within(mobileNav).getByRole("link", { name: "Team" })).toHaveAttribute("href", "/team");
-    expect(within(mobileNav).getByRole("link", { name: "Proposals" })).toHaveAttribute("href", "/proposals");
-    expect(within(mobileNav).getByRole("link", { name: /Messages/ })).toHaveTextContent("3");
+    expect(
+      within(mobileNav).getByRole("link", { name: /Dashboard/ }),
+    ).toHaveAttribute("aria-current", "page");
+    expect(
+      within(mobileNav).getByRole("link", { name: "Leads" }),
+    ).toHaveAttribute("href", "/leads");
+    expect(
+      within(mobileNav).getByRole("link", { name: "Team" }),
+    ).toHaveAttribute("href", "/team");
+    expect(
+      within(mobileNav).getByRole("link", { name: "Proposals" }),
+    ).toHaveAttribute("href", "/proposals");
+    expect(
+      within(mobileNav).getByRole("link", { name: /Messages/ }),
+    ).toHaveTextContent("3");
 
     await user.click(within(mobileNav).getByRole("link", { name: "Leads" }));
 
-    expect(screen.getByRole("button", { name: "Open navigation" })).toHaveAttribute("aria-expanded", "false");
-    expect(screen.queryByRole("navigation", { name: "Primary" })).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Open navigation" }),
+    ).toHaveAttribute("aria-expanded", "false");
+    expect(
+      screen.queryByRole("navigation", { name: "Primary" }),
+    ).not.toBeInTheDocument();
   });
 });

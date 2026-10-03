@@ -7,12 +7,16 @@
  * "Print / Save as PDF" produces the invoice alone.
  *
  * @module apps/binx-web/src/components/invoices/InvoiceView/InvoiceView.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
 import type { InvoiceDetail } from "@/lib/invoicing";
-import { formatMoneyCents, invoiceStatusLabel, PAYMENT_METHOD_LABELS } from "@/lib/money";
+import {
+  formatMoneyCents,
+  invoiceStatusLabel,
+  PAYMENT_METHOD_LABELS,
+} from "@/lib/money";
 
 import styles from "./InvoiceView.module.scss";
 
@@ -67,15 +71,25 @@ const InvoiceView = ({ invoice }: InvoiceViewProps) => {
         <section>
           <h2 className={styles.partyLabel}>From</h2>
           <p className={styles.partyName}>{invoice.from.name ?? "—"}</p>
-          {invoice.from.address && <p className={styles.partyLine}>{invoice.from.address}</p>}
-          {invoice.from.email && <p className={styles.partyLine}>{invoice.from.email}</p>}
-          {invoice.from.tax_id && <p className={styles.partyLine}>Tax ID: {invoice.from.tax_id}</p>}
+          {invoice.from.address && (
+            <p className={styles.partyLine}>{invoice.from.address}</p>
+          )}
+          {invoice.from.email && (
+            <p className={styles.partyLine}>{invoice.from.email}</p>
+          )}
+          {invoice.from.tax_id && (
+            <p className={styles.partyLine}>Tax ID: {invoice.from.tax_id}</p>
+          )}
         </section>
         <section>
           <h2 className={styles.partyLabel}>Bill to</h2>
           <p className={styles.partyName}>{invoice.bill_to.name}</p>
-          {invoice.bill_to.address && <p className={styles.partyLine}>{invoice.bill_to.address}</p>}
-          {invoice.bill_to.email && <p className={styles.partyLine}>{invoice.bill_to.email}</p>}
+          {invoice.bill_to.address && (
+            <p className={styles.partyLine}>{invoice.bill_to.address}</p>
+          )}
+          {invoice.bill_to.email && (
+            <p className={styles.partyLine}>{invoice.bill_to.email}</p>
+          )}
         </section>
       </div>
 
@@ -93,9 +107,15 @@ const InvoiceView = ({ invoice }: InvoiceViewProps) => {
             {invoice.line_items.map((item) => (
               <tr key={item.id}>
                 <td>{item.description}</td>
-                <td className={styles.numCol}>{quantityLabel(item.quantity)}</td>
-                <td className={styles.numCol}>{formatMoneyCents(item.unit_price_cents, currency)}</td>
-                <td className={styles.numCol}>{formatMoneyCents(item.amount_cents, currency)}</td>
+                <td className={styles.numCol}>
+                  {quantityLabel(item.quantity)}
+                </td>
+                <td className={styles.numCol}>
+                  {formatMoneyCents(item.unit_price_cents, currency)}
+                </td>
+                <td className={styles.numCol}>
+                  {formatMoneyCents(item.amount_cents, currency)}
+                </td>
               </tr>
             ))}
             {invoice.line_items.length === 0 && (
@@ -118,7 +138,8 @@ const InvoiceView = ({ invoice }: InvoiceViewProps) => {
           <div>
             <dt>
               Discount
-              {invoice.discount_percent != null && ` (${Number.parseFloat(invoice.discount_percent)}%)`}
+              {invoice.discount_percent != null &&
+                ` (${Number.parseFloat(invoice.discount_percent)}%)`}
             </dt>
             <dd>−{formatMoneyCents(invoice.discount_cents, currency)}</dd>
           </div>
@@ -154,9 +175,15 @@ const InvoiceView = ({ invoice }: InvoiceViewProps) => {
             {invoice.payments.map((payment) => (
               <li key={payment.id}>
                 <span>{formatDate(payment.paid_on)}</span>
-                <span>{PAYMENT_METHOD_LABELS[payment.method] ?? payment.method}</span>
-                <span className={styles.paymentRef}>{payment.reference ?? ""}</span>
-                <span className={styles.paymentAmount}>{formatMoneyCents(payment.amount_cents, currency)}</span>
+                <span>
+                  {PAYMENT_METHOD_LABELS[payment.method] ?? payment.method}
+                </span>
+                <span className={styles.paymentRef}>
+                  {payment.reference ?? ""}
+                </span>
+                <span className={styles.paymentAmount}>
+                  {formatMoneyCents(payment.amount_cents, currency)}
+                </span>
               </li>
             ))}
           </ul>

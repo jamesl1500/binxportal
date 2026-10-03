@@ -12,7 +12,7 @@
  * refreshes the route to fetch it. This component never fetches on its own.
  *
  * @module apps/binx-web/src/components/projects/ProjectDashboardGrid/ProjectDashboardGrid.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -62,9 +62,15 @@ const ProjectDashboardGrid = ({
 }: ProjectDashboardGridProps) => {
   const router = useRouter();
   const [, startTransition] = useTransition();
-  const [order, setOrder] = useState<ProjectWidgetId[]>(() => normalizeProjectWidgetOrder(initialOrder));
-  const [hidden, setHidden] = useState<Set<ProjectWidgetId>>(() => new Set(knownProjectWidgetIds(initialHidden)));
-  const [wide, setWide] = useState<Set<ProjectWidgetId>>(() => new Set(knownProjectWidgetIds(initialWide)));
+  const [order, setOrder] = useState<ProjectWidgetId[]>(() =>
+    normalizeProjectWidgetOrder(initialOrder),
+  );
+  const [hidden, setHidden] = useState<Set<ProjectWidgetId>>(
+    () => new Set(knownProjectWidgetIds(initialHidden)),
+  );
+  const [wide, setWide] = useState<Set<ProjectWidgetId>>(
+    () => new Set(knownProjectWidgetIds(initialWide)),
+  );
   const [customizing, setCustomizing] = useState(false);
   const [draggedId, setDraggedId] = useState<ProjectWidgetId | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -77,7 +83,11 @@ const ProjectDashboardGrid = ({
   ) => {
     setError(null);
     startTransition(async () => {
-      const result = await updateProjectDashboardLayoutAction(nextOrder, Array.from(nextHidden), Array.from(nextWide));
+      const result = await updateProjectDashboardLayoutAction(
+        nextOrder,
+        Array.from(nextHidden),
+        Array.from(nextWide),
+      );
       if (result.error) {
         setError(result.error);
         return;
@@ -93,7 +103,9 @@ const ProjectDashboardGrid = ({
     if (showing) next.delete(id);
     else next.add(id);
     setHidden(next);
-    persist(order, next, wide, { refresh: showing && widgets[id] === undefined });
+    persist(order, next, wide, {
+      refresh: showing && widgets[id] === undefined,
+    });
   };
 
   const toggleWide = (id: ProjectWidgetId) => {
@@ -122,7 +134,9 @@ const ProjectDashboardGrid = ({
     setHidden(nextHidden);
     setWide(nextWide);
     persist(nextOrder, nextHidden, nextWide, {
-      refresh: nextOrder.some((id) => !nextHidden.has(id) && widgets[id] === undefined),
+      refresh: nextOrder.some(
+        (id) => !nextHidden.has(id) && widgets[id] === undefined,
+      ),
     });
   };
 
@@ -138,7 +152,9 @@ const ProjectDashboardGrid = ({
     persist(next, hidden, wide);
   };
 
-  const visibleOrder = customizing ? order : order.filter((id) => !hidden.has(id));
+  const visibleOrder = customizing
+    ? order
+    : order.filter((id) => !hidden.has(id));
 
   return (
     <div>
@@ -159,20 +175,26 @@ const ProjectDashboardGrid = ({
           onClick={() => setCustomizing((value) => !value)}
           aria-pressed={customizing}
         >
-          {customizing ? <Check aria-hidden="true" /> : <Settings2 aria-hidden="true" />}
+          {customizing ? (
+            <Check aria-hidden="true" />
+          ) : (
+            <Settings2 aria-hidden="true" />
+          )}
           {customizing ? "Done" : "Customize"}
         </button>
       </div>
 
       {customizing && (
         <p className={styles.customizeHint}>
-          Drag cards (or use the arrows) to reorder, resize them, and hide what you don&apos;t need. Your layout
-          applies to every project you open.
+          Drag cards (or use the arrows) to reorder, resize them, and hide what
+          you don&apos;t need. Your layout applies to every project you open.
         </p>
       )}
 
       {visibleOrder.length === 0 ? (
-        <p className={styles.emptyNotice}>Every widget is hidden. Use Customize to bring some back.</p>
+        <p className={styles.emptyNotice}>
+          Every widget is hidden. Use Customize to bring some back.
+        </p>
       ) : (
         <div className={styles.grid} data-customizing={customizing}>
           {visibleOrder.map((id, index) => {
@@ -235,19 +257,33 @@ const ProjectDashboardGrid = ({
                         type="button"
                         className={styles.iconButton}
                         onClick={() => toggleWide(id)}
-                        aria-label={isWide ? `Make ${meta.title} half width` : `Make ${meta.title} full width`}
+                        aria-label={
+                          isWide
+                            ? `Make ${meta.title} half width`
+                            : `Make ${meta.title} full width`
+                        }
                         aria-pressed={isWide}
                       >
-                        {isWide ? <Minimize2 aria-hidden="true" /> : <Maximize2 aria-hidden="true" />}
+                        {isWide ? (
+                          <Minimize2 aria-hidden="true" />
+                        ) : (
+                          <Maximize2 aria-hidden="true" />
+                        )}
                       </button>
                       <button
                         type="button"
                         className={styles.iconButton}
                         onClick={() => toggleHidden(id)}
-                        aria-label={isHidden ? `Show ${meta.title}` : `Hide ${meta.title}`}
+                        aria-label={
+                          isHidden ? `Show ${meta.title}` : `Hide ${meta.title}`
+                        }
                         aria-pressed={isHidden}
                       >
-                        {isHidden ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
+                        {isHidden ? (
+                          <EyeOff aria-hidden="true" />
+                        ) : (
+                          <Eye aria-hidden="true" />
+                        )}
                       </button>
                     </div>
                   ) : (

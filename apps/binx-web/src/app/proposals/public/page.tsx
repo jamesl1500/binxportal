@@ -8,7 +8,7 @@
  * token alone scopes the request (see `lib/proposals.ts#getPublicProposal`).
  *
  * @module apps/binx-web/src/app/proposals/public/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 
@@ -19,14 +19,21 @@ import PublicProposalActions from "@/components/proposals/PublicProposalActions/
 
 import styles from "./page.module.scss";
 
-export const metadata: Metadata = { title: "Proposal", robots: { index: false, follow: false } };
+export const metadata: Metadata = {
+  title: "Proposal",
+  robots: { index: false, follow: false },
+};
 
 interface PublicProposalPageProps {
   searchParams: Promise<{ token?: string }>;
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+  return new Date(iso).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 }
 
 function quantityLabel(quantity: string): string {
@@ -34,7 +41,9 @@ function quantityLabel(quantity: string): string {
   return Number.isInteger(n) ? String(n) : quantity;
 }
 
-const PublicProposalPage = async ({ searchParams }: PublicProposalPageProps) => {
+const PublicProposalPage = async ({
+  searchParams,
+}: PublicProposalPageProps) => {
   const { token } = await searchParams;
 
   let proposal: Awaited<ReturnType<typeof getPublicProposal>> | null = null;
@@ -46,7 +55,10 @@ const PublicProposalPage = async ({ searchParams }: PublicProposalPageProps) => 
     try {
       proposal = await getPublicProposal(token);
     } catch (error) {
-      tokenError = error instanceof Error ? error.message : "This proposal link is invalid or has expired.";
+      tokenError =
+        error instanceof Error
+          ? error.message
+          : "This proposal link is invalid or has expired.";
     }
   }
 
@@ -63,7 +75,8 @@ const PublicProposalPage = async ({ searchParams }: PublicProposalPageProps) => 
   }
 
   const currency = proposal.currency;
-  const awaitingDecision = proposal.display_status === "sent" || proposal.display_status === "viewed";
+  const awaitingDecision =
+    proposal.display_status === "sent" || proposal.display_status === "viewed";
 
   return (
     <div className={styles.page}>
@@ -76,12 +89,20 @@ const PublicProposalPage = async ({ searchParams }: PublicProposalPageProps) => 
           </span>
         </header>
 
-        {proposal.recipient_name && <p className={styles.subtitle}>Prepared for {proposal.recipient_name}</p>}
+        {proposal.recipient_name && (
+          <p className={styles.subtitle}>
+            Prepared for {proposal.recipient_name}
+          </p>
+        )}
         {proposal.valid_until && (
-          <p className={styles.subtitle}>Valid until {formatDate(proposal.valid_until)}</p>
+          <p className={styles.subtitle}>
+            Valid until {formatDate(proposal.valid_until)}
+          </p>
         )}
 
-        {proposal.content && <p className={styles.content}>{proposal.content}</p>}
+        {proposal.content && (
+          <p className={styles.content}>{proposal.content}</p>
+        )}
 
         <div className={styles.tableScroll}>
           <table className={styles.lineTable}>
@@ -97,9 +118,15 @@ const PublicProposalPage = async ({ searchParams }: PublicProposalPageProps) => 
               {proposal.line_items.map((item) => (
                 <tr key={item.id}>
                   <td>{item.description}</td>
-                  <td className={styles.numCol}>{quantityLabel(item.quantity)}</td>
-                  <td className={styles.numCol}>{formatMoneyCents(item.unit_price_cents, currency)}</td>
-                  <td className={styles.numCol}>{formatMoneyCents(item.amount_cents, currency)}</td>
+                  <td className={styles.numCol}>
+                    {quantityLabel(item.quantity)}
+                  </td>
+                  <td className={styles.numCol}>
+                    {formatMoneyCents(item.unit_price_cents, currency)}
+                  </td>
+                  <td className={styles.numCol}>
+                    {formatMoneyCents(item.amount_cents, currency)}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -125,9 +152,12 @@ const PublicProposalPage = async ({ searchParams }: PublicProposalPageProps) => 
 
         {proposal.signature && (
           <div className={styles.decision}>
-            <p className={styles.decisionTitle}>Signed by {proposal.signature.signer_name}</p>
+            <p className={styles.decisionTitle}>
+              Signed by {proposal.signature.signer_name}
+            </p>
             <p className={styles.decisionLine}>
-              {proposal.signature.signer_email} · {formatDate(proposal.signature.signed_at)}
+              {proposal.signature.signer_email} ·{" "}
+              {formatDate(proposal.signature.signed_at)}
             </p>
           </div>
         )}
@@ -141,13 +171,18 @@ const PublicProposalPage = async ({ searchParams }: PublicProposalPageProps) => 
         {proposal.display_status === "expired" && (
           <div className={styles.decision}>
             <p className={styles.decisionTitle}>This proposal has expired.</p>
-            <p className={styles.decisionLine}>Ask {proposal.agency_name} to resend it.</p>
+            <p className={styles.decisionLine}>
+              Ask {proposal.agency_name} to resend it.
+            </p>
           </div>
         )}
 
         {awaitingDecision && (
           <div className={styles.actions}>
-            <PublicProposalActions token={token} recipientName={proposal.recipient_name} />
+            <PublicProposalActions
+              token={token}
+              recipientName={proposal.recipient_name}
+            />
           </div>
         )}
       </div>

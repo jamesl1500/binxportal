@@ -4,7 +4,7 @@
  * Draft-proposal editor. binx-api assigns the share token on creation.
  *
  * @module apps/binx-web/src/app/(app)/proposals/new/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -29,7 +29,10 @@ const NewProposalPage = async ({ searchParams }: NewProposalPageProps) => {
     redirect("/onboarding/two");
   }
 
-  const [{ client }, clients] = await Promise.all([searchParams, getAgencyClients(currentAgency.id)]);
+  const [{ client }, clients] = await Promise.all([
+    searchParams,
+    getAgencyClients(currentAgency.id),
+  ]);
 
   return (
     <div>
@@ -40,7 +43,9 @@ const NewProposalPage = async ({ searchParams }: NewProposalPageProps) => {
         <div>
           <span className={styles.eyebrow}>Proposals</span>
           <h1 className={styles.title}>New proposal</h1>
-          <p className={styles.subtitle}>Draft it here — you can review before sending.</p>
+          <p className={styles.subtitle}>
+            Draft it here — you can review before sending.
+          </p>
         </div>
       </div>
 

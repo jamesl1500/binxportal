@@ -11,7 +11,7 @@
  * The pattern is lifted from `MessagingProvider.tsx`.
  *
  * @module apps/binx-web/src/components/boards/BoardProvider/BoardProvider.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -36,7 +36,13 @@ function wsBaseUrl(): string | null {
   return httpBase.replace(/^http/, "ws").replace(/\/$/, "");
 }
 
-const BoardProvider = ({ boardId, currentUserId, initialItems, resync, children }: BoardProviderProps) => {
+const BoardProvider = ({
+  boardId,
+  currentUserId,
+  initialItems,
+  resync,
+  children,
+}: BoardProviderProps) => {
   const seed = useBoardStore((s) => s.seed);
   const setItems = useBoardStore((s) => s.setItems);
   const applyEvent = useBoardStore((s) => s.applyEvent);
@@ -73,7 +79,9 @@ const BoardProvider = ({ boardId, currentUserId, initialItems, resync, children 
 
       let ticket: string;
       try {
-        const response = await fetch("/api/messages/ws-ticket", { method: "POST" });
+        const response = await fetch("/api/messages/ws-ticket", {
+          method: "POST",
+        });
         if (!response.ok) throw new Error("ticket");
         ({ ticket } = await response.json());
       } catch {
@@ -87,7 +95,9 @@ const BoardProvider = ({ boardId, currentUserId, initialItems, resync, children 
         return;
       }
 
-      const socket = new WebSocket(`${wsBase}/ws/messages?ticket=${encodeURIComponent(ticket)}`);
+      const socket = new WebSocket(
+        `${wsBase}/ws/messages?ticket=${encodeURIComponent(ticket)}`,
+      );
       socketRef.current = socket;
 
       socket.onopen = () => {
@@ -134,7 +144,8 @@ const BoardProvider = ({ boardId, currentUserId, initialItems, resync, children 
     };
     document.addEventListener("visibilitychange", onVisible);
     const interval = setInterval(() => {
-      if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) void doResync();
+      if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN)
+        void doResync();
     }, 20_000);
     return () => {
       document.removeEventListener("visibilitychange", onVisible);

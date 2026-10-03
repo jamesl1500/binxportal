@@ -8,7 +8,7 @@
  * header/tabs.
  *
  * @module apps/binx-web/src/app/(app)/projects/[projectId]/kickoff/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";

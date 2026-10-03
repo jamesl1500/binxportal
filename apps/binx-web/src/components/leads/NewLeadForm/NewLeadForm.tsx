@@ -7,7 +7,7 @@
  * dialog-hosted create flow didn't. Replaces the old CreateLeadDialog.
  *
  * @module apps/binx-web/src/components/leads/NewLeadForm/NewLeadForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -22,7 +22,12 @@ interface NewLeadFormProps {
 const NewLeadForm = ({ agencyId }: NewLeadFormProps) => {
   const router = useRouter();
 
-  return <LeadForm agencyId={agencyId} onSuccess={(lead) => router.push(`/leads/${lead.id}`)} />;
+  return (
+    <LeadForm
+      agencyId={agencyId}
+      onSuccess={(lead) => router.push(`/leads/${lead.id}`)}
+    />
+  );
 };
 
 export default NewLeadForm;

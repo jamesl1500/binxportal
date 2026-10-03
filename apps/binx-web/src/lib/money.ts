@@ -7,7 +7,7 @@
  * `lib/invoicing.ts` (server-only).
  *
  * @module apps/binx-web/src/lib/money.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 
 /** A single point on a time series (a month's collected revenue, …). */
@@ -19,7 +19,10 @@ export interface TimePoint {
 /** Whole-cents → a currency string, e.g. formatMoneyCents(342563, "USD") → "$3,425.63". */
 export function formatMoneyCents(cents: number, currency = "USD"): string {
   try {
-    return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(cents / 100);
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency,
+    }).format(cents / 100);
   } catch {
     // An unknown currency code — fall back to a plain number with the code.
     return `${(cents / 100).toFixed(2)} ${currency}`;
@@ -70,13 +73,21 @@ export function deriveDisplayStatus(invoice: {
   total_cents: number;
   amount_paid_cents: number;
 }): InvoiceDisplayStatus {
-  if (invoice.status === "void" || invoice.status === "paid" || invoice.status === "draft") {
+  if (
+    invoice.status === "void" ||
+    invoice.status === "paid" ||
+    invoice.status === "draft"
+  ) {
     return invoice.status;
   }
   const due = invoice.total_cents - invoice.amount_paid_cents;
   const today = new Date().toISOString().slice(0, 10);
   if (due > 0 && invoice.due_date < today) return "overdue";
-  if (invoice.amount_paid_cents > 0 && invoice.amount_paid_cents < invoice.total_cents) return "partial";
+  if (
+    invoice.amount_paid_cents > 0 &&
+    invoice.amount_paid_cents < invoice.total_cents
+  )
+    return "partial";
   return "sent";
 }
 

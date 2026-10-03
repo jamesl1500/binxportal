@@ -5,7 +5,7 @@
  * signing up. FAQ content is mirrored into FAQPage JSON-LD for rich results.
  *
  * @module apps/binx-web/src/app/(marketing)/pricing/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -102,8 +102,9 @@ const PricingPage = () => {
             <span className={styles.eyebrow}>Pricing</span>
             <h1 className={styles.h1}>Plans that grow with the agency.</h1>
             <p className={styles.lead}>
-              Start free, upgrade when the work does. Every plan includes proposals, the client portal, invoicing and
-              AI. The tiers just change how much of everything you get.
+              Start free, upgrade when the work does. Every plan includes
+              proposals, the client portal, invoicing and AI. The tiers just
+              change how much of everything you get.
             </p>
             <p className={styles.lead}>
               {LAUNCH_DISCOUNT_ENABLED
@@ -118,12 +119,22 @@ const PricingPage = () => {
         <div className={styles.container}>
           <div className={styles.priceGrid}>
             {PLANS.map((plan) => (
-              <div key={plan.name} className={styles.priceCard} data-featured={plan.featured}>
+              <div
+                key={plan.name}
+                className={styles.priceCard}
+                data-featured={plan.featured}
+              >
                 <p className={styles.priceName}>{plan.name}</p>
                 <p className={styles.priceTag}>${plan.price}</p>
-                <p className={styles.pricePer}>{plan.price === 0 ? "forever" : "per month"}</p>
+                <p className={styles.pricePer}>
+                  {plan.price === 0 ? "forever" : "per month"}
+                </p>
                 <p className={styles.priceBlurb}>{plan.blurb}</p>
-                {plan.price > 0 && <p className={styles.priceBlurb}>{TRIAL_DAYS} days free, no card needed.</p>}
+                {plan.price > 0 && (
+                  <p className={styles.priceBlurb}>
+                    {TRIAL_DAYS} days free, no card needed.
+                  </p>
+                )}
                 <ul className={styles.priceList}>
                   {plan.features.map((feature) => (
                     <li key={feature}>{feature}</li>
@@ -159,7 +170,10 @@ const PricingPage = () => {
         </div>
       </section>
 
-      <MarketingCta heading="Try it on the free plan." sub="No card, no time limit. Upgrade the day it pays off." />
+      <MarketingCta
+        heading="Try it on the free plan."
+        sub="No card, no time limit. Upgrade the day it pays off."
+      />
     </>
   );
 };

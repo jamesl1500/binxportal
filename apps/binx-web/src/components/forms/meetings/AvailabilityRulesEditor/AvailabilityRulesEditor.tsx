@@ -13,7 +13,7 @@
  * (Sunday=0). `WEEKDAYS` below is the single place that mapping lives.
  *
  * @module apps/binx-web/src/components/forms/meetings/AvailabilityRulesEditor/AvailabilityRulesEditor.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -43,11 +43,21 @@ interface Block {
 }
 
 function newBlockId(): string {
-  return typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : String(Math.random());
+  return typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : String(Math.random());
 }
 
 function blocksByWeekday(rules: AvailabilityRule[]): Record<number, Block[]> {
-  const grouped: Record<number, Block[]> = { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
+  const grouped: Record<number, Block[]> = {
+    0: [],
+    1: [],
+    2: [],
+    3: [],
+    4: [],
+    5: [],
+    6: [],
+  };
   for (const rule of rules) {
     grouped[rule.weekday]?.push({
       id: newBlockId(),
@@ -64,31 +74,50 @@ interface AvailabilityRulesEditorProps {
   canManage: boolean;
 }
 
-const AvailabilityRulesEditor = ({ agencyId, initialRules, canManage }: AvailabilityRulesEditorProps) => {
+const AvailabilityRulesEditor = ({
+  agencyId,
+  initialRules,
+  canManage,
+}: AvailabilityRulesEditorProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
-  const [byWeekday, setByWeekday] = useState<Record<number, Block[]>>(() => blocksByWeekday(initialRules));
+  const [byWeekday, setByWeekday] = useState<Record<number, Block[]>>(() =>
+    blocksByWeekday(initialRules),
+  );
 
   const addBlock = (weekday: number) => {
     setSaved(false);
     setByWeekday((prev) => ({
       ...prev,
-      [weekday]: [...prev[weekday], { id: newBlockId(), startTime: "09:00", endTime: "17:00" }],
+      [weekday]: [
+        ...prev[weekday],
+        { id: newBlockId(), startTime: "09:00", endTime: "17:00" },
+      ],
     }));
   };
 
   const removeBlock = (weekday: number, blockId: string) => {
     setSaved(false);
-    setByWeekday((prev) => ({ ...prev, [weekday]: prev[weekday].filter((block) => block.id !== blockId) }));
+    setByWeekday((prev) => ({
+      ...prev,
+      [weekday]: prev[weekday].filter((block) => block.id !== blockId),
+    }));
   };
 
-  const updateBlock = (weekday: number, blockId: string, field: "startTime" | "endTime", value: string) => {
+  const updateBlock = (
+    weekday: number,
+    blockId: string,
+    field: "startTime" | "endTime",
+    value: string,
+  ) => {
     setSaved(false);
     setByWeekday((prev) => ({
       ...prev,
-      [weekday]: prev[weekday].map((block) => (block.id === blockId ? { ...block, [field]: value } : block)),
+      [weekday]: prev[weekday].map((block) =>
+        block.id === blockId ? { ...block, [field]: value } : block,
+      ),
     }));
   };
 
@@ -96,14 +125,20 @@ const AvailabilityRulesEditor = ({ agencyId, initialRules, canManage }: Availabi
     setFormError(null);
     setSaved(false);
 
-    const invalid = WEEKDAYS.some(({ weekday }) => byWeekday[weekday].some((b) => b.startTime >= b.endTime));
+    const invalid = WEEKDAYS.some(({ weekday }) =>
+      byWeekday[weekday].some((b) => b.startTime >= b.endTime),
+    );
     if (invalid) {
       setFormError("Each block's end time must be after its start time.");
       return;
     }
 
     const rules = WEEKDAYS.flatMap(({ weekday }) =>
-      byWeekday[weekday].map((block) => ({ weekday, start_time: block.startTime, end_time: block.endTime })),
+      byWeekday[weekday].map((block) => ({
+        weekday,
+        start_time: block.startTime,
+        end_time: block.endTime,
+      })),
     );
 
     startTransition(async () => {
@@ -118,7 +153,11 @@ const AvailabilityRulesEditor = ({ agencyId, initialRules, canManage }: Availabi
   };
 
   if (!canManage) {
-    return <p className={styles.readonlyNote}>Only an owner or admin can change the availability schedule.</p>;
+    return (
+      <p className={styles.readonlyNote}>
+        Only an owner or admin can change the availability schedule.
+      </p>
+    );
   }
 
   return (
@@ -127,14 +166,23 @@ const AvailabilityRulesEditor = ({ agencyId, initialRules, canManage }: Availabi
         <div key={weekday} className={styles.dayRow}>
           <span className={styles.dayLabel}>{label}</span>
           <div className={styles.blocks}>
-            {byWeekday[weekday].length === 0 && <span className={styles.noBlocks}>Not available</span>}
+            {byWeekday[weekday].length === 0 && (
+              <span className={styles.noBlocks}>Not available</span>
+            )}
             {byWeekday[weekday].map((block) => (
               <div key={block.id} className={styles.block}>
                 <input
                   type="time"
                   className={styles.timeInput}
                   value={block.startTime}
-                  onChange={(event) => updateBlock(weekday, block.id, "startTime", event.target.value)}
+                  onChange={(event) =>
+                    updateBlock(
+                      weekday,
+                      block.id,
+                      "startTime",
+                      event.target.value,
+                    )
+                  }
                   aria-label={`${label} block start time`}
                 />
                 <span className={styles.blockSeparator}>–</span>
@@ -142,7 +190,14 @@ const AvailabilityRulesEditor = ({ agencyId, initialRules, canManage }: Availabi
                   type="time"
                   className={styles.timeInput}
                   value={block.endTime}
-                  onChange={(event) => updateBlock(weekday, block.id, "endTime", event.target.value)}
+                  onChange={(event) =>
+                    updateBlock(
+                      weekday,
+                      block.id,
+                      "endTime",
+                      event.target.value,
+                    )
+                  }
                   aria-label={`${label} block end time`}
                 />
                 <button
@@ -155,7 +210,11 @@ const AvailabilityRulesEditor = ({ agencyId, initialRules, canManage }: Availabi
                 </button>
               </div>
             ))}
-            <button type="button" className={styles.addBlock} onClick={() => addBlock(weekday)}>
+            <button
+              type="button"
+              className={styles.addBlock}
+              onClick={() => addBlock(weekday)}
+            >
               <Plus aria-hidden="true" /> Add time block
             </button>
           </div>
@@ -165,7 +224,12 @@ const AvailabilityRulesEditor = ({ agencyId, initialRules, canManage }: Availabi
       {formError && <p className={styles.formError}>{formError}</p>}
       {saved && <p className={styles.formSuccess}>Availability saved.</p>}
 
-      <button type="button" className={styles.submit} onClick={handleSave} disabled={isPending}>
+      <button
+        type="button"
+        className={styles.submit}
+        onClick={handleSave}
+        disabled={isPending}
+      >
         {isPending ? "Saving…" : "Save availability"}
       </button>
     </div>

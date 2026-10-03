@@ -6,7 +6,7 @@
  * "Review & sign" — and everything already decided.
  *
  * @module apps/binx-web/src/app/(portal)/portal/proposals/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -32,13 +32,16 @@ const ProposalRow = ({ proposal }: { proposal: PortalProposal }) => (
         <span className={styles.title}>{proposal.title}</span>
         <span className={styles.meta}>
           Sent {formatDay(proposal.sent_at ?? proposal.created_at)}
-          {proposal.valid_until && ` · valid until ${formatDay(proposal.valid_until)}`}
+          {proposal.valid_until &&
+            ` · valid until ${formatDay(proposal.valid_until)}`}
         </span>
       </span>
       <span className={styles.status} data-status={proposal.display_status}>
         {proposalStatusLabel(proposal.display_status)}
       </span>
-      <span className={styles.amount}>{formatMoneyCents(proposal.total_cents, proposal.currency)}</span>
+      <span className={styles.amount}>
+        {formatMoneyCents(proposal.total_cents, proposal.currency)}
+      </span>
       <ChevronRight className={styles.chevron} aria-hidden="true" />
     </Link>
   </li>
@@ -68,7 +71,10 @@ const PortalProposalsPage = async () => {
       ) : (
         <>
           {awaiting.length > 0 && (
-            <section className={styles.section} aria-labelledby="awaiting-title">
+            <section
+              className={styles.section}
+              aria-labelledby="awaiting-title"
+            >
               <h2 id="awaiting-title" className={styles.sectionTitle}>
                 Awaiting your decision
               </h2>

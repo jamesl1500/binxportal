@@ -8,7 +8,7 @@
  * route.
  *
  * @module apps/binx-web/src/app/(auth)/onboarding/two/actions.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 "use server";
 
@@ -21,7 +21,9 @@ export interface CreateAgencyActionResult {
   error?: string;
 }
 
-export async function createAgencyAction(name: string): Promise<CreateAgencyActionResult> {
+export async function createAgencyAction(
+  name: string,
+): Promise<CreateAgencyActionResult> {
   try {
     await createAgency(name);
   } catch (error) {

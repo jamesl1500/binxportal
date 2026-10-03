@@ -17,7 +17,7 @@
  * "Thinking…" bubble covers the gap before the first token arrives.
  *
  * @module apps/binx-web/src/components/ai/AiModal/AiModal.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -36,7 +36,12 @@ import {
   resolveAiActionAction,
   updateAiPreferencesAction,
 } from "@/app/(app)/ai/actions";
-import type { AiAction, AiConversation, AiMessage, AiPreferences } from "@/lib/ai";
+import type {
+  AiAction,
+  AiConversation,
+  AiMessage,
+  AiPreferences,
+} from "@/lib/ai";
 import AiActionCard from "@/components/ai/AiActionCard/AiActionCard";
 import AiMarkdown from "@/components/ai/AiMarkdown/AiMarkdown";
 import AiSettingsMenu from "@/components/ai/AiSettingsMenu/AiSettingsMenu";
@@ -438,7 +443,8 @@ const AiModal = ({ agencyId, isOpen, onClose }: AiModalProps) => {
       finalize(finalText, actions);
       // Changes that already went through (confirmations off) may affect
       // the page behind the modal.
-      if (actions.some((action) => action.status === "applied")) router.refresh();
+      if (actions.some((action) => action.status === "applied"))
+        router.refresh();
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Unable to send that message",
@@ -451,9 +457,17 @@ const AiModal = ({ agencyId, isOpen, onClose }: AiModalProps) => {
     }
   };
 
-  const handleResolveAction = async (actionId: string, decision: "approve" | "decline") => {
+  const handleResolveAction = async (
+    actionId: string,
+    decision: "approve" | "decline",
+  ) => {
     if (!activeId) return;
-    const result = await resolveAiActionAction(agencyId, activeId, actionId, decision);
+    const result = await resolveAiActionAction(
+      agencyId,
+      activeId,
+      actionId,
+      decision,
+    );
     if (result.error || !result.action) {
       toast.error(result.error ?? "Unable to update that change");
       return;
@@ -462,7 +476,12 @@ const AiModal = ({ agencyId, isOpen, onClose }: AiModalProps) => {
     setMessages((prev) =>
       prev.map((message) =>
         message.actions.some((action) => action.id === actionId)
-          ? { ...message, actions: message.actions.map((action) => (action.id === actionId ? resolved : action)) }
+          ? {
+              ...message,
+              actions: message.actions.map((action) =>
+                action.id === actionId ? resolved : action,
+              ),
+            }
           : message,
       ),
     );
@@ -619,7 +638,11 @@ const AiModal = ({ agencyId, isOpen, onClose }: AiModalProps) => {
                       )}
                     </div>
                     {message.actions.map((action) => (
-                      <AiActionCard key={action.id} action={action} onResolve={handleResolveAction} />
+                      <AiActionCard
+                        key={action.id}
+                        action={action}
+                        onResolve={handleResolveAction}
+                      />
                     ))}
                   </div>
                 ))
@@ -649,7 +672,11 @@ const AiModal = ({ agencyId, isOpen, onClose }: AiModalProps) => {
                     )}
                   </div>
                   {streamingActions.map((action) => (
-                    <AiActionCard key={action.id} action={action} onResolve={handleResolveAction} />
+                    <AiActionCard
+                      key={action.id}
+                      action={action}
+                      onResolve={handleResolveAction}
+                    />
                   ))}
                 </div>
               )}

@@ -15,7 +15,7 @@
  * state, same "mutate then refetch" pattern as the rest of the app.
  *
  * @module apps/binx-web/src/components/forms/projects/KanbanBoard/KanbanBoard.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -31,7 +31,12 @@ import {
   moveTaskListAction,
   renameTaskListAction,
 } from "@/app/(app)/projects/[projectId]/actions";
-import type { BoardColumn, ProjectMember, ProjectTag, Task } from "@/lib/projects";
+import type {
+  BoardColumn,
+  ProjectMember,
+  ProjectTag,
+  Task,
+} from "@/lib/projects";
 import TaskDetailPanel from "@/components/forms/projects/TaskDetailPanel/TaskDetailPanel";
 
 import styles from "./KanbanBoard.module.scss";
@@ -48,7 +53,10 @@ interface KanbanBoardProps {
 }
 
 function formatDueDate(iso: string): string {
-  return new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  return new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
 }
 
 const KanbanBoard = ({
@@ -86,7 +94,10 @@ const KanbanBoard = ({
   const [dragOverListId, setDragOverListId] = useState<string | null>(null);
   const [draggedListId, setDraggedListId] = useState<string | null>(null);
 
-  const run = (action: () => Promise<{ error?: string }>, onSuccess?: () => void) => {
+  const run = (
+    action: () => Promise<{ error?: string }>,
+    onSuccess?: () => void,
+  ) => {
     setError(null);
     startTransition(async () => {
       const result = await action();
@@ -103,16 +114,22 @@ const KanbanBoard = ({
     event.preventDefault();
     const name = newListName.trim();
     if (!name) return;
-    run(() => createTaskListAction(agencyId, projectId, name), () => {
-      setNewListName("");
-      setAddingListOpen(false);
-    });
+    run(
+      () => createTaskListAction(agencyId, projectId, name),
+      () => {
+        setNewListName("");
+        setAddingListOpen(false);
+      },
+    );
   };
 
   const handleRenameList = (listId: string) => {
     const name = renameDraft.trim();
     if (!name) return;
-    run(() => renameTaskListAction(agencyId, projectId, listId, name), () => setRenamingListId(null));
+    run(
+      () => renameTaskListAction(agencyId, projectId, listId, name),
+      () => setRenamingListId(null),
+    );
   };
 
   const handleDeleteList = (listId: string) => {
@@ -124,7 +141,14 @@ const KanbanBoard = ({
     const title = newTaskTitle.trim();
     if (!title) return;
     run(
-      () => createTaskAction(agencyId, projectId, { listId, title, description: null, dueDate: null, assigneeId: null }),
+      () =>
+        createTaskAction(agencyId, projectId, {
+          listId,
+          title,
+          description: null,
+          dueDate: null,
+          assigneeId: null,
+        }),
       () => {
         setNewTaskTitle("");
         setAddingTaskListId(null);
@@ -144,7 +168,9 @@ const KanbanBoard = ({
     setDraggedTaskId(null);
     setDragOverListId(null);
     if (!taskId) return;
-    const task = columns.flatMap((column) => column.tasks).find((candidate) => candidate.id === taskId);
+    const task = columns
+      .flatMap((column) => column.tasks)
+      .find((candidate) => candidate.id === taskId);
     if (task) handleMoveTask(task, listId);
   };
 
@@ -158,7 +184,9 @@ const KanbanBoard = ({
       setDraggedListId(null);
       setDragOverListId(null);
       if (sourceListId === listId) return;
-      const targetPosition = columns.findIndex((column) => column.id === listId);
+      const targetPosition = columns.findIndex(
+        (column) => column.id === listId,
+      );
       if (targetPosition === -1) return;
       handleMoveList(sourceListId, targetPosition);
       return;
@@ -167,7 +195,9 @@ const KanbanBoard = ({
   };
 
   const selectedTask = selectedTaskId
-    ? columns.flatMap((column) => column.tasks).find((task) => task.id === selectedTaskId) ?? null
+    ? (columns
+        .flatMap((column) => column.tasks)
+        .find((task) => task.id === selectedTaskId) ?? null)
     : null;
 
   return (
@@ -183,7 +213,10 @@ const KanbanBoard = ({
           <div
             key={column.id}
             className={styles.column}
-            data-dragover={dragOverListId === column.id && (draggedTaskId !== null || draggedListId !== null)}
+            data-dragover={
+              dragOverListId === column.id &&
+              (draggedTaskId !== null || draggedListId !== null)
+            }
             data-dragging={draggedListId === column.id}
             onDragOver={(event) => {
               if (draggedTaskId === null && draggedListId === null) return;
@@ -242,7 +275,9 @@ const KanbanBoard = ({
                 type="button"
                 className={styles.columnDelete}
                 onClick={() => handleDeleteList(column.id)}
-                disabled={isPending || column.tasks.length > 0 || columns.length <= 1}
+                disabled={
+                  isPending || column.tasks.length > 0 || columns.length <= 1
+                }
                 title={
                   column.tasks.length > 0
                     ? "Move or delete this list's tasks first"
@@ -283,7 +318,9 @@ const KanbanBoard = ({
                   >
                     {task.title}
                   </button>
-                  {task.description && <p className={styles.cardDescription}>{task.description}</p>}
+                  {task.description && (
+                    <p className={styles.cardDescription}>{task.description}</p>
+                  )}
                   {task.tags.length > 0 && (
                     <div className={styles.cardTags}>
                       {task.tags.map((tag) => (
@@ -298,11 +335,20 @@ const KanbanBoard = ({
                     </div>
                   )}
                   <div className={styles.cardMeta}>
-                    {task.due_date && <span className={styles.cardDue}>{formatDueDate(task.due_date)}</span>}
-                    {task.assignee_name && <span className={styles.cardAssignee}>{task.assignee_name}</span>}
+                    {task.due_date && (
+                      <span className={styles.cardDue}>
+                        {formatDueDate(task.due_date)}
+                      </span>
+                    )}
+                    {task.assignee_name && (
+                      <span className={styles.cardAssignee}>
+                        {task.assignee_name}
+                      </span>
+                    )}
                     {task.comment_count > 0 && (
                       <span className={styles.cardBadge}>
-                        <MessageSquare aria-hidden="true" /> {task.comment_count}
+                        <MessageSquare aria-hidden="true" />{" "}
+                        {task.comment_count}
                       </span>
                     )}
                     {task.file_count > 0 && (
@@ -316,7 +362,10 @@ const KanbanBoard = ({
             </div>
 
             {addingTaskListId === column.id ? (
-              <form className={styles.addTaskForm} onSubmit={(event) => handleAddTask(event, column.id)}>
+              <form
+                className={styles.addTaskForm}
+                onSubmit={(event) => handleAddTask(event, column.id)}
+              >
                 <input
                   autoFocus
                   type="text"
@@ -332,7 +381,11 @@ const KanbanBoard = ({
                   }}
                 />
                 <div className={styles.addTaskActions}>
-                  <button type="submit" className={styles.addTaskSubmit} disabled={isPending || !newTaskTitle.trim()}>
+                  <button
+                    type="submit"
+                    className={styles.addTaskSubmit}
+                    disabled={isPending || !newTaskTitle.trim()}
+                  >
                     Add
                   </button>
                   <button
@@ -380,7 +433,11 @@ const KanbanBoard = ({
                 }}
               />
               <div className={styles.addTaskActions}>
-                <button type="submit" className={styles.addTaskSubmit} disabled={isPending || !newListName.trim()}>
+                <button
+                  type="submit"
+                  className={styles.addTaskSubmit}
+                  disabled={isPending || !newListName.trim()}
+                >
                   Add list
                 </button>
                 <button
@@ -396,7 +453,11 @@ const KanbanBoard = ({
               </div>
             </form>
           ) : (
-            <button type="button" className={styles.addListTrigger} onClick={() => setAddingListOpen(true)}>
+            <button
+              type="button"
+              className={styles.addListTrigger}
+              onClick={() => setAddingListOpen(true)}
+            >
               <Plus aria-hidden="true" /> Add list
             </button>
           )}

@@ -8,7 +8,7 @@
  * which is wrapped in React's `cache()`, so that's one request, not two.
  *
  * @module apps/binx-web/src/app/(app)/clients/[clientId]/layout.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -26,7 +26,11 @@ interface ClientLayoutProps {
   params: Promise<{ clientId: string }>;
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ clientId: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ clientId: string }>;
+}): Promise<Metadata> {
   const { clientId } = await params;
   try {
     const { currentAgency } = await getCurrentAgencyContext();
@@ -73,7 +77,9 @@ const ClientLayout = async ({ children, params }: ClientLayoutProps) => {
           <h1 className={styles.title}>{client.name}</h1>
           <p className={styles.subtitle}>
             Added {addedOn}
-            {client.primary_contact_name ? ` · ${client.primary_contact_name}` : ""}
+            {client.primary_contact_name
+              ? ` · ${client.primary_contact_name}`
+              : ""}
           </p>
         </div>
         <span className={styles.statusBadge} data-active={client.is_active}>

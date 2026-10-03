@@ -14,7 +14,7 @@
  * user per `id` — see TutorialProvider for the dismissed-popup bookkeeping.
  *
  * @module apps/binx-web/src/components/tutorial/PageCoachmark/PageCoachmark.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -35,7 +35,13 @@ interface PageCoachmarkProps {
   side?: "top" | "bottom" | "left" | "right";
 }
 
-const PageCoachmark = ({ id, anchorRef, title, body, side = "bottom" }: PageCoachmarkProps) => {
+const PageCoachmark = ({
+  id,
+  anchorRef,
+  title,
+  body,
+  side = "bottom",
+}: PageCoachmarkProps) => {
   const { isPopupDismissed, dismissPopup } = useTutorial();
 
   if (isPopupDismissed(id)) {
@@ -45,11 +51,22 @@ const PageCoachmark = ({ id, anchorRef, title, body, side = "bottom" }: PageCoac
   return (
     <Popover.Root open onOpenChange={(open) => !open && dismissPopup(id)}>
       <Popover.Portal>
-        <Popover.Positioner anchor={anchorRef} side={side} sideOffset={8} className={styles.positioner}>
+        <Popover.Positioner
+          anchor={anchorRef}
+          side={side}
+          sideOffset={8}
+          className={styles.positioner}
+        >
           <Popover.Popup className={styles.popup}>
             <Popover.Title className={styles.title}>{title}</Popover.Title>
-            <Popover.Description className={styles.description}>{body}</Popover.Description>
-            <button type="button" className={styles.dismiss} onClick={() => dismissPopup(id)}>
+            <Popover.Description className={styles.description}>
+              {body}
+            </Popover.Description>
+            <button
+              type="button"
+              className={styles.dismiss}
+              onClick={() => dismissPopup(id)}
+            >
               Got it
             </button>
           </Popover.Popup>

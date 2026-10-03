@@ -12,13 +12,18 @@
  * plain helpers in `imports-client.ts`.
  *
  * @module apps/binx-web/src/lib/imports.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 import axios from "axios";
 
 import { api } from "@/lib/api";
 import { AuthApiError, extractDetailMessage, getAccessToken } from "@/lib/auth";
-import type { ImportKind, ImportParseResult, ImportResult, MappedImportRow } from "@/lib/imports-client";
+import type {
+  ImportKind,
+  ImportParseResult,
+  ImportResult,
+  MappedImportRow,
+} from "@/lib/imports-client";
 
 async function authHeader(): Promise<{ Authorization: string }> {
   const accessToken = await getAccessToken();
@@ -30,7 +35,10 @@ async function authHeader(): Promise<{ Authorization: string }> {
 
 function apiError(error: unknown, fallback: string): AuthApiError | unknown {
   if (axios.isAxiosError(error) && error.response) {
-    return new AuthApiError(extractDetailMessage(error.response.data, fallback), error.response.status);
+    return new AuthApiError(
+      extractDetailMessage(error.response.data, fallback),
+      error.response.status,
+    );
   }
   return error;
 }
@@ -44,7 +52,11 @@ function apiError(error: unknown, fallback: string): AuthApiError | unknown {
  * @function parseImportFile
  * @throws {AuthApiError} - Unreadable/oversized/unsupported file (400/413/415), or not allowed (403).
  */
-export async function parseImportFile(agencyId: string, kind: ImportKind, file: File): Promise<ImportParseResult> {
+export async function parseImportFile(
+  agencyId: string,
+  kind: ImportKind,
+  file: File,
+): Promise<ImportParseResult> {
   const headers = await authHeader();
   const formData = new FormData();
   formData.append("file", file);
@@ -52,9 +64,13 @@ export async function parseImportFile(agencyId: string, kind: ImportKind, file: 
   try {
     // Same Content-Type override as uploadProjectFile in lib/projects.ts —
     // lets axios set the multipart boundary itself.
-    const { data } = await api.post<ImportParseResult>(`/agencies/${agencyId}/imports/${kind}/parse`, formData, {
-      headers: { ...headers, "Content-Type": undefined },
-    });
+    const { data } = await api.post<ImportParseResult>(
+      `/agencies/${agencyId}/imports/${kind}/parse`,
+      formData,
+      {
+        headers: { ...headers, "Content-Type": undefined },
+      },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to read that file");
@@ -87,6 +103,9 @@ export async function runImport(
     );
     return data;
   } catch (error) {
-    throw apiError(error, dryRun ? "Unable to check those rows" : "Unable to import");
+    throw apiError(
+      error,
+      dryRun ? "Unable to check those rows" : "Unable to import",
+    );
   }
 }

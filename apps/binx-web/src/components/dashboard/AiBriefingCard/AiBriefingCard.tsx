@@ -11,7 +11,7 @@
  * a bug.
  *
  * @module apps/binx-web/src/components/dashboard/AiBriefingCard/AiBriefingCard.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -64,7 +64,9 @@ const AiBriefingCard = ({ agencyId }: AiBriefingCardProps) => {
     return (
       <div className={styles.card} data-empty="true">
         <Sparkles className={styles.icon} aria-hidden="true" />
-        <p className={styles.emptyText}>AI isn&apos;t configured for this environment yet.</p>
+        <p className={styles.emptyText}>
+          AI isn&apos;t configured for this environment yet.
+        </p>
       </div>
     );
   }
@@ -86,7 +88,9 @@ const AiBriefingCard = ({ agencyId }: AiBriefingCardProps) => {
         </button>
       </div>
 
-      {status === "loading" && briefing === null && <p className={styles.loadingText}>Thinking…</p>}
+      {status === "loading" && briefing === null && (
+        <p className={styles.loadingText}>Thinking…</p>
+      )}
       {status === "error" && <p className={styles.errorText}>{error}</p>}
       {briefing && <AiMarkdown content={briefing} className={styles.body} />}
     </div>

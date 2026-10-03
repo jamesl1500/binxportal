@@ -7,7 +7,7 @@
  * structure, minus the stat row (meetings have no billing figures).
  *
  * @module apps/binx-web/src/app/(app)/meetings/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -37,7 +37,10 @@ const MeetingsPage = async () => {
     getAgencyProjects(currentAgency.id),
   ]);
 
-  const clientOptions = clients.map((client) => ({ id: client.id, name: client.name }));
+  const clientOptions = clients.map((client) => ({
+    id: client.id,
+    name: client.name,
+  }));
   const projectOptions = projects.map((project) => ({
     id: project.id,
     name: project.name,
@@ -50,7 +53,9 @@ const MeetingsPage = async () => {
         <div>
           <span className={styles.eyebrow}>Meetings</span>
           <h1 className={styles.title}>Meetings</h1>
-          <p className={styles.subtitle}>Every meeting scheduled with a client, staff- or client-booked.</p>
+          <p className={styles.subtitle}>
+            Every meeting scheduled with a client, staff- or client-booked.
+          </p>
         </div>
 
         <div className={styles.actions}>
@@ -58,13 +63,19 @@ const MeetingsPage = async () => {
             Meeting settings
           </Link>
           {clients.length > 0 && (
-            <ScheduleMeetingDialog agencyId={currentAgency.id} clients={clientOptions} projects={projectOptions} />
+            <ScheduleMeetingDialog
+              agencyId={currentAgency.id}
+              clients={clientOptions}
+              projects={projectOptions}
+            />
           )}
         </div>
       </div>
 
       {clients.length === 0 ? (
-        <p className={styles.notice}>Add a client from the Clients page before scheduling a meeting.</p>
+        <p className={styles.notice}>
+          Add a client from the Clients page before scheduling a meeting.
+        </p>
       ) : (
         <div className={styles.tableWrapper}>
           <MeetingsTable

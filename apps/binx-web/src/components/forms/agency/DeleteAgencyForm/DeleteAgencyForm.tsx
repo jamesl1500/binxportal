@@ -9,7 +9,7 @@
  * state to render.
  *
  * @module apps/binx-web/src/components/forms/agency/DeleteAgencyForm/DeleteAgencyForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -75,7 +75,9 @@ const DeleteAgencyForm = ({ agencyId, agencyName }: DeleteAgencyFormProps) => {
           aria-invalid={Boolean(errors.confirmText)}
           {...register("confirmText")}
         />
-        {errors.confirmText && <p className={styles.error}>{errors.confirmText.message}</p>}
+        {errors.confirmText && (
+          <p className={styles.error}>{errors.confirmText.message}</p>
+        )}
       </div>
 
       {formError && <p className={styles.formError}>{formError}</p>}

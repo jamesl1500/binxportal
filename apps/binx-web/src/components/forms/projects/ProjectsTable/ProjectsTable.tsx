@@ -7,14 +7,18 @@
  * page already fetches every project once.
  *
  * @module apps/binx-web/src/components/forms/projects/ProjectsTable/ProjectsTable.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
 
-import { PROJECT_STATUS_LABELS as STATUS_LABELS, PROJECT_STATUSES, type ProjectStatus } from "@/lib/projects-client";
+import {
+  PROJECT_STATUS_LABELS as STATUS_LABELS,
+  PROJECT_STATUSES,
+  type ProjectStatus,
+} from "@/lib/projects-client";
 import type { Project } from "@/lib/projects";
 
 import styles from "./ProjectsTable.module.scss";
@@ -22,7 +26,10 @@ import styles from "./ProjectsTable.module.scss";
 type StatusFilter = ProjectStatus | "all";
 
 function formatDate(iso: string): string {
-  return new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  return new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
 }
 
 interface ProjectsTableProps {
@@ -45,9 +52,13 @@ const ProjectsTable = ({ projects }: ProjectsTableProps) => {
     const query = search.trim().toLowerCase();
 
     return projects.filter((project) => {
-      if (statusFilter !== "all" && project.status !== statusFilter) return false;
+      if (statusFilter !== "all" && project.status !== statusFilter)
+        return false;
       if (!query) return true;
-      return project.name.toLowerCase().includes(query) || project.client_name.toLowerCase().includes(query);
+      return (
+        project.name.toLowerCase().includes(query) ||
+        project.client_name.toLowerCase().includes(query)
+      );
     });
   }, [projects, search, statusFilter]);
 
@@ -55,7 +66,10 @@ const ProjectsTable = ({ projects }: ProjectsTableProps) => {
     return (
       <div className={styles.emptyState}>
         <p className={styles.emptyTitle}>No projects yet</p>
-        <p className={styles.emptyText}>Create your first project to start tracking delivery work for a client.</p>
+        <p className={styles.emptyText}>
+          Create your first project to start tracking delivery work for a
+          client.
+        </p>
       </div>
     );
   }
@@ -63,7 +77,11 @@ const ProjectsTable = ({ projects }: ProjectsTableProps) => {
   return (
     <div className={styles.wrapper}>
       <div className={styles.toolbar}>
-        <div className={styles.tabs} role="tablist" aria-label="Filter by status">
+        <div
+          className={styles.tabs}
+          role="tablist"
+          aria-label="Filter by status"
+        >
           <button
             type="button"
             role="tab"
@@ -82,7 +100,10 @@ const ProjectsTable = ({ projects }: ProjectsTableProps) => {
               className={styles.tab}
               onClick={() => setStatusFilter(statusOption)}
             >
-              {STATUS_LABELS[statusOption]} <span className={styles.tabCount}>{countsByStatus.get(statusOption) ?? 0}</span>
+              {STATUS_LABELS[statusOption]}{" "}
+              <span className={styles.tabCount}>
+                {countsByStatus.get(statusOption) ?? 0}
+              </span>
             </button>
           ))}
         </div>
@@ -104,49 +125,62 @@ const ProjectsTable = ({ projects }: ProjectsTableProps) => {
         </div>
       ) : (
         <div className={styles.tableScroll}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th className={styles.headCell}>Project</th>
-              <th className={styles.headCell}>Client</th>
-              <th className={styles.headCell}>Status</th>
-              <th className={styles.headCell}>Timeline</th>
-              <th className={styles.headCell}>Team</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((project) => (
-              <tr key={project.id} className={styles.row}>
-                <td className={styles.cell}>
-                  <Link href={`/projects/${project.id}`} className={styles.projectLink}>
-                    <p className={styles.name}>{project.name}</p>
-                    {project.description && <span className={styles.description}>{project.description}</span>}
-                  </Link>
-                </td>
-                <td className={styles.cell}>{project.client_name}</td>
-                <td className={styles.cell}>
-                  <span className={styles.statusBadge} data-status={project.status}>
-                    {STATUS_LABELS[project.status]}
-                  </span>
-                </td>
-                <td className={`${styles.cell} ${styles.timeline}`}>
-                  {project.start_date || project.due_date ? (
-                    <>
-                      {project.start_date ? formatDate(project.start_date) : "—"}
-                      {" → "}
-                      {project.due_date ? formatDate(project.due_date) : "—"}
-                    </>
-                  ) : (
-                    <span className={styles.noDates}>No dates set</span>
-                  )}
-                </td>
-                <td className={styles.cell}>
-                  {project.member_count} {project.member_count === 1 ? "member" : "members"}
-                </td>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th className={styles.headCell}>Project</th>
+                <th className={styles.headCell}>Client</th>
+                <th className={styles.headCell}>Status</th>
+                <th className={styles.headCell}>Timeline</th>
+                <th className={styles.headCell}>Team</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filtered.map((project) => (
+                <tr key={project.id} className={styles.row}>
+                  <td className={styles.cell}>
+                    <Link
+                      href={`/projects/${project.id}`}
+                      className={styles.projectLink}
+                    >
+                      <p className={styles.name}>{project.name}</p>
+                      {project.description && (
+                        <span className={styles.description}>
+                          {project.description}
+                        </span>
+                      )}
+                    </Link>
+                  </td>
+                  <td className={styles.cell}>{project.client_name}</td>
+                  <td className={styles.cell}>
+                    <span
+                      className={styles.statusBadge}
+                      data-status={project.status}
+                    >
+                      {STATUS_LABELS[project.status]}
+                    </span>
+                  </td>
+                  <td className={`${styles.cell} ${styles.timeline}`}>
+                    {project.start_date || project.due_date ? (
+                      <>
+                        {project.start_date
+                          ? formatDate(project.start_date)
+                          : "—"}
+                        {" → "}
+                        {project.due_date ? formatDate(project.due_date) : "—"}
+                      </>
+                    ) : (
+                      <span className={styles.noDates}>No dates set</span>
+                    )}
+                  </td>
+                  <td className={styles.cell}>
+                    {project.member_count}{" "}
+                    {project.member_count === 1 ? "member" : "members"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

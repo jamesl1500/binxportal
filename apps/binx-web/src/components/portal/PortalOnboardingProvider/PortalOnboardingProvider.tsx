@@ -16,11 +16,19 @@
  * visit.
  *
  * @module apps/binx-web/src/components/portal/PortalOnboardingProvider/PortalOnboardingProvider.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { updateTutorialProgressAction } from "@/app/(app)/actions";
 import { PORTAL_TOUR_ID } from "@/lib/portal-insights";
@@ -36,18 +44,26 @@ interface PortalOnboardingContextValue {
   dismiss: (id: string) => void;
 }
 
-const PortalOnboardingContext = createContext<PortalOnboardingContextValue | null>(null);
+const PortalOnboardingContext =
+  createContext<PortalOnboardingContextValue | null>(null);
 
 interface PortalOnboardingProviderProps {
   initialProgress: TutorialProgress;
   children: React.ReactNode;
 }
 
-const PortalOnboardingProvider = ({ initialProgress, children }: PortalOnboardingProviderProps) => {
-  const [dismissed, setDismissed] = useState<string[]>(initialProgress.dismissed_popups);
+const PortalOnboardingProvider = ({
+  initialProgress,
+  children,
+}: PortalOnboardingProviderProps) => {
+  const [dismissed, setDismissed] = useState<string[]>(
+    initialProgress.dismissed_popups,
+  );
   // Opens on the very first render for a client who's never seen it —
   // server-seeded, so it matches the first client render with no effect.
-  const [isTourOpen, setIsTourOpen] = useState(() => !initialProgress.dismissed_popups.includes(PORTAL_TOUR_ID));
+  const [isTourOpen, setIsTourOpen] = useState(
+    () => !initialProgress.dismissed_popups.includes(PORTAL_TOUR_ID),
+  );
 
   // Skip the first run — that's the server-seeded value, not a change.
   const isFirstRender = useRef(true);
@@ -81,13 +97,19 @@ const PortalOnboardingProvider = ({ initialProgress, children }: PortalOnboardin
     [isTourOpen, dismissed, dismiss],
   );
 
-  return <PortalOnboardingContext.Provider value={value}>{children}</PortalOnboardingContext.Provider>;
+  return (
+    <PortalOnboardingContext.Provider value={value}>
+      {children}
+    </PortalOnboardingContext.Provider>
+  );
 };
 
 export function usePortalOnboarding(): PortalOnboardingContextValue {
   const context = useContext(PortalOnboardingContext);
   if (!context) {
-    throw new Error("usePortalOnboarding must be used within a PortalOnboardingProvider");
+    throw new Error(
+      "usePortalOnboarding must be used within a PortalOnboardingProvider",
+    );
   }
   return context;
 }

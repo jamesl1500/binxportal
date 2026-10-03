@@ -8,7 +8,7 @@
  * server-side callers see no change.
  *
  * @module apps/binx-web/src/lib/meetings-client.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Schemas } from "@/lib/api-types";
 

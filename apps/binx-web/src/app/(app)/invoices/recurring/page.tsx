@@ -10,7 +10,7 @@
  * one in place (see `RecurringScheduleActions`).
  *
  * @module apps/binx-web/src/app/(app)/invoices/recurring/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -38,7 +38,8 @@ const RecurringInvoicesPage = async () => {
     getBillingSettings(currentAgency.id),
   ]);
 
-  const canManage = currentAgency.role === "owner" || currentAgency.role === "admin";
+  const canManage =
+    currentAgency.role === "owner" || currentAgency.role === "admin";
 
   return (
     <div>

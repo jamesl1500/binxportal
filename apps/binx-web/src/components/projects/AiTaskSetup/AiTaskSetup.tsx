@@ -10,7 +10,7 @@
  * declining the offer outright — the project itself already exists either way.
  *
  * @module apps/binx-web/src/components/projects/AiTaskSetup/AiTaskSetup.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -35,13 +35,19 @@ type Step = "offer" | "loading" | "review" | "applying" | "error";
 
 const AiTaskSetup = ({ agencyId, projectId, onDone }: AiTaskSetupProps) => {
   const [step, setStep] = useState<Step>("offer");
-  const [suggestions, setSuggestions] = useState<AiTaskSuggestions | null>(null);
+  const [suggestions, setSuggestions] = useState<AiTaskSuggestions | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
 
   const handleSuggest = async () => {
     setStep("loading");
     const result = await suggestProjectTasksAction(agencyId, projectId);
-    if (result.error || !result.suggestions || result.suggestions.lists.length === 0) {
+    if (
+      result.error ||
+      !result.suggestions ||
+      result.suggestions.lists.length === 0
+    ) {
       setError(result.error ?? "The AI didn't come back with any suggestions.");
       setStep("error");
       return;
@@ -53,7 +59,11 @@ const AiTaskSetup = ({ agencyId, projectId, onDone }: AiTaskSetupProps) => {
   const handleApply = async () => {
     if (!suggestions) return;
     setStep("applying");
-    const result = await applyProjectTaskSuggestionsAction(agencyId, projectId, suggestions);
+    const result = await applyProjectTaskSuggestionsAction(
+      agencyId,
+      projectId,
+      suggestions,
+    );
     if (result.error) {
       setError(result.error);
       setStep("error");
@@ -64,14 +74,20 @@ const AiTaskSetup = ({ agencyId, projectId, onDone }: AiTaskSetupProps) => {
 
   const removeList = (listIndex: number) => {
     setSuggestions((prev) =>
-      prev ? { lists: prev.lists.filter((_, index) => index !== listIndex) } : prev,
+      prev
+        ? { lists: prev.lists.filter((_, index) => index !== listIndex) }
+        : prev,
     );
   };
 
   const renameList = (listIndex: number, name: string) => {
     setSuggestions((prev) =>
       prev
-        ? { lists: prev.lists.map((lst, index) => (index === listIndex ? { ...lst, name } : lst)) }
+        ? {
+            lists: prev.lists.map((lst, index) =>
+              index === listIndex ? { ...lst, name } : lst,
+            ),
+          }
         : prev,
     );
   };
@@ -81,7 +97,9 @@ const AiTaskSetup = ({ agencyId, projectId, onDone }: AiTaskSetupProps) => {
       prev
         ? {
             lists: prev.lists.map((lst, index) =>
-              index === listIndex ? { ...lst, tasks: lst.tasks.filter((_, i) => i !== taskIndex) } : lst,
+              index === listIndex
+                ? { ...lst, tasks: lst.tasks.filter((_, i) => i !== taskIndex) }
+                : lst,
             ),
           }
         : prev,
@@ -94,7 +112,12 @@ const AiTaskSetup = ({ agencyId, projectId, onDone }: AiTaskSetupProps) => {
         ? {
             lists: prev.lists.map((lst, index) =>
               index === listIndex
-                ? { ...lst, tasks: lst.tasks.map((t, i) => (i === taskIndex ? { ...t, title } : t)) }
+                ? {
+                    ...lst,
+                    tasks: lst.tasks.map((t, i) =>
+                      i === taskIndex ? { ...t, title } : t,
+                    ),
+                  }
                 : lst,
             ),
           }
@@ -113,7 +136,11 @@ const AiTaskSetup = ({ agencyId, projectId, onDone }: AiTaskSetupProps) => {
           <button type="button" className={styles.skip} onClick={onDone}>
             Skip
           </button>
-          <button type="button" className={styles.suggest} onClick={() => void handleSuggest()}>
+          <button
+            type="button"
+            className={styles.suggest}
+            onClick={() => void handleSuggest()}
+          >
             Suggest tasks
           </button>
         </div>
@@ -140,11 +167,16 @@ const AiTaskSetup = ({ agencyId, projectId, onDone }: AiTaskSetupProps) => {
 
   if (!suggestions) return null;
 
-  const totalTasks = suggestions.lists.reduce((sum, lst) => sum + lst.tasks.length, 0);
+  const totalTasks = suggestions.lists.reduce(
+    (sum, lst) => sum + lst.tasks.length,
+    0,
+  );
 
   return (
     <div className={styles.review}>
-      <p className={styles.reviewHint}>Edit or remove anything before adding it to the board.</p>
+      <p className={styles.reviewHint}>
+        Edit or remove anything before adding it to the board.
+      </p>
       <ul className={styles.lists}>
         {suggestions.lists.map((lst, listIndex) => (
           <li key={listIndex} className={styles.list}>
@@ -172,7 +204,9 @@ const AiTaskSetup = ({ agencyId, projectId, onDone }: AiTaskSetupProps) => {
                     type="text"
                     className={styles.taskTitleInput}
                     value={task.title}
-                    onChange={(event) => renameTask(listIndex, taskIndex, event.target.value)}
+                    onChange={(event) =>
+                      renameTask(listIndex, taskIndex, event.target.value)
+                    }
                     aria-label={`Task ${taskIndex + 1} title in ${lst.name}`}
                   />
                   <button
@@ -198,7 +232,11 @@ const AiTaskSetup = ({ agencyId, projectId, onDone }: AiTaskSetupProps) => {
           type="button"
           className={styles.suggest}
           onClick={() => void handleApply()}
-          disabled={step !== "review" || suggestions.lists.length === 0 || totalTasks === 0}
+          disabled={
+            step !== "review" ||
+            suggestions.lists.length === 0 ||
+            totalTasks === 0
+          }
         >
           {step === "applying" ? "Adding…" : "Add to board"}
         </button>

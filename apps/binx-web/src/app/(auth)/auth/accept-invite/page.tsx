@@ -10,7 +10,7 @@
  * rather than threading a post-login redirect through the auth flow.
  *
  * @module apps/binx-web/src/app/(auth)/auth/accept-invite/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -32,7 +32,8 @@ const AcceptInvitePage = async ({ searchParams }: AcceptInvitePageProps) => {
 
   // Look the token up (without consuming it) before rendering anything — an
   // invalid/expired/revoked token should never reach the accept form.
-  let preview: Awaited<ReturnType<typeof previewAgencyInvitation>> | null = null;
+  let preview: Awaited<ReturnType<typeof previewAgencyInvitation>> | null =
+    null;
   let tokenError: string | null = null;
 
   if (!token) {
@@ -41,7 +42,10 @@ const AcceptInvitePage = async ({ searchParams }: AcceptInvitePageProps) => {
     try {
       preview = await previewAgencyInvitation(token);
     } catch (error) {
-      tokenError = error instanceof Error ? error.message : "This invitation link is invalid or has expired.";
+      tokenError =
+        error instanceof Error
+          ? error.message
+          : "This invitation link is invalid or has expired.";
     }
   }
 
@@ -64,8 +68,8 @@ const AcceptInvitePage = async ({ searchParams }: AcceptInvitePageProps) => {
       ) : !user ? (
         <div className={styles.authPrompt}>
           <p className={styles.authPromptText}>
-            Log in or create an account using <strong>{preview.email}</strong>, then come back to this link to
-            accept.
+            Log in or create an account using <strong>{preview.email}</strong>,
+            then come back to this link to accept.
           </p>
           <div className={styles.authPromptActions}>
             <Link href="/auth/login" className={styles.primaryButton}>

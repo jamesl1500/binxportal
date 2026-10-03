@@ -8,7 +8,7 @@
  * task on the project board (list picker defaults to the first column).
  *
  * @module apps/binx-web/src/components/kickoffs/KickoffStatusView/KickoffStatusView.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -19,7 +19,10 @@ import { Dialog } from "@base-ui/react/dialog";
 import { toast } from "sonner";
 
 import type { KickoffDetail } from "@/lib/kickoffs";
-import { convertKickoffAction, nudgeKickoffAction } from "@/app/(app)/projects/[projectId]/kickoff/actions";
+import {
+  convertKickoffAction,
+  nudgeKickoffAction,
+} from "@/app/(app)/projects/[projectId]/kickoff/actions";
 
 import styles from "./KickoffStatusView.module.scss";
 
@@ -36,13 +39,24 @@ interface KickoffStatusViewProps {
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  return new Date(iso).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
-function answerDisplay(question: KickoffDetail["questions"][number], answer: KickoffDetail["answers"][number] | undefined) {
+function answerDisplay(
+  question: KickoffDetail["questions"][number],
+  answer: KickoffDetail["answers"][number] | undefined,
+) {
   if (!answer) return <span className={styles.unanswered}>Not answered</span>;
   if (question.type === "file_upload") {
-    return answer.file_name ? <span>Uploaded: {answer.file_name}</span> : <span className={styles.unanswered}>No file</span>;
+    return answer.file_name ? (
+      <span>Uploaded: {answer.file_name}</span>
+    ) : (
+      <span className={styles.unanswered}>No file</span>
+    );
   }
   if (question.type === "multiple_choice") {
     return <span>{answer.selected_options.join(", ") || "—"}</span>;
@@ -50,13 +64,20 @@ function answerDisplay(question: KickoffDetail["questions"][number], answer: Kic
   return <span>{answer.text_value || "—"}</span>;
 }
 
-const KickoffStatusView = ({ agencyId, projectId, kickoff, taskLists }: KickoffStatusViewProps) => {
+const KickoffStatusView = ({
+  agencyId,
+  projectId,
+  kickoff,
+  taskLists,
+}: KickoffStatusViewProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [convertOpen, setConvertOpen] = useState(false);
   const [listId, setListId] = useState(taskLists[0]?.id ?? "");
 
-  const answersByQuestion = new Map(kickoff.answers.map((a) => [a.question_id, a]));
+  const answersByQuestion = new Map(
+    kickoff.answers.map((a) => [a.question_id, a]),
+  );
 
   const handleNudge = () => {
     startTransition(async () => {
@@ -72,13 +93,19 @@ const KickoffStatusView = ({ agencyId, projectId, kickoff, taskLists }: KickoffS
 
   const handleConvert = () => {
     startTransition(async () => {
-      const result = await convertKickoffAction(agencyId, projectId, listId || null);
+      const result = await convertKickoffAction(
+        agencyId,
+        projectId,
+        listId || null,
+      );
       if (result.error) {
         toast.error(result.error);
         return;
       }
       setConvertOpen(false);
-      toast.success(`${result.tasksCreated ?? 0} task${result.tasksCreated === 1 ? "" : "s"} added to the board`);
+      toast.success(
+        `${result.tasksCreated ?? 0} task${result.tasksCreated === 1 ? "" : "s"} added to the board`,
+      );
       router.refresh();
     });
   };
@@ -88,7 +115,9 @@ const KickoffStatusView = ({ agencyId, projectId, kickoff, taskLists }: KickoffS
       <div className={styles.header}>
         <div>
           <h2 className={styles.title}>{kickoff.title}</h2>
-          {kickoff.intro_message && <p className={styles.intro}>{kickoff.intro_message}</p>}
+          {kickoff.intro_message && (
+            <p className={styles.intro}>{kickoff.intro_message}</p>
+          )}
         </div>
         <span className={styles.statusBadge} data-status={kickoff.status}>
           {kickoff.status === "sent" ? "Sent — waiting on client" : "Completed"}
@@ -118,12 +147,22 @@ const KickoffStatusView = ({ agencyId, projectId, kickoff, taskLists }: KickoffS
 
       <div className={styles.actions}>
         {kickoff.status === "sent" && (
-          <button type="button" className={styles.ghost} disabled={isPending} onClick={handleNudge}>
+          <button
+            type="button"
+            className={styles.ghost}
+            disabled={isPending}
+            onClick={handleNudge}
+          >
             Remind client
           </button>
         )}
         {kickoff.status === "completed" && !kickoff.converted_at && (
-          <button type="button" className={styles.primary} disabled={isPending} onClick={() => setConvertOpen(true)}>
+          <button
+            type="button"
+            className={styles.primary}
+            disabled={isPending}
+            onClick={() => setConvertOpen(true)}
+          >
             Convert to tasks
           </button>
         )}
@@ -142,7 +181,9 @@ const KickoffStatusView = ({ agencyId, projectId, kickoff, taskLists }: KickoffS
               {question.label}
               {question.required && <span className={styles.required}> *</span>}
             </span>
-            <div className={styles.answer}>{answerDisplay(question, answersByQuestion.get(question.id))}</div>
+            <div className={styles.answer}>
+              {answerDisplay(question, answersByQuestion.get(question.id))}
+            </div>
           </div>
         ))}
       </div>
@@ -150,15 +191,25 @@ const KickoffStatusView = ({ agencyId, projectId, kickoff, taskLists }: KickoffS
       <Dialog.Root open={convertOpen} onOpenChange={setConvertOpen}>
         <Dialog.Portal>
           <Dialog.Backdrop className={styles.backdrop} />
-          <Dialog.Popup className={styles.dialog} aria-label="Convert kickoff answers to tasks">
-            <Dialog.Title className={styles.dialogTitle}>Convert answers to tasks?</Dialog.Title>
+          <Dialog.Popup
+            className={styles.dialog}
+            aria-label="Convert kickoff answers to tasks"
+          >
+            <Dialog.Title className={styles.dialogTitle}>
+              Convert answers to tasks?
+            </Dialog.Title>
             <Dialog.Description className={styles.dialogDescription}>
-              One task is added per answered question, each with the answer as its description.
+              One task is added per answered question, each with the answer as
+              its description.
             </Dialog.Description>
             {taskLists.length > 0 && (
               <label className={styles.field}>
                 <span className={styles.fieldLabel}>Add to list</span>
-                <select className={styles.select} value={listId} onChange={(event) => setListId(event.target.value)}>
+                <select
+                  className={styles.select}
+                  value={listId}
+                  onChange={(event) => setListId(event.target.value)}
+                >
                   {taskLists.map((list) => (
                     <option key={list.id} value={list.id}>
                       {list.name}
@@ -168,10 +219,19 @@ const KickoffStatusView = ({ agencyId, projectId, kickoff, taskLists }: KickoffS
               </label>
             )}
             <div className={styles.dialogActions}>
-              <button type="button" className={styles.ghost} onClick={() => setConvertOpen(false)}>
+              <button
+                type="button"
+                className={styles.ghost}
+                onClick={() => setConvertOpen(false)}
+              >
                 Cancel
               </button>
-              <button type="button" className={styles.primary} disabled={isPending} onClick={handleConvert}>
+              <button
+                type="button"
+                className={styles.primary}
+                disabled={isPending}
+                onClick={handleConvert}
+              >
                 Convert
               </button>
             </div>

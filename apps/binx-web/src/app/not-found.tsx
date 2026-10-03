@@ -5,7 +5,7 @@
  * `notFound()`. Serves as the site-wide 404 page.
  *
  * @module apps/binx-web/src/app/not-found.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import Link from "next/link";
 
@@ -18,7 +18,8 @@ const NotFound = () => {
         <p className={styles.code}>404</p>
         <h1 className={styles.title}>This page doesn&apos;t exist</h1>
         <p className={styles.subtitle}>
-          The page you&apos;re looking for may have been moved, renamed, or never existed.
+          The page you&apos;re looking for may have been moved, renamed, or
+          never existed.
         </p>
 
         <div className={styles.actions}>

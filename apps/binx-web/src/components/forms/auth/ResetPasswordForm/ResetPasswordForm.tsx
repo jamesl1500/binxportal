@@ -6,7 +6,7 @@
  * for the actual request (see lib/auth.ts).
  *
  * @module apps/binx-web/src/components/forms/auth/ResetPasswordForm/ResetPasswordForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -84,7 +84,9 @@ const ResetPasswordForm = ({ token }: ResetPasswordFormProps) => {
           aria-invalid={Boolean(errors.password)}
           {...register("password")}
         />
-        {errors.password && <p className={styles.error}>{errors.password.message}</p>}
+        {errors.password && (
+          <p className={styles.error}>{errors.password.message}</p>
+        )}
       </div>
 
       <div className={styles.field}>
@@ -99,7 +101,9 @@ const ResetPasswordForm = ({ token }: ResetPasswordFormProps) => {
           aria-invalid={Boolean(errors.confirmPassword)}
           {...register("confirmPassword")}
         />
-        {errors.confirmPassword && <p className={styles.error}>{errors.confirmPassword.message}</p>}
+        {errors.confirmPassword && (
+          <p className={styles.error}>{errors.confirmPassword.message}</p>
+        )}
       </div>
 
       {formError && <p className={styles.formError}>{formError}</p>}

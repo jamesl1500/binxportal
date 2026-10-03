@@ -19,7 +19,7 @@
  * comes back rather than assuming "agency_member".
  *
  * @module apps/binx-web/src/components/forms/projects/TaskDetailPanel/TaskDetailPanel.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -39,7 +39,14 @@ import {
   uploadTaskFileAction,
 } from "@/app/(app)/projects/[projectId]/actions";
 import { getTaskFileDownloadUrl } from "@/lib/projects-client";
-import type { BoardColumn, ProjectMember, ProjectTag, Task, TaskComment, TaskFile } from "@/lib/projects";
+import type {
+  BoardColumn,
+  ProjectMember,
+  ProjectTag,
+  Task,
+  TaskComment,
+  TaskFile,
+} from "@/lib/projects";
 
 import styles from "./TaskDetailPanel.module.scss";
 
@@ -76,11 +83,20 @@ function formatFileSize(bytes: number): string {
 }
 
 function formatTimestamp(iso: string): string {
-  return new Date(iso).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  return new Date(iso).toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
 function formatDueDate(iso: string): string {
-  return new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  return new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 const TaskDetailPanel = ({
@@ -131,7 +147,9 @@ const TaskDetailPanel = ({
   // fields. See https://react.dev/learn/you-might-not-need-an-effect. Starts
   // `undefined` so the first render with a non-null task always seeds, even
   // when the panel is mounted with one already selected.
-  const [seededTaskId, setSeededTaskId] = useState<string | undefined>(undefined);
+  const [seededTaskId, setSeededTaskId] = useState<string | undefined>(
+    undefined,
+  );
   if (task && task.id !== seededTaskId) {
     setSeededTaskId(task.id);
     setTitle(task.title);
@@ -173,7 +191,8 @@ const TaskDetailPanel = ({
   if (!task) return null;
 
   const currentTask = task;
-  const listName = columns.find((column) => column.id === currentTask.list_id)?.name ?? "—";
+  const listName =
+    columns.find((column) => column.id === currentTask.list_id)?.name ?? "—";
   const commentCount = comments?.length ?? currentTask.comment_count;
   const fileCount = files?.length ?? currentTask.file_count;
 
@@ -193,13 +212,18 @@ const TaskDetailPanel = ({
 
     setFormError(null);
     startSaving(async () => {
-      const result = await updateTaskAction(agencyId, projectId, currentTask.id, {
-        listId,
-        title: trimmedTitle,
-        description: description.trim() || null,
-        dueDate: dueDate || null,
-        assigneeId: assigneeId || null,
-      });
+      const result = await updateTaskAction(
+        agencyId,
+        projectId,
+        currentTask.id,
+        {
+          listId,
+          title: trimmedTitle,
+          description: description.trim() || null,
+          dueDate: dueDate || null,
+          assigneeId: assigneeId || null,
+        },
+      );
       if (result.error) {
         setFormError(result.error);
         return;
@@ -210,12 +234,19 @@ const TaskDetailPanel = ({
   };
 
   const handleToggleTag = (tagId: string) => {
-    const next = tagIds.includes(tagId) ? tagIds.filter((id) => id !== tagId) : [...tagIds, tagId];
+    const next = tagIds.includes(tagId)
+      ? tagIds.filter((id) => id !== tagId)
+      : [...tagIds, tagId];
     const previous = tagIds;
     setTagIds(next);
     setFormError(null);
     startTagging(async () => {
-      const result = await setTaskTagsAction(agencyId, projectId, currentTask.id, next);
+      const result = await setTaskTagsAction(
+        agencyId,
+        projectId,
+        currentTask.id,
+        next,
+      );
       if (result.error) {
         setTagIds(previous);
         setFormError(result.error);
@@ -227,7 +258,11 @@ const TaskDetailPanel = ({
 
   const handleDeleteTask = () => {
     startDeleting(async () => {
-      const result = await deleteTaskAction(agencyId, projectId, currentTask.id);
+      const result = await deleteTaskAction(
+        agencyId,
+        projectId,
+        currentTask.id,
+      );
       if (result.error) {
         setFormError(result.error);
         return;
@@ -245,7 +280,13 @@ const TaskDetailPanel = ({
     setCommentsError(null);
     const file = commentFile;
     startPostingComment(async () => {
-      const result = await addTaskCommentAction(agencyId, projectId, currentTask.id, body, file);
+      const result = await addTaskCommentAction(
+        agencyId,
+        projectId,
+        currentTask.id,
+        body,
+        file,
+      );
       if (result.error) {
         setCommentsError(result.error);
         return;
@@ -267,16 +308,27 @@ const TaskDetailPanel = ({
   const handleDeleteComment = (commentId: string) => {
     setCommentsError(null);
     startPostingComment(async () => {
-      const result = await deleteTaskCommentAction(agencyId, projectId, currentTask.id, commentId);
+      const result = await deleteTaskCommentAction(
+        agencyId,
+        projectId,
+        currentTask.id,
+        commentId,
+      );
       if (result.error) {
         setCommentsError(result.error);
         return;
       }
       const removed = comments?.find((comment) => comment.id === commentId);
-      setComments((prev) => (prev ?? []).filter((comment) => comment.id !== commentId));
+      setComments((prev) =>
+        (prev ?? []).filter((comment) => comment.id !== commentId),
+      );
       // Deleting a comment also deletes the file it carried.
       if (removed?.attachment) {
-        setFiles((prev) => (prev ? prev.filter((file) => file.id !== removed.attachment!.id) : prev));
+        setFiles((prev) =>
+          prev
+            ? prev.filter((file) => file.id !== removed.attachment!.id)
+            : prev,
+        );
       }
       onMutated();
     });
@@ -288,7 +340,12 @@ const TaskDetailPanel = ({
 
     setFilesError(null);
     startUploading(async () => {
-      const result = await uploadTaskFileAction(agencyId, projectId, currentTask.id, file);
+      const result = await uploadTaskFileAction(
+        agencyId,
+        projectId,
+        currentTask.id,
+        file,
+      );
       if (fileInputRef.current) fileInputRef.current.value = "";
       if (result.error) {
         setFilesError(result.error);
@@ -302,7 +359,12 @@ const TaskDetailPanel = ({
   const handleDeleteFile = (fileId: string) => {
     setFilesError(null);
     startUploading(async () => {
-      const result = await deleteTaskFileAction(agencyId, projectId, currentTask.id, fileId);
+      const result = await deleteTaskFileAction(
+        agencyId,
+        projectId,
+        currentTask.id,
+        fileId,
+      );
       if (result.error) {
         setFilesError(result.error);
         return;
@@ -313,10 +375,17 @@ const TaskDetailPanel = ({
   };
 
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange} onOpenChangeComplete={(isOpen) => !isOpen && onClosed()}>
+    <Dialog.Root
+      open={open}
+      onOpenChange={onOpenChange}
+      onOpenChangeComplete={(isOpen) => !isOpen && onClosed()}
+    >
       <Dialog.Portal>
         <Dialog.Backdrop className={styles.backdrop} />
-        <Dialog.Popup className={styles.panel} aria-label={`Task: ${currentTask.title}`}>
+        <Dialog.Popup
+          className={styles.panel}
+          aria-label={`Task: ${currentTask.title}`}
+        >
           <div className={styles.header}>
             <span className={styles.eyebrow}>Task</span>
             <Dialog.Close className={styles.closeButton} aria-label="Close">
@@ -328,7 +397,11 @@ const TaskDetailPanel = ({
             <div className={styles.detailsHeader}>
               <h2 className={styles.detailsHeading}>Details</h2>
               {!isEditing && (
-                <button type="button" className={styles.editButton} onClick={() => setIsEditing(true)}>
+                <button
+                  type="button"
+                  className={styles.editButton}
+                  onClick={() => setIsEditing(true)}
+                >
                   <Pencil aria-hidden="true" /> Edit details
                 </button>
               )}
@@ -372,7 +445,10 @@ const TaskDetailPanel = ({
                     </select>
                   </div>
                   <div className={styles.field}>
-                    <label className={styles.fieldLabel} htmlFor="task-due-date">
+                    <label
+                      className={styles.fieldLabel}
+                      htmlFor="task-due-date"
+                    >
                       Due date
                     </label>
                     <input
@@ -407,7 +483,9 @@ const TaskDetailPanel = ({
                 <div className={styles.field}>
                   <span className={styles.fieldLabel}>Tags</span>
                   {projectTags.length === 0 ? (
-                    <p className={styles.emptyText}>No tags configured. Add some in project Settings.</p>
+                    <p className={styles.emptyText}>
+                      No tags configured. Add some in project Settings.
+                    </p>
                   ) : (
                     <div className={styles.tagPicker}>
                       {projectTags.map((tag) => {
@@ -421,9 +499,17 @@ const TaskDetailPanel = ({
                             aria-pressed={active}
                             disabled={isTagging}
                             onClick={() => handleToggleTag(tag.id)}
-                            style={active ? { borderColor: tag.color, color: tag.color } : undefined}
+                            style={
+                              active
+                                ? { borderColor: tag.color, color: tag.color }
+                                : undefined
+                            }
                           >
-                            <span className={styles.tagDot} style={{ background: tag.color }} aria-hidden="true" />
+                            <span
+                              className={styles.tagDot}
+                              style={{ background: tag.color }}
+                              aria-hidden="true"
+                            />
                             {tag.name}
                           </button>
                         );
@@ -439,7 +525,11 @@ const TaskDetailPanel = ({
                 )}
 
                 <div className={styles.formActions}>
-                  <button type="submit" className={styles.saveButton} disabled={isSaving || !title.trim()}>
+                  <button
+                    type="submit"
+                    className={styles.saveButton}
+                    disabled={isSaving || !title.trim()}
+                  >
                     {isSaving ? "Saving…" : "Save changes"}
                   </button>
                   <button
@@ -453,8 +543,14 @@ const TaskDetailPanel = ({
                   >
                     Cancel
                   </button>
-                  <button type="button" className={styles.deleteButton} onClick={handleDeleteTask} disabled={isDeleting}>
-                    <Trash2 aria-hidden="true" /> {isDeleting ? "Deleting…" : "Delete task"}
+                  <button
+                    type="button"
+                    className={styles.deleteButton}
+                    onClick={handleDeleteTask}
+                    disabled={isDeleting}
+                  >
+                    <Trash2 aria-hidden="true" />{" "}
+                    {isDeleting ? "Deleting…" : "Delete task"}
                   </button>
                 </div>
               </form>
@@ -462,7 +558,9 @@ const TaskDetailPanel = ({
               <div className={styles.readonly}>
                 <h3 className={styles.readonlyTitle}>{currentTask.title}</h3>
                 {currentTask.description ? (
-                  <p className={styles.readonlyDescription}>{currentTask.description}</p>
+                  <p className={styles.readonlyDescription}>
+                    {currentTask.description}
+                  </p>
                 ) : (
                   <p className={styles.emptyText}>No description.</p>
                 )}
@@ -475,12 +573,16 @@ const TaskDetailPanel = ({
                   <div className={styles.metaItem}>
                     <dt className={styles.fieldLabel}>Due date</dt>
                     <dd className={styles.metaValue}>
-                      {currentTask.due_date ? formatDueDate(currentTask.due_date) : "Not set"}
+                      {currentTask.due_date
+                        ? formatDueDate(currentTask.due_date)
+                        : "Not set"}
                     </dd>
                   </div>
                   <div className={styles.metaItem}>
                     <dt className={styles.fieldLabel}>Assignee</dt>
-                    <dd className={styles.metaValue}>{currentTask.assignee_name ?? "Unassigned"}</dd>
+                    <dd className={styles.metaValue}>
+                      {currentTask.assignee_name ?? "Unassigned"}
+                    </dd>
                   </div>
                   <div className={styles.metaItem}>
                     <dt className={styles.fieldLabel}>Tags</dt>
@@ -493,9 +595,16 @@ const TaskDetailPanel = ({
                             <span
                               key={tag.id}
                               className={styles.tagChip}
-                              style={{ borderColor: tag.color, color: tag.color }}
+                              style={{
+                                borderColor: tag.color,
+                                color: tag.color,
+                              }}
                             >
-                              <span className={styles.tagDot} style={{ background: tag.color }} aria-hidden="true" />
+                              <span
+                                className={styles.tagDot}
+                                style={{ background: tag.color }}
+                                aria-hidden="true"
+                              />
                               {tag.name}
                             </span>
                           ))}
@@ -515,7 +624,11 @@ const TaskDetailPanel = ({
           </section>
 
           <div className={styles.tabArea}>
-            <div className={styles.tabs} role="tablist" aria-label="Task activity">
+            <div
+              className={styles.tabs}
+              role="tablist"
+              aria-label="Task activity"
+            >
               <button
                 type="button"
                 role="tab"
@@ -541,7 +654,12 @@ const TaskDetailPanel = ({
             </div>
 
             {activeTab === "comments" ? (
-              <div id="task-panel-comments" role="tabpanel" aria-labelledby="task-tab-comments" className={styles.tabPanel}>
+              <div
+                id="task-panel-comments"
+                role="tabpanel"
+                aria-labelledby="task-tab-comments"
+                className={styles.tabPanel}
+              >
                 {commentsError && (
                   <p className={styles.error} role="alert">
                     {commentsError}
@@ -559,10 +677,15 @@ const TaskDetailPanel = ({
                         <div className={styles.commentHeader}>
                           <span className={styles.commentAuthor}>
                             {comment.author_name}
-                            {comment.author_type === "client" && <span className={styles.clientBadge}>Client</span>}
+                            {comment.author_type === "client" && (
+                              <span className={styles.clientBadge}>Client</span>
+                            )}
                           </span>
-                          <span className={styles.commentTimestamp}>{formatTimestamp(comment.created_at)}</span>
-                          {(comment.author_user_id === currentUserId || canModerateComments) && (
+                          <span className={styles.commentTimestamp}>
+                            {formatTimestamp(comment.created_at)}
+                          </span>
+                          {(comment.author_user_id === currentUserId ||
+                            canModerateComments) && (
                             <button
                               type="button"
                               className={styles.commentDelete}
@@ -586,8 +709,13 @@ const TaskDetailPanel = ({
                             target="_blank"
                             rel="noopener noreferrer"
                           >
-                            <Paperclip className={styles.commentAttachmentIcon} aria-hidden="true" />
-                            <span className={styles.commentAttachmentName}>{comment.attachment.file_name}</span>
+                            <Paperclip
+                              className={styles.commentAttachmentIcon}
+                              aria-hidden="true"
+                            />
+                            <span className={styles.commentAttachmentName}>
+                              {comment.attachment.file_name}
+                            </span>
                             <span className={styles.commentAttachmentSize}>
                               {formatFileSize(comment.attachment.size)}
                             </span>
@@ -598,7 +726,10 @@ const TaskDetailPanel = ({
                   </ul>
                 )}
 
-                <form className={styles.commentForm} onSubmit={handlePostComment}>
+                <form
+                  className={styles.commentForm}
+                  onSubmit={handlePostComment}
+                >
                   <textarea
                     className={styles.commentInput}
                     rows={2}
@@ -610,13 +741,17 @@ const TaskDetailPanel = ({
                   <div className={styles.commentFormActions}>
                     <label className={styles.commentAttach}>
                       <Paperclip aria-hidden="true" />
-                      <span>{commentFile ? commentFile.name : "Attach a file"}</span>
+                      <span>
+                        {commentFile ? commentFile.name : "Attach a file"}
+                      </span>
                       <input
                         ref={commentFileRef}
                         type="file"
                         accept={ACCEPTED_FILE_TYPES}
                         className={styles.uploadInput}
-                        onChange={(event) => setCommentFile(event.target.files?.[0] ?? null)}
+                        onChange={(event) =>
+                          setCommentFile(event.target.files?.[0] ?? null)
+                        }
                         disabled={isPostingComment}
                       />
                     </label>
@@ -626,7 +761,8 @@ const TaskDetailPanel = ({
                         className={styles.commentAttachClear}
                         onClick={() => {
                           setCommentFile(null);
-                          if (commentFileRef.current) commentFileRef.current.value = "";
+                          if (commentFileRef.current)
+                            commentFileRef.current.value = "";
                         }}
                         aria-label="Remove attached file"
                       >
@@ -644,7 +780,12 @@ const TaskDetailPanel = ({
                 </form>
               </div>
             ) : (
-              <div id="task-panel-files" role="tabpanel" aria-labelledby="task-tab-files" className={styles.tabPanel}>
+              <div
+                id="task-panel-files"
+                role="tabpanel"
+                aria-labelledby="task-tab-files"
+                className={styles.tabPanel}
+              >
                 {filesError && (
                   <p className={styles.error} role="alert">
                     {filesError}
@@ -660,15 +801,27 @@ const TaskDetailPanel = ({
                     {files.map((file) => (
                       <li key={file.id} className={styles.fileRow}>
                         <a
-                          href={getTaskFileDownloadUrl(agencyId, projectId, currentTask.id, file.id)}
+                          href={getTaskFileDownloadUrl(
+                            agencyId,
+                            projectId,
+                            currentTask.id,
+                            file.id,
+                          )}
                           className={styles.fileLink}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          <Paperclip className={styles.fileIcon} aria-hidden="true" />
-                          <span className={styles.fileName}>{file.file_name}</span>
+                          <Paperclip
+                            className={styles.fileIcon}
+                            aria-hidden="true"
+                          />
+                          <span className={styles.fileName}>
+                            {file.file_name}
+                          </span>
                         </a>
-                        <span className={styles.fileMeta}>{formatFileSize(file.size)}</span>
+                        <span className={styles.fileMeta}>
+                          {formatFileSize(file.size)}
+                        </span>
                         <button
                           type="button"
                           className={styles.fileDelete}
@@ -684,7 +837,8 @@ const TaskDetailPanel = ({
                 )}
 
                 <label className={styles.uploadTrigger}>
-                  <Paperclip aria-hidden="true" /> {isUploading ? "Working…" : "Attach a file"}
+                  <Paperclip aria-hidden="true" />{" "}
+                  {isUploading ? "Working…" : "Attach a file"}
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -694,7 +848,9 @@ const TaskDetailPanel = ({
                     disabled={isUploading}
                   />
                 </label>
-                <p className={styles.uploadHint}>Images, PDFs, or Word documents.</p>
+                <p className={styles.uploadHint}>
+                  Images, PDFs, or Word documents.
+                </p>
               </div>
             )}
           </div>

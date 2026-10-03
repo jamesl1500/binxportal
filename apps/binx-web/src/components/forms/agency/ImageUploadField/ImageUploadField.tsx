@@ -9,7 +9,7 @@
  * (AgencyBrandingForm) and a client's own portal logo (ClientBrandingForm).
  *
  * @module apps/binx-web/src/components/forms/agency/ImageUploadField/ImageUploadField.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -18,7 +18,10 @@ import { useRouter } from "next/navigation";
 import { ImageUp, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { AGENCY_IMAGE_MAX_BYTES, AGENCY_IMAGE_MIME_TYPES } from "@/lib/agencies-client";
+import {
+  AGENCY_IMAGE_MAX_BYTES,
+  AGENCY_IMAGE_MIME_TYPES,
+} from "@/lib/agencies-client";
 
 import styles from "./ImageUploadField.module.scss";
 
@@ -34,7 +37,15 @@ interface ImageUploadFieldProps {
 
 const MAX_MB = AGENCY_IMAGE_MAX_BYTES / (1024 * 1024);
 
-const ImageUploadField = ({ label, hint, hasImage, imageUrl, aspect, onUpload, onRemove }: ImageUploadFieldProps) => {
+const ImageUploadField = ({
+  label,
+  hint,
+  hasImage,
+  imageUrl,
+  aspect,
+  onUpload,
+  onRemove,
+}: ImageUploadFieldProps) => {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -93,7 +104,11 @@ const ImageUploadField = ({ label, hint, hasImage, imageUrl, aspect, onUpload, o
       >
         {hasImage ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img className={styles.preview} src={imageUrl} alt={`${label} preview`} />
+          <img
+            className={styles.preview}
+            src={imageUrl}
+            alt={`${label} preview`}
+          />
         ) : (
           <span className={styles.placeholder}>
             <ImageUp aria-hidden="true" />
@@ -124,7 +139,12 @@ const ImageUploadField = ({ label, hint, hasImage, imageUrl, aspect, onUpload, o
           {hasImage ? "Replace" : "Choose file"}
         </button>
         {hasImage && (
-          <button type="button" className={styles.remove} disabled={busy} onClick={() => void remove()}>
+          <button
+            type="button"
+            className={styles.remove}
+            disabled={busy}
+            onClick={() => void remove()}
+          >
             <Trash2 aria-hidden="true" /> Remove
           </button>
         )}

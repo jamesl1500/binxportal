@@ -8,7 +8,7 @@
  * the browser is simpler than round-tripping to binx-api for it.
  *
  * @module apps/binx-web/src/components/forms/clients/ClientsTable/ClientsTable.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -36,7 +36,11 @@ function initials(name: string): string {
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+  return new Date(iso).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 }
 
 /** Strips a leading protocol so a website reads as a plain domain in the table, without breaking the href. */
@@ -48,7 +52,10 @@ const ClientsTable = ({ agencyId, clients }: ClientsTableProps) => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("active");
 
-  const activeCount = useMemo(() => clients.filter((client) => client.is_active).length, [clients]);
+  const activeCount = useMemo(
+    () => clients.filter((client) => client.is_active).length,
+    [clients],
+  );
   const archivedCount = clients.length - activeCount;
 
   const filtered = useMemo(() => {
@@ -71,7 +78,9 @@ const ClientsTable = ({ agencyId, clients }: ClientsTableProps) => {
     return (
       <div className={styles.emptyState}>
         <p className={styles.emptyTitle}>No clients yet</p>
-        <p className={styles.emptyText}>Add your first client to start tracking who your agency works with.</p>
+        <p className={styles.emptyText}>
+          Add your first client to start tracking who your agency works with.
+        </p>
       </div>
     );
   }
@@ -79,7 +88,11 @@ const ClientsTable = ({ agencyId, clients }: ClientsTableProps) => {
   return (
     <div className={styles.wrapper}>
       <div className={styles.toolbar}>
-        <div className={styles.tabs} role="tablist" aria-label="Filter by status">
+        <div
+          className={styles.tabs}
+          role="tablist"
+          aria-label="Filter by status"
+        >
           <button
             type="button"
             role="tab"
@@ -126,60 +139,89 @@ const ClientsTable = ({ agencyId, clients }: ClientsTableProps) => {
         </div>
       ) : (
         <div className={styles.tableScroll}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th className={styles.headCell}>Client</th>
-              <th className={styles.headCell}>Primary contact</th>
-              <th className={styles.headCell}>Status</th>
-              <th className={styles.headCell}>Added</th>
-              <th className={styles.headCell}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((client) => (
-              <tr key={client.id} className={styles.row}>
-                <td className={styles.cell}>
-                  <Link href={`/clients/${client.id}`} className={styles.clientLink}>
-                    <span className={styles.avatar} aria-hidden="true">
-                      {initials(client.name)}
-                    </span>
-                    <div>
-                      <p className={styles.name}>{client.name}</p>
-                      {client.website && (
-                        <span className={styles.website}>{displayUrl(client.website)}</span>
-                      )}
-                    </div>
-                  </Link>
-                </td>
-                <td className={styles.cell}>
-                  {client.primary_contact_name || client.primary_contact_email || client.primary_contact_phone ? (
-                    <div>
-                      {client.primary_contact_name && <p className={styles.contactName}>{client.primary_contact_name}</p>}
-                      {client.primary_contact_email && (
-                        <a href={`mailto:${client.primary_contact_email}`} className={styles.contactDetail}>
-                          {client.primary_contact_email}
-                        </a>
-                      )}
-                      {client.primary_contact_phone && <p className={styles.contactDetail}>{client.primary_contact_phone}</p>}
-                    </div>
-                  ) : (
-                    <span className={styles.noContact}>No contact on file</span>
-                  )}
-                </td>
-                <td className={styles.cell}>
-                  <span className={styles.statusBadge} data-active={client.is_active}>
-                    {client.is_active ? "Active" : "Archived"}
-                  </span>
-                </td>
-                <td className={`${styles.cell} ${styles.added}`}>{formatDate(client.created_at)}</td>
-                <td className={styles.cell}>
-                  <ArchiveClientButton agencyId={agencyId} client={client} compact />
-                </td>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th className={styles.headCell}>Client</th>
+                <th className={styles.headCell}>Primary contact</th>
+                <th className={styles.headCell}>Status</th>
+                <th className={styles.headCell}>Added</th>
+                <th className={styles.headCell}>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filtered.map((client) => (
+                <tr key={client.id} className={styles.row}>
+                  <td className={styles.cell}>
+                    <Link
+                      href={`/clients/${client.id}`}
+                      className={styles.clientLink}
+                    >
+                      <span className={styles.avatar} aria-hidden="true">
+                        {initials(client.name)}
+                      </span>
+                      <div>
+                        <p className={styles.name}>{client.name}</p>
+                        {client.website && (
+                          <span className={styles.website}>
+                            {displayUrl(client.website)}
+                          </span>
+                        )}
+                      </div>
+                    </Link>
+                  </td>
+                  <td className={styles.cell}>
+                    {client.primary_contact_name ||
+                    client.primary_contact_email ||
+                    client.primary_contact_phone ? (
+                      <div>
+                        {client.primary_contact_name && (
+                          <p className={styles.contactName}>
+                            {client.primary_contact_name}
+                          </p>
+                        )}
+                        {client.primary_contact_email && (
+                          <a
+                            href={`mailto:${client.primary_contact_email}`}
+                            className={styles.contactDetail}
+                          >
+                            {client.primary_contact_email}
+                          </a>
+                        )}
+                        {client.primary_contact_phone && (
+                          <p className={styles.contactDetail}>
+                            {client.primary_contact_phone}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <span className={styles.noContact}>
+                        No contact on file
+                      </span>
+                    )}
+                  </td>
+                  <td className={styles.cell}>
+                    <span
+                      className={styles.statusBadge}
+                      data-active={client.is_active}
+                    >
+                      {client.is_active ? "Active" : "Archived"}
+                    </span>
+                  </td>
+                  <td className={`${styles.cell} ${styles.added}`}>
+                    {formatDate(client.created_at)}
+                  </td>
+                  <td className={styles.cell}>
+                    <ArchiveClientButton
+                      agencyId={agencyId}
+                      client={client}
+                      compact
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

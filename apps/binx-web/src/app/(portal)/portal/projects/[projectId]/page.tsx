@@ -7,7 +7,7 @@
  * the team. The header and tab nav live in the layout above.
  *
  * @module apps/binx-web/src/app/(portal)/portal/projects/[projectId]/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -24,7 +24,9 @@ interface PortalProjectOverviewPageProps {
   params: Promise<{ projectId: string }>;
 }
 
-const PortalProjectOverviewPage = async ({ params }: PortalProjectOverviewPageProps) => {
+const PortalProjectOverviewPage = async ({
+  params,
+}: PortalProjectOverviewPageProps) => {
   const { projectId } = await params;
 
   let project;
@@ -43,9 +45,13 @@ const PortalProjectOverviewPage = async ({ params }: PortalProjectOverviewPagePr
   // Share of the schedule elapsed, when both ends of it are known.
   let elapsed: number | null = null;
   if (project.start_date && project.due_date) {
-    const span = daysUntil(project.due_date, now) - daysUntil(project.start_date, now);
+    const span =
+      daysUntil(project.due_date, now) - daysUntil(project.start_date, now);
     const gone = -daysUntil(project.start_date, now);
-    elapsed = span > 0 ? Math.min(100, Math.max(0, Math.round((gone / span) * 100))) : 100;
+    elapsed =
+      span > 0
+        ? Math.min(100, Math.max(0, Math.round((gone / span) * 100)))
+        : 100;
   }
   const daysLeft = project.due_date ? daysUntil(project.due_date, now) : null;
 
@@ -74,7 +80,10 @@ const PortalProjectOverviewPage = async ({ params }: PortalProjectOverviewPagePr
     <div className={styles.overviewGrid}>
       <section className={styles.card}>
         <h2 className={styles.sectionTitle}>Progress</h2>
-        <ProjectProgress progress={project.progress} columns={project.columns} />
+        <ProjectProgress
+          progress={project.progress}
+          columns={project.columns}
+        />
       </section>
 
       <section className={styles.card}>
@@ -86,9 +95,15 @@ const PortalProjectOverviewPage = async ({ params }: PortalProjectOverviewPagePr
             aria-label={`${elapsed}% of the scheduled time has passed`}
           >
             <span className={styles.timelineTrack} />
-            <span className={styles.timelineDone} style={{ width: `${elapsed}%` }} />
+            <span
+              className={styles.timelineDone}
+              style={{ width: `${elapsed}%` }}
+            />
             {elapsed > 0 && elapsed < 100 && (
-              <span className={styles.timelineToday} style={{ left: `${elapsed}%` }}>
+              <span
+                className={styles.timelineToday}
+                style={{ left: `${elapsed}%` }}
+              >
                 Today
               </span>
             )}
@@ -104,7 +119,9 @@ const PortalProjectOverviewPage = async ({ params }: PortalProjectOverviewPagePr
             <dd>{project.due_date ? formatDay(project.due_date) : "—"}</dd>
           </div>
           <div>
-            <dt>{daysLeft !== null && daysLeft < 0 ? "Past due" : "Days left"}</dt>
+            <dt>
+              {daysLeft !== null && daysLeft < 0 ? "Past due" : "Days left"}
+            </dt>
             <dd>{daysLeft === null ? "—" : Math.abs(daysLeft)}</dd>
           </div>
         </dl>
@@ -114,7 +131,11 @@ const PortalProjectOverviewPage = async ({ params }: PortalProjectOverviewPagePr
         {shortcuts.map((shortcut) => {
           const Icon = shortcut.icon;
           return (
-            <Link key={shortcut.title} href={shortcut.href} className={styles.shortcut}>
+            <Link
+              key={shortcut.title}
+              href={shortcut.href}
+              className={styles.shortcut}
+            >
               <span className={styles.shortcutIcon} aria-hidden="true">
                 <Icon />
               </span>

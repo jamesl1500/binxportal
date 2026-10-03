@@ -6,7 +6,7 @@
  * session with a current agency.
  *
  * @module apps/binx-web/src/app/(app)/proposals/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -29,7 +29,9 @@ const ProposalsPage = async () => {
   }
 
   const proposals = await getProposals(currentAgency.id);
-  const draftCount = proposals.filter((proposal) => proposal.status === "draft").length;
+  const draftCount = proposals.filter(
+    (proposal) => proposal.status === "draft",
+  ).length;
 
   return (
     <div>
@@ -38,7 +40,8 @@ const ProposalsPage = async () => {
           <span className={styles.eyebrow}>Proposals</span>
           <h1 className={styles.title}>Proposals</h1>
           <p className={styles.subtitle}>
-            {proposals.length} total · {draftCount} draft{draftCount === 1 ? "" : "s"}
+            {proposals.length} total · {draftCount} draft
+            {draftCount === 1 ? "" : "s"}
           </p>
         </div>
 

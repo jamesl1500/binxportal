@@ -6,7 +6,7 @@
  * CreateLeadDialog modal so staff can be linked straight here.
  *
  * @module apps/binx-web/src/app/(app)/leads/new/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -37,7 +37,8 @@ const NewLeadPage = async () => {
           <span className={styles.eyebrow}>Leads</span>
           <h1 className={styles.title}>New lead</h1>
           <p className={styles.subtitle}>
-            Just a name to start — you can fill in the rest and work it from the lead&apos;s page.
+            Just a name to start — you can fill in the rest and work it from the
+            lead&apos;s page.
           </p>
         </div>
       </div>

@@ -6,7 +6,7 @@
  * owns the selected id set.
  *
  * @module apps/binx-web/src/components/messaging/MemberMultiSelect/MemberMultiSelect.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -24,7 +24,12 @@ interface MemberMultiSelectProps {
   exclude?: Set<string>;
 }
 
-const MemberMultiSelect = ({ members, selected, onChange, exclude }: MemberMultiSelectProps) => {
+const MemberMultiSelect = ({
+  members,
+  selected,
+  onChange,
+  exclude,
+}: MemberMultiSelectProps) => {
   const [query, setQuery] = useState("");
 
   const visible = useMemo(() => {
@@ -33,7 +38,8 @@ const MemberMultiSelect = ({ members, selected, onChange, exclude }: MemberMulti
       if (exclude?.has(member.user_id)) return false;
       if (!q) return true;
       return (
-        member.full_name.toLowerCase().includes(q) || (member.email ?? "").toLowerCase().includes(q)
+        member.full_name.toLowerCase().includes(q) ||
+        (member.email ?? "").toLowerCase().includes(q)
       );
     });
   }, [members, query, exclude]);
@@ -70,7 +76,9 @@ const MemberMultiSelect = ({ members, selected, onChange, exclude }: MemberMulti
                 />
                 <span className={styles.optionText}>
                   <span className={styles.optionName}>{member.full_name}</span>
-                  <span className={styles.optionMeta}>{member.job_title || member.email}</span>
+                  <span className={styles.optionMeta}>
+                    {member.job_title || member.email}
+                  </span>
                 </span>
               </label>
             </li>

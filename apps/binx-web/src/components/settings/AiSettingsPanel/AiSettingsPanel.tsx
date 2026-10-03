@@ -7,7 +7,7 @@
  * settings split — see `app/(app)/settings/general/page.tsx`).
  *
  * @module apps/binx-web/src/components/settings/AiSettingsPanel/AiSettingsPanel.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -27,12 +27,20 @@ interface AiSettingsPanelProps {
   canEdit: boolean;
 }
 
-const AiSettingsPanel = ({ agencyId, settings, canEdit }: AiSettingsPanelProps) => {
+const AiSettingsPanel = ({
+  agencyId,
+  settings,
+  canEdit,
+}: AiSettingsPanelProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isEnabled, setIsEnabled] = useState(settings.is_enabled);
-  const [monthlyBudget, setMonthlyBudget] = useState((settings.monthly_budget_cents / 100).toFixed(2));
-  const [dailyCap, setDailyCap] = useState(String(settings.daily_user_request_cap));
+  const [monthlyBudget, setMonthlyBudget] = useState(
+    (settings.monthly_budget_cents / 100).toFixed(2),
+  );
+  const [dailyCap, setDailyCap] = useState(
+    String(settings.daily_user_request_cap),
+  );
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -41,15 +49,21 @@ const AiSettingsPanel = ({ agencyId, settings, canEdit }: AiSettingsPanelProps) 
       <dl className={styles.readonlyList}>
         <div className={styles.readonlyRow}>
           <dt className={styles.readonlyLabel}>Status</dt>
-          <dd className={styles.readonlyValue}>{settings.is_enabled ? "Enabled" : "Disabled"}</dd>
+          <dd className={styles.readonlyValue}>
+            {settings.is_enabled ? "Enabled" : "Disabled"}
+          </dd>
         </div>
         <div className={styles.readonlyRow}>
           <dt className={styles.readonlyLabel}>Monthly budget</dt>
-          <dd className={styles.readonlyValue}>{formatMoneyCents(settings.monthly_budget_cents)}</dd>
+          <dd className={styles.readonlyValue}>
+            {formatMoneyCents(settings.monthly_budget_cents)}
+          </dd>
         </div>
         <div className={styles.readonlyRow}>
           <dt className={styles.readonlyLabel}>Daily requests per person</dt>
-          <dd className={styles.readonlyValue}>{settings.daily_user_request_cap}</dd>
+          <dd className={styles.readonlyValue}>
+            {settings.daily_user_request_cap}
+          </dd>
         </div>
       </dl>
     );
@@ -91,7 +105,10 @@ const AiSettingsPanel = ({ agencyId, settings, canEdit }: AiSettingsPanelProps) 
       <div className={styles.toggleRow}>
         <div>
           <p className={styles.toggleLabel}>AI features enabled</p>
-          <p className={styles.toggleHint}>Turn every AI feature off for this agency without losing the budget below.</p>
+          <p className={styles.toggleHint}>
+            Turn every AI feature off for this agency without losing the budget
+            below.
+          </p>
         </div>
         <Switch.Root
           checked={isEnabled}
@@ -118,8 +135,9 @@ const AiSettingsPanel = ({ agencyId, settings, canEdit }: AiSettingsPanelProps) 
             onChange={(event) => setMonthlyBudget(event.target.value)}
           />
           <p className={styles.toggleHint}>
-            Your plan caps this at {formatMoneyCents(settings.plan_monthly_budget_cents)} / mo. Higher values
-            are clamped down.
+            Your plan caps this at{" "}
+            {formatMoneyCents(settings.plan_monthly_budget_cents)} / mo. Higher
+            values are clamped down.
           </p>
         </div>
 
@@ -136,14 +154,21 @@ const AiSettingsPanel = ({ agencyId, settings, canEdit }: AiSettingsPanelProps) 
             value={dailyCap}
             onChange={(event) => setDailyCap(event.target.value)}
           />
-          <p className={styles.toggleHint}>Plan cap: {settings.plan_daily_user_cap} per person per day.</p>
+          <p className={styles.toggleHint}>
+            Plan cap: {settings.plan_daily_user_cap} per person per day.
+          </p>
         </div>
       </div>
 
       {formError && <p className={styles.formError}>{formError}</p>}
       {successMessage && <p className={styles.formSuccess}>{successMessage}</p>}
 
-      <button type="button" className={styles.submit} onClick={handleSave} disabled={isPending}>
+      <button
+        type="button"
+        className={styles.submit}
+        onClick={handleSave}
+        disabled={isPending}
+      >
         {isPending ? "Saving…" : "Save changes"}
       </button>
     </div>

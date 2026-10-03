@@ -7,7 +7,7 @@
  * it ties a ClientContact to an account.
  *
  * @module apps/binx-web/src/app/(auth)/auth/portal-invite/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -27,7 +27,8 @@ interface PortalInvitePageProps {
 const PortalInvitePage = async ({ searchParams }: PortalInvitePageProps) => {
   const { token } = await searchParams;
 
-  let preview: Awaited<ReturnType<typeof previewPortalInvitation>> | null = null;
+  let preview: Awaited<ReturnType<typeof previewPortalInvitation>> | null =
+    null;
   let tokenError: string | null = null;
 
   if (!token) {
@@ -36,7 +37,10 @@ const PortalInvitePage = async ({ searchParams }: PortalInvitePageProps) => {
     try {
       preview = await previewPortalInvitation(token);
     } catch (error) {
-      tokenError = error instanceof Error ? error.message : "This invitation link is invalid or has expired.";
+      tokenError =
+        error instanceof Error
+          ? error.message
+          : "This invitation link is invalid or has expired.";
     }
   }
 
@@ -59,8 +63,8 @@ const PortalInvitePage = async ({ searchParams }: PortalInvitePageProps) => {
       ) : !user ? (
         <div className={styles.authPrompt}>
           <p className={styles.authPromptText}>
-            Log in or create an account using <strong>{preview.email}</strong>, then come back to this link to
-            accept.
+            Log in or create an account using <strong>{preview.email}</strong>,
+            then come back to this link to accept.
           </p>
           <div className={styles.authPromptActions}>
             <Link href="/auth/login" className={styles.primaryButton}>

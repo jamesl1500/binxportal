@@ -8,7 +8,7 @@
  * feature-gated tier.
  *
  * @module apps/binx-web/src/app/(marketing)/free-client-portal/page.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -80,7 +80,15 @@ const faqJsonLd = {
 const FreeClientPortalPage = () => {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([faqJsonLd, breadcrumbJsonLd(TITLE, "/free-client-portal")]) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify([
+            faqJsonLd,
+            breadcrumbJsonLd(TITLE, "/free-client-portal"),
+          ]),
+        }}
+      />
 
       <section className={styles.hero}>
         <div className={styles.heroGlow} aria-hidden="true" />
@@ -89,8 +97,9 @@ const FreeClientPortalPage = () => {
             <span className={styles.eyebrow}>Free client portal</span>
             <h1 className={styles.h1}>A real client portal. Actually free.</h1>
             <p className={styles.lead}>
-              Not a trial, not a feature you unlock later — the {SITE.name} Free plan includes a full, branded
-              client portal with no card required, and client-portal contacts never count toward your team limit or
+              Not a trial, not a feature you unlock later — the {SITE.name} Free
+              plan includes a full, branded client portal with no card required,
+              and client-portal contacts never count toward your team limit or
               get billed on any plan.
             </p>
             <div className={`${styles.btnRow} ${styles.heroActions}`}>
@@ -101,7 +110,9 @@ const FreeClientPortalPage = () => {
                 See the Free plan
               </Link>
             </div>
-            <p className={styles.heroNote}>No card required · client contacts are never billed.</p>
+            <p className={styles.heroNote}>
+              No card required · client contacts are never billed.
+            </p>
           </div>
         </div>
       </section>
@@ -110,7 +121,9 @@ const FreeClientPortalPage = () => {
         <div className={styles.container}>
           <div className={styles.sectionHead}>
             <span className={styles.eyebrow}>What&apos;s actually in it</span>
-            <h2 className={styles.h2}>Not a stripped-down version. The same portal on every plan.</h2>
+            <h2 className={styles.h2}>
+              Not a stripped-down version. The same portal on every plan.
+            </h2>
           </div>
           <div className={styles.grid}>
             {INCLUDED.map(({ icon: Icon, title, text }) => (
@@ -143,7 +156,10 @@ const FreeClientPortalPage = () => {
         </div>
       </section>
 
-      <MarketingCta heading="Open your first client portal." sub="Free plan, no card, no time limit." />
+      <MarketingCta
+        heading="Open your first client portal."
+        sub="Free plan, no card, no time limit."
+      />
     </>
   );
 };

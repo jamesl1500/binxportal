@@ -15,16 +15,27 @@
  * and onboarding step four — the caller supplies where "Done" leads.
  *
  * @module apps/binx-web/src/components/imports/BulkImportWizard/BulkImportWizard.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
-import { type ChangeEvent, type DragEvent, useId, useMemo, useRef, useState, useTransition } from "react";
+import {
+  type ChangeEvent,
+  type DragEvent,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Download, FileSpreadsheet, Upload } from "lucide-react";
 
-import { parseImportFileAction, runImportAction } from "@/app/(app)/imports/actions";
+import {
+  parseImportFileAction,
+  runImportAction,
+} from "@/app/(app)/imports/actions";
 import {
   applyImportMapping,
   type ImportKind,
@@ -62,12 +73,16 @@ const COPY: Record<
     labelHeading: "Email",
     maxRows: 100,
     action: (n) => `Send ${n} ${n === 1 ? "invite" : "invites"}`,
-    done: (n) => `Invited ${n} ${n === 1 ? "person" : "people"} — they'll get an email shortly`,
+    done: (n) =>
+      `Invited ${n} ${n === 1 ? "person" : "people"} — they'll get an email shortly`,
     limitNoun: "team members (including pending invites)",
   },
 };
 
-const STATUS_LABELS: Record<ImportRowResult["status"], { review: string; done: string }> = {
+const STATUS_LABELS: Record<
+  ImportRowResult["status"],
+  { review: string; done: string }
+> = {
   ok: { review: "Ready", done: "Imported" },
   duplicate: { review: "Duplicate", done: "Skipped · duplicate" },
   invalid: { review: "Needs fixing", done: "Skipped · needs fixing" },
@@ -121,7 +136,13 @@ const ResultsTable = ({
   </div>
 );
 
-const BulkImportWizard = ({ agencyId, kind, nextHref, nextLabel, onImported }: BulkImportWizardProps) => {
+const BulkImportWizard = ({
+  agencyId,
+  kind,
+  nextHref,
+  nextLabel,
+  onImported,
+}: BulkImportWizardProps) => {
   const copy = COPY[kind];
   const router = useRouter();
   const inputId = useId();
@@ -142,7 +163,11 @@ const BulkImportWizard = ({ agencyId, kind, nextHref, nextLabel, onImported }: B
 
   // First non-empty value in each column, shown under the mapping selects.
   const samples = useMemo(
-    () => parsed?.columns.map((_, index) => parsed.rows.find((row) => row.cells[index])?.cells[index] ?? "") ?? [],
+    () =>
+      parsed?.columns.map(
+        (_, index) =>
+          parsed.rows.find((row) => row.cells[index])?.cells[index] ?? "",
+      ) ?? [],
     [parsed],
   );
 
@@ -188,7 +213,12 @@ const BulkImportWizard = ({ agencyId, kind, nextHref, nextLabel, onImported }: B
     if (!parsed || missing.length > 0) return;
     setError(null);
     startTransition(async () => {
-      const response = await runImportAction(agencyId, kind, applyImportMapping(parsed, mapping), true);
+      const response = await runImportAction(
+        agencyId,
+        kind,
+        applyImportMapping(parsed, mapping),
+        true,
+      );
       if (response.error || !response.result) {
         setError(response.error ?? "Unable to check those rows");
         return;
@@ -203,7 +233,12 @@ const BulkImportWizard = ({ agencyId, kind, nextHref, nextLabel, onImported }: B
     if (!parsed) return;
     setError(null);
     startTransition(async () => {
-      const response = await runImportAction(agencyId, kind, applyImportMapping(parsed, mapping), false);
+      const response = await runImportAction(
+        agencyId,
+        kind,
+        applyImportMapping(parsed, mapping),
+        false,
+      );
       if (response.error || !response.result) {
         setError(response.error ?? "Unable to import");
         return;
@@ -239,10 +274,13 @@ const BulkImportWizard = ({ agencyId, kind, nextHref, nextLabel, onImported }: B
         >
           <Upload className={styles.dropIcon} aria-hidden="true" />
           <span className={styles.dropTitle}>
-            {isPending ? `Reading ${fileName ?? "file"}…` : "Drop a .csv or .xlsx file here, or click to browse"}
+            {isPending
+              ? `Reading ${fileName ?? "file"}…`
+              : "Drop a .csv or .xlsx file here, or click to browse"}
           </span>
           <span className={styles.dropHint}>
-            First row should be column headings · up to {copy.maxRows} rows · 2MB max
+            First row should be column headings · up to {copy.maxRows} rows ·
+            2MB max
           </span>
           <input
             ref={inputRef}
@@ -251,7 +289,9 @@ const BulkImportWizard = ({ agencyId, kind, nextHref, nextLabel, onImported }: B
             accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             className={styles.fileInput}
             disabled={isPending}
-            onChange={(event: ChangeEvent<HTMLInputElement>) => handleFile(event.target.files?.[0])}
+            onChange={(event: ChangeEvent<HTMLInputElement>) =>
+              handleFile(event.target.files?.[0])
+            }
             aria-label={`Upload a ${kind} spreadsheet`}
           />
         </label>
@@ -279,26 +319,31 @@ const BulkImportWizard = ({ agencyId, kind, nextHref, nextLabel, onImported }: B
         <div className={styles.fileBadge}>
           <FileSpreadsheet aria-hidden="true" />
           <span>
-            {fileName} · {parsed.rows.length} {parsed.rows.length === 1 ? "row" : "rows"}
+            {fileName} · {parsed.rows.length}{" "}
+            {parsed.rows.length === 1 ? "row" : "rows"}
           </span>
         </div>
 
         <h3 className={styles.stepTitle}>Match your columns</h3>
         <p className={styles.stepSubtitle}>
-          We&apos;ve matched what we could. Check each field and pick the column it should come from.
+          We&apos;ve matched what we could. Check each field and pick the column
+          it should come from.
         </p>
 
         <div className={styles.mapGrid}>
           {parsed.fields.map((field) => {
             const selectId = `${inputId}-${field.key}`;
             const column = mapping[field.key];
-            const sample = column === null || column === undefined ? "" : samples[column];
+            const sample =
+              column === null || column === undefined ? "" : samples[column];
             const isMissing = missing.some((item) => item.key === field.key);
             return (
               <div key={field.key} className={styles.mapField}>
                 <label htmlFor={selectId} className={styles.mapLabel}>
                   {field.label}
-                  {field.required && <span className={styles.required}> (required)</span>}
+                  {field.required && (
+                    <span className={styles.required}> (required)</span>
+                  )}
                 </label>
                 <select
                   id={selectId}
@@ -308,7 +353,10 @@ const BulkImportWizard = ({ agencyId, kind, nextHref, nextLabel, onImported }: B
                   onChange={(event) =>
                     setMapping((current) => ({
                       ...current,
-                      [field.key]: event.target.value === "" ? null : Number(event.target.value),
+                      [field.key]:
+                        event.target.value === ""
+                          ? null
+                          : Number(event.target.value),
                     }))
                   }
                 >
@@ -319,19 +367,29 @@ const BulkImportWizard = ({ agencyId, kind, nextHref, nextLabel, onImported }: B
                     </option>
                   ))}
                 </select>
-                <span className={styles.sample}>{sample ? `e.g. ${sample}` : " "}</span>
+                <span className={styles.sample}>
+                  {sample ? `e.g. ${sample}` : " "}
+                </span>
               </div>
             );
           })}
         </div>
 
         {missing.length > 0 && (
-          <p className={styles.warning}>Choose a column for {missing.map((field) => field.label).join(", ")}.</p>
+          <p className={styles.warning}>
+            Choose a column for {missing.map((field) => field.label).join(", ")}
+            .
+          </p>
         )}
         {errorBanner}
 
         <div className={styles.footer}>
-          <button type="button" className={styles.secondary} onClick={reset} disabled={isPending}>
+          <button
+            type="button"
+            className={styles.secondary}
+            onClick={reset}
+            disabled={isPending}
+          >
             Choose a different file
           </button>
           <button
@@ -351,14 +409,19 @@ const BulkImportWizard = ({ agencyId, kind, nextHref, nextLabel, onImported }: B
   if (step === "review" && review) {
     const skipped = review.rows.length - review.imported;
     const visible = review.rows.filter((row) =>
-      filter === "all" ? true : filter === "ready" ? row.status === "ok" : row.status !== "ok",
+      filter === "all"
+        ? true
+        : filter === "ready"
+          ? row.status === "ok"
+          : row.status !== "ok",
     );
 
     return (
       <div className={styles.wizard}>
         <h3 className={styles.stepTitle}>Review</h3>
         <p className={styles.stepSubtitle}>
-          Nothing has been imported yet. Skipped rows can be fixed in your file and imported later.
+          Nothing has been imported yet. Skipped rows can be fixed in your file
+          and imported later.
         </p>
 
         <ul className={styles.summary}>
@@ -367,7 +430,8 @@ const BulkImportWizard = ({ agencyId, kind, nextHref, nextLabel, onImported }: B
           </li>
           {review.duplicates > 0 && (
             <li data-status="duplicate">
-              <strong>{review.duplicates}</strong> {review.duplicates === 1 ? "duplicate" : "duplicates"}
+              <strong>{review.duplicates}</strong>{" "}
+              {review.duplicates === 1 ? "duplicate" : "duplicates"}
             </li>
           )}
           {review.invalid > 0 && (
@@ -385,9 +449,13 @@ const BulkImportWizard = ({ agencyId, kind, nextHref, nextLabel, onImported }: B
         {review.over_limit > 0 && review.limit !== null && (
           <p className={styles.limitBanner}>
             Your {review.plan_name} plan allows {review.limit} {copy.limitNoun}
-            {review.remaining ? ` and has room for ${review.remaining} more` : ", and that's already reached"}, so{" "}
-            {review.over_limit} {review.over_limit === 1 ? "row" : "rows"} will be skipped.{" "}
-            <Link href="/settings/plan">Upgrade your plan</Link> to import the rest.
+            {review.remaining
+              ? ` and has room for ${review.remaining} more`
+              : ", and that's already reached"}
+            , so {review.over_limit} {review.over_limit === 1 ? "row" : "rows"}{" "}
+            will be skipped.{" "}
+            <Link href="/settings/plan">Upgrade your plan</Link> to import the
+            rest.
           </p>
         )}
 
@@ -411,11 +479,20 @@ const BulkImportWizard = ({ agencyId, kind, nextHref, nextLabel, onImported }: B
           ))}
         </div>
 
-        <ResultsTable rows={visible} heading={copy.labelHeading} phase="review" />
+        <ResultsTable
+          rows={visible}
+          heading={copy.labelHeading}
+          phase="review"
+        />
         {errorBanner}
 
         <div className={styles.footer}>
-          <button type="button" className={styles.secondary} onClick={() => setStep("map")} disabled={isPending}>
+          <button
+            type="button"
+            className={styles.secondary}
+            onClick={() => setStep("map")}
+            disabled={isPending}
+          >
             Back
           </button>
           <button
@@ -424,7 +501,11 @@ const BulkImportWizard = ({ agencyId, kind, nextHref, nextLabel, onImported }: B
             onClick={runImport}
             disabled={isPending || review.imported === 0}
           >
-            {isPending ? "Importing…" : review.imported === 0 ? `Nothing to import` : copy.action(review.imported)}
+            {isPending
+              ? "Importing…"
+              : review.imported === 0
+                ? `Nothing to import`
+                : copy.action(review.imported)}
           </button>
         </div>
       </div>
@@ -442,13 +523,21 @@ const BulkImportWizard = ({ agencyId, kind, nextHref, nextLabel, onImported }: B
             <h3 className={styles.stepTitle}>{copy.done(result.imported)}</h3>
             {skippedRows.length > 0 && (
               <p className={styles.stepSubtitle}>
-                {skippedRows.length} {skippedRows.length === 1 ? "row was" : "rows were"} skipped — see why below.
+                {skippedRows.length}{" "}
+                {skippedRows.length === 1 ? "row was" : "rows were"} skipped —
+                see why below.
               </p>
             )}
           </div>
         </div>
 
-        {skippedRows.length > 0 && <ResultsTable rows={skippedRows} heading={copy.labelHeading} phase="done" />}
+        {skippedRows.length > 0 && (
+          <ResultsTable
+            rows={skippedRows}
+            heading={copy.labelHeading}
+            phase="done"
+          />
+        )}
 
         <div className={styles.footer}>
           <button type="button" className={styles.secondary} onClick={reset}>

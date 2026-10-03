@@ -5,7 +5,7 @@
  * markup. `null` renders a muted "not scored" chip.
  *
  * @module apps/binx-web/src/components/leads/LeadScoreBadge/LeadScoreBadge.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 import styles from "./LeadScoreBadge.module.scss";
 
@@ -21,7 +21,11 @@ function tone(score: number): "low" | "mid" | "high" {
 
 const LeadScoreBadge = ({ score }: LeadScoreBadgeProps) => {
   if (score == null) {
-    return <span className={styles.badge} data-tone="none">Not scored</span>;
+    return (
+      <span className={styles.badge} data-tone="none">
+        Not scored
+      </span>
+    );
   }
   return (
     <span className={styles.badge} data-tone={tone(score)}>

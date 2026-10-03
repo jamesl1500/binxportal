@@ -8,7 +8,7 @@
  * their choice of which one they're working in persists across the app.
  *
  * @module apps/binx-web/src/lib/agencies.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 import axios from "axios";
 import { cookies } from "next/headers";
@@ -27,14 +27,19 @@ export type { AgencyImageKind };
 export type AgencyRole = "owner" | "admin" | "member";
 
 /** The signed-in user's agency + their role in it. */
-export type AgencyRead = Omit<Schemas["AgencyRead"], "role"> & { role: AgencyRole };
+export type AgencyRead = Omit<Schemas["AgencyRead"], "role"> & {
+  role: AgencyRole;
+};
 
 /** The general agency profile — branding, about/contact, socials, policies. */
 export type AgencyProfile = Schemas["AgencyProfileRead"];
 
 /** Every editable profile field — the settings forms submit the full set each save. */
 export type AgencyProfileInput = Partial<
-  Omit<AgencyProfile, "agency_id" | "has_logo" | "has_cover" | "logo_version" | "cover_version">
+  Omit<
+    AgencyProfile,
+    "agency_id" | "has_logo" | "has_cover" | "logo_version" | "cover_version"
+  >
 >;
 
 async function authHeader(): Promise<{ Authorization: string }> {
@@ -57,7 +62,11 @@ export async function createAgency(name: string): Promise<AgencyRead> {
   const headers = await authHeader();
 
   try {
-    const { data } = await api.post<AgencyRead>("/agencies", { name }, { headers });
+    const { data } = await api.post<AgencyRead>(
+      "/agencies",
+      { name },
+      { headers },
+    );
     return data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
@@ -105,11 +114,18 @@ export async function getMyAgencies(): Promise<AgencyRead[]> {
  * @function updateAgency
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller lacks permission for this agency.
  */
-export async function updateAgency(agencyId: string, name: string): Promise<AgencyRead> {
+export async function updateAgency(
+  agencyId: string,
+  name: string,
+): Promise<AgencyRead> {
   const headers = await authHeader();
 
   try {
-    const { data } = await api.patch<AgencyRead>(`/agencies/${agencyId}`, { name }, { headers });
+    const { data } = await api.patch<AgencyRead>(
+      `/agencies/${agencyId}`,
+      { name },
+      { headers },
+    );
     return data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
@@ -207,16 +223,19 @@ export interface CurrentAgencyContext {
  * @function getCurrentAgencyContext
  * @throws {AuthApiError} - Thrown if not authenticated, or binx-api rejects the request.
  */
-export const getCurrentAgencyContext = cache(async (): Promise<CurrentAgencyContext> => {
-  const agencies = await getMyAgencies();
-  if (agencies.length === 0) {
-    return { agencies, currentAgency: null };
-  }
+export const getCurrentAgencyContext = cache(
+  async (): Promise<CurrentAgencyContext> => {
+    const agencies = await getMyAgencies();
+    if (agencies.length === 0) {
+      return { agencies, currentAgency: null };
+    }
 
-  const currentAgencyId = await getCurrentAgencyId();
-  const currentAgency = agencies.find((agency) => agency.id === currentAgencyId) ?? agencies[0];
-  return { agencies, currentAgency };
-});
+    const currentAgencyId = await getCurrentAgencyId();
+    const currentAgency =
+      agencies.find((agency) => agency.id === currentAgencyId) ?? agencies[0];
+    return { agencies, currentAgency };
+  },
+);
 
 // ---- Profile (branding / about / policies) ----
 
@@ -229,14 +248,25 @@ export const getCurrentAgencyContext = cache(async (): Promise<CurrentAgencyCont
  * @function getAgencyProfile
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't a member of this agency.
  */
-export async function getAgencyProfile(agencyId: string): Promise<AgencyProfile> {
+export async function getAgencyProfile(
+  agencyId: string,
+): Promise<AgencyProfile> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<AgencyProfile>(`/agencies/${agencyId}/profile`, { headers });
+    const { data } = await api.get<AgencyProfile>(
+      `/agencies/${agencyId}/profile`,
+      { headers },
+    );
     return data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
-      throw new AuthApiError(extractDetailMessage(error.response.data, "Unable to load agency profile"), error.response.status);
+      throw new AuthApiError(
+        extractDetailMessage(
+          error.response.data,
+          "Unable to load agency profile",
+        ),
+        error.response.status,
+      );
     }
     throw error;
   }
@@ -251,14 +281,27 @@ export async function getAgencyProfile(agencyId: string): Promise<AgencyProfile>
  * @function updateAgencyProfile
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller lacks permission for this agency.
  */
-export async function updateAgencyProfile(agencyId: string, input: AgencyProfileInput): Promise<AgencyProfile> {
+export async function updateAgencyProfile(
+  agencyId: string,
+  input: AgencyProfileInput,
+): Promise<AgencyProfile> {
   const headers = await authHeader();
   try {
-    const { data } = await api.patch<AgencyProfile>(`/agencies/${agencyId}/profile`, input, { headers });
+    const { data } = await api.patch<AgencyProfile>(
+      `/agencies/${agencyId}/profile`,
+      input,
+      { headers },
+    );
     return data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
-      throw new AuthApiError(extractDetailMessage(error.response.data, "Unable to update agency profile"), error.response.status);
+      throw new AuthApiError(
+        extractDetailMessage(
+          error.response.data,
+          "Unable to update agency profile",
+        ),
+        error.response.status,
+      );
     }
     throw error;
   }
@@ -285,13 +328,20 @@ export async function uploadAgencyImage(
   try {
     // See lib/projects.ts's uploadProjectFile: delete the inherited
     // `Content-Type: application/json` so axios sets its own multipart boundary.
-    const { data } = await api.put<AgencyProfile>(`/agencies/${agencyId}/${kind}`, formData, {
-      headers: { ...headers, "Content-Type": undefined },
-    });
+    const { data } = await api.put<AgencyProfile>(
+      `/agencies/${agencyId}/${kind}`,
+      formData,
+      {
+        headers: { ...headers, "Content-Type": undefined },
+      },
+    );
     return data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
-      throw new AuthApiError(extractDetailMessage(error.response.data, "Unable to upload image"), error.response.status);
+      throw new AuthApiError(
+        extractDetailMessage(error.response.data, "Unable to upload image"),
+        error.response.status,
+      );
     }
     throw error;
   }
@@ -306,14 +356,23 @@ export async function uploadAgencyImage(
  * @function deleteAgencyImage
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller lacks permission for this agency.
  */
-export async function deleteAgencyImage(agencyId: string, kind: AgencyImageKind): Promise<AgencyProfile> {
+export async function deleteAgencyImage(
+  agencyId: string,
+  kind: AgencyImageKind,
+): Promise<AgencyProfile> {
   const headers = await authHeader();
   try {
-    const { data } = await api.delete<AgencyProfile>(`/agencies/${agencyId}/${kind}`, { headers });
+    const { data } = await api.delete<AgencyProfile>(
+      `/agencies/${agencyId}/${kind}`,
+      { headers },
+    );
     return data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
-      throw new AuthApiError(extractDetailMessage(error.response.data, "Unable to remove image"), error.response.status);
+      throw new AuthApiError(
+        extractDetailMessage(error.response.data, "Unable to remove image"),
+        error.response.status,
+      );
     }
     throw error;
   }
@@ -321,7 +380,10 @@ export async function deleteAgencyImage(agencyId: string, kind: AgencyImageKind)
 
 // ---- Members ----
 
-export type AgencyMember = Omit<Schemas["AgencyMemberRead"], "role" | "experience" | "education"> & {
+export type AgencyMember = Omit<
+  Schemas["AgencyMemberRead"],
+  "role" | "experience" | "education"
+> & {
   role: AgencyRole;
   experience: ExperienceEntry[];
   education: EducationEntry[];
@@ -337,15 +399,23 @@ export type AgencyMember = Omit<Schemas["AgencyMemberRead"], "role" | "experienc
  * @function getAgencyMembers
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't a member of this agency.
  */
-export async function getAgencyMembers(agencyId: string): Promise<AgencyMember[]> {
+export async function getAgencyMembers(
+  agencyId: string,
+): Promise<AgencyMember[]> {
   const headers = await authHeader();
 
   try {
-    const { data } = await api.get<AgencyMember[]>(`/agencies/${agencyId}/members`, { headers });
+    const { data } = await api.get<AgencyMember[]>(
+      `/agencies/${agencyId}/members`,
+      { headers },
+    );
     return data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
-      throw new AuthApiError(extractDetailMessage(error.response.data, "Unable to load members"), error.response.status);
+      throw new AuthApiError(
+        extractDetailMessage(error.response.data, "Unable to load members"),
+        error.response.status,
+      );
     }
     throw error;
   }
@@ -360,15 +430,24 @@ export async function getAgencyMembers(agencyId: string): Promise<AgencyMember[]
  * @function getAgencyMember
  * @throws {AuthApiError} - Thrown if not authenticated, the caller isn't a member of this agency, or the member doesn't exist.
  */
-export async function getAgencyMember(agencyId: string, memberId: string): Promise<AgencyMember> {
+export async function getAgencyMember(
+  agencyId: string,
+  memberId: string,
+): Promise<AgencyMember> {
   const headers = await authHeader();
 
   try {
-    const { data } = await api.get<AgencyMember>(`/agencies/${agencyId}/members/${memberId}`, { headers });
+    const { data } = await api.get<AgencyMember>(
+      `/agencies/${agencyId}/members/${memberId}`,
+      { headers },
+    );
     return data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
-      throw new AuthApiError(extractDetailMessage(error.response.data, "Unable to load this member"), error.response.status);
+      throw new AuthApiError(
+        extractDetailMessage(error.response.data, "Unable to load this member"),
+        error.response.status,
+      );
     }
     throw error;
   }
@@ -384,16 +463,27 @@ export async function getAgencyMember(agencyId: string, memberId: string): Promi
  * @function updateAgencyMemberRole
  * @throws {AuthApiError} - Thrown if not authenticated, lacking permission, or the change would leave no owner.
  */
-export async function updateAgencyMemberRole(agencyId: string, memberId: string, role: AgencyRole): Promise<AgencyMember> {
+export async function updateAgencyMemberRole(
+  agencyId: string,
+  memberId: string,
+  role: AgencyRole,
+): Promise<AgencyMember> {
   const headers = await authHeader();
 
   try {
-    const { data } = await api.patch<AgencyMember>(`/agencies/${agencyId}/members/${memberId}`, { role }, { headers });
+    const { data } = await api.patch<AgencyMember>(
+      `/agencies/${agencyId}/members/${memberId}`,
+      { role },
+      { headers },
+    );
     return data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new AuthApiError(
-        extractDetailMessage(error.response.data, "Unable to update member's role"),
+        extractDetailMessage(
+          error.response.data,
+          "Unable to update member's role",
+        ),
         error.response.status,
       );
     }
@@ -429,7 +519,10 @@ export async function updateAgencyMemberDetails(
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new AuthApiError(
-        extractDetailMessage(error.response.data, "Unable to update member's details"),
+        extractDetailMessage(
+          error.response.data,
+          "Unable to update member's details",
+        ),
         error.response.status,
       );
     }
@@ -446,14 +539,20 @@ export async function updateAgencyMemberDetails(
  * @function removeAgencyMember
  * @throws {AuthApiError} - Thrown if not authenticated, lacking permission, or the removal is disallowed.
  */
-export async function removeAgencyMember(agencyId: string, memberId: string): Promise<void> {
+export async function removeAgencyMember(
+  agencyId: string,
+  memberId: string,
+): Promise<void> {
   const headers = await authHeader();
 
   try {
     await api.delete(`/agencies/${agencyId}/members/${memberId}`, { headers });
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
-      throw new AuthApiError(extractDetailMessage(error.response.data, "Unable to remove member"), error.response.status);
+      throw new AuthApiError(
+        extractDetailMessage(error.response.data, "Unable to remove member"),
+        error.response.status,
+      );
     }
     throw error;
   }
@@ -465,7 +564,10 @@ export type AgencyInvitationStatus = "pending" | "accepted" | "revoked";
 /** Roles an invite can grant. Deliberately excludes "owner" — see binx-api's AgencyInvitationCreate. */
 export type InvitableAgencyRole = "admin" | "member";
 
-export type AgencyInvitation = Omit<Schemas["AgencyInvitationRead"], "role" | "status"> & {
+export type AgencyInvitation = Omit<
+  Schemas["AgencyInvitationRead"],
+  "role" | "status"
+> & {
   role: InvitableAgencyRole;
   status: AgencyInvitationStatus;
 };
@@ -488,7 +590,10 @@ export async function getAgencyInvitations(
   const params = options.includeAll ? { status: "all" } : undefined;
 
   try {
-    const { data } = await api.get<AgencyInvitation[]>(`/agencies/${agencyId}/invitations`, { headers, params });
+    const { data } = await api.get<AgencyInvitation[]>(
+      `/agencies/${agencyId}/invitations`,
+      { headers, params },
+    );
     return data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
@@ -519,7 +624,11 @@ export async function createAgencyInvitation(
   const headers = await authHeader();
 
   try {
-    const { data } = await api.post<AgencyInvitation>(`/agencies/${agencyId}/invitations`, { email, role }, { headers });
+    const { data } = await api.post<AgencyInvitation>(
+      `/agencies/${agencyId}/invitations`,
+      { email, role },
+      { headers },
+    );
     return data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
@@ -542,7 +651,10 @@ export async function createAgencyInvitation(
  * @function resendAgencyInvitation
  * @throws {AuthApiError} - Thrown if not authenticated, lacking permission, or the invitation is no longer pending.
  */
-export async function resendAgencyInvitation(agencyId: string, invitationId: string): Promise<AgencyInvitation> {
+export async function resendAgencyInvitation(
+  agencyId: string,
+  invitationId: string,
+): Promise<AgencyInvitation> {
   const headers = await authHeader();
 
   try {
@@ -555,7 +667,10 @@ export async function resendAgencyInvitation(agencyId: string, invitationId: str
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new AuthApiError(
-        extractDetailMessage(error.response.data, "Unable to resend invitation"),
+        extractDetailMessage(
+          error.response.data,
+          "Unable to resend invitation",
+        ),
         error.response.status,
       );
     }
@@ -572,15 +687,23 @@ export async function resendAgencyInvitation(agencyId: string, invitationId: str
  * @function revokeAgencyInvitation
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller lacks permission for this agency.
  */
-export async function revokeAgencyInvitation(agencyId: string, invitationId: string): Promise<void> {
+export async function revokeAgencyInvitation(
+  agencyId: string,
+  invitationId: string,
+): Promise<void> {
   const headers = await authHeader();
 
   try {
-    await api.delete(`/agencies/${agencyId}/invitations/${invitationId}`, { headers });
+    await api.delete(`/agencies/${agencyId}/invitations/${invitationId}`, {
+      headers,
+    });
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new AuthApiError(
-        extractDetailMessage(error.response.data, "Unable to revoke invitation"),
+        extractDetailMessage(
+          error.response.data,
+          "Unable to revoke invitation",
+        ),
         error.response.status,
       );
     }
@@ -588,7 +711,10 @@ export async function revokeAgencyInvitation(agencyId: string, invitationId: str
   }
 }
 
-export type AgencyInvitationPreview = Omit<Schemas["AgencyInvitationPreview"], "role"> & {
+export type AgencyInvitationPreview = Omit<
+  Schemas["AgencyInvitationPreview"],
+  "role"
+> & {
   role: InvitableAgencyRole;
 };
 
@@ -602,14 +728,22 @@ export type AgencyInvitationPreview = Omit<Schemas["AgencyInvitationPreview"], "
  * @function previewAgencyInvitation
  * @throws {AuthApiError} - Thrown if the token is invalid, already used, or expired.
  */
-export async function previewAgencyInvitation(token: string): Promise<AgencyInvitationPreview> {
+export async function previewAgencyInvitation(
+  token: string,
+): Promise<AgencyInvitationPreview> {
   try {
-    const { data } = await api.get<AgencyInvitationPreview>("/agencies/invitations/preview", { params: { token } });
+    const { data } = await api.get<AgencyInvitationPreview>(
+      "/agencies/invitations/preview",
+      { params: { token } },
+    );
     return data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new AuthApiError(
-        extractDetailMessage(error.response.data, "This invitation link is invalid or has expired"),
+        extractDetailMessage(
+          error.response.data,
+          "This invitation link is invalid or has expired",
+        ),
         error.response.status,
       );
     }
@@ -627,16 +761,25 @@ export async function previewAgencyInvitation(token: string): Promise<AgencyInvi
  * @function acceptAgencyInvitation
  * @throws {AuthApiError} - Thrown if not authenticated, the token is invalid/expired, or the email doesn't match.
  */
-export async function acceptAgencyInvitation(token: string): Promise<AgencyRead> {
+export async function acceptAgencyInvitation(
+  token: string,
+): Promise<AgencyRead> {
   const headers = await authHeader();
 
   try {
-    const { data } = await api.post<AgencyRead>("/agencies/invitations/accept", { token }, { headers });
+    const { data } = await api.post<AgencyRead>(
+      "/agencies/invitations/accept",
+      { token },
+      { headers },
+    );
     return data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new AuthApiError(
-        extractDetailMessage(error.response.data, "Unable to accept invitation"),
+        extractDetailMessage(
+          error.response.data,
+          "Unable to accept invitation",
+        ),
         error.response.status,
       );
     }

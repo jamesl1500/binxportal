@@ -8,7 +8,7 @@
  * hence the `compact` prop for the tighter table-row styling.
  *
  * @module apps/binx-web/src/components/forms/clients/ArchiveClientButton/ArchiveClientButton.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -28,7 +28,12 @@ interface ArchiveClientButtonProps {
   onChanged?: (client: AgencyClient) => void;
 }
 
-const ArchiveClientButton = ({ agencyId, client, compact, onChanged }: ArchiveClientButtonProps) => {
+const ArchiveClientButton = ({
+  agencyId,
+  client,
+  compact,
+  onChanged,
+}: ArchiveClientButtonProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +43,8 @@ const ArchiveClientButton = ({ agencyId, client, compact, onChanged }: ArchiveCl
     if (client.is_active) {
       const confirmed = await confirm({
         title: `Archive ${client.name}?`,
-        description: "It moves to your archived clients. You can restore it later.",
+        description:
+          "It moves to your archived clients. You can restore it later.",
         confirmLabel: "Archive client",
       });
       if (!confirmed) return;
@@ -47,7 +53,11 @@ const ArchiveClientButton = ({ agencyId, client, compact, onChanged }: ArchiveCl
     setError(null);
 
     startTransition(async () => {
-      const result = await setClientActiveAction(agencyId, client.id, !client.is_active);
+      const result = await setClientActiveAction(
+        agencyId,
+        client.id,
+        !client.is_active,
+      );
 
       if (result.error) {
         setError(result.error);
@@ -65,7 +75,9 @@ const ArchiveClientButton = ({ agencyId, client, compact, onChanged }: ArchiveCl
     <div className={compact ? styles.compactWrapper : styles.wrapper}>
       <button
         type="button"
-        className={client.is_active ? styles.archiveButton : styles.restoreButton}
+        className={
+          client.is_active ? styles.archiveButton : styles.restoreButton
+        }
         onClick={handleClick}
         disabled={isPending}
       >

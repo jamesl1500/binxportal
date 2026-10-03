@@ -8,7 +8,7 @@
  * `AuthApiError` via `apiError`.
  *
  * @module apps/binx-web/src/lib/meetings.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 import axios from "axios";
 
@@ -30,7 +30,10 @@ async function authHeader(): Promise<{ Authorization: string }> {
 
 function apiError(error: unknown, fallback: string): AuthApiError | unknown {
   if (axios.isAxiosError(error) && error.response) {
-    return new AuthApiError(extractDetailMessage(error.response.data, fallback), error.response.status);
+    return new AuthApiError(
+      extractDetailMessage(error.response.data, fallback),
+      error.response.status,
+    );
   }
   return error;
 }
@@ -65,10 +68,15 @@ export interface MeetingFilter {
  * @function getMeetingSettings
  * @throws {AuthApiError} - Thrown if not authenticated, or binx-api rejects the request.
  */
-export async function getMeetingSettings(agencyId: string): Promise<MeetingSettings> {
+export async function getMeetingSettings(
+  agencyId: string,
+): Promise<MeetingSettings> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<MeetingSettings>(`/agencies/${agencyId}/meeting-settings`, { headers });
+    const { data } = await api.get<MeetingSettings>(
+      `/agencies/${agencyId}/meeting-settings`,
+      { headers },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to load meeting settings");
@@ -90,9 +98,13 @@ export async function updateMeetingSettings(
 ): Promise<MeetingSettings> {
   const headers = await authHeader();
   try {
-    const { data } = await api.patch<MeetingSettings>(`/agencies/${agencyId}/meeting-settings`, settings, {
-      headers,
-    });
+    const { data } = await api.patch<MeetingSettings>(
+      `/agencies/${agencyId}/meeting-settings`,
+      settings,
+      {
+        headers,
+      },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to update meeting settings");
@@ -110,10 +122,15 @@ export async function updateMeetingSettings(
  * @function getAvailabilityRules
  * @throws {AuthApiError} - Thrown if not authenticated, or binx-api rejects the request.
  */
-export async function getAvailabilityRules(agencyId: string): Promise<AvailabilityRule[]> {
+export async function getAvailabilityRules(
+  agencyId: string,
+): Promise<AvailabilityRule[]> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<AvailabilityRule[]>(`/agencies/${agencyId}/availability-rules`, { headers });
+    const { data } = await api.get<AvailabilityRule[]>(
+      `/agencies/${agencyId}/availability-rules`,
+      { headers },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to load availability");
@@ -137,9 +154,13 @@ export async function putAvailabilityRules(
 ): Promise<AvailabilityRule[]> {
   const headers = await authHeader();
   try {
-    const { data } = await api.put<AvailabilityRule[]>(`/agencies/${agencyId}/availability-rules`, rules, {
-      headers,
-    });
+    const { data } = await api.put<AvailabilityRule[]>(
+      `/agencies/${agencyId}/availability-rules`,
+      rules,
+      {
+        headers,
+      },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to save availability");
@@ -159,13 +180,20 @@ export async function putAvailabilityRules(
  * @function getAvailableSlots
  * @throws {AuthApiError} - Thrown if not authenticated, or binx-api rejects the request.
  */
-export async function getAvailableSlots(agencyId: string, fromDate: string, toDate?: string): Promise<Slot[]> {
+export async function getAvailableSlots(
+  agencyId: string,
+  fromDate: string,
+  toDate?: string,
+): Promise<Slot[]> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<Slot[]>(`/agencies/${agencyId}/meetings/slots`, {
-      headers,
-      params: { from_date: fromDate, to_date: toDate },
-    });
+    const { data } = await api.get<Slot[]>(
+      `/agencies/${agencyId}/meetings/slots`,
+      {
+        headers,
+        params: { from_date: fromDate, to_date: toDate },
+      },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to load available times");
@@ -183,19 +211,25 @@ export async function getAvailableSlots(agencyId: string, fromDate: string, toDa
  * @function getMeetings
  * @throws {AuthApiError} - Thrown if not authenticated, or binx-api rejects the request.
  */
-export async function getMeetings(agencyId: string, filter: MeetingFilter = {}): Promise<Meeting[]> {
+export async function getMeetings(
+  agencyId: string,
+  filter: MeetingFilter = {},
+): Promise<Meeting[]> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<Meeting[]>(`/agencies/${agencyId}/meetings`, {
-      headers,
-      params: {
-        client_id: filter.clientId,
-        project_id: filter.projectId,
-        status: filter.status,
-        from_date: filter.fromDate,
-        to_date: filter.toDate,
+    const { data } = await api.get<Meeting[]>(
+      `/agencies/${agencyId}/meetings`,
+      {
+        headers,
+        params: {
+          client_id: filter.clientId,
+          project_id: filter.projectId,
+          status: filter.status,
+          from_date: filter.fromDate,
+          to_date: filter.toDate,
+        },
       },
-    });
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to load meetings");
@@ -212,10 +246,17 @@ export async function getMeetings(agencyId: string, filter: MeetingFilter = {}):
  * @function createMeeting
  * @throws {AuthApiError} - Thrown if not authenticated, or the slot is no longer available (409).
  */
-export async function createMeeting(agencyId: string, input: MeetingCreateInput): Promise<Meeting> {
+export async function createMeeting(
+  agencyId: string,
+  input: MeetingCreateInput,
+): Promise<Meeting> {
   const headers = await authHeader();
   try {
-    const { data } = await api.post<Meeting>(`/agencies/${agencyId}/meetings`, input, { headers });
+    const { data } = await api.post<Meeting>(
+      `/agencies/${agencyId}/meetings`,
+      input,
+      { headers },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to schedule meeting");
@@ -233,10 +274,18 @@ export async function createMeeting(agencyId: string, input: MeetingCreateInput)
  * @function updateMeeting
  * @throws {AuthApiError} - Thrown if not authenticated, the meeting is cancelled, or the new time is no longer available (409).
  */
-export async function updateMeeting(agencyId: string, meetingId: string, input: MeetingUpdateInput): Promise<Meeting> {
+export async function updateMeeting(
+  agencyId: string,
+  meetingId: string,
+  input: MeetingUpdateInput,
+): Promise<Meeting> {
   const headers = await authHeader();
   try {
-    const { data } = await api.patch<Meeting>(`/agencies/${agencyId}/meetings/${meetingId}`, input, { headers });
+    const { data } = await api.patch<Meeting>(
+      `/agencies/${agencyId}/meetings/${meetingId}`,
+      input,
+      { headers },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to update meeting");
@@ -251,12 +300,19 @@ export async function updateMeeting(agencyId: string, meetingId: string, input: 
  * @function cancelMeeting
  * @throws {AuthApiError} - Thrown if not authenticated, already cancelled (409), or not found.
  */
-export async function cancelMeeting(agencyId: string, meetingId: string): Promise<Meeting> {
+export async function cancelMeeting(
+  agencyId: string,
+  meetingId: string,
+): Promise<Meeting> {
   const headers = await authHeader();
   try {
-    const { data } = await api.post<Meeting>(`/agencies/${agencyId}/meetings/${meetingId}/cancel`, null, {
-      headers,
-    });
+    const { data } = await api.post<Meeting>(
+      `/agencies/${agencyId}/meetings/${meetingId}/cancel`,
+      null,
+      {
+        headers,
+      },
+    );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to cancel meeting");

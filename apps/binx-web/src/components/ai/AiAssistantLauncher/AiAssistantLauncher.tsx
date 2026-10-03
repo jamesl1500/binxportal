@@ -7,7 +7,7 @@
  * dropped into AppHeader next to NotificationBell.
  *
  * @module apps/binx-web/src/components/ai/AiAssistantLauncher/AiAssistantLauncher.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -51,7 +51,11 @@ const AiAssistantLauncher = ({ agencyId }: AiAssistantLauncherProps) => {
         <Sparkles className={styles.icon} aria-hidden="true" />
       </button>
 
-      <AiModal agencyId={agencyId} isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      <AiModal
+        agencyId={agencyId}
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+      />
     </>
   );
 };

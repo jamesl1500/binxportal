@@ -7,7 +7,7 @@
  * same shape as ConfirmEmailChangeForm but without the inline success message.
  *
  * @module apps/binx-web/src/components/forms/auth/AcceptInviteForm/AcceptInviteForm.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -64,7 +64,12 @@ const AcceptInviteForm = ({ token, preview }: AcceptInviteFormProps) => {
 
       {formError && <p className={styles.formError}>{formError}</p>}
 
-      <button className={styles.submit} type="button" onClick={handleAccept} disabled={isPending}>
+      <button
+        className={styles.submit}
+        type="button"
+        onClick={handleAccept}
+        disabled={isPending}
+      >
         {isPending ? "Joining…" : `Join ${preview.agency_name}`}
       </button>
     </div>

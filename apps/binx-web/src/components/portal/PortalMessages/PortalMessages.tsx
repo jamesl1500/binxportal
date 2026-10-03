@@ -11,7 +11,7 @@
  * served through the conversation-scoped portal avatar route.
  *
  * @module apps/binx-web/src/components/portal/PortalMessages/PortalMessages.tsx
- * @author Binx.io
+ * @author Binx Portal
  */
 "use client";
 
@@ -105,7 +105,11 @@ const PortalMessages = ({
   const avatarSrc = (userId: string | null): string | null => {
     const participant = userId ? participantById.get(userId) : undefined;
     if (!activeId || !participant?.has_avatar) return null;
-    return portalParticipantAvatarUrl(activeId, participant.user_id, participant.avatar_version);
+    return portalParticipantAvatarUrl(
+      activeId,
+      participant.user_id,
+      participant.avatar_version,
+    );
   };
 
   const handleSend = async () => {
@@ -129,7 +133,9 @@ const PortalMessages = ({
       <aside className={styles.list}>
         <h2 className={styles.listHeading}>Conversations</h2>
         {conversations.length === 0 ? (
-          <p className={styles.empty}>No messages yet. Your account team will start a thread here.</p>
+          <p className={styles.empty}>
+            No messages yet. Your account team will start a thread here.
+          </p>
         ) : (
           <ul>
             {conversations.map((conversation) => (
@@ -141,8 +147,12 @@ const PortalMessages = ({
                   data-unread={conversation.unread_count > 0}
                 >
                   <span className={styles.rowTop}>
-                    <span className={styles.rowTitle}>{conversation.title}</span>
-                    <span className={styles.rowTime}>{relTime(conversation.last_message_at)}</span>
+                    <span className={styles.rowTitle}>
+                      {conversation.title}
+                    </span>
+                    <span className={styles.rowTime}>
+                      {relTime(conversation.last_message_at)}
+                    </span>
                   </span>
                   <span className={styles.rowPreview}>
                     {conversation.last_message_preview ?? "No messages yet"}
@@ -184,8 +194,15 @@ const PortalMessages = ({
                       {others.map((p, index) => (
                         <span key={p.user_id}>
                           {index > 0 && ", "}
-                          <span className={styles.personName}>{p.full_name}</span>
-                          {p.job_title && <span className={styles.personTitle}> · {p.job_title}</span>}
+                          <span className={styles.personName}>
+                            {p.full_name}
+                          </span>
+                          {p.job_title && (
+                            <span className={styles.personTitle}>
+                              {" "}
+                              · {p.job_title}
+                            </span>
+                          )}
                         </span>
                       ))}
                     </p>
@@ -196,7 +213,9 @@ const PortalMessages = ({
 
             <div className={styles.messages}>
               {messages.length === 0 ? (
-                <p className={styles.placeholder}>No messages yet — say hello.</p>
+                <p className={styles.placeholder}>
+                  No messages yet — say hello.
+                </p>
               ) : (
                 messages.map((message, index) => {
                   const mine = message.sender_id === currentUserId;
@@ -204,11 +223,23 @@ const PortalMessages = ({
                   const grouped =
                     previous !== undefined &&
                     previous.sender_id === message.sender_id &&
-                    new Date(message.created_at).getTime() - new Date(previous.created_at).getTime() < GROUP_WINDOW_MS;
+                    new Date(message.created_at).getTime() -
+                      new Date(previous.created_at).getTime() <
+                      GROUP_WINDOW_MS;
                   return (
-                    <div key={message.id} className={styles.message} data-mine={mine} data-grouped={grouped}>
+                    <div
+                      key={message.id}
+                      className={styles.message}
+                      data-mine={mine}
+                      data-grouped={grouped}
+                    >
                       <div className={styles.gutter}>
-                        {!grouped && <MessageAvatar name={message.sender_name} src={avatarSrc(message.sender_id)} />}
+                        {!grouped && (
+                          <MessageAvatar
+                            name={message.sender_name}
+                            src={avatarSrc(message.sender_id)}
+                          />
+                        )}
                       </div>
                       <div className={styles.content}>
                         {!grouped && (
@@ -219,13 +250,22 @@ const PortalMessages = ({
                                 <span className={styles.clientTag}>Client</span>
                               )}
                             </span>
-                            <span className={styles.time}>{timestamp(message.created_at)}</span>
+                            <span className={styles.time}>
+                              {timestamp(message.created_at)}
+                            </span>
                           </div>
                         )}
                         {message.deleted_at ? (
                           <p className={styles.deleted}>Message deleted</p>
                         ) : (
-                          <p className={styles.body} title={grouped ? timestamp(message.created_at) : undefined}>
+                          <p
+                            className={styles.body}
+                            title={
+                              grouped
+                                ? timestamp(message.created_at)
+                                : undefined
+                            }
+                          >
                             {message.body}
                           </p>
                         )}
@@ -257,7 +297,11 @@ const PortalMessages = ({
                   }
                 }}
               />
-              <button type="submit" className={styles.send} disabled={sending || !body.trim()}>
+              <button
+                type="submit"
+                className={styles.send}
+                disabled={sending || !body.trim()}
+              >
                 Send
               </button>
             </form>
