@@ -1,5 +1,6 @@
 from functools import lru_cache
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -136,10 +137,11 @@ class Settings(BaseSettings):
     # create_app() for the sentry_sdk.init() call this gates.
     sentry_dsn: str | None = None
     sentry_environment: str = "development"
-    # Fraction of requests to capture a performance trace for (0.0-1.0). Kept
-    # low — this is error tracking first, not APM — since every sampled
-    # trace is billed the same as an error event.
-    sentry_traces_sample_rate: float = 0.1
+    # Fraction of requests to capture a performance trace for. Kept low —
+    # this is error tracking first, not APM — since every sampled trace is
+    # billed the same as an error event. Bounded because the Sentry SDK
+    # silently drops traces for an out-of-range value rather than erroring.
+    sentry_traces_sample_rate: float = Field(default=0.1, ge=0.0, le=1.0)
 
 
 @lru_cache
