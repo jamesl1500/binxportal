@@ -5,7 +5,7 @@ it ends, the deadline for the launch conversion discount, and whether this
 agency has ever used its trial. See modules/billing/service.py::start_trial.
 
 Revision ID: 532a64585f55
-Revises: a7c2e9d4b1f3
+Revises: 4f04054d39cf
 Create Date: 2026-10-02 21:40:00.000000
 
 """
@@ -18,7 +18,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "532a64585f55"
-down_revision: str | Sequence[str] | None = "a7c2e9d4b1f3"
+down_revision: str | Sequence[str] | None = "4f04054d39cf"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
