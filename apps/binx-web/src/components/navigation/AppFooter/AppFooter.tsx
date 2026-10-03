@@ -21,7 +21,7 @@ const AppFooter = () => {
         &copy; {new Date().getFullYear()} {SITE.legalName}
       </span>
 
-      <nav className={styles.links} aria-label="Legal">
+      <nav className={styles.links} aria-label="Legal and support">
         <Link href="/privacy" className={styles.link}>
           Privacy
         </Link>
