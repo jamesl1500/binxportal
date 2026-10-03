@@ -666,3 +666,110 @@ class TestPortalContactCannotBecomeStaff:
 
         response = await client.post("/agencies", json={"name": "Sneaky Agency"}, headers=auth_headers(contact_user))
         assert response.status_code == 403
+
+
+class TestPortalTeam:
+    async def test_lists_only_people_on_the_clients_projects(
+        self, client, db_session, email_outbox, portal_setup
+    ) -> None:
+        from binx_api.modules.projects.models import ProjectMember
+        from tests.factories import add_agency_member
+
+        s = portal_setup
+        dev = await make_user(db_session, full_name="Devon Dev", email="devon@agency.example")
+        await add_agency_member(db_session, agency=s["agency"], user=dev)
+        second = await make_project(
+            db_session, agency=s["agency"], created_by=s["owner"], client=s["client"], name="Website"
+        )
+        db_session.add(ProjectMember(project_id=second.id, user_id=dev.id))
+
+        # Someone who only works on another client's project must not appear.
+        other_client = await make_client(db_session, agency=s["agency"], name="Globex")
+        outsider = await make_user(db_session, full_name="Uma Unrelated", email="uma@agency.example")
+        await add_agency_member(db_session, agency=s["agency"], user=outsider)
+        secret = await make_project(
+            db_session, agency=s["agency"], created_by=outsider, client=other_client, name="Secret"
+        )
+        await db_session.commit()
+        assert secret.id
+
+        contact_user, _ = await _invite_and_accept(
+            client, db_session, email_outbox, s["agency"].id, s["client"].id, s["owner"], "casey-team@northwind.example"
+        )
+
+        resp = await client.get("/portal/team", headers=auth_headers(contact_user))
+        assert resp.status_code == 200, resp.text
+        team = resp.json()
+
+        # One entry per person, alphabetical, with every project they're on.
+        assert [m["full_name"] for m in team] == ["Devon Dev", "Olivia Owner"]
+        assert [p["name"] for p in team[0]["projects"]] == ["Website"]
+        assert [p["name"] for p in team[1]["projects"]] == ["Rebrand", "Website"]
+        assert team[1]["email"] == "olivia@agency.example"
+        # Phone sharing is opt-in.
+        assert team[1]["phone"] is None
+
+    async def test_contact_details_follow_the_members_privacy_settings(
+        self, client, db_session, email_outbox, portal_setup
+    ) -> None:
+        s = portal_setup
+        owner_headers = auth_headers(s["owner"])
+        s["owner"].phone_number = "+1 555 0100"
+        await db_session.commit()
+        contact_user, _ = await _invite_and_accept(
+            client, db_session, email_outbox, s["agency"].id, s["client"].id, s["owner"], "casey-priv@northwind.example"
+        )
+        headers = auth_headers(contact_user)
+
+        privacy = {
+            "profile_visibility": "team",
+            "show_email_to_team": False,
+            "show_phone_to_team": True,
+            "activity_status_visible": True,
+            "analytics_opt_out": False,
+        }
+        saved = await client.put("/users/me/privacy-settings", json=privacy, headers=owner_headers)
+        assert saved.status_code == 200, saved.text
+
+        owner_row = (await client.get("/portal/team", headers=headers)).json()[0]
+        assert owner_row["email"] is None
+        assert owner_row["phone"] == "+1 555 0100"
+
+        await client.put(
+            "/users/me/privacy-settings", json={**privacy, "profile_visibility": "private"}, headers=owner_headers
+        )
+        owner_row = (await client.get("/portal/team", headers=headers)).json()[0]
+        assert owner_row["phone"] is None
+
+    async def test_avatars_are_limited_to_the_clients_team(
+        self, client, db_session, email_outbox, portal_setup
+    ) -> None:
+        from tests.factories import add_agency_member
+
+        s = portal_setup
+        contact_user, _ = await _invite_and_accept(
+            client, db_session, email_outbox, s["agency"].id, s["client"].id, s["owner"], "casey-pic@northwind.example"
+        )
+        headers = auth_headers(contact_user)
+        avatar_url = f"/portal/team/{s['owner'].id}/avatar"
+
+        assert (await client.get("/portal/team", headers=headers)).json()[0]["has_avatar"] is False
+        assert (await client.get(avatar_url, headers=headers)).status_code == 404
+
+        await client.put("/users/me/avatar", files={"file": PNG}, headers=auth_headers(s["owner"]))
+        owner_row = (await client.get("/portal/team", headers=headers)).json()[0]
+        assert owner_row["has_avatar"] is True
+        assert owner_row["avatar_version"]
+        avatar = await client.get(avatar_url, headers=headers)
+        assert avatar.status_code == 200
+        assert avatar.headers["content-type"] == "image/png"
+
+        # A teammate at the agency who isn't on any of this client's projects.
+        outsider = await make_user(db_session, email="no-project@agency.example")
+        await add_agency_member(db_session, agency=s["agency"], user=outsider)
+        await client.put("/users/me/avatar", files={"file": PNG}, headers=auth_headers(outsider))
+        assert (await client.get(f"/portal/team/{outsider.id}/avatar", headers=headers)).status_code == 404
+
+    async def test_a_non_contact_account_is_forbidden(self, client, db_session, portal_setup) -> None:
+        stranger = await make_user(db_session, email="team-stranger@example.com")
+        assert (await client.get("/portal/team", headers=auth_headers(stranger))).status_code == 403

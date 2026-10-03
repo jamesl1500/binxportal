@@ -9037,6 +9037,131 @@
         "title": "PortalTaskRead",
         "type": "object"
       },
+      "PortalTeamMemberRead": {
+        "description": "An agency team member, as the client sees them on \"My Team\" (GET\n/portal/team) \u2014 only people assigned to one of this client's projects.\n`email`/`phone` are None when the member has chosen not to share them\n(see service.list_portal_team). Photo bytes come from\nGET /portal/team/{user_id}/avatar (proxied).",
+        "properties": {
+          "avatar_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Version"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "full_name": {
+            "title": "Full Name",
+            "type": "string"
+          },
+          "has_avatar": {
+            "title": "Has Avatar",
+            "type": "boolean"
+          },
+          "job_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Title"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "projects": {
+            "items": {
+              "$ref": "#/components/schemas/PortalTeamProjectRead"
+            },
+            "title": "Projects",
+            "type": "array"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "full_name",
+          "job_title",
+          "email",
+          "phone",
+          "has_avatar",
+          "avatar_version",
+          "projects"
+        ],
+        "title": "PortalTeamMemberRead",
+        "type": "object"
+      },
+      "PortalTeamProjectRead": {
+        "description": "One of the client's projects a team member is on, with the custom\nproject role they hold there (\"Project Manager\"), if any.",
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "role_color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role Color"
+          },
+          "role_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role Name"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "role_name",
+          "role_color"
+        ],
+        "title": "PortalTeamProjectRead",
+        "type": "object"
+      },
       "PrivacySettingsRead": {
         "properties": {
           "activity_status_visible": {
@@ -29282,6 +29407,82 @@
           }
         ],
         "summary": "Sign Portal Proposal",
+        "tags": [
+          "client-portal"
+        ]
+      }
+    },
+    "/portal/team": {
+      "get": {
+        "operationId": "list_team_portal_team_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PortalTeamMemberRead"
+                  },
+                  "title": "Response List Team Portal Team Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Team",
+        "tags": [
+          "client-portal"
+        ]
+      }
+    },
+    "/portal/team/{user_id}/avatar": {
+      "get": {
+        "operationId": "download_team_member_avatar_portal_team__user_id__avatar_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Download Team Member Avatar",
         "tags": [
           "client-portal"
         ]
