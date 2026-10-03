@@ -3571,6 +3571,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/portal/team": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Team */
+        get: operations["list_team_portal_team_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/portal/team/{user_id}/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download Team Member Avatar */
+        get: operations["download_team_member_avatar_portal_team__user_id__avatar_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/proposals/public/{token}": {
         parameters: {
             query?: never;
@@ -6956,6 +6990,53 @@ export interface components {
             position: number;
             /** Title */
             title: string;
+        };
+        /**
+         * PortalTeamMemberRead
+         * @description An agency team member, as the client sees them on "My Team" (GET
+         *     /portal/team) — only people assigned to one of this client's projects.
+         *     `email`/`phone` are None when the member has chosen not to share them
+         *     (see service.list_portal_team). Photo bytes come from
+         *     GET /portal/team/{user_id}/avatar (proxied).
+         */
+        PortalTeamMemberRead: {
+            /** Avatar Version */
+            avatar_version: string | null;
+            /** Email */
+            email: string | null;
+            /** Full Name */
+            full_name: string;
+            /** Has Avatar */
+            has_avatar: boolean;
+            /** Job Title */
+            job_title: string | null;
+            /** Phone */
+            phone: string | null;
+            /** Projects */
+            projects: components["schemas"]["PortalTeamProjectRead"][];
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+        };
+        /**
+         * PortalTeamProjectRead
+         * @description One of the client's projects a team member is on, with the custom
+         *     project role they hold there ("Project Manager"), if any.
+         */
+        PortalTeamProjectRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Role Color */
+            role_color: string | null;
+            /** Role Name */
+            role_name: string | null;
         };
         /** PrivacySettingsRead */
         PrivacySettingsRead: {
@@ -17401,6 +17482,57 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProposalDetailRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_team_portal_team_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortalTeamMemberRead"][];
+                };
+            };
+        };
+    };
+    download_team_member_avatar_portal_team__user_id__avatar_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

@@ -32,6 +32,7 @@ from binx_api.modules.client_portal.schemas import (
     PortalProjectDetailRead,
     PortalProjectRead,
     PortalTaskListRead,
+    PortalTeamMemberRead,
 )
 from binx_api.modules.invoicing import service as invoicing_service
 from binx_api.modules.invoicing.router import _detail_read, _invoice_read
@@ -165,6 +166,24 @@ async def read_task_board(db: DbSession, membership: PortalContext, project_id: 
     _agency, client, _contact = membership
     project = await service.get_portal_project_or_404(db, client.id, project_id)
     return await service.portal_task_board(db, project.id)
+
+
+# ---- My Team ----------------------------------------------------------
+# The agency people assigned to this client's projects, with the contact
+# details each has chosen to share — see service.list_portal_team.
+
+
+@router.get("/team", response_model=list[PortalTeamMemberRead])
+async def list_team(db: DbSession, membership: PortalContext) -> list[PortalTeamMemberRead]:
+    agency, client, _contact = membership
+    return await service.list_portal_team(db, agency.id, client.id)
+
+
+@router.get("/team/{user_id}/avatar")
+async def download_team_member_avatar(db: DbSession, membership: PortalContext, user_id: uuid.UUID):
+    agency, client, _contact = membership
+    profile = await service.get_portal_team_avatar_or_404(db, agency.id, client.id, user_id)
+    return FileResponse(path=profile.avatar_storage_path, media_type=profile.avatar_mime_type or "image/png")
 
 
 # ---- Collaboration canvas ------------------------------------------

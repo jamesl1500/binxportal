@@ -7,7 +7,7 @@
  * a contact for (see binx-api's require_client_contact).
  *
  * @module apps/binx-web/src/lib/portal.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 import axios from "axios";
 import { cache } from "react";
@@ -16,12 +16,24 @@ import { api } from "@/lib/api";
 import { getMyAgencies } from "@/lib/agencies";
 import type { Schemas } from "@/lib/api-types";
 import { AuthApiError, extractDetailMessage, getAccessToken } from "@/lib/auth";
-import type { Board, BoardComment, BoardItem, BoardItemPatch } from "@/lib/boards-client";
+import type {
+  Board,
+  BoardComment,
+  BoardItem,
+  BoardItemPatch,
+} from "@/lib/boards-client";
 import type { BoardReactions, CreateBoardItemInput } from "@/lib/boards";
 import type { InvoiceDetail, Invoice as StaffInvoice } from "@/lib/invoicing";
 import type { Meeting as StaffMeeting, Slot } from "@/lib/meetings";
-import type { Conversation, ConversationDetail, Message } from "@/lib/messaging-client";
-import type { ProposalDetail, Proposal as StaffProposal } from "@/lib/proposals";
+import type {
+  Conversation,
+  ConversationDetail,
+  Message,
+} from "@/lib/messaging-client";
+import type {
+  ProposalDetail,
+  Proposal as StaffProposal,
+} from "@/lib/proposals";
 import type { KickoffDetail as StaffKickoffDetail } from "@/lib/kickoffs";
 
 export type PortalInvoice = StaffInvoice;
@@ -44,6 +56,8 @@ export type PortalProjectDetail = Schemas["PortalProjectDetailRead"];
 export type PortalTask = Schemas["PortalTaskRead"];
 export type PortalTaskList = Schemas["PortalTaskListRead"];
 export type PortalPendingKickoff = Schemas["PortalPendingKickoffRead"];
+export type PortalTeamMember = Schemas["PortalTeamMemberRead"];
+export type PortalTeamProject = Schemas["PortalTeamProjectRead"];
 export type PortalCheckoutConfirmation = Schemas["CheckoutConfirmRead"];
 export type PortalCheckoutOutcome = PortalCheckoutConfirmation["outcome"];
 
@@ -61,7 +75,10 @@ async function authHeader(): Promise<{ Authorization: string }> {
 
 function rethrow(error: unknown, fallback: string): never {
   if (axios.isAxiosError(error) && error.response) {
-    throw new AuthApiError(extractDetailMessage(error.response.data, fallback), error.response.status);
+    throw new AuthApiError(
+      extractDetailMessage(error.response.data, fallback),
+      error.response.status,
+    );
   }
   throw error;
 }
@@ -73,23 +90,31 @@ function rethrow(error: unknown, fallback: string): never {
  * `null` when they aren't a client contact at all — the routing layer uses
  * that to decide between `/portal` and `/dashboard`.
  */
-export const getPortalContext = cache(async (): Promise<PortalContext | null> => {
-  let headers: { Authorization: string };
-  try {
-    headers = await authHeader();
-  } catch {
-    return null;
-  }
-  try {
-    const { data } = await api.get<PortalContext>("/portal/context", { headers });
-    return data;
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response && [401, 403].includes(error.response.status)) {
+export const getPortalContext = cache(
+  async (): Promise<PortalContext | null> => {
+    let headers: { Authorization: string };
+    try {
+      headers = await authHeader();
+    } catch {
       return null;
     }
-    rethrow(error, "Unable to load your portal");
-  }
-});
+    try {
+      const { data } = await api.get<PortalContext>("/portal/context", {
+        headers,
+      });
+      return data;
+    } catch (error) {
+      if (
+        axios.isAxiosError(error) &&
+        error.response &&
+        [401, 403].includes(error.response.status)
+      ) {
+        return null;
+      }
+      rethrow(error, "Unable to load your portal");
+    }
+  },
+);
 
 // The list getters (projects, invoices, proposals, meetings, conversations)
 // are `cache()`-wrapped too: the (portal) layout reads them for the sidebar's
@@ -98,7 +123,9 @@ export const getPortalContext = cache(async (): Promise<PortalContext | null> =>
 export const getPortalProjects = cache(async (): Promise<PortalProject[]> => {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<PortalProject[]>("/portal/projects", { headers });
+    const { data } = await api.get<PortalProject[]>("/portal/projects", {
+      headers,
+    });
     return data;
   } catch (error) {
     rethrow(error, "Unable to load projects");
@@ -113,20 +140,30 @@ export const getPortalProjects = cache(async (): Promise<PortalProject[]> => {
  * with the same `projectId` share a single fetch, the same dedup
  * `getAgencyProject` uses on the staff side (lib/projects.ts).
  */
-export const getPortalProject = cache(async (projectId: string): Promise<PortalProjectDetail> => {
-  const headers = await authHeader();
-  try {
-    const { data } = await api.get<PortalProjectDetail>(`/portal/projects/${projectId}`, { headers });
-    return data;
-  } catch (error) {
-    rethrow(error, "Unable to load this project");
-  }
-});
+export const getPortalProject = cache(
+  async (projectId: string): Promise<PortalProjectDetail> => {
+    const headers = await authHeader();
+    try {
+      const { data } = await api.get<PortalProjectDetail>(
+        `/portal/projects/${projectId}`,
+        { headers },
+      );
+      return data;
+    } catch (error) {
+      rethrow(error, "Unable to load this project");
+    }
+  },
+);
 
-export async function getPortalTaskBoard(projectId: string): Promise<PortalTaskList[]> {
+export async function getPortalTaskBoard(
+  projectId: string,
+): Promise<PortalTaskList[]> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<PortalTaskList[]>(`/portal/projects/${projectId}/board`, { headers });
+    const { data } = await api.get<PortalTaskList[]>(
+      `/portal/projects/${projectId}/board`,
+      { headers },
+    );
     return data;
   } catch (error) {
     rethrow(error, "Unable to load the board");
@@ -136,17 +173,24 @@ export async function getPortalTaskBoard(projectId: string): Promise<PortalTaskL
 export const getPortalInvoices = cache(async (): Promise<PortalInvoice[]> => {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<PortalInvoice[]>("/portal/invoices", { headers });
+    const { data } = await api.get<PortalInvoice[]>("/portal/invoices", {
+      headers,
+    });
     return data;
   } catch (error) {
     rethrow(error, "Unable to load invoices");
   }
 });
 
-export async function getPortalInvoice(invoiceId: string): Promise<PortalInvoiceDetail> {
+export async function getPortalInvoice(
+  invoiceId: string,
+): Promise<PortalInvoiceDetail> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<PortalInvoiceDetail>(`/portal/invoices/${invoiceId}`, { headers });
+    const { data } = await api.get<PortalInvoiceDetail>(
+      `/portal/invoices/${invoiceId}`,
+      { headers },
+    );
     return data;
   } catch (error) {
     rethrow(error, "Unable to load this invoice");
@@ -161,12 +205,18 @@ export async function getPortalInvoice(invoiceId: string): Promise<PortalInvoice
  * Stripe account. Returns the URL to redirect the browser to. Rejects (409)
  * if the agency hasn't finished Stripe Connect onboarding yet.
  */
-export async function startPortalInvoiceCheckout(invoiceId: string): Promise<string> {
+export async function startPortalInvoiceCheckout(
+  invoiceId: string,
+): Promise<string> {
   const headers = await authHeader();
   try {
-    const { data } = await api.post<{ checkout_url: string }>(`/portal/invoices/${invoiceId}/pay`, undefined, {
-      headers,
-    });
+    const { data } = await api.post<{ checkout_url: string }>(
+      `/portal/invoices/${invoiceId}/pay`,
+      undefined,
+      {
+        headers,
+      },
+    );
     return data.checkout_url;
   } catch (error) {
     rethrow(error, "Unable to start checkout");
@@ -208,17 +258,24 @@ export async function confirmPortalInvoicePayment(
 export const getPortalProposals = cache(async (): Promise<PortalProposal[]> => {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<PortalProposal[]>("/portal/proposals", { headers });
+    const { data } = await api.get<PortalProposal[]>("/portal/proposals", {
+      headers,
+    });
     return data;
   } catch (error) {
     rethrow(error, "Unable to load proposals");
   }
 });
 
-export async function getPortalProposal(proposalId: string): Promise<PortalProposalDetail> {
+export async function getPortalProposal(
+  proposalId: string,
+): Promise<PortalProposalDetail> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<PortalProposalDetail>(`/portal/proposals/${proposalId}`, { headers });
+    const { data } = await api.get<PortalProposalDetail>(
+      `/portal/proposals/${proposalId}`,
+      { headers },
+    );
     return data;
   } catch (error) {
     rethrow(error, "Unable to load this proposal");
@@ -232,19 +289,28 @@ export async function getPortalProposal(proposalId: string): Promise<PortalPropo
  * `POST /portal/proposals/{proposalId}/sign` — unlike the public share-link
  * flow, the portal already knows who this is, so there's nothing to type.
  */
-export async function signPortalProposal(proposalId: string): Promise<PortalProposalDetail> {
+export async function signPortalProposal(
+  proposalId: string,
+): Promise<PortalProposalDetail> {
   const headers = await authHeader();
   try {
-    const { data } = await api.post<PortalProposalDetail>(`/portal/proposals/${proposalId}/sign`, undefined, {
-      headers,
-    });
+    const { data } = await api.post<PortalProposalDetail>(
+      `/portal/proposals/${proposalId}/sign`,
+      undefined,
+      {
+        headers,
+      },
+    );
     return data;
   } catch (error) {
     rethrow(error, "Unable to sign this proposal");
   }
 }
 
-export async function declinePortalProposal(proposalId: string, reason: string | null): Promise<PortalProposalDetail> {
+export async function declinePortalProposal(
+  proposalId: string,
+  reason: string | null,
+): Promise<PortalProposalDetail> {
   const headers = await authHeader();
   try {
     const { data } = await api.post<PortalProposalDetail>(
@@ -258,15 +324,20 @@ export async function declinePortalProposal(proposalId: string, reason: string |
   }
 }
 
-export const getPortalMeetingSettings = cache(async (): Promise<PortalMeetingSettings> => {
-  const headers = await authHeader();
-  try {
-    const { data } = await api.get<PortalMeetingSettings>("/portal/meeting-settings", { headers });
-    return data;
-  } catch (error) {
-    rethrow(error, "Unable to load meeting availability");
-  }
-});
+export const getPortalMeetingSettings = cache(
+  async (): Promise<PortalMeetingSettings> => {
+    const headers = await authHeader();
+    try {
+      const { data } = await api.get<PortalMeetingSettings>(
+        "/portal/meeting-settings",
+        { headers },
+      );
+      return data;
+    } catch (error) {
+      rethrow(error, "Unable to load meeting availability");
+    }
+  },
+);
 
 /**
  * getPortalAvailableSlots
@@ -275,7 +346,10 @@ export const getPortalMeetingSettings = cache(async (): Promise<PortalMeetingSet
  * computation the staff-side preview uses, scoped to this client's agency.
  * Empty when the agency has turned self-service booking off.
  */
-export async function getPortalAvailableSlots(fromDate: string, toDate?: string): Promise<PortalSlot[]> {
+export async function getPortalAvailableSlots(
+  fromDate: string,
+  toDate?: string,
+): Promise<PortalSlot[]> {
   const headers = await authHeader();
   try {
     const { data } = await api.get<PortalSlot[]>("/portal/meetings/slots", {
@@ -291,7 +365,9 @@ export async function getPortalAvailableSlots(fromDate: string, toDate?: string)
 export const getPortalMeetings = cache(async (): Promise<PortalMeeting[]> => {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<PortalMeeting[]>("/portal/meetings", { headers });
+    const { data } = await api.get<PortalMeeting[]>("/portal/meetings", {
+      headers,
+    });
     return data;
   } catch (error) {
     rethrow(error, "Unable to load meetings");
@@ -306,10 +382,14 @@ export const getPortalMeetings = cache(async (): Promise<PortalMeeting[]> => {
  * between the client fetching slots and submitting this, or (403) if
  * self-service booking has since been turned off.
  */
-export async function bookPortalMeeting(input: PortalMeetingBookingInput): Promise<PortalMeeting> {
+export async function bookPortalMeeting(
+  input: PortalMeetingBookingInput,
+): Promise<PortalMeeting> {
   const headers = await authHeader();
   try {
-    const { data } = await api.post<PortalMeeting>("/portal/meetings", input, { headers });
+    const { data } = await api.post<PortalMeeting>("/portal/meetings", input, {
+      headers,
+    });
     return data;
   } catch (error) {
     rethrow(error, "Unable to book that time");
@@ -322,30 +402,45 @@ export async function bookPortalMeeting(input: PortalMeetingBookingInput): Promi
  * Cancels one of this client's own meetings via
  * `POST /portal/meetings/{meetingId}/cancel`.
  */
-export async function cancelPortalMeeting(meetingId: string): Promise<PortalMeeting> {
+export async function cancelPortalMeeting(
+  meetingId: string,
+): Promise<PortalMeeting> {
   const headers = await authHeader();
   try {
-    const { data } = await api.post<PortalMeeting>(`/portal/meetings/${meetingId}/cancel`, undefined, { headers });
+    const { data } = await api.post<PortalMeeting>(
+      `/portal/meetings/${meetingId}/cancel`,
+      undefined,
+      { headers },
+    );
     return data;
   } catch (error) {
     rethrow(error, "Unable to cancel this meeting");
   }
 }
 
-export const getPortalConversations = cache(async (): Promise<Conversation[]> => {
-  const headers = await authHeader();
-  try {
-    const { data } = await api.get<Conversation[]>("/portal/conversations", { headers });
-    return data;
-  } catch (error) {
-    rethrow(error, "Unable to load messages");
-  }
-});
+export const getPortalConversations = cache(
+  async (): Promise<Conversation[]> => {
+    const headers = await authHeader();
+    try {
+      const { data } = await api.get<Conversation[]>("/portal/conversations", {
+        headers,
+      });
+      return data;
+    } catch (error) {
+      rethrow(error, "Unable to load messages");
+    }
+  },
+);
 
-export async function getPortalConversation(conversationId: string): Promise<ConversationDetail> {
+export async function getPortalConversation(
+  conversationId: string,
+): Promise<ConversationDetail> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<ConversationDetail>(`/portal/conversations/${conversationId}`, { headers });
+    const { data } = await api.get<ConversationDetail>(
+      `/portal/conversations/${conversationId}`,
+      { headers },
+    );
     return data;
   } catch (error) {
     rethrow(error, "Unable to load this conversation");
@@ -358,34 +453,48 @@ export async function getPortalMessages(
 ): Promise<Message[]> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<Message[]>(`/portal/conversations/${conversationId}/messages`, {
-      headers,
-      params: { limit: options.limit ?? 50, before: options.before },
-    });
+    const { data } = await api.get<Message[]>(
+      `/portal/conversations/${conversationId}/messages`,
+      {
+        headers,
+        params: { limit: options.limit ?? 50, before: options.before },
+      },
+    );
     return data;
   } catch (error) {
     rethrow(error, "Unable to load messages");
   }
 }
 
-export async function sendPortalMessage(conversationId: string, body: string): Promise<Message> {
+export async function sendPortalMessage(
+  conversationId: string,
+  body: string,
+): Promise<Message> {
   const headers = await authHeader();
   const form = new FormData();
   form.append("body", body);
   try {
-    const { data } = await api.post<Message>(`/portal/conversations/${conversationId}/messages`, form, {
-      headers: { ...headers, "Content-Type": undefined },
-    });
+    const { data } = await api.post<Message>(
+      `/portal/conversations/${conversationId}/messages`,
+      form,
+      {
+        headers: { ...headers, "Content-Type": undefined },
+      },
+    );
     return data;
   } catch (error) {
     rethrow(error, "Unable to send your message");
   }
 }
 
-export async function markPortalConversationRead(conversationId: string): Promise<void> {
+export async function markPortalConversationRead(
+  conversationId: string,
+): Promise<void> {
   const headers = await authHeader();
   try {
-    await api.post(`/portal/conversations/${conversationId}/read`, undefined, { headers });
+    await api.post(`/portal/conversations/${conversationId}/read`, undefined, {
+      headers,
+    });
   } catch (error) {
     rethrow(error, "Unable to update read state");
   }
@@ -409,10 +518,17 @@ export async function getPortalBoard(projectId: string): Promise<Board> {
   }
 }
 
-export async function createPortalBoardItem(projectId: string, input: CreateBoardItemInput): Promise<BoardItem> {
+export async function createPortalBoardItem(
+  projectId: string,
+  input: CreateBoardItemInput,
+): Promise<BoardItem> {
   const headers = await authHeader();
   try {
-    const { data } = await api.post<BoardItem>(`${canvasBase(projectId)}/items`, input, { headers });
+    const { data } = await api.post<BoardItem>(
+      `${canvasBase(projectId)}/items`,
+      input,
+      { headers },
+    );
     return data;
   } catch (error) {
     rethrow(error, "Unable to add the card");
@@ -426,14 +542,21 @@ export async function updatePortalBoardItem(
 ): Promise<BoardItem> {
   const headers = await authHeader();
   try {
-    const { data } = await api.patch<BoardItem>(`${canvasBase(projectId)}/items/${itemId}`, patch, { headers });
+    const { data } = await api.patch<BoardItem>(
+      `${canvasBase(projectId)}/items/${itemId}`,
+      patch,
+      { headers },
+    );
     return data;
   } catch (error) {
     rethrow(error, "Unable to update the card");
   }
 }
 
-export async function deletePortalBoardItem(projectId: string, itemId: string): Promise<void> {
+export async function deletePortalBoardItem(
+  projectId: string,
+  itemId: string,
+): Promise<void> {
   const headers = await authHeader();
   try {
     await api.delete(`${canvasBase(projectId)}/items/${itemId}`, { headers });
@@ -451,10 +574,14 @@ export async function uploadPortalBoardImage(
   const form = new FormData();
   form.append("file", file);
   try {
-    const { data } = await api.post<BoardItem>(`${canvasBase(projectId)}/images`, form, {
-      headers: { ...headers, "Content-Type": undefined },
-      params: placement,
-    });
+    const { data } = await api.post<BoardItem>(
+      `${canvasBase(projectId)}/images`,
+      form,
+      {
+        headers: { ...headers, "Content-Type": undefined },
+        params: placement,
+      },
+    );
     return data;
   } catch (error) {
     rethrow(error, "Unable to upload the image");
@@ -479,10 +606,16 @@ export async function togglePortalBoardReaction(
   }
 }
 
-export async function getPortalBoardComments(projectId: string, itemId: string): Promise<BoardComment[]> {
+export async function getPortalBoardComments(
+  projectId: string,
+  itemId: string,
+): Promise<BoardComment[]> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<BoardComment[]>(`${canvasBase(projectId)}/items/${itemId}/comments`, { headers });
+    const { data } = await api.get<BoardComment[]>(
+      `${canvasBase(projectId)}/items/${itemId}/comments`,
+      { headers },
+    );
     return data;
   } catch (error) {
     rethrow(error, "Unable to load comments");
@@ -514,7 +647,10 @@ export async function deletePortalBoardComment(
 ): Promise<void> {
   const headers = await authHeader();
   try {
-    await api.delete(`${canvasBase(projectId)}/items/${itemId}/comments/${commentId}`, { headers });
+    await api.delete(
+      `${canvasBase(projectId)}/items/${itemId}/comments/${commentId}`,
+      { headers },
+    );
   } catch (error) {
     rethrow(error, "Unable to delete the comment");
   }
@@ -560,27 +696,40 @@ export interface PortalKickoffAnswerInput {
  * layout's invitation modal and the home page's attention list read.
  * `cache()`-wrapped since both of those run in the same render.
  */
-export const getPortalPendingKickoffs = cache(async (): Promise<PortalPendingKickoff[]> => {
-  const headers = await authHeader();
-  try {
-    const { data } = await api.get<PortalPendingKickoff[]>("/portal/kickoffs/pending", { headers });
-    return data;
-  } catch (error) {
-    rethrow(error, "Unable to load your kickoffs");
-  }
-});
+export const getPortalPendingKickoffs = cache(
+  async (): Promise<PortalPendingKickoff[]> => {
+    const headers = await authHeader();
+    try {
+      const { data } = await api.get<PortalPendingKickoff[]>(
+        "/portal/kickoffs/pending",
+        { headers },
+      );
+      return data;
+    } catch (error) {
+      rethrow(error, "Unable to load your kickoffs");
+    }
+  },
+);
 
-export async function getPortalKickoff(projectId: string): Promise<PortalKickoff> {
+export async function getPortalKickoff(
+  projectId: string,
+): Promise<PortalKickoff> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<PortalKickoff>(`/portal/projects/${projectId}/kickoff`, { headers });
+    const { data } = await api.get<PortalKickoff>(
+      `/portal/projects/${projectId}/kickoff`,
+      { headers },
+    );
     return data;
   } catch (error) {
     rethrow(error, "Unable to load this kickoff");
   }
 }
 
-export async function uploadPortalKickoffFile(projectId: string, file: File): Promise<{ file_id: string; file_name: string }> {
+export async function uploadPortalKickoffFile(
+  projectId: string,
+  file: File,
+): Promise<{ file_id: string; file_name: string }> {
   const headers = await authHeader();
   const form = new FormData();
   form.append("file", file);
@@ -622,18 +771,25 @@ export async function submitPortalKickoffAnswers(
 
 // ---- Invitation (onboarding) ----
 
-export async function previewPortalInvitation(token: string): Promise<PortalInvitationPreview> {
+export async function previewPortalInvitation(
+  token: string,
+): Promise<PortalInvitationPreview> {
   try {
-    const { data } = await api.get<PortalInvitationPreview>("/portal/invitations/preview", {
-      params: { token },
-    });
+    const { data } = await api.get<PortalInvitationPreview>(
+      "/portal/invitations/preview",
+      {
+        params: { token },
+      },
+    );
     return data;
   } catch (error) {
     rethrow(error, "This invitation link is invalid or has expired");
   }
 }
 
-export async function acceptPortalInvitation(token: string): Promise<PortalContext> {
+export async function acceptPortalInvitation(
+  token: string,
+): Promise<PortalContext> {
   const headers = await authHeader();
   try {
     const { data } = await api.post<PortalContext>(
@@ -654,10 +810,34 @@ export async function acceptPortalInvitation(token: string): Promise<PortalConte
  * a client contact → `/portal`; neither → onboarding. Used by the login
  * redirect and the two layout guards so the split lives in one place.
  */
-export async function resolveHome(): Promise<"/dashboard" | "/portal" | "/onboarding/one"> {
+export async function resolveHome(): Promise<
+  "/dashboard" | "/portal" | "/onboarding/one"
+> {
   const agencies = await getMyAgencies().catch(() => []);
   if (agencies.length > 0) return "/dashboard";
   const portal = await getPortalContext();
   if (portal) return "/portal";
   return "/onboarding/one";
+}
+
+// ---- My Team ----
+
+/**
+ * getPortalTeam
+ *
+ * The agency people assigned to this client's projects, via
+ * `GET /portal/team` — one entry per person with the projects (and project
+ * roles) they hold. `email`/`phone` are null when the member has chosen not
+ * to share them.
+ */
+export async function getPortalTeam(): Promise<PortalTeamMember[]> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.get<PortalTeamMember[]>("/portal/team", {
+      headers,
+    });
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to load your team");
+  }
 }

@@ -7,12 +7,17 @@
  * build image URLs. Mirrors `lib/agencies-client.ts`.
  *
  * @module apps/binx-web/src/lib/users-client.ts
- * @author Binx.io
+ * @author Binx Portal
  */
 
 /** Keep in sync with binx-api's `agency_image_max_bytes` (core/config.py) — user photos reuse the same cap. */
 export const USER_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
-export const USER_IMAGE_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+export const USER_IMAGE_MIME_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+];
 
 export type UserImageKind = "avatar" | "cover";
 
@@ -25,7 +30,10 @@ export type UserImageKind = "avatar" | "cover";
  * profile's cache-bust token) is appended as `?v=` so a re-uploaded image
  * isn't served stale from the browser cache.
  */
-export function userImageUrl(kind: UserImageKind, version?: string | null): string {
+export function userImageUrl(
+  kind: UserImageKind,
+  version?: string | null,
+): string {
   const base = `/api/users/me/${kind}`;
   return version ? `${base}?v=${encodeURIComponent(version)}` : base;
 }
@@ -54,7 +62,26 @@ export function memberImageUrl(
  * can see, via the conversation-scoped portal proxy route (binx-api only
  * serves photos of that conversation's participants).
  */
-export function portalParticipantAvatarUrl(conversationId: string, userId: string, version?: string | null): string {
+export function portalParticipantAvatarUrl(
+  conversationId: string,
+  userId: string,
+  version?: string | null,
+): string {
   const base = `/api/portal/conversations/${conversationId}/participants/${userId}/avatar`;
+  return version ? `${base}?v=${encodeURIComponent(version)}` : base;
+}
+
+/**
+ * portalTeamAvatarUrl
+ *
+ * For client portal contacts: the avatar of someone on their team (the
+ * "My Team" page), via the team-scoped portal proxy route (binx-api only
+ * serves photos of people assigned to that client's projects).
+ */
+export function portalTeamAvatarUrl(
+  userId: string,
+  version?: string | null,
+): string {
+  const base = `/api/portal/team/${userId}/avatar`;
   return version ? `${base}?v=${encodeURIComponent(version)}` : base;
 }

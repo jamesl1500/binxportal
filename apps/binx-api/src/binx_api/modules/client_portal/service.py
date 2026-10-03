@@ -18,7 +18,7 @@ from binx_api.core.images import image_version as _image_version
 from binx_api.core.security import generate_opaque_token, hash_token
 from binx_api.modules.activity import service as activity_service
 from binx_api.modules.activity.models import CATEGORY_CLIENTS
-from binx_api.modules.agencies.models import Agency, AgencyClient
+from binx_api.modules.agencies.models import Agency, AgencyClient, AgencyMember
 from binx_api.modules.agencies.service import (
     get_or_create_agency_profile,
     get_or_create_client_branding,
@@ -37,13 +37,15 @@ from binx_api.modules.client_portal.schemas import (
     PortalProgress,
     PortalTaskListRead,
     PortalTaskRead,
+    PortalTeamMemberRead,
+    PortalTeamProjectRead,
 )
 from binx_api.modules.invoicing.service import get_or_create_billing_settings
 from binx_api.modules.messaging.models import Conversation, ConversationParticipant
 from binx_api.modules.notifications import service as notifications_service
 from binx_api.modules.notifications.models import CATEGORY_TEAM as NOTIFY_CATEGORY_TEAM
-from binx_api.modules.projects.models import Project, ProjectTask, ProjectTaskList
-from binx_api.modules.users.models import User
+from binx_api.modules.projects.models import Project, ProjectMember, ProjectRole, ProjectTask, ProjectTaskList
+from binx_api.modules.users.models import VISIBILITY_PRIVATE, User, UserPrivacySettings, UserProfile
 
 INVITATION_EXPIRE_DAYS = 7
 
@@ -410,6 +412,77 @@ async def portal_task_board(db: AsyncSession, project_id: uuid.UUID) -> list[Por
         )
         for lst in lists
     ]
+
+
+# ---- Portal reads: the team on this client's projects ---------------------
+
+
+def _client_team_query(agency_id: uuid.UUID, client_id: uuid.UUID):
+    """ProjectMember rows on this client's projects, limited to people who
+    are still members of the agency."""
+    return (
+        select(ProjectMember, Project, ProjectRole, User, AgencyMember, UserPrivacySettings, UserProfile)
+        .join(Project, Project.id == ProjectMember.project_id)
+        .join(User, User.id == ProjectMember.user_id)
+        .join(AgencyMember, (AgencyMember.user_id == User.id) & (AgencyMember.agency_id == agency_id))
+        .outerjoin(ProjectRole, ProjectRole.id == ProjectMember.role_id)
+        .outerjoin(UserPrivacySettings, UserPrivacySettings.user_id == User.id)
+        .outerjoin(UserProfile, UserProfile.user_id == User.id)
+        .where(Project.client_id == client_id)
+    )
+
+
+async def list_portal_team(db: AsyncSession, agency_id: uuid.UUID, client_id: uuid.UUID) -> list[PortalTeamMemberRead]:
+    """The people a client sees on "My Team": everyone assigned to at least
+    one of their projects, one entry per person with the projects (and custom
+    project roles) they hold. Not the whole agency roster.
+
+    Contact details follow the same privacy settings that gate the staff
+    roster (agencies/router.py::_member_read) — email unless the member
+    turned off sharing it, phone only if they turned sharing on, and neither
+    phone for a private profile."""
+    rows = (await db.execute(_client_team_query(agency_id, client_id).order_by(User.full_name, Project.name))).all()
+
+    team: dict[uuid.UUID, PortalTeamMemberRead] = {}
+    for _project_member, project, role, user, agency_member, privacy, profile in rows:
+        entry = team.get(user.id)
+        if entry is None:
+            is_private = privacy is not None and privacy.profile_visibility == VISIBILITY_PRIVATE
+            show_email = privacy is None or privacy.show_email_to_team
+            show_phone = not is_private and privacy is not None and privacy.show_phone_to_team
+            avatar_path = profile.avatar_storage_path if profile else None
+            entry = team[user.id] = PortalTeamMemberRead(
+                user_id=user.id,
+                full_name=user.full_name,
+                job_title=agency_member.title or user.job_title,
+                email=user.email if show_email else None,
+                phone=user.phone_number if show_phone else None,
+                has_avatar=avatar_path is not None,
+                avatar_version=_image_version(avatar_path),
+                projects=[],
+            )
+        entry.projects.append(
+            PortalTeamProjectRead(
+                id=project.id,
+                name=project.name,
+                role_name=role.name if role else None,
+                role_color=role.color if role else None,
+            )
+        )
+    return list(team.values())
+
+
+async def get_portal_team_avatar_or_404(
+    db: AsyncSession, agency_id: uuid.UUID, client_id: uuid.UUID, user_id: uuid.UUID
+) -> UserProfile:
+    """The avatar of someone on this client's team — 404 for anyone who isn't
+    on one of the client's projects, so this can't be used to look up
+    arbitrary users."""
+    row = (await db.execute(_client_team_query(agency_id, client_id).where(User.id == user_id).limit(1))).first()
+    profile = row[6] if row else None
+    if profile is None or not profile.avatar_storage_path:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No avatar set")
+    return profile
 
 
 async def portal_client_read(db: AsyncSession, client: AgencyClient) -> PortalClientRead:
