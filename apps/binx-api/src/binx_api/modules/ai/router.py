@@ -13,12 +13,15 @@ from binx_api.modules.agencies.dependencies import require_agency_role
 from binx_api.modules.agencies.models import ROLE_ADMIN, ROLE_MEMBER, ROLE_OWNER, Agency
 from binx_api.modules.ai import client as ai_client
 from binx_api.modules.ai import service
-from binx_api.modules.ai.models import AiUsageEvent
+from binx_api.modules.ai.models import AiAction, AiConversationMessage, AiUsageEvent
 from binx_api.modules.ai.schemas import (
+    AiActionRead,
     AiBriefingRead,
     AiConversationRead,
     AiMessageCreate,
     AiMessageRead,
+    AiPreferencesRead,
+    AiPreferencesUpdate,
     AiSettingsRead,
     AiSettingsUpdate,
     AiUsageEventRead,
@@ -140,6 +143,44 @@ async def get_ai_briefing(
     return AiBriefingRead(briefing=text)
 
 
+@router.get("/preferences", response_model=AiPreferencesRead)
+async def get_ai_preferences(db: DbSession, current_user: CurrentUser, agency_and_role: AnyMember) -> AiPreferencesRead:
+    """The caller's own "Ask AI" preferences — defaults if never saved."""
+    agency, _role = agency_and_role
+    preferences = await service.get_preferences(db, agency.id, current_user.id)
+    return AiPreferencesRead.model_validate(preferences, from_attributes=True)
+
+
+@router.put("/preferences", response_model=AiPreferencesRead)
+async def update_ai_preferences(
+    db: DbSession, data: AiPreferencesUpdate, current_user: CurrentUser, agency_and_role: AnyMember
+) -> AiPreferencesRead:
+    agency, _role = agency_and_role
+    instructions = (data.custom_instructions or "").strip() or None
+    preferences = await service.update_preferences(
+        db,
+        agency.id,
+        current_user.id,
+        **data.model_dump(exclude={"custom_instructions"}),
+        custom_instructions=instructions,
+    )
+    return AiPreferencesRead.model_validate(preferences, from_attributes=True)
+
+
+def _action_read(action: AiAction) -> AiActionRead:
+    return AiActionRead.model_validate(action, from_attributes=True)
+
+
+def _message_read(message: AiConversationMessage, actions: list[AiAction] | None = None) -> AiMessageRead:
+    return AiMessageRead(
+        id=message.id,
+        role=message.role,
+        content=message.content,
+        created_at=message.created_at,
+        actions=[_action_read(a) for a in actions or []],
+    )
+
+
 @router.post("/conversations", response_model=AiConversationRead, status_code=status.HTTP_201_CREATED)
 async def create_conversation(
     db: DbSession, current_user: CurrentUser, agency_and_role: AnyMember
@@ -165,7 +206,8 @@ async def list_conversation_messages(
     agency, _role = agency_and_role
     conversation = await service.get_conversation_or_404(db, agency.id, current_user.id, conversation_id)
     messages = await service.list_conversation_messages(db, conversation.id)
-    return [AiMessageRead.model_validate(m, from_attributes=True) for m in messages]
+    actions = await service.list_conversation_actions(db, conversation.id)
+    return [_message_read(m, actions.get(m.id)) for m in messages]
 
 
 @router.post(
@@ -180,11 +222,9 @@ async def send_conversation_message(
 ) -> AiMessageRead:
     agency, _role = agency_and_role
     conversation = await service.get_conversation_or_404(db, agency.id, current_user.id, conversation_id)
-    await service.assistant_reply(db, conversation, agency, actor=current_user, user_message=data.message)
-    # assistant_reply persists both the user turn and the assistant turn
-    # before returning, so the last message is always the reply just made.
-    messages = await service.list_conversation_messages(db, conversation.id)
-    return AiMessageRead.model_validate(messages[-1], from_attributes=True)
+    reply = await service.assistant_reply(db, conversation, agency, actor=current_user, user_message=data.message)
+    actions = await service.list_conversation_actions(db, conversation.id)
+    return _message_read(reply, actions.get(reply.id))
 
 
 def _sse(payload: dict) -> str:
@@ -204,7 +244,9 @@ async def stream_conversation_message(
     starts the HTTP status/headers are already sent, so an error mid-stream
     can't become an HTTP error response — it's relayed as an in-band
     ``{"type": "error"}`` event instead, and the generator ends there
-    (no ``done`` event follows an ``error``)."""
+    (no ``done`` event follows an ``error``). Each change the assistant makes
+    or proposes arrives as its own ``{"type": "action", "action": {...}}``
+    event as soon as it's handled."""
     agency, _role = agency_and_role
     conversation = await service.get_conversation_or_404(db, agency.id, current_user.id, conversation_id)
 
@@ -213,7 +255,10 @@ async def stream_conversation_message(
             async for chunk in service.assistant_reply_stream(
                 db, conversation, agency, actor=current_user, user_message=data.message
             ):
-                yield _sse({"type": "delta", "text": chunk})
+                if isinstance(chunk, AiAction):
+                    yield _sse({"type": "action", "action": _action_read(chunk).model_dump(mode="json")})
+                else:
+                    yield _sse({"type": "delta", "text": chunk})
             yield _sse({"type": "done"})
         except Exception as exc:  # must never crash the stream silently — always tell the client
             message = exc.detail if hasattr(exc, "detail") else "Something went wrong generating that reply."
@@ -229,3 +274,34 @@ async def delete_conversation(
     agency, _role = agency_and_role
     conversation = await service.get_conversation_or_404(db, agency.id, current_user.id, conversation_id)
     await service.delete_conversation(db, conversation)
+
+
+@router.post("/conversations/{conversation_id}/actions/{action_id}/approve", response_model=AiActionRead)
+async def approve_action(
+    db: DbSession,
+    conversation_id: uuid.UUID,
+    action_id: uuid.UUID,
+    current_user: CurrentUser,
+    agency_and_role: AnyMember,
+) -> AiActionRead:
+    """Run a change the assistant proposed. A failure to apply (the lead was
+    deleted meanwhile, say) isn't an HTTP error — it comes back as the
+    action's ``failed`` status and ``result``, for the card to show."""
+    agency, _role = agency_and_role
+    conversation = await service.get_conversation_or_404(db, agency.id, current_user.id, conversation_id)
+    action = await service.get_pending_action_or_404(db, conversation, action_id)
+    return _action_read(await service.approve_action(db, action, agency, actor=current_user))
+
+
+@router.post("/conversations/{conversation_id}/actions/{action_id}/decline", response_model=AiActionRead)
+async def decline_action(
+    db: DbSession,
+    conversation_id: uuid.UUID,
+    action_id: uuid.UUID,
+    current_user: CurrentUser,
+    agency_and_role: AnyMember,
+) -> AiActionRead:
+    agency, _role = agency_and_role
+    conversation = await service.get_conversation_or_404(db, agency.id, current_user.id, conversation_id)
+    action = await service.get_pending_action_or_404(db, conversation, action_id)
+    return _action_read(await service.decline_action(db, action))

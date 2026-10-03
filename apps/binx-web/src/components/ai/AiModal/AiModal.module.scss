@@ -37,7 +37,9 @@
     transform: translate(-50%, -50%) scale(0.97);
   }
 
-  transition: opacity t.$duration-fast t.$ease-standard, transform t.$duration-fast t.$ease-standard;
+  transition:
+    opacity t.$duration-fast t.$ease-standard,
+    transform t.$duration-fast t.$ease-standard;
 }
 
 .sidebar {
@@ -128,7 +130,9 @@
   border-radius: t.$radius-sm;
   cursor: pointer;
   opacity: 0;
-  transition: opacity t.$duration-fast t.$ease-standard, color t.$duration-fast t.$ease-standard;
+  transition:
+    opacity t.$duration-fast t.$ease-standard,
+    color t.$duration-fast t.$ease-standard;
 
   svg {
     width: 0.8rem;
@@ -151,6 +155,13 @@
   flex: 1;
   min-width: 0;
   padding: t.$space-5 t.$space-5 t.$space-4;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: t.$space-2;
 }
 
 .title {
@@ -214,7 +225,9 @@
   border: 1px solid t.$color-border;
   border-radius: t.$radius-sm;
   cursor: pointer;
-  transition: border-color t.$duration-fast t.$ease-standard, color t.$duration-fast t.$ease-standard;
+  transition:
+    border-color t.$duration-fast t.$ease-standard,
+    color t.$duration-fast t.$ease-standard;
 
   &:hover {
     color: t.$color-ink;
@@ -226,15 +239,18 @@
   }
 }
 
+// A column so an assistant reply's action cards stack under its bubble.
 .bubbleRow {
   display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
 
   &[data-role="user"] {
-    justify-content: flex-end;
+    align-items: flex-end;
   }
 
   &[data-role="assistant"] {
-    justify-content: flex-start;
+    align-items: flex-start;
   }
 }
 
@@ -259,6 +275,11 @@
     border-bottom-left-radius: t.$radius-sm;
   }
 
+  // Live voice transcript, not yet sent.
+  &[data-interim="true"] {
+    opacity: 0.65;
+  }
+
   &[data-thinking="true"] {
     color: t.$color-ink-faint;
     font-style: italic;
@@ -274,6 +295,84 @@
 .composerInput {
   @include m.input-base;
   flex: 1;
+}
+
+.composerVoice {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  color: t.$color-ink-soft;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+  transition:
+    color t.$duration-fast t.$ease-standard,
+    background t.$duration-fast t.$ease-standard,
+    border-color t.$duration-fast t.$ease-standard;
+
+  &:hover:not(:disabled) {
+    color: t.$color-ink;
+    border-color: t.$color-border-strong;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  // Listening: solid red button with two staggered rings radiating out.
+  &[data-listening="true"] {
+    color: #fff;
+    background: t.$color-danger;
+    border-color: t.$color-danger;
+
+    &:hover:not(:disabled) {
+      color: #fff;
+      border-color: t.$color-danger;
+    }
+
+    &::before,
+    &::after {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      border: 2px solid t.$color-danger;
+      border-radius: inherit;
+      pointer-events: none;
+      animation: mic-pulse 1.6s t.$ease-standard infinite;
+    }
+
+    &::after {
+      animation-delay: 0.8s;
+    }
+  }
+}
+
+@keyframes mic-pulse {
+  from {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(1.4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .composerVoice[data-listening="true"]::before,
+  .composerVoice[data-listening="true"]::after {
+    animation: none;
+    opacity: 0;
+  }
 }
 
 .composerSubmit {

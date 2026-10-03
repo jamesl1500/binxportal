@@ -1345,6 +1345,59 @@
         "title": "AgencyUpdate",
         "type": "object"
       },
+      "AiActionRead": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "applied",
+              "declined",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "tool": {
+            "title": "Tool",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "tool",
+          "summary",
+          "status",
+          "result",
+          "created_at"
+        ],
+        "title": "AiActionRead",
+        "type": "object"
+      },
       "AiBriefingRead": {
         "properties": {
           "briefing": {
@@ -1432,6 +1485,14 @@
       },
       "AiMessageRead": {
         "properties": {
+          "actions": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/AiActionRead"
+            },
+            "title": "Actions",
+            "type": "array"
+          },
           "content": {
             "title": "Content",
             "type": "string"
@@ -1458,6 +1519,117 @@
           "created_at"
         ],
         "title": "AiMessageRead",
+        "type": "object"
+      },
+      "AiPreferencesRead": {
+        "properties": {
+          "allow_actions": {
+            "title": "Allow Actions",
+            "type": "boolean"
+          },
+          "confirm_actions": {
+            "title": "Confirm Actions",
+            "type": "boolean"
+          },
+          "custom_instructions": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom Instructions"
+          },
+          "response_length": {
+            "enum": [
+              "concise",
+              "balanced",
+              "detailed"
+            ],
+            "title": "Response Length",
+            "type": "string"
+          },
+          "tone": {
+            "enum": [
+              "professional",
+              "friendly",
+              "casual"
+            ],
+            "title": "Tone",
+            "type": "string"
+          },
+          "voice_auto_send": {
+            "title": "Voice Auto Send",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "response_length",
+          "tone",
+          "allow_actions",
+          "confirm_actions",
+          "voice_auto_send",
+          "custom_instructions"
+        ],
+        "title": "AiPreferencesRead",
+        "type": "object"
+      },
+      "AiPreferencesUpdate": {
+        "description": "A full replace \u2014 the settings dropdown always submits every field.",
+        "properties": {
+          "allow_actions": {
+            "title": "Allow Actions",
+            "type": "boolean"
+          },
+          "confirm_actions": {
+            "title": "Confirm Actions",
+            "type": "boolean"
+          },
+          "custom_instructions": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom Instructions"
+          },
+          "response_length": {
+            "enum": [
+              "concise",
+              "balanced",
+              "detailed"
+            ],
+            "title": "Response Length",
+            "type": "string"
+          },
+          "tone": {
+            "enum": [
+              "professional",
+              "friendly",
+              "casual"
+            ],
+            "title": "Tone",
+            "type": "string"
+          },
+          "voice_auto_send": {
+            "title": "Voice Auto Send",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "response_length",
+          "tone",
+          "allow_actions",
+          "confirm_actions",
+          "voice_auto_send"
+        ],
+        "title": "AiPreferencesUpdate",
         "type": "object"
       },
       "AiSettingsRead": {
@@ -13411,6 +13583,143 @@
         ]
       }
     },
+    "/agencies/{agency_id}/ai/conversations/{conversation_id}/actions/{action_id}/approve": {
+      "post": {
+        "description": "Run a change the assistant proposed. A failure to apply (the lead was\ndeleted meanwhile, say) isn't an HTTP error \u2014 it comes back as the\naction's ``failed`` status and ``result``, for the card to show.",
+        "operationId": "approve_action_agencies__agency_id__ai_conversations__conversation_id__actions__action_id__approve_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversation_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Conversation Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "action_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Action Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiActionRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Approve Action",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/ai/conversations/{conversation_id}/actions/{action_id}/decline": {
+      "post": {
+        "operationId": "decline_action_agencies__agency_id__ai_conversations__conversation_id__actions__action_id__decline_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversation_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Conversation Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "action_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Action Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiActionRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Decline Action",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
     "/agencies/{agency_id}/ai/conversations/{conversation_id}/messages": {
       "get": {
         "operationId": "list_conversation_messages_agencies__agency_id__ai_conversations__conversation_id__messages_get",
@@ -13541,7 +13850,7 @@
     },
     "/agencies/{agency_id}/ai/conversations/{conversation_id}/messages/stream": {
       "post": {
-        "description": "Same request as ``POST .../messages``, but the reply streams in as\nServer-Sent Events instead of arriving all at once. Once streaming\nstarts the HTTP status/headers are already sent, so an error mid-stream\ncan't become an HTTP error response \u2014 it's relayed as an in-band\n``{\"type\": \"error\"}`` event instead, and the generator ends there\n(no ``done`` event follows an ``error``).",
+        "description": "Same request as ``POST .../messages``, but the reply streams in as\nServer-Sent Events instead of arriving all at once. Once streaming\nstarts the HTTP status/headers are already sent, so an error mid-stream\ncan't become an HTTP error response \u2014 it's relayed as an in-band\n``{\"type\": \"error\"}`` event instead, and the generator ends there\n(no ``done`` event follows an ``error``). Each change the assistant makes\nor proposes arrives as its own ``{\"type\": \"action\", \"action\": {...}}``\nevent as soon as it's handled.",
         "operationId": "stream_conversation_message_agencies__agency_id__ai_conversations__conversation_id__messages_stream_post",
         "parameters": [
           {
@@ -13601,6 +13910,111 @@
           }
         ],
         "summary": "Stream Conversation Message",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/ai/preferences": {
+      "get": {
+        "description": "The caller's own \"Ask AI\" preferences \u2014 defaults if never saved.",
+        "operationId": "get_ai_preferences_agencies__agency_id__ai_preferences_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiPreferencesRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Ai Preferences",
+        "tags": [
+          "ai"
+        ]
+      },
+      "put": {
+        "operationId": "update_ai_preferences_agencies__agency_id__ai_preferences_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiPreferencesUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiPreferencesRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Ai Preferences",
         "tags": [
           "ai"
         ]

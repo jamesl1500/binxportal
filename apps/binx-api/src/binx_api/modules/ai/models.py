@@ -40,6 +40,29 @@ STATUS_BLOCKED = "blocked"
 ROLE_USER = "user"
 ROLE_ASSISTANT = "assistant"
 
+# AiAction.status. "pending" = proposed and waiting on the member's
+# Approve/Decline; the other three are terminal.
+ACTION_PENDING = "pending"
+ACTION_APPLIED = "applied"
+ACTION_DECLINED = "declined"
+ACTION_FAILED = "failed"
+
+# AiUserPreferences choices — plain strings, validated by the schema's
+# Literal types, so adding one never needs a migration.
+RESPONSE_LENGTHS: list[str] = ["concise", "balanced", "detailed"]
+TONES: list[str] = ["professional", "friendly", "casual"]
+
+# What a member who never opened the settings dropdown gets — both the
+# column defaults below and ai/service.py::get_preferences' unsaved fallback.
+PREFERENCE_DEFAULTS: dict[str, object] = {
+    "response_length": "balanced",
+    "tone": "professional",
+    "allow_actions": True,
+    "confirm_actions": True,
+    "voice_auto_send": True,
+    "custom_instructions": None,
+}
+
 
 # Per-agency AI configuration — lazy-created on first access, same pattern as
 # invoicing's AgencyBillingSettings and agencies' AgencyProfile. Seeded from
@@ -123,3 +146,51 @@ class DashboardBriefing(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
     briefing_date: Mapped[date] = mapped_column(Date)
     content: Mapped[str] = mapped_column(Text)
+
+
+# One member's "Ask AI" preferences (the modal's settings dropdown). Personal
+# like AiConversation — scoped to (agency, user), lazy-created on first save;
+# a member who never opened the dropdown just gets the column defaults (see
+# ai/service.py::get_preferences).
+class AiUserPreferences(Base):
+    __tablename__ = "ai_user_preferences"
+    __table_args__ = (UniqueConstraint("agency_id", "user_id", name="uq_ai_user_preferences_agency_user"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    agency_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("agencies.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+
+    response_length: Mapped[str] = mapped_column(String(20), default=PREFERENCE_DEFAULTS["response_length"])
+    tone: Mapped[str] = mapped_column(String(20), default=PREFERENCE_DEFAULTS["tone"])
+    # Whether the assistant may change data at all, and if so whether each
+    # change waits for the member's Approve (see AiAction).
+    allow_actions: Mapped[bool] = mapped_column(default=PREFERENCE_DEFAULTS["allow_actions"])
+    confirm_actions: Mapped[bool] = mapped_column(default=PREFERENCE_DEFAULTS["confirm_actions"])
+    # Voice input: send the transcript as soon as the speaker pauses, vs.
+    # drop it into the composer to review first. Purely a client-side switch.
+    voice_auto_send: Mapped[bool] = mapped_column(default=PREFERENCE_DEFAULTS["voice_auto_send"])
+    custom_instructions: Mapped[str | None] = mapped_column(String(1000), default=None)
+
+
+# One change the assistant made, or proposed to make, on the member's behalf
+# — both the Approve/Decline queue and the audit trail. `tool`/`input` are
+# exactly what Claude asked for, so approving later replays that same call
+# (ai/service.py::approve_action) against live data.
+class AiAction(Base):
+    __tablename__ = "ai_actions"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    conversation_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("ai_conversations.id", ondelete="CASCADE"), index=True
+    )
+    # The assistant turn that proposed it — set once that turn is persisted
+    # at the end of the tool loop, so briefly NULL while the turn is running.
+    message_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("ai_conversation_messages.id", ondelete="CASCADE"), index=True, default=None
+    )
+    tool: Mapped[str] = mapped_column(String(50))
+    input: Mapped[str] = mapped_column(Text)  # JSON
+    summary: Mapped[str] = mapped_column(String(500))
+    status: Mapped[str] = mapped_column(String(10))
+    # What happened when it ran — the success line or the error. NULL while pending/declined.
+    result: Mapped[str | None] = mapped_column(String(1024), default=None)

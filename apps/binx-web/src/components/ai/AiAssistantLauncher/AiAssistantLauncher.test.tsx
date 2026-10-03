@@ -6,9 +6,12 @@ vi.mock("@/app/(app)/ai/actions", () => ({
   createAiConversationAction: vi.fn(),
   deleteAiConversationAction: vi.fn(),
   getAiConversationMessagesAction: vi.fn(),
+  getAiPreferencesAction: vi.fn().mockResolvedValue({}),
   listAiConversationsAction: vi.fn().mockResolvedValue({ conversations: [] }),
   sendAiMessageAction: vi.fn(),
 }));
+
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 
 import AiAssistantLauncher from "./AiAssistantLauncher";
 

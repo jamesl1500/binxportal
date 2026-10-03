@@ -4,8 +4,12 @@
  * The global "Ask AI" assistant: a centered modal with a conversation list on
  * the left (new/select/delete) and the active thread + composer on the
  * right. Opened from AiAssistantLauncher (header button or ⌘K/Ctrl+K).
- * Answers are read-only lookups over the agency's own leads/clients/
- * projects/invoices (see ai/service.py::assistant_reply_stream's tool loop).
+ * Answers come from lookups over the agency's own leads/clients/
+ * projects/invoices (see ai/service.py::assistant_reply_stream's tool loop),
+ * and — when the member allows it — the assistant can also make changes for
+ * them, each shown as an AiActionCard under its reply (held for Approve
+ * unless they turned confirmations off). The gear in the header opens
+ * AiSettingsMenu, the member's own preferences for all of this.
  * A sent message streams the reply in token-by-token via
  * `/api/ai/{agencyId}/{conversationId}/messages/stream` (Server-Sent Events,
  * proxied same-origin — see that route's own docstring for why it's a plain
@@ -18,18 +22,24 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Dialog } from "@base-ui/react/dialog";
-import { Plus, Sparkles, Trash2 } from "lucide-react";
+import { Plus, Sparkles, Trash2, Mic } from "lucide-react";
 import { toast } from "sonner";
 
 import {
   createAiConversationAction,
   deleteAiConversationAction,
   getAiConversationMessagesAction,
+  getAiPreferencesAction,
   listAiConversationsAction,
+  resolveAiActionAction,
+  updateAiPreferencesAction,
 } from "@/app/(app)/ai/actions";
-import type { AiConversation, AiMessage } from "@/lib/ai";
+import type { AiAction, AiConversation, AiMessage, AiPreferences } from "@/lib/ai";
+import AiActionCard from "@/components/ai/AiActionCard/AiActionCard";
 import AiMarkdown from "@/components/ai/AiMarkdown/AiMarkdown";
+import AiSettingsMenu from "@/components/ai/AiSettingsMenu/AiSettingsMenu";
 
 import styles from "./AiModal.module.scss";
 
@@ -46,16 +56,162 @@ const SUGGESTIONS = [
 ];
 
 interface StreamEvent {
-  type: "delta" | "done" | "error";
+  type: "delta" | "action" | "done" | "error";
   text?: string;
+  action?: AiAction;
   message?: string;
 }
+
+/** The slice of the Web Speech API the voice composer uses — typed by hand
+ * since it's still vendor-prefixed (`webkitSpeechRecognition`) in Chrome and
+ * Safari and isn't reliably in TypeScript's DOM lib. */
+interface SpeechRecognitionResultLike {
+  readonly [index: number]: { transcript: string };
+}
+
+interface SpeechRecognitionLike {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  onstart: (() => void) | null;
+  onresult:
+    | ((event: { results: ArrayLike<SpeechRecognitionResultLike> }) => void)
+    | null;
+  onerror: ((event: { error: string }) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+  abort: () => void;
+}
+
+type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
+
+interface SpeechWindow {
+  SpeechRecognition?: SpeechRecognitionConstructor;
+  webkitSpeechRecognition?: SpeechRecognitionConstructor;
+}
+
+const SPEECH_ERRORS: Record<string, string> = {
+  "not-allowed":
+    "Microphone access is blocked — allow it in your browser to use voice.",
+  "service-not-allowed":
+    "Microphone access is blocked — allow it in your browser to use voice.",
+  "audio-capture": "No microphone was found.",
+  "no-speech": "Didn't catch that — try again.",
+  network: "Voice input needs a network connection.",
+};
+
+interface UseSpeechRecognitionOptions {
+  /** Tear down (and discard) any in-progress session while false — e.g.
+   * while the modal is closed. */
+  enabled: boolean;
+  lang?: string;
+  /** Called once per session with what was said, after the speaker pauses or
+   * stop() is called. Not called for an empty or discarded session. */
+  onFinal: (transcript: string) => void;
+  onError: (message: string) => void;
+}
+
+/** One-utterance-at-a-time speech-to-text: start() listens until the speaker
+ * pauses (or stop() is called), streaming the interim transcript meanwhile,
+ * then hands the final transcript to onFinal. */
+const useSpeechRecognition = ({
+  enabled,
+  lang = "en-US",
+  onFinal,
+  onError,
+}: UseSpeechRecognitionOptions) => {
+  const [transcript, setTranscript] = useState("");
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  // Latest callbacks, so a session's onend sees the current render's `send`
+  // without re-creating the recognizer on every render.
+  const callbacksRef = useRef({ onFinal, onError });
+  useEffect(() => {
+    callbacksRef.current = { onFinal, onError };
+  });
+
+  useEffect(() => {
+    if (!enabled) return;
+    // Resolved here rather than at module scope: client components are still
+    // prerendered on the server, where `window` doesn't exist.
+    const speechWindow = window as unknown as SpeechWindow;
+    const Recognition =
+      speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition;
+    if (!Recognition) return;
+
+    const recognition = new Recognition();
+    recognition.lang = lang;
+    // Non-continuous: the browser ends the session itself once the speaker
+    // pauses, which is the cue to send.
+    recognition.continuous = false;
+    recognition.interimResults = true;
+
+    let latest = "";
+    let discarded = false;
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onresult = (event) => {
+      latest = Array.from(event.results, (result) => result[0].transcript).join(
+        "",
+      );
+      setTranscript(latest);
+    };
+    recognition.onerror = (event) => {
+      // "aborted" is our own teardown below — nothing to tell the user.
+      if (event.error === "aborted") return;
+      callbacksRef.current.onError(
+        SPEECH_ERRORS[event.error] ?? `Voice input failed (${event.error}).`,
+      );
+    };
+    recognition.onend = () => {
+      const text = latest.trim();
+      latest = "";
+      setIsListening(false);
+      setTranscript("");
+      if (text && !discarded) callbacksRef.current.onFinal(text);
+    };
+
+    recognitionRef.current = recognition;
+    return () => {
+      discarded = true;
+      recognition.abort();
+      recognitionRef.current = null;
+    };
+  }, [enabled, lang]);
+
+  const start = () => {
+    const recognition = recognitionRef.current;
+    if (!recognition) {
+      callbacksRef.current.onError(
+        "Voice input isn't supported in this browser.",
+      );
+      return;
+    }
+    if (isListening) return;
+    try {
+      recognition.start();
+    } catch {
+      // InvalidStateError: a double-click landed before onstart fired — the
+      // session is already starting.
+    }
+  };
+
+  const stop = () => {
+    recognitionRef.current?.stop();
+  };
+
+  return { transcript, isListening, start, stop };
+};
 
 /** Splits a decoded SSE chunk into whichever complete `data: {...}` events it
  * contains, returning the not-yet-terminated remainder to prepend to the
  * next chunk — a streamed byte chunk can split a "\n\n"-delimited event
  * anywhere, including mid-JSON. */
-function splitSseEvents(buffer: string): { events: StreamEvent[]; remainder: string } {
+function splitSseEvents(buffer: string): {
+  events: StreamEvent[];
+  remainder: string;
+} {
   const parts = buffer.split("\n\n");
   const remainder = parts.pop() ?? "";
   const events = parts
@@ -65,7 +221,9 @@ function splitSseEvents(buffer: string): { events: StreamEvent[]; remainder: str
 }
 
 const AiModal = ({ agencyId, isOpen, onClose }: AiModalProps) => {
-  const [conversations, setConversations] = useState<AiConversation[] | null>(null);
+  const [conversations, setConversations] = useState<AiConversation[] | null>(
+    null,
+  );
   const [activeId, setActiveId] = useState<string | null>(null);
   const [messages, setMessages] = useState<AiMessage[]>([]);
   const [messagesLoading, setMessagesLoading] = useState(false);
@@ -73,7 +231,12 @@ const AiModal = ({ agencyId, isOpen, onClose }: AiModalProps) => {
   // null: no reply in flight. "": in flight, no tokens yet ("Thinking…").
   // Anything else: the reply as streamed in so far.
   const [streamingReply, setStreamingReply] = useState<string | null>(null);
+  // Changes the in-flight reply has made/proposed so far — folded into its
+  // message once the stream finishes.
+  const [streamingActions, setStreamingActions] = useState<AiAction[]>([]);
+  const [preferences, setPreferences] = useState<AiPreferences | null>(null);
   const [draft, setDraft] = useState("");
+  const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
   const tempIdRef = useRef(0);
   // Conversation ids created client-side this session — their message list is
@@ -96,6 +259,17 @@ const AiModal = ({ agencyId, isOpen, onClose }: AiModalProps) => {
       if (list.length > 0) setActiveId(list[0].id);
     })();
   }, [isOpen, agencyId, conversations]);
+
+  // The member's own AI preferences, once per open. Failing to load them
+  // isn't worth a toast — the gear just stays disabled and the server
+  // applies the same defaults either way.
+  useEffect(() => {
+    if (!isOpen || preferences !== null) return;
+    void (async () => {
+      const result = await getAiPreferencesAction(agencyId);
+      if (result.preferences) setPreferences(result.preferences);
+    })();
+  }, [isOpen, agencyId, preferences]);
 
   // Load a thread's messages whenever the selection changes. Nothing to fetch
   // when there's no active thread — the call sites that clear `activeId`
@@ -126,7 +300,7 @@ const AiModal = ({ agencyId, isOpen, onClose }: AiModalProps) => {
     if (el && typeof el.scrollTo === "function") {
       el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
     }
-  }, [messages, sending, streamingReply]);
+  }, [messages, sending, streamingReply, streamingActions]);
 
   const handleNewChat = async () => {
     const result = await createAiConversationAction(agencyId);
@@ -140,14 +314,19 @@ const AiModal = ({ agencyId, isOpen, onClose }: AiModalProps) => {
     setMessages([]);
   };
 
-  const handleDelete = async (event: React.MouseEvent, conversationId: string) => {
+  const handleDelete = async (
+    event: React.MouseEvent,
+    conversationId: string,
+  ) => {
     event.stopPropagation();
     const result = await deleteAiConversationAction(agencyId, conversationId);
     if (result.error) {
       toast.error(result.error);
       return;
     }
-    setConversations((prev) => (prev ?? []).filter((c) => c.id !== conversationId));
+    setConversations((prev) =>
+      (prev ?? []).filter((c) => c.id !== conversationId),
+    );
     if (activeId === conversationId) {
       setActiveId(null);
       setMessages([]);
@@ -177,14 +356,16 @@ const AiModal = ({ agencyId, isOpen, onClose }: AiModalProps) => {
       role: "user",
       content: trimmed,
       created_at: new Date().toISOString(),
+      actions: [],
     };
     setMessages((prev) => [...prev, optimisticUser]);
     setDraft("");
     setSending(true);
     setStreamingReply("");
+    setStreamingActions([]);
 
     const isFirstMessage = messages.length === 0;
-    const finalize = (finalText: string) => {
+    const finalize = (finalText: string, actions: AiAction[]) => {
       tempIdRef.current += 1;
       setMessages((prev) => [
         ...prev,
@@ -193,23 +374,34 @@ const AiModal = ({ agencyId, isOpen, onClose }: AiModalProps) => {
           role: "assistant",
           content: finalText,
           created_at: new Date().toISOString(),
+          actions,
         },
       ]);
       if (isFirstMessage) {
         setConversations((prev) =>
-          (prev ?? []).map((c) => (c.id === conversationId ? { ...c, title: trimmed.slice(0, 255) } : c)),
+          (prev ?? []).map((c) =>
+            c.id === conversationId
+              ? { ...c, title: trimmed.slice(0, 255) }
+              : c,
+          ),
         );
       }
     };
 
     try {
-      const response = await fetch(`/api/ai/${agencyId}/${conversationId}/messages/stream`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: trimmed }),
-      });
+      const response = await fetch(
+        `/api/ai/${agencyId}/${conversationId}/messages/stream`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: trimmed }),
+        },
+      );
 
-      if (!response.body || !response.headers.get("content-type")?.includes("text/event-stream")) {
+      if (
+        !response.body ||
+        !response.headers.get("content-type")?.includes("text/event-stream")
+      ) {
         const data = await response.json().catch(() => null);
         throw new Error(data?.message ?? "Unable to send that message");
       }
@@ -218,6 +410,7 @@ const AiModal = ({ agencyId, isOpen, onClose }: AiModalProps) => {
       const decoder = new TextDecoder();
       let buffer = "";
       let finalText = "";
+      const actions: AiAction[] = [];
       let streamError: string | null = null;
 
       while (true) {
@@ -230,6 +423,9 @@ const AiModal = ({ agencyId, isOpen, onClose }: AiModalProps) => {
           if (event.type === "delta" && event.text) {
             finalText += event.text;
             setStreamingReply(finalText);
+          } else if (event.type === "action" && event.action) {
+            actions.push(event.action);
+            setStreamingActions([...actions]);
           } else if (event.type === "error") {
             streamError = event.message ?? "Unable to send that message";
           }
@@ -239,13 +435,73 @@ const AiModal = ({ agencyId, isOpen, onClose }: AiModalProps) => {
       if (streamError) {
         throw new Error(streamError);
       }
-      finalize(finalText);
+      finalize(finalText, actions);
+      // Changes that already went through (confirmations off) may affect
+      // the page behind the modal.
+      if (actions.some((action) => action.status === "applied")) router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to send that message");
+      toast.error(
+        error instanceof Error ? error.message : "Unable to send that message",
+      );
       setMessages((prev) => prev.filter((m) => m.id !== optimisticUser.id));
     } finally {
       setSending(false);
       setStreamingReply(null);
+      setStreamingActions([]);
+    }
+  };
+
+  const handleResolveAction = async (actionId: string, decision: "approve" | "decline") => {
+    if (!activeId) return;
+    const result = await resolveAiActionAction(agencyId, activeId, actionId, decision);
+    if (result.error || !result.action) {
+      toast.error(result.error ?? "Unable to update that change");
+      return;
+    }
+    const resolved = result.action;
+    setMessages((prev) =>
+      prev.map((message) =>
+        message.actions.some((action) => action.id === actionId)
+          ? { ...message, actions: message.actions.map((action) => (action.id === actionId ? resolved : action)) }
+          : message,
+      ),
+    );
+    if (resolved.status === "applied") router.refresh();
+  };
+
+  // Saved optimistically — a failed save rolls the menu back and says so.
+  const handlePreferencesChange = async (next: AiPreferences) => {
+    const previous = preferences;
+    setPreferences(next);
+    const result = await updateAiPreferencesAction(agencyId, next);
+    if (result.error || !result.preferences) {
+      setPreferences(previous);
+      toast.error(result.error ?? "Unable to save your AI preferences");
+      return;
+    }
+    setPreferences(result.preferences);
+  };
+
+  // Voice input: speak, pause, and the transcript is sent as a message — or,
+  // with auto-send turned off, added to the composer to review first.
+  const voice = useSpeechRecognition({
+    enabled: isOpen,
+    onFinal: (transcript) => {
+      if (preferences?.voice_auto_send === false) {
+        setDraft((prev) => [prev.trim(), transcript].filter(Boolean).join(" "));
+      } else {
+        void send(transcript);
+      }
+    },
+    onError: (message) => toast.error(message),
+  });
+
+  const handleToggleListening = () => {
+    if (voice.isListening) {
+      // Ends the session early; its onend still sends what was heard.
+      voice.stop();
+    } else {
+      voice.start();
     }
   };
 
@@ -260,7 +516,11 @@ const AiModal = ({ agencyId, isOpen, onClose }: AiModalProps) => {
         <Dialog.Backdrop className={styles.backdrop} />
         <Dialog.Popup className={styles.dialog} aria-label="Ask AI">
           <div className={styles.sidebar}>
-            <button type="button" className={styles.newChat} onClick={() => void handleNewChat()}>
+            <button
+              type="button"
+              className={styles.newChat}
+              onClick={() => void handleNewChat()}
+            >
               <Plus className={styles.newChatIcon} aria-hidden="true" />
               New chat
             </button>
@@ -287,12 +547,16 @@ const AiModal = ({ agencyId, isOpen, onClose }: AiModalProps) => {
                       }
                     }}
                   >
-                    <span className={styles.conversationTitle}>{conversation.title ?? "New chat"}</span>
+                    <span className={styles.conversationTitle}>
+                      {conversation.title ?? "New chat"}
+                    </span>
                     <button
                       type="button"
                       className={styles.deleteButton}
                       aria-label="Delete conversation"
-                      onClick={(event) => void handleDelete(event, conversation.id)}
+                      onClick={(event) =>
+                        void handleDelete(event, conversation.id)
+                      }
                     >
                       <Trash2 aria-hidden="true" />
                     </button>
@@ -303,13 +567,22 @@ const AiModal = ({ agencyId, isOpen, onClose }: AiModalProps) => {
           </div>
 
           <div className={styles.main}>
-            <Dialog.Title className={styles.title}>
-              <Sparkles className={styles.titleIcon} aria-hidden="true" />
-              Ask AI
-            </Dialog.Title>
+            <div className={styles.header}>
+              <Dialog.Title className={styles.title}>
+                <Sparkles className={styles.titleIcon} aria-hidden="true" />
+                Ask AI
+              </Dialog.Title>
+              <AiSettingsMenu
+                preferences={preferences}
+                onChange={(next) => void handlePreferencesChange(next)}
+              />
+            </div>
             <Dialog.Description className={styles.description}>
-              Answers questions about your leads, clients, projects, and invoices. Read-only — it can&apos;t change
-              anything.
+              {preferences?.allow_actions === false
+                ? "Answers questions about your leads, clients, projects, and invoices. Changes are turned off — it can only look things up."
+                : preferences?.confirm_actions === false
+                  ? "Answers questions about your leads, clients, projects, and invoices, and makes changes for you right away."
+                  : "Answers questions about your leads, clients, projects, and invoices, and can make changes once you approve them."}
             </Dialog.Description>
 
             <div className={styles.thread} ref={scrollRef}>
@@ -333,7 +606,11 @@ const AiModal = ({ agencyId, isOpen, onClose }: AiModalProps) => {
                 </div>
               ) : (
                 messages.map((message) => (
-                  <div key={message.id} className={styles.bubbleRow} data-role={message.role}>
+                  <div
+                    key={message.id}
+                    className={styles.bubbleRow}
+                    data-role={message.role}
+                  >
                     <div className={styles.bubble} data-role={message.role}>
                       {message.role === "assistant" ? (
                         <AiMarkdown content={message.content} />
@@ -341,14 +618,39 @@ const AiModal = ({ agencyId, isOpen, onClose }: AiModalProps) => {
                         message.content
                       )}
                     </div>
+                    {message.actions.map((action) => (
+                      <AiActionCard key={action.id} action={action} onResolve={handleResolveAction} />
+                    ))}
                   </div>
                 ))
               )}
+              {voice.transcript && (
+                <div className={styles.bubbleRow} data-role="user">
+                  <div
+                    className={styles.bubble}
+                    data-role="user"
+                    data-interim="true"
+                  >
+                    {voice.transcript}
+                  </div>
+                </div>
+              )}
               {streamingReply !== null && (
                 <div className={styles.bubbleRow} data-role="assistant">
-                  <div className={styles.bubble} data-role="assistant" data-thinking={streamingReply === "" ? "true" : undefined}>
-                    {streamingReply === "" ? "Thinking…" : <AiMarkdown content={streamingReply} />}
+                  <div
+                    className={styles.bubble}
+                    data-role="assistant"
+                    data-thinking={streamingReply === "" ? "true" : undefined}
+                  >
+                    {streamingReply === "" ? (
+                      "Thinking…"
+                    ) : (
+                      <AiMarkdown content={streamingReply} />
+                    )}
                   </div>
+                  {streamingActions.map((action) => (
+                    <AiActionCard key={action.id} action={action} onResolve={handleResolveAction} />
+                  ))}
                 </div>
               )}
             </div>
@@ -357,12 +659,33 @@ const AiModal = ({ agencyId, isOpen, onClose }: AiModalProps) => {
               <input
                 type="text"
                 className={styles.composerInput}
-                placeholder="Ask about a lead, client, project, or invoice…"
+                placeholder={
+                  voice.isListening
+                    ? "Listening…"
+                    : "Ask about a lead, client, project, or invoice…"
+                }
                 value={draft}
                 onChange={(event) => setDraft(event.target.value)}
                 disabled={sending}
               />
-              <button type="submit" className={styles.composerSubmit} disabled={sending || !draft.trim()}>
+              <button
+                type="button"
+                className={styles.composerVoice}
+                data-listening={voice.isListening ? "true" : undefined}
+                aria-pressed={voice.isListening}
+                aria-label={
+                  voice.isListening ? "Stop and send" : "Ask with your voice"
+                }
+                onClick={handleToggleListening}
+                disabled={sending}
+              >
+                <Mic aria-hidden="true" />
+              </button>
+              <button
+                type="submit"
+                className={styles.composerSubmit}
+                disabled={sending || !draft.trim()}
+              >
                 Send
               </button>
             </form>

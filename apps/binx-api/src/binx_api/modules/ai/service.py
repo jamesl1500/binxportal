@@ -11,8 +11,11 @@ directly.
   generate_invoice_reminder / generate_lead_followup /
   generate_message_reply — plain-text drafts.
 - assistant_reply / assistant_reply_stream — the "Ask AI" manual
-  tool-calling loop over four read-only, agency-scoped search tools; the
-  streaming variant yields text deltas instead of returning once.
+  tool-calling loop over agency-scoped read tools plus, when the member
+  allows it, action tools that change data on their behalf (recorded as
+  AiActions, each held for the member's Approve unless they opted out);
+  the streaming variant yields text deltas and actions as they happen
+  instead of returning once.
 """
 
 from __future__ import annotations
@@ -20,19 +23,24 @@ from __future__ import annotations
 import json
 import uuid
 from asyncio import Lock
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
 from fastapi import HTTPException, status
+from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from binx_api.modules.activity import service as activity_service
 from binx_api.modules.agencies import service as agencies_service
-from binx_api.modules.agencies.models import Agency, AgencyClient
+from binx_api.modules.agencies.models import Agency, AgencyClient, AgencyMember
 from binx_api.modules.ai import client as ai_client
 from binx_api.modules.ai.models import (
+    ACTION_APPLIED,
+    ACTION_DECLINED,
+    ACTION_FAILED,
+    ACTION_PENDING,
     FEATURE_ASSISTANT,
     FEATURE_DASHBOARD_BRIEFING,
     FEATURE_INVOICE_REMINDER,
@@ -42,10 +50,13 @@ from binx_api.modules.ai.models import (
     FEATURE_MESSAGE_REPLY,
     FEATURE_PROJECT_SUMMARY,
     FEATURE_PROJECT_TASKS,
+    PREFERENCE_DEFAULTS,
     ROLE_ASSISTANT,
     ROLE_USER,
+    AiAction,
     AiConversation,
     AiConversationMessage,
+    AiUserPreferences,
     DashboardBriefing,
 )
 from binx_api.modules.dashboard import service as dashboard_service
@@ -53,10 +64,12 @@ from binx_api.modules.invoicing import service as invoicing_service
 from binx_api.modules.invoicing.models import STATUS_SENT, Invoice
 from binx_api.modules.leads import places as places_client
 from binx_api.modules.leads.models import LEAD_OPEN_STATUSES, LEAD_STATUSES, Lead
+from binx_api.modules.leads.schemas import LeadCreate, LeadNoteCreate, LeadStatusUpdate
 from binx_api.modules.messaging import service as messaging_service
 from binx_api.modules.messaging.models import SENDER_CLIENT, Conversation
 from binx_api.modules.projects import service as projects_service
 from binx_api.modules.projects.models import Project, project_statuses
+from binx_api.modules.projects.schemas import TaskCreate, TaskUpdate
 from binx_api.modules.users.models import User
 
 MAX_ASSISTANT_ITERATIONS = 6
@@ -722,7 +735,123 @@ _ASSISTANT_TOOLS = [
             },
         },
     },
+    {
+        "name": "get_project_board",
+        "description": "A project's kanban board: its columns (with ids) and the tasks in each (with ids, "
+        "assignee, and due date). Use it before creating or changing a task.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"project_id": {"type": "string", "description": "An id from search_projects"}},
+            "required": ["project_id"],
+        },
+    },
+    {
+        "name": "list_team_members",
+        "description": "This agency's team members, with their ids — for assigning tasks.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
 ]
+
+# Tools that change data. Never executed directly by the tool loop — they go
+# through _handle_action_call, which records an AiAction and (unless the
+# member opted out of confirmations) waits for their Approve. Every one maps
+# onto a service function a plain agency member can already call through the
+# API, so the assistant can never do more than the member could by hand.
+_ACTION_TOOLS = [
+    {
+        "name": "create_lead",
+        "description": "Create a new sales lead.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string", "description": "Company or person name"},
+                "contact_name": {"type": "string"},
+                "contact_email": {"type": "string"},
+                "contact_phone": {"type": "string"},
+                "website": {"type": "string"},
+                "estimated_value_cents": {"type": "integer", "description": "Estimated deal value, in cents"},
+                "notes": {"type": "string"},
+            },
+            "required": ["name"],
+        },
+    },
+    {
+        "name": "update_lead_status",
+        "description": "Move a lead to a different pipeline status.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "lead_id": {"type": "string", "description": "An id from search_leads"},
+                "status": {"type": "string", "enum": LEAD_STATUSES},
+                "lost_reason": {"type": "string", "description": "Why it was lost — only for status 'lost'"},
+            },
+            "required": ["lead_id", "status"],
+        },
+    },
+    {
+        "name": "add_lead_note",
+        "description": "Add a note to a lead's activity timeline.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "lead_id": {"type": "string", "description": "An id from search_leads"},
+                "body": {"type": "string"},
+            },
+            "required": ["lead_id", "body"],
+        },
+    },
+    {
+        "name": "create_task",
+        "description": "Add a task card to a project's board.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "project_id": {"type": "string", "description": "An id from search_projects"},
+                "list_id": {
+                    "type": "string",
+                    "description": "A column id from get_project_board — defaults to the first column",
+                },
+                "title": {"type": "string"},
+                "description": {"type": "string"},
+                "due_date": {"type": "string", "description": "YYYY-MM-DD"},
+                "assignee_id": {"type": "string", "description": "An id from list_team_members"},
+            },
+            "required": ["project_id", "title"],
+        },
+    },
+    {
+        "name": "update_task",
+        "description": "Change a task: move it to another column, rename it, reschedule it, or (re)assign it. "
+        "Only the fields you pass change; pass null for due_date or assignee_id to clear it.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "project_id": {"type": "string", "description": "An id from search_projects"},
+                "task_id": {"type": "string", "description": "A task id from get_project_board"},
+                "list_id": {"type": "string", "description": "A column id from get_project_board"},
+                "title": {"type": "string"},
+                "description": {"type": "string"},
+                "due_date": {"type": ["string", "null"], "description": "YYYY-MM-DD"},
+                "assignee_id": {"type": ["string", "null"], "description": "An id from list_team_members"},
+            },
+            "required": ["project_id", "task_id"],
+        },
+    },
+    {
+        "name": "update_project_status",
+        "description": "Change a project's status.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "project_id": {"type": "string", "description": "An id from search_projects"},
+                "status": {"type": "string", "enum": project_statuses},
+            },
+            "required": ["project_id", "status"],
+        },
+    },
+]
+
+_ACTION_TOOL_NAMES = frozenset(tool["name"] for tool in _ACTION_TOOLS)
 
 
 def _invoice_status_label(invoice: Invoice, today: datetime) -> str:
@@ -739,6 +868,29 @@ def _invoice_status_label(invoice: Invoice, today: datetime) -> str:
     return STATUS_SENT
 
 
+def _id_input(tool_input: dict, key: str) -> uuid.UUID:
+    try:
+        return uuid.UUID(str(tool_input.get(key)))
+    except ValueError:
+        raise ValueError(
+            f"{key} must be an id returned by one of the search tools — never a name or a guess."
+        ) from None
+
+
+async def _member_name(db: AsyncSession, agency_id: uuid.UUID, user_id: uuid.UUID) -> str:
+    """The display name of an agency member, or a ValueError the model can
+    read and correct (rather than the service's own 400 at apply time)."""
+    result = await db.execute(
+        select(User.full_name)
+        .join(AgencyMember, AgencyMember.user_id == User.id)
+        .where(AgencyMember.agency_id == agency_id, User.id == user_id)
+    )
+    name = result.scalar_one_or_none()
+    if name is None:
+        raise ValueError("assignee_id isn't a member of this agency — use an id from list_team_members.")
+    return name
+
+
 async def _run_tool(db: AsyncSession, agency_id: uuid.UUID, name: str, tool_input: dict) -> object:
     limit = min(max(int(tool_input.get("limit") or 10), 1), 20)
     query = (tool_input.get("query") or "").strip().lower()
@@ -750,6 +902,7 @@ async def _run_tool(db: AsyncSession, agency_id: uuid.UUID, name: str, tool_inpu
         matches = [lead for lead, _owner, _client in rows if not query or query in lead.name.lower()]
         return [
             {
+                "id": str(lead.id),
                 "name": lead.name,
                 "status": lead.status,
                 "score": lead.score,
@@ -763,7 +916,12 @@ async def _run_tool(db: AsyncSession, agency_id: uuid.UUID, name: str, tool_inpu
         clients = await agencies_service.list_clients(db, agency_id)
         matches = [c for c in clients if not query or query in c.name.lower()]
         return [
-            {"name": c.name, "is_active": c.is_active, "primary_contact_email": c.primary_contact_email}
+            {
+                "id": str(c.id),
+                "name": c.name,
+                "is_active": c.is_active,
+                "primary_contact_email": c.primary_contact_email,
+            }
             for c in matches[:limit]
         ]
 
@@ -772,6 +930,7 @@ async def _run_tool(db: AsyncSession, agency_id: uuid.UUID, name: str, tool_inpu
         matches = [(p, client_name) for p, client_name, _members in rows if not query or query in p.name.lower()]
         return [
             {
+                "id": str(p.id),
                 "name": p.name,
                 "status": p.status,
                 "client": client_name,
@@ -806,7 +965,235 @@ async def _run_tool(db: AsyncSession, agency_id: uuid.UUID, name: str, tool_inpu
             )
         return items[:limit]
 
+    if name == "get_project_board":
+        project = await projects_service.get_project_or_404(db, agency_id, _id_input(tool_input, "project_id"))
+        board = await projects_service.get_project_board(db, project.id)
+        return {
+            "project": project.name,
+            "status": project.status,
+            "columns": [
+                {
+                    "id": str(task_list.id),
+                    "name": task_list.name,
+                    "tasks": [
+                        {
+                            "id": str(task.id),
+                            "title": task.title,
+                            "assignee": assignee_name,
+                            "due_date": task.due_date.isoformat() if task.due_date else None,
+                        }
+                        for task, assignee_name, *_rest in tasks
+                    ],
+                }
+                for task_list, tasks in board
+            ],
+        }
+
+    if name == "list_team_members":
+        members = await agencies_service.list_agency_members(db, agency_id)
+        return [{"id": str(user.id), "name": user.full_name, "role": member.role} for member, user, *_rest in members]
+
     return {"error": f"Unknown tool '{name}'"}
+
+
+@dataclass
+class _PlannedAction:
+    """A validated change, ready to run: ``summary`` is what the member sees
+    on the Approve/Decline card; ``apply`` performs it and returns the
+    one-line outcome."""
+
+    summary: str
+    apply: Callable[[], Awaitable[str]]
+
+
+async def _plan_action(db: AsyncSession, agency: Agency, actor: User, name: str, tool_input: dict) -> _PlannedAction:
+    """Validates one action-tool call against live data — ids resolve, the
+    values pass the same schemas the API's own endpoints use — and returns
+    what it would do, without doing it. Raises (ValueError, ValidationError,
+    or the service's HTTPException) when the call is bad, which the tool loop
+    hands back to Claude to correct. Run again at approval time, so an
+    approval acts on the data as it is then, not as it was when proposed."""
+    from binx_api.modules.leads import service as leads_service  # see generate_dashboard_briefing
+
+    if name == "create_lead":
+        lead_data = LeadCreate.model_validate({**tool_input, "source": "manual"})
+
+        async def apply_create_lead() -> str:
+            lead = await leads_service.create_lead(db, agency, actor=actor, **lead_data.model_dump())
+            return f'Created the lead "{lead.name}".'
+
+        return _PlannedAction(f'Create the lead "{lead_data.name}"', apply_create_lead)
+
+    if name == "update_lead_status":
+        status_data = LeadStatusUpdate.model_validate(tool_input)
+        lead = await leads_service.get_lead_or_404(db, agency.id, _id_input(tool_input, "lead_id"))
+        lead_name, from_status = lead.name, lead.status
+        reason = f" ({status_data.lost_reason})" if status_data.status == "lost" and status_data.lost_reason else ""
+
+        async def apply_lead_status() -> str:
+            await leads_service.change_status(
+                db, lead, new_status=status_data.status, lost_reason=status_data.lost_reason, actor=actor
+            )
+            return f'Moved "{lead_name}" to {status_data.status}.'
+
+        return _PlannedAction(
+            f'Move the lead "{lead_name}" from {from_status} to {status_data.status}{reason}', apply_lead_status
+        )
+
+    if name == "add_lead_note":
+        note = LeadNoteCreate.model_validate(tool_input)
+        lead = await leads_service.get_lead_or_404(db, agency.id, _id_input(tool_input, "lead_id"))
+        lead_name = lead.name
+
+        async def apply_lead_note() -> str:
+            await leads_service.add_note(db, lead, body=note.body, actor=actor)
+            return f'Added a note to "{lead_name}".'
+
+        preview = note.body if len(note.body) <= 120 else f"{note.body[:117]}…"
+        return _PlannedAction(f'Add a note to the lead "{lead_name}": "{preview}"', apply_lead_note)
+
+    if name == "create_task":
+        project = await projects_service.get_project_or_404(db, agency.id, _id_input(tool_input, "project_id"))
+        if tool_input.get("list_id"):
+            task_list = await projects_service.get_task_list_or_404(db, project.id, _id_input(tool_input, "list_id"))
+        else:
+            board = await projects_service.get_project_board(db, project.id)
+            if not board:
+                raise ValueError(f'"{project.name}" has no board columns to add a task to.')
+            task_list = board[0][0]
+        task_data = TaskCreate.model_validate({**tool_input, "list_id": task_list.id})
+        details = [f'Add the task "{task_data.title}" to {project.name} › {task_list.name}']
+        if task_data.assignee_id:
+            details.append(f"assigned to {await _member_name(db, agency.id, task_data.assignee_id)}")
+        if task_data.due_date:
+            details.append(f"due {task_data.due_date.isoformat()}")
+
+        async def apply_create_task() -> str:
+            await projects_service.create_task(db, project, **task_data.model_dump(), actor=actor)
+            return f'Added "{task_data.title}" to {project.name}.'
+
+        return _PlannedAction(", ".join(details), apply_create_task)
+
+    if name == "update_task":
+        project = await projects_service.get_project_or_404(db, agency.id, _id_input(tool_input, "project_id"))
+        task = await projects_service.get_task_or_404(db, project.id, _id_input(tool_input, "task_id"))
+        current = {
+            "list_id": task.list_id,
+            "title": task.title,
+            "description": task.description,
+            "due_date": task.due_date,
+            "assignee_id": task.assignee_id,
+        }
+        task_data = TaskUpdate.model_validate({**current, **{k: tool_input[k] for k in current if k in tool_input}})
+
+        changes = []
+        if task_data.list_id != task.list_id:
+            task_list = await projects_service.get_task_list_or_404(db, project.id, task_data.list_id)
+            changes.append(f"move it to {task_list.name}")
+        if task_data.title != task.title:
+            changes.append(f'rename it "{task_data.title}"')
+        if task_data.description != task.description:
+            changes.append("update its description")
+        if task_data.due_date != task.due_date:
+            changes.append(
+                f"make it due {task_data.due_date.isoformat()}" if task_data.due_date else "clear its due date"
+            )
+        if task_data.assignee_id != task.assignee_id:
+            changes.append(
+                f"assign it to {await _member_name(db, agency.id, task_data.assignee_id)}"
+                if task_data.assignee_id
+                else "unassign it"
+            )
+        if not changes:
+            raise ValueError("That wouldn't change anything — pass at least one field with a new value.")
+        task_title = task.title
+
+        async def apply_update_task() -> str:
+            await projects_service.update_task(db, task, **task_data.model_dump(), actor=actor)
+            return f'Updated "{task_title}".'
+
+        return _PlannedAction(
+            f'Update the task "{task_title}" in {project.name}: {", ".join(changes)}', apply_update_task
+        )
+
+    if name == "update_project_status":
+        new_status = str(tool_input.get("status") or "")
+        if new_status not in project_statuses:
+            raise ValueError(f"status must be one of: {', '.join(project_statuses)}")
+        project = await projects_service.get_project_or_404(db, agency.id, _id_input(tool_input, "project_id"))
+        project_name, from_status = project.name, project.status
+
+        async def apply_project_status() -> str:
+            await projects_service.update_project(
+                db,
+                project,
+                client_id=project.client_id,
+                name=project.name,
+                description=project.description,
+                status_=new_status,
+                start_date=project.start_date,
+                due_date=project.due_date,
+                default_hourly_rate_cents=project.default_hourly_rate_cents,
+            )
+            return f'Set "{project_name}" to {new_status}.'
+
+        return _PlannedAction(
+            f'Change the project "{project_name}" from {from_status} to {new_status}', apply_project_status
+        )
+
+    raise ValueError(f"Unknown action '{name}'")
+
+
+def _error_text(exc: Exception) -> str:
+    """A readable one-liner for a failed tool call or action — what Claude
+    gets back to correct itself, and what an action card shows on failure."""
+    if isinstance(exc, HTTPException):
+        return str(exc.detail)
+    if isinstance(exc, ValidationError):
+        return "; ".join(
+            f"{'.'.join(str(part) for part in error['loc'])}: {error['msg']}" if error["loc"] else error["msg"]
+            for error in exc.errors()
+        )
+    return str(exc)
+
+
+async def _apply(action: AiAction, planned: _PlannedAction) -> None:
+    try:
+        action.result = (await planned.apply())[:1024]
+        action.status = ACTION_APPLIED
+    except Exception as exc:  # recorded on the card rather than raised — the turn goes on
+        action.result = _error_text(exc)[:1024]
+        action.status = ACTION_FAILED
+
+
+# ---- Ask AI: preferences --------------------------------------------
+
+
+async def get_preferences(db: AsyncSession, agency_id: uuid.UUID, user_id: uuid.UUID) -> AiUserPreferences:
+    """The member's saved preferences — or, if they've never saved any, an
+    unsaved instance carrying the defaults. Nothing is written on read."""
+    result = await db.execute(
+        select(AiUserPreferences).where(AiUserPreferences.agency_id == agency_id, AiUserPreferences.user_id == user_id)
+    )
+    preferences = result.scalar_one_or_none()
+    if preferences is None:
+        preferences = AiUserPreferences(agency_id=agency_id, user_id=user_id, **PREFERENCE_DEFAULTS)
+    return preferences
+
+
+async def update_preferences(
+    db: AsyncSession, agency_id: uuid.UUID, user_id: uuid.UUID, **fields: object
+) -> AiUserPreferences:
+    preferences = await get_preferences(db, agency_id, user_id)
+    for key, value in fields.items():
+        setattr(preferences, key, value)
+    db.add(preferences)
+    await db.commit()
+    await db.refresh(preferences)
+    return preferences
+
+
+# ---- Ask AI: conversations ------------------------------------------
 
 
 async def list_conversations(db: AsyncSession, agency_id: uuid.UUID, user_id: uuid.UUID) -> list[AiConversation]:
@@ -851,28 +1238,178 @@ async def list_conversation_messages(db: AsyncSession, conversation_id: uuid.UUI
     return list(result.scalars().all())
 
 
+async def list_conversation_actions(db: AsyncSession, conversation_id: uuid.UUID) -> dict[uuid.UUID, list[AiAction]]:
+    """Every persisted action in a conversation, keyed by the assistant
+    message that made/proposed it, oldest first within each."""
+    result = await db.execute(
+        select(AiAction)
+        .where(AiAction.conversation_id == conversation_id, AiAction.message_id.is_not(None))
+        .order_by(AiAction.created_at)
+    )
+    grouped: dict[uuid.UUID, list[AiAction]] = {}
+    for action in result.scalars().all():
+        assert action.message_id is not None
+        grouped.setdefault(action.message_id, []).append(action)
+    return grouped
+
+
 async def delete_conversation(db: AsyncSession, conversation: AiConversation) -> None:
     await db.delete(conversation)
     await db.commit()
 
 
-def _assistant_system_prompt(agency: Agency) -> str:
-    return (
+async def get_pending_action_or_404(db: AsyncSession, conversation: AiConversation, action_id: uuid.UUID) -> AiAction:
+    action = await db.get(AiAction, action_id)
+    if action is None or action.conversation_id != conversation.id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Action not found")
+    if action.status != ACTION_PENDING:
+        raise HTTPException(status.HTTP_409_CONFLICT, f"This change was already {action.status}.")
+    return action
+
+
+async def approve_action(db: AsyncSession, action: AiAction, agency: Agency, *, actor: User) -> AiAction:
+    """Runs a pending action on the member's Approve — re-validated against
+    the data as it is now (see _plan_action), so approving a stale proposal
+    fails cleanly onto the card instead of acting on something that moved."""
+    preferences = await get_preferences(db, agency.id, actor.id)
+    if not preferences.allow_actions:
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN, "AI changes are turned off — turn them back on in Ask AI settings first."
+        )
+    try:
+        planned = await _plan_action(db, agency, actor, action.tool, json.loads(action.input))
+    except Exception as exc:
+        action.status, action.result = ACTION_FAILED, _error_text(exc)[:1024]
+    else:
+        await _apply(action, planned)
+    await db.commit()
+    await db.refresh(action)
+    return action
+
+
+async def decline_action(db: AsyncSession, action: AiAction) -> AiAction:
+    action.status = ACTION_DECLINED
+    await db.commit()
+    await db.refresh(action)
+    return action
+
+
+# ---- Ask AI: the tool loop ------------------------------------------
+
+_LENGTH_GUIDANCE = {
+    "concise": "Keep answers short — a sentence or two, or a tight list. No preamble.",
+    "balanced": "Be concise and specific.",
+    "detailed": "Give thorough answers: walk through the specifics and your reasoning.",
+}
+_REPLY_MAX_TOKENS = {"concise": 800, "balanced": 1200, "detailed": 2000}
+_TONE_GUIDANCE = {
+    "professional": "Use a clear, professional tone.",
+    "friendly": "Use a warm, friendly tone.",
+    "casual": "Use a relaxed, casual tone.",
+}
+
+
+def _assistant_system_prompt(agency: Agency, preferences: AiUserPreferences) -> str:
+    parts = [
         f'You are Binx\'s in-app AI assistant for the agency "{agency.name}". Answer questions about '
-        "their leads, clients, projects, and invoices using the tools available — always look things "
-        "up rather than guessing at numbers or statuses. Be concise and specific. You are read-only: "
-        "you cannot create, edit, send, or change anything on the user's behalf."
-    )
+        "their leads, clients, projects, tasks, and invoices using the tools available — always look things "
+        "up rather than guessing at numbers, statuses, or ids.",
+        f"{_LENGTH_GUIDANCE[preferences.response_length]} {_TONE_GUIDANCE[preferences.tone]}",
+        f"Today is {datetime.now(UTC).date().isoformat()}.",
+    ]
+    if not preferences.allow_actions:
+        parts.append(
+            "You are read-only for this member: they've turned off AI changes, so you can't create, edit, or "
+            "change anything. If they ask you to, say so and point them to the settings menu in Ask AI."
+        )
+    else:
+        when = (
+            "Each change you request is shown to the member as a proposal with Approve/Decline buttons and only "
+            "happens once they approve it — so after requesting one, say what you've proposed, and never claim "
+            "it's done."
+            if preferences.confirm_actions
+            else "Changes take effect immediately, so only make the ones the member clearly asked for, and say "
+            "what you did afterwards."
+        )
+        parts.append(
+            "You can also make changes for the member with the action tools: create leads, move leads through "
+            "the pipeline, add lead notes, create and update tasks, and change project status. Only make changes "
+            "they asked for. Look up every id with the read tools first — never guess one. You can't change "
+            f"invoices or clients, or delete anything; say so if asked. {when}"
+        )
+    if preferences.custom_instructions:
+        parts.append(
+            "The member's own standing instructions (follow them unless they conflict with the above):\n"
+            + preferences.custom_instructions
+        )
+    return "\n\n".join(parts)
+
+
+_ACTION_STATUS_NOTES = {
+    ACTION_PENDING: "awaiting the member's approval",
+    ACTION_APPLIED: "done",
+    ACTION_DECLINED: "declined by the member",
+    ACTION_FAILED: "failed",
+}
 
 
 async def _build_assistant_messages(db: AsyncSession, conversation: AiConversation, user_message: str) -> list[dict]:
+    """The conversation so far as Claude messages. Each past assistant turn
+    carries a note of the changes it made/proposed and where they stand now
+    (an approval happens after the turn ends), so Claude knows what's
+    already been done without replaying the old tool calls."""
     history = await list_conversation_messages(db, conversation.id)
-    messages: list[dict] = [{"role": m.role, "content": m.content} for m in history]
+    actions_by_message = await list_conversation_actions(db, conversation.id)
+    messages: list[dict] = []
+    for m in history:
+        content = m.content
+        if m.id in actions_by_message:
+            notes = "\n".join(f"- {a.summary} ({_ACTION_STATUS_NOTES[a.status]})" for a in actions_by_message[m.id])
+            content += f"\n\n[Changes from this turn:\n{notes}]"
+        messages.append({"role": m.role, "content": content})
     messages.append({"role": "user", "content": user_message})
     return messages
 
 
-async def _execute_tool_calls(db: AsyncSession, agency_id: uuid.UUID, message) -> list[dict]:
+@dataclass
+class _AssistantTurn:
+    """One user message's pass through the tool loop — what the loop needs to
+    run tools, and the actions it collects along the way."""
+
+    db: AsyncSession
+    conversation: AiConversation
+    agency: Agency
+    actor: User
+    preferences: AiUserPreferences
+    actions: list[AiAction] = field(default_factory=list)
+
+
+async def _handle_action_call(turn: _AssistantTurn, name: str, tool_input: dict) -> dict:
+    if not turn.preferences.allow_actions:
+        raise ValueError("This member has turned off AI changes in their Ask AI settings.")
+    planned = await _plan_action(turn.db, turn.agency, turn.actor, name, tool_input)
+    action = AiAction(
+        conversation_id=turn.conversation.id,
+        tool=name,
+        input=json.dumps(tool_input),
+        summary=planned.summary[:500],
+        status=ACTION_PENDING,
+    )
+    turn.db.add(action)
+    # Flushed now (not at the turn's end) so the streamed card has its id.
+    await turn.db.flush()
+    turn.actions.append(action)
+    if turn.preferences.confirm_actions:
+        return {
+            "status": "awaiting_approval",
+            "proposed": action.summary,
+            "note": "Shown to the member with Approve/Decline buttons. It has NOT happened yet.",
+        }
+    await _apply(action, planned)
+    return {"status": action.status, "result": action.result}
+
+
+async def _execute_tool_calls(turn: _AssistantTurn, message) -> list[dict]:
     """Runs every ``tool_use`` block in one assistant message and returns all
     their results as a list of ``tool_result`` blocks for a single user
     message — never split across messages (that silently trains Claude to
@@ -882,21 +1419,51 @@ async def _execute_tool_calls(db: AsyncSession, agency_id: uuid.UUID, message) -
         if block.type != "tool_use":
             continue
         try:
-            output = await _run_tool(db, agency_id, block.name, block.input or {})
+            if block.name in _ACTION_TOOL_NAMES:
+                output = await _handle_action_call(turn, block.name, block.input or {})
+            else:
+                output = await _run_tool(turn.db, turn.agency.id, block.name, block.input or {})
             tool_results.append({"type": "tool_result", "tool_use_id": block.id, "content": json.dumps(output)})
         except Exception as exc:  # a bad tool call shouldn't kill the whole turn
-            tool_results.append({"type": "tool_result", "tool_use_id": block.id, "content": str(exc), "is_error": True})
+            tool_results.append(
+                {"type": "tool_result", "tool_use_id": block.id, "content": _error_text(exc), "is_error": True}
+            )
     return tool_results
 
 
-async def _persist_assistant_turn(
-    db: AsyncSession, conversation: AiConversation, *, user_message: str, final_text: str
-) -> None:
+async def _persist_assistant_turn(turn: _AssistantTurn, *, user_message: str, final_text: str) -> AiConversationMessage:
+    db, conversation = turn.db, turn.conversation
     db.add(AiConversationMessage(conversation_id=conversation.id, role=ROLE_USER, content=user_message))
-    db.add(AiConversationMessage(conversation_id=conversation.id, role=ROLE_ASSISTANT, content=final_text))
+    reply = AiConversationMessage(conversation_id=conversation.id, role=ROLE_ASSISTANT, content=final_text)
+    db.add(reply)
+    # Flushed before linking: AiAction has no ORM relationship to the
+    # message, so the unit of work wouldn't know to insert the message first.
+    await db.flush()
+    for action in turn.actions:
+        action.message_id = reply.id
     if conversation.title is None:
         conversation.title = user_message[:255]
     await db.commit()
+    return reply
+
+
+async def _start_turn(
+    db: AsyncSession, conversation: AiConversation, agency: Agency, actor: User, user_message: str
+) -> tuple[_AssistantTurn, list[dict], dict]:
+    preferences = await get_preferences(db, agency.id, actor.id)
+    turn = _AssistantTurn(db=db, conversation=conversation, agency=agency, actor=actor, preferences=preferences)
+    messages = await _build_assistant_messages(db, conversation, user_message)
+    call_kwargs = {
+        "feature": FEATURE_ASSISTANT,
+        "system": _assistant_system_prompt(agency, preferences),
+        "max_tokens": _REPLY_MAX_TOKENS[preferences.response_length],
+        "effort": "medium",
+        # Action tools are only offered when the member allows changes, so
+        # Claude doesn't try (and fail) to use them otherwise.
+        "tools": _ASSISTANT_TOOLS + (_ACTION_TOOLS if preferences.allow_actions else []),
+        "cache_system": True,
+    }
+    return turn, messages, call_kwargs
 
 
 _NO_ANSWER = "I wasn't able to finish looking that up — try narrowing your question."
@@ -904,69 +1471,47 @@ _NO_ANSWER = "I wasn't able to finish looking that up — try narrowing your que
 
 async def assistant_reply(
     db: AsyncSession, conversation: AiConversation, agency: Agency, *, actor: User, user_message: str
-) -> str:
-    messages = await _build_assistant_messages(db, conversation, user_message)
-    system = _assistant_system_prompt(agency)
+) -> AiConversationMessage:
+    """Runs one user message through the tool loop and returns the persisted
+    assistant reply (its actions are linked by ``message_id``)."""
+    turn, messages, call_kwargs = await _start_turn(db, conversation, agency, actor, user_message)
 
     final_text = _NO_ANSWER
     for _iteration in range(MAX_ASSISTANT_ITERATIONS):
-        result = await ai_client.complete(
-            db,
-            agency.id,
-            actor.id,
-            feature=FEATURE_ASSISTANT,
-            system=system,
-            messages=messages,
-            max_tokens=1200,
-            effort="medium",
-            tools=_ASSISTANT_TOOLS,
-            cache_system=True,
-        )
+        result = await ai_client.complete(db, agency.id, actor.id, messages=messages, **call_kwargs)
         message = result.message
         if message.stop_reason != "tool_use":
             final_text = result.text or final_text
             break
 
         messages.append({"role": "assistant", "content": message.content})
-        tool_results = await _execute_tool_calls(db, agency.id, message)
+        tool_results = await _execute_tool_calls(turn, message)
         messages.append({"role": "user", "content": tool_results})
 
-    await _persist_assistant_turn(db, conversation, user_message=user_message, final_text=final_text)
-    return final_text
+    return await _persist_assistant_turn(turn, user_message=user_message, final_text=final_text)
 
 
 async def assistant_reply_stream(
     db: AsyncSession, conversation: AiConversation, agency: Agency, *, actor: User, user_message: str
-) -> AsyncIterator[str]:
+) -> AsyncIterator[str | AiAction]:
     """Streaming counterpart to :func:`assistant_reply` — the exact same
     tool loop (still capped at ``MAX_ASSISTANT_ITERATIONS``, still runs every
     ``tool_use`` block from one message and returns all results in one user
     message) and the exact same persistence (one commit at the end, same two
     ``AiConversationMessage`` rows) — only the client-visible delivery is
-    incremental: yields text deltas as each iteration's reply is generated
-    instead of returning the finished text once. An iteration that's purely
-    a tool call yields no deltas (nothing to show yet), so what streams to
-    the user is naturally just the assistant's visible reasoning and its
-    final answer."""
-    messages = await _build_assistant_messages(db, conversation, user_message)
-    system = _assistant_system_prompt(agency)
+    incremental: yields text deltas as each iteration's reply is generated,
+    and each ``AiAction`` as soon as its tool call has been handled (pending
+    or already applied), instead of returning the finished text once. An
+    iteration that's purely a tool call yields no deltas (nothing to show
+    yet), so what streams to the user is naturally just the assistant's
+    visible reasoning and its final answer."""
+    turn, messages, call_kwargs = await _start_turn(db, conversation, agency, actor, user_message)
 
     final_text = _NO_ANSWER
     for _iteration in range(MAX_ASSISTANT_ITERATIONS):
         message = None
         turn_text = ""
-        async for event in ai_client.complete_stream(
-            db,
-            agency.id,
-            actor.id,
-            feature=FEATURE_ASSISTANT,
-            system=system,
-            messages=messages,
-            max_tokens=1200,
-            effort="medium",
-            tools=_ASSISTANT_TOOLS,
-            cache_system=True,
-        ):
+        async for event in ai_client.complete_stream(db, agency.id, actor.id, messages=messages, **call_kwargs):
             if isinstance(event, ai_client.TextDelta):
                 turn_text += event.text
                 yield event.text
@@ -979,7 +1524,10 @@ async def assistant_reply_stream(
             break
 
         messages.append({"role": "assistant", "content": message.content})
-        tool_results = await _execute_tool_calls(db, agency.id, message)
+        seen = len(turn.actions)
+        tool_results = await _execute_tool_calls(turn, message)
         messages.append({"role": "user", "content": tool_results})
+        for action in turn.actions[seen:]:
+            yield action
 
-    await _persist_assistant_turn(db, conversation, user_message=user_message, final_text=final_text)
+    await _persist_assistant_turn(turn, user_message=user_message, final_text=final_text)

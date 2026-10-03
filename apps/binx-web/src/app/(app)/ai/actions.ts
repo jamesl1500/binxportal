@@ -13,13 +13,18 @@
 "use server";
 
 import {
+  type AiAction,
   type AiConversation,
   type AiMessage,
+  type AiPreferences,
   createAiConversation,
   deleteAiConversation,
   getAiConversationMessages,
+  getAiPreferences,
   listAiConversations,
+  resolveAiAction,
   sendAiMessage,
+  updateAiPreferences,
 } from "@/lib/ai";
 import { AuthApiError } from "@/lib/auth";
 
@@ -96,4 +101,46 @@ export async function deleteAiConversationAction(agencyId: string, conversationI
     return errorResult(error, "Unable to delete this conversation");
   }
   return {};
+}
+
+export interface AiPreferencesActionResult {
+  error?: string;
+  preferences?: AiPreferences;
+}
+
+export async function getAiPreferencesAction(agencyId: string): Promise<AiPreferencesActionResult> {
+  try {
+    return { preferences: await getAiPreferences(agencyId) };
+  } catch (error) {
+    return errorResult(error, "Unable to load your AI preferences");
+  }
+}
+
+export async function updateAiPreferencesAction(
+  agencyId: string,
+  preferences: AiPreferences,
+): Promise<AiPreferencesActionResult> {
+  try {
+    return { preferences: await updateAiPreferences(agencyId, preferences) };
+  } catch (error) {
+    return errorResult(error, "Unable to save your AI preferences");
+  }
+}
+
+export interface AiActionResult {
+  error?: string;
+  action?: AiAction;
+}
+
+export async function resolveAiActionAction(
+  agencyId: string,
+  conversationId: string,
+  actionId: string,
+  decision: "approve" | "decline",
+): Promise<AiActionResult> {
+  try {
+    return { action: await resolveAiAction(agencyId, conversationId, actionId, decision) };
+  } catch (error) {
+    return errorResult(error, decision === "approve" ? "Unable to make that change" : "Unable to decline that change");
+  }
 }

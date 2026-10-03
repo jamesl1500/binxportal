@@ -1,0 +1,97 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+  max-width: 80%;
+  padding: t.$space-3 t.$space-4;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-left: 3px solid t.$color-border-strong;
+  border-radius: t.$radius-md;
+
+  &[data-status="pending"] {
+    border-left-color: t.$color-accent;
+  }
+
+  &[data-status="failed"] {
+    border-left-color: t.$color-danger;
+  }
+
+  &[data-status="declined"] {
+    opacity: 0.7;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  color: t.$color-ink-soft;
+
+  .card[data-status="failed"] & {
+    color: t.$color-danger;
+  }
+}
+
+.icon {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.status {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.summary {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  line-height: 1.5;
+  color: t.$color-ink;
+
+  .card[data-status="declined"] & {
+    text-decoration: line-through;
+  }
+}
+
+.result {
+  margin: 0;
+  font-size: t.$font-size-xs;
+  color: t.$color-danger;
+}
+
+.buttons {
+  display: flex;
+  gap: t.$space-2;
+}
+
+.approve {
+  @include m.button-base;
+  padding: t.$space-1 t.$space-3;
+  font-size: t.$font-size-xs;
+  color: t.$color-accent-foreground;
+  background: t.$color-accent;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+}
+
+.decline {
+  @include m.button-base;
+  padding: t.$space-1 t.$space-3;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+
+  &:hover:not(:disabled) {
+    color: t.$color-ink;
+    border-color: t.$color-border-strong;
+  }
+}
