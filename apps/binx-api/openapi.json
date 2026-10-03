@@ -11447,6 +11447,11 @@
             "title": "Is Trialing",
             "type": "boolean"
           },
+          "launch_discount_configured": {
+            "default": false,
+            "title": "Launch Discount Configured",
+            "type": "boolean"
+          },
           "limits": {
             "$ref": "#/components/schemas/PlanLimitsRead"
           },

@@ -44,6 +44,12 @@ class SubscriptionRead(BaseModel):
     has_used_trial: bool = False
     trial_discount_eligible: bool = False
     trial_discount_expires_at: datetime | None = None
+    # Whether a real coupon is actually configured server-side — the
+    # frontend must gate any "you'll get 20% off" claim on this, since
+    # trial_discount_eligible alone is just a time window and stays true
+    # even when no coupon is set (start_checkout then just charges full
+    # price; see billing/service.py's module docstring on that pattern).
+    launch_discount_configured: bool = False
 
 
 class ChangePlanRequest(BaseModel):

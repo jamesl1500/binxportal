@@ -7,6 +7,7 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock("@/app/(app)/settings/plan/actions", () => ({
   changePlanAction: vi.fn(),
+  startPlanCheckoutAction: vi.fn(),
   startPlanTrialAction: vi.fn(),
 }));
 vi.mock("@/lib/billing-client", () => ({
@@ -15,12 +16,13 @@ vi.mock("@/lib/billing-client", () => ({
 }));
 vi.mock("@/lib/money", () => ({ formatMoneyCents: (c: number) => `$${(c / 100).toFixed(2)}` }));
 
-import { changePlanAction, startPlanTrialAction } from "@/app/(app)/settings/plan/actions";
+import { changePlanAction, startPlanCheckoutAction, startPlanTrialAction } from "@/app/(app)/settings/plan/actions";
 import { toast } from "sonner";
 import { PLAN_INTENT_STORAGE_KEY } from "@/lib/plan-intent";
 import PlanSelector from "./PlanSelector";
 
 const changePlan = vi.mocked(changePlanAction);
+const startCheckout = vi.mocked(startPlanCheckoutAction);
 const startTrial = vi.mocked(startPlanTrialAction);
 
 const catalog = [
@@ -46,6 +48,14 @@ const catalog = [
   },
 ] as never;
 
+const defaultProps = {
+  agencyId: "a1",
+  catalog,
+  currentPlan: "free",
+  hasUsedTrial: false,
+  hasStripeSubscription: false,
+};
+
 beforeEach(() => {
   vi.clearAllMocks();
   window.localStorage.clear();
@@ -55,7 +65,7 @@ beforeEach(() => {
 
 describe("PlanSelector", () => {
   it("renders every catalog plan with its limits", () => {
-    render(<PlanSelector agencyId="a1" catalog={catalog} />);
+    render(<PlanSelector {...defaultProps} />);
     // Both the Free plan's name and its formatted price render "Free".
     expect(screen.getAllByText("Free")).toHaveLength(2);
     expect(screen.getByText("Pro")).toBeInTheDocument();
@@ -67,7 +77,7 @@ describe("PlanSelector", () => {
   it("switches to Free via changePlanAction and routes to the import step", async () => {
     changePlan.mockResolvedValueOnce({ subscription: {} as never });
     const user = userEvent.setup();
-    render(<PlanSelector agencyId="a1" catalog={catalog} />);
+    render(<PlanSelector {...defaultProps} />);
 
     await user.click(screen.getByRole("button", { name: "Continue with Free" }));
 
@@ -78,7 +88,7 @@ describe("PlanSelector", () => {
   it("toasts an error from changePlanAction without routing away", async () => {
     changePlan.mockResolvedValueOnce({ error: "Something went wrong" });
     const user = userEvent.setup();
-    render(<PlanSelector agencyId="a1" catalog={catalog} />);
+    render(<PlanSelector {...defaultProps} />);
 
     await user.click(screen.getByRole("button", { name: "Continue with Free" }));
 
@@ -89,7 +99,7 @@ describe("PlanSelector", () => {
   it("starts a card-free trial for a paid plan and routes to the import step", async () => {
     startTrial.mockResolvedValueOnce({ subscription: {} as never });
     const user = userEvent.setup();
-    render(<PlanSelector agencyId="a1" catalog={catalog} />);
+    render(<PlanSelector {...defaultProps} />);
 
     await user.click(screen.getByRole("button", { name: "Start Pro trial" }));
 
@@ -100,7 +110,7 @@ describe("PlanSelector", () => {
   it("toasts an error from startPlanTrialAction without routing away", async () => {
     startTrial.mockResolvedValueOnce({ error: "This agency has already used its free trial" });
     const user = userEvent.setup();
-    render(<PlanSelector agencyId="a1" catalog={catalog} />);
+    render(<PlanSelector {...defaultProps} />);
 
     await user.click(screen.getByRole("button", { name: "Start Pro trial" }));
 
@@ -108,16 +118,46 @@ describe("PlanSelector", () => {
     expect(push).not.toHaveBeenCalled();
   });
 
+  it("falls back to Checkout for a paid plan once the trial has already been used", async () => {
+    startCheckout.mockResolvedValueOnce({ redirectUrl: "https://checkout.stripe.test/abc" });
+    const user = userEvent.setup();
+    render(<PlanSelector {...defaultProps} hasUsedTrial />);
+
+    expect(screen.queryByRole("button", { name: "Start Pro trial" })).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Switch to Pro" }));
+
+    expect(startCheckout).toHaveBeenCalledWith("a1", "pro", "/onboarding/four");
+    expect(startTrial).not.toHaveBeenCalled();
+    expect(window.location.href).toBe("https://checkout.stripe.test/abc");
+  });
+
+  it("falls back to Checkout for a paid plan once the agency already has a Stripe subscription", async () => {
+    startCheckout.mockResolvedValueOnce({ redirectUrl: "https://checkout.stripe.test/abc" });
+    const user = userEvent.setup();
+    render(<PlanSelector {...defaultProps} hasStripeSubscription />);
+
+    await user.click(screen.getByRole("button", { name: "Switch to Pro" }));
+
+    expect(startCheckout).toHaveBeenCalledWith("a1", "pro", "/onboarding/four");
+    expect(startTrial).not.toHaveBeenCalled();
+  });
+
+  it("shows the current plan instead of an action button", () => {
+    render(<PlanSelector {...defaultProps} currentPlan="pro" hasUsedTrial />);
+    expect(screen.getByText("Your current plan")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Switch to Pro" })).toBeNull();
+  });
+
   it("highlights the plan matching a stashed intent from the pricing page, and clears it", async () => {
     window.localStorage.setItem(PLAN_INTENT_STORAGE_KEY, "pro");
-    render(<PlanSelector agencyId="a1" catalog={catalog} />);
+    render(<PlanSelector {...defaultProps} />);
 
     expect(await screen.findByText("You were looking at this one")).toBeInTheDocument();
     expect(window.localStorage.getItem(PLAN_INTENT_STORAGE_KEY)).toBeNull();
   });
 
   it("shows no intent badge when nothing was stashed", () => {
-    render(<PlanSelector agencyId="a1" catalog={catalog} />);
+    render(<PlanSelector {...defaultProps} />);
     expect(screen.queryByText("You were looking at this one")).not.toBeInTheDocument();
   });
 });

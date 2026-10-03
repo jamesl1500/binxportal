@@ -15,7 +15,7 @@ from datetime import UTC, datetime, timedelta
 
 import stripe
 from fastapi import HTTPException, status
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -108,23 +108,41 @@ async def start_trial(db: AsyncSession, agency: Agency, *, plan: str, actor: Use
     """Starts a 14-day, card-free trial of ``plan``. One trial per agency
     ever — an agency that already has a live subscription has no reason to
     trial a lower or equal tier, and an agency that already used its trial
-    can't start another."""
+    can't start another.
+
+    The guards and the write happen in one atomic UPDATE (not a read-then-
+    write) so two concurrent requests can't both pass the ``has_used_trial``
+    check and both start a trial."""
     if plan not in PLANS or plan == PLAN_FREE:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Unknown or non-trialable plan")
 
     subscription = await get_or_create_subscription(db, agency.id)
-    if subscription.has_used_trial:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "This agency has already used its free trial")
-    if subscription.stripe_subscription_id is not None:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "This agency already has a paid subscription")
 
     now = datetime.now(UTC)
-    subscription.trial_plan = plan
-    subscription.trial_ends_at = now + timedelta(days=TRIAL_DAYS)
-    subscription.trial_discount_expires_at = subscription.trial_ends_at + timedelta(days=TRIAL_DISCOUNT_GRACE_DAYS)
-    subscription.has_used_trial = True
+    trial_ends_at = now + timedelta(days=TRIAL_DAYS)
+    trial_discount_expires_at = trial_ends_at + timedelta(days=TRIAL_DISCOUNT_GRACE_DAYS)
+
+    result = await db.execute(
+        update(AgencySubscription)
+        .where(
+            AgencySubscription.id == subscription.id,
+            AgencySubscription.has_used_trial.is_(False),
+            AgencySubscription.stripe_subscription_id.is_(None),
+        )
+        .values(
+            trial_plan=plan,
+            trial_ends_at=trial_ends_at,
+            trial_discount_expires_at=trial_discount_expires_at,
+            has_used_trial=True,
+        )
+    )
     await db.commit()
     await db.refresh(subscription)
+
+    if result.rowcount == 0:
+        if subscription.stripe_subscription_id is not None:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "This agency already has a paid subscription")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "This agency has already used its free trial")
 
     await activity_service.log_agency_activity(
         db,
@@ -326,6 +344,14 @@ async def _apply_stripe_subscription(
     subscription.current_period_end = (
         datetime.fromtimestamp(item.current_period_end, tz=UTC) if item.current_period_end else None
     )
+    # A real paid subscription is now in force — the card-free trial (and the
+    # launch discount window it carries) is done its job. Clearing it here,
+    # not just on cancellation, closes two gaps: the trial's own limits no
+    # longer override the (now real) billed plan's, and the discount can't
+    # be replayed on a later Checkout after this subscription is canceled.
+    subscription.trial_plan = None
+    subscription.trial_ends_at = None
+    subscription.trial_discount_expires_at = None
     await db.commit()
     await db.refresh(subscription)
 

@@ -65,6 +65,7 @@ const SettingsPlanPage = async () => {
           trialEndsAt={subscription.trial_ends_at}
           hasUsedTrial={subscription.has_used_trial}
           trialDiscountEligible={subscription.trial_discount_eligible}
+          launchDiscountConfigured={subscription.launch_discount_configured}
         />
       </section>
     </div>

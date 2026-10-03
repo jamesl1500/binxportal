@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import dataclasses
 from datetime import UTC, datetime, timedelta
+from types import SimpleNamespace
+from unittest import mock
 
 import pytest
 from fastapi import HTTPException
@@ -175,3 +177,44 @@ class TestTrial:
         with pytest.raises(HTTPException) as exc:
             await service.start_trial(db_session, agency, plan="pro", actor=owner)
         assert exc.value.status_code == 400
+
+    async def test_start_trial_guard_is_a_single_atomic_update(self, db_session) -> None:
+        # The has_used_trial check and the write happen in one conditional
+        # UPDATE (service.py's start_trial), not a read-then-write — so a
+        # second call never overwrites a trial the first one already won,
+        # which is what a real race between two concurrent requests needs.
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        subscription = await service.get_or_create_subscription(db_session, agency.id)
+
+        await service.start_trial(db_session, agency, plan="pro", actor=owner)
+        with pytest.raises(HTTPException) as exc:
+            await service.start_trial(db_session, agency, plan="scale", actor=owner)
+        assert exc.value.status_code == 400
+
+        await db_session.refresh(subscription)
+        assert subscription.trial_plan == "pro"  # the second call never overwrote it
+
+    async def test_converting_during_a_trial_clears_the_trial_state(self, db_session) -> None:
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        await service.start_trial(db_session, agency, plan="pro", actor=owner)
+        subscription = await service.get_or_create_subscription(db_session, agency.id)
+
+        stripe_subscription = SimpleNamespace(
+            id="sub_123",
+            status="active",
+            cancel_at_period_end=False,
+            items=SimpleNamespace(
+                data=[SimpleNamespace(price=SimpleNamespace(id="price_pro"), current_period_end=None)]
+            ),
+        )
+        with mock.patch.object(service, "_plan_for_price_id", return_value="pro"):
+            await service._apply_stripe_subscription(db_session, subscription, stripe_subscription)
+
+        await db_session.refresh(subscription)
+        assert subscription.plan == "pro"
+        assert subscription.trial_plan is None
+        assert subscription.trial_ends_at is None
+        assert subscription.trial_discount_expires_at is None
+        assert service.trial_discount_eligible(subscription) is False

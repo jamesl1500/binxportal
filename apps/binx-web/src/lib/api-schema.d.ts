@@ -7723,6 +7723,11 @@ export interface components {
              * @default false
              */
             is_trialing: boolean;
+            /**
+             * Launch Discount Configured
+             * @default false
+             */
+            launch_discount_configured: boolean;
             limits: components["schemas"]["PlanLimitsRead"];
             /** Plan */
             plan: string;

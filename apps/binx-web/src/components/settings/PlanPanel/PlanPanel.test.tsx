@@ -39,6 +39,7 @@ const defaultProps = {
   trialEndsAt: null,
   hasUsedTrial: false,
   trialDiscountEligible: false,
+  launchDiscountConfigured: false,
 };
 
 beforeEach(() => {
@@ -124,11 +125,28 @@ describe("PlanPanel", () => {
         trialEndsAt={trialEndsAt}
         hasUsedTrial
         trialDiscountEligible
+        launchDiscountConfigured
       />,
     );
     expect(screen.getByText(/ends in 5 days/)).toBeInTheDocument();
     expect(screen.getByText(/20% off your first 3 months/)).toBeInTheDocument();
     expect(screen.getByText("Trialing")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Upgrade now" })).toBeInTheDocument();
+  });
+
+  it("doesn't promise the discount when no coupon is configured server-side", () => {
+    const trialEndsAt = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString();
+    render(
+      <PlanPanel
+        {...defaultProps}
+        isTrialing
+        trialPlan="pro"
+        trialEndsAt={trialEndsAt}
+        hasUsedTrial
+        trialDiscountEligible
+        launchDiscountConfigured={false}
+      />,
+    );
+    expect(screen.queryByText(/20% off your first 3 months/)).not.toBeInTheDocument();
   });
 });

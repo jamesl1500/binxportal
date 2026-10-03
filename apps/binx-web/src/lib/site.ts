@@ -88,6 +88,16 @@ export const PLANS = [
 /** Every paid tier's card-free trial — see binx-api's billing/service.py::start_trial. */
 export const TRIAL_DAYS = 14;
 export const TRIAL_DISCOUNT_PERCENT_OFF = 20;
+/**
+ * Whether to advertise the launch conversion discount on marketing pages.
+ * The backend's own eligibility window (billing/service.py's
+ * trial_discount_eligible) applies regardless, but the discount only
+ * actually lands on a Checkout session once a real Stripe coupon is
+ * configured (STRIPE_LAUNCH_DISCOUNT_COUPON_ID) — this is the matching
+ * public flag so unauthenticated marketing copy doesn't promise it before
+ * that coupon exists. Set it once the coupon is live.
+ */
+export const LAUNCH_DISCOUNT_ENABLED = process.env.NEXT_PUBLIC_LAUNCH_DISCOUNT_ENABLED === "true";
 
 /** SoftwareApplication JSON-LD — lets search engines show Binx as an app with a price range. */
 export function softwareApplicationJsonLd(featureList: readonly string[]) {

@@ -9,6 +9,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
+from binx_api.core.config import get_settings
 from binx_api.core.dependencies import CurrentUser, DbSession
 from binx_api.modules.agencies.dependencies import require_agency_role
 from binx_api.modules.agencies.models import ROLE_ADMIN, ROLE_MEMBER, ROLE_OWNER, Agency
@@ -27,6 +28,7 @@ from binx_api.modules.billing.schemas import (
 )
 
 router = APIRouter(prefix="/agencies/{agency_id}/plan", tags=["billing"])
+settings = get_settings()
 
 AnyMember = Annotated[tuple[Agency, str], Depends(require_agency_role(ROLE_OWNER, ROLE_ADMIN, ROLE_MEMBER))]
 OwnerOnly = Annotated[tuple[Agency, str], Depends(require_agency_role(ROLE_OWNER))]
@@ -54,6 +56,7 @@ async def _subscription_read(db: DbSession, agency: Agency) -> SubscriptionRead:
         has_used_trial=subscription.has_used_trial,
         trial_discount_eligible=service.trial_discount_eligible(subscription),
         trial_discount_expires_at=subscription.trial_discount_expires_at,
+        launch_discount_configured=bool(settings.stripe_launch_discount_coupon_id),
     )
 
 

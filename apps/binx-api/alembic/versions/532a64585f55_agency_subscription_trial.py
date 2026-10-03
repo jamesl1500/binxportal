@@ -4,7 +4,7 @@ Adds a card-free trial to agency_subscriptions: the plan being trialed, when
 it ends, the deadline for the launch conversion discount, and whether this
 agency has ever used its trial. See modules/billing/service.py::start_trial.
 
-Revision ID: c3d4e5f6a7b8
+Revision ID: 532a64585f55
 Revises: a7c2e9d4b1f3
 Create Date: 2026-10-02 21:40:00.000000
 

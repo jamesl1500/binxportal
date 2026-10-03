@@ -37,6 +37,7 @@ interface PlanPanelProps {
   trialEndsAt: Subscription["trial_ends_at"];
   hasUsedTrial: boolean;
   trialDiscountEligible: boolean;
+  launchDiscountConfigured: boolean;
 }
 
 const daysRemaining = (isoDate: string): number => {
@@ -56,6 +57,7 @@ const PlanPanel = ({
   trialEndsAt,
   hasUsedTrial,
   trialDiscountEligible,
+  launchDiscountConfigured,
 }: PlanPanelProps) => {
   const [isPending, startTransition] = useTransition();
   const [pendingPlan, setPendingPlan] = useState<string | null>(null);
@@ -105,7 +107,7 @@ const PlanPanel = ({
           <p>
             Your trial of <strong>{catalog.find((p) => p.key === trialPlan)?.name ?? trialPlan}</strong> ends in{" "}
             {daysRemaining(trialEndsAt)} day{daysRemaining(trialEndsAt) === 1 ? "" : "s"}.{" "}
-            {trialDiscountEligible && "Upgrade now and get 20% off your first 3 months."}
+            {trialDiscountEligible && launchDiscountConfigured && "Upgrade now and get 20% off your first 3 months."}
           </p>
           {canManage && trialPlan && (
             <button

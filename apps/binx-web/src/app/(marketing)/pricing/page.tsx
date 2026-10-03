@@ -11,6 +11,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import {
+  LAUNCH_DISCOUNT_ENABLED,
   PLANS,
   TRIAL_DAYS,
   TRIAL_DISCOUNT_PERCENT_OFF,
@@ -40,7 +41,9 @@ const FAQ = [
   },
   {
     q: `Can I try Starter, Pro or Scale before paying?`,
-    a: `Yes. Every paid plan starts with a ${TRIAL_DAYS}-day free trial — no card required. Upgrade during the trial, or within two weeks after it ends, and you'll get ${TRIAL_DISCOUNT_PERCENT_OFF}% off your first 3 months.`,
+    a: LAUNCH_DISCOUNT_ENABLED
+      ? `Yes. Every paid plan starts with a ${TRIAL_DAYS}-day free trial — no card required. Upgrade during the trial, or within two weeks after it ends, and you'll get ${TRIAL_DISCOUNT_PERCENT_OFF}% off your first 3 months.`
+      : `Yes. Every paid plan starts with a ${TRIAL_DAYS}-day free trial — no card required. Upgrade whenever you're ready.`,
   },
   {
     q: "Do you charge per seat?",
@@ -103,8 +106,9 @@ const PricingPage = () => {
               AI. The tiers just change how much of everything you get.
             </p>
             <p className={styles.lead}>
-              Trying Starter, Pro or Scale? Get {TRIAL_DAYS} days free, no card required — convert during the trial
-              or shortly after and take {TRIAL_DISCOUNT_PERCENT_OFF}% off your first 3 months.
+              {LAUNCH_DISCOUNT_ENABLED
+                ? `Trying Starter, Pro or Scale? Get ${TRIAL_DAYS} days free, no card required — convert during the trial or shortly after and take ${TRIAL_DISCOUNT_PERCENT_OFF}% off your first 3 months.`
+                : `Trying Starter, Pro or Scale? Get ${TRIAL_DAYS} days free, no card required.`}
             </p>
           </div>
         </div>
