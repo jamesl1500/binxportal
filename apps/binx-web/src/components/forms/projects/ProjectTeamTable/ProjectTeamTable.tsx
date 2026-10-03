@@ -27,6 +27,7 @@ import {
   assignProjectMemberRoleAction,
   removeProjectMemberAction,
 } from "@/app/(app)/projects/[projectId]/actions";
+import { useConfirmDialog } from "@/components/ui/ConfirmDialog/ConfirmDialog";
 import type { AgencyMember } from "@/lib/agencies";
 import type { ProjectMember, ProjectRole } from "@/lib/projects";
 
@@ -63,6 +64,7 @@ const ProjectTeamTable = ({ agencyId, projectId, members, agencyMembers, roles }
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [selectedUserId, setSelectedUserId] = useState("");
+  const { confirm, dialog } = useConfirmDialog();
 
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("name");
@@ -144,13 +146,20 @@ const ProjectTeamTable = ({ agencyId, projectId, members, agencyMembers, roles }
     runMutation(memberId, () => assignProjectMemberRoleAction(agencyId, projectId, memberId, roleId || null));
   };
 
-  const handleRemove = (memberId: string, fullName: string) => {
-    if (typeof window !== "undefined" && !window.confirm(`Remove ${fullName} from this project?`)) return;
+  const handleRemove = async (memberId: string, fullName: string) => {
+    const confirmed = await confirm({
+      title: `Remove ${fullName} from this project?`,
+      description: "They come off this project's team. You can add them back later.",
+      confirmLabel: "Remove member",
+      tone: "danger",
+    });
+    if (!confirmed) return;
     runMutation(memberId, () => removeProjectMemberAction(agencyId, projectId, memberId));
   };
 
   return (
     <div className={styles.wrapper}>
+      {dialog}
       <div className={styles.toolbar}>
         <input
           type="search"

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -35,51 +35,48 @@ describe("ArchiveClientButton", () => {
   });
 
   it("asks for confirmation before archiving, and does nothing if declined", async () => {
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
     const user = userEvent.setup();
     render(<ArchiveClientButton agencyId={agencyId} client={activeClient} />);
 
     await user.click(screen.getByRole("button", { name: "Archive" }));
 
+    expect(await screen.findByRole("alertdialog", { name: "Archive Acme Co?" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+
     expect(mockedSetActive).not.toHaveBeenCalled();
-    confirmSpy.mockRestore();
   });
 
   it("archives once confirmed and refreshes the route", async () => {
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     mockedSetActive.mockResolvedValueOnce({});
     const user = userEvent.setup();
     render(<ArchiveClientButton agencyId={agencyId} client={activeClient} />);
 
     await user.click(screen.getByRole("button", { name: "Archive" }));
+    await user.click(await screen.findByRole("button", { name: "Archive client" }));
 
-    expect(mockedSetActive).toHaveBeenCalledWith(agencyId, activeClient.id, false);
-    expect(mockRefresh).toHaveBeenCalledOnce();
-    vi.restoreAllMocks();
+    await waitFor(() => expect(mockedSetActive).toHaveBeenCalledWith(agencyId, activeClient.id, false));
+    await waitFor(() => expect(mockRefresh).toHaveBeenCalledOnce());
   });
 
   it("restores without asking for confirmation", async () => {
-    const confirmSpy = vi.spyOn(window, "confirm");
     mockedSetActive.mockResolvedValueOnce({});
     const user = userEvent.setup();
     render(<ArchiveClientButton agencyId={agencyId} client={archivedClient} />);
 
     await user.click(screen.getByRole("button", { name: "Restore" }));
 
-    expect(confirmSpy).not.toHaveBeenCalled();
-    expect(mockedSetActive).toHaveBeenCalledWith(agencyId, archivedClient.id, true);
-    confirmSpy.mockRestore();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    await waitFor(() => expect(mockedSetActive).toHaveBeenCalledWith(agencyId, archivedClient.id, true));
   });
 
   it("shows the server error on failure", async () => {
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     mockedSetActive.mockResolvedValueOnce({ error: "Unable to update client status" });
     const user = userEvent.setup();
     render(<ArchiveClientButton agencyId={agencyId} client={activeClient} />);
 
     await user.click(screen.getByRole("button", { name: "Archive" }));
+    await user.click(await screen.findByRole("button", { name: "Archive client" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Unable to update client status");
-    vi.restoreAllMocks();
   });
 });

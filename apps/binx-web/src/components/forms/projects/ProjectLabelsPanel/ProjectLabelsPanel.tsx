@@ -29,6 +29,7 @@ import {
   updateProjectTagAction,
 } from "@/app/(app)/projects/[projectId]/actions";
 import LabelColorPicker, { DEFAULT_LABEL_COLOR } from "@/components/forms/projects/LabelColorPicker/LabelColorPicker";
+import { useConfirmDialog } from "@/components/ui/ConfirmDialog/ConfirmDialog";
 import type { ProjectRole, ProjectTag } from "@/lib/projects";
 
 import styles from "./ProjectLabelsPanel.module.scss";
@@ -94,6 +95,7 @@ const ProjectLabelsPanel = ({ agencyId, projectId, kind, labels: initialLabels }
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [busyId, setBusyId] = useState<string | null>(null);
+  const { confirm, dialog } = useConfirmDialog();
 
   const [newName, setNewName] = useState("");
   const [newColor, setNewColor] = useState(DEFAULT_LABEL_COLOR);
@@ -155,8 +157,14 @@ const ProjectLabelsPanel = ({ agencyId, projectId, kind, labels: initialLabels }
     });
   };
 
-  const handleDelete = (label: Label) => {
-    if (typeof window !== "undefined" && !window.confirm(`Delete the “${label.name}” ${config.noun}?`)) return;
+  const handleDelete = async (label: Label) => {
+    const confirmed = await confirm({
+      title: `Delete the “${label.name}” ${config.noun}?`,
+      description: "This can't be undone.",
+      confirmLabel: `Delete ${config.noun}`,
+      tone: "danger",
+    });
+    if (!confirmed) return;
 
     setError(null);
     setBusyId(label.id);
@@ -174,6 +182,7 @@ const ProjectLabelsPanel = ({ agencyId, projectId, kind, labels: initialLabels }
 
   return (
     <div className={styles.wrapper}>
+      {dialog}
       {labels.length === 0 ? (
         <p className={styles.emptyText}>{config.emptyText}</p>
       ) : (

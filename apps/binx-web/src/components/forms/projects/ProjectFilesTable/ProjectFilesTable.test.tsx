@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -147,14 +147,27 @@ describe("ProjectFilesTable", () => {
   });
 
   it("deletes a file after confirmation and refreshes", async () => {
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     mockedDelete.mockResolvedValueOnce({});
     const user = userEvent.setup();
     render(<ProjectFilesTable agencyId="agency-1" projectId="project-1" files={files} />);
 
     await user.click(screen.getByRole("button", { name: "Delete brief.pdf" }));
 
-    expect(mockedDelete).toHaveBeenCalledWith("agency-1", "project-1", "file-brief");
-    expect(mockedRefresh).toHaveBeenCalledOnce();
+    expect(await screen.findByRole("alertdialog", { name: "Delete brief.pdf?" })).toBeInTheDocument();
+    expect(mockedDelete).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "Delete file" }));
+
+    await waitFor(() => expect(mockedDelete).toHaveBeenCalledWith("agency-1", "project-1", "file-brief"));
+    await waitFor(() => expect(mockedRefresh).toHaveBeenCalledOnce());
+  });
+
+  it("keeps the file when the delete is cancelled", async () => {
+    const user = userEvent.setup();
+    render(<ProjectFilesTable agencyId="agency-1" projectId="project-1" files={files} />);
+
+    await user.click(screen.getByRole("button", { name: "Delete brief.pdf" }));
+    await user.click(await screen.findByRole("button", { name: "Cancel" }));
+
+    expect(mockedDelete).not.toHaveBeenCalled();
   });
 });

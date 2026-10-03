@@ -2,7 +2,7 @@
  * ArchiveClientButton.tsx
  *
  * Toggles a client between active and archived. Reversible, so unlike
- * DeleteClientForm this has no type-to-confirm step — just a plain confirm()
+ * DeleteClientForm this has no type-to-confirm step — just a ConfirmDialog
  * before archiving (restoring needs no confirmation at all). Shared between
  * ClientsTable's row action and the client detail page's Status section,
  * hence the `compact` prop for the tighter table-row styling.
@@ -16,6 +16,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import { setClientActiveAction } from "@/app/(app)/clients/actions";
+import { useConfirmDialog } from "@/components/ui/ConfirmDialog/ConfirmDialog";
 import type { AgencyClient } from "@/lib/clients";
 
 import styles from "./ArchiveClientButton.module.scss";
@@ -31,14 +32,16 @@ const ArchiveClientButton = ({ agencyId, client, compact, onChanged }: ArchiveCl
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const { confirm, dialog } = useConfirmDialog();
 
-  const handleClick = () => {
-    if (
-      client.is_active &&
-      typeof window !== "undefined" &&
-      !window.confirm(`Archive ${client.name}? You can restore it later.`)
-    ) {
-      return;
+  const handleClick = async () => {
+    if (client.is_active) {
+      const confirmed = await confirm({
+        title: `Archive ${client.name}?`,
+        description: "It moves to your archived clients. You can restore it later.",
+        confirmLabel: "Archive client",
+      });
+      if (!confirmed) return;
     }
 
     setError(null);
@@ -73,6 +76,7 @@ const ArchiveClientButton = ({ agencyId, client, compact, onChanged }: ArchiveCl
           {error}
         </span>
       )}
+      {dialog}
     </div>
   );
 };

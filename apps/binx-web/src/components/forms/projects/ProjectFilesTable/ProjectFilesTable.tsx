@@ -24,6 +24,7 @@ import { useRouter } from "next/navigation";
 import { ArrowDown, ArrowUp, ChevronsUpDown, Download, Trash2, Upload } from "lucide-react";
 
 import { deleteProjectFileAction, uploadProjectFileAction } from "@/app/(app)/projects/[projectId]/actions";
+import { useConfirmDialog } from "@/components/ui/ConfirmDialog/ConfirmDialog";
 import { getProjectFileDownloadUrl } from "@/lib/projects-client";
 import type { ProjectFile } from "@/lib/projects";
 
@@ -70,6 +71,7 @@ const ProjectFilesTable = ({ agencyId, projectId, files }: ProjectFilesTableProp
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const { confirm, dialog } = useConfirmDialog();
 
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("created_at");
@@ -142,8 +144,14 @@ const ProjectFilesTable = ({ agencyId, projectId, files }: ProjectFilesTableProp
     });
   };
 
-  const handleDelete = (fileId: string, fileName: string) => {
-    if (typeof window !== "undefined" && !window.confirm(`Delete ${fileName}?`)) return;
+  const handleDelete = async (fileId: string, fileName: string) => {
+    const confirmed = await confirm({
+      title: `Delete ${fileName}?`,
+      description: "The file is removed from this project. This can't be undone.",
+      confirmLabel: "Delete file",
+      tone: "danger",
+    });
+    if (!confirmed) return;
 
     setError(null);
     setBusyId(fileId);
@@ -160,6 +168,7 @@ const ProjectFilesTable = ({ agencyId, projectId, files }: ProjectFilesTableProp
 
   return (
     <div className={styles.wrapper}>
+      {dialog}
       <div className={styles.toolbar}>
         <input
           type="search"

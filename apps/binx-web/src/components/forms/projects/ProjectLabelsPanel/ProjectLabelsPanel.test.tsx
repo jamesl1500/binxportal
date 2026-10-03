@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -97,15 +97,28 @@ describe("ProjectLabelsPanel", () => {
   });
 
   it("deletes a role after confirmation", async () => {
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     mockedDeleteRole.mockResolvedValueOnce({});
     const user = userEvent.setup();
     render(<ProjectLabelsPanel agencyId="agency-1" projectId="project-1" kind="role" labels={roles} />);
 
     await user.click(screen.getByRole("button", { name: "Delete Project Manager" }));
 
-    expect(mockedDeleteRole).toHaveBeenCalledWith("agency-1", "project-1", "role-pm");
-    expect(screen.queryByText("Project Manager")).not.toBeInTheDocument();
+    expect(await screen.findByRole("alertdialog", { name: "Delete the “Project Manager” role?" })).toBeInTheDocument();
+    expect(mockedDeleteRole).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "Delete role" }));
+
+    await waitFor(() => expect(mockedDeleteRole).toHaveBeenCalledWith("agency-1", "project-1", "role-pm"));
+    await waitFor(() => expect(screen.queryByText("Project Manager")).not.toBeInTheDocument());
+  });
+
+  it("keeps the role when the delete is cancelled", async () => {
+    const user = userEvent.setup();
+    render(<ProjectLabelsPanel agencyId="agency-1" projectId="project-1" kind="role" labels={roles} />);
+
+    await user.click(screen.getByRole("button", { name: "Delete Project Manager" }));
+    await user.click(await screen.findByRole("button", { name: "Cancel" }));
+
+    expect(mockedDeleteRole).not.toHaveBeenCalled();
   });
 
   it("surfaces a server error", async () => {

@@ -1,0 +1,136 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+// Rendered through a portal into <body>, above every other dialog (60–80) —
+// a confirm can be raised from inside one.
+$z-confirm: 90;
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: $z-confirm;
+  background: rgba(10, 10, 11, 0.4);
+  transition: opacity t.$duration-fast t.$ease-standard;
+
+  &[data-starting-style],
+  &[data-ending-style] {
+    opacity: 0;
+  }
+}
+
+.dialog {
+  --tone: #{t.$color-ink};
+  --tone-bg: #{t.$color-paper};
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: $z-confirm;
+  width: min(26rem, calc(100vw - #{t.$space-8}));
+  overflow: hidden;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  box-shadow: 0 24px 48px rgba(10, 10, 11, 0.2);
+  outline: none;
+  transform: translate(-50%, -50%);
+  transition:
+    opacity t.$duration-fast t.$ease-standard,
+    transform t.$duration-fast t.$ease-standard;
+
+  &[data-starting-style],
+  &[data-ending-style] {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.97);
+  }
+
+  &[data-tone="danger"] {
+    --tone: #{t.$color-danger};
+    --tone-bg: #fef2f2;
+  }
+}
+
+.body {
+  display: flex;
+  align-items: flex-start;
+  gap: t.$space-4;
+  padding: t.$space-6;
+}
+
+.iconWrap {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  color: var(--tone);
+  background: var(--tone-bg);
+  border: 1px solid color-mix(in srgb, var(--tone) 16%, transparent);
+  border-radius: t.$radius-md;
+}
+
+.icon {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.text {
+  // Lets a long file or client name wrap instead of stretching the dialog.
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  line-height: 1.3;
+  color: t.$color-ink;
+}
+
+.description {
+  margin: t.$space-2 0 0;
+  font-size: t.$font-size-sm;
+  line-height: 1.6;
+  color: t.$color-ink-soft;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: t.$space-3;
+  padding: t.$space-4 t.$space-6;
+  background: t.$color-paper;
+  border-top: 1px solid t.$color-border;
+}
+
+.cancel {
+  @include m.button-base;
+  color: t.$color-ink;
+  background: t.$color-surface;
+  border-color: t.$color-border;
+
+  &:hover {
+    border-color: t.$color-border-strong;
+  }
+}
+
+.confirm {
+  @include m.button-base;
+  color: t.$color-accent-foreground;
+  background: t.$color-accent;
+
+  &:hover {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+
+  .dialog[data-tone="danger"] & {
+    color: #fff;
+    background: t.$color-danger;
+
+    &:hover {
+      background: color-mix(in srgb, t.$color-danger 88%, black);
+    }
+  }
+}

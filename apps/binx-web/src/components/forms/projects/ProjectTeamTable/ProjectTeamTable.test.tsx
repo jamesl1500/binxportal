@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -162,7 +162,6 @@ describe("ProjectTeamTable", () => {
   });
 
   it("removes a member after confirmation", async () => {
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     mockedRemove.mockResolvedValueOnce({});
     const user = userEvent.setup();
     renderTable();
@@ -170,7 +169,22 @@ describe("ProjectTeamTable", () => {
     const abeRow = screen.getByText("Abe Brown").closest("tr")!;
     await user.click(within(abeRow).getByRole("button", { name: "Remove" }));
 
-    expect(mockedRemove).toHaveBeenCalledWith("agency-1", "project-1", "member-abe");
+    expect(await screen.findByRole("alertdialog", { name: "Remove Abe Brown from this project?" })).toBeInTheDocument();
+    expect(mockedRemove).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "Remove member" }));
+
+    await waitFor(() => expect(mockedRemove).toHaveBeenCalledWith("agency-1", "project-1", "member-abe"));
+  });
+
+  it("keeps the member when the removal is cancelled", async () => {
+    const user = userEvent.setup();
+    renderTable();
+
+    const abeRow = screen.getByText("Abe Brown").closest("tr")!;
+    await user.click(within(abeRow).getByRole("button", { name: "Remove" }));
+    await user.click(await screen.findByRole("button", { name: "Cancel" }));
+
+    expect(mockedRemove).not.toHaveBeenCalled();
   });
 
   it("assigns an unassigned agency teammate to the project", async () => {
