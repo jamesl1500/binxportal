@@ -18,8 +18,8 @@ import { useState, useTransition } from "react";
 import { Check } from "lucide-react";
 import { toast } from "sonner";
 
-import { openBillingPortalAction, startPlanCheckoutAction } from "@/app/(app)/settings/plan/actions";
-import type { PlanLimits } from "@/lib/billing";
+import { openBillingPortalAction, startPlanCheckoutAction, startPlanTrialAction } from "@/app/(app)/settings/plan/actions";
+import type { PlanLimits, Subscription } from "@/lib/billing";
 import { formatLimit, formatPlanPrice } from "@/lib/billing-client";
 import { formatMoneyCents } from "@/lib/money";
 
@@ -32,7 +32,18 @@ interface PlanPanelProps {
   canManage: boolean;
   hasStripeCustomer: boolean;
   hasStripeSubscription: boolean;
+  isTrialing: boolean;
+  trialPlan: Subscription["trial_plan"];
+  trialEndsAt: Subscription["trial_ends_at"];
+  hasUsedTrial: boolean;
+  trialDiscountEligible: boolean;
+  launchDiscountConfigured: boolean;
 }
+
+const daysRemaining = (isoDate: string): number => {
+  const ms = new Date(isoDate).getTime() - Date.now();
+  return Math.max(0, Math.ceil(ms / (24 * 60 * 60 * 1000)));
+};
 
 const PlanPanel = ({
   agencyId,
@@ -41,6 +52,12 @@ const PlanPanel = ({
   canManage,
   hasStripeCustomer,
   hasStripeSubscription,
+  isTrialing,
+  trialPlan,
+  trialEndsAt,
+  hasUsedTrial,
+  trialDiscountEligible,
+  launchDiscountConfigured,
 }: PlanPanelProps) => {
   const [isPending, startTransition] = useTransition();
   const [pendingPlan, setPendingPlan] = useState<string | null>(null);
@@ -64,6 +81,19 @@ const PlanPanel = ({
     });
   };
 
+  const handleStartTrial = (plan: string) => {
+    setPendingPlan(plan);
+    startTransition(async () => {
+      const result = await startPlanTrialAction(agencyId, plan);
+      setPendingPlan(null);
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success(`Your 14-day trial of ${catalog.find((p) => p.key === plan)?.name ?? plan} has started.`);
+    });
+  };
+
   const handleManageBilling = () => {
     startTransition(async () => {
       redirect(await openBillingPortalAction(agencyId));
@@ -72,6 +102,25 @@ const PlanPanel = ({
 
   return (
     <div>
+      {isTrialing && trialEndsAt && (
+        <div className={styles.trialBanner}>
+          <p>
+            Your trial of <strong>{catalog.find((p) => p.key === trialPlan)?.name ?? trialPlan}</strong> ends in{" "}
+            {daysRemaining(trialEndsAt)} day{daysRemaining(trialEndsAt) === 1 ? "" : "s"}.{" "}
+            {trialDiscountEligible && launchDiscountConfigured && "Upgrade now and get 20% off your first 3 months."}
+          </p>
+          {canManage && trialPlan && (
+            <button
+              type="button"
+              className={styles.switch}
+              onClick={() => handleSwitch(trialPlan)}
+              disabled={isPending}
+            >
+              {isPending && pendingPlan === trialPlan ? "Redirecting…" : "Upgrade now"}
+            </button>
+          )}
+        </div>
+      )}
       {hasStripeCustomer && (
         <button type="button" className={styles.manageBilling} onClick={handleManageBilling} disabled={isPending}>
           Manage billing
@@ -80,6 +129,9 @@ const PlanPanel = ({
       <div className={styles.grid}>
         {catalog.map((plan) => {
           const isCurrent = plan.key === currentPlan;
+          const isTrialingThis = isTrialing && plan.key === trialPlan && plan.key !== currentPlan;
+          const canTrialThis =
+            !hasUsedTrial && !hasStripeSubscription && plan.key !== "free" && plan.key !== currentPlan;
           return (
             <div key={plan.key} className={styles.card} data-current={isCurrent}>
               <div className={styles.cardHead}>
@@ -97,15 +149,29 @@ const PlanPanel = ({
                 <p className={styles.currentTag}>
                   <Check aria-hidden="true" /> Current plan
                 </p>
+              ) : isTrialingThis ? (
+                <p className={styles.trialTag}>Trialing</p>
               ) : canManage ? (
-                <button
-                  type="button"
-                  className={styles.switch}
-                  onClick={() => handleSwitch(plan.key)}
-                  disabled={isPending}
-                >
-                  {isPending && pendingPlan === plan.key ? "Redirecting…" : "Switch to this plan"}
-                </button>
+                <>
+                  <button
+                    type="button"
+                    className={styles.switch}
+                    onClick={() => handleSwitch(plan.key)}
+                    disabled={isPending}
+                  >
+                    {isPending && pendingPlan === plan.key ? "Redirecting…" : "Switch to this plan"}
+                  </button>
+                  {canTrialThis && (
+                    <button
+                      type="button"
+                      className={styles.trial}
+                      onClick={() => handleStartTrial(plan.key)}
+                      disabled={isPending}
+                    >
+                      {isPending && pendingPlan === plan.key ? "Starting…" : "Start 14-day free trial"}
+                    </button>
+                  )}
+                </>
               ) : null}
             </div>
           );

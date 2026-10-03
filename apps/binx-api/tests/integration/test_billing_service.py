@@ -9,6 +9,9 @@ cap, so these tests monkeypatch the specific plan back to real values.
 from __future__ import annotations
 
 import dataclasses
+from datetime import UTC, datetime, timedelta
+from types import SimpleNamespace
+from unittest import mock
 
 import pytest
 from fastapi import HTTPException
@@ -104,3 +107,114 @@ class TestChangePlan:
         with pytest.raises(HTTPException) as exc:
             await service.change_plan(db_session, agency, new_plan="platinum", actor=owner)
         assert exc.value.status_code == 400
+
+
+class TestTrial:
+    async def test_start_trial_raises_effective_limits(self, db_session, monkeypatch: pytest.MonkeyPatch) -> None:
+        _set_plan(monkeypatch, "pro", max_clients=60)
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+
+        await service.start_trial(db_session, agency, plan="pro", actor=owner)
+
+        limits = await service.get_plan_limits(db_session, agency.id)
+        assert limits.key == "pro"
+        subscription = await service.get_or_create_subscription(db_session, agency.id)
+        assert subscription.plan == "free"  # billed plan is untouched — only the trial grants access
+        assert subscription.has_used_trial is True
+        assert service.trial_is_active(subscription) is True
+        assert service.trial_discount_eligible(subscription) is True
+
+    async def test_trial_reverts_to_billed_plan_once_expired(self, db_session) -> None:
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        await service.start_trial(db_session, agency, plan="pro", actor=owner)
+
+        subscription = await service.get_or_create_subscription(db_session, agency.id)
+        subscription.trial_ends_at = datetime.now(UTC) - timedelta(seconds=1)
+        await db_session.commit()
+
+        limits = await service.get_plan_limits(db_session, agency.id)
+        assert limits.key == "free"
+        assert service.trial_is_active(subscription) is False
+        # still within the grace window — the discount survives trial expiry
+        assert service.trial_discount_eligible(subscription) is True
+
+    async def test_discount_eligibility_ends_after_grace_window(self, db_session) -> None:
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        await service.start_trial(db_session, agency, plan="pro", actor=owner)
+
+        subscription = await service.get_or_create_subscription(db_session, agency.id)
+        subscription.trial_discount_expires_at = datetime.now(UTC) - timedelta(seconds=1)
+        await db_session.commit()
+
+        assert service.trial_discount_eligible(subscription) is False
+
+    async def test_cannot_trial_twice(self, db_session) -> None:
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        await service.start_trial(db_session, agency, plan="pro", actor=owner)
+
+        with pytest.raises(HTTPException) as exc:
+            await service.start_trial(db_session, agency, plan="scale", actor=owner)
+        assert exc.value.status_code == 400
+
+    async def test_cannot_trial_the_free_plan(self, db_session) -> None:
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        with pytest.raises(HTTPException) as exc:
+            await service.start_trial(db_session, agency, plan="free", actor=owner)
+        assert exc.value.status_code == 400
+
+    async def test_cannot_trial_with_an_existing_subscription(self, db_session) -> None:
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        subscription = await service.get_or_create_subscription(db_session, agency.id)
+        subscription.stripe_subscription_id = "sub_existing"
+        await db_session.commit()
+
+        with pytest.raises(HTTPException) as exc:
+            await service.start_trial(db_session, agency, plan="pro", actor=owner)
+        assert exc.value.status_code == 400
+
+    async def test_start_trial_guard_is_a_single_atomic_update(self, db_session) -> None:
+        # The has_used_trial check and the write happen in one conditional
+        # UPDATE (service.py's start_trial), not a read-then-write — so a
+        # second call never overwrites a trial the first one already won,
+        # which is what a real race between two concurrent requests needs.
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        subscription = await service.get_or_create_subscription(db_session, agency.id)
+
+        await service.start_trial(db_session, agency, plan="pro", actor=owner)
+        with pytest.raises(HTTPException) as exc:
+            await service.start_trial(db_session, agency, plan="scale", actor=owner)
+        assert exc.value.status_code == 400
+
+        await db_session.refresh(subscription)
+        assert subscription.trial_plan == "pro"  # the second call never overwrote it
+
+    async def test_converting_during_a_trial_clears_the_trial_state(self, db_session) -> None:
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        await service.start_trial(db_session, agency, plan="pro", actor=owner)
+        subscription = await service.get_or_create_subscription(db_session, agency.id)
+
+        stripe_subscription = SimpleNamespace(
+            id="sub_123",
+            status="active",
+            cancel_at_period_end=False,
+            items=SimpleNamespace(
+                data=[SimpleNamespace(price=SimpleNamespace(id="price_pro"), current_period_end=None)]
+            ),
+        )
+        with mock.patch.object(service, "_plan_for_price_id", return_value="pro"):
+            await service._apply_stripe_subscription(db_session, subscription, stripe_subscription)
+
+        await db_session.refresh(subscription)
+        assert subscription.plan == "pro"
+        assert subscription.trial_plan is None
+        assert subscription.trial_ends_at is None
+        assert subscription.trial_discount_expires_at is None
+        assert service.trial_discount_eligible(subscription) is False

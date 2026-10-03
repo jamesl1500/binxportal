@@ -16,7 +16,13 @@
 import { revalidatePath } from "next/cache";
 
 import { AuthApiError } from "@/lib/auth";
-import { type Subscription, changePlan, createBillingPortalSession, createPlanCheckout } from "@/lib/billing";
+import {
+  type Subscription,
+  changePlan,
+  createBillingPortalSession,
+  createPlanCheckout,
+  startPlanTrial,
+} from "@/lib/billing";
 
 export interface ChangePlanActionResult {
   error?: string;
@@ -30,6 +36,16 @@ export async function changePlanAction(agencyId: string, plan: string): Promise<
     return { subscription };
   } catch (error) {
     return { error: error instanceof AuthApiError ? error.message : "Unable to change the plan" };
+  }
+}
+
+export async function startPlanTrialAction(agencyId: string, plan: string): Promise<ChangePlanActionResult> {
+  try {
+    const subscription = await startPlanTrial(agencyId, plan);
+    revalidatePath("/settings/plan");
+    return { subscription };
+  } catch (error) {
+    return { error: error instanceof AuthApiError ? error.message : "Unable to start the trial" };
   }
 }
 

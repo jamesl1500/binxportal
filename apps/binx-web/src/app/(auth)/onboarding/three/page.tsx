@@ -14,7 +14,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getCurrentAgencyContext } from "@/lib/agencies";
-import { getPlanCatalog } from "@/lib/billing";
+import { getPlanCatalog, getSubscription } from "@/lib/billing";
 import PlanSelector from "@/components/forms/onboarding/PlanSelector/PlanSelector";
 
 import styles from "./page.module.scss";
@@ -28,7 +28,10 @@ const OnboardingStepThreePage = async () => {
     redirect("/onboarding/two");
   }
 
-  const catalog = await getPlanCatalog(currentAgency.id);
+  const [catalog, subscription] = await Promise.all([
+    getPlanCatalog(currentAgency.id),
+    getSubscription(currentAgency.id),
+  ]);
 
   return (
     <div>
@@ -44,7 +47,13 @@ const OnboardingStepThreePage = async () => {
         </p>
       </header>
 
-      <PlanSelector agencyId={currentAgency.id} catalog={catalog} />
+      <PlanSelector
+        agencyId={currentAgency.id}
+        catalog={catalog}
+        currentPlan={subscription.plan}
+        hasUsedTrial={subscription.has_used_trial}
+        hasStripeSubscription={subscription.has_stripe_subscription}
+      />
     </div>
   );
 };

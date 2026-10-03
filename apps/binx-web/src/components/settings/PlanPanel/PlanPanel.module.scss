@@ -1,6 +1,31 @@
 @use "../../../styles/tokens" as t;
 @use "../../../styles/mixins" as m;
 
+.trialBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: t.$space-3;
+  margin-bottom: t.$space-4;
+  padding: t.$space-3 t.$space-4;
+  background: t.$color-paper;
+  border: 1px solid t.$color-accent;
+  border-radius: t.$radius-md;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink;
+
+  p {
+    margin: 0;
+  }
+}
+
+.trialTag {
+  margin: t.$space-1 0 0;
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  color: t.$color-accent;
+}
+
 .manageBilling {
   @include m.button-base;
   margin-bottom: t.$space-4;
@@ -89,5 +114,18 @@
 
   &:hover:not(:disabled) {
     border-color: t.$color-border-strong;
+  }
+}
+
+.trial {
+  @include m.button-base;
+  background: transparent;
+  color: t.$color-ink-soft;
+  border: 1px dashed t.$color-border;
+  font-size: t.$font-size-xs;
+
+  &:hover:not(:disabled) {
+    border-color: t.$color-border-strong;
+    color: t.$color-ink;
   }
 }

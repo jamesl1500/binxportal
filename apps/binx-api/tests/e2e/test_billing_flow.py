@@ -57,6 +57,27 @@ class TestChangePlan:
         assert again.json()["plan"] == "pro"
 
 
+class TestStartTrial:
+    async def test_owner_can_trial_member_cannot(self, client, agency_ctx) -> None:
+        agency, owner, member = agency_ctx
+
+        trial_url = f"/agencies/{agency.id}/plan/trial"
+        forbidden = await client.post(trial_url, json={"plan": "pro"}, headers=auth_headers(member))
+        assert forbidden.status_code == 403
+
+        started = await client.post(trial_url, json={"plan": "pro"}, headers=auth_headers(owner))
+        assert started.status_code == 200, started.text
+        body = started.json()
+        assert body["plan"] == "free"  # billed plan untouched
+        assert body["limits"]["key"] == "pro"  # but the trial's limits apply
+        assert body["is_trialing"] is True
+        assert body["trial_plan"] == "pro"
+        assert body["trial_discount_eligible"] is True
+
+        again = await client.post(trial_url, json={"plan": "scale"}, headers=auth_headers(owner))
+        assert again.status_code == 400
+
+
 class TestLimitEnforcement:
     async def test_client_creation_402s_at_the_cap(self, client, agency_ctx, monkeypatch: pytest.MonkeyPatch) -> None:
         agency, owner, _member = agency_ctx

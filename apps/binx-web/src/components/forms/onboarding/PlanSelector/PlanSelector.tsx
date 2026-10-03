@@ -3,12 +3,15 @@
  *
  * Onboarding step three: pick a plan, or continue on Free. Mirrors
  * PlanPanel.tsx's card grid (same catalog shape, same formatters) but with
- * onboarding-appropriate copy and actions instead of "current plan" —
- * there's no existing subscription yet, so Free goes straight through
- * `changePlanAction` (no Stripe involved) and every paid plan starts a
- * Checkout Session that returns to onboarding step four (bulk import)
- * instead of Settings > Plan. Either way the next stop is step four, which
- * comes after the plan so imports are checked against the chosen plan's limits.
+ * onboarding-appropriate copy and actions instead of "current plan" — Free
+ * goes straight through `changePlanAction` (no Stripe involved). A paid plan
+ * starts a card-free 14-day trial via `startPlanTrialAction` when this
+ * agency hasn't used one yet; an agency that revisits this step after
+ * already trialing (or already subscribing) falls back to real Checkout
+ * instead, since `startPlanTrialAction` would otherwise just 400 with no way
+ * forward — see `hasUsedTrial`/`hasStripeSubscription` below. Either way the
+ * next stop is step four (bulk import), which comes after the plan so
+ * imports are checked against the chosen plan's (or trial's) limits.
  *
  * If the visitor arrived via a marketing pricing-page CTA, `PLAN_INTENT_STORAGE_KEY`
  * in `localStorage` carries which plan they clicked (see (marketing)/pricing/page.tsx
@@ -25,7 +28,7 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { changePlanAction, startPlanCheckoutAction } from "@/app/(app)/settings/plan/actions";
+import { changePlanAction, startPlanCheckoutAction, startPlanTrialAction } from "@/app/(app)/settings/plan/actions";
 import type { PlanLimits } from "@/lib/billing";
 import { formatLimit, formatPlanPrice } from "@/lib/billing-client";
 import { formatMoneyCents } from "@/lib/money";
@@ -38,9 +41,19 @@ const ONBOARDING_NEXT_STEP = "/onboarding/four";
 interface PlanSelectorProps {
   agencyId: string;
   catalog: PlanLimits[];
+  currentPlan: string;
+  hasUsedTrial: boolean;
+  hasStripeSubscription: boolean;
 }
 
-const PlanSelector = ({ agencyId, catalog }: PlanSelectorProps) => {
+const PlanSelector = ({
+  agencyId,
+  catalog,
+  currentPlan,
+  hasUsedTrial,
+  hasStripeSubscription,
+}: PlanSelectorProps) => {
+  const canTrial = !hasUsedTrial && !hasStripeSubscription;
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [pendingPlan, setPendingPlan] = useState<string | null>(null);
@@ -77,7 +90,20 @@ const PlanSelector = ({ agencyId, catalog }: PlanSelectorProps) => {
     });
   };
 
-  const handlePaid = (plan: string) => {
+  const handleTrial = (plan: string) => {
+    setPendingPlan(plan);
+    startTransition(async () => {
+      const result = await startPlanTrialAction(agencyId, plan);
+      setPendingPlan(null);
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+      router.push(ONBOARDING_NEXT_STEP);
+    });
+  };
+
+  const handleCheckout = (plan: string) => {
     setPendingPlan(plan);
     startTransition(async () => {
       const result = await startPlanCheckoutAction(agencyId, plan, ONBOARDING_NEXT_STEP);
@@ -90,11 +116,20 @@ const PlanSelector = ({ agencyId, catalog }: PlanSelectorProps) => {
     });
   };
 
+  const handlePaid = (plan: string) => (canTrial ? handleTrial(plan) : handleCheckout(plan));
+
   return (
     <div className={styles.grid}>
       {catalog.map((plan) => {
         const isFree = plan.key === "free";
+        // currentPlan defaults to "free" for every agency that hasn't
+        // subscribed yet, so a plain key match would wrongly treat Free as
+        // "already chosen" on a brand-new agency's first visit. Only a paid
+        // plan can be meaningfully "current" here — that only happens once
+        // a real Stripe subscription exists.
+        const isCurrent = plan.key === currentPlan && currentPlan !== "free";
         const isPendingThis = isPending && pendingPlan === plan.key;
+        const paidLabel = canTrial ? `Start ${plan.name} trial` : `Switch to ${plan.name}`;
         return (
           <div key={plan.key} className={styles.card} data-intent={plan.key === intentPlan}>
             {plan.key === intentPlan && <p className={styles.intentBadge}>You were looking at this one</p>}
@@ -109,14 +144,19 @@ const PlanSelector = ({ agencyId, catalog }: PlanSelectorProps) => {
               <li>{formatLimit(plan.max_team_members)} team members</li>
               <li>{formatMoneyCents(plan.ai_monthly_budget_cents)} / mo AI</li>
             </ul>
-            <button
-              type="button"
-              className={isFree ? styles.freeButton : styles.switch}
-              onClick={() => (isFree ? handleFree() : handlePaid(plan.key))}
-              disabled={isPending}
-            >
-              {isPendingThis ? "Setting up…" : isFree ? "Continue with Free" : `Start with ${plan.name}`}
-            </button>
+            {!isFree && canTrial && <p className={styles.trialNote}>14 days free, no card needed</p>}
+            {isCurrent ? (
+              <p className={styles.trialNote}>Your current plan</p>
+            ) : (
+              <button
+                type="button"
+                className={isFree ? styles.freeButton : styles.switch}
+                onClick={() => (isFree ? handleFree() : handlePaid(plan.key))}
+                disabled={isPending}
+              >
+                {isPendingThis ? "Setting up…" : isFree ? "Continue with Free" : paidLabel}
+              </button>
+            )}
           </div>
         );
       })}

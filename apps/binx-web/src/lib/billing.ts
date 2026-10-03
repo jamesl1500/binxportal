@@ -68,6 +68,24 @@ export async function changePlan(agencyId: string, plan: string): Promise<Subscr
 }
 
 /**
+ * startPlanTrial
+ *
+ * Starts a 14-day, card-free trial of a paid plan via
+ * `POST /agencies/{agencyId}/plan/trial` — no Stripe redirect, just raises
+ * the agency's effective plan limits immediately. One trial per agency ever;
+ * see binx-api's billing/service.py::start_trial for the guards.
+ */
+export async function startPlanTrial(agencyId: string, plan: string): Promise<Subscription> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.post<Subscription>(`/agencies/${agencyId}/plan/trial`, { plan }, { headers });
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to start the trial");
+  }
+}
+
+/**
  * createPlanCheckout
  *
  * Starts a Stripe Checkout Session for subscribing to a paid plan for the
