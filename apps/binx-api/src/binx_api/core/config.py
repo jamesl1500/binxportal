@@ -130,6 +130,17 @@ class Settings(BaseSettings):
     # which isn't guaranteed across botocore versions/configs.
     aws_region: str = "us-east-2"
 
+    # --- Error tracking (Sentry) ---------------------------------------------
+    # Unset (every dev/test environment) means Sentry is cleanly off — same
+    # pattern as anthropic_api_key/stripe_secret_key above. See main.py's
+    # create_app() for the sentry_sdk.init() call this gates.
+    sentry_dsn: str | None = None
+    sentry_environment: str = "development"
+    # Fraction of requests to capture a performance trace for (0.0-1.0). Kept
+    # low — this is error tracking first, not APM — since every sampled
+    # trace is billed the same as an error event.
+    sentry_traces_sample_rate: float = 0.1
+
 
 @lru_cache
 def get_settings() -> Settings:

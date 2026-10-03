@@ -1,9 +1,11 @@
 import logging
 
+import sentry_sdk
 from fastapi import FastAPI
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
+from binx_api.core.config import get_settings
 from binx_api.core.rate_limit import limiter
 from binx_api.modules.activity.router import router as activity_router
 from binx_api.modules.agencies.router import router as agencies_router
@@ -38,6 +40,18 @@ logging.basicConfig(level=logging.INFO)
 
 
 def create_app() -> FastAPI:
+    settings = get_settings()
+
+    # Cleanly off when unset (dev, CI, test) — see core/config.py. The
+    # FastAPI/Starlette integrations auto-enable since both packages are
+    # installed; no explicit integrations= list needed.
+    if settings.sentry_dsn:
+        sentry_sdk.init(
+            dsn=settings.sentry_dsn,
+            environment=settings.sentry_environment,
+            traces_sample_rate=settings.sentry_traces_sample_rate,
+        )
+
     app = FastAPI(title="Binx API")
 
     # Rate limiting — the @limiter.limit decorators in modules/auth/router.py
