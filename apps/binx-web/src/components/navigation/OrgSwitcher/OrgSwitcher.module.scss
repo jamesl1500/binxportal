@@ -5,6 +5,7 @@
   position: relative;
   display: flex;
   align-items: center;
+  min-width: 0;
 }
 
 .trigger {
@@ -12,7 +13,13 @@
   align-items: center;
   gap: t.$space-2;
   max-width: 12rem;
+  min-width: 0;
   padding: t.$space-2 t.$space-3;
+
+  @media (max-width: 479px) {
+    max-width: 2.25rem;
+    padding: t.$space-2;
+  }
   font: inherit;
   font-size: t.$font-size-sm;
   font-weight: 600;
@@ -42,6 +49,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
+
+  @media (max-width: 479px) {
+    display: none;
+  }
 }
 
 .mark,
@@ -72,6 +84,10 @@
 
   [data-open] > & {
     transform: rotate(180deg);
+  }
+
+  @media (max-width: 479px) {
+    display: none;
   }
 }
 

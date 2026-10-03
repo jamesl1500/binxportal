@@ -13,11 +13,11 @@
  */
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu } from "@base-ui/react/menu";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Menu as MenuIcon, X } from "lucide-react";
 
 import { logoutAction } from "@/app/(app)/actions";
 import BinxMark from "@/components/BinxMark/BinxMark";
@@ -74,6 +74,7 @@ const AppHeader = ({
 }: AppHeaderProps) => {
   const pathname = usePathname();
   const [isSigningOut, startTransition] = useTransition();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const initial = user.full_name.trim().charAt(0).toUpperCase() || "?";
 
@@ -83,13 +84,15 @@ const AppHeader = ({
     });
   };
 
+  const allLinks = [...NAV_LINKS, ...MANAGE_LINKS];
+
   return (
     <header className={styles.header}>
       <div className={styles.left}>
         <div className={styles.workspace}>
           <Link href="/dashboard" className={styles.brand}>
             <BinxMark className={styles.brandMark} />
-            Binx
+            <span className={styles.brandText}>Binx</span>
           </Link>
 
           <span className={styles.divider} aria-hidden="true" />
@@ -138,6 +141,17 @@ const AppHeader = ({
       </div>
 
       <div className={styles.right}>
+        <button
+          type="button"
+          className={styles.mobileNavToggle}
+          aria-expanded={mobileNavOpen}
+          aria-controls="app-mobile-nav"
+          aria-label={mobileNavOpen ? "Close navigation" : "Open navigation"}
+          onClick={() => setMobileNavOpen((open) => !open)}
+        >
+          {mobileNavOpen ? <X aria-hidden="true" /> : <MenuIcon aria-hidden="true" />}
+        </button>
+
         <TutorialLauncher />
         <AiAssistantLauncher agencyId={currentAgency.id} />
         <NotificationBell initialUnreadCount={unreadNotifications} initialItems={notifications} />
@@ -179,6 +193,29 @@ const AppHeader = ({
           </Menu.Portal>
         </Menu.Root>
       </div>
+
+      {mobileNavOpen && (
+        <nav id="app-mobile-nav" className={styles.mobileNav} aria-label="Primary">
+          {allLinks.map((link) => {
+            const active = pathname === link.href || pathname.startsWith(`${link.href}/`);
+            return (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={styles.mobileNavLink}
+              data-active={active}
+              aria-current={active ? "page" : undefined}
+              onClick={() => setMobileNavOpen(false)}
+            >
+              {link.label}
+              {link.href === "/messages" && unreadMessages > 0 && (
+                <span className={styles.navBadge}>{unreadMessages > 99 ? "99+" : unreadMessages}</span>
+              )}
+            </Link>
+            );
+          })}
+        </nav>
+      )}
     </header>
   );
 };

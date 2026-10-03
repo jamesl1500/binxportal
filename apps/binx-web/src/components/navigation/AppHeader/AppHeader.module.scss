@@ -2,15 +2,21 @@
 @use "../../../styles/mixins" as m;
 
 .header {
+  position: relative;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: t.$space-6;
-  padding: t.$space-4 t.$space-6;
+  gap: t.$space-2 t.$space-6;
+  padding: t.$space-4;
   background: t.$color-surface;
   border-bottom: 1px solid t.$color-border;
 
   @media (min-width: 640px) {
+    padding: t.$space-4 t.$space-6;
+  }
+
+  @media (min-width: 1024px) {
     padding: t.$space-4 t.$space-12;
   }
 }
@@ -20,6 +26,7 @@
   align-items: center;
   gap: t.$space-8;
   min-width: 0;
+  flex-shrink: 1;
 }
 
 .workspace {
@@ -45,6 +52,12 @@
   width: 1.5rem;
   height: 1.5rem;
   flex-shrink: 0;
+}
+
+.brandText {
+  @media (max-width: 479px) {
+    display: none;
+  }
 }
 
 .divider {
@@ -146,6 +159,74 @@
   align-items: center;
   gap: t.$space-2;
   flex-shrink: 0;
+}
+
+.mobileNavToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  color: t.$color-ink-soft;
+  background: none;
+  border: none;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+  transition: color t.$duration-fast t.$ease-standard, background-color t.$duration-fast t.$ease-standard;
+
+  svg {
+    width: 1.15rem;
+    height: 1.15rem;
+  }
+
+  &:hover {
+    color: t.$color-ink;
+    background: rgba(10, 10, 11, 0.04);
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+
+  @media (min-width: 768px) {
+    display: none;
+  }
+}
+
+.mobileNav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding-top: t.$space-3;
+  order: 1;
+
+  @media (min-width: 768px) {
+    display: none;
+  }
+}
+
+.mobileNavLink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: t.$space-2;
+  padding: t.$space-3;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+  text-decoration: none;
+  border-radius: t.$radius-sm;
+
+  &:hover {
+    color: t.$color-ink;
+    background: rgba(10, 10, 11, 0.04);
+  }
+
+  &[data-active="true"] {
+    color: t.$color-ink;
+    font-weight: 600;
+    background: rgba(10, 10, 11, 0.04);
+  }
 }
 
 .accountTrigger {
