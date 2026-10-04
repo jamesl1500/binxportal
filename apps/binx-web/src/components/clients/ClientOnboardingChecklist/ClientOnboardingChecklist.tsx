@@ -11,7 +11,7 @@
  * @author Binx Portal
  */
 import Link from "next/link";
-import { Check, ChevronRight } from "lucide-react";
+import { Check, ChevronRight, Sparkles } from "lucide-react";
 
 import type { ClientOnboardingStep } from "@/lib/client-onboarding";
 
@@ -32,12 +32,18 @@ const ClientOnboardingChecklist = ({
   return (
     <section className={styles.card} aria-labelledby="client-onboarding-title">
       <div className={styles.head}>
-        <h2 id="client-onboarding-title" className={styles.title}>
-          Finish setting up {clientName}
-        </h2>
-        <p className={styles.subtitle}>
-          {doneCount} of {steps.length} done
-        </p>
+        <span className={styles.badge} aria-hidden="true">
+          <Sparkles />
+        </span>
+        <div className={styles.headText}>
+          <span className={styles.eyebrow}>Setup</span>
+          <h2 id="client-onboarding-title" className={styles.title}>
+            Finish setting up {clientName}
+          </h2>
+          <p className={styles.subtitle}>
+            {doneCount} of {steps.length} done
+          </p>
+        </div>
       </div>
 
       <div

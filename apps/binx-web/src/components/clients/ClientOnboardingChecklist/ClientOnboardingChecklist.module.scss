@@ -7,14 +7,49 @@
   flex-direction: column;
   gap: t.$space-4;
   padding: t.$space-5;
+  // A heavier border-left (same device AiActionCard uses to flag priority)
+  // and a dark header strip, so this reads as "do this first" against the
+  // plain stat/chart panels below it rather than just another card.
+  border-left: 4px solid t.$color-ink;
+  box-shadow: 0 1px 3px rgba(10, 10, 11, 0.08);
 }
 
 .head {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: t.$space-2;
+  align-items: flex-start;
+  gap: t.$space-3;
+}
+
+.badge {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  color: t.$color-accent-foreground;
+  background: t.$color-ink;
+  border-radius: t.$radius-md;
+
+  svg {
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+}
+
+.headText {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.eyebrow {
+  font-size: t.$font-size-xs;
+  font-weight: 700;
+  color: t.$color-ink-soft;
+  text-transform: uppercase;
+  letter-spacing: t.$tracking-wider;
 }
 
 .title {
