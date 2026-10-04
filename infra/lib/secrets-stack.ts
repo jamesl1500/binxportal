@@ -4,10 +4,13 @@ import { Construct } from "constructs";
 
 /**
  * The single source of truth for every production secret this app needs —
- * `POSTGRES_PASSWORD`, `JWT_SECRET`, `ANTHROPIC_API_KEY` (all consumed by
- * the box at deploy time — see deploy/redeploy.sh) and
- * `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` (consumed by GitHub Actions at
- * Docker build time — see .github/workflows/deploy.yml). One JSON secret,
+ * `POSTGRES_PASSWORD`, `JWT_SECRET`, `ANTHROPIC_API_KEY`, `SENTRY_DSN` (all
+ * consumed by the box at deploy time — see deploy/redeploy.sh) and
+ * `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY`, `NEXT_PUBLIC_SENTRY_DSN` (consumed by
+ * GitHub Actions at Docker build time — see .github/workflows/deploy.yml).
+ * SENTRY_DSN/NEXT_PUBLIC_SENTRY_DSN aren't actually sensitive (a Sentry DSN
+ * is meant to be public), they just live here for one source of truth. One
+ * JSON secret,
  * not four separate ones: both consumers (the EC2 instance role, the
  * GitHub deploy role) are already trusted with the whole app's secret
  * surface, so there's no real IAM-granularity reason to split them, and one
@@ -19,6 +22,16 @@ import { Construct } from "constructs";
  * are set once, out of band, via `aws secretsmanager put-secret-value` —
  * see the plan's "Rollout" section for exactly how that was sequenced the
  * first time without breaking the live site.
+ *
+ * This stack has already been deployed once with real values in place —
+ * don't `cdk deploy SecretsStack` again to add a new key (e.g. the
+ * SENTRY_DSN pair added alongside this comment): CloudFormation would see
+ * this property's JSON as changed and overwrite every existing value with
+ * its REPLACE_ME placeholder. Add a new key with a merge, e.g.
+ * `aws secretsmanager put-secret-value --secret-id binxportal/app
+ * --secret-string "$(aws secretsmanager get-secret-value --secret-id
+ * binxportal/app --query SecretString --output text | jq '. + {"NEW_KEY":
+ * "value"}')"`.
  */
 export class SecretsStack extends cdk.Stack {
   public readonly secret: secretsmanager.Secret;
@@ -29,7 +42,7 @@ export class SecretsStack extends cdk.Stack {
     this.secret = new secretsmanager.Secret(this, "AppSecret", {
       secretName: "binxportal/app",
       description:
-        "POSTGRES_PASSWORD, JWT_SECRET, ANTHROPIC_API_KEY, NEXT_SERVER_ACTIONS_ENCRYPTION_KEY — set via put-secret-value, never by CDK",
+        "POSTGRES_PASSWORD, JWT_SECRET, ANTHROPIC_API_KEY, NEXT_SERVER_ACTIONS_ENCRYPTION_KEY, SENTRY_DSN, NEXT_PUBLIC_SENTRY_DSN — set via put-secret-value, never by CDK",
       // Placeholder only — overwritten out of band immediately after the
       // first deploy of this stack. Never fill this in with real values.
       secretStringValue: cdk.SecretValue.unsafePlainText(
@@ -39,6 +52,8 @@ export class SecretsStack extends cdk.Stack {
           ANTHROPIC_API_KEY: "REPLACE_ME",
           NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: "REPLACE_ME",
           GOOGLE_PLACES_API_KEY: "REPLACE_ME",
+          SENTRY_DSN: "REPLACE_ME",
+          NEXT_PUBLIC_SENTRY_DSN: "REPLACE_ME",
         }),
       ),
       removalPolicy: cdk.RemovalPolicy.RETAIN,

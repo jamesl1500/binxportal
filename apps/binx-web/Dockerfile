@@ -34,8 +34,15 @@ COPY apps/binx-web ./apps/binx-web
 
 ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_SITE_URL
+# Sentry DSN is a public identifier, not a secret (it only says which Sentry
+# project events land in) — same NEXT_PUBLIC_* build-arg treatment as the two
+# above. Unset means instrumentation.ts/instrumentation-client.ts both no-op.
+ARG NEXT_PUBLIC_SENTRY_DSN
+ARG NEXT_PUBLIC_SENTRY_ENVIRONMENT
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
     NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL \
+    NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN \
+    NEXT_PUBLIC_SENTRY_ENVIRONMENT=$NEXT_PUBLIC_SENTRY_ENVIRONMENT \
     NEXT_TELEMETRY_DISABLED=1
 
 WORKDIR /repo/apps/binx-web
