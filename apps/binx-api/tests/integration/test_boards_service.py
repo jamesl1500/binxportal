@@ -556,9 +556,7 @@ class TestApproval:
         assert versions[0].status == "approved"
         assert versions[0].decided_by_name == "Client Casey"
 
-    async def test_editing_after_approval_clears_decision_but_keeps_the_pinned_version(
-        self, db_session
-    ) -> None:
+    async def test_editing_after_approval_clears_decision_but_keeps_the_pinned_version(self, db_session) -> None:
         """Editing a card's content after it's approved invalidates the live
         decision (it no longer matches what was approved) but must never
         touch the already-decided BoardItemVersion row — that's the whole

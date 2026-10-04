@@ -411,17 +411,13 @@ class TestApproval:
 
         # Editing after approval clears the live decision but keeps v1 pinned.
         edited = (
-            await client.patch(
-                f"{staff_base}/items/{item['id']}", json={"content": {"text": "v2"}}, headers=staff_h
-            )
+            await client.patch(f"{staff_base}/items/{item['id']}", json={"content": {"text": "v2"}}, headers=staff_h)
         ).json()
         assert edited["approval_status"] is None
         assert edited["approved_version_number"] == 1
         assert edited["version_number"] == 1
 
-        again = (
-            await client.post(f"{staff_base}/items/{item['id']}/approval/request", headers=staff_h)
-        ).json()
+        again = (await client.post(f"{staff_base}/items/{item['id']}/approval/request", headers=staff_h)).json()
         assert again["version_number"] == 2
         assert again["approved_version_number"] == 1
 
