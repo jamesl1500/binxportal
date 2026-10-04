@@ -64,8 +64,11 @@ interface ProjectFormProps {
   onSuccess?: (project: Project) => void;
   /** Create mode: called with the validated details — the caller decides when to actually create. */
   onContinue?: (input: ProjectDetailsInput) => void;
-  /** Create mode: values to restore, e.g. when the wizard steps back to this form. */
-  initialValues?: ProjectDetailsInput;
+  /**
+   * Create mode: values to restore, e.g. when the wizard steps back to this
+   * form, or to preselect a client coming from that client's own page.
+   */
+  initialValues?: Partial<ProjectDetailsInput>;
   onCancel?: () => void;
 }
 

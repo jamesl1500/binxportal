@@ -8,22 +8,31 @@ vi.mock("@/app/(app)/projects/actions", () => ({ createProjectAction: vi.fn() })
 // The details step is ProjectForm's own concern (see its tests) — stand in
 // with a button that "continues" with fixed details.
 vi.mock("@/components/forms/projects/ProjectForm/ProjectForm", () => ({
-  default: ({ onContinue }: { onContinue: (input: unknown) => void }) => (
-    <button
-      onClick={() =>
-        onContinue({
-          name: "Redesign",
-          clientId: "c1",
-          status: "planning",
-          description: null,
-          startDate: null,
-          dueDate: null,
-          defaultHourlyRateCents: null,
-        })
-      }
-    >
-      fake-details-continue
-    </button>
+  default: ({
+    onContinue,
+    initialValues,
+  }: {
+    onContinue: (input: unknown) => void;
+    initialValues?: { clientId?: string };
+  }) => (
+    <>
+      <p data-testid="initial-client-id">{initialValues?.clientId ?? ""}</p>
+      <button
+        onClick={() =>
+          onContinue({
+            name: "Redesign",
+            clientId: "c1",
+            status: "planning",
+            description: null,
+            startDate: null,
+            dueDate: null,
+            defaultHourlyRateCents: null,
+          })
+        }
+      >
+        fake-details-continue
+      </button>
+    </>
   ),
 }));
 vi.mock("@/components/projects/AiTaskSetup/AiTaskSetup", () => ({
@@ -99,6 +108,27 @@ describe("NewProjectForm", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "fake-ai-done" }));
     expect(mockPush).toHaveBeenCalledWith("/projects/p1");
+  });
+
+  it("preselects the client coming from that client's own page", () => {
+    render(<NewProjectForm {...props} initialClientId="c2" />);
+    expect(screen.getByTestId("initial-client-id")).toHaveTextContent("c2");
+  });
+
+  it("leaves the client unselected with no initialClientId", () => {
+    render(<NewProjectForm {...props} />);
+    expect(screen.getByTestId("initial-client-id")).toHaveTextContent("");
+  });
+
+  it("prefers restored details over the initial client once details have been filled in", async () => {
+    render(<NewProjectForm {...props} initialClientId="c2" />);
+    expect(screen.getByTestId("initial-client-id")).toHaveTextContent("c2");
+
+    // Continuing sets details.clientId to "c1" (the fake details step).
+    await userEvent.click(screen.getByRole("button", { name: "fake-details-continue" }));
+    await userEvent.click(screen.getByRole("button", { name: /Details/ }));
+
+    expect(screen.getByTestId("initial-client-id")).toHaveTextContent("c1");
   });
 
   it("requires at least one task tag", async () => {

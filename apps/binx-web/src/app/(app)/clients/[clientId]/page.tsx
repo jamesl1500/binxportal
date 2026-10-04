@@ -12,7 +12,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getCurrentAgencyContext } from "@/lib/agencies";
-import { getAgencyClient } from "@/lib/clients";
+import { buildClientOnboardingSteps, isClientOnboardingComplete } from "@/lib/client-onboarding";
+import {
+  getAgencyClient,
+  getClientContactInvitations,
+  getClientContacts,
+} from "@/lib/clients";
 import {
   getInvoices,
   getInvoiceSummary,
@@ -20,12 +25,14 @@ import {
   formatCompactMoney,
   invoiceStatusLabel,
 } from "@/lib/invoicing";
+import { getKickoff } from "@/lib/kickoffs";
 import { getMeetings } from "@/lib/meetings";
 import { getAgencyProjects } from "@/lib/projects";
 import {
   PROJECT_STATUS_LABELS,
   type ProjectStatus,
 } from "@/lib/projects-client";
+import ClientOnboardingChecklist from "@/components/clients/ClientOnboardingChecklist/ClientOnboardingChecklist";
 import ClientStatGrid from "@/components/clients/ClientStatGrid/ClientStatGrid";
 import LineChart from "@/components/charts/LineChart/LineChart";
 import DonutChart from "@/components/charts/DonutChart/DonutChart";
@@ -65,7 +72,14 @@ const ClientDashboardPage = async ({ params }: ClientDashboardPageProps) => {
     redirect("/onboarding/two");
   }
 
-  const [client, allProjects, invoices, summary, upcomingMeetings] =
+  // Only owners/admins can reach the client-portal settings panel (see
+  // ClientSettingsTabs) — mirror that gate here so the onboarding checklist
+  // never sends anyone else to a tab they can't see, and so it skips
+  // fetching contact/invitation data that staff member couldn't use anyway.
+  const canManagePortal =
+    currentAgency.role === "owner" || currentAgency.role === "admin";
+
+  const [client, allProjects, invoices, summary, upcomingMeetings, contacts, invitations] =
     await Promise.all([
       getAgencyClient(currentAgency.id, clientId),
       getAgencyProjects(currentAgency.id),
@@ -76,6 +90,12 @@ const ClientDashboardPage = async ({ params }: ClientDashboardPageProps) => {
         status: "scheduled",
         fromDate: new Date().toISOString().slice(0, 10),
       }),
+      canManagePortal
+        ? getClientContacts(currentAgency.id, clientId)
+        : Promise.resolve([]),
+      canManagePortal
+        ? getClientContactInvitations(currentAgency.id, clientId)
+        : Promise.resolve([]),
     ]);
 
   const projects = allProjects.filter(
@@ -85,6 +105,23 @@ const ClientDashboardPage = async ({ params }: ClientDashboardPageProps) => {
     (project) => project.status === "active",
   ).length;
   const currency = invoices[0]?.currency ?? "USD";
+
+  const firstProject =
+    [...projects].sort((a, b) => a.created_at.localeCompare(b.created_at))[0] ??
+    null;
+  const firstProjectKickoff = firstProject
+    ? await getKickoff(currentAgency.id, firstProject.id)
+    : null;
+  const onboardingSteps = buildClientOnboardingSteps({
+    clientId: client.id,
+    clientName: client.name,
+    canManagePortal,
+    hasPortalContact: contacts.length > 0,
+    hasPendingInvitation: invitations.length > 0,
+    firstProject: firstProject ? { id: firstProject.id } : null,
+    kickoffSent: firstProjectKickoff?.sent_at != null,
+  });
+  const showOnboarding = !isClientOnboardingComplete(onboardingSteps);
 
   const projectStatusCounts = new Map<ProjectStatus, number>();
   for (const project of projects) {
@@ -132,6 +169,13 @@ const ClientDashboardPage = async ({ params }: ClientDashboardPageProps) => {
 
   return (
     <div className={styles.page}>
+      {showOnboarding && (
+        <ClientOnboardingChecklist
+          clientName={client.name}
+          steps={onboardingSteps}
+        />
+      )}
+
       <ClientStatGrid
         stats={[
           {

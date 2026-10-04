@@ -40,7 +40,9 @@ test.describe("staff app", () => {
     await staffPage.goto("/clients");
     await expect(staffPage.getByRole("heading", { name: /your clients/i })).toBeVisible();
     await staffPage.getByRole("link", { name: DEMO.clientName }).click();
-    await expect(staffPage.getByRole("heading", { name: DEMO.clientName })).toBeVisible();
+    await expect(
+      staffPage.getByRole("heading", { level: 1, name: DEMO.clientName }),
+    ).toBeVisible();
   });
 
   test("the seeded project opens its board with tasks", async ({ staffPage }) => {
