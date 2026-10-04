@@ -15,6 +15,7 @@ import { getCurrentAgencyContext } from "@/lib/agencies";
 import { buildClientOnboardingSteps, isClientOnboardingComplete } from "@/lib/client-onboarding";
 import {
   getAgencyClient,
+  getClientBranding,
   getClientContactInvitations,
   getClientContacts,
 } from "@/lib/clients";
@@ -72,31 +73,40 @@ const ClientDashboardPage = async ({ params }: ClientDashboardPageProps) => {
     redirect("/onboarding/two");
   }
 
-  // Only owners/admins can reach the client-portal settings panel (see
-  // ClientSettingsTabs) — mirror that gate here so the onboarding checklist
-  // never sends anyone else to a tab they can't see, and so it skips
-  // fetching contact/invitation data that staff member couldn't use anyway.
+  // Only owners/admins can reach the client's branding and client-portal
+  // settings tabs (see ClientSettingsTabs) — mirror that gate here so the
+  // onboarding checklist never sends anyone else to a tab they can't see,
+  // and so it skips fetching data that staff member couldn't use anyway.
   const canManagePortal =
     currentAgency.role === "owner" || currentAgency.role === "admin";
 
-  const [client, allProjects, invoices, summary, upcomingMeetings, contacts, invitations] =
-    await Promise.all([
-      getAgencyClient(currentAgency.id, clientId),
-      getAgencyProjects(currentAgency.id),
-      getInvoices(currentAgency.id, { clientId }),
-      getInvoiceSummary(currentAgency.id, clientId),
-      getMeetings(currentAgency.id, {
-        clientId,
-        status: "scheduled",
-        fromDate: new Date().toISOString().slice(0, 10),
-      }),
-      canManagePortal
-        ? getClientContacts(currentAgency.id, clientId)
-        : Promise.resolve([]),
-      canManagePortal
-        ? getClientContactInvitations(currentAgency.id, clientId)
-        : Promise.resolve([]),
-    ]);
+  const [
+    client,
+    allProjects,
+    invoices,
+    summary,
+    upcomingMeetings,
+    contacts,
+    invitations,
+    branding,
+  ] = await Promise.all([
+    getAgencyClient(currentAgency.id, clientId),
+    getAgencyProjects(currentAgency.id),
+    getInvoices(currentAgency.id, { clientId }),
+    getInvoiceSummary(currentAgency.id, clientId),
+    getMeetings(currentAgency.id, {
+      clientId,
+      status: "scheduled",
+      fromDate: new Date().toISOString().slice(0, 10),
+    }),
+    canManagePortal
+      ? getClientContacts(currentAgency.id, clientId)
+      : Promise.resolve([]),
+    canManagePortal
+      ? getClientContactInvitations(currentAgency.id, clientId)
+      : Promise.resolve([]),
+    canManagePortal ? getClientBranding(currentAgency.id, clientId) : null,
+  ]);
 
   const projects = allProjects.filter(
     (project) => project.client_id === clientId,
@@ -112,10 +122,18 @@ const ClientDashboardPage = async ({ params }: ClientDashboardPageProps) => {
   const firstProjectKickoff = firstProject
     ? await getKickoff(currentAgency.id, firstProject.id)
     : null;
+  const hasBranding = Boolean(
+    branding &&
+      (branding.has_logo ||
+        branding.primary_color ||
+        branding.accent_color ||
+        branding.welcome_message),
+  );
   const onboardingSteps = buildClientOnboardingSteps({
     clientId: client.id,
     clientName: client.name,
     canManagePortal,
+    hasBranding,
     hasPortalContact: contacts.length > 0,
     hasPendingInvitation: invitations.length > 0,
     firstProject: firstProject ? { id: firstProject.id } : null,
