@@ -85,6 +85,8 @@ interface NewProjectFormProps {
   clients: AgencyClient[];
   agencyMembers: AgencyMember[];
   currentUserId: string;
+  /** Preselects the client on the details step, e.g. arriving from their page. */
+  initialClientId?: string;
 }
 
 function formatDate(iso: string | null): string {
@@ -114,6 +116,7 @@ const NewProjectForm = ({
   clients,
   agencyMembers,
   currentUserId,
+  initialClientId,
 }: NewProjectFormProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -285,7 +288,10 @@ const NewProjectForm = ({
           <ProjectForm
             agencyId={agencyId}
             clients={clients}
-            initialValues={details ?? undefined}
+            initialValues={
+              details ??
+              (initialClientId ? { clientId: initialClientId } : undefined)
+            }
             onContinue={(input) => {
               setDetails(input);
               // `details` in this render is still the old value, and the

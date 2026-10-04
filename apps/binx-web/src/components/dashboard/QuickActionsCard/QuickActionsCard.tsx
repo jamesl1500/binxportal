@@ -19,9 +19,14 @@ const ACTIONS = [
     key: "project",
     icon: FolderKanban,
     label: "New project",
-    href: "/projects",
+    href: "/projects/new",
   },
-  { key: "client", icon: UserPlus, label: "New client", href: "/clients" },
+  {
+    key: "client",
+    icon: UserPlus,
+    label: "New client",
+    href: "/clients/new",
+  },
   {
     key: "invoice",
     icon: Receipt,
