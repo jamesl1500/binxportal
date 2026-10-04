@@ -23,6 +23,8 @@ function item(overrides: Partial<BoardItem> = {}): BoardItem {
     approval_decided_by_name: null,
     approval_decided_at: null,
     approval_note: null,
+    version_number: null,
+    approved_version_number: null,
     reactions: {},
     my_reactions: [],
     comment_count: 0,

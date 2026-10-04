@@ -17,6 +17,7 @@ import {
   deletePortalBoardItemAction,
   deletePortalCommentAction,
   listPortalCommentsAction,
+  listPortalVersionsAction,
   resyncPortalBoardAction,
   togglePortalReactionAction,
   updatePortalBoardItemAction,
@@ -62,6 +63,7 @@ const PortalBoardStage = ({
       deletePortalCommentAction(projectId, id, commentId),
     decideApproval: (id, decision, note) =>
       decideApprovalAction(projectId, id, decision, note),
+    listVersions: (id) => listPortalVersionsAction(projectId, id),
   };
 
   return (

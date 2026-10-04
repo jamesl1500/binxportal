@@ -16,6 +16,7 @@ import type {
   BoardComment,
   BoardItem,
   BoardItemPatch,
+  BoardItemVersion,
 } from "@/lib/boards-client";
 import {
   addPortalBoardComment,
@@ -25,6 +26,7 @@ import {
   deletePortalBoardItem,
   getPortalBoard,
   getPortalBoardComments,
+  getPortalBoardItemVersions,
   togglePortalBoardReaction,
   updatePortalBoardItem,
   uploadPortalBoardImage,
@@ -161,5 +163,16 @@ export async function decideApprovalAction(
     };
   } catch (error) {
     return fail(error, "Unable to record your decision");
+  }
+}
+
+export async function listPortalVersionsAction(
+  projectId: string,
+  itemId: string,
+): Promise<{ versions?: BoardItemVersion[]; error?: string }> {
+  try {
+    return { versions: await getPortalBoardItemVersions(projectId, itemId) };
+  } catch (error) {
+    return fail(error, "Unable to load the version history");
   }
 }

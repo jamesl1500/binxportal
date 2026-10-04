@@ -504,6 +504,131 @@ class TestApproval:
         assert again.approval_decided_by_name is None
         assert again.approval_note is None
 
+    async def test_request_pins_a_version_snapshot(self, db_session) -> None:
+        owner, _agency, _client, project = await _project(db_session)
+        board = await service.get_or_create_board(db_session, project)
+        item = await service.create_item(
+            db_session,
+            board,
+            project,
+            actor=owner,
+            type_="note",
+            x=0,
+            y=0,
+            width=None,
+            height=None,
+            content={"text": "v1 copy"},
+            color=None,
+        )
+        requested = await service.request_approval(db_session, item, project, actor=owner)
+        assert requested.version_number == 1
+
+        versions = await service.list_versions(db_session, item.id)
+        assert len(versions) == 1
+        assert versions[0].version_number == 1
+        assert json.loads(versions[0].content) == {"text": "v1 copy"}
+        assert versions[0].status == "pending"
+
+    async def test_approving_pins_approved_version_number(self, db_session) -> None:
+        owner, _agency, _client, project = await _project(db_session)
+        contact_user = await make_user(db_session, full_name="Client Casey")
+        board = await service.get_or_create_board(db_session, project)
+        item = await service.create_item(
+            db_session,
+            board,
+            project,
+            actor=owner,
+            type_="note",
+            x=0,
+            y=0,
+            width=None,
+            height=None,
+            content={"text": "v1"},
+            color=None,
+        )
+        await service.request_approval(db_session, item, project, actor=owner)
+        decided = await service.decide_approval(
+            db_session, item, project, decider=contact_user, decision="approved", note=None
+        )
+        assert decided.approved_version_number == 1
+
+        versions = await service.list_versions(db_session, item.id)
+        assert versions[0].status == "approved"
+        assert versions[0].decided_by_name == "Client Casey"
+
+    async def test_editing_after_approval_clears_decision_but_keeps_the_pinned_version(self, db_session) -> None:
+        """Editing a card's content after it's approved invalidates the live
+        decision (it no longer matches what was approved) but must never
+        touch the already-decided BoardItemVersion row — that's the whole
+        point of pinning: the client's sign-off stays answerable forever."""
+        owner, _agency, _client, project = await _project(db_session)
+        contact_user = await make_user(db_session, full_name="Client Casey")
+        board = await service.get_or_create_board(db_session, project)
+        item = await service.create_item(
+            db_session,
+            board,
+            project,
+            actor=owner,
+            type_="note",
+            x=0,
+            y=0,
+            width=None,
+            height=None,
+            content={"text": "v1"},
+            color=None,
+        )
+        await service.request_approval(db_session, item, project, actor=owner)
+        await service.decide_approval(db_session, item, project, decider=contact_user, decision="approved", note=None)
+
+        edited = await service.update_item(db_session, item, project, content={"text": "v2 — a tweak"})
+        assert edited.approval_status is None
+        assert edited.approval_requested_by_name is None
+        assert edited.approved_version_number == 1  # the old sign-off is still pinned
+        assert edited.version_number == 1  # no new snapshot is taken until re-requested
+
+        versions = await service.list_versions(db_session, item.id)
+        assert len(versions) == 1
+        assert json.loads(versions[0].content) == {"text": "v1"}  # untouched by the edit
+        assert versions[0].status == "approved"
+
+        # Re-requesting pins the new content as version 2 and leaves version 1 alone.
+        requested_again = await service.request_approval(db_session, item, project, actor=owner)
+        assert requested_again.version_number == 2
+        assert requested_again.approved_version_number == 1
+
+        versions = await service.list_versions(db_session, item.id)
+        assert len(versions) == 2
+        by_number = {v.version_number: v for v in versions}
+        assert json.loads(by_number[1].content) == {"text": "v1"}
+        assert json.loads(by_number[2].content) == {"text": "v2 — a tweak"}
+        assert by_number[2].status == "pending"
+
+    async def test_moving_or_resizing_after_approval_does_not_clear_the_decision(self, db_session) -> None:
+        """Geometry isn't substance — dragging/resizing an approved card
+        shouldn't silently reopen its approval."""
+        owner, _agency, _client, project = await _project(db_session)
+        contact_user = await make_user(db_session, full_name="Client Casey")
+        board = await service.get_or_create_board(db_session, project)
+        item = await service.create_item(
+            db_session,
+            board,
+            project,
+            actor=owner,
+            type_="note",
+            x=0,
+            y=0,
+            width=None,
+            height=None,
+            content={"text": "v1"},
+            color=None,
+        )
+        await service.request_approval(db_session, item, project, actor=owner)
+        await service.decide_approval(db_session, item, project, decider=contact_user, decision="approved", note=None)
+
+        moved = await service.update_item(db_session, item, project, x=100, y=50, width=300)
+        assert moved.approval_status == "approved"
+        assert moved.approved_version_number == 1
+
 
 class TestBroadcastRecipients:
     async def test_reaches_team_and_client_contacts_only(self, db_session) -> None:

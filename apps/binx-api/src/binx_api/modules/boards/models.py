@@ -45,6 +45,9 @@ REACTION_KINDS: list[str] = ["👍", "❤️", "🎉", "👀", "🚀"]
 # Client-approval workflow on a card. Null means no approval was ever
 # requested. An agency member requests/withdraws; only a client-portal
 # contact decides (approves or asks for changes) — see boards/service.py.
+# Every request pins a BoardItemVersion snapshot of the card's content at
+# that moment, so "what did the client actually sign off on" never drifts
+# even if the card is edited later.
 APPROVAL_PENDING = "pending"
 APPROVAL_APPROVED = "approved"
 APPROVAL_CHANGES_REQUESTED = "changes_requested"
@@ -103,6 +106,41 @@ class BoardItem(Base):
     approval_decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
     # The client's feedback when requesting changes (or an optional note on approval).
     approval_note: Mapped[str | None] = mapped_column(String(2000), default=None)
+
+    # Version counters — see BoardItemVersion below. Null until the card's
+    # approval is requested for the first time. version_number is the most
+    # recent snapshot (whatever its decision); approved_version_number is the
+    # last one a client actually approved, and keeps pointing at it even after
+    # a later edit reopens the card for re-approval, so "the approved version"
+    # always resolves to an immutable snapshot rather than the live content.
+    version_number: Mapped[int | None] = mapped_column(Integer, default=None)
+    approved_version_number: Mapped[int | None] = mapped_column(Integer, default=None)
+
+
+# An immutable snapshot of a card's content + colour, taken every time an
+# agency member requests approval. Pinned by (item_id, version_number), never
+# mutated once decided — only its decision fields (status/decided_*/note) get
+# filled in when the client responds. This is what lets everyone answer
+# "exactly which version did the client approve" even after the card moves on.
+class BoardItemVersion(Base):
+    __tablename__ = "board_item_versions"
+    __table_args__ = (UniqueConstraint("item_id", "version_number", name="uq_board_item_versions_item_number"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    item_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("board_items.id", ondelete="CASCADE"), index=True)
+    version_number: Mapped[int] = mapped_column(Integer)
+
+    # Snapshotted at request time — the card's substance, not its position
+    # (dragging/resizing never creates a new version).
+    content: Mapped[str] = mapped_column(Text, default="{}")
+    color: Mapped[str | None] = mapped_column(String(7), default=None)
+
+    status: Mapped[str] = mapped_column(String(20), default=APPROVAL_PENDING)
+    requested_by_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), default=None)
+    requested_by_name: Mapped[str | None] = mapped_column(String(255), default=None)
+    decided_by_name: Mapped[str | None] = mapped_column(String(255), default=None)
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    note: Mapped[str | None] = mapped_column(String(2000), default=None)
 
 
 # One emoji reaction on a card by one person. Toggled on/off; the unique

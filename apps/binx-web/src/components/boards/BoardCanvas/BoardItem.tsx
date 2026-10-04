@@ -14,7 +14,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { MessageCircle, Trash2 } from "lucide-react";
+import { History, MessageCircle, Trash2 } from "lucide-react";
 
 import {
   clamp,
@@ -28,6 +28,7 @@ import {
 } from "@/lib/boards-client";
 import { useBoardStore } from "@/stores/use-board-store";
 import BoardCommentsDialog from "@/components/boards/BoardCanvas/BoardCommentsDialog";
+import BoardVersionsDialog from "@/components/boards/BoardCanvas/BoardVersionsDialog";
 
 import styles from "./BoardCanvas.module.scss";
 import type { BoardCanvasActions } from "./BoardCanvas";
@@ -78,6 +79,7 @@ const BoardItemView = ({
   const cancelledRef = useRef(false);
   const [editing, setEditing] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(false);
+  const [versionsOpen, setVersionsOpen] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [requestingChanges, setRequestingChanges] = useState(false);
   const [changesNote, setChangesNote] = useState("");
@@ -98,6 +100,8 @@ const BoardItemView = ({
       setChangesNote("");
     }
   }
+
+  const versionSuffix = item.version_number != null ? ` (v${item.version_number})` : "";
 
   const bumpToFront = () => {
     // A cheap "bring to front": one past the current view is fine, the server
@@ -359,7 +363,9 @@ const BoardItemView = ({
       </span>
 
       {/* Approval state — visible whenever set, not just on hover/select, so
-          a resting board still shows what's waiting on the client. */}
+          a resting board still shows what's waiting on the client. Each
+          decision is tied to a pinned version number, so this always names
+          exactly which snapshot is pending / was approved. */}
       {item.approval_status && (
         <div
           className={styles.approvalBadge}
@@ -367,20 +373,36 @@ const BoardItemView = ({
           onPointerDown={(e) => e.stopPropagation()}
         >
           <span className={styles.approvalStatus}>
-            {item.approval_status === "pending" && "Awaiting approval"}
+            {item.approval_status === "pending" &&
+              `Awaiting approval${versionSuffix}`}
             {item.approval_status === "approved" &&
               (item.approval_decided_by_name
-                ? `Approved by ${item.approval_decided_by_name}`
-                : "Approved")}
+                ? `Approved by ${item.approval_decided_by_name}${versionSuffix}`
+                : `Approved${versionSuffix}`)}
             {item.approval_status === "changes_requested" &&
               (item.approval_decided_by_name
-                ? `Changes requested by ${item.approval_decided_by_name}`
-                : "Changes requested")}
+                ? `Changes requested by ${item.approval_decided_by_name}${versionSuffix}`
+                : `Changes requested${versionSuffix}`)}
           </span>
           {item.approval_status === "changes_requested" &&
             item.approval_note && (
               <p className={styles.approvalNote}>“{item.approval_note}”</p>
             )}
+        </div>
+      )}
+
+      {/* The card was edited since its last approved snapshot — the decision
+          was cleared (see boards/service.py::update_item), but the earlier
+          sign-off is still pinned and viewable in the history dialog. */}
+      {!item.approval_status && item.approved_version_number != null && (
+        <div
+          className={styles.approvalBadge}
+          data-status="pending"
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <span className={styles.approvalStatus}>
+            Edited since approved v{item.approved_version_number}
+          </span>
         </div>
       )}
 
@@ -488,6 +510,17 @@ const BoardItemView = ({
                   <MessageCircle aria-hidden="true" />
                   {item.comment_count > 0 && <span>{item.comment_count}</span>}
                 </button>
+                {item.version_number != null && (
+                  <button
+                    type="button"
+                    className={styles.commentButton}
+                    onClick={() => setVersionsOpen(true)}
+                    aria-label="Version history"
+                  >
+                    <History aria-hidden="true" />
+                    <span>v{item.version_number}</span>
+                  </button>
+                )}
                 {item.type === "note" && (
                   <>
                     <span className={styles.barDivider} aria-hidden="true" />
@@ -585,6 +618,16 @@ const BoardItemView = ({
           canModerate={canModerate}
           open={commentsOpen}
           onOpenChange={setCommentsOpen}
+          onError={onError}
+        />
+      )}
+
+      {versionsOpen && (
+        <BoardVersionsDialog
+          item={item}
+          actions={actions}
+          open={versionsOpen}
+          onOpenChange={setVersionsOpen}
           onError={onError}
         />
       )}

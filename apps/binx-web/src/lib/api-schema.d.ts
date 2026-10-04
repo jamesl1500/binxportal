@@ -1912,6 +1912,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agencies/{agency_id}/projects/{project_id}/canvas/items/{item_id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Item Versions */
+        get: operations["list_item_versions_agencies__agency_id__projects__project_id__canvas_items__item_id__versions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agencies/{agency_id}/projects/{project_id}/files": {
         parameters: {
             query?: never;
@@ -3441,6 +3458,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/portal/projects/{project_id}/canvas/items/{item_id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Board Item Versions */
+        get: operations["list_board_item_versions_portal_projects__project_id__canvas_items__item_id__versions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/portal/projects/{project_id}/kickoff": {
         parameters: {
             query?: never;
@@ -4717,6 +4751,8 @@ export interface components {
             approval_requested_by_name?: string | null;
             /** Approval Status */
             approval_status?: string | null;
+            /** Approved Version Number */
+            approved_version_number?: number | null;
             /** Author Kind */
             author_kind: string;
             /**
@@ -4760,6 +4796,8 @@ export interface components {
             };
             /** Type */
             type: string;
+            /** Version Number */
+            version_number?: number | null;
             /** Width */
             width: number;
             /** X */
@@ -4796,6 +4834,45 @@ export interface components {
             y?: number | null;
             /** Z */
             z?: number | null;
+        };
+        /**
+         * BoardItemVersionRead
+         * @description One immutable approval-cycle snapshot — see BoardItemVersion.
+         */
+        BoardItemVersionRead: {
+            /** Color */
+            color: string | null;
+            /** Content */
+            content: {
+                [key: string]: unknown;
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Decided At */
+            decided_at: string | null;
+            /** Decided By Name */
+            decided_by_name: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Item Id
+             * Format: uuid
+             */
+            item_id: string;
+            /** Note */
+            note: string | null;
+            /** Requested By Name */
+            requested_by_name: string | null;
+            /** Status */
+            status: string;
+            /** Version Number */
+            version_number: number;
         };
         /** BoardReactionToggle */
         BoardReactionToggle: {
@@ -13641,6 +13718,39 @@ export interface operations {
             };
         };
     };
+    list_item_versions_agencies__agency_id__projects__project_id__canvas_items__item_id__versions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                item_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardItemVersionRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_project_files_agencies__agency_id__projects__project_id__files_get: {
         parameters: {
             query?: never;
@@ -17264,6 +17374,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BoardReactionsRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_board_item_versions_portal_projects__project_id__canvas_items__item_id__versions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardItemVersionRead"][];
                 };
             };
             /** @description Validation Error */

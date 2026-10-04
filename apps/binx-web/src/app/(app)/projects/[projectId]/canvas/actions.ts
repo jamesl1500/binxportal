@@ -15,6 +15,7 @@ import type {
   BoardComment,
   BoardItem,
   BoardItemPatch,
+  BoardItemVersion,
 } from "@/lib/boards-client";
 import {
   type BoardReactions,
@@ -25,6 +26,7 @@ import {
   deleteBoardItem,
   getBoard,
   getBoardComments,
+  getBoardItemVersions,
   requestBoardApproval,
   toggleBoardReaction,
   updateBoardItem,
@@ -185,5 +187,17 @@ export async function withdrawApprovalAction(
     return { item: await withdrawBoardApproval(agencyId, projectId, itemId) };
   } catch (error) {
     return fail(error, "Unable to withdraw the approval request");
+  }
+}
+
+export async function listVersionsAction(
+  agencyId: string,
+  projectId: string,
+  itemId: string,
+): Promise<{ versions?: BoardItemVersion[]; error?: string }> {
+  try {
+    return { versions: await getBoardItemVersions(agencyId, projectId, itemId) };
+  } catch (error) {
+    return fail(error, "Unable to load the version history");
   }
 }
