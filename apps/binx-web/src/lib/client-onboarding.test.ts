@@ -8,7 +8,9 @@ import {
 const BASE = {
   clientId: "client-1",
   clientName: "Acme Co",
+  canManagePortal: true,
   hasPortalContact: false,
+  hasPendingInvitation: false,
   firstProject: null,
   kickoffSent: false,
 } as const;
@@ -28,6 +30,23 @@ describe("buildClientOnboardingSteps", () => {
     });
     expect(invite.done).toBe(true);
     expect(invite.cta).toBe("Manage access");
+  });
+
+  it("marks invite done while an invitation is still pending acceptance", () => {
+    const [invite] = buildClientOnboardingSteps({
+      ...BASE,
+      hasPendingInvitation: true,
+    });
+    expect(invite.done).toBe(true);
+    expect(invite.cta).toBe("View invite");
+  });
+
+  it("omits the invite step for staff who can't manage the client portal", () => {
+    const steps = buildClientOnboardingSteps({
+      ...BASE,
+      canManagePortal: false,
+    });
+    expect(steps.map((step) => step.id)).not.toContain("invite");
   });
 
   it("only shows the kickoff step once a project exists", () => {
@@ -69,6 +88,16 @@ describe("isClientOnboardingComplete", () => {
     const steps = buildClientOnboardingSteps({
       ...BASE,
       hasPortalContact: true,
+      firstProject: { id: "proj-1" },
+      kickoffSent: true,
+    });
+    expect(isClientOnboardingComplete(steps)).toBe(true);
+  });
+
+  it("is true for a non-managing staff member once the remaining steps are done", () => {
+    const steps = buildClientOnboardingSteps({
+      ...BASE,
+      canManagePortal: false,
       firstProject: { id: "proj-1" },
       kickoffSent: true,
     });

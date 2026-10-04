@@ -13,7 +13,11 @@ import { redirect } from "next/navigation";
 
 import { getCurrentAgencyContext } from "@/lib/agencies";
 import { buildClientOnboardingSteps, isClientOnboardingComplete } from "@/lib/client-onboarding";
-import { getAgencyClient, getClientContacts } from "@/lib/clients";
+import {
+  getAgencyClient,
+  getClientContactInvitations,
+  getClientContacts,
+} from "@/lib/clients";
 import {
   getInvoices,
   getInvoiceSummary,
@@ -68,7 +72,14 @@ const ClientDashboardPage = async ({ params }: ClientDashboardPageProps) => {
     redirect("/onboarding/two");
   }
 
-  const [client, allProjects, invoices, summary, upcomingMeetings, contacts] =
+  // Only owners/admins can reach the client-portal settings panel (see
+  // ClientSettingsTabs) — mirror that gate here so the onboarding checklist
+  // never sends anyone else to a tab they can't see, and so it skips
+  // fetching contact/invitation data that staff member couldn't use anyway.
+  const canManagePortal =
+    currentAgency.role === "owner" || currentAgency.role === "admin";
+
+  const [client, allProjects, invoices, summary, upcomingMeetings, contacts, invitations] =
     await Promise.all([
       getAgencyClient(currentAgency.id, clientId),
       getAgencyProjects(currentAgency.id),
@@ -79,7 +90,12 @@ const ClientDashboardPage = async ({ params }: ClientDashboardPageProps) => {
         status: "scheduled",
         fromDate: new Date().toISOString().slice(0, 10),
       }),
-      getClientContacts(currentAgency.id, clientId),
+      canManagePortal
+        ? getClientContacts(currentAgency.id, clientId)
+        : Promise.resolve([]),
+      canManagePortal
+        ? getClientContactInvitations(currentAgency.id, clientId)
+        : Promise.resolve([]),
     ]);
 
   const projects = allProjects.filter(
@@ -99,7 +115,9 @@ const ClientDashboardPage = async ({ params }: ClientDashboardPageProps) => {
   const onboardingSteps = buildClientOnboardingSteps({
     clientId: client.id,
     clientName: client.name,
+    canManagePortal,
     hasPortalContact: contacts.length > 0,
+    hasPendingInvitation: invitations.length > 0,
     firstProject: firstProject ? { id: firstProject.id } : null,
     kickoffSent: firstProjectKickoff?.sent_at != null,
   });

@@ -25,8 +25,17 @@ export interface ClientOnboardingStep {
 export interface ClientOnboardingInput {
   clientId: string;
   clientName: string;
-  /** Any portal contact exists for this client, invited or accepted. */
+  /**
+   * Whether the viewing staff member can reach the client-portal settings
+   * panel at all (owners/admins only — see ClientSettingsTabs). The invite
+   * step is omitted entirely for anyone else: linking them to a tab they
+   * can't see would leave the step permanently stuck undone.
+   */
+  canManagePortal: boolean;
+  /** An accepted portal contact exists for this client. */
   hasPortalContact: boolean;
+  /** An invitation has been sent and hasn't been accepted or revoked yet. */
+  hasPendingInvitation: boolean;
   /** The client's earliest project, if any. */
   firstProject: { id: string } | null;
   /** Whether a kickoff has been sent on that first project. */
@@ -44,30 +53,39 @@ export interface ClientOnboardingInput {
 export function buildClientOnboardingSteps({
   clientId,
   clientName,
+  canManagePortal,
   hasPortalContact,
+  hasPendingInvitation,
   firstProject,
   kickoffSent,
 }: ClientOnboardingInput): ClientOnboardingStep[] {
-  const steps: ClientOnboardingStep[] = [
-    {
+  const steps: ClientOnboardingStep[] = [];
+
+  if (canManagePortal) {
+    steps.push({
       id: "invite",
       title: "Invite them to the portal",
       description: `Give ${clientName} their own login to track projects, invoices and messages.`,
-      done: hasPortalContact,
+      done: hasPortalContact || hasPendingInvitation,
       href: `/clients/${clientId}/settings#portal`,
-      cta: hasPortalContact ? "Manage access" : "Send invite",
-    },
-    {
-      id: "project",
-      title: "Start the first project",
-      description: "Projects are what the portal and your team organize work around.",
-      done: firstProject !== null,
-      href: firstProject
-        ? `/projects/${firstProject.id}`
-        : `/projects/new?clientId=${clientId}`,
-      cta: firstProject ? "Open project" : "Create project",
-    },
-  ];
+      cta: hasPortalContact
+        ? "Manage access"
+        : hasPendingInvitation
+          ? "View invite"
+          : "Send invite",
+    });
+  }
+
+  steps.push({
+    id: "project",
+    title: "Start the first project",
+    description: "Projects are what the portal and your team organize work around.",
+    done: firstProject !== null,
+    href: firstProject
+      ? `/projects/${firstProject.id}`
+      : `/projects/new?clientId=${clientId}`,
+    cta: firstProject ? "Open project" : "Create project",
+  });
 
   if (firstProject) {
     steps.push({
