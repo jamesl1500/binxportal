@@ -25,6 +25,7 @@ import { getUnreadMessageCount } from "@/lib/messaging";
 import { getNotifications } from "@/lib/notifications";
 import { getPortalContext } from "@/lib/portal";
 import { getAppearanceSettings, getTutorialProgress } from "@/lib/users";
+import AppFooter from "@/components/navigation/AppFooter/AppFooter";
 import AppHeader from "@/components/navigation/AppHeader/AppHeader";
 import TutorialProvider from "@/components/tutorial/TutorialProvider/TutorialProvider";
 import WelcomeTourModal from "@/components/tutorial/WelcomeTourModal/WelcomeTourModal";
@@ -89,6 +90,8 @@ const AppLayout = async ({ children }: { children: React.ReactNode }) => {
         />
 
         <main className={styles.content}>{children}</main>
+
+        <AppFooter />
 
         <WelcomeTourModal />
         <Toaster position="bottom-right" richColors />

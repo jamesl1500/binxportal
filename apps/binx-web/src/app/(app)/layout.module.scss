@@ -3,12 +3,24 @@
 .root {
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  // A definite height (not min-height) so `.content`'s `flex: 1; min-height: 0`
+  // below can resolve to the real remaining space after the header and
+  // footer — with only `min-height`, a flex-grow child with no intrinsic
+  // size has nothing definite to grow against and falls back to its content
+  // size instead, overflowing past the header+footer and forcing a page
+  // scroll that leaves the footer off-screen on routes like /messages.
+  height: 100dvh;
   background: t.$color-paper;
 }
 
 .content {
+  display: flex;
+  flex-direction: column;
   flex: 1;
+  min-height: 0;
+  // Pages taller than the space between header and footer scroll in here
+  // (header/footer stay put) instead of scrolling the whole document.
+  overflow-y: auto;
   padding: t.$space-8 t.$space-6;
 
   @media (min-width: 640px) {
