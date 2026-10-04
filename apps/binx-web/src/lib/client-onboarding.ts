@@ -14,7 +14,7 @@
  * @author Binx Portal
  */
 export interface ClientOnboardingStep {
-  id: "invite" | "project" | "kickoff";
+  id: "branding" | "invite" | "project" | "kickoff";
   title: string;
   description: string;
   done: boolean;
@@ -26,12 +26,15 @@ export interface ClientOnboardingInput {
   clientId: string;
   clientName: string;
   /**
-   * Whether the viewing staff member can reach the client-portal settings
-   * panel at all (owners/admins only — see ClientSettingsTabs). The invite
-   * step is omitted entirely for anyone else: linking them to a tab they
-   * can't see would leave the step permanently stuck undone.
+   * Whether the viewing staff member can reach the client's Settings tabs
+   * that are owner/admin-only (branding and the client-portal panel — see
+   * ClientSettingsTabs). Both of those steps are omitted entirely for
+   * anyone else: linking them to a tab they can't see would leave the step
+   * permanently stuck undone.
    */
   canManagePortal: boolean;
+  /** Any branding has been set — a logo, a colour, or a welcome message. */
+  hasBranding: boolean;
   /** An accepted portal contact exists for this client. */
   hasPortalContact: boolean;
   /** An invitation has been sent and hasn't been accepted or revoked yet. */
@@ -45,15 +48,17 @@ export interface ClientOnboardingInput {
 /**
  * buildClientOnboardingSteps
  *
- * The three things that turn a bare client record into one actually working
- * with the agency. The kickoff step only appears once there's a project to
- * send one on — same progressive-disclosure rule buildChecklist uses on the
- * portal side.
+ * The things that turn a bare client record into one actually working with
+ * the agency, branding first — it's what the client sees the moment they
+ * log in, so it comes before the invite that gives them a reason to. The
+ * kickoff step only appears once there's a project to send one on — same
+ * progressive-disclosure rule buildChecklist uses on the portal side.
  */
 export function buildClientOnboardingSteps({
   clientId,
   clientName,
   canManagePortal,
+  hasBranding,
   hasPortalContact,
   hasPendingInvitation,
   firstProject,
@@ -62,6 +67,15 @@ export function buildClientOnboardingSteps({
   const steps: ClientOnboardingStep[] = [];
 
   if (canManagePortal) {
+    steps.push({
+      id: "branding",
+      title: "Add their branding",
+      description: `A logo, colors and a welcome message ${clientName} sees as soon as they log in.`,
+      done: hasBranding,
+      href: `/clients/${clientId}/settings#branding`,
+      cta: hasBranding ? "Edit branding" : "Add branding",
+    });
+
     steps.push({
       id: "invite",
       title: "Invite them to the portal",

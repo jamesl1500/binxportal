@@ -9,6 +9,7 @@ const BASE = {
   clientId: "client-1",
   clientName: "Acme Co",
   canManagePortal: true,
+  hasBranding: false,
   hasPortalContact: false,
   hasPendingInvitation: false,
   firstProject: null,
@@ -16,37 +17,53 @@ const BASE = {
 } as const;
 
 describe("buildClientOnboardingSteps", () => {
-  it("starts with invite and project steps, both not done", () => {
+  it("leads with branding, then invite and project, none done", () => {
     const steps = buildClientOnboardingSteps(BASE);
-    expect(steps.map((step) => step.id)).toEqual(["invite", "project"]);
+    expect(steps.map((step) => step.id)).toEqual([
+      "branding",
+      "invite",
+      "project",
+    ]);
     expect(steps.every((step) => !step.done)).toBe(true);
-    expect(steps[1].href).toBe("/projects/new?clientId=client-1");
+    expect(steps[2].href).toBe("/projects/new?clientId=client-1");
+  });
+
+  it("marks branding done once any branding is set", () => {
+    const [branding] = buildClientOnboardingSteps({
+      ...BASE,
+      hasBranding: true,
+    });
+    expect(branding.id).toBe("branding");
+    expect(branding.done).toBe(true);
+    expect(branding.cta).toBe("Edit branding");
   });
 
   it("marks invite done once a portal contact exists", () => {
-    const [invite] = buildClientOnboardingSteps({
+    const invite = buildClientOnboardingSteps({
       ...BASE,
       hasPortalContact: true,
-    });
-    expect(invite.done).toBe(true);
-    expect(invite.cta).toBe("Manage access");
+    }).find((step) => step.id === "invite");
+    expect(invite?.done).toBe(true);
+    expect(invite?.cta).toBe("Manage access");
   });
 
   it("marks invite done while an invitation is still pending acceptance", () => {
-    const [invite] = buildClientOnboardingSteps({
+    const invite = buildClientOnboardingSteps({
       ...BASE,
       hasPendingInvitation: true,
-    });
-    expect(invite.done).toBe(true);
-    expect(invite.cta).toBe("View invite");
+    }).find((step) => step.id === "invite");
+    expect(invite?.done).toBe(true);
+    expect(invite?.cta).toBe("View invite");
   });
 
-  it("omits the invite step for staff who can't manage the client portal", () => {
+  it("omits branding and invite for staff who can't manage the client portal", () => {
     const steps = buildClientOnboardingSteps({
       ...BASE,
       canManagePortal: false,
     });
+    expect(steps.map((step) => step.id)).not.toContain("branding");
     expect(steps.map((step) => step.id)).not.toContain("invite");
+    expect(steps.map((step) => step.id)).toEqual(["project"]);
   });
 
   it("only shows the kickoff step once a project exists", () => {
@@ -87,6 +104,7 @@ describe("isClientOnboardingComplete", () => {
   it("is true once every listed step is done", () => {
     const steps = buildClientOnboardingSteps({
       ...BASE,
+      hasBranding: true,
       hasPortalContact: true,
       firstProject: { id: "proj-1" },
       kickoffSent: true,
