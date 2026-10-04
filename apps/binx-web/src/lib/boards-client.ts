@@ -50,6 +50,12 @@ export interface BoardItem {
   approval_decided_by_name: string | null;
   approval_decided_at: string | null;
   approval_note: string | null;
+  /** Version pinning — null until approval has been requested at least once.
+   * `version_number` is the most recent snapshot (whatever its decision);
+   * `approved_version_number` is the last one actually approved, and keeps
+   * pointing at it even once a later edit reopens the card for re-approval. */
+  version_number: number | null;
+  approved_version_number: number | null;
   /** {emoji: count}. The realtime item events omit these — the store keeps them. */
   reactions: Record<string, number>;
   /** Which reaction kinds the current viewer has on this card. */
@@ -59,6 +65,12 @@ export interface BoardItem {
 
 export type BoardComment = Omit<Schemas["BoardCommentRead"], "author_kind"> & {
   author_kind: "agency" | "client";
+};
+
+/** One immutable approval-cycle snapshot of a card — see binx-api's
+ * boards/models.py::BoardItemVersion. */
+export type BoardItemVersion = Omit<Schemas["BoardItemVersionRead"], "content"> & {
+  content: BoardItemContent;
 };
 
 /** The fixed reaction set — keep in sync with binx-api's REACTION_KINDS. */

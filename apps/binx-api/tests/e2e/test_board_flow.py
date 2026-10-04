@@ -379,6 +379,59 @@ class TestApproval:
         )
         assert r.status_code == 422
 
+    async def test_versions_pin_exactly_what_was_approved_through_edits(self, client, canvas_ctx) -> None:
+        ctx = canvas_ctx
+        staff_h = auth_headers(ctx["owner"])
+        client_h = auth_headers(ctx["contact"])
+        staff_base = _staff_base(ctx)
+        portal_base = f"/portal/projects/{ctx['project'].id}/canvas"
+
+        item = (
+            await client.post(f"{staff_base}/items", json={"type": "note", "content": {"text": "v1"}}, headers=staff_h)
+        ).json()
+        assert item["version_number"] is None
+        assert item["approved_version_number"] is None
+
+        await client.post(f"{staff_base}/items/{item['id']}/approval/request", headers=staff_h)
+        approved = (
+            await client.post(
+                f"{portal_base}/items/{item['id']}/approval/decide", json={"status": "approved"}, headers=client_h
+            )
+        ).json()
+        assert approved["version_number"] == 1
+        assert approved["approved_version_number"] == 1
+
+        # Both sides can read the same history.
+        for base, headers in ((staff_base, staff_h), (portal_base, client_h)):
+            versions = (await client.get(f"{base}/items/{item['id']}/versions", headers=headers)).json()
+            assert len(versions) == 1
+            assert versions[0]["version_number"] == 1
+            assert versions[0]["status"] == "approved"
+            assert versions[0]["content"] == {"text": "v1"}
+
+        # Editing after approval clears the live decision but keeps v1 pinned.
+        edited = (
+            await client.patch(
+                f"{staff_base}/items/{item['id']}", json={"content": {"text": "v2"}}, headers=staff_h
+            )
+        ).json()
+        assert edited["approval_status"] is None
+        assert edited["approved_version_number"] == 1
+        assert edited["version_number"] == 1
+
+        again = (
+            await client.post(f"{staff_base}/items/{item['id']}/approval/request", headers=staff_h)
+        ).json()
+        assert again["version_number"] == 2
+        assert again["approved_version_number"] == 1
+
+        versions = (await client.get(f"{staff_base}/items/{item['id']}/versions", headers=staff_h)).json()
+        by_number = {v["version_number"]: v for v in versions}
+        assert by_number[1]["content"] == {"text": "v1"}
+        assert by_number[1]["status"] == "approved"
+        assert by_number[2]["content"] == {"text": "v2"}
+        assert by_number[2]["status"] == "pending"
+
 
 class TestRealtime:
     async def test_staff_create_pushes_to_a_connected_client_contact(self, client, canvas_ctx) -> None:

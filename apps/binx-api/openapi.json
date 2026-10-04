@@ -2482,6 +2482,17 @@
             ],
             "title": "Approval Status"
           },
+          "approved_version_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved Version Number"
+          },
           "author_kind": {
             "title": "Author Kind",
             "type": "string"
@@ -2556,6 +2567,17 @@
           "type": {
             "title": "Type",
             "type": "string"
+          },
+          "version_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version Number"
           },
           "width": {
             "title": "Width",
@@ -2683,6 +2705,110 @@
           }
         },
         "title": "BoardItemUpdate",
+        "type": "object"
+      },
+      "BoardItemVersionRead": {
+        "description": "One immutable approval-cycle snapshot \u2014 see BoardItemVersion.",
+        "properties": {
+          "color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color"
+          },
+          "content": {
+            "additionalProperties": true,
+            "title": "Content",
+            "type": "object"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "decided_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided At"
+          },
+          "decided_by_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided By Name"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "item_id": {
+            "format": "uuid",
+            "title": "Item Id",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "requested_by_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requested By Name"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "version_number": {
+            "title": "Version Number",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "item_id",
+          "version_number",
+          "content",
+          "color",
+          "status",
+          "requested_by_name",
+          "decided_by_name",
+          "decided_at",
+          "note",
+          "created_at"
+        ],
+        "title": "BoardItemVersionRead",
         "type": "object"
       },
       "BoardReactionToggle": {
@@ -22571,6 +22697,78 @@
         ]
       }
     },
+    "/agencies/{agency_id}/projects/{project_id}/canvas/items/{item_id}/versions": {
+      "get": {
+        "operationId": "list_item_versions_agencies__agency_id__projects__project_id__canvas_items__item_id__versions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Item Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/BoardItemVersionRead"
+                  },
+                  "title": "Response List Item Versions Agencies  Agency Id  Projects  Project Id  Canvas Items  Item Id  Versions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Item Versions",
+        "tags": [
+          "boards"
+        ]
+      }
+    },
     "/agencies/{agency_id}/projects/{project_id}/files": {
       "get": {
         "operationId": "list_project_files_agencies__agency_id__projects__project_id__files_get",
@@ -29057,6 +29255,68 @@
           }
         ],
         "summary": "Toggle Board Reaction",
+        "tags": [
+          "client-portal"
+        ]
+      }
+    },
+    "/portal/projects/{project_id}/canvas/items/{item_id}/versions": {
+      "get": {
+        "operationId": "list_board_item_versions_portal_projects__project_id__canvas_items__item_id__versions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Item Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/BoardItemVersionRead"
+                  },
+                  "title": "Response List Board Item Versions Portal Projects  Project Id  Canvas Items  Item Id  Versions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Board Item Versions",
         "tags": [
           "client-portal"
         ]

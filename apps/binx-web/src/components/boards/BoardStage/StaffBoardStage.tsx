@@ -16,6 +16,7 @@ import {
   deleteBoardItemAction,
   deleteCommentAction,
   listCommentsAction,
+  listVersionsAction,
   requestApprovalAction,
   resyncBoardAction,
   toggleReactionAction,
@@ -69,6 +70,7 @@ const StaffBoardStage = ({
       deleteCommentAction(agencyId, projectId, id, commentId),
     requestApproval: (id) => requestApprovalAction(agencyId, projectId, id),
     withdrawApproval: (id) => withdrawApprovalAction(agencyId, projectId, id),
+    listVersions: (id) => listVersionsAction(agencyId, projectId, id),
   };
 
   return (

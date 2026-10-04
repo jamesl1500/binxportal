@@ -21,6 +21,7 @@ import type {
   BoardComment,
   BoardItem,
   BoardItemPatch,
+  BoardItemVersion,
 } from "@/lib/boards-client";
 import type { BoardReactions, CreateBoardItemInput } from "@/lib/boards";
 import type { InvoiceDetail, Invoice as StaffInvoice } from "@/lib/invoicing";
@@ -672,6 +673,22 @@ export async function decidePortalBoardApproval(
     return data;
   } catch (error) {
     rethrow(error, "Unable to record your decision");
+  }
+}
+
+export async function getPortalBoardItemVersions(
+  projectId: string,
+  itemId: string,
+): Promise<BoardItemVersion[]> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.get<BoardItemVersion[]>(
+      `${canvasBase(projectId)}/items/${itemId}/versions`,
+      { headers },
+    );
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to load the version history");
   }
 }
 

@@ -29,6 +29,11 @@ class BoardItemRead(BaseModel):
     approval_decided_by_name: str | None = None
     approval_decided_at: datetime | None = None
     approval_note: str | None = None
+    # Version pinning — null until approval has been requested at least once.
+    # version_number is the most recent snapshot; approved_version_number is
+    # the last one actually approved (see boards/models.py::BoardItemVersion).
+    version_number: int | None = None
+    approved_version_number: int | None = None
     # Filled from boards/service.py::item_meta on the board GET; the realtime
     # item events omit them and the frontend store keeps its own values.
     reactions: dict[str, int] = {}
@@ -96,3 +101,19 @@ class BoardApprovalDecision(BaseModel):
 
     status: str = Field(pattern=_APPROVAL_DECISION_PATTERN)
     note: str | None = Field(default=None, max_length=2000)
+
+
+class BoardItemVersionRead(BaseModel):
+    """One immutable approval-cycle snapshot — see BoardItemVersion."""
+
+    id: uuid.UUID
+    item_id: uuid.UUID
+    version_number: int
+    content: dict[str, Any]
+    color: str | None
+    status: str
+    requested_by_name: str | None
+    decided_by_name: str | None
+    decided_at: datetime | None
+    note: str | None
+    created_at: datetime

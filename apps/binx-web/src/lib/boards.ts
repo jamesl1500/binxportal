@@ -21,9 +21,17 @@ import type {
   BoardItem,
   BoardItemPatch,
   BoardItemType,
+  BoardItemVersion,
 } from "@/lib/boards-client";
 
-export type { Board, BoardComment, BoardItem, BoardItemPatch, BoardItemType };
+export type {
+  Board,
+  BoardComment,
+  BoardItem,
+  BoardItemPatch,
+  BoardItemType,
+  BoardItemVersion,
+};
 
 export type BoardReactions = Schemas["BoardReactionsRead"];
 
@@ -255,5 +263,22 @@ export async function withdrawBoardApproval(
     return data;
   } catch (error) {
     rethrow(error, "Unable to withdraw the approval request");
+  }
+}
+
+export async function getBoardItemVersions(
+  agencyId: string,
+  projectId: string,
+  itemId: string,
+): Promise<BoardItemVersion[]> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.get<BoardItemVersion[]>(
+      `${base(agencyId, projectId)}/items/${itemId}/versions`,
+      { headers },
+    );
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to load the version history");
   }
 }

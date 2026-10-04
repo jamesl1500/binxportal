@@ -23,6 +23,7 @@ from binx_api.modules.boards.schemas import (
     BoardItemCreate,
     BoardItemRead,
     BoardItemUpdate,
+    BoardItemVersionRead,
     BoardReactionsRead,
     BoardReactionToggle,
     BoardRead,
@@ -260,3 +261,12 @@ async def withdraw_item_approval(
     project, item = await _item(db, agency.id, project_id, item_id)
     item = await service.withdraw_approval(db, item, project)
     return BoardItemRead(**await service.item_read(db, item, current_user.id))
+
+
+@router.get("/items/{item_id}/versions", response_model=list[BoardItemVersionRead])
+async def list_item_versions(
+    db: DbSession, project_id: uuid.UUID, item_id: uuid.UUID, agency_and_role: AnyMember
+) -> list[BoardItemVersionRead]:
+    agency, _role = agency_and_role
+    _project, item = await _item(db, agency.id, project_id, item_id)
+    return [BoardItemVersionRead(**service.version_payload(v)) for v in await service.list_versions(db, item.id)]

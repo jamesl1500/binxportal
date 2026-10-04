@@ -31,6 +31,7 @@ from binx_api.modules.boards.models import (
     BoardItem,
     BoardItemComment,
     BoardItemReaction,
+    BoardItemVersion,
     ProjectBoard,
 )
 from binx_api.modules.client_portal.models import ClientContact
@@ -168,14 +169,33 @@ async def update_item(
         item.height = _clamp(height, _MIN_SIZE, _MAX_SIZE)
     if z is not None:
         item.z = z
+    substance_changed = False
     if content is not None:
         # Only the note text is client-editable; an image's file pointer is fixed.
         if item.type == ITEM_NOTE:
-            item.content = json.dumps({"text": str(content.get("text", ""))})
+            next_content = json.dumps({"text": str(content.get("text", ""))})
+            substance_changed = substance_changed or next_content != item.content
+            item.content = next_content
     if clear_color:
+        substance_changed = substance_changed or item.color is not None
         item.color = None
     elif color is not None:
+        substance_changed = substance_changed or color != item.color
         item.color = color
+
+    # A card's approval is pinned to a specific BoardItemVersion snapshot — an
+    # edit to its substance after that snapshot was taken means the live card
+    # no longer matches whatever was requested or decided, so the decision no
+    # longer applies. The snapshot itself (and any approved_version_number
+    # pointing at one) is untouched, so approval history stays intact; the
+    # agency just has to request approval again for the new content.
+    if substance_changed and item.approval_status is not None:
+        item.approval_status = None
+        item.approval_requested_by_id = None
+        item.approval_requested_by_name = None
+        item.approval_decided_by_name = None
+        item.approval_decided_at = None
+        item.approval_note = None
 
     await db.commit()
     await db.refresh(item)
@@ -196,7 +216,22 @@ async def delete_item(db: AsyncSession, item: BoardItem, project: Project) -> No
 async def request_approval(db: AsyncSession, item: BoardItem, project: Project, *, actor: User) -> BoardItem:
     """An agency member asks the client to review this card. Always resets to
     ``pending``, even if it was already decided — that's how a re-request
-    after addressing feedback works."""
+    after addressing feedback works. Snapshots the card's current content +
+    colour into a new BoardItemVersion, so this exact request is pinned and
+    stays answerable later even if the card changes again."""
+    next_number = (item.version_number or 0) + 1
+    db.add(
+        BoardItemVersion(
+            item_id=item.id,
+            version_number=next_number,
+            content=item.content,
+            color=item.color,
+            status=APPROVAL_PENDING,
+            requested_by_id=actor.id,
+            requested_by_name=actor.full_name,
+        )
+    )
+    item.version_number = next_number
     item.approval_status = APPROVAL_PENDING
     item.approval_requested_by_id = actor.id
     item.approval_requested_by_name = actor.full_name
@@ -236,10 +271,28 @@ async def decide_approval(
     if item.approval_status != APPROVAL_PENDING:
         raise HTTPException(status.HTTP_409_CONFLICT, "This card isn't awaiting approval.")
 
+    decided_at = datetime.now(UTC)
+    decided_note = note.strip() if note else None
+
+    if item.version_number is not None:
+        version_result = await db.execute(
+            select(BoardItemVersion).where(
+                BoardItemVersion.item_id == item.id, BoardItemVersion.version_number == item.version_number
+            )
+        )
+        version = version_result.scalar_one_or_none()
+        if version is not None:
+            version.status = decision
+            version.decided_by_name = decider.full_name
+            version.decided_at = decided_at
+            version.note = decided_note
+
     item.approval_status = decision
     item.approval_decided_by_name = decider.full_name
-    item.approval_decided_at = datetime.now(UTC)
-    item.approval_note = note.strip() if note else None
+    item.approval_decided_at = decided_at
+    item.approval_note = decided_note
+    if decision == APPROVAL_APPROVED:
+        item.approved_version_number = item.version_number
     await db.commit()
     await db.refresh(item)
     await _broadcast(db, project, item.board_id, realtime.EVENT_BOARD_ITEM_UPDATED, _item_payload(item))
@@ -264,6 +317,37 @@ async def decide_approval(
                 actor=decider,
             )
     return item
+
+
+async def list_versions(db: AsyncSession, item_id: uuid.UUID) -> list[BoardItemVersion]:
+    """A card's full approval history, newest first — each row an immutable
+    snapshot of what was asked for review and how it was decided."""
+    result = await db.execute(
+        select(BoardItemVersion)
+        .where(BoardItemVersion.item_id == item_id)
+        .order_by(BoardItemVersion.version_number.desc())
+    )
+    return list(result.scalars().all())
+
+
+def version_payload(version: BoardItemVersion) -> dict:
+    try:
+        content = json.loads(version.content) if version.content else {}
+    except (TypeError, ValueError):
+        content = {}
+    return {
+        "id": str(version.id),
+        "item_id": str(version.item_id),
+        "version_number": version.version_number,
+        "content": content if isinstance(content, dict) else {},
+        "color": version.color,
+        "status": version.status,
+        "requested_by_name": version.requested_by_name,
+        "decided_by_name": version.decided_by_name,
+        "decided_at": version.decided_at.isoformat() if version.decided_at else None,
+        "note": version.note,
+        "created_at": version.created_at.isoformat(),
+    }
 
 
 async def save_board_image(
@@ -304,6 +388,8 @@ def _item_payload(item: BoardItem) -> dict:
         "approval_decided_by_name": item.approval_decided_by_name,
         "approval_decided_at": item.approval_decided_at.isoformat() if item.approval_decided_at else None,
         "approval_note": item.approval_note,
+        "version_number": item.version_number,
+        "approved_version_number": item.approved_version_number,
     }
 
 
@@ -517,9 +603,11 @@ __all__ = [
     "item_payload",
     "list_comments",
     "list_items",
+    "list_versions",
     "request_approval",
     "save_board_image",
     "toggle_reaction",
     "update_item",
+    "version_payload",
     "withdraw_approval",
 ]

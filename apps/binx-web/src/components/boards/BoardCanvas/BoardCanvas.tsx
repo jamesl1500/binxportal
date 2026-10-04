@@ -23,6 +23,7 @@ import type {
   BoardComment,
   BoardItem,
   BoardItemPatch,
+  BoardItemVersion,
 } from "@/lib/boards-client";
 import {
   clamp,
@@ -78,6 +79,10 @@ export interface BoardCanvasActions {
     decision: "approved" | "changes_requested",
     note?: string,
   ) => Promise<{ item?: BoardItem; error?: string }>;
+  /** A card's approval history — every version it's ever been through. */
+  listVersions: (
+    id: string,
+  ) => Promise<{ versions?: BoardItemVersion[]; error?: string }>;
 }
 
 interface BoardCanvasProps {

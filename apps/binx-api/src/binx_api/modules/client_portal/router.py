@@ -16,6 +16,7 @@ from binx_api.modules.boards.schemas import (
     BoardItemCreate,
     BoardItemRead,
     BoardItemUpdate,
+    BoardItemVersionRead,
     BoardReactionsRead,
     BoardReactionToggle,
     BoardRead,
@@ -418,6 +419,16 @@ async def decide_board_item_approval(
         db, item, project, decider=current_user, decision=data.status, note=data.note
     )
     return BoardItemRead(**await boards_service.item_read(db, item, current_user.id))
+
+
+@router.get("/projects/{project_id}/canvas/items/{item_id}/versions", response_model=list[BoardItemVersionRead])
+async def list_board_item_versions(
+    db: DbSession, membership: PortalContext, project_id: uuid.UUID, item_id: uuid.UUID
+) -> list[BoardItemVersionRead]:
+    _agency, client, _contact = membership
+    _project, item = await _portal_item(db, client.id, project_id, item_id)
+    versions = await boards_service.list_versions(db, item.id)
+    return [BoardItemVersionRead(**boards_service.version_payload(v)) for v in versions]
 
 
 # ---- Kickoff ---------------------------------------------------------
