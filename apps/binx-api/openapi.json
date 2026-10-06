@@ -2391,7 +2391,7 @@
             "title": "Height"
           },
           "type": {
-            "pattern": "^(note|image)$",
+            "pattern": "^(note|image|pin)$",
             "title": "Type",
             "type": "string"
           },

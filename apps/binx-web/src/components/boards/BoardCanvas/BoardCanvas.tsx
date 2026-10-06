@@ -24,6 +24,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Image as ImageIcon,
   Maximize,
+  MessageSquarePlus,
   Minus,
   Plus,
   StickyNote,
@@ -43,6 +44,7 @@ import {
   DEFAULT_NOTE_WIDTH,
   MAX_ZOOM,
   MIN_ZOOM,
+  PIN_SIZE,
   screenToCanvas,
 } from "@/lib/boards-client";
 import type { BoardReactions, CreateBoardItemInput } from "@/lib/boards";
@@ -161,6 +163,12 @@ const BoardCanvas = ({
   const [animated, setAnimated] = useState(false);
   const [reviewIndex, setReviewIndex] = useState(0);
   const [viewportSize, setViewportSize] = useState({ width: 800, height: 600 });
+  // A just-dropped pin opens its own comment thread immediately — read once
+  // by BoardItemView as its initial `commentsOpen` state (see the component's
+  // own useState there), so re-renders after the first don't reopen it.
+  const [autoOpenCommentsId, setAutoOpenCommentsId] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     const el = surfaceRef.current;
@@ -302,6 +310,25 @@ const BoardCanvas = ({
     if (error || !item) return notify(error ?? "Unable to add the note");
     upsertItem(item);
     setSelectedId(item.id);
+  };
+
+  /** Drops a small comment pin at the viewport centre — like a note, it can
+   * then be dragged anywhere on the board — and opens its thread right away,
+   * since the point of a pin is the conversation anchored to it. */
+  const handleAddPin = async () => {
+    const centre = viewportCentre();
+    const { item, error } = await actions.create({
+      type: "pin",
+      x: centre.x - PIN_SIZE / 2,
+      y: centre.y - PIN_SIZE / 2,
+      width: PIN_SIZE,
+      height: PIN_SIZE,
+      content: {},
+    });
+    if (error || !item) return notify(error ?? "Unable to add the comment pin");
+    upsertItem(item);
+    setSelectedId(item.id);
+    setAutoOpenCommentsId(item.id);
   };
 
   const handleFile = async (file: File) => {
@@ -495,6 +522,7 @@ const BoardCanvas = ({
               currentUserId={currentUserId}
               canModerate={canModerate}
               viewerKind={viewerKind}
+              autoOpenComments={autoOpenCommentsId === item.id}
               onSelect={() => setSelectedId(item.id)}
               onError={(message) => {
                 notify(message);
@@ -557,6 +585,9 @@ const BoardCanvas = ({
           onClick={() => fileRef.current?.click()}
         >
           <ImageIcon aria-hidden="true" /> Image
+        </button>
+        <button type="button" className={styles.tool} onClick={handleAddPin}>
+          <MessageSquarePlus aria-hidden="true" /> Comment
         </button>
         <span className={styles.divider} aria-hidden="true" />
         <button

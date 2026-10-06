@@ -226,6 +226,49 @@
   &[data-type="image"] {
     background: t.$color-surface;
   }
+
+  // A pin is a small round marker, not a card — it exists only to anchor a
+  // comment thread to a spot on the board.
+  &[data-type="pin"] {
+    border: 1.5px solid color-mix(in srgb, t.$color-accent 70%, transparent);
+    border-radius: 50%;
+    background: t.$color-accent;
+    box-shadow: 0 2px 8px rgba(10, 10, 11, 0.22);
+  }
+}
+
+.pinMarker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: t.$color-accent-foreground;
+  border-radius: inherit;
+
+  svg {
+    width: 55%;
+    height: 55%;
+  }
+}
+
+.pinCount {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  font-size: 0.5625rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: t.$color-accent-foreground;
+  background: t.$color-danger;
+  border: 1.5px solid t.$color-surface;
+  border-radius: 999px;
 }
 
 .noteText,

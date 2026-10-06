@@ -43,6 +43,7 @@ const cardLabel = (item: BoardItem): string => {
       ? `“${text.slice(0, 40)}${text.length > 40 ? "…" : ""}”`
       : "this note";
   }
+  if (item.type === "pin") return "this pin";
   return "this image";
 };
 
