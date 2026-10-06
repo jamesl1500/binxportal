@@ -43,7 +43,11 @@ ALLOWED_BOARD_IMAGE_MIME_TYPES: set[str] = {"image/png", "image/jpeg", "image/we
 DEFAULT_NOTE_WIDTH = 220.0
 DEFAULT_NOTE_HEIGHT = 160.0
 # A pin is always this size — fixed, not resizable (see service.create_item).
-DEFAULT_PIN_SIZE = 32.0
+# Taller than wide: it renders as a map-pin teardrop (round head + a pointed
+# tail), and the tail's tip — not the bounding box's center — is the anchored
+# spot, same convention as a map pin's drop point.
+DEFAULT_PIN_WIDTH = 28.0
+DEFAULT_PIN_HEIGHT = 36.0
 
 # The fixed reaction set — one of each per person per card. The emoji char is
 # stored directly as ``kind``; a new emoji here needs no migration.

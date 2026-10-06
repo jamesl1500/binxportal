@@ -134,8 +134,11 @@ export const MIN_ITEM_SIZE = 60;
 export const MAX_ITEM_SIZE = 4000;
 export const DEFAULT_NOTE_WIDTH = 220;
 export const DEFAULT_NOTE_HEIGHT = 160;
-/** A pin is always this size — fixed, not resizable. */
-export const PIN_SIZE = 32;
+/** A pin is always this size — fixed, not resizable. Taller than wide: it
+ * renders as a map-pin teardrop, and the tail's tip (the bounding box's
+ * bottom-center, not its center) is the anchored spot. */
+export const PIN_WIDTH = 28;
+export const PIN_HEIGHT = 36;
 export const MIN_ZOOM = 0.25;
 export const MAX_ZOOM = 2.5;
 

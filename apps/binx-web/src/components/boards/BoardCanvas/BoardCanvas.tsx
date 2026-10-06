@@ -44,7 +44,8 @@ import {
   DEFAULT_NOTE_WIDTH,
   MAX_ZOOM,
   MIN_ZOOM,
-  PIN_SIZE,
+  PIN_HEIGHT,
+  PIN_WIDTH,
   screenToCanvas,
 } from "@/lib/boards-client";
 import type { BoardReactions, CreateBoardItemInput } from "@/lib/boards";
@@ -314,15 +315,18 @@ const BoardCanvas = ({
 
   /** Drops a small comment pin at the viewport centre — like a note, it can
    * then be dragged anywhere on the board — and opens its thread right away,
-   * since the point of a pin is the conversation anchored to it. */
+   * since the point of a pin is the conversation anchored to it. The pin
+   * renders as a teardrop whose tail tip marks the anchored spot, so `x`/`y`
+   * (the bounding box's top-left) are offset to put that tip at the centre,
+   * not the box itself. */
   const handleAddPin = async () => {
     const centre = viewportCentre();
     const { item, error } = await actions.create({
       type: "pin",
-      x: centre.x - PIN_SIZE / 2,
-      y: centre.y - PIN_SIZE / 2,
-      width: PIN_SIZE,
-      height: PIN_SIZE,
+      x: centre.x - PIN_WIDTH / 2,
+      y: centre.y - PIN_HEIGHT,
+      width: PIN_WIDTH,
+      height: PIN_HEIGHT,
       content: {},
     });
     if (error || !item) return notify(error ?? "Unable to add the comment pin");

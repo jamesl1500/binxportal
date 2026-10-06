@@ -25,7 +25,8 @@ from binx_api.modules.boards.models import (
     AUTHOR_AGENCY,
     DEFAULT_NOTE_HEIGHT,
     DEFAULT_NOTE_WIDTH,
-    DEFAULT_PIN_SIZE,
+    DEFAULT_PIN_HEIGHT,
+    DEFAULT_PIN_WIDTH,
     ITEM_IMAGE,
     ITEM_NOTE,
     ITEM_PIN,
@@ -130,7 +131,7 @@ async def create_item(
     # spot on the board, not a resizable card, so it ignores any width/height
     # the caller sent and skips the note/image size clamp entirely.
     if type_ == ITEM_PIN:
-        pin_width, pin_height = DEFAULT_PIN_SIZE, DEFAULT_PIN_SIZE
+        pin_width, pin_height = DEFAULT_PIN_WIDTH, DEFAULT_PIN_HEIGHT
     else:
         pin_width = _clamp(width or DEFAULT_NOTE_WIDTH, _MIN_SIZE, _MAX_SIZE)
         pin_height = _clamp(height or DEFAULT_NOTE_HEIGHT, _MIN_SIZE, _MAX_SIZE)
