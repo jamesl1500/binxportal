@@ -1,0 +1,32 @@
+@use "../../../styles/tokens" as t;
+
+.minimap {
+  position: relative;
+  border-radius: t.$radius-md;
+  background: color-mix(in srgb, t.$color-surface 90%, transparent);
+  border: 1px solid t.$color-border;
+  box-shadow: 0 6px 20px rgba(10, 10, 11, 0.16);
+  cursor: pointer;
+  overflow: hidden;
+  touch-action: none;
+  backdrop-filter: blur(6px);
+}
+
+.dot {
+  position: absolute;
+  border-radius: 2px;
+  background: color-mix(in srgb, t.$color-ink 35%, transparent);
+  pointer-events: none;
+
+  &[data-author="client"] {
+    background: t.$color-accent;
+  }
+}
+
+.viewport {
+  position: absolute;
+  border: 1.5px solid t.$color-accent;
+  background: color-mix(in srgb, t.$color-accent 10%, transparent);
+  border-radius: 2px;
+  pointer-events: none;
+}

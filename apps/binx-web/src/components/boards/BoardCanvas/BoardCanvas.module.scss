@@ -3,8 +3,6 @@
 
 .wrapper {
   position: relative;
-  display: flex;
-  flex-direction: column;
   height: calc(100vh - 24rem);
   min-height: 30rem;
   border: 1px solid t.$color-border;
@@ -13,13 +11,26 @@
   background: t.$color-paper;
 }
 
-.toolbar {
+// ---- Floating controls (Miro-style: the canvas is edge-to-edge, every
+// control floats on top of it instead of sitting in a fixed header) -------
+
+.floatingToolbar {
+  position: absolute;
+  left: 50%;
+  bottom: t.$space-4;
+  transform: translateX(-50%);
+  z-index: 5;
   display: flex;
   align-items: center;
-  gap: t.$space-2;
-  padding: t.$space-2 t.$space-3;
-  border-bottom: 1px solid t.$color-border;
-  background: t.$color-surface;
+  gap: t.$space-1;
+  padding: t.$space-1;
+  max-width: calc(100% - #{t.$space-6});
+  background: color-mix(in srgb, t.$color-surface 94%, transparent);
+  border: 1px solid t.$color-border;
+  border-radius: 999px;
+  box-shadow: 0 10px 30px rgba(10, 10, 11, 0.16);
+  backdrop-filter: blur(8px);
+  overflow-x: auto;
 }
 
 .tool {
@@ -30,10 +41,12 @@
   font-size: t.$font-size-xs;
   font-weight: 600;
   color: t.$color-ink;
-  background: t.$color-surface;
-  border: 1px solid t.$color-border;
-  border-radius: t.$radius-sm;
+  background: transparent;
+  border: none;
+  border-radius: 999px;
   cursor: pointer;
+  white-space: nowrap;
+  transition: background-color t.$duration-fast t.$ease-standard;
 
   svg {
     width: 0.85rem;
@@ -41,7 +54,7 @@
   }
 
   &:hover {
-    border-color: t.$color-border-strong;
+    background: t.$color-paper;
   }
 
   &:focus-visible {
@@ -52,50 +65,87 @@
 .divider {
   width: 1px;
   align-self: stretch;
+  margin: t.$space-1 t.$space-1;
   background: t.$color-border;
-  margin: 0 t.$space-1;
 }
 
 .zoomButton {
   display: inline-flex;
-  padding: t.$space-1;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
   color: t.$color-ink-soft;
   background: transparent;
-  border: 1px solid t.$color-border;
-  border-radius: t.$radius-sm;
+  border: none;
+  border-radius: 999px;
   cursor: pointer;
+  transition: background-color t.$duration-fast t.$ease-standard;
 
   svg {
-    width: 0.8rem;
-    height: 0.8rem;
+    width: 0.85rem;
+    height: 0.85rem;
   }
+
+  &:hover {
+    color: t.$color-ink;
+    background: t.$color-paper;
+  }
+}
+
+.zoomLevel {
+  min-width: 2.75rem;
+  padding: t.$space-1;
+  text-align: center;
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: t.$color-ink-soft;
+  background: transparent;
+  border: none;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
 
   &:hover {
     color: t.$color-ink;
   }
 }
 
-.zoomLevel {
-  min-width: 2.75rem;
-  text-align: center;
-  font-size: t.$font-size-xs;
-  color: t.$color-ink-soft;
-}
-
-.status {
-  margin-left: auto;
+.liveChip {
+  position: absolute;
+  top: t.$space-3;
+  left: t.$space-3;
+  z-index: 5;
   @include m.mono-label;
+  padding: t.$space-1 t.$space-2;
   font-size: 0.5625rem;
   color: t.$color-ink-faint;
+  background: color-mix(in srgb, t.$color-surface 90%, transparent);
+  border: 1px solid t.$color-border;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(10, 10, 11, 0.08);
+  backdrop-filter: blur(6px);
 
   &[data-status="open"] {
     color: #0f9d58;
   }
 }
 
+.minimapSlot {
+  position: absolute;
+  right: t.$space-3;
+  bottom: t.$space-3;
+  z-index: 5;
+  display: none;
+
+  @media (min-width: 48rem) {
+    display: block;
+  }
+}
+
 .surface {
-  position: relative;
-  flex: 1;
+  position: absolute;
+  inset: 0;
   overflow: hidden;
   cursor: grab;
   touch-action: none;
