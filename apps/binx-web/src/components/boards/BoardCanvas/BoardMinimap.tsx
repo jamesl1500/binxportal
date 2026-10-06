@@ -11,7 +11,7 @@
  */
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import type { BoardItem } from "@/lib/boards-client";
 
@@ -39,14 +39,23 @@ const BoardMinimap = ({
   onNavigate,
 }: BoardMinimapProps) => {
   const mapRef = useRef<HTMLDivElement | null>(null);
-  const draggingRef = useRef(false);
+  // State, not a ref: `bounds` below reads it during render (refs can't be
+  // read there), and flipping it needs to reliably re-render at both drag
+  // start and drag end.
+  const [dragging, setDragging] = useState(false);
+  const [frozenBounds, setFrozenBounds] = useState<{
+    minX: number;
+    minY: number;
+    width: number;
+    height: number;
+  } | null>(null);
 
   const viewMinX = -pan.x / zoom;
   const viewMinY = -pan.y / zoom;
   const viewMaxX = viewMinX + viewportWidth / zoom;
   const viewMaxY = viewMinY + viewportHeight / zoom;
 
-  const bounds = useMemo(() => {
+  const liveBounds = useMemo(() => {
     const xs = items.flatMap((i) => [i.x, i.x + i.width]);
     const ys = items.flatMap((i) => [i.y, i.y + i.height]);
     const minX = Math.min(viewMinX, ...(xs.length ? xs : [0])) - PADDING;
@@ -60,6 +69,15 @@ const BoardMinimap = ({
       height: Math.max(maxY - minY, 1),
     };
   }, [items, viewMinX, viewMinY, viewMaxX, viewMaxY]);
+
+  // `liveBounds` grows to keep the viewport rectangle inside it, so it
+  // shifts every time the viewport pans. During a drag, dragging the
+  // viewport *is* what changes the viewport — recomputing bounds (and so
+  // the map's px-to-canvas scale) on every pointer move made the mapping
+  // drift under the cursor, which is what made a slow, deliberate drag
+  // "fly" past the intended spot. Freeze the bounds at drag start instead,
+  // and only pick the fresh ones back up once the drag ends.
+  const bounds = dragging && frozenBounds ? frozenBounds : liveBounds;
 
   const scale = Math.min(MAP_WIDTH / bounds.width, MAP_HEIGHT / bounds.height);
 
@@ -86,16 +104,18 @@ const BoardMinimap = ({
       style={{ width: MAP_WIDTH, height: MAP_HEIGHT }}
       onPointerDown={(event) => {
         event.stopPropagation();
-        draggingRef.current = true;
+        setFrozenBounds(liveBounds);
+        setDragging(true);
         (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
         navigateFromEvent(event);
       }}
       onPointerMove={(event) => {
-        if (!draggingRef.current) return;
+        if (!dragging) return;
         navigateFromEvent(event);
       }}
       onPointerUp={() => {
-        draggingRef.current = false;
+        setDragging(false);
+        setFrozenBounds(null);
       }}
       role="button"
       tabIndex={0}
