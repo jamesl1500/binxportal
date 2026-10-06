@@ -351,11 +351,14 @@ const BoardItemView = ({
           </p>
         )
       ) : item.type === "pin" ? (
-        <div className={styles.pinMarker} aria-hidden="true">
-          <MessageSquare aria-hidden="true" />
-          {item.comment_count > 0 && (
-            <span className={styles.pinCount}>{item.comment_count}</span>
-          )}
+        <div className={styles.pinShape} aria-hidden="true">
+          <div className={styles.pinTail} />
+          <div className={styles.pinHead}>
+            <MessageSquare aria-hidden="true" />
+            {item.comment_count > 0 && (
+              <span className={styles.pinCount}>{item.comment_count}</span>
+            )}
+          </div>
         </div>
       ) : (
         // eslint-disable-next-line @next/next/no-img-element -- canvas images are user-positioned at arbitrary sizes; next/image's layout constraints don't fit a freeform board
