@@ -66,7 +66,8 @@ from binx_api.modules.leads import places as places_client
 from binx_api.modules.leads.models import LEAD_OPEN_STATUSES, LEAD_STATUSES, Lead
 from binx_api.modules.leads.schemas import LeadCreate, LeadNoteCreate, LeadStatusUpdate
 from binx_api.modules.messaging import service as messaging_service
-from binx_api.modules.messaging.models import SENDER_CLIENT, Conversation
+from binx_api.modules.messaging.models import MESSAGE_USER, SENDER_CLIENT, Conversation
+from binx_api.modules.messaging.schemas import MessageRead
 from binx_api.modules.projects import service as projects_service
 from binx_api.modules.projects.models import Project, project_statuses
 from binx_api.modules.projects.schemas import TaskCreate, TaskUpdate
@@ -651,24 +652,38 @@ async def generate_invoice_reminder(db: AsyncSession, invoice: Invoice, agency: 
 async def generate_message_reply(
     db: AsyncSession, conversation: Conversation, agency: Agency, *, actor: User | None
 ) -> str:
-    """Draft a reply to the client's most recent message in a staff/client
-    conversation. Guard: 400 when there's no client message to reply to yet
-    (an empty thread, or the newest message is already staff's own) — mirrors
-    generate_invoice_reminder's guard shape. Reuses
-    messaging/service.py::list_messages wholesale for the history fetch."""
-    history = await messaging_service.list_messages(db, conversation, limit=15, before=None)
-    if not history or history[-1].sender_kind != SENDER_CLIENT or history[-1].deleted_at is not None:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "There's no new client message to reply to.")
-
-    lines = [
-        f"{'Client' if message.sender_kind == SENDER_CLIENT else message.sender_name}: {message.body}"
-        for message in history
-        if message.deleted_at is None
+    """Draft the actor's next message in a conversation — a reply to the most
+    recent message someone else wrote, client or teammate. Guard: 400 when
+    nobody else has written anything yet (an empty thread, or only the
+    actor's own messages) — mirrors generate_invoice_reminder's guard shape.
+    System messages ("X added Y") and deleted messages are ignored throughout.
+    Reuses messaging/service.py::list_messages wholesale for the history
+    fetch."""
+    history = [
+        message
+        for message in await messaging_service.list_messages(db, conversation, limit=15, before=None)
+        if message.message_type == MESSAGE_USER and message.deleted_at is None
     ]
+    actor_id = actor.id if actor else None
+    latest = next((message for message in reversed(history) if message.sender_id != actor_id), None)
+    if latest is None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "There's no message to reply to yet.")
+
+    def _speaker(message: MessageRead) -> str:
+        if message.sender_id == actor_id:
+            return "You"
+        if message.sender_kind == SENDER_CLIENT:
+            return f"Client ({message.sender_name})"
+        return message.sender_name
+
+    lines = [f"{_speaker(message)}: {message.body}" for message in history]
+    to_client = latest.sender_kind == SENDER_CLIENT
     prompt = (
-        f'Draft a reply to the client\'s most recent message in this conversation with "{agency.name}".\n\n'
+        f'Draft your next message in this conversation at "{agency.name}", replying to the most recent '
+        f"message from {'the client' if to_client else latest.sender_name}.\n\n"
         "Conversation so far (oldest first):\n" + "\n".join(lines) + "\n\n"
-        "Write a warm, professional reply that directly addresses the client's most recent message. "
+        f"Write a {'warm, professional' if to_client else 'friendly, concise'} reply that directly "
+        "addresses that message, taking into account anything you've already said since. "
         "Don't invent facts not present above. Write only the message body — no signature block."
     )
 
@@ -677,7 +692,7 @@ async def generate_message_reply(
         agency.id,
         actor.id if actor else None,
         feature=FEATURE_MESSAGE_REPLY,
-        system="You write clear, warm client-facing replies on behalf of a creative/marketing agency.",
+        system="You write clear, warm messages for a team member at a creative/marketing agency.",
         messages=[{"role": "user", "content": prompt}],
         max_tokens=500,
         effort="low",

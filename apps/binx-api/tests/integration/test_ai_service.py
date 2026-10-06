@@ -376,7 +376,20 @@ class TestGenerateMessageReply:
             await ai_service.generate_message_reply(db_session, conversation, agency, actor=owner)
         assert getattr(exc_info.value, "status_code", None) == 400
 
-    async def test_rejects_when_staff_already_has_the_last_word(
+    async def test_rejects_when_only_the_actor_has_written(self, db_session, monkeypatch: pytest.MonkeyPatch) -> None:
+        _configure(monkeypatch)
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        member = await make_user(db_session, email="member@example.com")
+        await add_agency_member(db_session, agency=agency, user=member)
+        conversation = await make_conversation(db_session, agency=agency, creator=owner, others=[member])
+        await post_message(db_session, conversation, sender=owner, body="Anyone around?", uploads=[])
+
+        with pytest.raises(Exception) as exc_info:
+            await ai_service.generate_message_reply(db_session, conversation, agency, actor=owner)
+        assert getattr(exc_info.value, "status_code", None) == 400
+
+    async def test_drafts_a_reply_to_a_teammate_even_after_the_actors_own_message(
         self, db_session, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         _configure(monkeypatch)
@@ -385,15 +398,22 @@ class TestGenerateMessageReply:
         member = await make_user(db_session, email="member@example.com")
         await add_agency_member(db_session, agency=agency, user=member)
         conversation = await make_conversation(db_session, agency=agency, creator=owner, others=[member])
-        client_user = await make_user(db_session, email="client@example.com")
-        await post_message(
-            db_session, conversation, sender=client_user, body="Any update?", uploads=[], sender_kind=SENDER_CLIENT
-        )
+        await post_message(db_session, conversation, sender=member, body="Can you review the deck?", uploads=[])
         await post_message(db_session, conversation, sender=owner, body="On it!", uploads=[])
 
-        with pytest.raises(Exception) as exc_info:
-            await ai_service.generate_message_reply(db_session, conversation, agency, actor=owner)
-        assert getattr(exc_info.value, "status_code", None) == 400
+        captured: dict = {}
+
+        async def _capture(**kwargs):
+            captured.update(kwargs)
+            return _text_message("Reviewed — two small notes.")
+
+        monkeypatch.setattr(ai_client, "_call_anthropic", _capture)
+
+        text = await ai_service.generate_message_reply(db_session, conversation, agency, actor=owner)
+        assert text == "Reviewed — two small notes."
+        prompt = captured["messages"][0]["content"]
+        assert f"{member.full_name}: Can you review the deck?" in prompt
+        assert "You: On it!" in prompt
 
     async def test_drafts_a_reply_to_the_clients_latest_message(
         self, db_session, monkeypatch: pytest.MonkeyPatch
