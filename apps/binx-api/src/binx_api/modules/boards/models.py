@@ -21,9 +21,14 @@ from binx_api.core.database import Base
 
 # Card kinds. Kept a plain string (not a DB enum) so adding "link" / "checklist"
 # later needs no migration — only a `content` shape and some frontend.
+# "pin" is a small, fixed-size marker that exists only to anchor a comment
+# thread (service.py::add_comment) to a specific spot on the board — Miro's
+# "drop a comment anywhere" — rather than only to a note/image card. It has
+# no content of its own and never takes part in the approval workflow.
 ITEM_NOTE = "note"
 ITEM_IMAGE = "image"
-BOARD_ITEM_TYPES: list[str] = [ITEM_NOTE, ITEM_IMAGE]
+ITEM_PIN = "pin"
+BOARD_ITEM_TYPES: list[str] = [ITEM_NOTE, ITEM_IMAGE, ITEM_PIN]
 
 # Who created a card — mirrors ProjectTaskComment.author_type so the UI can
 # badge a client-authored card.
@@ -37,6 +42,8 @@ ALLOWED_BOARD_IMAGE_MIME_TYPES: set[str] = {"image/png", "image/jpeg", "image/we
 # Default geometry for a freshly-dropped note (canvas units == CSS px at zoom 1).
 DEFAULT_NOTE_WIDTH = 220.0
 DEFAULT_NOTE_HEIGHT = 160.0
+# A pin is always this size — fixed, not resizable (see service.create_item).
+DEFAULT_PIN_SIZE = 32.0
 
 # The fixed reaction set — one of each per person per card. The emoji char is
 # stored directly as ``kind``; a new emoji here needs no migration.

@@ -100,6 +100,21 @@ describe("BoardCanvas", () => {
     await waitFor(() => expect(useBoardStore.getState().itemsById.new).toBeDefined());
   });
 
+  it("drops a comment pin via the toolbar and opens its thread", async () => {
+    const actions = makeActions();
+    actions.create = vi.fn(async (input) => ({
+      item: item({ id: "pin1", type: "pin", width: 32, height: 32, content: {}, ...input }),
+    }));
+    render(<BoardCanvas actions={actions} imageUrl={(id) => `/img/${id}`} {...baseProps} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /comment/i }));
+
+    await waitFor(() => expect(actions.create).toHaveBeenCalledWith(expect.objectContaining({ type: "pin" })));
+    await waitFor(() => expect(useBoardStore.getState().itemsById.pin1).toBeDefined());
+    // The pin's comment thread opens automatically — no card to double-click.
+    expect(await screen.findByText("No comments yet — start the conversation.")).toBeInTheDocument();
+  });
+
   it("toggles a reaction on the selected card", async () => {
     const actions = makeActions();
     useBoardStore.getState().seed("b1", [item()], "u1");

@@ -25,8 +25,10 @@ from binx_api.modules.boards.models import (
     AUTHOR_AGENCY,
     DEFAULT_NOTE_HEIGHT,
     DEFAULT_NOTE_WIDTH,
+    DEFAULT_PIN_SIZE,
     ITEM_IMAGE,
     ITEM_NOTE,
+    ITEM_PIN,
     REACTION_KINDS,
     BoardItem,
     BoardItemComment,
@@ -124,13 +126,22 @@ async def create_item(
     if int(count.scalar_one()) >= MAX_ITEMS_PER_BOARD:
         raise HTTPException(status.HTTP_409_CONFLICT, f"This canvas is full ({MAX_ITEMS_PER_BOARD} cards).")
 
+    # A pin is always a fixed, small marker — it anchors a comment thread to a
+    # spot on the board, not a resizable card, so it ignores any width/height
+    # the caller sent and skips the note/image size clamp entirely.
+    if type_ == ITEM_PIN:
+        pin_width, pin_height = DEFAULT_PIN_SIZE, DEFAULT_PIN_SIZE
+    else:
+        pin_width = _clamp(width or DEFAULT_NOTE_WIDTH, _MIN_SIZE, _MAX_SIZE)
+        pin_height = _clamp(height or DEFAULT_NOTE_HEIGHT, _MIN_SIZE, _MAX_SIZE)
+
     item = BoardItem(
         board_id=board.id,
         type=type_,
         x=_clamp(x, -_MAX_COORD, _MAX_COORD),
         y=_clamp(y, -_MAX_COORD, _MAX_COORD),
-        width=_clamp(width or DEFAULT_NOTE_WIDTH, _MIN_SIZE, _MAX_SIZE),
-        height=_clamp(height or DEFAULT_NOTE_HEIGHT, _MIN_SIZE, _MAX_SIZE),
+        width=pin_width,
+        height=pin_height,
         z=await _next_z(db, board.id),
         content=json.dumps(content),
         color=color,

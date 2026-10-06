@@ -4,7 +4,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-_TYPE_PATTERN = "^(note|image)$"
+_TYPE_PATTERN = "^(note|image|pin)$"
 _HEX_PATTERN = "^#[0-9a-fA-F]{6}$"
 _APPROVAL_DECISION_PATTERN = "^(approved|changes_requested)$"
 

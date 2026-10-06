@@ -14,7 +14,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { History, MessageCircle, Trash2 } from "lucide-react";
+import { History, MessageCircle, MessageSquare, Trash2 } from "lucide-react";
 
 import {
   clamp,
@@ -42,6 +42,9 @@ interface BoardItemProps {
   currentUserId: string;
   canModerate: boolean;
   viewerKind: "agency" | "client";
+  /** True for exactly one render after this pin was just dropped — read once
+   * as the comments dialog's initial open state. */
+  autoOpenComments?: boolean;
   onSelect: () => void;
   onError: (message: string) => void;
 }
@@ -65,6 +68,7 @@ const BoardItemView = ({
   currentUserId,
   canModerate,
   viewerKind,
+  autoOpenComments,
   onSelect,
   onError,
 }: BoardItemProps) => {
@@ -78,7 +82,18 @@ const BoardItemView = ({
   const textRef = useRef<HTMLTextAreaElement | null>(null);
   const cancelledRef = useRef(false);
   const [editing, setEditing] = useState(false);
-  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(autoOpenComments ?? false);
+  // The initializer above only covers mounting with the prop already true.
+  // The realtime `board.item.*` broadcast can also mount this card (via the
+  // websocket's own upsert) before BoardCanvas's local `setAutoOpenCommentsId`
+  // lands, so the prop can turn true only after first mount too — adjust
+  // state during render (React's documented pattern for this) instead of a
+  // `useEffect`, so it isn't a second, cascading render.
+  const [seenAutoOpen, setSeenAutoOpen] = useState(autoOpenComments);
+  if (autoOpenComments && autoOpenComments !== seenAutoOpen) {
+    setSeenAutoOpen(autoOpenComments);
+    setCommentsOpen(true);
+  }
   const [versionsOpen, setVersionsOpen] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [requestingChanges, setRequestingChanges] = useState(false);
@@ -335,6 +350,13 @@ const BoardItemView = ({
             {noteText(item) || "Double-click to write…"}
           </p>
         )
+      ) : item.type === "pin" ? (
+        <div className={styles.pinMarker} aria-hidden="true">
+          <MessageSquare aria-hidden="true" />
+          {item.comment_count > 0 && (
+            <span className={styles.pinCount}>{item.comment_count}</span>
+          )}
+        </div>
       ) : (
         // eslint-disable-next-line @next/next/no-img-element -- canvas images are user-positioned at arbitrary sizes; next/image's layout constraints don't fit a freeform board
         <img
@@ -538,7 +560,7 @@ const BoardItemView = ({
                     </span>
                   </>
                 )}
-                {viewerKind === "agency" && actions.requestApproval && (
+                {item.type !== "pin" && viewerKind === "agency" && actions.requestApproval && (
                   <>
                     <span className={styles.barDivider} aria-hidden="true" />
                     {item.approval_status === "pending" ? (
@@ -565,7 +587,8 @@ const BoardItemView = ({
                     )}
                   </>
                 )}
-                {viewerKind === "client" &&
+                {item.type !== "pin" &&
+                  viewerKind === "client" &&
                   actions.decideApproval &&
                   item.approval_status === "pending" && (
                     <>
@@ -601,12 +624,14 @@ const BoardItemView = ({
               </>
             )}
           </div>
-          <div
-            className={styles.resizeHandle}
-            onPointerDown={onPointerDownHandle}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-          />
+          {item.type !== "pin" && (
+            <div
+              className={styles.resizeHandle}
+              onPointerDown={onPointerDownHandle}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerUp}
+            />
+          )}
         </>
       )}
 

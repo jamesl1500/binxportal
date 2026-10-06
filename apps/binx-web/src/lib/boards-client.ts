@@ -12,8 +12,10 @@
 
 import type { Schemas } from "@/lib/api-types";
 
-/** Keep in sync with binx-api's boards/models.py BOARD_ITEM_TYPES. */
-export type BoardItemType = "note" | "image";
+/** Keep in sync with binx-api's boards/models.py BOARD_ITEM_TYPES. A "pin" is
+ * a small fixed-size marker that exists only to anchor a comment thread to a
+ * spot on the board, Miro-style — it has no content of its own. */
+export type BoardItemType = "note" | "image" | "pin";
 
 export interface NoteContent {
   text: string;
@@ -132,6 +134,8 @@ export const MIN_ITEM_SIZE = 60;
 export const MAX_ITEM_SIZE = 4000;
 export const DEFAULT_NOTE_WIDTH = 220;
 export const DEFAULT_NOTE_HEIGHT = 160;
+/** A pin is always this size — fixed, not resizable. */
+export const PIN_SIZE = 32;
 export const MIN_ZOOM = 0.25;
 export const MAX_ZOOM = 2.5;
 
