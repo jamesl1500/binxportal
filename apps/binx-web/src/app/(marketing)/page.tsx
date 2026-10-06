@@ -76,8 +76,8 @@ const NEW_FEATURES = [
   },
   {
     icon: CheckCheck,
-    title: "Client approvals on the canvas",
-    text: "Ask a client to approve a concept right on the card. They approve or request changes, and everyone sees the decision the moment it lands.",
+    title: "Seamless client approvals",
+    text: "A guided review bar walks clients through every card waiting on them, on a Miro-style canvas with pan, zoom and a minimap. They approve, request changes, or pin a comment anywhere on the board, and everyone sees it the moment it lands.",
   },
   {
     icon: LayoutDashboard,
@@ -110,7 +110,7 @@ const CAPABILITIES = [
   {
     icon: LayoutGrid,
     title: "Projects & canvas",
-    text: "Boards, tasks, versioned files and a freeform canvas where clients approve work in place.",
+    text: "Boards, tasks, versioned files and a Miro-style canvas with a guided review bar that makes client approvals seamless.",
   },
   {
     icon: Receipt,
@@ -128,7 +128,7 @@ const FEATURE_LIST = [
   "AI lead prospecting with saved searches",
   "Proposals with online e-signature",
   "Client portal",
-  "Client approvals on a shared canvas",
+  "Seamless client approvals on a Miro-style canvas",
   "Project boards and file versioning",
   "Invoicing with pay-from-portal",
   "Customizable drag-and-drop dashboard",
@@ -318,19 +318,18 @@ const HomePage = () => {
           <div className={`${styles.split} ${styles.splitAlt}`}>
             <div className={styles.splitBody}>
               <span className={styles.eyebrow}>Collaboration canvas</span>
-              <h2 className={styles.h3}>
-                A shared wall, with sign-off built in.
-              </h2>
+              <h2 className={styles.h3}>Client sign-off, made seamless.</h2>
               <p className={styles.cardText}>
-                Pin notes and images on a freeform canvas the team and the
-                client arrange together in real time. When a concept is ready,
-                request approval on the card and get a clear yes or a note on
-                what to change.
+                A Miro-style canvas with pan, zoom and a minimap, so clients
+                never get lost in a big board. A guided review bar walks them
+                through every card waiting on a decision, and they can pin a
+                comment anywhere on the board, not just on a card, to flag
+                something before it is even up for approval.
               </p>
               <ul className={styles.splitList}>
-                <li>Request, approve or reject any card</li>
-                <li>Client and team edit the same board live</li>
-                <li>Comments and reactions per card</li>
+                <li>A review bar guides clients through every pending card</li>
+                <li>Pin comments anywhere on the board, not just on cards</li>
+                <li>Request, approve or reject any card, live with the team</li>
               </ul>
             </div>
             <div className={styles.splitMedia}>

@@ -122,12 +122,12 @@ const GROUPS: { eyebrow: string; heading: string; items: Feature[] }[] = [
       {
         icon: PanelsTopLeft,
         title: "Collaboration canvas",
-        text: "A Milanote-style wall per project: notes and images the team and client arrange together in real time, with comments and reactions on every card.",
+        text: "A Miro-style wall per project: pan, zoom and a minimap, with notes and images the team and client arrange together in real time, plus comments and reactions on every card.",
       },
       {
         icon: CheckCheck,
-        title: "Client approvals",
-        text: "Request approval on any canvas card. The client approves or asks for changes with a note, and the whole team sees the decision live.",
+        title: "Seamless client approvals",
+        text: "A guided review bar walks the client through every card waiting on them. They approve, request changes with a note, or pin a comment anywhere on the board, and the whole team sees the decision live.",
         isNew: true,
       },
       {
