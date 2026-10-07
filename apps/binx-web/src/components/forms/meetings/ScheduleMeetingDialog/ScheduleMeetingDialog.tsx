@@ -11,7 +11,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Dialog } from "@base-ui/react/dialog";
 import { Plus } from "lucide-react";
 
@@ -47,12 +46,10 @@ const ScheduleMeetingDialog = ({
   defaultProjectId,
   compact = false,
 }: ScheduleMeetingDialogProps) => {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
 
   const handleScheduled = () => {
     setOpen(false);
-    router.refresh();
   };
 
   return (

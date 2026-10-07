@@ -11,7 +11,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -53,7 +52,6 @@ interface LeadFormProps {
 
 const LeadForm = ({ agencyId, lead, onSuccess, onCancel }: LeadFormProps) => {
   const isEdit = Boolean(lead);
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -105,7 +103,6 @@ const LeadForm = ({ agencyId, lead, onSuccess, onCancel }: LeadFormProps) => {
       }
       if (isEdit) {
         setSuccessMessage("Lead updated.");
-        router.refresh();
       }
       onSuccess?.(result.lead);
     });

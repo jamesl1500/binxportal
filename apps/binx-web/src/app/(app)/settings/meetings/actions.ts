@@ -11,7 +11,7 @@
  */
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { refresh, revalidatePath } from "next/cache";
 
 import { AuthApiError } from "@/lib/auth";
 import {
@@ -42,6 +42,7 @@ export async function updateMeetingSettingsAction(
   try {
     const settings = await updateMeetingSettings(agencyId, input);
     revalidatePath("/settings/meetings");
+    refresh();
     return { settings };
   } catch (error) {
     return errorResult(error, "Unable to update meeting settings");
@@ -60,6 +61,7 @@ export async function putAvailabilityRulesAction(
   try {
     const saved = await putAvailabilityRules(agencyId, rules);
     revalidatePath("/settings/meetings");
+    refresh();
     return { rules: saved };
   } catch (error) {
     return errorResult(error, "Unable to save availability");

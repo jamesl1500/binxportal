@@ -11,7 +11,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -58,7 +57,6 @@ const BillingSettingsForm = ({
   settings,
   canManage,
 }: BillingSettingsFormProps) => {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -147,7 +145,6 @@ const BillingSettingsForm = ({
         return;
       }
       setSaved(true);
-      router.refresh();
     });
   };
 

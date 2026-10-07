@@ -2,8 +2,6 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const refresh = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
 vi.mock("@/app/(app)/imports/actions", () => ({
   parseImportFileAction: vi.fn(),
   runImportAction: vi.fn(),
@@ -117,7 +115,6 @@ describe("BulkImportWizard", () => {
     expect(await screen.findByRole("heading", { name: "Imported 1 client" })).toBeInTheDocument();
     expect(screen.getByText("2 rows were skipped — see why below.")).toBeInTheDocument();
     expect(onImported).toHaveBeenCalledWith(expect.objectContaining({ imported: 1 }));
-    expect(refresh).toHaveBeenCalled();
     expect(screen.getByRole("link", { name: "View clients" })).toHaveAttribute("href", "/clients");
   });
 

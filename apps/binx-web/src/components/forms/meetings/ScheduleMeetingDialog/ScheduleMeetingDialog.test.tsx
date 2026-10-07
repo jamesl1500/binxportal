@@ -7,11 +7,6 @@ vi.mock("@/app/(app)/meetings/actions", () => ({
   updateMeetingAction: vi.fn(),
 }));
 
-const mockRefresh = vi.fn();
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: mockRefresh }),
-}));
-
 import { createMeetingAction } from "@/app/(app)/meetings/actions";
 
 import ScheduleMeetingDialog from "./ScheduleMeetingDialog";
@@ -36,7 +31,7 @@ describe("ScheduleMeetingDialog", () => {
     expect(await screen.findByRole("heading", { name: "Schedule a meeting" })).toBeInTheDocument();
   });
 
-  it("schedules a meeting and closes the dialog, refreshing the route", async () => {
+  it("schedules a meeting and closes the dialog", async () => {
     mockedCreate.mockResolvedValueOnce({
       meeting: {
         id: "m1",
@@ -70,7 +65,6 @@ describe("ScheduleMeetingDialog", () => {
       agencyId,
       expect.objectContaining({ client_id: "c1", title: "Kickoff" }),
     );
-    expect(mockRefresh).toHaveBeenCalledOnce();
     expect(screen.queryByRole("heading", { name: "Schedule a meeting" })).not.toBeInTheDocument();
   });
 

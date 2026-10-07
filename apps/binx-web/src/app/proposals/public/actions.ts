@@ -10,6 +10,8 @@
  */
 "use server";
 
+import { refresh } from "next/cache";
+
 import { AuthApiError } from "@/lib/auth";
 import {
   declinePublicProposal,
@@ -35,9 +37,9 @@ export async function signPublicProposalAction(
   signerEmail: string,
 ): Promise<PublicProposalActionResult> {
   try {
-    return {
-      proposal: await signPublicProposal(token, signerName, signerEmail),
-    };
+    const proposal = await signPublicProposal(token, signerName, signerEmail);
+    refresh();
+    return { proposal };
   } catch (error) {
     return errorResult(error, "Unable to sign this proposal");
   }
@@ -48,7 +50,9 @@ export async function declinePublicProposalAction(
   reason: string | null,
 ): Promise<PublicProposalActionResult> {
   try {
-    return { proposal: await declinePublicProposal(token, reason) };
+    const proposal = await declinePublicProposal(token, reason);
+    refresh();
+    return { proposal };
   } catch (error) {
     return errorResult(error, "Unable to decline this proposal");
   }

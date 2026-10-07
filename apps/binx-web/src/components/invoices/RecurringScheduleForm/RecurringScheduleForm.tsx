@@ -172,7 +172,6 @@ const RecurringScheduleForm = ({
       }
       if (result.schedule) {
         router.push("/invoices/recurring");
-        router.refresh();
       }
     } finally {
       setSubmitting(false);

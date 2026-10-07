@@ -29,7 +29,6 @@ import {
   useTransition,
 } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { CheckCircle2, Download, FileSpreadsheet, Upload } from "lucide-react";
 
 import {
@@ -144,7 +143,6 @@ const BulkImportWizard = ({
   onImported,
 }: BulkImportWizardProps) => {
   const copy = COPY[kind];
-  const router = useRouter();
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -246,7 +244,6 @@ const BulkImportWizard = ({
       setResult(response.result);
       setStep("done");
       onImported?.(response.result);
-      router.refresh();
     });
   };
 

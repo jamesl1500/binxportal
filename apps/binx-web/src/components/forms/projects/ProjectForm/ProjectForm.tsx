@@ -15,7 +15,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -82,7 +81,6 @@ const ProjectForm = ({
   onCancel,
 }: ProjectFormProps) => {
   const isEdit = Boolean(project);
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -139,7 +137,6 @@ const ProjectForm = ({
       }
 
       setSuccessMessage("Project updated.");
-      router.refresh();
       onSuccess?.(result.project);
     });
   };

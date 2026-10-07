@@ -6,11 +6,6 @@ vi.mock("@/app/(app)/settings/actions", () => ({
   updateAiSettingsAction: vi.fn(),
 }));
 
-const mockRefresh = vi.fn();
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: mockRefresh }),
-}));
-
 import { updateAiSettingsAction } from "@/app/(app)/settings/actions";
 import type { AiSettings } from "@/lib/ai";
 
@@ -61,7 +56,7 @@ describe("AiSettingsPanel", () => {
     expect(mockedUpdate).not.toHaveBeenCalled();
   });
 
-  it("submits the budget in cents, shows success, and refreshes", async () => {
+  it("submits the budget in cents and shows success", async () => {
     mockedUpdate.mockResolvedValueOnce({ settings });
     const user = userEvent.setup();
     render(<AiSettingsPanel agencyId="a1" settings={settings} canEdit />);
@@ -76,7 +71,6 @@ describe("AiSettingsPanel", () => {
       monthlyBudgetCents: 3550,
       dailyUserRequestCap: 50,
     });
-    expect(mockRefresh).toHaveBeenCalledOnce();
   });
 
   it("shows the server error on failure", async () => {
@@ -87,6 +81,5 @@ describe("AiSettingsPanel", () => {
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
     expect(await screen.findByText("Insufficient permissions for this agency")).toBeInTheDocument();
-    expect(mockRefresh).not.toHaveBeenCalled();
   });
 });

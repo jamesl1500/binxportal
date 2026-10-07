@@ -10,11 +10,6 @@ vi.mock("@/app/(app)/meetings/actions", () => ({
   updateMeetingAction: vi.fn(),
 }));
 
-const mockRefresh = vi.fn();
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: mockRefresh }),
-}));
-
 import { cancelMeetingAction, updateMeetingAction } from "@/app/(app)/meetings/actions";
 import type { Meeting } from "@/lib/meetings";
 
@@ -138,14 +133,13 @@ describe("MeetingsTable", () => {
     expect(screen.getByText("Website relaunch")).toBeInTheDocument();
   });
 
-  it("cancels a meeting and refreshes the route", async () => {
+  it("cancels a meeting", async () => {
     const user = userEvent.setup();
     render(<MeetingsTable agencyId="a1" clients={CLIENTS} projects={PROJECTS} meetings={[makeMeeting({ id: "m1" })]} />);
 
     await user.click(screen.getByRole("button", { name: "Cancel" }));
 
     expect(mockedCancel).toHaveBeenCalledWith("a1", "m1");
-    expect(mockRefresh).toHaveBeenCalled();
   });
 
   it("surfaces a cancel error", async () => {

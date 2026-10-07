@@ -11,6 +11,7 @@
  */
 "use server";
 
+import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { AuthApiError } from "@/lib/auth";
@@ -76,9 +77,9 @@ export async function sendProposalAction(
   recipientEmail: string | null,
 ): Promise<ProposalActionResult> {
   try {
-    return {
-      proposal: await sendProposal(agencyId, proposalId, recipientEmail),
-    };
+    const proposal = await sendProposal(agencyId, proposalId, recipientEmail);
+    refresh();
+    return { proposal };
   } catch (error) {
     return errorResult(error, "Unable to send proposal");
   }

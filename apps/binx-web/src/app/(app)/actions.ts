@@ -8,6 +8,7 @@
  */
 "use server";
 
+import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { AuthApiError, logout } from "@/lib/auth";
@@ -35,8 +36,9 @@ export interface SwitchAgencyActionResult {
  * agency as the one the user is working in. Re-checks membership against
  * binx-api first — the switcher only ever offers agencies the user actually
  * belongs to, but this guards against a stale client or a tampered call.
- * Doesn't redirect; the caller (OrgSwitcher) refreshes the current route
- * instead, so switching orgs doesn't move you elsewhere in the app.
+ * Doesn't redirect; it refreshes the current route instead (re-rendered in
+ * this same response), so switching orgs doesn't move you elsewhere in the
+ * app.
  */
 export async function switchAgencyAction(
   agencyId: string,
@@ -47,6 +49,7 @@ export async function switchAgencyAction(
   }
 
   await setCurrentAgencyId(agencyId);
+  refresh();
   return {};
 }
 

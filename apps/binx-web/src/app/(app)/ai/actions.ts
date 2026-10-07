@@ -12,6 +12,8 @@
  */
 "use server";
 
+import { refresh } from "next/cache";
+
 import {
   type AiAction,
   type AiConversation,
@@ -150,14 +152,16 @@ export async function resolveAiActionAction(
   decision: "approve" | "decline",
 ): Promise<AiActionResult> {
   try {
-    return {
-      action: await resolveAiAction(
-        agencyId,
-        conversationId,
-        actionId,
-        decision,
-      ),
-    };
+    const action = await resolveAiAction(
+      agencyId,
+      conversationId,
+      actionId,
+      decision,
+    );
+    // An approved change may affect the page behind the modal — re-render it
+    // in this same response.
+    if (action.status === "applied") refresh();
+    return { action };
   } catch (error) {
     return errorResult(
       error,

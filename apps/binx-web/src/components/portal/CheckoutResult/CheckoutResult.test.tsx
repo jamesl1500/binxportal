@@ -2,9 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mockedRefresh = vi.fn();
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: mockedRefresh }),
   usePathname: () => "/portal/invoices/i1",
 }));
 vi.mock("@/app/(portal)/portal/invoices/actions", () => ({ confirmPaymentAction: vi.fn() }));
@@ -53,18 +51,16 @@ describe("CheckoutResult", () => {
     resolve({ outcome: "paid", amountPaidCents: 925000, currency: "USD" });
     expect(await screen.findByRole("heading", { name: "Payment successful" })).toBeInTheDocument();
     expect(screen.getByText(/\$9,250\.00 paid for invoice INV-0001/)).toBeInTheDocument();
-    expect(mockedRefresh).toHaveBeenCalled();
   });
 
   it.each([
     ["processing", "Payment processing"],
     ["failed", "Payment didn't go through"],
     ["open", "Payment canceled"],
-  ] as const)("shows %s outcomes without refreshing", async (outcome, heading) => {
+  ] as const)("shows %s outcomes", async (outcome, heading) => {
     mockedConfirm.mockResolvedValueOnce({ outcome });
     renderResult("success", "cs_1");
     expect(await screen.findByRole("heading", { name: heading })).toBeInTheDocument();
-    expect(mockedRefresh).not.toHaveBeenCalled();
   });
 
   it("shows the error and retries the check on demand", async () => {

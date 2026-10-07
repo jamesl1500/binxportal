@@ -6,11 +6,6 @@ vi.mock("@/app/(app)/clients/actions", () => ({
   setClientActiveAction: vi.fn(),
 }));
 
-const mockRefresh = vi.fn();
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: mockRefresh }),
-}));
-
 import { setClientActiveAction } from "@/app/(app)/clients/actions";
 
 import ArchiveClientButton from "./ArchiveClientButton";
@@ -46,7 +41,7 @@ describe("ArchiveClientButton", () => {
     expect(mockedSetActive).not.toHaveBeenCalled();
   });
 
-  it("archives once confirmed and refreshes the route", async () => {
+  it("archives once confirmed", async () => {
     mockedSetActive.mockResolvedValueOnce({});
     const user = userEvent.setup();
     render(<ArchiveClientButton agencyId={agencyId} client={activeClient} />);
@@ -55,7 +50,6 @@ describe("ArchiveClientButton", () => {
     await user.click(await screen.findByRole("button", { name: "Archive client" }));
 
     await waitFor(() => expect(mockedSetActive).toHaveBeenCalledWith(agencyId, activeClient.id, false));
-    await waitFor(() => expect(mockRefresh).toHaveBeenCalledOnce());
   });
 
   it("restores without asking for confirmation", async () => {

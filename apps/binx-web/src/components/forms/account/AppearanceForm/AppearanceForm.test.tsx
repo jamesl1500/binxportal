@@ -2,8 +2,6 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const refresh = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
 vi.mock("@/app/(app)/profile/actions", () => ({
   updateAppearanceAction: vi.fn(),
 }));
@@ -46,7 +44,6 @@ describe("AppearanceForm", () => {
     await user.click(screen.getByRole("button", { name: "Save" }));
     expect(mocked).toHaveBeenCalledWith("#2563eb");
     expect(await screen.findByText("Saved.")).toBeInTheDocument();
-    expect(refresh).toHaveBeenCalled();
   });
 
   it("resets to default via the Reset button, saving null", async () => {

@@ -2,9 +2,6 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mockedRefresh = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: mockedRefresh }) }));
-
 vi.mock("@/app/(app)/projects/[projectId]/kickoff/actions", () => ({
   createKickoffAction: vi.fn(),
   updateKickoffAction: vi.fn(),
@@ -78,7 +75,6 @@ describe("KickoffBuilder", () => {
         questions: [expect.objectContaining({ label: "What's the goal?" })],
       }),
     );
-    expect(mockedRefresh).toHaveBeenCalledOnce();
     expect(mockedToastSuccess).toHaveBeenCalledWith("Kickoff draft created", expect.anything());
   });
 
@@ -106,7 +102,6 @@ describe("KickoffBuilder", () => {
     await user.click(screen.getByRole("button", { name: /save draft/i }));
 
     expect(mockedUpdate).toHaveBeenCalledWith("a1", "p1", expect.objectContaining({ title: "Project kickoff" }));
-    expect(mockedRefresh).toHaveBeenCalledOnce();
     expect(mockedToastSuccess).toHaveBeenCalledWith("Draft saved", {
       description: "Only your team can see it until you send it to the client.",
     });
@@ -121,7 +116,6 @@ describe("KickoffBuilder", () => {
     await user.click(screen.getByRole("button", { name: "Send kickoff" }));
 
     expect(mockedSend).toHaveBeenCalledWith("a1", "p1");
-    expect(mockedRefresh).toHaveBeenCalledOnce();
     expect(mockedToastSuccess).toHaveBeenCalledWith("Kickoff sent to your client", expect.anything());
   });
 
@@ -135,7 +129,6 @@ describe("KickoffBuilder", () => {
 
     expect(mockedToastError).toHaveBeenCalledWith("This client has no portal contact yet");
     expect(mockedToastSuccess).not.toHaveBeenCalled();
-    expect(mockedRefresh).not.toHaveBeenCalled();
   });
 
   it("deletes the kickoff after confirming the dialog", async () => {
@@ -157,7 +150,6 @@ describe("KickoffBuilder", () => {
     await user.click(screen.getByRole("button", { name: /save draft/i }));
 
     expect(mockedToastError).toHaveBeenCalledWith("Something went wrong");
-    expect(mockedRefresh).not.toHaveBeenCalled();
   });
 
   it("adds and removes question rows", async () => {

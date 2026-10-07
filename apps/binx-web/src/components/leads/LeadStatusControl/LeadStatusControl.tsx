@@ -3,7 +3,8 @@
  *
  * The status pill + dropdown on a lead's detail page. Changing status calls
  * `changeLeadStatusAction` immediately; picking "Lost" asks for a reason
- * first. `router.refresh()` after so the timeline + header stay in sync.
+ * first. The action refreshes the page in the same response, so the timeline
+ * + header stay in sync.
  *
  * @module apps/binx-web/src/components/leads/LeadStatusControl/LeadStatusControl.tsx
  * @author Binx Portal
@@ -11,7 +12,6 @@
 "use client";
 
 import { useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { changeLeadStatusAction } from "@/app/(app)/leads/actions";
@@ -37,7 +37,6 @@ const LeadStatusControl = ({
   status,
   locked,
 }: LeadStatusControlProps) => {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const meta = LEAD_STATUS_META[status];
 
@@ -63,7 +62,6 @@ const LeadStatusControl = ({
         return;
       }
       toast.success(`Moved to ${LEAD_STATUS_META[next].label}`);
-      router.refresh();
     });
   };
 

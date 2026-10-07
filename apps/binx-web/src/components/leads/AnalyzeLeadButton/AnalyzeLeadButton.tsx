@@ -13,7 +13,6 @@
 "use client";
 
 import { useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
@@ -32,7 +31,6 @@ const AnalyzeLeadButton = ({
   leadId,
   analyzed,
 }: AnalyzeLeadButtonProps) => {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   const handleClick = () => {
@@ -43,7 +41,6 @@ const AnalyzeLeadButton = ({
         return;
       }
       toast.success("Lead analyzed");
-      router.refresh();
     });
   };
 

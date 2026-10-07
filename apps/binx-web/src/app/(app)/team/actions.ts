@@ -12,6 +12,8 @@
  */
 "use server";
 
+import { refresh } from "next/cache";
+
 import { AuthApiError } from "@/lib/auth";
 import {
   AgencyInvitation,
@@ -45,6 +47,7 @@ export async function inviteMemberAction(
     return { error: "Unable to send invitation" };
   }
 
+  refresh();
   return {};
 }
 
@@ -60,6 +63,7 @@ export async function updateAgencyMemberRoleAction(
 ): Promise<UpdateAgencyMemberRoleActionResult> {
   try {
     const member = await updateAgencyMemberRole(agencyId, memberId, role);
+    refresh();
     return { member };
   } catch (error) {
     if (error instanceof AuthApiError) {
@@ -81,6 +85,7 @@ export async function updateMemberDetailsAction(
 ): Promise<UpdateMemberDetailsActionResult> {
   try {
     const member = await updateAgencyMemberDetails(agencyId, memberId, details);
+    refresh();
     return { member };
   } catch (error) {
     if (error instanceof AuthApiError) {
@@ -107,6 +112,7 @@ export async function removeAgencyMemberAction(
     return { error: "Unable to remove member" };
   }
 
+  refresh();
   return {};
 }
 
@@ -147,6 +153,7 @@ export async function revokeAgencyInvitationAction(
     return { error: "Unable to revoke invitation" };
   }
 
+  refresh();
   return {};
 }
 

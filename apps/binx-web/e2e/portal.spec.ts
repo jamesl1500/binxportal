@@ -20,8 +20,15 @@ test.describe("client portal", () => {
     await clientPage.goto("/portal");
     const checklist = clientPage.getByRole("region", { name: /getting started|you're all set up/i });
     await expect(checklist).toBeVisible();
+    // Following a step saves progress in the background (a server action).
+    // Navigation now commits instantly (the route's loading skeleton), so
+    // wait for that save to land before reloading /portal to check it.
+    const saved = clientPage.waitForResponse(
+      (res) => res.request().method() === "POST" && "next-action" in res.request().headers(),
+    );
     await checklist.getByRole("link", { name: /check in on your projects/i }).click();
     await expect(clientPage).toHaveURL(/\/portal\/projects$/);
+    await saved;
 
     await clientPage.goto("/portal");
     await expect(checklist.getByRole("link", { name: /check in on your projects\s*\(done\)/i })).toBeVisible();

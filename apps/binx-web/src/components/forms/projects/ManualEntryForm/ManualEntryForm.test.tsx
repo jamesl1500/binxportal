@@ -2,9 +2,6 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mockedRefresh = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: mockedRefresh }) }));
-
 vi.mock("@/app/(app)/projects/[projectId]/time/actions", () => ({
   logManualEntryAction: vi.fn(),
 }));
@@ -67,7 +64,6 @@ describe("ManualEntryForm", () => {
       hourlyRateCents: 15000,
     });
     expect(mockedToastSuccess).toHaveBeenCalledWith("Time entry logged");
-    expect(mockedRefresh).toHaveBeenCalledOnce();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
@@ -109,7 +105,6 @@ describe("ManualEntryForm", () => {
 
     expect(await screen.findByText("ended_at must be after started_at")).toBeInTheDocument();
     expect(mockedToastError).toHaveBeenCalledWith("ended_at must be after started_at");
-    expect(mockedRefresh).not.toHaveBeenCalled();
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 

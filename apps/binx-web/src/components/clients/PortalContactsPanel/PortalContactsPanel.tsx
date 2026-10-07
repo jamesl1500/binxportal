@@ -12,7 +12,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { Copy, RotateCcw, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -47,7 +46,6 @@ const PortalContactsPanel = ({
   contacts,
   invitations,
 }: PortalContactsPanelProps) => {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [title, setTitle] = useState("");
   const [links, setLinks] = useState<Record<string, string>>({});
@@ -78,7 +76,6 @@ const PortalContactsPanel = ({
       toast.success(`Invitation sent to ${trimmed}`);
       setEmail("");
       setTitle("");
-      router.refresh();
     });
   };
 
@@ -119,7 +116,6 @@ const PortalContactsPanel = ({
         return;
       }
       toast.success("Invitation revoked");
-      router.refresh();
     });
   };
 
@@ -137,7 +133,6 @@ const PortalContactsPanel = ({
         return;
       }
       toast.success(`${name} removed`);
-      router.refresh();
     });
   };
 

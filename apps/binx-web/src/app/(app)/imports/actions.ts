@@ -10,6 +10,8 @@
  */
 "use server";
 
+import { refresh } from "next/cache";
+
 import { AuthApiError } from "@/lib/auth";
 import { parseImportFile, runImport } from "@/lib/imports";
 import type {
@@ -56,7 +58,10 @@ export async function runImportAction(
   dryRun: boolean,
 ): Promise<RunImportActionResult> {
   try {
-    return { result: await runImport(agencyId, kind, rows, dryRun) };
+    const result = await runImport(agencyId, kind, rows, dryRun);
+    // A real import changes the lists behind the wizard; a dry run doesn't.
+    if (!dryRun) refresh();
+    return { result };
   } catch (error) {
     return {
       error: errorMessage(

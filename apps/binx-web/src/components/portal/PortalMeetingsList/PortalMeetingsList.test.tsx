@@ -6,11 +6,6 @@ vi.mock("@/app/(portal)/portal/meetings/actions", () => ({
   cancelPortalMeetingAction: vi.fn(),
 }));
 
-const mockRefresh = vi.fn();
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: mockRefresh }),
-}));
-
 import { cancelPortalMeetingAction } from "@/app/(portal)/portal/meetings/actions";
 import type { PortalMeeting } from "@/lib/portal";
 
@@ -80,14 +75,13 @@ describe("PortalMeetingsList", () => {
     expect(screen.getByText("Scheduled for you")).toBeInTheDocument();
   });
 
-  it("cancels a meeting and refreshes the route", async () => {
+  it("cancels a meeting", async () => {
     const user = userEvent.setup();
     render(<PortalMeetingsList meetings={[makeMeeting({ id: "m1", starts_at: FUTURE })]} />);
 
     await user.click(screen.getByRole("button", { name: "Cancel" }));
 
     expect(mockedCancel).toHaveBeenCalledWith("m1");
-    expect(mockRefresh).toHaveBeenCalled();
   });
 
   it("surfaces a cancel error", async () => {

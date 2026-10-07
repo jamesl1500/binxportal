@@ -4,13 +4,15 @@
  * Server actions for the leads list + detail pages: create, edit, status /
  * owner changes, notes, convert-to-client, the AI analyze pass, and delete.
  * Plain authenticated mutations against `lib/leads.ts`, mirroring
- * `clients/actions.ts`.
+ * `clients/actions.ts`. Mutations made from the lead pages call `refresh()` so
+ * the page re-renders in the same response.
  *
  * @module apps/binx-web/src/app/(app)/leads/actions.ts
  * @author Binx Portal
  */
 "use server";
 
+import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { generateLeadFollowup } from "@/lib/ai";
@@ -70,7 +72,9 @@ export async function updateLeadAction(
   input: LeadInput,
 ): Promise<LeadResult> {
   try {
-    return { lead: await updateLead(agencyId, leadId, input) };
+    const lead = await updateLead(agencyId, leadId, input);
+    refresh();
+    return { lead };
   } catch (error) {
     return fail(error, "Unable to update the lead");
   }
@@ -83,9 +87,9 @@ export async function changeLeadStatusAction(
   lostReason?: string | null,
 ): Promise<LeadResult> {
   try {
-    return {
-      lead: await changeLeadStatus(agencyId, leadId, status, lostReason),
-    };
+    const lead = await changeLeadStatus(agencyId, leadId, status, lostReason);
+    refresh();
+    return { lead };
   } catch (error) {
     return fail(error, "Unable to change the status");
   }
@@ -97,7 +101,9 @@ export async function assignLeadOwnerAction(
   ownerId: string | null,
 ): Promise<LeadResult> {
   try {
-    return { lead: await assignLeadOwner(agencyId, leadId, ownerId) };
+    const lead = await assignLeadOwner(agencyId, leadId, ownerId);
+    refresh();
+    return { lead };
   } catch (error) {
     return fail(error, "Unable to reassign the lead");
   }
@@ -108,7 +114,9 @@ export async function analyzeLeadAction(
   leadId: string,
 ): Promise<LeadResult> {
   try {
-    return { lead: await analyzeLead(agencyId, leadId) };
+    const lead = await analyzeLead(agencyId, leadId);
+    refresh();
+    return { lead };
   } catch (error) {
     return fail(error, "Unable to analyze the lead");
   }
@@ -139,7 +147,9 @@ export async function analyzeOpenLeadsAction(
   agencyId: string,
 ): Promise<BulkAnalyzeActionResult> {
   try {
-    return { result: await analyzeOpenLeads(agencyId) };
+    const result = await analyzeOpenLeads(agencyId);
+    refresh();
+    return { result };
   } catch (error) {
     return fail(error, "Unable to analyze the pipeline");
   }
@@ -171,7 +181,9 @@ export async function importLeadsAction(
   candidates: ProspectCandidate[],
 ): Promise<ImportLeadsActionResult> {
   try {
-    return { result: await importLeads(agencyId, candidates) };
+    const result = await importLeads(agencyId, candidates);
+    refresh();
+    return { result };
   } catch (error) {
     return fail(error, "Unable to import the leads");
   }
@@ -188,7 +200,9 @@ export async function addLeadNoteAction(
   body: string,
 ): Promise<AddNoteResult> {
   try {
-    return { event: await addLeadNote(agencyId, leadId, body) };
+    const event = await addLeadNote(agencyId, leadId, body);
+    refresh();
+    return { event };
   } catch (error) {
     return fail(error, "Unable to add the note");
   }

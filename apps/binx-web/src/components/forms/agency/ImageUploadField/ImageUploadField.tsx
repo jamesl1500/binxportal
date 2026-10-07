@@ -4,8 +4,8 @@
  * A single image slot: shows the current image (or an empty drop zone), a
  * file picker + drag-and-drop, client-side type/size checks, and a "Remove"
  * control. The caller owns where the image lives — it hands this component
- * the URL to display and the upload/remove actions to call, then
- * `router.refresh()`s on success. Used for the agency's logo/cover
+ * the URL to display and the upload/remove actions to call (which refresh
+ * the route themselves on success). Used for the agency's logo/cover
  * (AgencyBrandingForm) and a client's own portal logo (ClientBrandingForm).
  *
  * @module apps/binx-web/src/components/forms/agency/ImageUploadField/ImageUploadField.tsx
@@ -14,7 +14,6 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { ImageUp, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -46,7 +45,6 @@ const ImageUploadField = ({
   onUpload,
   onRemove,
 }: ImageUploadFieldProps) => {
-  const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -64,7 +62,6 @@ const ImageUploadField = ({
     try {
       const result = await onUpload(file);
       if (result.error) toast.error(result.error);
-      else router.refresh();
     } finally {
       setBusy(false);
     }
@@ -75,7 +72,6 @@ const ImageUploadField = ({
     try {
       const result = await onRemove();
       if (result.error) toast.error(result.error);
-      else router.refresh();
     } finally {
       setBusy(false);
     }

@@ -2,11 +2,6 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mockedRefresh = vi.fn();
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: mockedRefresh }),
-}));
-
 vi.mock("@/app/(app)/projects/[projectId]/actions", () => ({
   uploadProjectFileAction: vi.fn(),
   deleteProjectFileAction: vi.fn(),
@@ -104,7 +99,7 @@ describe("ProjectFilesTable", () => {
     expect(firstFileName()).toBe("logo.png");
   });
 
-  it("uploads the selected file and refreshes on success", async () => {
+  it("uploads the selected file", async () => {
     mockedUpload.mockResolvedValueOnce({ file: files[0] });
     const user = userEvent.setup();
     render(<ProjectFilesTable agencyId="agency-1" projectId="project-1" files={[]} />);
@@ -113,7 +108,6 @@ describe("ProjectFilesTable", () => {
     await user.upload(screen.getByLabelText(/upload a file/i, { selector: "input" }), file);
 
     expect(mockedUpload).toHaveBeenCalledWith("agency-1", "project-1", file);
-    expect(mockedRefresh).toHaveBeenCalledOnce();
   });
 
   it("shows the server error when upload fails", async () => {
@@ -125,7 +119,6 @@ describe("ProjectFilesTable", () => {
     await user.upload(screen.getByLabelText(/upload a file/i, { selector: "input" }), file);
 
     expect(await screen.findByText("File is too large")).toBeInTheDocument();
-    expect(mockedRefresh).not.toHaveBeenCalled();
   });
 
   it("badges a task attachment and blocks deleting it from the project files table", async () => {
@@ -146,7 +139,7 @@ describe("ProjectFilesTable", () => {
     expect(screen.queryByText("brief.pdf")).not.toBeInTheDocument();
   });
 
-  it("deletes a file after confirmation and refreshes", async () => {
+  it("deletes a file after confirmation", async () => {
     mockedDelete.mockResolvedValueOnce({});
     const user = userEvent.setup();
     render(<ProjectFilesTable agencyId="agency-1" projectId="project-1" files={files} />);
@@ -158,7 +151,6 @@ describe("ProjectFilesTable", () => {
     await user.click(screen.getByRole("button", { name: "Delete file" }));
 
     await waitFor(() => expect(mockedDelete).toHaveBeenCalledWith("agency-1", "project-1", "file-brief"));
-    await waitFor(() => expect(mockedRefresh).toHaveBeenCalledOnce());
   });
 
   it("keeps the file when the delete is cancelled", async () => {

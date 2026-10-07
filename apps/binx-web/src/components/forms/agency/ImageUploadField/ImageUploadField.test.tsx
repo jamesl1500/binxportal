@@ -2,8 +2,6 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const refresh = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
 const toastError = vi.fn();
 vi.mock("sonner", () => ({ toast: { error: (...a: unknown[]) => toastError(...a) } }));
 
@@ -73,7 +71,6 @@ describe("ImageUploadField", () => {
 
     await user.click(screen.getByRole("button", { name: /remove/i }));
     expect(onRemove).toHaveBeenCalled();
-    expect(refresh).toHaveBeenCalled();
   });
 
   it("rejects an oversize image with a toast and no upload", async () => {
@@ -98,7 +95,7 @@ describe("ImageUploadField", () => {
     expect(onUpload).not.toHaveBeenCalled();
   });
 
-  it("toasts and does not refresh when the upload action returns an error", async () => {
+  it("toasts when the upload action returns an error", async () => {
     const onUpload = vi.fn().mockResolvedValueOnce({ error: "Nope" });
     const user = userEvent.setup();
     const { container } = render(
@@ -116,10 +113,9 @@ describe("ImageUploadField", () => {
     await user.upload(input, new File(["bytes"], "logo.png", { type: "image/png" }));
 
     expect(toastError).toHaveBeenCalledWith("Nope");
-    expect(refresh).not.toHaveBeenCalled();
   });
 
-  it("toasts and does not refresh when the remove action returns an error", async () => {
+  it("toasts when the remove action returns an error", async () => {
     const onRemove = vi.fn().mockResolvedValueOnce({ error: "Nope" });
     const user = userEvent.setup();
     render(
@@ -135,7 +131,6 @@ describe("ImageUploadField", () => {
 
     await user.click(screen.getByRole("button", { name: /remove/i }));
     expect(toastError).toHaveBeenCalledWith("Nope");
-    expect(refresh).not.toHaveBeenCalled();
   });
 
   it("opens the file picker from the Choose file / Replace button", async () => {

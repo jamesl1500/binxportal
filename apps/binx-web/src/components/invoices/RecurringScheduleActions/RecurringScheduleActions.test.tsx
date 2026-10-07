@@ -2,8 +2,6 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const refresh = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
 vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 vi.mock("@/app/(app)/invoices/recurring/actions", () => ({
   pauseRecurringScheduleAction: vi.fn(),
@@ -57,7 +55,6 @@ describe("RecurringScheduleActions", () => {
     expect(screen.queryByRole("button", { name: "Resume" })).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Pause" }));
     expect(pause).toHaveBeenCalledWith("a1", "s1");
-    expect(refresh).toHaveBeenCalled();
   });
 
   it("shows Resume for a paused schedule and resumes it", async () => {

@@ -11,7 +11,7 @@
  */
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { refresh, revalidatePath } from "next/cache";
 
 import { AuthApiError } from "@/lib/auth";
 import {
@@ -37,8 +37,11 @@ export interface MeetingActionResult {
 
 /** Every surface a meeting can show up on — revalidated after any mutation
  * so the dashboard card, the client's meetings tab, and the project overview
- * card all reflect the change without a manual refresh. */
+ * card all reflect the change without a manual refresh. The schedule/edit
+ * dialogs live on other pages too, so the page the action was called from is
+ * always refreshed as well (in this same response). */
 function revalidateMeetingSurfaces(meeting: Meeting): void {
+  refresh();
   revalidatePath("/meetings");
   revalidatePath("/dashboard");
   revalidatePath(`/clients/${meeting.client_id}/meetings`);
@@ -84,6 +87,9 @@ export async function cancelMeetingAction(
     revalidateMeetingSurfaces(meeting);
     return { meeting };
   } catch (error) {
+    // Still re-render — the meeting may have changed under us (e.g. it was
+    // already cancelled elsewhere), and the table should show that.
+    refresh();
     return errorResult(error, "Unable to cancel meeting");
   }
 }

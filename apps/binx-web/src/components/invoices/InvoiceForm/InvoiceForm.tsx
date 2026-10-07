@@ -216,7 +216,6 @@ const InvoiceForm = ({
       }
       if (result.invoice) {
         router.push(`/invoices/${result.invoice.id}`);
-        router.refresh();
       }
     } finally {
       setSubmitting(false);

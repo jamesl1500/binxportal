@@ -2,8 +2,6 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const refresh = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
 vi.mock("@/app/(app)/invoices/actions", () => ({ updateBillingSettingsAction: vi.fn() }));
 
 import { updateBillingSettingsAction } from "@/app/(app)/invoices/actions";
@@ -54,7 +52,6 @@ describe("BillingSettingsForm", () => {
       expect.objectContaining({ currency: "USD", nextInvoiceNumber: 5, defaultTaxRatePercent: "0" }),
     );
     expect(await screen.findByText(/saved/i)).toBeInTheDocument();
-    expect(refresh).toHaveBeenCalled();
   });
 
   it("blocks an invalid currency code", async () => {

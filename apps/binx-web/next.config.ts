@@ -13,6 +13,15 @@ const nextConfig: NextConfig = {
     formats: ["image/avif", "image/webp"],
   },
   experimental: {
+    // Run the React Compiler (`reactCompiler` above) as Turbopack's native
+    // Rust port instead of the Babel plugin — same output, less build/dev
+    // compile time and memory. Experimental: to roll back, delete this line
+    // (babel-plugin-react-compiler stays installed for exactly that reason).
+    turbopackRustReactCompiler: true,
+    // Dev only: don't compile a client-side `import()` / `next/dynamic`
+    // target (e.g. the AI modal) until the browser actually asks for it.
+    // No effect on production builds.
+    turbopackLazyDynamicImports: true,
     serverActions: {
       // Uploads (canvas images, task files, message attachments) go through
       // server actions as multipart FormData. Next caps action bodies at 1MB

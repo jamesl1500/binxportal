@@ -8,11 +8,16 @@
  * internal `/api/*` proxy route (file downloads are the one exception; see
  * app/api/projects/.../route.ts).
  *
+ * Mutations call `refresh()` so the project page re-renders in the same
+ * response — the board, team and files tabs read server data, and the
+ * callers don't need a follow-up `router.refresh()`.
+ *
  * @module apps/binx-web/src/app/(app)/projects/[projectId]/actions.ts
  * @author Binx Portal
  */
 "use server";
 
+import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 
 import {
@@ -89,6 +94,7 @@ export async function updateProjectAction(
 ): Promise<UpdateProjectActionResult> {
   try {
     const project = await updateAgencyProject(agencyId, projectId, input);
+    refresh();
     return { project };
   } catch (error) {
     return errorResult(error, "Unable to update project");
@@ -126,6 +132,7 @@ export async function addProjectMemberAction(
 ): Promise<AddProjectMemberActionResult> {
   try {
     const member = await addProjectMember(agencyId, projectId, userId);
+    refresh();
     return { member };
   } catch (error) {
     return errorResult(error, "Unable to assign this person to the project");
@@ -143,6 +150,7 @@ export async function removeProjectMemberAction(
 ): Promise<RemoveProjectMemberActionResult> {
   try {
     await removeProjectMember(agencyId, projectId, memberId);
+    refresh();
     return {};
   } catch (error) {
     return errorResult(error, "Unable to remove this person from the project");
@@ -163,6 +171,7 @@ export async function createTaskListAction(
 ): Promise<TaskListActionResult> {
   try {
     const list = await createTaskList(agencyId, projectId, name);
+    refresh();
     return { list };
   } catch (error) {
     return errorResult(error, "Unable to create list");
@@ -177,6 +186,7 @@ export async function renameTaskListAction(
 ): Promise<TaskListActionResult> {
   try {
     const list = await renameTaskList(agencyId, projectId, listId, name);
+    refresh();
     return { list };
   } catch (error) {
     return errorResult(error, "Unable to rename list");
@@ -194,6 +204,7 @@ export async function deleteTaskListAction(
 ): Promise<DeleteTaskListActionResult> {
   try {
     await deleteTaskList(agencyId, projectId, listId);
+    refresh();
     return {};
   } catch (error) {
     return errorResult(error, "Unable to delete list");
@@ -208,6 +219,7 @@ export async function moveTaskListAction(
 ): Promise<TaskListActionResult> {
   try {
     const list = await moveTaskList(agencyId, projectId, listId, position);
+    refresh();
     return { list };
   } catch (error) {
     return errorResult(error, "Unable to move list");
@@ -228,6 +240,7 @@ export async function createTaskAction(
 ): Promise<TaskActionResult> {
   try {
     const task = await createTask(agencyId, projectId, input);
+    refresh();
     return { task };
   } catch (error) {
     return errorResult(error, "Unable to create task");
@@ -242,6 +255,7 @@ export async function updateTaskAction(
 ): Promise<TaskActionResult> {
   try {
     const task = await updateTask(agencyId, projectId, taskId, input);
+    refresh();
     return { task };
   } catch (error) {
     return errorResult(error, "Unable to update task");
@@ -257,6 +271,7 @@ export async function moveTaskAction(
 ): Promise<TaskActionResult> {
   try {
     const task = await moveTask(agencyId, projectId, taskId, listId, position);
+    refresh();
     return { task };
   } catch (error) {
     return errorResult(error, "Unable to move task");
@@ -274,6 +289,7 @@ export async function deleteTaskAction(
 ): Promise<DeleteTaskActionResult> {
   try {
     await deleteTask(agencyId, projectId, taskId);
+    refresh();
     return {};
   } catch (error) {
     return errorResult(error, "Unable to delete task");
@@ -296,6 +312,7 @@ export async function uploadProjectFileAction(
 ): Promise<UploadProjectFileActionResult> {
   try {
     const uploaded = await uploadProjectFile(agencyId, projectId, file);
+    refresh();
     return { file: uploaded };
   } catch (error) {
     return errorResult(error, "Unable to upload file");
@@ -313,6 +330,7 @@ export async function deleteProjectFileAction(
 ): Promise<DeleteProjectFileActionResult> {
   try {
     await deleteProjectFile(agencyId, projectId, fileId);
+    refresh();
     return {};
   } catch (error) {
     return errorResult(error, "Unable to delete file");
@@ -362,6 +380,7 @@ export async function addTaskCommentAction(
       body,
       file,
     );
+    refresh();
     return { comment };
   } catch (error) {
     return errorResult(error, "Unable to post comment");
@@ -380,6 +399,7 @@ export async function deleteTaskCommentAction(
 ): Promise<DeleteTaskCommentActionResult> {
   try {
     await deleteTaskComment(agencyId, projectId, taskId, commentId);
+    refresh();
     return {};
   } catch (error) {
     return errorResult(error, "Unable to delete comment");
@@ -419,6 +439,7 @@ export async function uploadTaskFileAction(
 ): Promise<UploadTaskFileActionResult> {
   try {
     const uploaded = await uploadTaskFile(agencyId, projectId, taskId, file);
+    refresh();
     return { file: uploaded };
   } catch (error) {
     return errorResult(error, "Unable to upload file");
@@ -437,6 +458,7 @@ export async function deleteTaskFileAction(
 ): Promise<DeleteTaskFileActionResult> {
   try {
     await deleteTaskFile(agencyId, projectId, taskId, fileId);
+    refresh();
     return {};
   } catch (error) {
     return errorResult(error, "Unable to delete file");
@@ -463,6 +485,7 @@ export async function assignProjectMemberRoleAction(
       memberId,
       roleId,
     );
+    refresh();
     return { member };
   } catch (error) {
     return errorResult(error, "Unable to update this person's role");
@@ -501,6 +524,7 @@ export async function createProjectRoleAction(
 ): Promise<ProjectRoleActionResult> {
   try {
     const role = await createProjectRole(agencyId, projectId, name, color);
+    refresh();
     return { role };
   } catch (error) {
     return errorResult(error, "Unable to create role");
@@ -522,6 +546,7 @@ export async function updateProjectRoleAction(
       name,
       color,
     );
+    refresh();
     return { role };
   } catch (error) {
     return errorResult(error, "Unable to update role");
@@ -539,6 +564,7 @@ export async function deleteProjectRoleAction(
 ): Promise<DeleteProjectRoleActionResult> {
   try {
     await deleteProjectRole(agencyId, projectId, roleId);
+    refresh();
     return {};
   } catch (error) {
     return errorResult(error, "Unable to delete role");
@@ -577,6 +603,7 @@ export async function createProjectTagAction(
 ): Promise<ProjectTagActionResult> {
   try {
     const tag = await createProjectTag(agencyId, projectId, name, color);
+    refresh();
     return { tag };
   } catch (error) {
     return errorResult(error, "Unable to create tag");
@@ -592,6 +619,7 @@ export async function updateProjectTagAction(
 ): Promise<ProjectTagActionResult> {
   try {
     const tag = await updateProjectTag(agencyId, projectId, tagId, name, color);
+    refresh();
     return { tag };
   } catch (error) {
     return errorResult(error, "Unable to update tag");
@@ -609,6 +637,7 @@ export async function deleteProjectTagAction(
 ): Promise<DeleteProjectTagActionResult> {
   try {
     await deleteProjectTag(agencyId, projectId, tagId);
+    refresh();
     return {};
   } catch (error) {
     return errorResult(error, "Unable to delete tag");
@@ -628,6 +657,7 @@ export async function setTaskTagsAction(
 ): Promise<SetTaskTagsActionResult> {
   try {
     const task = await setTaskTags(agencyId, projectId, taskId, tagIds);
+    refresh();
     return { task };
   } catch (error) {
     return errorResult(error, "Unable to update tags");
@@ -689,9 +719,13 @@ export async function updateProjectDashboardLayoutAction(
   widgetOrder: string[],
   hiddenWidgets: string[],
   wideWidgets: string[],
+  /** Re-render the page in this response — needed when a widget that was
+   * hidden on the last server render is shown again (it has no body yet). */
+  options: { refresh?: boolean } = {},
 ): Promise<{ error?: string }> {
   try {
     await updateProjectDashboardLayout(widgetOrder, hiddenWidgets, wideWidgets);
+    if (options.refresh) refresh();
     return {};
   } catch (error) {
     return errorResult(error, "Unable to save your dashboard layout");

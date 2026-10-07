@@ -12,7 +12,7 @@
  */
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { refresh, revalidatePath } from "next/cache";
 
 import { AuthApiError } from "@/lib/auth";
 import type { Invoice } from "@/lib/invoicing";
@@ -58,6 +58,7 @@ export async function pauseRecurringScheduleAction(
   try {
     const schedule = await pauseRecurringSchedule(agencyId, scheduleId);
     revalidatePath("/invoices/recurring");
+    refresh();
     return { schedule };
   } catch (error) {
     return errorResult(error, "Unable to pause recurring invoice schedule");
@@ -71,6 +72,7 @@ export async function resumeRecurringScheduleAction(
   try {
     const schedule = await resumeRecurringSchedule(agencyId, scheduleId);
     revalidatePath("/invoices/recurring");
+    refresh();
     return { schedule };
   } catch (error) {
     return errorResult(error, "Unable to resume recurring invoice schedule");
@@ -84,6 +86,7 @@ export async function deleteRecurringScheduleAction(
   try {
     await deleteRecurringSchedule(agencyId, scheduleId);
     revalidatePath("/invoices/recurring");
+    refresh();
     return {};
   } catch (error) {
     return errorResult(error, "Unable to delete recurring invoice schedule");
@@ -103,6 +106,7 @@ export async function runRecurringScheduleNowAction(
     const invoice = await runRecurringScheduleNow(agencyId, scheduleId);
     revalidatePath("/invoices/recurring");
     revalidatePath("/invoices");
+    refresh();
     return { invoice };
   } catch (error) {
     return errorResult(error, "Unable to generate invoice now");

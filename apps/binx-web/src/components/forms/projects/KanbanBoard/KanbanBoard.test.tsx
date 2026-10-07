@@ -1,10 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: vi.fn() }),
-}));
-
 vi.mock("@/app/(app)/projects/[projectId]/actions", () => ({
   createTaskAction: vi.fn(),
   createTaskListAction: vi.fn(),

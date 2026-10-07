@@ -13,7 +13,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 
 import { cancelPortalMeetingAction } from "@/app/(portal)/portal/meetings/actions";
 import type { PortalMeeting } from "@/lib/portal";
@@ -39,7 +38,6 @@ function isUpcoming(iso: string): boolean {
 }
 
 const PortalMeetingsList = ({ meetings }: PortalMeetingsListProps) => {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +55,6 @@ const PortalMeetingsList = ({ meetings }: PortalMeetingsListProps) => {
         setError(result.error);
       }
       setCancellingId(null);
-      router.refresh();
     });
   };
 

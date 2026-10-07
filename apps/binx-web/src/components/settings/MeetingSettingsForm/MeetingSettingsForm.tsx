@@ -12,7 +12,6 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { Switch } from "@base-ui/react/switch";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -61,7 +60,6 @@ const MeetingSettingsForm = ({
   settings,
   canManage,
 }: MeetingSettingsFormProps) => {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -128,7 +126,6 @@ const MeetingSettingsForm = ({
         return;
       }
       setSaved(true);
-      router.refresh();
     });
   };
 
