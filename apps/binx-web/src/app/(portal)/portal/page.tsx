@@ -53,6 +53,8 @@ import PortalStatTiles, {
 
 import styles from "./home.module.scss";
 
+import SummarizeClientPortalDashboard from "@/components/portal/SummarizeClientPortalDashboard/SummarizeClientPortalDashboard";
+
 /** Projects the client cares about most first: in flight, then planned, then the rest. */
 const STATUS_ORDER: Record<string, number> = {
   active: 0,
@@ -200,6 +202,7 @@ const PortalHomePage = async () => {
               Message the team
             </Link>
             {selfBooking && <BookMeetingDialog />}
+            <SummarizeClientPortalDashboard />
           </div>
         </div>
 

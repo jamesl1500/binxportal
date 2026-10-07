@@ -1,0 +1,20 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+$brand: var(--portal-primary, #{t.$color-ink});
+
+.summarizeButton {
+  @include m.button-base;
+  color: t.$color-accent-foreground;
+  text-decoration: none;
+  background: $brand;
+
+  svg {
+    width: 0.95rem;
+    height: 0.95rem;
+  }
+
+  &:hover {
+    background: color-mix(in srgb, #{$brand} 85%, white);
+  }
+}

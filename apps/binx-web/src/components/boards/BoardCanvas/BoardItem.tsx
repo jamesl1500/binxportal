@@ -116,7 +116,8 @@ const BoardItemView = ({
     }
   }
 
-  const versionSuffix = item.version_number != null ? ` (v${item.version_number})` : "";
+  const versionSuffix =
+    item.version_number != null ? ` (v${item.version_number})` : "";
 
   const bumpToFront = () => {
     // A cheap "bring to front": one past the current view is fine, the server
@@ -377,80 +378,85 @@ const BoardItemView = ({
         />
       )}
 
-      {/* Who dropped the card — a faint tag above it, revealed on hover/select
-          (styling in .authorTag). */}
-      <span
-        className={styles.authorTag}
-        data-client={item.author_kind === "client"}
-        aria-hidden="true"
-      >
-        {item.created_by_name}
-      </span>
-
-      {/* Approval state — visible whenever set, not just on hover/select, so
+      {/* Everything that floats above the card shares one row (.itemMeta) so
+          the approval badge, reaction pills and author tag lay out next to
+          each other instead of stacking on the same spot. */}
+      <div className={styles.itemMeta}>
+        {/* Approval state — visible whenever set, not just on hover/select, so
           a resting board still shows what's waiting on the client. Each
           decision is tied to a pinned version number, so this always names
           exactly which snapshot is pending / was approved. */}
-      {item.approval_status && (
-        <div
-          className={styles.approvalBadge}
-          data-status={item.approval_status}
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          <span className={styles.approvalStatus}>
-            {item.approval_status === "pending" &&
-              `Awaiting approval${versionSuffix}`}
-            {item.approval_status === "approved" &&
-              (item.approval_decided_by_name
-                ? `Approved by ${item.approval_decided_by_name}${versionSuffix}`
-                : `Approved${versionSuffix}`)}
+        {item.approval_status && (
+          <div
+            className={styles.approvalBadge}
+            data-status={item.approval_status}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <span className={styles.approvalStatus}>
+              {item.approval_status === "pending" &&
+                `Awaiting approval${versionSuffix}`}
+              {item.approval_status === "approved" &&
+                (item.approval_decided_by_name
+                  ? `Approved by ${item.approval_decided_by_name}${versionSuffix}`
+                  : `Approved${versionSuffix}`)}
+              {item.approval_status === "changes_requested" &&
+                (item.approval_decided_by_name
+                  ? `Changes requested by ${item.approval_decided_by_name}${versionSuffix}`
+                  : `Changes requested${versionSuffix}`)}
+            </span>
             {item.approval_status === "changes_requested" &&
-              (item.approval_decided_by_name
-                ? `Changes requested by ${item.approval_decided_by_name}${versionSuffix}`
-                : `Changes requested${versionSuffix}`)}
-          </span>
-          {item.approval_status === "changes_requested" &&
-            item.approval_note && (
-              <p className={styles.approvalNote}>“{item.approval_note}”</p>
-            )}
-        </div>
-      )}
+              item.approval_note && (
+                <p className={styles.approvalNote}>“{item.approval_note}”</p>
+              )}
+          </div>
+        )}
 
-      {/* The card was edited since its last approved snapshot — the decision
+        {/* The card was edited since its last approved snapshot — the decision
           was cleared (see boards/service.py::update_item), but the earlier
           sign-off is still pinned and viewable in the history dialog. */}
-      {!item.approval_status && item.approved_version_number != null && (
-        <div
-          className={styles.approvalBadge}
-          data-status="pending"
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          <span className={styles.approvalStatus}>
-            Edited since approved v{item.approved_version_number}
-          </span>
-        </div>
-      )}
+        {!item.approval_status && item.approved_version_number != null && (
+          <div
+            className={styles.approvalBadge}
+            data-status="pending"
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <span className={styles.approvalStatus}>
+              Edited since approved v{item.approved_version_number}
+            </span>
+          </div>
+        )}
 
-      {/* Reaction pills sit above the card whenever there are any — visible
+        {/* Reaction pills sit above the card whenever there are any — visible
           without selecting, like Milanote / Figma. */}
-      {Object.keys(item.reactions).length > 0 && (
-        <div
-          className={styles.reactionPills}
-          onPointerDown={(e) => e.stopPropagation()}
+        {Object.keys(item.reactions).length > 0 && (
+          <div
+            className={styles.reactionPills}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            {REACTION_EMOJI.filter((e) => item.reactions[e]).map((emoji) => (
+              <button
+                key={emoji}
+                type="button"
+                className={styles.reactionPill}
+                data-mine={item.my_reactions.includes(emoji)}
+                onClick={() => toggleReaction(emoji)}
+              >
+                <span aria-hidden="true">{emoji}</span> {item.reactions[emoji]}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Who dropped the card — a faint tag at the row's right end, revealed
+          on hover/select (styling in .authorTag). */}
+        <span
+          className={styles.authorTag}
+          data-client={item.author_kind === "client"}
+          aria-hidden="true"
         >
-          {REACTION_EMOJI.filter((e) => item.reactions[e]).map((emoji) => (
-            <button
-              key={emoji}
-              type="button"
-              className={styles.reactionPill}
-              data-mine={item.my_reactions.includes(emoji)}
-              onClick={() => toggleReaction(emoji)}
-            >
-              <span aria-hidden="true">{emoji}</span> {item.reactions[emoji]}
-            </button>
-          ))}
-        </div>
-      )}
+          {item.created_by_name}
+        </span>
+      </div>
 
       {selected && (
         <>
@@ -563,33 +569,35 @@ const BoardItemView = ({
                     </span>
                   </>
                 )}
-                {item.type !== "pin" && viewerKind === "agency" && actions.requestApproval && (
-                  <>
-                    <span className={styles.barDivider} aria-hidden="true" />
-                    {item.approval_status === "pending" ? (
-                      <button
-                        type="button"
-                        className={styles.approvalButton}
-                        onClick={withdrawApproval}
-                        disabled={approvalBusy}
-                      >
-                        Withdraw request
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        className={styles.approvalButton}
-                        data-tone="accent"
-                        onClick={requestApproval}
-                        disabled={approvalBusy}
-                      >
-                        {item.approval_status
-                          ? "Request re-approval"
-                          : "Request approval"}
-                      </button>
-                    )}
-                  </>
-                )}
+                {item.type !== "pin" &&
+                  viewerKind === "agency" &&
+                  actions.requestApproval && (
+                    <>
+                      <span className={styles.barDivider} aria-hidden="true" />
+                      {item.approval_status === "pending" ? (
+                        <button
+                          type="button"
+                          className={styles.approvalButton}
+                          onClick={withdrawApproval}
+                          disabled={approvalBusy}
+                        >
+                          Withdraw request
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className={styles.approvalButton}
+                          data-tone="accent"
+                          onClick={requestApproval}
+                          disabled={approvalBusy}
+                        >
+                          {item.approval_status
+                            ? "Request re-approval"
+                            : "Request approval"}
+                        </button>
+                      )}
+                    </>
+                  )}
                 {item.type !== "pin" &&
                   viewerKind === "client" &&
                   actions.decideApproval &&

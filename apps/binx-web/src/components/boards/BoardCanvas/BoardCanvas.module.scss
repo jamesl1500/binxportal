@@ -149,7 +149,11 @@
   overflow: hidden;
   cursor: grab;
   touch-action: none;
-  background-image: radial-gradient(circle, color-mix(in srgb, t.$color-ink 12%, transparent) 1px, transparent 1px);
+  background-image: radial-gradient(
+    circle,
+    color-mix(in srgb, t.$color-ink 12%, transparent) 1px,
+    transparent 1px
+  );
   background-size: 24px 24px;
 
   &:active {
@@ -270,8 +274,8 @@
 
 .pinHead {
   position: absolute;
-  top: 0;
-  left: 1px;
+  top: 3.1px;
+  left: 3px;
   z-index: 1;
   display: flex;
   align-items: center;
@@ -362,16 +366,35 @@
   border-radius: inherit;
 }
 
-// ---- Likes (reaction chips, shown above the card at any time) --------
+// ---- Meta row (approval badge, reaction chips, author tag) -----------
 
-.reactionPills {
+// One row floating just above the card. The three pieces used to be
+// absolutely positioned on the same edge and collided as soon as a card had
+// an approval badge; as flex siblings they push each other aside instead.
+// The row is at least as wide as the card (so the author tag reaches the
+// top-right corner) and grows past it rather than wrapping when the card is
+// narrow. It ignores the pointer itself so the empty space between the
+// pieces doesn't swallow clicks meant for the board underneath.
+.itemMeta {
   position: absolute;
   left: 0;
   bottom: 100%;
-  margin-bottom: 6px;
   display: flex;
-  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 6px;
+  width: max-content;
+  min-width: 100%;
+  padding-bottom: 6px;
+  pointer-events: none;
+}
+
+// ---- Likes (reaction chips, shown above the card at any time) --------
+
+.reactionPills {
+  display: flex;
+  flex: none;
   gap: 4px;
+  pointer-events: auto;
   cursor: default;
   animation: board-pop t.$duration-fast t.$ease-standard;
 }
@@ -495,16 +518,16 @@
 
 // ---- Client approval ---------------------------------------------------
 
-// Pinned to the card's top-left (the author tag owns top-right), always
-// visible when set so a resting board still shows what's awaiting the
-// client without anyone needing to select the card.
+// First in the meta row, so it sits at the card's top-left (the author tag
+// owns top-right). Always visible when set so a resting board still shows
+// what's awaiting the client without anyone needing to select the card.
 .approvalBadge {
-  position: absolute;
-  left: 0;
-  bottom: 100%;
-  margin-bottom: 6px;
-  max-width: 16rem;
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-start;
   cursor: default;
+  pointer-events: auto;
   animation: board-pop t.$duration-fast t.$ease-standard;
 }
 
@@ -513,6 +536,7 @@
   padding: 2px 8px;
   font-size: 0.625rem;
   font-weight: 600;
+  line-height: 1.5;
   letter-spacing: 0.01em;
   color: #92620a;
   background: #fef3c7;
@@ -613,17 +637,17 @@
   background: #9a2f2f;
 }
 
-// Author label — a faint tag pinned to the card's top-right, revealed on
-// hover or select so a resting board stays clean.
+// Author label — a faint tag at the end of the meta row (the auto margin
+// pushes it to the card's top-right), revealed on hover or select so a
+// resting board stays clean.
 .authorTag {
-  position: absolute;
-  right: 0;
-  bottom: 100%;
-  margin-bottom: 6px;
+  flex: none;
+  margin-left: auto;
   max-width: 12rem;
   padding: 2px 8px;
   font-size: 0.625rem;
   font-weight: 500;
+  line-height: 1.5;
   letter-spacing: 0.01em;
   color: t.$color-ink-soft;
   background: t.$color-surface;
