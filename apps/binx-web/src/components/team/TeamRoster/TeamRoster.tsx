@@ -8,8 +8,8 @@
  * callers as a quick change without opening the drawer.
  *
  * Holds the roster in local state so a drawer mutation is reflected
- * immediately; `router.refresh()` also runs so the sibling stat grid catches
- * up.
+ * immediately; the drawer's actions also refresh the route in the same
+ * response, so the sibling stat grid catches up.
  *
  * @module apps/binx-web/src/components/team/TeamRoster/TeamRoster.tsx
  * @author Binx Portal
@@ -17,7 +17,6 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { updateAgencyMemberRoleAction } from "@/app/(app)/team/actions";
@@ -76,7 +75,6 @@ const TeamRoster = ({
   currentUserId,
   canManage,
 }: TeamRosterProps) => {
-  const router = useRouter();
   const [members, setMembers] = useState(initialMembers);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
@@ -145,12 +143,10 @@ const TeamRoster = ({
     setMembers((prev) =>
       prev.map((member) => (member.id === updated.id ? updated : member)),
     );
-    router.refresh();
   };
 
   const applyMemberRemoval = (memberId: string) => {
     setMembers((prev) => prev.filter((member) => member.id !== memberId));
-    router.refresh();
   };
 
   const handleInlineRole = (memberId: string, role: AgencyRole) => {

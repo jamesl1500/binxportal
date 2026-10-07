@@ -6,11 +6,6 @@ vi.mock("@/app/(app)/settings/actions", () => ({
   updateAgencyAction: vi.fn(),
 }));
 
-const mockRefresh = vi.fn();
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: mockRefresh }),
-}));
-
 import { updateAgencyAction } from "@/app/(app)/settings/actions";
 
 import AgencyGeneralForm from "./AgencyGeneralForm";
@@ -44,7 +39,7 @@ describe("AgencyGeneralForm", () => {
     expect(mockedUpdateAgencyAction).not.toHaveBeenCalled();
   });
 
-  it("submits the trimmed name, shows a success message, and refreshes the route", async () => {
+  it("submits the trimmed name and shows a success message", async () => {
     mockedUpdateAgencyAction.mockResolvedValueOnce({});
     const user = userEvent.setup();
     render(<AgencyGeneralForm agencyId={agencyId} name="Acme Agency" slug="acme-agency" />);
@@ -55,7 +50,6 @@ describe("AgencyGeneralForm", () => {
 
     expect(await screen.findByText("Agency updated.")).toBeInTheDocument();
     expect(mockedUpdateAgencyAction).toHaveBeenCalledWith(agencyId, "Acme Studio");
-    expect(mockRefresh).toHaveBeenCalledOnce();
   });
 
   it("shows the server error on failure", async () => {
@@ -66,6 +60,5 @@ describe("AgencyGeneralForm", () => {
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
     expect(await screen.findByText("Insufficient permissions for this agency")).toBeInTheDocument();
-    expect(mockRefresh).not.toHaveBeenCalled();
   });
 });

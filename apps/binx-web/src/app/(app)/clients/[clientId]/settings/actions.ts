@@ -10,6 +10,8 @@
  */
 "use server";
 
+import { refresh } from "next/cache";
+
 import { AuthApiError } from "@/lib/auth";
 import {
   type ClientContactInvitation,
@@ -35,6 +37,7 @@ export async function inviteClientContactAction(
       email,
       title,
     });
+    refresh();
     return { invitation };
   } catch (error) {
     if (error instanceof AuthApiError) return { error: error.message };
@@ -75,6 +78,7 @@ export async function revokeClientContactInvitationAction(
     if (error instanceof AuthApiError) return { error: error.message };
     return { error: "Unable to revoke the invitation" };
   }
+  refresh();
   return {};
 }
 
@@ -89,5 +93,6 @@ export async function removeClientContactAction(
     if (error instanceof AuthApiError) return { error: error.message };
     return { error: "Unable to remove the contact" };
   }
+  refresh();
   return {};
 }

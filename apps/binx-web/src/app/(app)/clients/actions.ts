@@ -6,11 +6,15 @@
  * mutations — no session cookies change — so they call binx-api directly via
  * `lib/clients.ts` rather than going through an internal `/api/*` proxy route.
  *
+ * Edits that leave you on the same page call `refresh()` so the page
+ * re-renders in the same response (no follow-up `router.refresh()`).
+ *
  * @module apps/binx-web/src/app/(app)/clients/actions.ts
  * @author Binx Portal
  */
 "use server";
 
+import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { AuthApiError } from "@/lib/auth";
@@ -61,6 +65,7 @@ export async function updateClientAction(
 ): Promise<UpdateClientActionResult> {
   try {
     const client = await updateAgencyClient(agencyId, clientId, input);
+    refresh();
     return { client };
   } catch (error) {
     if (error instanceof AuthApiError) {
@@ -82,6 +87,7 @@ export async function setClientActiveAction(
 ): Promise<SetClientActiveActionResult> {
   try {
     const client = await setAgencyClientActive(agencyId, clientId, isActive);
+    refresh();
     return { client };
   } catch (error) {
     if (error instanceof AuthApiError) {
@@ -145,7 +151,9 @@ export async function updateClientBrandingAction(
   input: ClientBrandingInput,
 ): Promise<ClientBrandingActionResult> {
   try {
-    return { branding: await updateClientBranding(agencyId, clientId, input) };
+    const branding = await updateClientBranding(agencyId, clientId, input);
+    refresh();
+    return { branding };
   } catch (error) {
     return brandingError(error, "Unable to update branding");
   }
@@ -161,7 +169,9 @@ export async function uploadClientLogoAction(
     return { error: "No file selected" };
   }
   try {
-    return { branding: await uploadClientLogo(agencyId, clientId, file) };
+    const branding = await uploadClientLogo(agencyId, clientId, file);
+    refresh();
+    return { branding };
   } catch (error) {
     return brandingError(error, "Unable to upload the logo");
   }
@@ -172,7 +182,9 @@ export async function removeClientLogoAction(
   clientId: string,
 ): Promise<ClientBrandingActionResult> {
   try {
-    return { branding: await removeClientLogo(agencyId, clientId) };
+    const branding = await removeClientLogo(agencyId, clientId);
+    refresh();
+    return { branding };
   } catch (error) {
     return brandingError(error, "Unable to remove the logo");
   }

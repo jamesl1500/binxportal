@@ -12,7 +12,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 
 import type { AgencyProfile } from "@/lib/agencies";
 import { agencyImageUrl } from "@/lib/agencies-client";
@@ -34,7 +33,6 @@ const DEFAULT_COLOR = "#0a0a0b";
 const HEX = /^#[0-9a-fA-F]{6}$/;
 
 const AgencyBrandingForm = ({ agencyId, profile }: AgencyBrandingFormProps) => {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [tagline, setTagline] = useState(profile.tagline ?? "");
   const [color, setColor] = useState(profile.brand_color ?? "");
@@ -60,7 +58,6 @@ const AgencyBrandingForm = ({ agencyId, profile }: AgencyBrandingFormProps) => {
         return;
       }
       setSaved(true);
-      router.refresh();
     });
   };
 

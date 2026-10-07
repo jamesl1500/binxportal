@@ -2,8 +2,6 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const refresh = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
 vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
 vi.mock("@/app/proposals/public/actions", () => ({
   signPublicProposalAction: vi.fn(),
@@ -35,7 +33,6 @@ describe("PublicProposalActions", () => {
     await user.click(screen.getByRole("button", { name: "Sign proposal" }));
 
     expect(sign).toHaveBeenCalledWith("tok", "Jamie Rivera", "jamie@example.com");
-    expect(refresh).toHaveBeenCalled();
   });
 
   it("shows the decline form and submits an optional reason", async () => {
@@ -47,7 +44,6 @@ describe("PublicProposalActions", () => {
     await user.click(screen.getByRole("button", { name: "Decline proposal" }));
 
     expect(decline).toHaveBeenCalledWith("tok", "Went with another agency");
-    expect(refresh).toHaveBeenCalled();
   });
 
   it("declines with a null reason when left blank", async () => {
@@ -71,7 +67,6 @@ describe("PublicProposalActions", () => {
     await user.click(screen.getByRole("button", { name: "Sign proposal" }));
 
     expect(toast.error).toHaveBeenCalledWith("This proposal has expired — ask the agency to resend it");
-    expect(refresh).not.toHaveBeenCalled();
   });
 
   it("goes back to the choice from either form", async () => {

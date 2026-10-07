@@ -2,11 +2,6 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mockedRefresh = vi.fn();
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: mockedRefresh }),
-}));
-
 vi.mock("@/app/(app)/projects/[projectId]/actions", () => ({
   addProjectMemberAction: vi.fn(),
   assignProjectMemberRoleAction: vi.fn(),
@@ -158,7 +153,6 @@ describe("ProjectTeamTable", () => {
     await user.selectOptions(screen.getByLabelText("Project role for Zoe Adams"), "role-pm");
 
     expect(mockedAssignRole).toHaveBeenCalledWith("agency-1", "project-1", "member-zoe", "role-pm");
-    expect(mockedRefresh).toHaveBeenCalled();
   });
 
   it("removes a member after confirmation", async () => {

@@ -485,7 +485,8 @@ const AiModal = ({ agencyId, isOpen, onClose }: AiModalProps) => {
           : message,
       ),
     );
-    if (resolved.status === "applied") router.refresh();
+    // An applied change re-renders the page behind the modal from inside the
+    // action itself (same response) — no follow-up refresh needed here.
   };
 
   // Saved optimistically — a failed save rolls the menu back and says so.

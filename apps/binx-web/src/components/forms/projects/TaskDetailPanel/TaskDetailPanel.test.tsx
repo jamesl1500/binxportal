@@ -95,7 +95,6 @@ function renderPanel(overrides: Partial<React.ComponentProps<typeof TaskDetailPa
       canModerateComments={false}
       onOpenChange={vi.fn()}
       onClosed={vi.fn()}
-      onMutated={vi.fn()}
       {...overrides}
     />,
   );
@@ -131,9 +130,8 @@ describe("TaskDetailPanel", () => {
 
   it("saves edits through updateTaskAction and returns to read-only", async () => {
     mockedUpdate.mockResolvedValueOnce({ task: { ...task, title: "Ship it" } });
-    const onMutated = vi.fn();
     const user = userEvent.setup();
-    renderPanel({ onMutated });
+    renderPanel();
 
     await user.click(screen.getByRole("button", { name: /edit details/i }));
     const titleField = screen.getByRole("textbox", { name: "Task title" });
@@ -147,8 +145,9 @@ describe("TaskDetailPanel", () => {
       "task-1",
       expect.objectContaining({ title: "Ship it", listId: "list-todo" }),
     );
-    await waitFor(() => expect(onMutated).toHaveBeenCalled());
-    expect(screen.queryByRole("button", { name: /save changes/i })).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: /save changes/i })).not.toBeInTheDocument(),
+    );
   });
 
   it("defaults to the Comments tab and switches to Files on click", async () => {

@@ -7,11 +7,6 @@ vi.mock("@/app/(portal)/portal/meetings/actions", () => ({
   bookPortalMeetingAction: vi.fn(),
 }));
 
-const mockRefresh = vi.fn();
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: mockRefresh }),
-}));
-
 import { bookPortalMeetingAction, getPortalAvailableSlotsAction } from "@/app/(portal)/portal/meetings/actions";
 
 import BookMeetingDialog from "./BookMeetingDialog";
@@ -82,7 +77,6 @@ describe("BookMeetingDialog", () => {
     expect(mockedBook).toHaveBeenCalledWith(
       expect.objectContaining({ starts_at: SLOT_A.starts_at, title: "Kickoff" }),
     );
-    expect(mockRefresh).toHaveBeenCalled();
     expect(screen.queryByText(/confirm your meeting/i)).not.toBeInTheDocument();
   });
 
@@ -106,7 +100,6 @@ describe("BookMeetingDialog", () => {
 
     expect(await screen.findByText(/just booked/i)).toBeInTheDocument();
     expect(mockedGetSlots).toHaveBeenCalledTimes(2);
-    expect(mockRefresh).not.toHaveBeenCalled();
   });
 
   it("resets back to the day step when closed and reopened mid-flow", async () => {

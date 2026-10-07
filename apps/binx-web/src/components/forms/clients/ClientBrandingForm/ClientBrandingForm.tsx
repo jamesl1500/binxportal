@@ -14,7 +14,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 
 import type { ClientBranding } from "@/lib/clients";
 import { clientLogoUrl } from "@/lib/clients-client";
@@ -41,7 +40,6 @@ const ClientBrandingForm = ({
   clientId,
   branding,
 }: ClientBrandingFormProps) => {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [primaryColor, setPrimaryColor] = useState(
     branding.primary_color ?? "",
@@ -78,7 +76,6 @@ const ClientBrandingForm = ({
         return;
       }
       setSaved(true);
-      router.refresh();
     });
   };
 

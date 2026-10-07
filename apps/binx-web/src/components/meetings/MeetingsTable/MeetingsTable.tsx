@@ -14,7 +14,6 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 import { cancelMeetingAction } from "@/app/(app)/meetings/actions";
@@ -65,7 +64,6 @@ const MeetingsTable = ({
   projects,
   showClient = true,
 }: MeetingsTableProps) => {
-  const router = useRouter();
   const [filter, setFilter] = useState<Filter>("upcoming");
   const [isPending, startTransition] = useTransition();
   const [cancellingId, setCancellingId] = useState<string | null>(null);
@@ -96,7 +94,6 @@ const MeetingsTable = ({
         setActionError(result.error);
       }
       setCancellingId(null);
-      router.refresh();
     });
   };
 

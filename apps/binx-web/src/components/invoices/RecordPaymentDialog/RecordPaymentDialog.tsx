@@ -11,7 +11,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Dialog } from "@base-ui/react/dialog";
 import { toast } from "sonner";
 
@@ -34,7 +33,6 @@ const RecordPaymentDialog = ({
   open,
   onOpenChange,
 }: RecordPaymentDialogProps) => {
-  const router = useRouter();
   const balance = Math.max(0, invoice.amount_due_cents);
 
   const [amount, setAmount] = useState((balance / 100).toFixed(2));
@@ -62,7 +60,6 @@ const RecordPaymentDialog = ({
       }
       onOpenChange(false);
       setReference("");
-      router.refresh();
     } finally {
       setSubmitting(false);
     }

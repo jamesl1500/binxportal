@@ -2,8 +2,6 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const refresh = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock("@/app/(app)/leads/actions", () => ({
   generateLeadsAction: vi.fn(),
@@ -77,7 +75,6 @@ describe("FindLeadsDialog", () => {
     await userEvent.click(screen.getByRole("button", { name: /Import 1 lead/ }));
     expect(importLeads).toHaveBeenCalledWith("a1", [candidates[0]]);
     expect(toast.success).toHaveBeenCalled();
-    expect(refresh).toHaveBeenCalled();
   });
 
   it("refuses to import with nothing selected", async () => {

@@ -1,0 +1,268 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-6;
+  width: 100%;
+  // Held back briefly so a navigation that resolves quickly never flashes
+  // the skeleton — it only shows once the wait is actually noticeable.
+  animation: skeleton-appear t.$duration-base t.$ease-standard 150ms both;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.bone {
+  display: block;
+  height: t.$space-4;
+  border-radius: t.$radius-sm;
+  background: linear-gradient(
+    90deg,
+    rgba(10, 10, 11, 0.06) 0%,
+    rgba(10, 10, 11, 0.1) 50%,
+    rgba(10, 10, 11, 0.06) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+// --- header -----------------------------------------------------------------
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+  margin-bottom: t.$space-2;
+}
+
+.eyebrow {
+  width: 6rem;
+  height: t.$space-3;
+}
+
+.title {
+  width: min(18rem, 70%);
+  height: t.$space-8;
+}
+
+.subtitle {
+  width: min(28rem, 90%);
+}
+
+// --- shared pieces ----------------------------------------------------------
+
+.card {
+  @include m.card-base;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+  padding: t.$space-5;
+}
+
+.cardTitle {
+  width: 40%;
+  height: t.$space-5;
+  margin-bottom: t.$space-2;
+}
+
+.line {
+  width: 100%;
+}
+
+.lineShort {
+  width: 60%;
+}
+
+.button {
+  width: 7.5rem;
+  height: t.$space-10;
+}
+
+// --- table ------------------------------------------------------------------
+
+.table {
+  @include m.card-base;
+  overflow: hidden;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: t.$space-4;
+  padding: t.$space-4 t.$space-5;
+  border-bottom: 1px solid t.$color-border;
+}
+
+.search {
+  width: min(16rem, 60%);
+  height: t.$space-10;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 3fr 2fr 2fr 1fr;
+  gap: t.$space-6;
+  align-items: center;
+  padding: t.$space-4 t.$space-5;
+
+  & + & {
+    border-top: 1px solid t.$color-border;
+  }
+
+  @media (max-width: 639px) {
+    grid-template-columns: 2fr 1fr;
+
+    > :nth-child(n + 3) {
+      display: none;
+    }
+  }
+}
+
+.cellWide {
+  width: 85%;
+}
+
+.cell {
+  width: 70%;
+}
+
+.cellNarrow {
+  width: 50%;
+}
+
+// --- cards ------------------------------------------------------------------
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: t.$space-4;
+}
+
+.statLabel {
+  width: 50%;
+  height: t.$space-3;
+}
+
+.statValue {
+  width: 70%;
+  height: t.$space-8;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: t.$space-4;
+}
+
+.tallCard {
+  min-height: 12rem;
+}
+
+// --- form -------------------------------------------------------------------
+
+.form {
+  gap: t.$space-6;
+  max-width: 40rem;
+  padding: t.$space-6;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+}
+
+.fieldLabel {
+  width: 8rem;
+  height: t.$space-3;
+}
+
+.input {
+  height: t.$space-10;
+}
+
+// --- split (inbox) ----------------------------------------------------------
+
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 20rem) minmax(0, 1fr);
+  gap: t.$space-4;
+  min-height: 24rem;
+
+  @media (max-width: 767px) {
+    grid-template-columns: 1fr;
+
+    .pane {
+      display: none;
+    }
+  }
+}
+
+.list {
+  gap: t.$space-5;
+}
+
+.listItem {
+  display: flex;
+  align-items: center;
+  gap: t.$space-3;
+}
+
+.avatar {
+  flex: none;
+  width: t.$space-10;
+  height: t.$space-10;
+  border-radius: 50%;
+}
+
+.listText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: t.$space-2;
+}
+
+.pane {
+  justify-content: flex-start;
+}
+
+@keyframes skeleton-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@keyframes skeleton-appear {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root {
+    animation: none;
+  }
+
+  .bone {
+    animation: none;
+  }
+}

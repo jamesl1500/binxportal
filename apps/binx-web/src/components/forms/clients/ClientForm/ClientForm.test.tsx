@@ -7,11 +7,6 @@ vi.mock("@/app/(app)/clients/actions", () => ({
   updateClientAction: vi.fn(),
 }));
 
-const mockRefresh = vi.fn();
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: mockRefresh }),
-}));
-
 import { createClientAction, updateClientAction } from "@/app/(app)/clients/actions";
 import type { AgencyClient } from "@/lib/clients";
 
@@ -117,7 +112,7 @@ describe("ClientForm — edit mode", () => {
     expect(screen.getByLabelText("Notes")).toHaveValue("Prefers email over calls.");
   });
 
-  it("saves changes, shows an inline success message, and refreshes the route", async () => {
+  it("saves changes and shows an inline success message", async () => {
     const updated = { ...existingClient, name: "Acme Corp" };
     mockedUpdate.mockResolvedValueOnce({ client: updated });
     const user = userEvent.setup();
@@ -133,7 +128,6 @@ describe("ClientForm — edit mode", () => {
       expect.objectContaining({ name: "Acme Corp" }),
     );
     expect(await screen.findByText("Client updated.")).toBeInTheDocument();
-    expect(mockRefresh).toHaveBeenCalledOnce();
   });
 
   it("shows the server error on failure", async () => {
@@ -144,6 +138,5 @@ describe("ClientForm — edit mode", () => {
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
     expect(await screen.findByText("Unable to update client")).toBeInTheDocument();
-    expect(mockRefresh).not.toHaveBeenCalled();
   });
 });

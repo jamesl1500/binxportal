@@ -18,7 +18,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
 
 import { putAvailabilityRulesAction } from "@/app/(app)/settings/meetings/actions";
@@ -79,7 +78,6 @@ const AvailabilityRulesEditor = ({
   initialRules,
   canManage,
 }: AvailabilityRulesEditorProps) => {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -148,7 +146,6 @@ const AvailabilityRulesEditor = ({
         return;
       }
       setSaved(true);
-      router.refresh();
     });
   };
 

@@ -11,7 +11,7 @@
  */
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { refresh, revalidatePath } from "next/cache";
 
 import { AuthApiError } from "@/lib/auth";
 import {
@@ -51,6 +51,7 @@ export async function submitPortalKickoffAnswersAction(
   try {
     const kickoff = await submitPortalKickoffAnswers(projectId, answers);
     revalidatePath(`/portal/projects/${projectId}/kickoff`);
+    refresh();
     return { kickoff };
   } catch (error) {
     return errorResult(error, "Unable to submit your answers");

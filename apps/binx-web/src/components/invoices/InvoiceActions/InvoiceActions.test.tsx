@@ -2,8 +2,6 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const refresh = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
 vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 vi.mock("@/components/invoices/RecordPaymentDialog/RecordPaymentDialog", () => ({
   default: ({ open }: { open: boolean }) => (open ? <div>record-payment-dialog</div> : null),
@@ -50,7 +48,6 @@ describe("InvoiceActions", () => {
     render(<InvoiceActions agencyId="a1" invoice={invoice("draft")} canManage clientHasEmail />);
     await userEvent.click(screen.getByRole("button", { name: "Delete" }));
     expect(del).toHaveBeenCalledWith("a1", "i1");
-    expect(refresh).toHaveBeenCalled();
   });
 
   it("issues a draft via the confirm dialog", async () => {
