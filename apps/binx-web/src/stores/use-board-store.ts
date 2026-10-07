@@ -6,7 +6,7 @@
  * seeds it from the server render, then keeps it live by applying websocket
  * events (`applyEvent`) and the results of the canvas's own optimistic edits.
  * Like `use-messaging-store.ts`, this is a deliberate departure from the app's
- * usual "mutate then router.refresh()" — a shared canvas needs socket-driven,
+ * usual "mutate, then re-render the route" — a shared canvas needs socket-driven,
  * sub-second updates.
  *
  * The `activeIds` set holds cards this client is *currently* dragging, resizing

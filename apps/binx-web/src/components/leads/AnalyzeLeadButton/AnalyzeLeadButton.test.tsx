@@ -2,8 +2,6 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const refresh = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
 vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 vi.mock("@/app/(app)/leads/actions", () => ({ analyzeLeadAction: vi.fn() }));
 
@@ -23,20 +21,18 @@ describe("AnalyzeLeadButton", () => {
     expect(screen.getByRole("button", { name: "Re-analyze" })).toBeInTheDocument();
   });
 
-  it("analyzes and refreshes on success", async () => {
+  it("analyzes and confirms on success", async () => {
     mocked.mockResolvedValueOnce({} as never);
     render(<AnalyzeLeadButton agencyId="a1" leadId="l1" analyzed={false} />);
     await userEvent.click(screen.getByRole("button"));
     expect(mocked).toHaveBeenCalledWith("a1", "l1");
     expect(toast.success).toHaveBeenCalledWith("Lead analyzed");
-    expect(refresh).toHaveBeenCalled();
   });
 
-  it("toasts an error without refreshing", async () => {
+  it("toasts an error", async () => {
     mocked.mockResolvedValueOnce({ error: "Budget reached" } as never);
     render(<AnalyzeLeadButton agencyId="a1" leadId="l1" analyzed={false} />);
     await userEvent.click(screen.getByRole("button"));
     expect(toast.error).toHaveBeenCalledWith("Budget reached");
-    expect(refresh).not.toHaveBeenCalled();
   });
 });

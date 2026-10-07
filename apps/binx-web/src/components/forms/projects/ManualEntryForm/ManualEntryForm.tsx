@@ -14,7 +14,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { Dialog } from "@base-ui/react/dialog";
 import { toast } from "sonner";
 
@@ -59,7 +58,6 @@ const ManualEntryForm = ({
   projectId,
   tasks,
 }: ManualEntryFormProps) => {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -128,7 +126,6 @@ const ManualEntryForm = ({
       toast.success("Time entry logged");
       setDialogOpen(false);
       resetForm();
-      router.refresh();
     });
   };
 

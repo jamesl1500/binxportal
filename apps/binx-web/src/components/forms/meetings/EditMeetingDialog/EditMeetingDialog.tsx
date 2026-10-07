@@ -13,7 +13,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Dialog } from "@base-ui/react/dialog";
 import { Pencil } from "lucide-react";
 
@@ -45,12 +44,10 @@ const EditMeetingDialog = ({
   clients,
   projects,
 }: EditMeetingDialogProps) => {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
 
   const handleUpdated = () => {
     setOpen(false);
-    router.refresh();
   };
 
   return (

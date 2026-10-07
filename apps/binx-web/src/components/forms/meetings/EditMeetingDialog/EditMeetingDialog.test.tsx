@@ -7,11 +7,6 @@ vi.mock("@/app/(app)/meetings/actions", () => ({
   updateMeetingAction: vi.fn(),
 }));
 
-const mockRefresh = vi.fn();
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: mockRefresh }),
-}));
-
 import { updateMeetingAction } from "@/app/(app)/meetings/actions";
 import type { Meeting } from "@/lib/meetings";
 
@@ -64,7 +59,7 @@ describe("EditMeetingDialog", () => {
     expect(screen.getByLabelText("Client")).toHaveValue("Acme Co");
   });
 
-  it("saves changes and closes the dialog, refreshing the route", async () => {
+  it("saves changes and closes the dialog", async () => {
     mockedUpdate.mockResolvedValueOnce({ meeting: { ...meeting, title: "Renamed" } } as never);
     const user = userEvent.setup();
     render(<EditMeetingDialog agencyId={agencyId} meeting={meeting} clients={clients} projects={projects} />);
@@ -76,7 +71,6 @@ describe("EditMeetingDialog", () => {
     await user.click(screen.getByRole("button", { name: "Save changes" }));
 
     expect(mockedUpdate).toHaveBeenCalledWith(agencyId, "m1", expect.objectContaining({ title: "Renamed" }));
-    expect(mockRefresh).toHaveBeenCalledOnce();
     expect(screen.queryByRole("heading", { name: "Edit meeting" })).not.toBeInTheDocument();
   });
 

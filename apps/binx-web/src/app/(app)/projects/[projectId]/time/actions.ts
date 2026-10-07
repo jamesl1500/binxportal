@@ -7,15 +7,16 @@
  * no session cookies change — calling binx-api directly via
  * `lib/time-tracking.ts`, same pattern as the other project actions in
  * `../actions.ts`. Every action returns `{ error? }` and revalidates this
- * project's Time subpage so a `router.refresh()` in the client picks up the
- * change.
+ * project's Time subpage; the timer and manual-entry actions also
+ * `refresh()` the page they're called from (the timer widget isn't only on
+ * the Time tab), so the change shows up in the same response.
  *
  * @module apps/binx-web/src/app/(app)/projects/[projectId]/time/actions.ts
  * @author Binx Portal
  */
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { refresh, revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { AuthApiError } from "@/lib/auth";
@@ -57,6 +58,7 @@ export async function startTimerAction(
   try {
     const entry = await startTimer(agencyId, input);
     revalidateTimeTab(projectId);
+    refresh();
     return { entry };
   } catch (error) {
     return errorResult(error, "Unable to start the timer");
@@ -71,6 +73,7 @@ export async function stopTimerAction(
   try {
     const entry = await stopTimer(agencyId, entryId);
     revalidateTimeTab(projectId);
+    refresh();
     return { entry };
   } catch (error) {
     return errorResult(error, "Unable to stop the timer");
@@ -85,6 +88,7 @@ export async function logManualEntryAction(
   try {
     const entry = await logManualEntry(agencyId, input);
     revalidateTimeTab(projectId);
+    refresh();
     return { entry };
   } catch (error) {
     return errorResult(error, "Unable to log time entry");

@@ -5,8 +5,8 @@
  * message history per conversation, and transient typing indicators. The
  * MessagingProvider seeds it from the server render, then keeps it live by
  * applying websocket events (see `applyEvent`) and the results of server
- * actions. This is a deliberate departure from the app's usual "mutate then
- * router.refresh()" pattern — a chat needs sub-second, socket-driven updates
+ * actions. This is a deliberate departure from the app's usual "mutate, then
+ * re-render the route" pattern — a chat needs sub-second, socket-driven updates
  * that a full route refetch can't give.
  *
  * @module apps/binx-web/src/stores/use-messaging-store.ts

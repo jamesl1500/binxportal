@@ -11,6 +11,8 @@
  */
 "use server";
 
+import { refresh } from "next/cache";
+
 import { AuthApiError } from "@/lib/auth";
 import {
   getPortalMessages,
@@ -30,6 +32,7 @@ export async function sendPortalMessageAction(
 ): Promise<SendPortalMessageResult> {
   try {
     const message = await sendPortalMessage(conversationId, body);
+    refresh();
     return { message };
   } catch (error) {
     if (error instanceof AuthApiError) {

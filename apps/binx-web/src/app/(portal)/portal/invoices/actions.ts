@@ -13,7 +13,7 @@
  */
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { refresh, revalidatePath } from "next/cache";
 
 import { AuthApiError } from "@/lib/auth";
 import {
@@ -60,6 +60,7 @@ export async function confirmPaymentAction(
     if (outcome === "paid") {
       // The invoice page (and the sidebar's unpaid badge) should reflect it.
       revalidatePath("/portal", "layout");
+      refresh();
     }
     const lastPayment = invoice.payments
       .filter((payment) => payment.method === "stripe")

@@ -13,7 +13,7 @@
  */
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { refresh, revalidatePath } from "next/cache";
 
 import { AuthApiError } from "@/lib/auth";
 import {
@@ -65,6 +65,7 @@ export async function bookPortalMeetingAction(
   try {
     const meeting = await bookPortalMeeting(input);
     revalidatePath("/portal/meetings");
+    refresh();
     return { meeting };
   } catch (error) {
     return errorResult(error, "Unable to book that time");
@@ -77,8 +78,12 @@ export async function cancelPortalMeetingAction(
   try {
     const meeting = await cancelPortalMeeting(meetingId);
     revalidatePath("/portal/meetings");
+    refresh();
     return { meeting };
   } catch (error) {
+    // Still re-render — the meeting may have changed under us (e.g. the
+    // agency already cancelled it), and the list should show that.
+    refresh();
     return errorResult(error, "Unable to cancel this meeting");
   }
 }

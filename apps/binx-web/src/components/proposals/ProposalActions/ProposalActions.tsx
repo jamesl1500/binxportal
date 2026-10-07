@@ -13,7 +13,6 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Dialog } from "@base-ui/react/dialog";
 import { Copy } from "lucide-react";
 import { toast } from "sonner";
@@ -49,7 +48,6 @@ const STATUS_HINTS: Record<string, string> = {
 };
 
 const ProposalActions = ({ agencyId, proposal }: ProposalActionsProps) => {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [sendOpen, setSendOpen] = useState(false);
@@ -66,7 +64,6 @@ const ProposalActions = ({ agencyId, proposal }: ProposalActionsProps) => {
         toast.error(result.error);
         return;
       }
-      router.refresh();
     });
   };
 

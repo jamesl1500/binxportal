@@ -16,7 +16,6 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Dialog } from "@base-ui/react/dialog";
 import { Printer } from "lucide-react";
 import { toast } from "sonner";
@@ -46,7 +45,6 @@ const InvoiceActions = ({
   canManage,
   clientHasEmail,
 }: InvoiceActionsProps) => {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [issueOpen, setIssueOpen] = useState(false);
@@ -66,9 +64,7 @@ const InvoiceActions = ({
       const result = await action();
       if (result?.error) {
         toast.error(result.error);
-        return;
       }
-      router.refresh();
     });
   };
 

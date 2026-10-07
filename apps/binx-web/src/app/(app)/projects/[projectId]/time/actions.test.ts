@@ -13,7 +13,7 @@ vi.mock("@/lib/time-tracking", () => ({
   createInvoiceFromTimeEntries: vi.fn(),
 }));
 
-vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+vi.mock("next/cache", () => ({ refresh: vi.fn(), revalidatePath: vi.fn() }));
 
 // Next's real redirect() throws a special "NEXT_REDIRECT" error internally
 // that the framework catches further up to actually perform the navigation.
@@ -25,7 +25,7 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-import { revalidatePath } from "next/cache";
+import { refresh, revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { AuthApiError } from "@/lib/auth";
@@ -54,6 +54,7 @@ const mockedUpdateTimeEntry = vi.mocked(updateTimeEntry);
 const mockedDeleteTimeEntry = vi.mocked(deleteTimeEntry);
 const mockedCreateInvoiceFromTimeEntries = vi.mocked(createInvoiceFromTimeEntries);
 const mockedRevalidatePath = vi.mocked(revalidatePath);
+const mockedRefresh = vi.mocked(refresh);
 const mockedRedirect = vi.mocked(redirect);
 
 const agencyId = "aaaaaaaa-1111-1111-1111-111111111111";
@@ -67,13 +68,14 @@ beforeEach(() => {
 describe("startTimerAction", () => {
   const input = { projectId, taskId: null, description: null, isBillable: true };
 
-  it("starts the timer and revalidates the time tab", async () => {
+  it("starts the timer, revalidates the time tab, and refreshes the calling page", async () => {
     mockedStartTimer.mockResolvedValueOnce(entry);
 
     await expect(startTimerAction(agencyId, projectId, input)).resolves.toEqual({ entry });
 
     expect(mockedStartTimer).toHaveBeenCalledWith(agencyId, input);
     expect(mockedRevalidatePath).toHaveBeenCalledWith(`/projects/${projectId}/time`);
+    expect(mockedRefresh).toHaveBeenCalledOnce();
   });
 
   it("maps an AuthApiError to a returned error", async () => {
@@ -85,6 +87,7 @@ describe("startTimerAction", () => {
       error: "You already have a timer running — stop it before starting another",
     });
     expect(mockedRevalidatePath).not.toHaveBeenCalled();
+    expect(mockedRefresh).not.toHaveBeenCalled();
   });
 
   it("falls back to a generic message for a non-API error", async () => {

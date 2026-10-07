@@ -11,7 +11,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 
 import type { AgencyProfile } from "@/lib/agencies";
 import { updateAgencyProfileAction } from "@/app/(app)/settings/actions";
@@ -31,7 +30,6 @@ const BLOCKS = [
 ] as const;
 
 const AgencyPoliciesForm = ({ agencyId, profile }: AgencyPoliciesFormProps) => {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [values, setValues] = useState<Record<string, string>>(() =>
     Object.fromEntries(
@@ -57,7 +55,6 @@ const AgencyPoliciesForm = ({ agencyId, profile }: AgencyPoliciesFormProps) => {
         return;
       }
       setSaved(true);
-      router.refresh();
     });
   };
 

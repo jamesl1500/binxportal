@@ -21,7 +21,6 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Menu } from "@base-ui/react/menu";
 import { Check, ChevronDown, Plus } from "lucide-react";
 
@@ -53,7 +52,6 @@ interface OrgSwitcherProps {
 }
 
 const OrgSwitcher = ({ agencies, currentAgency }: OrgSwitcherProps) => {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -71,7 +69,6 @@ const OrgSwitcher = ({ agencies, currentAgency }: OrgSwitcherProps) => {
 
       // No redirect on purpose — re-render the current route with the new
       // "current agency" cookie in effect, instead of navigating elsewhere.
-      router.refresh();
     });
   };
 

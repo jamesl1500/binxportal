@@ -214,7 +214,7 @@ describe("AiModal", () => {
   });
 
   describe("changes the assistant makes", () => {
-    it("shows a streamed proposal as a card, and approving it applies it and refreshes the page", async () => {
+    it("shows a streamed proposal as a card, and approving it applies it", async () => {
       mockedCreate.mockResolvedValueOnce({
         conversation: { id: "new-1", title: null, created_at: "2026-01-03T00:00:00Z", updated_at: null },
       });
@@ -240,7 +240,8 @@ describe("AiModal", () => {
       expect(mockedResolve).toHaveBeenCalledWith(agencyId, "new-1", "act-1", "approve");
       expect(await screen.findByText("Done")).toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "Approve" })).not.toBeInTheDocument();
-      expect(refresh).toHaveBeenCalled();
+      // resolveAiActionAction re-renders the page itself — no client refresh.
+      expect(refresh).not.toHaveBeenCalled();
     });
 
     it("declines a proposal loaded with the thread", async () => {

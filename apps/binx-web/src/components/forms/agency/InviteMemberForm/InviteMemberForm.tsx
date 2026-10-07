@@ -1,10 +1,10 @@
 /**
  * InviteMemberForm.tsx
  *
- * Invites someone to the current agency by email. On success, resets itself
- * and calls `router.refresh()` so the Pending invitations table (a sibling
- * server-rendered section, not lifted state) picks up the new invite without
- * a full navigation.
+ * Invites someone to the current agency by email. On success, resets itself;
+ * the action refreshes the route in the same response, so the Pending
+ * invitations table (a sibling server-rendered section, not lifted state)
+ * picks up the new invite without a full navigation.
  *
  * @module apps/binx-web/src/components/forms/agency/InviteMemberForm/InviteMemberForm.tsx
  * @author Binx Portal
@@ -12,7 +12,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -33,7 +32,6 @@ interface InviteMemberFormProps {
 }
 
 const InviteMemberForm = ({ agencyId }: InviteMemberFormProps) => {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -63,7 +61,6 @@ const InviteMemberForm = ({ agencyId }: InviteMemberFormProps) => {
 
       setSuccessMessage(`Invitation sent to ${email}.`);
       reset();
-      router.refresh();
     });
   };
 

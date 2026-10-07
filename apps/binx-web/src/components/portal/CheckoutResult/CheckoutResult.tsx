@@ -21,7 +21,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 import { confirmPaymentAction } from "@/app/(portal)/portal/invoices/actions";
 import { formatMoneyCents } from "@/lib/money";
@@ -44,7 +44,6 @@ const CheckoutResult = ({
   invoiceNumber,
   agencyName,
 }: CheckoutResultProps) => {
-  const router = useRouter();
   const pathname = usePathname();
   const [state, setState] = useState<PaymentResultState | null>(null);
   const [amountLabel, setAmountLabel] = useState<string | undefined>();
@@ -66,10 +65,11 @@ const CheckoutResult = ({
         );
       }
       // "open" = Checkout was never finished, i.e. nothing was charged.
+      // On "paid" the action itself re-renders the invoice page (and the
+      // sidebar's unpaid badge) in the same response.
       setState(result.outcome === "open" ? "canceled" : result.outcome);
-      if (result.outcome === "paid") router.refresh();
     },
-    [invoiceId, router],
+    [invoiceId],
   );
 
   useEffect(() => {

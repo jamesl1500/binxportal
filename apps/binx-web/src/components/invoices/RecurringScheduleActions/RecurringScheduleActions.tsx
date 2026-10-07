@@ -16,7 +16,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { Dialog } from "@base-ui/react/dialog";
 import { toast } from "sonner";
 
@@ -42,7 +41,6 @@ const RecurringScheduleActions = ({
   schedule,
   canManage,
 }: RecurringScheduleActionsProps) => {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [runNowOpen, setRunNowOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -64,7 +62,6 @@ const RecurringScheduleActions = ({
       if (successMessage) {
         toast.success(successMessage);
       }
-      router.refresh();
     });
   };
 
