@@ -15,7 +15,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import type { PortalKickoff } from "@/lib/portal";
@@ -43,7 +42,6 @@ function emptyAnswer(): AnswerState {
 }
 
 const PortalKickoffForm = ({ projectId, kickoff }: PortalKickoffFormProps) => {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const answersById = kickoff.answers.reduce<Record<string, AnswerState>>(
@@ -121,7 +119,6 @@ const PortalKickoffForm = ({ projectId, kickoff }: PortalKickoffFormProps) => {
         return;
       }
       toast.success("Thanks — your answers were submitted");
-      router.refresh();
     });
   };
 

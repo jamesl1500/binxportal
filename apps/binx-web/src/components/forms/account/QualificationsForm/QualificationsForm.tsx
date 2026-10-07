@@ -12,7 +12,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 
 import { updateQualificationsAction } from "@/app/(app)/profile/actions";
 import type {
@@ -31,7 +30,6 @@ interface QualificationsFormProps {
 }
 
 const QualificationsForm = ({ profile }: QualificationsFormProps) => {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [skills, setSkills] = useState<string[]>(profile.skills);
   const [experience, setExperience] = useState<ExperienceEntry[]>(
@@ -58,7 +56,6 @@ const QualificationsForm = ({ profile }: QualificationsFormProps) => {
         return;
       }
       setSaved(true);
-      router.refresh();
     });
   };
 

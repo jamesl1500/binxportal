@@ -12,7 +12,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -42,7 +41,6 @@ const AgencyGeneralForm = ({
   name,
   slug,
 }: AgencyGeneralFormProps) => {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -66,10 +64,9 @@ const AgencyGeneralForm = ({
       if (result.error) {
         setFormError(result.error);
       } else {
-        setSuccessMessage("Agency updated.");
         // The new name shows up elsewhere (org switcher, header) via server
-        // data — refresh so those reflect it without a full navigation.
-        router.refresh();
+        // data — the action refreshes the route, so those already reflect it.
+        setSuccessMessage("Agency updated.");
       }
     });
   };

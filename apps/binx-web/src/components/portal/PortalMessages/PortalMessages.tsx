@@ -10,14 +10,19 @@
  * (faces, names, job titles) and each message carries its sender's avatar,
  * served through the conversation-scoped portal avatar route.
  *
+ * Relative ("5 minutes") and local ("Oct 7, 3:00 PM") times depend on the
+ * viewer's clock and timezone, so they're filled in right after hydration
+ * (the server render leaves them empty, same as LocalTime). Rendering them on
+ * the server made hydration fail on every load — React then threw the server
+ * HTML away and re-rendered, swallowing any click that landed in between.
+ *
  * @module apps/binx-web/src/components/portal/PortalMessages/PortalMessages.tsx
  * @author Binx Portal
  */
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { formatDistanceToNowStrict } from "date-fns";
 import { toast } from "sonner";
 
@@ -55,6 +60,8 @@ function relTime(iso: string | null): string {
   }
 }
 
+const subscribe = () => () => {};
+
 function timestamp(iso: string): string {
   return new Date(iso).toLocaleString(undefined, {
     month: "short",
@@ -72,7 +79,11 @@ const PortalMessages = ({
   participants = [],
   currentUserId,
 }: PortalMessagesProps) => {
-  const router = useRouter();
+  const isClient = useSyncExternalStore(
+    subscribe,
+    () => true,
+    () => false,
+  );
   const [messages, setMessages] = useState<Message[]>(initialMessages ?? []);
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
@@ -125,7 +136,6 @@ const PortalMessages = ({
       return;
     }
     if (result.message) setMessages((prev) => [...prev, result.message!]);
-    router.refresh();
   };
 
   return (
@@ -151,7 +161,7 @@ const PortalMessages = ({
                       {conversation.title}
                     </span>
                     <span className={styles.rowTime}>
-                      {relTime(conversation.last_message_at)}
+                      {isClient ? relTime(conversation.last_message_at) : null}
                     </span>
                   </span>
                   <span className={styles.rowPreview}>
@@ -251,7 +261,7 @@ const PortalMessages = ({
                               )}
                             </span>
                             <span className={styles.time}>
-                              {timestamp(message.created_at)}
+                              {isClient ? timestamp(message.created_at) : null}
                             </span>
                           </div>
                         )}
@@ -261,7 +271,7 @@ const PortalMessages = ({
                           <p
                             className={styles.body}
                             title={
-                              grouped
+                              grouped && isClient
                                 ? timestamp(message.created_at)
                                 : undefined
                             }

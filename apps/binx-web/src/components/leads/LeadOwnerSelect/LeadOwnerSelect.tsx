@@ -11,7 +11,6 @@
 "use client";
 
 import { useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { assignLeadOwnerAction } from "@/app/(app)/leads/actions";
@@ -31,7 +30,6 @@ const LeadOwnerSelect = ({
   ownerId,
   members,
 }: LeadOwnerSelectProps) => {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   const handleChange = (value: string) => {
@@ -44,7 +42,6 @@ const LeadOwnerSelect = ({
         return;
       }
       toast.success("Owner updated");
-      router.refresh();
     });
   };
 

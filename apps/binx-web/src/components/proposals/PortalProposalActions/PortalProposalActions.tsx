@@ -13,7 +13,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import {
@@ -30,7 +29,6 @@ interface PortalProposalActionsProps {
 type Mode = "choose" | "decline";
 
 const PortalProposalActions = ({ proposalId }: PortalProposalActionsProps) => {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [mode, setMode] = useState<Mode>("choose");
   const [reason, setReason] = useState("");
@@ -43,7 +41,6 @@ const PortalProposalActions = ({ proposalId }: PortalProposalActionsProps) => {
         toast.error(result.error);
         return;
       }
-      router.refresh();
     });
   };
 
@@ -59,7 +56,6 @@ const PortalProposalActions = ({ proposalId }: PortalProposalActionsProps) => {
         toast.error(result.error);
         return;
       }
-      router.refresh();
     });
   };
 

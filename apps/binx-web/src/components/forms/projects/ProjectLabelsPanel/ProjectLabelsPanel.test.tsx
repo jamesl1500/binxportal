@@ -2,11 +2,6 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mockedRefresh = vi.fn();
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: mockedRefresh }),
-}));
-
 vi.mock("@/app/(app)/projects/[projectId]/actions", () => ({
   createProjectRoleAction: vi.fn(),
   updateProjectRoleAction: vi.fn(),

@@ -16,7 +16,6 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { Dialog } from "@base-ui/react/dialog";
 import { toast } from "sonner";
 
@@ -57,7 +56,6 @@ const TimerWidget = ({
   tasks,
   runningTimer,
 }: TimerWidgetProps) => {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [now, setNow] = useState(() => Date.now());
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -103,7 +101,6 @@ const TimerWidget = ({
       }
       resetForm();
       setDialogOpen(false);
-      router.refresh();
     });
   };
 
@@ -117,9 +114,7 @@ const TimerWidget = ({
       );
       if (result.error) {
         toast.error(result.error);
-        return;
       }
-      router.refresh();
     });
   };
 

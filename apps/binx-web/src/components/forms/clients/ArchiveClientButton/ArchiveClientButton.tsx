@@ -13,7 +13,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 
 import { setClientActiveAction } from "@/app/(app)/clients/actions";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog/ConfirmDialog";
@@ -34,7 +33,6 @@ const ArchiveClientButton = ({
   compact,
   onChanged,
 }: ArchiveClientButtonProps) => {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const { confirm, dialog } = useConfirmDialog();
@@ -67,7 +65,6 @@ const ArchiveClientButton = ({
       if (result.client && onChanged) {
         onChanged(result.client);
       }
-      router.refresh();
     });
   };
 

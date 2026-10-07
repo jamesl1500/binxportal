@@ -72,8 +72,6 @@ interface TaskDetailPanelProps {
   onOpenChange: (open: boolean) => void;
   /** Fired once the close transition has actually finished — the right time for the parent to forget which task was selected. */
   onClosed: () => void;
-  /** Called after any successful mutation so the board (counts, title, list) can re-fetch. */
-  onMutated: () => void;
 }
 
 function formatFileSize(bytes: number): string {
@@ -111,7 +109,6 @@ const TaskDetailPanel = ({
   canModerateComments,
   onOpenChange,
   onClosed,
-  onMutated,
 }: TaskDetailPanelProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState<DetailTab>("comments");
@@ -229,7 +226,6 @@ const TaskDetailPanel = ({
         return;
       }
       setIsEditing(false);
-      onMutated();
     });
   };
 
@@ -250,9 +246,7 @@ const TaskDetailPanel = ({
       if (result.error) {
         setTagIds(previous);
         setFormError(result.error);
-        return;
       }
-      onMutated();
     });
   };
 
@@ -267,7 +261,6 @@ const TaskDetailPanel = ({
         setFormError(result.error);
         return;
       }
-      onMutated();
       onOpenChange(false);
     });
   };
@@ -293,7 +286,7 @@ const TaskDetailPanel = ({
       }
       setComments((prev) => [...(prev ?? []), result.comment!]);
       // A comment's file is a real task file — keep the Files tab in step
-      // without a refetch (the board's count is refreshed by onMutated).
+      // without a refetch (the action refreshes the board's count).
       const attached = result.comment?.attachment;
       if (attached) {
         setFiles((prev) => (prev ? [attached, ...prev] : prev));
@@ -301,7 +294,6 @@ const TaskDetailPanel = ({
       setNewComment("");
       setCommentFile(null);
       if (commentFileRef.current) commentFileRef.current.value = "";
-      onMutated();
     });
   };
 
@@ -330,7 +322,6 @@ const TaskDetailPanel = ({
             : prev,
         );
       }
-      onMutated();
     });
   };
 
@@ -352,7 +343,6 @@ const TaskDetailPanel = ({
         return;
       }
       setFiles((prev) => [result.file!, ...(prev ?? [])]);
-      onMutated();
     });
   };
 
@@ -370,7 +360,6 @@ const TaskDetailPanel = ({
         return;
       }
       setFiles((prev) => (prev ?? []).filter((file) => file.id !== fileId));
-      onMutated();
     });
   };
 

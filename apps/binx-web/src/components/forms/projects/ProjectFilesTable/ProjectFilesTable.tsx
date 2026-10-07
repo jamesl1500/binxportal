@@ -20,7 +20,6 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import {
   ArrowDown,
   ArrowUp,
@@ -88,7 +87,6 @@ const ProjectFilesTable = ({
   projectId,
   files,
 }: ProjectFilesTableProps) => {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -169,9 +167,7 @@ const ProjectFilesTable = ({
       const result = await uploadProjectFileAction(agencyId, projectId, file);
       if (result.error) {
         setError(result.error);
-        return;
       }
-      router.refresh();
     });
   };
 
@@ -192,9 +188,7 @@ const ProjectFilesTable = ({
       setBusyId(null);
       if (result.error) {
         setError(result.error);
-        return;
       }
-      router.refresh();
     });
   };
 

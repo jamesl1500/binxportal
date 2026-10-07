@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("next/cache", () => ({ refresh: vi.fn() }));
 // logoutAction() only orchestrates: clear the session cookies, redirect to
 // login. Mocked alongside the real AuthApiError (via importOriginal) since
 // createAgencyAction's error path is asserted against actual instances of it.
@@ -35,6 +36,7 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
+import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { AuthApiError, logout } from "@/lib/auth";
@@ -44,6 +46,7 @@ import { createAgencyAction, logoutAction, switchAgencyAction, updateTutorialPro
 
 const mockedLogout = vi.mocked(logout);
 const mockedRedirect = vi.mocked(redirect);
+const mockedRefresh = vi.mocked(refresh);
 const mockedGetMyAgencies = vi.mocked(getMyAgencies);
 const mockedSetCurrentAgencyId = vi.mocked(setCurrentAgencyId);
 const mockedCreateAgency = vi.mocked(createAgency);
@@ -68,12 +71,13 @@ describe("logoutAction", () => {
 });
 
 describe("switchAgencyAction", () => {
-  it("persists the agency when the user is a member of it", async () => {
+  it("persists the agency and re-renders the current route in the same response", async () => {
     mockedGetMyAgencies.mockResolvedValueOnce(agencies);
 
     await expect(switchAgencyAction(agencies[1].id)).resolves.toEqual({});
 
     expect(mockedSetCurrentAgencyId).toHaveBeenCalledWith(agencies[1].id);
+    expect(mockedRefresh).toHaveBeenCalledOnce();
   });
 
   // Guards against a stale client offering an agency the user has since left,
@@ -86,6 +90,7 @@ describe("switchAgencyAction", () => {
       error: "You're not a member of that organization",
     });
     expect(mockedSetCurrentAgencyId).not.toHaveBeenCalled();
+    expect(mockedRefresh).not.toHaveBeenCalled();
   });
 });
 

@@ -2,11 +2,6 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mockedRefresh = vi.fn();
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: mockedRefresh }),
-}));
-
 vi.mock("@/app/(portal)/portal/projects/[projectId]/kickoff/actions", () => ({
   submitPortalKickoffAnswersAction: vi.fn(),
   uploadPortalKickoffFileAction: vi.fn(),
@@ -118,7 +113,6 @@ describe("PortalKickoffForm", () => {
     expect(mockedToastSuccess).toHaveBeenCalledWith(
       "Thanks — your answers were submitted",
     );
-    expect(mockedRefresh).toHaveBeenCalledOnce();
   });
 
   it("uploads a file immediately on pick", async () => {
@@ -188,6 +182,5 @@ describe("PortalKickoffForm", () => {
     await user.click(screen.getByRole("button", { name: /submit answers/i }));
 
     expect(mockedToastError).toHaveBeenCalledWith("Unable to submit answers");
-    expect(mockedRefresh).not.toHaveBeenCalled();
   });
 });

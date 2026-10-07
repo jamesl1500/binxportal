@@ -2,8 +2,6 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const refresh = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
 vi.mock("@/app/(app)/settings/meetings/actions", () => ({ updateMeetingSettingsAction: vi.fn() }));
 
 import { updateMeetingSettingsAction } from "@/app/(app)/settings/meetings/actions";
@@ -60,7 +58,6 @@ describe("MeetingSettingsForm", () => {
       }),
     );
     expect(await screen.findByText(/saved/i)).toBeInTheDocument();
-    expect(refresh).toHaveBeenCalled();
   });
 
   it("blocks an out-of-range slot length", async () => {

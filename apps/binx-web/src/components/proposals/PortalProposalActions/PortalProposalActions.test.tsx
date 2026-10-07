@@ -2,9 +2,6 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mockedRefresh = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: mockedRefresh }) }));
-
 vi.mock("@/app/(portal)/portal/proposals/actions", () => ({
   signPortalProposalAction: vi.fn(),
   declinePortalProposalAction: vi.fn(),
@@ -41,7 +38,6 @@ describe("PortalProposalActions", () => {
     await user.click(screen.getByRole("button", { name: "Sign this proposal" }));
 
     expect(mockedSign).toHaveBeenCalledWith("p1");
-    expect(mockedRefresh).toHaveBeenCalledOnce();
   });
 
   it("shows a toast when signing fails", async () => {
@@ -52,7 +48,6 @@ describe("PortalProposalActions", () => {
     await user.click(screen.getByRole("button", { name: "Sign this proposal" }));
 
     expect(mockedToastError).toHaveBeenCalledWith("This proposal has expired");
-    expect(mockedRefresh).not.toHaveBeenCalled();
   });
 
   it("declines with an optional reason", async () => {
@@ -65,7 +60,6 @@ describe("PortalProposalActions", () => {
     await user.click(screen.getByRole("button", { name: "Decline proposal" }));
 
     expect(mockedDecline).toHaveBeenCalledWith("p1", "Going with another agency");
-    expect(mockedRefresh).toHaveBeenCalledOnce();
   });
 
   it("Back returns to the choose step without declining", async () => {

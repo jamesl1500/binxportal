@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("next/cache", () => ({ refresh: vi.fn() }));
 vi.mock("@/lib/proposals", () => ({
   createProposal: vi.fn(),
   updateProposal: vi.fn(),

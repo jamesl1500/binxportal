@@ -10,9 +10,10 @@
  * card's title opens TaskDetailPanel, a right-side drawer for managing that
  * task in full (fields, tags, files, comments) without leaving the board.
  * Every mutation (add/rename/delete list, add/move/delete task, and anything
- * done inside the panel) calls its server action, then `router.refresh()` to
- * re-fetch the board from the parent Server Component — no optimistic local
- * state, same "mutate then refetch" pattern as the rest of the app.
+ * done inside the panel) calls its server action, which re-renders the board
+ * from the parent Server Component in the same response (`refresh()` in the
+ * action) — no optimistic local state, same "mutate then refetch" pattern as
+ * the rest of the app.
  *
  * @module apps/binx-web/src/components/forms/projects/KanbanBoard/KanbanBoard.tsx
  * @author Binx Portal
@@ -20,7 +21,6 @@
 "use client";
 
 import { FormEvent, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { GripVertical, MessageSquare, Paperclip, Plus, X } from "lucide-react";
 
 import {
@@ -68,7 +68,6 @@ const KanbanBoard = ({
   currentUserId,
   canModerateComments,
 }: KanbanBoardProps) => {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -106,7 +105,6 @@ const KanbanBoard = ({
         return;
       }
       onSuccess?.();
-      router.refresh();
     });
   };
 
@@ -476,7 +474,6 @@ const KanbanBoard = ({
         canModerateComments={canModerateComments}
         onOpenChange={setPanelOpen}
         onClosed={() => setSelectedTaskId(null)}
-        onMutated={() => router.refresh()}
       />
     </div>
   );

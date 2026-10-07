@@ -12,7 +12,6 @@
 "use client";
 
 import { useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
@@ -25,7 +24,6 @@ interface AnalyzeAllButtonProps {
 }
 
 const AnalyzeAllButton = ({ agencyId }: AnalyzeAllButtonProps) => {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   const handleClick = () => {
@@ -43,7 +41,6 @@ const AnalyzeAllButton = ({ agencyId }: AnalyzeAllButtonProps) => {
           `Analyzed ${result.analyzed} lead${result.analyzed === 1 ? "" : "s"}${skipped}`,
         );
       }
-      router.refresh();
     });
   };
 

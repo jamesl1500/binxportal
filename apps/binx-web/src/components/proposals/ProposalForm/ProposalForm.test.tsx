@@ -6,7 +6,7 @@ const mockPush = vi.fn();
 const mockBack = vi.fn();
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: mockPush, back: mockBack, refresh: vi.fn() }),
+  useRouter: () => ({ push: mockPush, back: mockBack }),
 }));
 
 vi.mock("@/app/(app)/proposals/actions", () => ({

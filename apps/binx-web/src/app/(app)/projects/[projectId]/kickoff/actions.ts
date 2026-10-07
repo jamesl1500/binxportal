@@ -4,14 +4,16 @@
  * Server actions for the project Kickoff tab — plain authenticated
  * mutations, calling binx-api via `lib/kickoffs.ts`. Every action returns
  * `{ error?, ... }`, the same shape the proposals actions use, and revalidates
- * the tab's own path so the server component re-fetches after a mutation.
+ * the tab's own path so the server component re-fetches after a mutation,
+ * plus `refresh()` so the page the action ran from re-renders in the same
+ * response.
  *
  * @module apps/binx-web/src/app/(app)/projects/[projectId]/kickoff/actions.ts
  * @author Binx Portal
  */
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { refresh, revalidatePath } from "next/cache";
 
 import { AuthApiError } from "@/lib/auth";
 import {
@@ -47,6 +49,7 @@ export async function createKickoffAction(
   try {
     const kickoff = await createKickoff(agencyId, projectId, input);
     revalidatePath(`/projects/${projectId}/kickoff`);
+    refresh();
     return { kickoff };
   } catch (error) {
     return errorResult(error, "Unable to create kickoff");
@@ -61,6 +64,7 @@ export async function updateKickoffAction(
   try {
     const kickoff = await updateKickoff(agencyId, projectId, input);
     revalidatePath(`/projects/${projectId}/kickoff`);
+    refresh();
     return { kickoff };
   } catch (error) {
     return errorResult(error, "Unable to update kickoff");
@@ -74,6 +78,7 @@ export async function deleteKickoffAction(
   try {
     await deleteKickoff(agencyId, projectId);
     revalidatePath(`/projects/${projectId}/kickoff`);
+    refresh();
     return {};
   } catch (error) {
     return errorResult(error, "Unable to delete kickoff");
@@ -88,6 +93,7 @@ export async function sendKickoffAction(
     const kickoff = await sendKickoff(agencyId, projectId);
     revalidatePath(`/projects/${projectId}/kickoff`);
     revalidatePath(`/projects/${projectId}`);
+    refresh();
     return { kickoff };
   } catch (error) {
     return errorResult(error, "Unable to send kickoff");
@@ -101,6 +107,7 @@ export async function nudgeKickoffAction(
   try {
     const kickoff = await nudgeKickoff(agencyId, projectId);
     revalidatePath(`/projects/${projectId}/kickoff`);
+    refresh();
     return { kickoff };
   } catch (error) {
     return errorResult(error, "Unable to send reminder");
@@ -116,6 +123,7 @@ export async function convertKickoffAction(
     const result = await convertKickoff(agencyId, projectId, listId);
     revalidatePath(`/projects/${projectId}/kickoff`);
     revalidatePath(`/projects/${projectId}/board`);
+    refresh();
     return { tasksCreated: result.tasks_created };
   } catch (error) {
     return errorResult(error, "Unable to convert kickoff to tasks");
@@ -128,6 +136,7 @@ export async function createKickoffTemplateAction(
 ): Promise<{ error?: string }> {
   try {
     await createKickoffTemplate(agencyId, input);
+    refresh();
     return {};
   } catch (error) {
     return errorResult(error, "Unable to save template");

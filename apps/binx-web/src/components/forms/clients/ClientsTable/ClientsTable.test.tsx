@@ -8,10 +8,6 @@ vi.mock("@/app/(app)/clients/actions", () => ({
   setClientActiveAction: vi.fn(),
 }));
 
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: vi.fn() }),
-}));
-
 import type { AgencyClient } from "@/lib/clients";
 
 import ClientsTable from "./ClientsTable";

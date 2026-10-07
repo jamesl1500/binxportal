@@ -7,9 +7,9 @@
  * component drives both, switched by the `kind` prop. Used twice on the
  * project Settings page.
  *
- * Creating/renaming/recolouring/deleting each hit their server action, then
- * `router.refresh()` so the other tabs that read these (Team's role picker,
- * the task panel's tag picker) pick the change up.
+ * Creating/renaming/recolouring/deleting each hit their server action, which
+ * refreshes the route in the same response so the other tabs that read these
+ * (Team's role picker, the task panel's tag picker) pick the change up.
  *
  * @module apps/binx-web/src/components/forms/projects/ProjectLabelsPanel/ProjectLabelsPanel.tsx
  * @author Binx Portal
@@ -17,7 +17,6 @@
 "use client";
 
 import { FormEvent, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { Check, Pencil, Trash2, X } from "lucide-react";
 
 import {
@@ -106,7 +105,6 @@ const ProjectLabelsPanel = ({
   kind,
   labels: initialLabels,
 }: ProjectLabelsPanelProps) => {
-  const router = useRouter();
   const config = CONFIG[kind];
 
   const [labels, setLabels] = useState<Label[]>(initialLabels);
@@ -142,7 +140,6 @@ const ProjectLabelsPanel = ({
       );
       setNewName("");
       setNewColor(DEFAULT_LABEL_COLOR);
-      router.refresh();
     });
   };
 
@@ -181,7 +178,6 @@ const ProjectLabelsPanel = ({
           .sort((a, b) => a.name.localeCompare(b.name)),
       );
       setEditingId(null);
-      router.refresh();
     });
   };
 
@@ -204,7 +200,6 @@ const ProjectLabelsPanel = ({
         return;
       }
       setLabels((prev) => prev.filter((item) => item.id !== label.id));
-      router.refresh();
     });
   };
 

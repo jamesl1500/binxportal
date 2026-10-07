@@ -12,7 +12,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 
 import { updateAppearanceAction } from "@/app/(app)/profile/actions";
 import type { AppearanceSettings } from "@/lib/users";
@@ -27,7 +26,6 @@ const DEFAULT_COLOR = "#0a0a0b";
 const HEX = /^#[0-9a-fA-F]{6}$/;
 
 const AppearanceForm = ({ settings }: AppearanceFormProps) => {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [color, setColor] = useState(settings.accent_color ?? "");
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +41,6 @@ const AppearanceForm = ({ settings }: AppearanceFormProps) => {
         return;
       }
       setSaved(true);
-      router.refresh();
     });
   };
 

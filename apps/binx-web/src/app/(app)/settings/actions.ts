@@ -12,6 +12,7 @@
  */
 "use server";
 
+import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 
 import {
@@ -54,6 +55,9 @@ export async function updateAgencyAction(
   } catch (error) {
     return errorResult(error, "Unable to update agency");
   }
+  // The new name shows up in the header and org switcher — re-render them in
+  // this same response.
+  refresh();
   return {};
 }
 
@@ -86,7 +90,9 @@ export async function updateAgencyProfileAction(
   input: AgencyProfileInput,
 ): Promise<AgencyProfileActionResult> {
   try {
-    return { profile: await updateAgencyProfile(agencyId, input) };
+    const profile = await updateAgencyProfile(agencyId, input);
+    refresh();
+    return { profile };
   } catch (error) {
     return errorResult(error, "Unable to save changes");
   }
@@ -102,7 +108,9 @@ export async function uploadAgencyImageAction(
     return { error: "No file selected" };
   }
   try {
-    return { profile: await uploadAgencyImage(agencyId, kind, file) };
+    const profile = await uploadAgencyImage(agencyId, kind, file);
+    refresh();
+    return { profile };
   } catch (error) {
     return errorResult(error, "Unable to upload image");
   }
@@ -113,7 +121,9 @@ export async function removeAgencyImageAction(
   kind: AgencyImageKind,
 ): Promise<AgencyProfileActionResult> {
   try {
-    return { profile: await deleteAgencyImage(agencyId, kind) };
+    const profile = await deleteAgencyImage(agencyId, kind);
+    refresh();
+    return { profile };
   } catch (error) {
     return errorResult(error, "Unable to remove image");
   }
@@ -129,7 +139,9 @@ export async function updateAiSettingsAction(
   input: AiSettingsInput,
 ): Promise<AiSettingsActionResult> {
   try {
-    return { settings: await updateAiSettings(agencyId, input) };
+    const settings = await updateAiSettings(agencyId, input);
+    refresh();
+    return { settings };
   } catch (error) {
     return errorResult(error, "Unable to update AI settings");
   }
