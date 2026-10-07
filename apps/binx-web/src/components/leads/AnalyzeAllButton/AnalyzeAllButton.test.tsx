@@ -2,8 +2,6 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const refresh = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
 vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 vi.mock("@/app/(app)/leads/actions", () => ({ analyzeOpenLeadsAction: vi.fn() }));
 
@@ -22,7 +20,6 @@ describe("AnalyzeAllButton", () => {
     await userEvent.click(screen.getByRole("button", { name: /analyze open leads/i }));
     expect(mocked).toHaveBeenCalledWith("a1");
     expect(toast.success).toHaveBeenCalledWith("Analyzed 3 leads, 1 skipped");
-    expect(refresh).toHaveBeenCalled();
   });
 
   it("says everything is up to date when nothing was analyzed", async () => {

@@ -2,8 +2,6 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const refresh = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
 vi.mock("@/app/(app)/settings/actions", () => ({
   updateAgencyProfileAction: vi.fn(),
   uploadAgencyImageAction: vi.fn(),
@@ -68,7 +66,6 @@ describe("AgencyBrandingForm", () => {
     await userEvent.click(screen.getByRole("button", { name: "Save branding" }));
     expect(mocked).toHaveBeenCalledWith("a1", { tagline: "We build brands", brand_color: "#123456" });
     expect(await screen.findByText("Branding saved.")).toBeInTheDocument();
-    expect(refresh).toHaveBeenCalled();
   });
 
   it("clears the colour with the Clear button", async () => {

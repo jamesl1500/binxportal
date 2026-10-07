@@ -10,18 +10,26 @@
  * since that's an expected, permanent state in some deployments rather than
  * a bug.
  *
+ * The Markdown renderer is code-split out of the dashboard's initial JS; its
+ * chunk starts loading alongside the briefing request, so it's ready well
+ * before the (much slower) AI response arrives.
+ *
  * @module apps/binx-web/src/components/dashboard/AiBriefingCard/AiBriefingCard.tsx
  * @author Binx Portal
  */
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { Sparkles } from "lucide-react";
 
 import { getAiBriefingAction } from "@/app/(app)/dashboard/actions";
-import AiMarkdown from "@/components/ai/AiMarkdown/AiMarkdown";
 
 import styles from "./AiBriefingCard.module.scss";
+
+const loadAiMarkdown = () => import("@/components/ai/AiMarkdown/AiMarkdown");
+
+const AiMarkdown = dynamic(loadAiMarkdown);
 
 interface AiBriefingCardProps {
   agencyId: string;
@@ -37,6 +45,7 @@ const AiBriefingCard = ({ agencyId }: AiBriefingCardProps) => {
   const load = async (force = false) => {
     setStatus("loading");
     setError(null);
+    void loadAiMarkdown();
     const result = await getAiBriefingAction(agencyId, force);
     if (result.briefing) {
       setBriefing(result.briefing);

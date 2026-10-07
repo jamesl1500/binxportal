@@ -14,7 +14,6 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { Dialog } from "@base-ui/react/dialog";
 import { Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -46,7 +45,6 @@ const SOURCE_LABELS: Record<ProspectSource, string> = {
 };
 
 const FindLeadsDialog = ({ agencyId }: FindLeadsDialogProps) => {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -194,7 +192,6 @@ const FindLeadsDialog = ({ agencyId }: FindLeadsDialogProps) => {
           (skipped.length > 0 ? ` (${skipped.length} already on file)` : ""),
       );
       handleOpenChange(false);
-      router.refresh();
     });
   };
 

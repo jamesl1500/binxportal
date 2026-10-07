@@ -11,6 +11,8 @@
  */
 "use server";
 
+import { refresh } from "next/cache";
+
 import { AuthApiError } from "@/lib/auth";
 import {
   declinePortalProposal,
@@ -27,7 +29,9 @@ export async function signPortalProposalAction(
   proposalId: string,
 ): Promise<PortalProposalActionResult> {
   try {
-    return { proposal: await signPortalProposal(proposalId) };
+    const proposal = await signPortalProposal(proposalId);
+    refresh();
+    return { proposal };
   } catch (error) {
     if (error instanceof AuthApiError) {
       return { error: error.message };
@@ -41,7 +45,9 @@ export async function declinePortalProposalAction(
   reason: string | null,
 ): Promise<PortalProposalActionResult> {
   try {
-    return { proposal: await declinePortalProposal(proposalId, reason) };
+    const proposal = await declinePortalProposal(proposalId, reason);
+    refresh();
+    return { proposal };
   } catch (error) {
     if (error instanceof AuthApiError) {
       return { error: error.message };

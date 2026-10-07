@@ -18,11 +18,6 @@ vi.mock("@/app/(app)/actions", () => ({
   switchAgencyAction: vi.fn(),
 }));
 
-const mockRefresh = vi.fn();
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: mockRefresh }),
-}));
-
 import { switchAgencyAction } from "@/app/(app)/actions";
 import type { AgencyRead } from "@/lib/agencies";
 
@@ -74,7 +69,7 @@ describe("OrgSwitcher", () => {
     ).toHaveAttribute("aria-checked", "false");
   });
 
-  it("switches to the selected agency and refreshes the route", async () => {
+  it("switches to the selected agency", async () => {
     mockedSwitchAgencyAction.mockResolvedValueOnce({});
     const user = userEvent.setup();
     render(<OrgSwitcher agencies={agencies} currentAgency={agencies[0]} />);
@@ -85,7 +80,6 @@ describe("OrgSwitcher", () => {
     );
 
     expect(mockedSwitchAgencyAction).toHaveBeenCalledWith(agencies[1].id);
-    expect(mockRefresh).toHaveBeenCalledOnce();
   });
 
   it("does nothing when the already-current agency is selected", async () => {
@@ -98,10 +92,9 @@ describe("OrgSwitcher", () => {
     );
 
     expect(mockedSwitchAgencyAction).not.toHaveBeenCalled();
-    expect(mockRefresh).not.toHaveBeenCalled();
   });
 
-  it("shows an error and does not refresh if the switch is rejected", async () => {
+  it("shows an error if the switch is rejected", async () => {
     mockedSwitchAgencyAction.mockResolvedValueOnce({
       error: "You're not a member of that organization",
     });
@@ -116,7 +109,6 @@ describe("OrgSwitcher", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "You're not a member of that organization",
     );
-    expect(mockRefresh).not.toHaveBeenCalled();
   });
 
   it("links Create agency to the dedicated /agencies/new page", async () => {

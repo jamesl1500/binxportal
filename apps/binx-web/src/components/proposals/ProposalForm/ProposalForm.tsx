@@ -172,7 +172,6 @@ const ProposalForm = ({
       }
       if (result.proposal) {
         router.push(`/proposals/${result.proposal.id}`);
-        router.refresh();
       }
     } finally {
       setSubmitting(false);

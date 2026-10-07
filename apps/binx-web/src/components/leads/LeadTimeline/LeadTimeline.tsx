@@ -11,7 +11,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import {
   ArrowRightLeft,
   FileText,
@@ -56,7 +55,6 @@ const LeadTimeline = ({
   leadId,
   events: initial,
 }: LeadTimelineProps) => {
-  const router = useRouter();
   const [events, setEvents] = useState(initial);
   const [body, setBody] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -73,7 +71,6 @@ const LeadTimeline = ({
       }
       setEvents((prev) => [result.event!, ...prev]);
       setBody("");
-      router.refresh();
     });
   };
 

@@ -13,7 +13,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { Copy, RotateCcw, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -56,7 +55,6 @@ const InvitationsPanel = ({
   agencyId,
   invitations: initialInvitations,
 }: InvitationsPanelProps) => {
-  const router = useRouter();
   const [invitations, setInvitations] = useState(initialInvitations);
   // Accept links only exist right after a create/resend — keyed by invitation id.
   const [links, setLinks] = useState<Record<string, string>>(() =>
@@ -112,7 +110,6 @@ const InvitationsPanel = ({
       );
       if (history) setHistory(null); // force a refetch next time it's opened
       toast.success("Invitation revoked");
-      router.refresh();
     });
   };
 

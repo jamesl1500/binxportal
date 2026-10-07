@@ -12,6 +12,8 @@
  */
 "use server";
 
+import { refresh } from "next/cache";
+
 import { AuthApiError } from "@/lib/auth";
 import {
   AppearanceSettings,
@@ -73,6 +75,7 @@ export async function updateQualificationsAction(
 ): Promise<UserProfileActionResult> {
   try {
     const profile = await updateQualifications(input);
+    refresh();
     return { profile };
   } catch (error) {
     if (error instanceof AuthApiError) {
@@ -93,6 +96,7 @@ export async function uploadUserImageAction(
 
   try {
     const profile = await uploadUserImage(kind, file);
+    refresh();
     return { profile };
   } catch (error) {
     if (error instanceof AuthApiError) {
@@ -107,6 +111,7 @@ export async function removeUserImageAction(
 ): Promise<UserProfileActionResult> {
   try {
     const profile = await removeUserImage(kind);
+    refresh();
     return { profile };
   } catch (error) {
     if (error instanceof AuthApiError) {
@@ -126,6 +131,8 @@ export async function updateAppearanceAction(
 ): Promise<AppearanceActionResult> {
   try {
     const settings = await updateAppearanceSettings(accentColor);
+    // The accent is applied by the (app) layout — re-render it in this response.
+    refresh();
     return { settings };
   } catch (error) {
     if (error instanceof AuthApiError) {

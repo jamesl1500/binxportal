@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("next/cache", () => ({ refresh: vi.fn() }));
 // These actions only orchestrate: call the matching lib/clients function,
 // translate a thrown AuthApiError into a returned { error }. We mock the lib
 // calls so these tests prove the ORCHESTRATION is correct, without a real

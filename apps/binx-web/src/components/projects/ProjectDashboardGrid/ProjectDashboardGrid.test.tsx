@@ -2,8 +2,6 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const refresh = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
 vi.mock("@/app/(app)/projects/[projectId]/actions", () => ({
   updateProjectDashboardLayoutAction: vi.fn(),
 }));
@@ -61,7 +59,7 @@ describe("ProjectDashboardGrid", () => {
     expect(screen.queryByRole("button", { name: /hide/i })).not.toBeInTheDocument();
   });
 
-  it("lists hidden widgets while customizing and persists un-hiding one, refreshing to fetch its body", async () => {
+  it("lists hidden widgets while customizing and persists un-hiding one, asking the action to re-render for its body", async () => {
     render(
       <ProjectDashboardGrid
         initialOrder={[]}
@@ -74,16 +72,18 @@ describe("ProjectDashboardGrid", () => {
     expect(headings()).toHaveLength(PROJECT_WIDGET_IDS.length);
 
     await userEvent.click(screen.getByRole("button", { name: "Show Files" }));
-    await waitFor(() => expect(mockedUpdate).toHaveBeenCalledWith([...PROJECT_WIDGET_IDS], [], []));
-    await waitFor(() => expect(refresh).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(mockedUpdate).toHaveBeenCalledWith([...PROJECT_WIDGET_IDS], [], [], { refresh: true }),
+    );
   });
 
-  it("hides a widget without refreshing", async () => {
+  it("hides a widget without asking for a re-render", async () => {
     render(<ProjectDashboardGrid initialOrder={[]} initialHidden={[]} initialWide={[]} widgets={widgets} />);
     await userEvent.click(screen.getByRole("button", { name: "Customize" }));
     await userEvent.click(screen.getByRole("button", { name: "Hide Board" }));
-    await waitFor(() => expect(mockedUpdate).toHaveBeenCalledWith([...PROJECT_WIDGET_IDS], ["board"], []));
-    expect(refresh).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect(mockedUpdate).toHaveBeenCalledWith([...PROJECT_WIDGET_IDS], ["board"], [], { refresh: false }),
+    );
 
     await userEvent.click(screen.getByRole("button", { name: "Done" }));
     expect(screen.queryByRole("heading", { name: "Board" })).not.toBeInTheDocument();
@@ -98,7 +98,9 @@ describe("ProjectDashboardGrid", () => {
     expect(headings().slice(0, 2)).toEqual(["My tasks", "Overview"]);
 
     await userEvent.click(screen.getByRole("button", { name: "Make Team full width" }));
-    await waitFor(() => expect(mockedUpdate).toHaveBeenLastCalledWith(expect.any(Array), [], ["team"]));
+    await waitFor(() =>
+      expect(mockedUpdate).toHaveBeenLastCalledWith(expect.any(Array), [], ["team"], { refresh: false }),
+    );
     expect(screen.getByRole("region", { name: "Team" })).toHaveAttribute("data-wide", "true");
   });
 
@@ -127,7 +129,12 @@ describe("ProjectDashboardGrid", () => {
     await userEvent.click(screen.getByRole("button", { name: "Customize" }));
     await userEvent.click(screen.getByRole("button", { name: "Reset to default" }));
     await waitFor(() =>
-      expect(mockedUpdate).toHaveBeenCalledWith([...PROJECT_WIDGET_IDS], ["ai_summary", "files"], ["overview"]),
+      expect(mockedUpdate).toHaveBeenCalledWith(
+        [...PROJECT_WIDGET_IDS],
+        ["ai_summary", "files"],
+        ["overview"],
+        { refresh: false },
+      ),
     );
   });
 

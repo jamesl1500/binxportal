@@ -2,8 +2,6 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const refresh = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
 vi.mock("@/app/(app)/profile/actions", () => ({
   updateQualificationsAction: vi.fn(),
 }));
@@ -47,7 +45,6 @@ describe("QualificationsForm", () => {
 
     expect(mocked).toHaveBeenCalledWith({ skills: ["Python", "Figma"], experience: [], education: [] });
     expect(await screen.findByText("Saved.")).toBeInTheDocument();
-    expect(refresh).toHaveBeenCalled();
   });
 
   it("shows a server error and does not claim success", async () => {

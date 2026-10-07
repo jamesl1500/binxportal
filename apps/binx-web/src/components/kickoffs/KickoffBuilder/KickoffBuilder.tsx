@@ -16,7 +16,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { Dialog } from "@base-ui/react/dialog";
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -84,7 +83,6 @@ const KickoffBuilder = ({
   kickoff,
   templates,
 }: KickoffBuilderProps) => {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [title, setTitle] = useState(kickoff?.title ?? "Project kickoff");
   const [introMessage, setIntroMessage] = useState(
@@ -154,7 +152,6 @@ const KickoffBuilder = ({
         return;
       }
       onSuccess?.();
-      router.refresh();
     });
   };
 

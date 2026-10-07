@@ -18,7 +18,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { Dialog } from "@base-ui/react/dialog";
 import { CalendarPlus } from "lucide-react";
 
@@ -44,7 +43,6 @@ function formatTime(iso: string): string {
 }
 
 const BookMeetingDialog = () => {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -135,7 +133,6 @@ const BookMeetingDialog = () => {
       }
 
       handleOpenChange(false);
-      router.refresh();
     });
   };
 

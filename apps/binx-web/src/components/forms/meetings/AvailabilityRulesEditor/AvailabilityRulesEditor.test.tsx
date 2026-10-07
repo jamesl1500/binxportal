@@ -2,8 +2,6 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const refresh = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
 vi.mock("@/app/(app)/settings/meetings/actions", () => ({ putAvailabilityRulesAction: vi.fn() }));
 
 import { putAvailabilityRulesAction } from "@/app/(app)/settings/meetings/actions";
@@ -53,7 +51,6 @@ describe("AvailabilityRulesEditor", () => {
 
     expect(mocked).toHaveBeenCalledWith("a1", [{ weekday: 0, start_time: "09:00", end_time: "17:00" }]);
     expect(await screen.findByText(/saved/i)).toBeInTheDocument();
-    expect(refresh).toHaveBeenCalled();
   });
 
   it("removes a block", async () => {

@@ -14,7 +14,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import {
@@ -35,7 +34,6 @@ const PublicProposalActions = ({
   token,
   recipientName,
 }: PublicProposalActionsProps) => {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [mode, setMode] = useState<Mode>("choose");
   const [signerName, setSignerName] = useState(recipientName ?? "");
@@ -56,7 +54,6 @@ const PublicProposalActions = ({
         toast.error(result.error);
         return;
       }
-      router.refresh();
     });
   };
 
@@ -72,7 +69,6 @@ const PublicProposalActions = ({
         toast.error(result.error);
         return;
       }
-      router.refresh();
     });
   };
 

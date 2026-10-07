@@ -2,9 +2,6 @@ import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const mockedRefresh = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: mockedRefresh }) }));
-
 vi.mock("@/app/(app)/projects/[projectId]/time/actions", () => ({
   startTimerAction: vi.fn(),
   stopTimerAction: vi.fn(),
@@ -83,7 +80,6 @@ describe("TimerWidget", () => {
       description: "Client call",
       isBillable: true,
     });
-    expect(mockedRefresh).toHaveBeenCalledOnce();
   });
 
   it("shows a toast when starting the timer fails, and keeps the modal open", async () => {
@@ -95,7 +91,6 @@ describe("TimerWidget", () => {
     await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Start" }));
 
     expect(mockedToastError).toHaveBeenCalledWith("You already have a timer running");
-    expect(mockedRefresh).not.toHaveBeenCalled();
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
@@ -140,6 +135,5 @@ describe("TimerWidget", () => {
     await user.click(screen.getByRole("button", { name: "Stop timer" }));
 
     expect(mockedStop).toHaveBeenCalledWith(agencyId, projectId, "entry-1");
-    expect(mockedRefresh).toHaveBeenCalledOnce();
   });
 });

@@ -13,7 +13,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Dialog } from "@base-ui/react/dialog";
 import { toast } from "sonner";
@@ -70,7 +69,6 @@ const KickoffStatusView = ({
   kickoff,
   taskLists,
 }: KickoffStatusViewProps) => {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [convertOpen, setConvertOpen] = useState(false);
   const [listId, setListId] = useState(taskLists[0]?.id ?? "");
@@ -87,7 +85,6 @@ const KickoffStatusView = ({
         return;
       }
       toast.success("Reminder sent");
-      router.refresh();
     });
   };
 
@@ -106,7 +103,6 @@ const KickoffStatusView = ({
       toast.success(
         `${result.tasksCreated ?? 0} task${result.tasksCreated === 1 ? "" : "s"} added to the board`,
       );
-      router.refresh();
     });
   };
 

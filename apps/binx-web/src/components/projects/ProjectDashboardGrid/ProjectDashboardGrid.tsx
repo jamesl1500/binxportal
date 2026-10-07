@@ -17,7 +17,6 @@
 "use client";
 
 import { type ReactNode, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import {
   ArrowDown,
   ArrowUp,
@@ -60,7 +59,6 @@ const ProjectDashboardGrid = ({
   widgets,
   headerActions = {},
 }: ProjectDashboardGridProps) => {
-  const router = useRouter();
   const [, startTransition] = useTransition();
   const [order, setOrder] = useState<ProjectWidgetId[]>(() =>
     normalizeProjectWidgetOrder(initialOrder),
@@ -87,13 +85,13 @@ const ProjectDashboardGrid = ({
         nextOrder,
         Array.from(nextHidden),
         Array.from(nextWide),
+        // A widget that was hidden on the last server render has no body yet,
+        // so ask the action to re-render the page in the same response.
+        { refresh },
       );
       if (result.error) {
         setError(result.error);
-        return;
       }
-      // A widget that was hidden on the last server render has no body yet.
-      if (refresh) router.refresh();
     });
   };
 

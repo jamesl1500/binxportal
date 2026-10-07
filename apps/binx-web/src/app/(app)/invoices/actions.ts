@@ -10,6 +10,7 @@
  */
 "use server";
 
+import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { generateInvoiceReminder } from "@/lib/ai";
@@ -48,7 +49,9 @@ export async function updateBillingSettingsAction(
   input: BillingSettingsInput,
 ): Promise<BillingSettingsActionResult> {
   try {
-    return { settings: await updateBillingSettings(agencyId, input) };
+    const settings = await updateBillingSettings(agencyId, input);
+    refresh();
+    return { settings };
   } catch (error) {
     return errorResult(error, "Unable to update billing settings");
   }
@@ -104,14 +107,14 @@ export async function issueInvoiceAction(
   recipientEmail?: string | null,
 ): Promise<InvoiceActionResult> {
   try {
-    return {
-      invoice: await issueInvoice(
-        agencyId,
-        invoiceId,
-        sendNotice,
-        recipientEmail,
-      ),
-    };
+    const invoice = await issueInvoice(
+      agencyId,
+      invoiceId,
+      sendNotice,
+      recipientEmail,
+    );
+    refresh();
+    return { invoice };
   } catch (error) {
     return errorResult(error, "Unable to issue invoice");
   }
@@ -122,7 +125,9 @@ export async function voidInvoiceAction(
   invoiceId: string,
 ): Promise<InvoiceActionResult> {
   try {
-    return { invoice: await voidInvoice(agencyId, invoiceId) };
+    const invoice = await voidInvoice(agencyId, invoiceId);
+    refresh();
+    return { invoice };
   } catch (error) {
     return errorResult(error, "Unable to void invoice");
   }
@@ -146,7 +151,9 @@ export async function addInvoicePaymentAction(
   input: PaymentInput,
 ): Promise<InvoiceActionResult> {
   try {
-    return { invoice: await addInvoicePayment(agencyId, invoiceId, input) };
+    const invoice = await addInvoicePayment(agencyId, invoiceId, input);
+    refresh();
+    return { invoice };
   } catch (error) {
     return errorResult(error, "Unable to record payment");
   }

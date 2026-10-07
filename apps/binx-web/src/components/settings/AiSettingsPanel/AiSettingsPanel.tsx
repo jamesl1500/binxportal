@@ -12,7 +12,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { Switch } from "@base-ui/react/switch";
 
 import { updateAiSettingsAction } from "@/app/(app)/settings/actions";
@@ -32,7 +31,6 @@ const AiSettingsPanel = ({
   settings,
   canEdit,
 }: AiSettingsPanelProps) => {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isEnabled, setIsEnabled] = useState(settings.is_enabled);
   const [monthlyBudget, setMonthlyBudget] = useState(
@@ -95,7 +93,6 @@ const AiSettingsPanel = ({
         setFormError(result.error);
       } else {
         setSuccessMessage("AI settings saved.");
-        router.refresh();
       }
     });
   };
