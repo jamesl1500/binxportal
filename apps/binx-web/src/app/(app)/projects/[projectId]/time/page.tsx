@@ -28,6 +28,7 @@ import {
 import ManualEntryForm from "@/components/forms/projects/ManualEntryForm/ManualEntryForm";
 import TimeEntriesTable from "@/components/forms/projects/TimeEntriesTable/TimeEntriesTable";
 import TimerWidget from "@/components/forms/projects/TimerWidget/TimerWidget";
+import PageEnter from "@/components/ui/PageEnter/PageEnter";
 
 import styles from "./page.module.scss";
 
@@ -59,57 +60,59 @@ const ProjectTimePage = async ({ params }: ProjectTimePageProps) => {
   );
 
   return (
-    <div className={styles.page}>
-      <div className={styles.statGrid}>
-        <div className={styles.statCard}>
-          <span className={styles.statLabel}>Uninvoiced entries</span>
-          <p className={styles.statValue}>{summary.entry_count}</p>
+    <PageEnter>
+      <div className={styles.page}>
+        <div className={styles.statGrid}>
+          <div className={styles.statCard}>
+            <span className={styles.statLabel}>Uninvoiced entries</span>
+            <p className={styles.statValue}>{summary.entry_count}</p>
+          </div>
+          <div className={styles.statCard}>
+            <span className={styles.statLabel}>Uninvoiced hours</span>
+            <p className={styles.statValue}>
+              {(summary.total_minutes / 60).toFixed(1)}
+            </p>
+          </div>
+          <div className={styles.statCard}>
+            <span className={styles.statLabel}>Uninvoiced billable amount</span>
+            <p className={styles.statValue}>
+              {formatMoneyCents(summary.billable_amount_cents)}
+            </p>
+          </div>
+          <div className={styles.statCard}>
+            <span className={styles.statLabel}>Missing a rate</span>
+            <p className={styles.statValue}>{summary.unrated_entry_count}</p>
+          </div>
         </div>
-        <div className={styles.statCard}>
-          <span className={styles.statLabel}>Uninvoiced hours</span>
-          <p className={styles.statValue}>
-            {(summary.total_minutes / 60).toFixed(1)}
-          </p>
-        </div>
-        <div className={styles.statCard}>
-          <span className={styles.statLabel}>Uninvoiced billable amount</span>
-          <p className={styles.statValue}>
-            {formatMoneyCents(summary.billable_amount_cents)}
-          </p>
-        </div>
-        <div className={styles.statCard}>
-          <span className={styles.statLabel}>Missing a rate</span>
-          <p className={styles.statValue}>{summary.unrated_entry_count}</p>
-        </div>
-      </div>
 
-      <div className={styles.actionsRow}>
-        <TimerWidget
-          agencyId={currentAgency.id}
-          projectId={project.id}
-          tasks={tasks}
-          runningTimer={runningTimer}
-        />
-        <ManualEntryForm
-          agencyId={currentAgency.id}
-          projectId={project.id}
-          tasks={tasks}
-        />
-      </div>
-
-      <div className={styles.card}>
-        <div className={styles.cardHeader}>
-          <h2 className={styles.cardTitle}>Time entries</h2>
+        <div className={styles.actionsRow}>
+          <TimerWidget
+            agencyId={currentAgency.id}
+            projectId={project.id}
+            tasks={tasks}
+            runningTimer={runningTimer}
+          />
+          <ManualEntryForm
+            agencyId={currentAgency.id}
+            projectId={project.id}
+            tasks={tasks}
+          />
         </div>
-        <TimeEntriesTable
-          agencyId={currentAgency.id}
-          projectId={project.id}
-          clientId={project.client_id}
-          entries={entries}
-          tasks={tasks}
-        />
+
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <h2 className={styles.cardTitle}>Time entries</h2>
+          </div>
+          <TimeEntriesTable
+            agencyId={currentAgency.id}
+            projectId={project.id}
+            clientId={project.client_id}
+            entries={entries}
+            tasks={tasks}
+          />
+        </div>
       </div>
-    </div>
+    </PageEnter>
   );
 };
 

@@ -3,7 +3,7 @@
  * demo agency. Uses the `staffPage` fixture (pre-signed-in storage state).
  */
 import { test, expect } from "./fixtures";
-import { DEMO } from "./fixtures";
+import { DEMO, STRIPE_CONFIGURED } from "./fixtures";
 
 test.describe("staff app", () => {
   test("dashboard shows the agency roll-up", async ({ staffPage }) => {
@@ -161,11 +161,17 @@ test.describe("staff app", () => {
     await expect(staffPage.getByText("Current plan")).toBeVisible();
     const switchButtons = staffPage.getByRole("button", { name: "Switch to this plan" });
     await expect(switchButtons.first()).toBeVisible();
-    // No Stripe price is configured in this e2e environment, so clicking
-    // surfaces the clean 503 from billing/service.py — not a fake success,
-    // and not a raw network error either.
     await switchButtons.first().click();
-    await expect(staffPage.getByText(/stripe isn.t configured/i)).toBeVisible();
+    if (STRIPE_CONFIGURED) {
+      // The API has Stripe keys (typical on a dev machine): the click really
+      // creates a Checkout Session and sends the browser to Stripe.
+      await staffPage.waitForURL(/checkout\.stripe\.com/, { timeout: 20_000 });
+    } else {
+      // No Stripe in this environment (CI), so clicking surfaces the clean
+      // 503 from billing/service.py — not a fake success, and not a raw
+      // network error either.
+      await expect(staffPage.getByText(/stripe isn.t configured/i)).toBeVisible();
+    }
   });
 
   test("invoicing page shows the Stripe Connect panel, not connected", async ({ staffPage }) => {
@@ -173,6 +179,9 @@ test.describe("staff app", () => {
     await expect(staffPage.getByText(/not connected to stripe/i)).toBeVisible();
     const connectButton = staffPage.getByRole("button", { name: "Connect Stripe" });
     await expect(connectButton).toBeVisible();
+    // With real Stripe keys the click would create a connected account in
+    // Stripe on every run — only exercise it where Stripe is off.
+    if (STRIPE_CONFIGURED) return;
     await connectButton.click();
     await expect(staffPage.getByText(/stripe isn.t configured/i)).toBeVisible();
   });

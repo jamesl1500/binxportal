@@ -15,6 +15,11 @@
  * Fades in after a short delay so a fast navigation never flashes it.
  * A plain Server Component — no client JS.
  *
+ * Deliberately not wrapped in a <ViewTransition> for a fade-out: an exit
+ * transition on a streamed Suspense fallback crashed the page in WebKit
+ * (the portal home, every load). Arriving content animates instead — see
+ * components/ui/PageEnter.
+ *
  * @module apps/binx-web/src/components/ui/PageSkeleton/PageSkeleton.tsx
  * @author Binx Portal
  */

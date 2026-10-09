@@ -65,13 +65,15 @@ const PortalOnboardingProvider = ({
     () => !initialProgress.dismissed_popups.includes(PORTAL_TOUR_ID),
   );
 
-  // Skip the first run — that's the server-seeded value, not a change.
-  const isFirstRender = useRef(true);
+  // Only save real changes — never the server-seeded value. Comparing against
+  // the last-saved list (rather than a "first render" flag) keeps that true
+  // under Strict Mode's double effect run in dev, which used to re-save the
+  // seeded list on every page load and clobber progress saved moments
+  // earlier from another tab.
+  const lastSaved = useRef(dismissed);
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
+    if (lastSaved.current === dismissed) return;
+    lastSaved.current = dismissed;
     void updateTutorialProgressAction({
       tour_completed: initialProgress.tour_completed,
       dismissed_popups: dismissed,

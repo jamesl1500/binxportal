@@ -128,3 +128,36 @@
     @apply font-sans;
   }
 }
+/*
+ * Page view transitions (React <ViewTransition> — see components/ui/PageEnter).
+ * Arriving page content fades in with a slight rise. Kept short so it reads
+ * as polish, not as waiting. Browsers without view transitions just swap
+ * instantly.
+ *
+ * The browser's default whole-page crossfade is switched off: only the
+ * arriving content should move, and the rest of the page swaps instantly.
+ */
+::view-transition-group(root),
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
+::view-transition-new(.page-enter) {
+  animation: 220ms cubic-bezier(0.2, 0, 0, 1) both vt-rise-in;
+}
+
+@keyframes vt-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
