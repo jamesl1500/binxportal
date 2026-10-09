@@ -1,3 +1,4 @@
+import { StrictMode } from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -33,6 +34,28 @@ beforeEach(() => {
 });
 
 describe("TutorialProvider", () => {
+  // Strict Mode runs effects twice on mount (as `next dev` does). The
+  // server-seeded progress must never be written back — a stale re-save on
+  // page load would clobber progress saved moments earlier from another tab.
+  it("doesn't save the server-seeded progress on mount, even under Strict Mode", async () => {
+    const user = userEvent.setup();
+    render(
+      <StrictMode>
+        <TutorialProvider initialProgress={{ tour_completed: true, dismissed_popups: ["leads-new"] }}>
+          <Consumer />
+        </TutorialProvider>
+      </StrictMode>,
+    );
+    expect(mockedUpdate).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "dismiss" }));
+    await waitFor(() => expect(mockedUpdate).toHaveBeenCalledTimes(1));
+    expect(mockedUpdate).toHaveBeenCalledWith({
+      tour_completed: true,
+      dismissed_popups: ["leads-new", "clients-new"],
+    });
+  });
+
   it("auto-opens the tour when the server says it hasn't been completed", () => {
     render(
       <TutorialProvider initialProgress={{ tour_completed: false, dismissed_popups: [] }}>

@@ -36,10 +36,13 @@ const PortalConversationPage = async ({
 
   let detail;
   let messages;
+  let conversations;
   try {
-    [detail, messages] = await Promise.all([
+    // The sidebar's conversation list loads alongside the thread, not after it.
+    [detail, messages, conversations] = await Promise.all([
       getPortalConversation(conversationId),
       getPortalMessages(conversationId),
+      getPortalConversations(),
     ]);
   } catch (error) {
     if (error instanceof AuthApiError && error.status === 404) {
@@ -47,8 +50,6 @@ const PortalConversationPage = async ({
     }
     throw error;
   }
-
-  const conversations = await getPortalConversations();
 
   return (
     <div className={styles.page}>

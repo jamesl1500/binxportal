@@ -69,14 +69,15 @@ const TutorialProvider = ({
     dismissedPopups: initialProgress.dismissed_popups,
   });
 
-  // Skip the first run — that's just the server-seeded initial value, not a
-  // change that needs saving back.
-  const isFirstRender = useRef(true);
+  // Only save real changes — never the server-seeded initial value. Comparing
+  // against the last-saved state (rather than a "first render" flag) keeps
+  // that true under Strict Mode's double effect run in dev, which used to
+  // re-save the seeded value on every page load and clobber progress saved
+  // moments earlier from another tab.
+  const lastSaved = useRef(state);
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
+    if (lastSaved.current === state) return;
+    lastSaved.current = state;
     void updateTutorialProgressAction({
       tour_completed: state.tourCompleted,
       dismissed_popups: state.dismissedPopups,

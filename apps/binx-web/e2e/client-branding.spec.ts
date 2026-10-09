@@ -8,6 +8,11 @@ import { test, expect } from "./fixtures";
 import { DEMO } from "./fixtures";
 
 test.describe("client portal branding", () => {
+  // These tests all save the same client's branding form, and each save
+  // sends every field — run in parallel they overwrite one another's
+  // changes (last write wins). Run this file's tests one at a time.
+  test.describe.configure({ mode: "default" });
+
   test("the Branding tab renders its fields", async ({ staffPage }) => {
     await staffPage.goto("/clients");
     await staffPage.getByRole("link", { name: DEMO.clientName }).click();

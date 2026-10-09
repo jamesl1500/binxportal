@@ -19,6 +19,7 @@ import {
   getProjectTags,
 } from "@/lib/projects";
 import KanbanBoard from "@/components/forms/projects/KanbanBoard/KanbanBoard";
+import PageEnter from "@/components/ui/PageEnter/PageEnter";
 
 export const metadata: Metadata = { title: "Board" };
 
@@ -46,17 +47,19 @@ const ProjectBoardPage = async ({ params }: ProjectBoardPageProps) => {
   ]);
 
   return (
-    <KanbanBoard
-      agencyId={currentAgency.id}
-      projectId={projectId}
-      columns={columns}
-      projectMembers={projectMembers}
-      projectTags={projectTags}
-      currentUserId={user.id}
-      canModerateComments={
-        currentAgency.role === "owner" || currentAgency.role === "admin"
-      }
-    />
+    <PageEnter>
+      <KanbanBoard
+        agencyId={currentAgency.id}
+        projectId={projectId}
+        columns={columns}
+        projectMembers={projectMembers}
+        projectTags={projectTags}
+        currentUserId={user.id}
+        canModerateComments={
+          currentAgency.role === "owner" || currentAgency.role === "admin"
+        }
+      />
+    </PageEnter>
   );
 };
 

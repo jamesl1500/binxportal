@@ -12,7 +12,8 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import * as Sentry from "@sentry/nextjs";
+
+import { reportError } from "@/lib/sentry-client";
 
 import styles from "./error.module.scss";
 
@@ -24,7 +25,7 @@ interface ErrorPageProps {
 const ErrorPage = ({ error, retry }: ErrorPageProps) => {
   useEffect(() => {
     console.error(error);
-    Sentry.captureException(error);
+    reportError(error);
   }, [error]);
 
   return (

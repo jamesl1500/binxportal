@@ -7,11 +7,31 @@
  *
  * @module apps/binx-web/e2e/fixtures.ts
  */
+import fs from "node:fs";
 import path from "node:path";
 
 import { test as base, type Page } from "@playwright/test";
 
 export const AUTH_DIR = path.join(__dirname, ".auth");
+
+/**
+ * Whether the binx-api these tests run against has Stripe keys. CI doesn't
+ * (so Stripe-backed actions return a clean "Stripe isn't configured" 503),
+ * but a developer's local API often does — and then the same clicks really
+ * redirect to Stripe. Specs branch on this instead of assuming either.
+ * Only checks that a key is present (env var, or binx-api's own .env).
+ */
+function detectStripeConfigured(): boolean {
+  if (process.env.STRIPE_SECRET_KEY) return true;
+  try {
+    const env = fs.readFileSync(path.resolve(__dirname, "../../binx-api/.env"), "utf8");
+    return /^\s*STRIPE_SECRET_KEY\s*=\s*["']?[^\s"'#]/m.test(env);
+  } catch {
+    return false;
+  }
+}
+
+export const STRIPE_CONFIGURED = detectStripeConfigured();
 
 export const DEMO = {
   password: "e2e-Passw0rd!",
