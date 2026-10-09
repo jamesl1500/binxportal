@@ -115,8 +115,9 @@ jobs:
           chmod 600 /tmp/next_actions_key
           if [ -n "$SECRET_ID" ]; then
             secret=$(aws secretsmanager get-secret-value --secret-id "$SECRET_ID" --region "$AWS_REGION" --query SecretString --output text)
-            echo "$secret" | jq -r '.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY // empty' > /tmp/next_actions_key
-            echo "sentry-dsn=$(echo "$secret" | jq -r '.NEXT_PUBLIC_SENTRY_DSN // empty')" >> "$GITHUB_OUTPUT"
+            # A value still at CDK's REPLACE_ME placeholder counts as unset.
+            echo "$secret" | jq -r '.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY // empty | select(. != "REPLACE_ME")' > /tmp/next_actions_key
+            echo "sentry-dsn=$(echo "$secret" | jq -r '.NEXT_PUBLIC_SENTRY_DSN // empty | select(. != "REPLACE_ME")')" >> "$GITHUB_OUTPUT"
             # Production must pin the key (see the Dockerfile); staging can
             # live with a per-build one if its secret doesn't set it.
             if [ "$SECRET_ID" = "binxportal/app" ] && [ ! -s /tmp/next_actions_key ]; then

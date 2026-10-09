@@ -56,6 +56,20 @@ services:
       JWT_SECRET: ${JWT_SECRET:?set in .env}
       FRONTEND_URL: https://www.binxportal.com
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # Optional integrations — each is cleanly off while its key is absent
+      # from the binxportal/app secret (see binx_api/core/config.py). Listed
+      # explicitly because a key in the secret only reaches `.env`; nothing
+      # reaches this container unless it's named here.
+      GOOGLE_PLACES_API_KEY: ${GOOGLE_PLACES_API_KEY:-}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_CONNECT_WEBHOOK_SECRET: ${STRIPE_CONNECT_WEBHOOK_SECRET:-}
+      STRIPE_CONNECT_ACCOUNT_WEBHOOK_SECRET: ${STRIPE_CONNECT_ACCOUNT_WEBHOOK_SECRET:-}
+      STRIPE_PRICE_ID_STARTER: ${STRIPE_PRICE_ID_STARTER:-}
+      STRIPE_PRICE_ID_PRO: ${STRIPE_PRICE_ID_PRO:-}
+      STRIPE_PRICE_ID_SCALE: ${STRIPE_PRICE_ID_SCALE:-}
+      STRIPE_LAUNCH_DISCOUNT_COUPON_ID: ${STRIPE_LAUNCH_DISCOUNT_COUPON_ID:-}
       # Amazon SES — not a secret (just a verified sending address + the
       # region), so it's a plain literal here rather than routed through
       # Secrets Manager. boto3 gets its actual AWS credentials from the
