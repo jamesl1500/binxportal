@@ -57,6 +57,14 @@ export class CiCdStack extends cdk.Stack {
         tagPrefixList: ["sha-"],
         maxImageCount: 20,
       },
+      {
+        // binx-web's per-environment staging builds (see deploy.yml) — never
+        // promoted or rolled back to, so far fewer are worth keeping.
+        description: "Keep only the last 5 staging-sha-tagged images",
+        tagStatus: ecr.TagStatus.TAGGED,
+        tagPrefixList: ["staging-sha-"],
+        maxImageCount: 5,
+      },
     ];
 
     this.apiRepository = new ecr.Repository(this, "ApiRepository", {
