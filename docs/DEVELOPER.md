@@ -148,9 +148,9 @@ cost/complexity tradeoff against ECS Fargate + RDS + ElastiCache.
 `staging-redis`) with its own volumes, its own secret (`binxportal/staging`),
 and hard memory caps so it can't starve production. Production's Caddy
 fronts it too, at `staging.binxportal.com` / `api.staging.binxportal.com`
-(basic auth on the web host, `noindex` on both). Staging never sends email —
-`SES_FROM_EMAIL` is unset there, so verification/invite links are in
-`docker logs binxportal-staging-staging-api-1` instead. It needs a 4GB
+(basic auth on the web host, `noindex` on both). Staging sends real email
+through the same SES domain, under the display name "Binx Portal (Staging)"
+— so don't load real client contacts into its database. It needs a 4GB
 instance (`t4g.medium`); `deploy/redeploy.sh` refuses a staging deploy on
 anything smaller.
 

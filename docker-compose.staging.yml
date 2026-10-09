@@ -81,10 +81,14 @@ services:
       STRIPE_PRICE_ID_PRO: ${STRIPE_PRICE_ID_PRO:-}
       STRIPE_PRICE_ID_SCALE: ${STRIPE_PRICE_ID_SCALE:-}
       STRIPE_LAUNCH_DISCOUNT_COUPON_ID: ${STRIPE_LAUNCH_DISCOUNT_COUPON_ID:-}
-      # SES_FROM_EMAIL is deliberately NOT set: with it unset, core/email.py
-      # logs each email instead of sending it, so staging can never mail a
-      # real client. Read verification/invite links out of
-      # `docker logs binxportal-staging-staging-api-1`.
+      # Staging sends REAL email (same SES domain and instance-role
+      # credentials as production — the account is out of the SES sandbox,
+      # so any address entered here gets mail). The "(Staging)" display name
+      # is the only thing telling a recipient it didn't come from
+      # production, so keep it; and never load real client contacts into
+      # the staging database. Remove this line to go back to log-only
+      # (core/email.py then just logs each email).
+      SES_FROM_EMAIL: "Binx Portal (Staging) <noreply@mail.binxportal.com>"
       AWS_REGION: us-east-2
       SENTRY_DSN: ${SENTRY_DSN:-}
       SENTRY_ENVIRONMENT: staging
@@ -115,7 +119,13 @@ services:
       - default
       - edge
     environment:
-      APP_ORIGIN: https://staging.binxportal.com
+      # Not the public URL, unlike production: APP_ORIGIN is only used for
+      # binx-web's server actions calling its OWN /api/auth/* routes
+      # (lib/auth.ts's getInternalBaseUrl), and the public staging host sits
+      # behind Caddy's basic auth — a server-side call there gets a 401 with
+      # no way to answer the challenge, which surfaces as "Unable to sign in"
+      # on every login/signup. Loopback inside the container skips Caddy.
+      APP_ORIGIN: http://localhost:3000
       NODE_ENV: production
 
 networks:
