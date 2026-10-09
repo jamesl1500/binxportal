@@ -67,6 +67,20 @@ services:
       JWT_SECRET: ${JWT_SECRET:?set in .env.staging}
       FRONTEND_URL: https://staging.binxportal.com
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # Same optional integrations as production, read from the
+      # binxportal/staging secret. Stripe values here must be TEST-mode
+      # (sk_test_…, test price ids, and webhook secrets for endpoints pointed
+      # at api.staging.binxportal.com) — never production's live keys.
+      GOOGLE_PLACES_API_KEY: ${GOOGLE_PLACES_API_KEY:-}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_CONNECT_WEBHOOK_SECRET: ${STRIPE_CONNECT_WEBHOOK_SECRET:-}
+      STRIPE_CONNECT_ACCOUNT_WEBHOOK_SECRET: ${STRIPE_CONNECT_ACCOUNT_WEBHOOK_SECRET:-}
+      STRIPE_PRICE_ID_STARTER: ${STRIPE_PRICE_ID_STARTER:-}
+      STRIPE_PRICE_ID_PRO: ${STRIPE_PRICE_ID_PRO:-}
+      STRIPE_PRICE_ID_SCALE: ${STRIPE_PRICE_ID_SCALE:-}
+      STRIPE_LAUNCH_DISCOUNT_COUPON_ID: ${STRIPE_LAUNCH_DISCOUNT_COUPON_ID:-}
       # SES_FROM_EMAIL is deliberately NOT set: with it unset, core/email.py
       # logs each email instead of sending it, so staging can never mail a
       # real client. Read verification/invite links out of
