@@ -219,9 +219,18 @@ Change infrastructure (new resource, IAM change, etc.): edit `infra/lib/*`,
 then from `infra/`:
 
 ```bash
-npx cdk diff <StackName>       # always review before deploying
-npx cdk deploy <StackName>
+npx cdk diff <StackName>                  # always review before deploying
+npx cdk deploy <StackName> --exclusively  # ONLY that stack
 ```
+
+**Always pass `--exclusively`.** Without it CDK also deploys every stack the
+named one depends on, and nearly everything depends (via `ComputeStack`) on
+`SecretsStack`. If that stack's placeholder JSON in code differs at all from
+what was last deployed, CloudFormation rewrites the live `binxportal/app`
+secret back to `REPLACE_ME` placeholders. If that ever happens, the real
+values are still in the secret's version history (`aws secretsmanager
+list-secret-version-ids --include-deprecated`) — restore from there, and
+don't promote to production until you have.
 
 `cdk diff` needs real AWS credentials and the account to already be
 bootstrapped (`npx cdk bootstrap aws://<account>/<region>`, one-time).

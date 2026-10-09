@@ -76,7 +76,10 @@ done
 
 umask 077
 {
-  jq -r 'to_entries[] | "\(.key)=\(.value)"' <<<"$secret_json"
+  # A key still holding CDK's REPLACE_ME placeholder is left out entirely, so
+  # it reads as unset (= that feature cleanly off) rather than as a bogus
+  # value — SENTRY_DSN=REPLACE_ME, for one, would crash the API on boot.
+  jq -r 'to_entries[] | select(.value != "REPLACE_ME") | "\(.key)=\(.value)"' <<<"$secret_json"
   echo "API_IMAGE=${ECR_REGISTRY}/binx-api:${TAG}"
   echo "WEB_IMAGE=${ECR_REGISTRY}/binx-web:${WEB_TAG}"
 } > "$ENV_FILE"
