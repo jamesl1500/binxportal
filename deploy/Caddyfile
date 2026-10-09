@@ -18,3 +18,29 @@ binxportal.com {
 www.binxportal.com {
 	reverse_proxy web:3000
 }
+
+# --- Staging (docker-compose.staging.yml) -----------------------------------
+# Same box, separate compose project, reached over the shared
+# `binxportal-edge` network. If the staging stack is down these just 502 —
+# nothing here can affect the production blocks above.
+
+(staging) {
+	header X-Robots-Tag "noindex, nofollow"
+}
+
+# No basic auth on the API host: the browser calls it cross-origin with a
+# bearer token (and over websockets), and binx-web's own server calls it too
+# — none of which could answer a basic-auth challenge.
+api.staging.binxportal.com {
+	import staging
+	reverse_proxy staging-api:8000
+}
+
+staging.binxportal.com {
+	import staging
+	# Generated on the box by deploy/redeploy.sh from the staging secret's
+	# STAGING_BASIC_AUTH_USER / STAGING_BASIC_AUTH_PASSWORD. A glob, so a
+	# missing file (no password set) is a warning, not a config error.
+	import /etc/caddy/staging-auth.caddy*
+	reverse_proxy staging-web:3000
+}

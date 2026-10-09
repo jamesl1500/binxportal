@@ -8,6 +8,7 @@ import { ComputeStack } from "../lib/compute-stack";
 import { DnsStack } from "../lib/dns-stack";
 import { EmailStack } from "../lib/email-stack";
 import { SecretsStack } from "../lib/secrets-stack";
+import { StagingStack } from "../lib/staging-stack";
 
 // Everything targets the account/region the existing EC2 instance already
 // lives in (see the plan's exploration notes — found via `aws sts
@@ -81,6 +82,17 @@ new EmailStack(app, "BinxportalEmail", {
   description: "SES sending identity for mail.binxportal.com + the DNS records it needs",
   mailDomain: MAIL_DOMAIN,
   hostedZone: dns.zone,
+});
+
+// Role names as literals (they're fixed `roleName`s in ComputeStack /
+// CiCdStack), not construct references — see StagingStackProps for why.
+new StagingStack(app, "BinxportalStaging", {
+  env,
+  description: "Staging environment on the existing instance: DNS records + its own secret",
+  hostedZone: dns.zone,
+  targetIpAddress: compute.elasticIp.attrPublicIp,
+  instanceRoleName: "binxportal-ec2",
+  deployRoleName: "binxportal-github-deploy",
 });
 
 new BackupStack(app, "BinxportalBackup", {

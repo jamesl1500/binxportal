@@ -101,13 +101,13 @@ cd infra && npx tsc --noEmit && npx cdk synth
 
 ## Git workflow
 
-**`master` is always deployable — merging to it ships to production
-automatically** (see [Deployment](#deployment)). That shapes the workflow:
+**`master` is always deployable — merging to it ships to staging
+automatically, and production is one manual promotion away** (see
+[Deployment](#deployment)). That shapes the workflow:
 
 - **Branch per change**: `feat/…`, `fix/…`, `chore/…`, `test/…`, cut from
   `master`, deleted after merge. No long-lived `develop`/`staging` branch —
-  there's one environment today, so that layer of indirection isn't earning
-  its keep yet. Revisit if a staging environment gets added.
+  staging tracks `master` itself, so there's nothing to drift.
 - **PRs, even solo.** A PR is what makes a change reviewable and gives CI a
   chance to run before anything reaches `master` — a direct push skips
   both. Squash-merge, so `master`'s history stays one commit per change and
@@ -119,19 +119,20 @@ automatically** (see [Deployment](#deployment)). That shapes the workflow:
 - **Branch protection on `master`**: require the `binx-api CI` / `binx-web
   CI` status checks (at minimum `lint` + `test`/`unit`) before merge —
   `deploy.yml` assumes broken code never reaches `master` in the first
-  place, since it deploys on every push there with no separate approval
-  gate. Configure under Settings → Branches on GitHub.
+  place, since it deploys to staging on every push there. Configure under
+  Settings → Branches on GitHub.
 
 ## CI
 
-Four workflows, all in `.github/workflows/`:
+Five workflows, all in `.github/workflows/`:
 
 | Workflow | Triggers on | Does |
 |---|---|---|
 | `binx-api-ci.yml` | push/PR touching `apps/binx-api/**` | ruff lint+format, `alembic check` (model/migration drift) + up/down/up round-trip, full pytest + coverage, checks `openapi.json` is up to date |
 | `binx-web-ci.yml` | push/PR touching `apps/binx-web/**` or `apps/binx-api/**` | eslint, checks `api-schema.d.ts` matches the committed `openapi.json`, vitest + coverage, Playwright E2E against a real seeded API + Postgres |
 | `infra-ci.yml` | push/PR touching `infra/**` | `tsc --noEmit` + `cdk synth` (no AWS credentials needed — nothing here does an account lookup) |
-| `deploy.yml` | push to `master` touching app/deploy paths | builds + pushes both Docker images to ECR, then redeploys via SSM (see below) |
+| `deploy.yml` | push to `master` touching app/deploy paths | builds + pushes the Docker images to ECR, then deploys them to **staging** via SSM (see below) |
+| `promote.yml` | manual (`workflow_dispatch`) | redeploys an already-built commit to **production** via SSM |
 
 ## Deployment
 
@@ -141,6 +142,17 @@ Compose services — `api`, `web`, `db` (Postgres), `redis`, and `caddy`
 deliberately the cheap, simple option, not the "correct-at-scale" one — see
 `infra/lib/compute-stack.ts`'s docstring for the reasoning and the
 cost/complexity tradeoff against ECS Fargate + RDS + ElastiCache.
+
+**Staging runs on the same instance**, as a second compose project
+(`docker-compose.staging.yml`: `staging-api`, `staging-web`, `staging-db`,
+`staging-redis`) with its own volumes, its own secret (`binxportal/staging`),
+and hard memory caps so it can't starve production. Production's Caddy
+fronts it too, at `staging.binxportal.com` / `api.staging.binxportal.com`
+(basic auth on the web host, `noindex` on both). Staging never sends email —
+`SES_FROM_EMAIL` is unset there, so verification/invite links are in
+`docker logs binxportal-staging-staging-api-1` instead. It needs a 4GB
+instance (`t4g.medium`); `deploy/redeploy.sh` refuses a staging deploy on
+anything smaller.
 
 **What `infra/` (AWS CDK) manages**, around that one hand-created instance:
 
@@ -154,47 +166,53 @@ cost/complexity tradeoff against ECS Fargate + RDS + ElastiCache.
   production secret lives in; see "Environment variables" below
 - `BackupStack` — daily EBS snapshots (the only backup now that Postgres is
   self-hosted, not RDS)
+- `StagingStack` — the `staging.` / `api.staging.` A records and the
+  `binxportal/staging` secret, self-contained so it deploys without
+  touching the stacks above
 
-**How a deploy actually happens** (`.github/workflows/deploy.yml`, on every
-push to `master`):
+**How a deploy actually happens.** Every push to `master`
+(`.github/workflows/deploy.yml`) goes to staging:
 
 1. Authenticate to AWS via OIDC — no stored AWS keys in the repo.
-2. Fetch `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` from Secrets Manager (a
-   file-based buildx secret — the value never appears in a workflow
-   expression or log line).
-3. Build both images (`apps/binx-api/Dockerfile`, `apps/binx-web/Dockerfile`)
-   and push to ECR, tagged `:latest` and `:sha-<short-sha>`.
-4. `aws ssm send-command` runs `deploy/redeploy.sh` on the instance. No SSH,
-   ever; the box's SSH port stays closed to CI, reachable only from an
-   allow-listed IP for a human.
+2. Build three images and push them to ECR: `binx-api:sha-<sha>` (shared by
+   both environments), `binx-web:sha-<sha>` (production) and
+   `binx-web:staging-sha-<sha>` (staging). binx-web is built per
+   environment because `NEXT_PUBLIC_*` are baked in at build time; each
+   build reads `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` from its own
+   environment's secret as a file-based buildx secret.
+3. `aws ssm send-command` unpacks this commit's compose files, Caddyfile and
+   `deploy/redeploy.sh` into `/binxportal` on the instance, then runs
+   `redeploy.sh staging sha-<sha>`. No SSH, ever; the box's SSH port stays
+   closed to CI, reachable only from an allow-listed IP for a human.
 
-`deploy/redeploy.sh` itself: fetches the whole `binxportal/app` secret from
-Secrets Manager and regenerates `/opt/binxportal/.env` from it (plus the two
-non-secret `API_IMAGE`/`WEB_IMAGE` lines, computed inline) — nothing is
-hand-placed on the box anymore — then pulls and recreates only `api`/`web`.
-`db`, `redis`, and `caddy` are untouched unless their own images change, so
-a deploy never touches the named volumes holding Postgres data, uploaded
-files, Redis, or Caddy's certs. **Never run `docker compose -f
+Then, once it looks right on staging, promote the same commit to production
+(`.github/workflows/promote.yml`) — nothing is rebuilt, it runs
+`redeploy.sh production sha-<sha>` with the images from step 2:
+
+```bash
+gh workflow run promote.yml -f sha=<commit>   # or Actions → Promote to production
+```
+
+Rolling back production is the same command with an older sha.
+
+`deploy/redeploy.sh <production|staging> <tag>` itself: fetches that
+environment's secret from Secrets Manager and regenerates its env file
+(`.env` / `.env.staging`) from it, plus the two non-secret
+`API_IMAGE`/`WEB_IMAGE` lines — nothing is hand-placed on the box — then
+pulls and recreates only that environment's api/web containers and reloads
+Caddy. The databases and Redis are untouched unless their own images
+change, so a deploy never touches the named volumes holding Postgres data,
+uploaded files, Redis, or Caddy's certs. **Never run `docker compose -f
 docker-compose.prod.yml down -v`** — that's the one command that would
 delete them.
 
 ### Manual / one-off operations
 
-Redeploy by hand (same thing CI does, useful if you need to ship without
-waiting on a push, or debug a stuck deploy):
+Re-run a deploy by hand (e.g. to debug a stuck one) from a Session Manager
+shell on the box — it uses whatever config the last CI deploy unpacked:
 
 ```bash
-aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin <account>.dkr.ecr.us-east-2.amazonaws.com
-docker build -f apps/binx-api/Dockerfile -t <account>.dkr.ecr.us-east-2.amazonaws.com/binx-api:latest .
-docker build -f apps/binx-web/Dockerfile \
-  --build-arg NEXT_PUBLIC_API_URL=https://api.binxportal.com/ \
-  --build-arg NEXT_PUBLIC_SITE_URL=https://binxportal.com \
-  --secret id=next_actions_key,src=<path-to-a-file-with-the-key> \
-  -t <account>.dkr.ecr.us-east-2.amazonaws.com/binx-web:latest .
-docker push <account>.dkr.ecr.us-east-2.amazonaws.com/binx-api:latest
-docker push <account>.dkr.ecr.us-east-2.amazonaws.com/binx-web:latest
-aws ssm send-command --instance-ids <instance-id> --document-name AWS-RunShellScript \
-  --parameters 'commands=["bash /opt/binxportal/deploy/redeploy.sh"]' --region us-east-2
+sudo bash /binxportal/deploy/redeploy.sh staging sha-<12-char-sha>
 ```
 
 Change infrastructure (new resource, IAM change, etc.): edit `infra/lib/*`,
@@ -218,9 +236,8 @@ aws ssm start-session --target <instance-id> --region us-east-2
 ### First-time / rarely-needed box setup
 
 `deploy/bootstrap.sh` installs Docker + the AWS CLI on a fresh instance and
-creates `/opt/binxportal`. After that, `.env` (from `.env.prod.example`) and
-the compose/Caddy files need to exist at `/opt/binxportal` before the first
-`docker compose up -d` — see that script's own printed next-steps.
+creates `/binxportal`. After that the first CI deploy does the rest — it
+ships the compose/Caddy files and generates the env files itself.
 
 ## Environment variables
 
@@ -230,8 +247,9 @@ optional in dev: `NEXT_PUBLIC_API_URL` (defaults to
 `http://localhost:8000/`), `NEXT_PUBLIC_SITE_URL` / `APP_ORIGIN` (the
 canonical origin used to build absolute links server-side), and `NODE_ENV`.
 
-Production values live in `/opt/binxportal/.env` on the instance — never
-committed; see `.env.prod.example` at the repo root for the shape.
+Production values live in the `binxportal/app` Secrets Manager secret and
+staging's in `binxportal/staging` — never committed; see `.env.prod.example`
+at the repo root for the shape of both.
 
 ### Stripe (local test-mode smoke test)
 
