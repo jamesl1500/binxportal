@@ -18,6 +18,7 @@ import ClientStatGrid, {
   type ClientStat,
 } from "@/components/clients/ClientStatGrid/ClientStatGrid";
 import MyTasksCard from "@/components/dashboard/MyTasksCard/MyTasksCard";
+import PageEnter from "@/components/ui/PageEnter/PageEnter";
 
 import styles from "../page.module.scss";
 
@@ -49,49 +50,51 @@ const MyWorkPage = async () => {
   ];
 
   return (
-    <div>
-      <ClientStatGrid stats={stats} />
+    <PageEnter>
+      <div>
+        <ClientStatGrid stats={stats} />
 
-      <section className={styles.section}>
-        <div className={styles.sectionHead}>
-          <h2 className={styles.sectionTitle}>Assigned to you</h2>
-        </div>
-        <MyTasksCard tasks={myWork.tasks} />
-      </section>
+        <section className={styles.section}>
+          <div className={styles.sectionHead}>
+            <h2 className={styles.sectionTitle}>Assigned to you</h2>
+          </div>
+          <MyTasksCard tasks={myWork.tasks} />
+        </section>
 
-      <section className={styles.section}>
-        <div className={styles.sectionHead}>
-          <h2 className={styles.sectionTitle}>Unread conversations</h2>
-          <Link href="/messages" className={styles.link}>
-            All messages
-          </Link>
-        </div>
-        {unread.length === 0 ? (
-          <p className={styles.empty}>You&apos;re all caught up on messages.</p>
-        ) : (
-          <ul className={styles.unreadList}>
-            {unread.map((conversation) => (
-              <li key={conversation.id}>
-                <Link
-                  href={`/messages/${conversation.id}`}
-                  className={styles.unreadRow}
-                >
-                  <span className={styles.unreadTitle}>
-                    {conversation.title}
-                  </span>
-                  <span className={styles.unreadPreview}>
-                    {conversation.last_message_preview ?? "New activity"}
-                  </span>
-                  <span className={styles.unreadBadge}>
-                    {conversation.unread_count}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-    </div>
+        <section className={styles.section}>
+          <div className={styles.sectionHead}>
+            <h2 className={styles.sectionTitle}>Unread conversations</h2>
+            <Link href="/messages" className={styles.link}>
+              All messages
+            </Link>
+          </div>
+          {unread.length === 0 ? (
+            <p className={styles.empty}>You&apos;re all caught up on messages.</p>
+          ) : (
+            <ul className={styles.unreadList}>
+              {unread.map((conversation) => (
+                <li key={conversation.id}>
+                  <Link
+                    href={`/messages/${conversation.id}`}
+                    className={styles.unreadRow}
+                  >
+                    <span className={styles.unreadTitle}>
+                      {conversation.title}
+                    </span>
+                    <span className={styles.unreadPreview}>
+                      {conversation.last_message_preview ?? "New activity"}
+                    </span>
+                    <span className={styles.unreadBadge}>
+                      {conversation.unread_count}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </div>
+    </PageEnter>
   );
 };
 

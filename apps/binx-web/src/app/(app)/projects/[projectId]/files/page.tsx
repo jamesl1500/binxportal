@@ -14,6 +14,7 @@ import { redirect } from "next/navigation";
 import { getCurrentAgencyContext } from "@/lib/agencies";
 import { getAgencyProject, getProjectFiles } from "@/lib/projects";
 import ProjectFilesTable from "@/components/forms/projects/ProjectFilesTable/ProjectFilesTable";
+import PageEnter from "@/components/ui/PageEnter/PageEnter";
 
 import styles from "./page.module.scss";
 
@@ -38,19 +39,21 @@ const ProjectFilesPage = async ({ params }: ProjectFilesPageProps) => {
   ]);
 
   return (
-    <div>
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Files</h2>
-        <p className={styles.sectionSubtitle}>
-          Briefs, assets, and deliverables shared for {project.name}.
-        </p>
-        <ProjectFilesTable
-          agencyId={currentAgency.id}
-          projectId={project.id}
-          files={files}
-        />
-      </section>
-    </div>
+    <PageEnter>
+      <div>
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Files</h2>
+          <p className={styles.sectionSubtitle}>
+            Briefs, assets, and deliverables shared for {project.name}.
+          </p>
+          <ProjectFilesTable
+            agencyId={currentAgency.id}
+            projectId={project.id}
+            files={files}
+          />
+        </section>
+      </div>
+    </PageEnter>
   );
 };
 

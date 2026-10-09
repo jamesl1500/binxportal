@@ -18,6 +18,7 @@ import { getKickoff, getKickoffTemplates } from "@/lib/kickoffs";
 import { getProjectBoard } from "@/lib/projects";
 import KickoffBuilder from "@/components/kickoffs/KickoffBuilder/KickoffBuilder";
 import KickoffStatusView from "@/components/kickoffs/KickoffStatusView/KickoffStatusView";
+import PageEnter from "@/components/ui/PageEnter/PageEnter";
 
 export const metadata: Metadata = { title: "Kickoff" };
 
@@ -40,23 +41,27 @@ const ProjectKickoffPage = async ({ params }: ProjectKickoffPageProps) => {
 
   if (!kickoff || kickoff.status === "draft") {
     return (
-      <KickoffBuilder
-        agencyId={currentAgency.id}
-        projectId={projectId}
-        kickoff={kickoff}
-        templates={templates}
-      />
+      <PageEnter>
+        <KickoffBuilder
+          agencyId={currentAgency.id}
+          projectId={projectId}
+          kickoff={kickoff}
+          templates={templates}
+        />
+      </PageEnter>
     );
   }
 
   const board = await getProjectBoard(currentAgency.id, projectId);
   return (
-    <KickoffStatusView
-      agencyId={currentAgency.id}
-      projectId={projectId}
-      kickoff={kickoff}
-      taskLists={board.map((column) => ({ id: column.id, name: column.name }))}
-    />
+    <PageEnter>
+      <KickoffStatusView
+        agencyId={currentAgency.id}
+        projectId={projectId}
+        kickoff={kickoff}
+        taskLists={board.map((column) => ({ id: column.id, name: column.name }))}
+      />
+    </PageEnter>
   );
 };
 
