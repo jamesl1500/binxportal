@@ -1,19 +1,22 @@
-# Builds both images and deploys them to the single binxportal EC2 instance.
+# Builds the images for a commit and deploys them to STAGING. Production is a
+# separate, manual step: promote.yml redeploys the exact images built here.
 #
 # Runs on every push to master that touches app code or the deploy config —
 # relies on branch protection requiring binx-api CI / binx-web CI to have
 # passed before a PR can merge, rather than re-running those suites here.
 #
-# No SSH: authenticates to AWS via OIDC (no stored AWS keys), pushes to ECR,
-# then triggers deploy/redeploy.sh ON THE BOX via SSM Send-Command. See
-# infra/lib/cicd-stack.ts for the IAM role this assumes and infra/lib/compute-stack.ts
-# for the SSM instance profile that has to be attached to the box first
-# (one-time manual step — see that stack's CfnOutput).
+# Both environments live on the single binxportal EC2 instance (see
+# docker-compose.prod.yml / docker-compose.staging.yml). No SSH:
+# authenticates to AWS via OIDC (no stored AWS keys), pushes to ECR, then
+# triggers deploy/redeploy.sh ON THE BOX via SSM Send-Command. See
+# infra/lib/cicd-stack.ts for the IAM role this assumes and
+# infra/lib/compute-stack.ts for the SSM instance profile attached to the box.
 #
-# No secrets stored in this repo's GitHub settings, either — the one
-# build-time secret it needs (NEXT_SERVER_ACTIONS_ENCRYPTION_KEY) comes from
-# AWS Secrets Manager (binxportal/app), the same place deploy/redeploy.sh
-# gets everything the box needs at deploy time. See infra/lib/secrets-stack.ts.
+# No secrets stored in this repo's GitHub settings, either — the build-time
+# values come from AWS Secrets Manager (binxportal/app for the production
+# build, binxportal/staging for the staging one), the same place
+# deploy/redeploy.sh gets everything the box needs at deploy time. See
+# infra/lib/secrets-stack.ts and infra/lib/staging-stack.ts.
 
 name: Deploy
 
@@ -25,12 +28,14 @@ on:
       - "apps/binx-web/**"
       - "pnpm-lock.yaml"
       - "docker-compose.prod.yml"
+      - "docker-compose.staging.yml"
       - "deploy/**"
       - ".dockerignore"
       - ".github/workflows/deploy.yml"
+      - ".github/actions/ssm-redeploy/**"
 
 concurrency:
-  group: deploy-production
+  group: deploy-staging
   cancel-in-progress: false
 
 permissions:
@@ -43,15 +48,45 @@ env:
   # assumable by a GitHub Actions OIDC token whose `sub` claim matches this
   # exact repo + branch, per that stack's trust policy).
   DEPLOY_ROLE_ARN: arn:aws:iam::574247905173:role/binxportal-github-deploy
-  # Graviton (arm64) t4g.small — see infra/lib/compute-stack.ts.
+  # Graviton (arm64) — see infra/lib/compute-stack.ts.
   INSTANCE_ID: i-0105be61fb01246d2
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    outputs:
-      api-image: ${{ steps.tags.outputs.api-image }}
-      web-image: ${{ steps.tags.outputs.web-image }}
+    strategy:
+      matrix:
+        include:
+          # One API image serves both environments — everything it needs is
+          # runtime config.
+          - name: binx-api
+            repository: binx-api
+            dockerfile: apps/binx-api/Dockerfile
+            tag-prefix: sha-
+            cache-scope: binx-api
+          # binx-web is built once per environment: NEXT_PUBLIC_* are inlined
+          # at `next build` time (see apps/binx-web/Dockerfile). The
+          # production image is built now, alongside staging's, so promoting
+          # is a pure redeploy of this exact commit — no build in between.
+          - name: binx-web (production)
+            repository: binx-web
+            dockerfile: apps/binx-web/Dockerfile
+            tag-prefix: sha-
+            cache-scope: binx-web
+            secret-id: binxportal/app
+            api-url: https://api.binxportal.com/
+            site-url: https://www.binxportal.com
+            sentry-environment: production
+          - name: binx-web (staging)
+            repository: binx-web
+            dockerfile: apps/binx-web/Dockerfile
+            tag-prefix: staging-sha-
+            cache-scope: binx-web-staging
+            secret-id: binxportal/staging
+            api-url: https://api.staging.binxportal.com/
+            site-url: https://staging.binxportal.com
+            sentry-environment: staging
+    name: build ${{ matrix.name }}
     steps:
       - uses: actions/checkout@v4
 
@@ -66,109 +101,102 @@ jobs:
       - name: Fetch build-time values from Secrets Manager
         # File-based (secret-files, not secrets), so the value only ever
         # touches a local file on this ephemeral runner — never a workflow
-        # expression, env var, or log line. binxportal/app is the single
-        # source of truth for every production secret (see
-        # infra/lib/secrets-stack.ts) — nothing is a GitHub secret anymore.
-        # NEXT_PUBLIC_SENTRY_DSN isn't actually sensitive (Sentry DSNs are
-        # meant to be public), but it's pulled from the same place for one
-        # source of truth; jq's `// empty` means a missing key builds with
-        # Sentry cleanly off instead of failing the step.
+        # expression, env var, or log line. NEXT_PUBLIC_SENTRY_DSN isn't
+        # actually sensitive (Sentry DSNs are meant to be public), but it's
+        # pulled from the same place for one source of truth; jq's `// empty`
+        # means a missing key builds with Sentry cleanly off instead of
+        # failing the step. The API build has no secret-id: it just gets an
+        # empty key file its Dockerfile never mounts.
         id: secrets
+        env:
+          SECRET_ID: ${{ matrix.secret-id }}
         run: |
-          secret=$(aws secretsmanager get-secret-value --secret-id binxportal/app --region "$AWS_REGION" --query SecretString --output text)
-          echo "$secret" | jq -r '.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY' > /tmp/next_actions_key
+          : > /tmp/next_actions_key
           chmod 600 /tmp/next_actions_key
-          echo "sentry-dsn=$(echo "$secret" | jq -r '.NEXT_PUBLIC_SENTRY_DSN // empty')" >> "$GITHUB_OUTPUT"
-
-      - id: tags
-        run: |
-          sha=${GITHUB_SHA::12}
-          echo "api-image=${{ steps.ecr.outputs.registry }}/binx-api:sha-$sha" >> "$GITHUB_OUTPUT"
-          echo "web-image=${{ steps.ecr.outputs.registry }}/binx-web:sha-$sha" >> "$GITHUB_OUTPUT"
+          if [ -n "$SECRET_ID" ]; then
+            secret=$(aws secretsmanager get-secret-value --secret-id "$SECRET_ID" --region "$AWS_REGION" --query SecretString --output text)
+            echo "$secret" | jq -r '.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY // empty' > /tmp/next_actions_key
+            echo "sentry-dsn=$(echo "$secret" | jq -r '.NEXT_PUBLIC_SENTRY_DSN // empty')" >> "$GITHUB_OUTPUT"
+            # Production must pin the key (see the Dockerfile); staging can
+            # live with a per-build one if its secret doesn't set it.
+            if [ "$SECRET_ID" = "binxportal/app" ] && [ ! -s /tmp/next_actions_key ]; then
+              echo "::error::NEXT_SERVER_ACTIONS_ENCRYPTION_KEY is missing from binxportal/app"
+              exit 1
+            fi
+          fi
 
       # The runner is amd64; QEMU lets buildx cross-build the arm64 images
-      # the Graviton instance below actually runs.
+      # the Graviton instance actually runs.
       - uses: docker/setup-qemu-action@v3
         with:
           platforms: arm64
 
       - uses: docker/setup-buildx-action@v3
 
-      - name: Build + push binx-api
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: apps/binx-api/Dockerfile
-          platforms: linux/arm64
-          push: true
-          tags: |
-            ${{ steps.tags.outputs.api-image }}
-            ${{ steps.ecr.outputs.registry }}/binx-api:latest
-          cache-from: type=gha,scope=binx-api
-          cache-to: type=gha,mode=max,scope=binx-api
+      - id: tag
+        run: echo "image=${{ steps.ecr.outputs.registry }}/${{ matrix.repository }}:${{ matrix.tag-prefix }}${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
 
-      - name: Build + push binx-web
+      - name: Build + push
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: apps/binx-web/Dockerfile
+          file: ${{ matrix.dockerfile }}
           platforms: linux/arm64
           push: true
-          tags: |
-            ${{ steps.tags.outputs.web-image }}
-            ${{ steps.ecr.outputs.registry }}/binx-web:latest
+          tags: ${{ steps.tag.outputs.image }}
           build-args: |
-            NEXT_PUBLIC_API_URL=https://api.binxportal.com/
-            NEXT_PUBLIC_SITE_URL=https://www.binxportal.com
+            NEXT_PUBLIC_API_URL=${{ matrix.api-url }}
+            NEXT_PUBLIC_SITE_URL=${{ matrix.site-url }}
             NEXT_PUBLIC_SENTRY_DSN=${{ steps.secrets.outputs.sentry-dsn }}
-            NEXT_PUBLIC_SENTRY_ENVIRONMENT=production
+            NEXT_PUBLIC_SENTRY_ENVIRONMENT=${{ matrix.sentry-environment }}
           # Same key on every build so an in-flight form submit against the
           # outgoing container doesn't fail post-deploy — see the Dockerfile.
           # File-based, from the step above — never a workflow expression.
           secret-files: |
             next_actions_key=/tmp/next_actions_key
-          cache-from: type=gha,scope=binx-web
-          cache-to: type=gha,mode=max,scope=binx-web
+          cache-from: type=gha,scope=${{ matrix.cache-scope }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.cache-scope }}
 
       - name: Clean up the fetched secret file
         if: always()
         run: rm -f /tmp/next_actions_key
 
-  deploy:
+      # Fails here, on the runner, rather than on the box — production's
+      # Caddy serves both environments from this one file.
+      - name: Validate the Caddyfile
+        if: matrix.repository == 'binx-api'
+        run: docker run --rm -v "$PWD/deploy:/etc/caddy:ro" caddy:2-alpine caddy validate --config /etc/caddy/Caddyfile
+
+  deploy-staging:
     needs: build-and-push
     runs-on: ubuntu-latest
+    # Shared with promote.yml: only one deploy touches the box at a time.
+    concurrency:
+      group: binxportal-box
+      cancel-in-progress: false
     steps:
+      - uses: actions/checkout@v4
+
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ env.DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Redeploy on the instance via SSM
+      - id: tag
+        run: echo "tag=sha-${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
+
+      - uses: ./.github/actions/ssm-redeploy
+        with:
+          target: staging
+          image-tag: ${{ steps.tag.outputs.tag }}
+          instance-id: ${{ env.INSTANCE_ID }}
+
+      - name: How to promote
         run: |
-          command_id=$(aws ssm send-command \
-            --instance-ids "$INSTANCE_ID" \
-            --document-name "AWS-RunShellScript" \
-            --parameters 'commands=["bash /binxportal/deploy/redeploy.sh"]' \
-            --comment "deploy ${GITHUB_SHA::12}" \
-            --query "Command.CommandId" --output text)
-          echo "SSM command: $command_id"
-
-          for _ in $(seq 1 30); do
-            status=$(aws ssm get-command-invocation \
-              --command-id "$command_id" --instance-id "$INSTANCE_ID" \
-              --query "Status" --output text 2>/dev/null || echo "Pending")
-            [ "$status" != "Pending" ] && [ "$status" != "InProgress" ] && break
-            sleep 5
-          done
-
-          echo "--- stdout ---"
-          aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" \
-            --query "StandardOutputContent" --output text
-          echo "--- stderr ---"
-          aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" \
-            --query "StandardErrorContent" --output text
-
-          if [ "$status" != "Success" ]; then
-            echo "::error::redeploy.sh finished with status $status"
-            exit 1
-          fi
+          {
+            echo "Deployed \`${GITHUB_SHA::12}\` to https://staging.binxportal.com"
+            echo
+            echo "Promote it to production with:"
+            echo
+            echo "    gh workflow run promote.yml -f sha=${GITHUB_SHA}"
+          } >> "$GITHUB_STEP_SUMMARY"

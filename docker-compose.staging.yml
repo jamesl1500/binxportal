@@ -1,0 +1,117 @@
+# Staging stack — runs on the SAME EC2 instance as production, as its own
+# compose project (`binxportal-staging`), so its containers, network, and
+# named volumes are completely separate from docker-compose.prod.yml's. Lives
+# at /binxportal on the box next to the prod file; its env comes from
+# `.env.staging`, regenerated on every staging deploy from the
+# `binxportal/staging` Secrets Manager secret (see deploy/redeploy.sh and
+# infra/lib/staging-stack.ts).
+#
+# No Caddy here: production's Caddy (docker-compose.prod.yml) is the only
+# thing on ports 80/443 and reverse-proxies the staging hosts too, reaching
+# these containers over the shared `binxportal-edge` network. That's why the
+# services are named `staging-*` rather than api/web — compose registers a
+# service's name as a DNS alias on every network it joins, so a second
+# `web` on the edge network would have Caddy round-robining production
+# traffic onto staging.
+#
+# Every service has a hard memory cap: staging shares the box with
+# production and must be the one that gets OOM-killed, never the other way
+# round.
+
+name: binxportal-staging
+
+services:
+  staging-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    mem_limit: 256m
+    environment:
+      POSTGRES_USER: binxapi
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env.staging}
+      POSTGRES_DB: binxportal
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U binxapi -d binxportal"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  staging-redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    mem_limit: 64m
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  staging-api:
+    image: ${API_IMAGE:?set in .env.staging}
+    restart: unless-stopped
+    mem_limit: 512m
+    depends_on:
+      staging-db:
+        condition: service_healthy
+      staging-redis:
+        condition: service_healthy
+    networks:
+      - default
+      - edge
+    environment:
+      DATABASE_URL: postgresql+asyncpg://binxapi:${POSTGRES_PASSWORD:?set in .env.staging}@staging-db:5432/binxportal
+      REDIS_URL: redis://staging-redis:6379/0
+      JWT_SECRET: ${JWT_SECRET:?set in .env.staging}
+      FRONTEND_URL: https://staging.binxportal.com
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # SES_FROM_EMAIL is deliberately NOT set: with it unset, core/email.py
+      # logs each email instead of sending it, so staging can never mail a
+      # real client. Read verification/invite links out of
+      # `docker logs binxportal-staging-staging-api-1`.
+      AWS_REGION: us-east-2
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      SENTRY_ENVIRONMENT: staging
+      PROJECT_UPLOAD_DIR: /data/uploads/projects
+      MESSAGE_UPLOAD_DIR: /data/uploads/messages
+      AGENCY_UPLOAD_DIR: /data/uploads/agencies
+    volumes:
+      - uploads:/data/uploads
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/ops/ready')"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
+
+  staging-web:
+    # A different image from production's, not just a different tag of the
+    # same build: NEXT_PUBLIC_API_URL / NEXT_PUBLIC_SITE_URL are baked in at
+    # `next build` time (see apps/binx-web/Dockerfile), so staging gets its
+    # own build pointing at the staging hosts.
+    image: ${WEB_IMAGE:?set in .env.staging}
+    restart: unless-stopped
+    mem_limit: 512m
+    depends_on:
+      staging-api:
+        condition: service_healthy
+    networks:
+      - default
+      - edge
+    environment:
+      APP_ORIGIN: https://staging.binxportal.com
+      NODE_ENV: production
+
+networks:
+  # Created by deploy/redeploy.sh (not by either compose project), so neither
+  # stack's `down` can remove it out from under the other.
+  edge:
+    name: binxportal-edge
+    external: true
+
+volumes:
+  db-data:
+  redis-data:
+  uploads:

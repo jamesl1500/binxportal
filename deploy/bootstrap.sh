@@ -36,21 +36,18 @@ cat <<'MSG'
 
 ==> Bootstrap done. Next steps (one-time, by hand):
 
-1. Copy docker-compose.prod.yml, deploy/Caddyfile, and deploy/redeploy.sh
-   from the repo into /opt/binxportal (matching layout: Caddyfile under
-   /opt/binxportal/deploy/).
-2. Log out and back in (or `newgrp docker`) so the docker group membership
+1. Log out and back in (or `newgrp docker`) so the docker group membership
    takes effect.
-3. `bash /binxportal/deploy/redeploy.sh` — that's the whole first
-   deploy. No `.env` to hand-place: it fetches POSTGRES_PASSWORD,
-   JWT_SECRET, and ANTHROPIC_API_KEY from Secrets Manager
-   (`binxportal/app` — see infra/lib/secrets-stack.ts) and regenerates
-   `.env` itself, every time, using the instance's own IAM role. That
-   secret has to already exist with real values before this step — see
-   DEVELOPER.md's "Environment variables" section for how to set/update
-   it (`aws secretsmanager put-secret-value`, never by hand-editing a
-   file on the box).
+2. Run a deploy from CI (push to master for staging, then the "Promote to
+   production" workflow) — that's the whole first deploy. Nothing to
+   hand-place: the SSM command ships the compose files, Caddyfile and
+   deploy/redeploy.sh into /binxportal, and redeploy.sh regenerates the env
+   file from Secrets Manager (`binxportal/app` / `binxportal/staging` — see
+   infra/lib/secrets-stack.ts and infra/lib/staging-stack.ts) using the
+   instance's own IAM role. Those secrets have to already exist with real
+   values — see DEVELOPER.md's "Environment variables" section for how to
+   set/update them (`aws secretsmanager put-secret-value`, never by
+   hand-editing a file on the box).
 
-From then on, every push to master runs deploy/redeploy.sh on this box via
-SSM automatically — see .github/workflows/deploy.yml.
+See .github/workflows/deploy.yml and promote.yml.
 MSG
