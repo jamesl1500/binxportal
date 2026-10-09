@@ -46,6 +46,7 @@ import {
   OverviewWidget,
   TeamWidget,
 } from "@/components/projects/ProjectDashboardWidgets/ProjectDashboardWidgets";
+import PageEnter from "@/components/ui/PageEnter/PageEnter";
 
 import styles from "./page.module.scss";
 
@@ -168,13 +169,15 @@ const ProjectDashboardPage = async ({ params }: ProjectDashboardPageProps) => {
   };
 
   return (
-    <ProjectDashboardGrid
-      initialOrder={layout.widget_order}
-      initialHidden={layout.hidden_widgets}
-      initialWide={layout.wide_widgets}
-      widgets={widgets}
-      headerActions={headerActions}
-    />
+    <PageEnter>
+      <ProjectDashboardGrid
+        initialOrder={layout.widget_order}
+        initialHidden={layout.hidden_widgets}
+        initialWide={layout.wide_widgets}
+        widgets={widgets}
+        headerActions={headerActions}
+      />
+    </PageEnter>
   );
 };
 

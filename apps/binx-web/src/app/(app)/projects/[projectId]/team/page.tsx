@@ -20,6 +20,7 @@ import {
   getProjectRoles,
 } from "@/lib/projects";
 import ProjectTeamTable from "@/components/forms/projects/ProjectTeamTable/ProjectTeamTable";
+import PageEnter from "@/components/ui/PageEnter/PageEnter";
 
 import styles from "./page.module.scss";
 
@@ -46,21 +47,23 @@ const ProjectTeamPage = async ({ params }: ProjectTeamPageProps) => {
   ]);
 
   return (
-    <div>
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Team</h2>
-        <p className={styles.sectionSubtitle}>
-          Who&apos;s actively working on {project.name}, and in what role.
-        </p>
-        <ProjectTeamTable
-          agencyId={currentAgency.id}
-          projectId={project.id}
-          members={members}
-          agencyMembers={agencyMembers}
-          roles={roles}
-        />
-      </section>
-    </div>
+    <PageEnter>
+      <div>
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Team</h2>
+          <p className={styles.sectionSubtitle}>
+            Who&apos;s actively working on {project.name}, and in what role.
+          </p>
+          <ProjectTeamTable
+            agencyId={currentAgency.id}
+            projectId={project.id}
+            members={members}
+            agencyMembers={agencyMembers}
+            roles={roles}
+          />
+        </section>
+      </div>
+    </PageEnter>
   );
 };
 

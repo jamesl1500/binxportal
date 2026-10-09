@@ -28,6 +28,7 @@ import ClientStatGrid, {
 } from "@/components/clients/ClientStatGrid/ClientStatGrid";
 import LineChart from "@/components/charts/LineChart/LineChart";
 import DonutChart from "@/components/charts/DonutChart/DonutChart";
+import PageEnter from "@/components/ui/PageEnter/PageEnter";
 
 import styles from "../page.module.scss";
 
@@ -115,61 +116,63 @@ const PulsePage = async () => {
   );
 
   return (
-    <div>
-      <ClientStatGrid stats={stats} />
+    <PageEnter>
+      <div>
+        <ClientStatGrid stats={stats} />
 
-      <section className={styles.section}>
-        <div className={styles.sectionHead}>
-          <h2 className={styles.sectionTitle}>Collected revenue</h2>
+        <section className={styles.section}>
+          <div className={styles.sectionHead}>
+            <h2 className={styles.sectionTitle}>Collected revenue</h2>
+          </div>
+          {summary.monthly_paid.length > 0 ? (
+            <LineChart
+              data={summary.monthly_paid}
+              ariaLabel="Collected revenue by month"
+              valueFormat="currency"
+            />
+          ) : (
+            <p className={styles.empty}>No payments recorded yet.</p>
+          )}
+        </section>
+
+        <div className={`${styles.grid} ${styles.afterStats}`}>
+          <section className={styles.section}>
+            <div className={styles.sectionHead}>
+              <h2 className={styles.sectionTitle}>Projects by status</h2>
+            </div>
+            {projectSegments.length > 0 ? (
+              <DonutChart
+                segments={projectSegments}
+                ariaLabel="Projects grouped by status"
+                centerPrimary={String(projects.length)}
+                centerSecondary="Projects"
+              />
+            ) : (
+              <p className={styles.empty}>No projects yet.</p>
+            )}
+          </section>
+
+          <section className={styles.section}>
+            <div className={styles.sectionHead}>
+              <h2 className={styles.sectionTitle}>Billing activity</h2>
+            </div>
+            {invoiceSegments.length > 0 ? (
+              <DonutChart
+                segments={invoiceSegments}
+                ariaLabel="Invoices grouped by status"
+                centerPrimary={formatCompactMoney(
+                  summary.outstanding_cents,
+                  currency,
+                )}
+                centerSecondary="Outstanding"
+              />
+            ) : (
+              <p className={styles.empty}>No invoices yet.</p>
+            )}
+          </section>
         </div>
-        {summary.monthly_paid.length > 0 ? (
-          <LineChart
-            data={summary.monthly_paid}
-            ariaLabel="Collected revenue by month"
-            valueFormat="currency"
-          />
-        ) : (
-          <p className={styles.empty}>No payments recorded yet.</p>
-        )}
-      </section>
-
-      <div className={`${styles.grid} ${styles.afterStats}`}>
-        <section className={styles.section}>
-          <div className={styles.sectionHead}>
-            <h2 className={styles.sectionTitle}>Projects by status</h2>
-          </div>
-          {projectSegments.length > 0 ? (
-            <DonutChart
-              segments={projectSegments}
-              ariaLabel="Projects grouped by status"
-              centerPrimary={String(projects.length)}
-              centerSecondary="Projects"
-            />
-          ) : (
-            <p className={styles.empty}>No projects yet.</p>
-          )}
-        </section>
-
-        <section className={styles.section}>
-          <div className={styles.sectionHead}>
-            <h2 className={styles.sectionTitle}>Billing activity</h2>
-          </div>
-          {invoiceSegments.length > 0 ? (
-            <DonutChart
-              segments={invoiceSegments}
-              ariaLabel="Invoices grouped by status"
-              centerPrimary={formatCompactMoney(
-                summary.outstanding_cents,
-                currency,
-              )}
-              centerSecondary="Outstanding"
-            />
-          ) : (
-            <p className={styles.empty}>No invoices yet.</p>
-          )}
-        </section>
       </div>
-    </div>
+    </PageEnter>
   );
 };
 
