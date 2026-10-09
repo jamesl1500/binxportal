@@ -1,0 +1,77 @@
+# Promotes a commit that's already been built (and deployed to staging) by
+# deploy.yml to PRODUCTION. Manual only — this is the approval gate:
+#
+#   gh workflow run promote.yml -f sha=<commit>      (or Actions → Promote to production → Run workflow)
+#
+# Nothing is rebuilt: it redeploys the binx-api:sha-<sha> / binx-web:sha-<sha>
+# images deploy.yml pushed for that commit, with that commit's compose/Caddy
+# config. Rolling back is the same thing with an older sha (ECR keeps the
+# last 20 — see infra/lib/cicd-stack.ts).
+#
+# Must be run from master: the deploy role's OIDC trust only accepts
+# refs/heads/master (infra/lib/cicd-stack.ts), so a run started from any
+# other branch fails at the credentials step.
+
+name: Promote to production
+
+on:
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: Commit SHA to promote (default — the tip of master)
+        required: false
+        type: string
+
+concurrency:
+  group: binxportal-box
+  cancel-in-progress: false
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-2
+  DEPLOY_ROLE_ARN: arn:aws:iam::574247905173:role/binxportal-github-deploy
+  INSTANCE_ID: i-0105be61fb01246d2
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.sha || github.sha }}
+
+      - id: tag
+        run: |
+          sha=$(git rev-parse HEAD)
+          echo "tag=sha-${sha::12}" >> "$GITHUB_OUTPUT"
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Check the images for this commit exist
+        # Not every commit has images — deploy.yml only builds on pushes
+        # touching app/deploy paths. Fail here rather than mid-deploy on the box.
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          for repo in binx-api binx-web; do
+            if ! docker manifest inspect "$REGISTRY/$repo:$TAG" > /dev/null; then
+              echo "::error::$repo:$TAG isn't in ECR — promote a commit that deploy.yml has built"
+              exit 1
+            fi
+          done
+
+      - uses: ./.github/actions/ssm-redeploy
+        with:
+          target: production
+          image-tag: ${{ steps.tag.outputs.tag }}
+          instance-id: ${{ env.INSTANCE_ID }}

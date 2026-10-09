@@ -1,0 +1,73 @@
+# Ships the deploy config to the box and runs deploy/redeploy.sh there, via
+# SSM Send-Command — no SSH. Shared by deploy.yml (staging) and promote.yml
+# (production).
+#
+# Expects the repo to be checked out at the commit being deployed and AWS
+# credentials to already be configured (aws-actions/configure-aws-credentials).
+
+name: SSM redeploy
+description: Sync the compose/Caddy config to the instance and run deploy/redeploy.sh via SSM
+
+inputs:
+  target:
+    description: production or staging
+    required: true
+  image-tag:
+    description: The sha-<12 hex> image tag to deploy
+    required: true
+  instance-id:
+    description: The EC2 instance to deploy to
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        TARGET: ${{ inputs.target }}
+        IMAGE_TAG: ${{ inputs.image-tag }}
+        INSTANCE_ID: ${{ inputs.instance-id }}
+      run: |
+        # The compose files, Caddyfile and redeploy.sh travel inside the SSM
+        # command itself (a few KB, base64'd) rather than being hand-copied
+        # onto the box, so what runs there always matches this commit.
+        # --overwrite writes existing files in place instead of unlinking
+        # them first; --no-same-owner because the runner's uid means nothing
+        # on the box.
+        bundle=$(tar -czf - docker-compose.prod.yml docker-compose.staging.yml deploy | base64 -w0)
+        params=$(jq -cn --arg bundle "$bundle" --arg target "$TARGET" --arg tag "$IMAGE_TAG" '{commands: [
+          "set -eu",
+          "mkdir -p /binxportal",
+          "echo \($bundle) | base64 -d > /tmp/binxportal-deploy.tgz",
+          "tar -xzf /tmp/binxportal-deploy.tgz -C /binxportal --no-same-owner --overwrite",
+          "rm -f /tmp/binxportal-deploy.tgz",
+          "bash /binxportal/deploy/redeploy.sh \($target) \($tag)"
+        ]}')
+
+        command_id=$(aws ssm send-command \
+          --instance-ids "$INSTANCE_ID" \
+          --document-name "AWS-RunShellScript" \
+          --parameters "$params" \
+          --comment "deploy $TARGET $IMAGE_TAG" \
+          --query "Command.CommandId" --output text)
+        echo "SSM command: $command_id"
+
+        for _ in $(seq 1 90); do
+          status=$(aws ssm get-command-invocation \
+            --command-id "$command_id" --instance-id "$INSTANCE_ID" \
+            --query "Status" --output text 2>/dev/null || echo "Pending")
+          [ "$status" != "Pending" ] && [ "$status" != "InProgress" ] && break
+          sleep 5
+        done
+
+        echo "--- stdout ---"
+        aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" \
+          --query "StandardOutputContent" --output text
+        echo "--- stderr ---"
+        aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" \
+          --query "StandardErrorContent" --output text
+
+        if [ "$status" != "Success" ]; then
+          echo "::error::redeploy.sh ($TARGET) finished with status $status"
+          exit 1
+        fi

@@ -105,10 +105,26 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    # `edge` is how this Caddy reaches the staging stack's containers
+    # (docker-compose.staging.yml) — it also fronts the staging hosts.
+    networks:
+      - default
+      - edge
     volumes:
-      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # The whole directory, not just the Caddyfile: a single-file bind mount
+      # pins the file's inode, so a deploy that replaces the Caddyfile would
+      # leave the container reading the old one. Also picks up the optional
+      # staging-auth.caddy that deploy/redeploy.sh generates.
+      - ./deploy:/etc/caddy:ro
       - caddy-data:/data
       - caddy-config:/config
+
+networks:
+  # Created by deploy/redeploy.sh (not by either compose project), so neither
+  # stack's `down` can remove it out from under the other.
+  edge:
+    name: binxportal-edge
+    external: true
 
 volumes:
   db-data:
