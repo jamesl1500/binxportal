@@ -21,6 +21,7 @@ import {
   getProjectTags,
 } from "@/lib/projects";
 import ProjectSettingsTabs from "@/components/forms/projects/ProjectSettingsTabs/ProjectSettingsTabs";
+import PageEnter from "@/components/ui/PageEnter/PageEnter";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -45,13 +46,15 @@ const ProjectSettingsPage = async ({ params }: ProjectSettingsPageProps) => {
   ]);
 
   return (
-    <ProjectSettingsTabs
-      agencyId={currentAgency.id}
-      project={project}
-      clients={clients}
-      roles={roles}
-      tags={tags}
-    />
+    <PageEnter>
+      <ProjectSettingsTabs
+        agencyId={currentAgency.id}
+        project={project}
+        clients={clients}
+        roles={roles}
+        tags={tags}
+      />
+    </PageEnter>
   );
 };
 

@@ -23,6 +23,7 @@ import ClientStatGrid, {
 import AiBriefingCard from "@/components/dashboard/AiBriefingCard/AiBriefingCard";
 import DashboardWidgetGrid from "@/components/dashboard/DashboardWidgetGrid/DashboardWidgetGrid";
 import { DASHBOARD_WIDGET_IDS } from "@/components/dashboard/widgets";
+import PageEnter from "@/components/ui/PageEnter/PageEnter";
 
 const DashboardOverviewPage = async () => {
   const { currentAgency } = await getCurrentAgencyContext();
@@ -87,26 +88,28 @@ const DashboardOverviewPage = async () => {
   ];
 
   return (
-    <div>
-      <div style={{ marginBottom: "25px" }}>
-        <AiBriefingCard agencyId={agencyId} />
-      </div>
+    <PageEnter>
+      <div>
+        <div style={{ marginBottom: "25px" }}>
+          <AiBriefingCard agencyId={agencyId} />
+        </div>
 
-      <ClientStatGrid stats={stats} />
+        <ClientStatGrid stats={stats} />
 
-      <div style={{ marginTop: "2rem" }}>
-        <DashboardWidgetGrid
-          initialOrder={layout.widget_order}
-          initialHidden={layout.hidden_widgets}
-          overdueInvoices={overdueInvoices}
-          overdueTaskCount={myWork.overdue_count}
-          onHoldProjects={onHoldProjects}
-          activity={activity}
-          meetings={upcomingMeetings}
-          myTasks={myWork.tasks}
-        />
+        <div style={{ marginTop: "2rem" }}>
+          <DashboardWidgetGrid
+            initialOrder={layout.widget_order}
+            initialHidden={layout.hidden_widgets}
+            overdueInvoices={overdueInvoices}
+            overdueTaskCount={myWork.overdue_count}
+            onHoldProjects={onHoldProjects}
+            activity={activity}
+            meetings={upcomingMeetings}
+            myTasks={myWork.tasks}
+          />
+        </div>
       </div>
-    </div>
+    </PageEnter>
   );
 };
 

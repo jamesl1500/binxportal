@@ -5,17 +5,18 @@
  * NEXT_PUBLIC_SENTRY_DSN is unset — see instrumentation.ts for why this is a
  * NEXT_PUBLIC_* var rather than a server-only secret.
  *
+ * Only schedules the SDK here rather than importing it: it loads once the
+ * page is idle, keeping it out of every route's initial JS (see
+ * lib/sentry-client.ts).
+ *
  * @module apps/binx-web/src/instrumentation-client.ts
  * @author Binx.io
  */
-import * as Sentry from "@sentry/nextjs";
+import {
+  captureRouterTransitionStart,
+  startSentryWhenIdle,
+} from "@/lib/sentry-client";
 
-if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
-  Sentry.init({
-    dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-    environment: process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT ?? "development",
-    tracesSampleRate: 0.1,
-  });
-}
+startSentryWhenIdle();
 
-export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
+export const onRouterTransitionStart = captureRouterTransitionStart;
