@@ -25,13 +25,13 @@ beforeEach(() => {
 
 describe("NewClientForm", () => {
   it("renders the client form with no cancel button", () => {
-    render(<NewClientForm agencyId={agencyId} />);
+    render(<NewClientForm agencyId={agencyId} canManagePortal />);
 
     expect(screen.getByLabelText("Client name")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /cancel/i })).not.toBeInTheDocument();
   });
 
-  it("creates a client and navigates to its detail page", async () => {
+  async function createClient(canManagePortal: boolean) {
     mockedCreate.mockResolvedValueOnce({
       client: {
         id: "cccccccc-3333-3333-3333-333333333333",
@@ -50,12 +50,25 @@ describe("NewClientForm", () => {
       },
     });
     const user = userEvent.setup();
-    render(<NewClientForm agencyId={agencyId} />);
+    render(<NewClientForm agencyId={agencyId} canManagePortal={canManagePortal} />);
 
     await user.type(screen.getByLabelText("Client name"), "Acme Co");
     await user.click(screen.getByRole("button", { name: /^create client$/i }));
 
     expect(mockedCreate).toHaveBeenCalledWith(agencyId, expect.objectContaining({ name: "Acme Co" }));
+  }
+
+  it("creates a client and sends an owner/admin on to portal setup", async () => {
+    await createClient(true);
+
+    expect(mockPush).toHaveBeenCalledWith(
+      "/clients/new/portal-setup?clientId=cccccccc-3333-3333-3333-333333333333",
+    );
+  });
+
+  it("sends a member who can't manage the portal straight to the client", async () => {
+    await createClient(false);
+
     expect(mockPush).toHaveBeenCalledWith("/clients/cccccccc-3333-3333-3333-333333333333");
   });
 });
