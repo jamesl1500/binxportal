@@ -30,6 +30,8 @@ interface PortalContactsPanelProps {
   clientId: string;
   contacts: ClientContact[];
   invitations: ClientContactInvitation[];
+  /** Pre-fills the invite field, e.g. with the client's primary contact. */
+  defaultEmail?: string;
 }
 
 function formatDate(iso: string): string {
@@ -45,8 +47,9 @@ const PortalContactsPanel = ({
   clientId,
   contacts,
   invitations,
+  defaultEmail = "",
 }: PortalContactsPanelProps) => {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(defaultEmail);
   const [title, setTitle] = useState("");
   const [links, setLinks] = useState<Record<string, string>>({});
   const [busyId, setBusyId] = useState<string | null>(null);

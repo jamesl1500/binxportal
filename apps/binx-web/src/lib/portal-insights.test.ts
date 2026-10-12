@@ -5,6 +5,7 @@ import {
   buildAttentionItems,
   buildBadges,
   buildChecklist,
+  buildPortalSummary,
   daysUntil,
   dueLabel,
   firstName,
@@ -12,6 +13,7 @@ import {
   initials,
   kickoffInviteKey,
   kickoffQuestionSummary,
+  parseHomeView,
   PORTAL_STEP_IDS,
 } from "@/lib/portal-insights";
 
@@ -291,5 +293,111 @@ describe("kickoffs", () => {
     expect(kickoffInviteKey([other, pending])).toBe(base);
     expect(kickoffInviteKey([pending])).not.toBe(base);
     expect(kickoffInviteKey([{ ...pending, last_nudged_at: "2026-09-26T00:00:00Z" }, other])).not.toBe(base);
+  });
+});
+
+describe("buildPortalSummary", () => {
+  function activeProject(overrides: Partial<PortalProject> = {}): PortalProject {
+    return {
+      id: "p1",
+      name: "Brand refresh",
+      description: null,
+      status: "active",
+      start_date: null,
+      due_date: "2026-09-28",
+      progress: { done_tasks: 3, total_tasks: 5, percent: 60 },
+      ...overrides,
+    };
+  }
+
+  function summarize(input: {
+    projects?: PortalProject[];
+    invoices?: PortalInvoice[];
+    proposals?: PortalProposal[];
+    conversations?: Conversation[];
+    meetings?: PortalMeeting[];
+  }) {
+    const { projects = [], invoices = [], proposals = [], conversations = [], meetings = [] } = input;
+    const attention = buildAttentionItems({ proposals, invoices, conversations, meetings, now: NOW });
+    return buildPortalSummary({
+      attention,
+      projects,
+      invoices,
+      conversations,
+      meetings,
+      agencyName: "Foundry Frame",
+      now: NOW,
+    });
+  }
+
+  it("says in one sentence what is waiting on the client, worst first", () => {
+    const summary = summarize({
+      invoices: [invoice({ display_status: "overdue", due_date: "2026-09-20" })],
+      proposals: [proposal()],
+      conversations: [conversation({ id: "c1", unread_count: 2 }), conversation({ id: "c2", unread_count: 1 })],
+    });
+
+    expect(summary.tone).toBe("danger");
+    expect(summary.headline).toBe("Waiting on you: an overdue invoice, a proposal to review and 3 unread messages.");
+  });
+
+  it("is reassuring when nothing needs the client", () => {
+    const summary = summarize({
+      projects: [activeProject()],
+      invoices: [invoice({ display_status: "paid", amount_due_cents: 0 })],
+    });
+
+    expect(summary.tone).toBe("positive");
+    expect(summary.headline).toBe("Nothing needs you right now — Foundry Frame is working on your project.");
+    expect(summary.nextSteps).toEqual([]);
+    expect(summary.facts).toEqual([
+      { id: "money", tone: "positive", text: "All invoices are paid", href: "/portal/invoices" },
+    ]);
+  });
+
+  it("caps the next steps and counts the rest", () => {
+    const summary = summarize({
+      invoices: [1, 2, 3, 4, 5].map((n) => invoice({ id: `inv-${n}`, number: `INV-000${n}` })),
+    });
+
+    expect(summary.nextSteps).toHaveLength(3);
+    expect(summary.moreSteps).toBe(2);
+    expect(summary.headline).toBe("Waiting on you: 5 invoices to pay.");
+    expect(summary.facts[0]).toMatchObject({ tone: "warn", text: "$500.00 outstanding across 5 invoices" });
+  });
+
+  it("lists open projects only, in-flight first, with progress and due date", () => {
+    const summary = summarize({
+      projects: [
+        activeProject({ id: "done", status: "completed" }),
+        activeProject({ id: "plan", status: "planning", due_date: null }),
+        activeProject({ id: "live" }),
+      ],
+    });
+
+    expect(summary.projects.map((p) => p.id)).toEqual(["live", "plan"]);
+    expect(summary.projects[0]).toMatchObject({
+      percent: 60,
+      due: { label: "Due in 3 days", tone: "soon" },
+      href: "/portal/projects/live",
+    });
+    expect(summary.projects[1].due).toBeNull();
+    expect(summary.moreProjects).toBe(0);
+  });
+
+  it("shows the next meeting as a fact unless it is already a next step", () => {
+    const later = meeting({ id: "m-later", starts_at: "2026-10-05T15:00:00Z" });
+    const soon = meeting({ id: "m-soon", starts_at: new Date(NOW.getTime() + 60 * 60 * 1000).toISOString() });
+
+    expect(summarize({ meetings: [later] }).facts).toEqual([
+      expect.objectContaining({ id: "meeting", at: later.starts_at }),
+    ]);
+    expect(summarize({ meetings: [later, soon] }).facts).toEqual([]);
+  });
+
+  it("only treats an explicit cookie value as the summary view", () => {
+    expect(parseHomeView("summary")).toBe("summary");
+    expect(parseHomeView("full")).toBe("full");
+    expect(parseHomeView(undefined)).toBe("full");
   });
 });

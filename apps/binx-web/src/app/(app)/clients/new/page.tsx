@@ -2,7 +2,8 @@
  * page.tsx - New Client
  *
  * Dedicated create page for a client — only the name is required, the rest
- * can be filled in any time from the client's own page. Replaces the old
+ * can be filled in any time from the client's own page. Creating one leads
+ * on to portal-setup/ (branding + portal invite). Replaces the old
  * CreateClientDialog modal so staff can be linked straight here.
  *
  * @module apps/binx-web/src/app/(app)/clients/new/page.tsx
@@ -34,7 +35,7 @@ const NewClientPage = async () => {
 
       <div className={styles.header}>
         <div>
-          <span className={styles.eyebrow}>Clients</span>
+          <span className={styles.eyebrow}>Clients · Step 1 of 2</span>
           <h1 className={styles.title}>New client</h1>
           <p className={styles.subtitle}>
             Only the name is required — you can fill in the rest any time.
@@ -43,7 +44,12 @@ const NewClientPage = async () => {
       </div>
 
       <div className={styles.formCard}>
-        <NewClientForm agencyId={currentAgency.id} />
+        <NewClientForm
+          agencyId={currentAgency.id}
+          canManagePortal={
+            currentAgency.role === "owner" || currentAgency.role === "admin"
+          }
+        />
       </div>
     </div>
   );
