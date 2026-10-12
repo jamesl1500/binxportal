@@ -56,12 +56,15 @@ async def send_verification_email(*, to: str, token: str, portal_invite_token: s
         # Carries a pending client-portal invite through verification, so
         # signup -> verify-email -> back to /auth/portal-invite never
         # detours through staff onboarding. See verify-email/actions.ts.
-        link += f"&portal_invite={portal_invite_token}"
+        # A client verifies on the portal's own auth pages, not the staff ones.
+        link = f"{settings.frontend_url}/portal/verify-email?token={token}&portal_invite={portal_invite_token}"
     await send_email(to=to, subject="Verify your Binx Portal account", body=f"Click to verify your account: {link}")
 
 
-async def send_password_reset_email(*, to: str, token: str) -> None:
-    link = f"{settings.frontend_url}/auth/reset-password?token={token}"
+async def send_password_reset_email(*, to: str, token: str, portal: bool = False) -> None:
+    # ``portal`` — the account is a client-portal contact, so the link lands
+    # on the portal's own reset page rather than the staff one.
+    link = f"{settings.frontend_url}/{'portal' if portal else 'auth'}/reset-password?token={token}"
     await send_email(to=to, subject="Reset your Binx Portal password", body=f"Click to reset your password: {link}")
 
 

@@ -42,7 +42,7 @@ import { redirect } from "next/navigation";
 import { AuthApiError, logout } from "@/lib/auth";
 import { createAgency, getMyAgencies, setCurrentAgencyId } from "@/lib/agencies";
 import { updateTutorialProgress } from "@/lib/users";
-import { createAgencyAction, logoutAction, switchAgencyAction, updateTutorialProgressAction } from "./actions";
+import { createAgencyAction, logoutAction, portalLogoutAction, switchAgencyAction, updateTutorialProgressAction } from "./actions";
 
 const mockedLogout = vi.mocked(logout);
 const mockedRedirect = vi.mocked(redirect);
@@ -67,6 +67,12 @@ describe("logoutAction", () => {
 
     expect(mockedLogout).toHaveBeenCalledOnce();
     expect(mockedRedirect).toHaveBeenCalledWith("/auth/login");
+  });
+
+  it("sends a client signing out of the portal to the portal's own login", async () => {
+    await expect(portalLogoutAction()).rejects.toThrow("REDIRECT:/portal/login");
+
+    expect(mockedLogout).toHaveBeenCalledOnce();
   });
 });
 

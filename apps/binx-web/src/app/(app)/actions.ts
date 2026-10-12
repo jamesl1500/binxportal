@@ -25,6 +25,12 @@ export async function logoutAction(): Promise<void> {
   redirect("/auth/login");
 }
 
+/** Sign-out from the client portal — back to the portal's own sign-in page. */
+export async function portalLogoutAction(): Promise<void> {
+  await logout();
+  redirect("/portal/login");
+}
+
 export interface SwitchAgencyActionResult {
   error?: string;
 }

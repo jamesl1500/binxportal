@@ -1,0 +1,526 @@
+@use "../../styles/tokens" as t;
+@use "../../styles/portal-warm" as w;
+
+// Every keyframe below animates *from* a hidden/offset state to the
+// element's own resting styles, so with animation switched off (see the
+// reduced-motion block at the bottom) everything is simply in place.
+
+.root {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 100dvh;
+  overflow: hidden;
+  color: w.$cocoa;
+  background: linear-gradient(160deg, w.$cream 0%, w.$sand 55%, #ffd9b8 100%);
+
+  @media (min-width: 1024px) {
+    grid-template-columns: minmax(0, 6fr) minmax(0, 5fr);
+  }
+}
+
+// ---- Backdrop: a slow sunrise ----
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.sun,
+.rays {
+  position: absolute;
+  bottom: -18rem;
+  left: -12rem;
+  width: 44rem;
+  height: 44rem;
+  border-radius: 50%;
+
+  @media (max-width: 1023px) {
+    bottom: -26rem;
+    left: 50%;
+    margin-left: -22rem;
+  }
+}
+
+.sun {
+  background: radial-gradient(
+    circle,
+    rgba(255, 211, 122, 0.95) 0%,
+    rgba(255, 171, 94, 0.75) 34%,
+    rgba(255, 141, 121, 0.35) 58%,
+    transparent 72%
+  );
+  animation:
+    sunrise 1.8s w.$ease-out both,
+    glow 7s ease-in-out 1.8s infinite alternate;
+}
+
+.rays {
+  width: 70rem;
+  height: 70rem;
+  bottom: -31rem;
+  left: -25rem;
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(255, 190, 110, 0.22) 0deg 6deg,
+    transparent 6deg 18deg
+  );
+  mask-image: radial-gradient(circle, #000 20%, transparent 68%);
+  animation:
+    fade 2.4s ease-out both,
+    spin 90s linear infinite;
+
+  @media (max-width: 1023px) {
+    bottom: -39rem;
+    left: 50%;
+    margin-left: -35rem;
+  }
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(48px);
+  opacity: 0.55;
+  animation: drift 18s ease-in-out infinite alternate;
+
+  &[data-orb="a"] {
+    top: -6rem;
+    right: 18%;
+    width: 22rem;
+    height: 22rem;
+    background: w.$rose;
+  }
+
+  &[data-orb="b"] {
+    top: 38%;
+    right: -8rem;
+    width: 26rem;
+    height: 26rem;
+    background: w.$gold;
+    animation-duration: 24s;
+    animation-delay: -6s;
+  }
+
+  &[data-orb="c"] {
+    bottom: -8rem;
+    left: 42%;
+    width: 18rem;
+    height: 18rem;
+    background: w.$apricot;
+    animation-duration: 21s;
+    animation-delay: -11s;
+  }
+}
+
+// ---- Scene: greeting + previews (desktop) ----
+
+.scene {
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: t.$space-8;
+  padding: t.$space-12;
+
+  @media (min-width: 1024px) {
+    display: flex;
+  }
+}
+
+.brand,
+.mobileBrand {
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: w.$cocoa;
+  animation: rise 0.7s w.$ease-out both;
+}
+
+.brandMark {
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+}
+
+.mobileBrand {
+  justify-content: center;
+  margin-bottom: t.$space-6;
+
+  @media (min-width: 1024px) {
+    display: none;
+  }
+}
+
+.welcome {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-4;
+  max-width: 30rem;
+}
+
+.greeting {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: clamp(2.75rem, 4.6vw, 4.25rem);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  color: w.$cocoa;
+  animation: rise 0.9s w.$ease-out 0.15s both;
+}
+
+.tagline {
+  margin: 0;
+  font-size: t.$font-size-lg;
+  line-height: 1.5;
+  color: w.$cocoa-soft;
+}
+
+.word {
+  display: inline-block;
+  white-space: pre;
+  animation: rise 0.6s w.$ease-out both;
+  animation-delay: calc(0.45s + var(--i) * 0.07s);
+}
+
+.previews {
+  position: relative;
+  height: 17rem;
+  margin-top: t.$space-8;
+}
+
+.preview {
+  position: absolute;
+  display: flex;
+  gap: t.$space-3;
+  padding: t.$space-4 t.$space-5;
+  background: w.$card;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 20px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 18px 40px -18px rgba(150, 80, 30, 0.45);
+  backdrop-filter: blur(10px);
+  // `translate`/`rotate` are separate properties so the entrance (which
+  // animates `transform`) and the endless bob never fight over one.
+  animation:
+    pop 0.8s w.$ease-spring both,
+    bob 6s ease-in-out infinite alternate;
+
+  &[data-preview="project"] {
+    top: 0;
+    left: 0;
+    flex-direction: column;
+    gap: t.$space-2;
+    width: 15.5rem;
+    rotate: -3deg;
+    animation-delay: 0.9s, 1.7s;
+  }
+
+  &[data-preview="message"] {
+    top: 7.5rem;
+    left: 5.5rem;
+    align-items: center;
+    rotate: 2deg;
+    animation-delay: 1.1s, 2.4s;
+    animation-duration: 0.8s, 7s;
+  }
+
+  &[data-preview="invoice"] {
+    top: 12.5rem;
+    left: 1rem;
+    align-items: center;
+    rotate: -1deg;
+    animation-delay: 1.3s, 3s;
+    animation-duration: 0.8s, 5.5s;
+  }
+}
+
+.previewLabel {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: w.$cocoa-faint;
+}
+
+.previewTitle {
+  display: block;
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  color: w.$cocoa;
+}
+
+.previewMeta {
+  display: block;
+  font-size: t.$font-size-xs;
+  color: w.$cocoa-soft;
+}
+
+.bar {
+  display: block;
+  height: 0.5rem;
+  overflow: hidden;
+  background: rgba(216, 86, 42, 0.14);
+  border-radius: 999px;
+}
+
+.barFill {
+  display: block;
+  width: 72%;
+  height: 100%;
+  background: linear-gradient(90deg, w.$terracotta, w.$apricot);
+  border-radius: inherit;
+  transform-origin: left;
+  animation: fill 7s w.$ease-out 1.6s infinite;
+}
+
+.avatar,
+.tick {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  color: #fff;
+  border-radius: 50%;
+
+  svg {
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+}
+
+.avatar {
+  background: linear-gradient(135deg, w.$rose, w.$terracotta);
+}
+
+.tick {
+  background: w.$leaf;
+  animation: stamp 7s w.$ease-spring 2s infinite;
+}
+
+.bubble {
+  position: relative;
+  display: grid;
+  align-items: center;
+  font-size: t.$font-size-sm;
+  font-weight: 500;
+  color: w.$cocoa;
+
+  // Both states share one grid cell, so the card is always sized for the
+  // message and the dots simply cross-fade into it.
+  > * {
+    grid-area: 1 / 1;
+  }
+}
+
+.bubbleText {
+  animation: reveal 7s ease-in-out 1.8s infinite both;
+}
+
+.typing {
+  display: inline-flex;
+  gap: 0.3rem;
+  opacity: 0;
+  animation: typing 7s ease-in-out 1.8s infinite both;
+
+  i {
+    width: 0.4rem;
+    height: 0.4rem;
+    background: w.$cocoa-faint;
+    border-radius: 50%;
+    animation: dot 1s ease-in-out infinite;
+
+    &:nth-child(2) {
+      animation-delay: 0.15s;
+    }
+
+    &:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+  }
+}
+
+.footnote {
+  margin: 0;
+  font-size: t.$font-size-xs;
+  color: w.$cocoa-soft;
+  animation: fade 1.2s ease-out 1.4s both;
+}
+
+// ---- Form card ----
+
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: t.$space-6 t.$space-4;
+
+  @media (min-width: 640px) {
+    padding: t.$space-12;
+  }
+}
+
+.card {
+  width: 100%;
+  max-width: 27rem;
+  padding: t.$space-8 t.$space-6;
+  background: w.$card;
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: w.$radius-card;
+  box-shadow:
+    0 1px 0 #fff inset,
+    0 40px 80px -40px rgba(150, 80, 30, 0.5),
+    0 12px 28px -18px rgba(150, 80, 30, 0.35);
+  backdrop-filter: blur(16px);
+  animation: card 0.9s w.$ease-out 0.1s both;
+
+  @media (min-width: 640px) {
+    padding: t.$space-10;
+  }
+}
+
+// ---- Keyframes ----
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes card {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem) scale(0.98);
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(1.25rem) scale(0.9);
+  }
+}
+
+@keyframes bob {
+  to {
+    translate: 0 -0.6rem;
+  }
+}
+
+@keyframes sunrise {
+  from {
+    opacity: 0;
+    transform: translateY(12rem);
+  }
+}
+
+@keyframes glow {
+  to {
+    transform: scale(1.06);
+  }
+}
+
+@keyframes spin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+@keyframes drift {
+  to {
+    transform: translate(3rem, -2.5rem) scale(1.12);
+  }
+}
+
+// One 7s loop: the bar fills, holds, then quietly resets.
+@keyframes fill {
+  0% {
+    transform: scaleX(0.12);
+  }
+
+  45%,
+  90% {
+    transform: scaleX(1);
+  }
+
+  100% {
+    transform: scaleX(0.12);
+  }
+}
+
+// Typing dots for the first third of the loop, then the message.
+@keyframes typing {
+  0%,
+  28% {
+    opacity: 1;
+  }
+
+  34%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes reveal {
+  0%,
+  30% {
+    opacity: 0;
+    transform: translateY(0.25rem);
+  }
+
+  38%,
+  94% {
+    opacity: 1;
+    transform: none;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes dot {
+  50% {
+    transform: translateY(-0.25rem);
+    opacity: 0.5;
+  }
+}
+
+@keyframes stamp {
+  0%,
+  12% {
+    transform: scale(0.6);
+  }
+
+  20%,
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root,
+  .root *,
+  .root *::before,
+  .root *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

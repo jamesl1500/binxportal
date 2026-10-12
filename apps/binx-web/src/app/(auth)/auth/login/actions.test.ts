@@ -73,6 +73,16 @@ describe("loginAction", () => {
     expect(mockedRedirect).toHaveBeenCalledWith("/dashboard");
   });
 
+  // Signing in from a client-portal invitation returns to that invitation
+  // rather than wherever resolveHome would send a not-yet-contact.
+  it("redirects back to a pending portal invitation when given its token", async () => {
+    mockedPost.mockResolvedValueOnce({ headers: { "set-cookie": ["a=1"] } });
+
+    await expect(loginAction("a@b.com", "password123", "inv 123")).rejects.toThrow(
+      "REDIRECT:/auth/portal-invite?token=inv%20123",
+    );
+  });
+
   // On failure there's nothing to forward and nowhere to redirect — the
   // action should just resolve with `{ error }` so the client-side form can
   // render it, instead of throwing and taking down the whole action.
