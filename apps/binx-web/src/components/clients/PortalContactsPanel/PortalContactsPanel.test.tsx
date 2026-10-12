@@ -68,6 +68,25 @@ describe("PortalContactsPanel", () => {
     expect(mockedInvite).toHaveBeenCalledWith("a1", "c1", "new@northwind.example", null);
   });
 
+  it("pre-fills the invite field when given a default email", async () => {
+    mockedInvite.mockResolvedValueOnce({ invitation });
+    const user = userEvent.setup();
+    render(
+      <PortalContactsPanel
+        agencyId="a1"
+        clientId="c1"
+        contacts={[]}
+        invitations={[]}
+        defaultEmail="primary@northwind.example"
+      />,
+    );
+
+    expect(screen.getByLabelText("Contact email")).toHaveValue("primary@northwind.example");
+    await user.click(screen.getByRole("button", { name: "Invite" }));
+
+    expect(mockedInvite).toHaveBeenCalledWith("a1", "c1", "primary@northwind.example", null);
+  });
+
   it("revokes a pending invitation", async () => {
     mockedRevoke.mockResolvedValueOnce({});
     const user = userEvent.setup();

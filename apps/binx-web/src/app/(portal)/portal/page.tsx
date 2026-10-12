@@ -5,6 +5,8 @@
  * agency's own welcome note, headline figures, everything that needs their
  * attention right now (see buildAttentionItems), their projects, the
  * getting-started checklist, what's coming up, and recent conversations.
+ * Everything below the hero can be swapped for a short summary (see
+ * SummarizeClientPortalDashboard) when the full dashboard is too much.
  * The (portal) layout above already guards for a signed-in client contact
  * and fetched most of these lists — they're `cache()`-shared, so reading
  * them again here is free.
@@ -12,6 +14,7 @@
  * @module apps/binx-web/src/app/(portal)/portal/page.tsx
  * @author Binx Portal
  */
+import { cookies } from "next/headers";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -37,9 +40,12 @@ import {
 import {
   buildAttentionItems,
   buildChecklist,
+  buildPortalSummary,
   firstName,
   isUnpaid,
   isUpcomingMeeting,
+  parseHomeView,
+  PORTAL_HOME_VIEW_COOKIE,
 } from "@/lib/portal-insights";
 import AttentionList from "@/components/portal/AttentionList/AttentionList";
 import BookMeetingDialog from "@/components/portal/BookMeetingDialog/BookMeetingDialog";
@@ -50,10 +56,9 @@ import PortalProjectCard from "@/components/portal/PortalProjectCard/PortalProje
 import PortalStatTiles, {
   type PortalStat,
 } from "@/components/portal/PortalStatTiles/PortalStatTiles";
+import SummarizeClientPortalDashboard from "@/components/portal/SummarizeClientPortalDashboard/SummarizeClientPortalDashboard";
 
 import styles from "./home.module.scss";
-
-import SummarizeClientPortalDashboard from "@/components/portal/SummarizeClientPortalDashboard/SummarizeClientPortalDashboard";
 
 /** Projects the client cares about most first: in flight, then planned, then the rest. */
 const STATUS_ORDER: Record<string, number> = {
@@ -75,6 +80,7 @@ const PortalHomePage = async () => {
     meetings,
     meetingSettings,
     kickoffs,
+    cookieStore,
   ] = await Promise.all([
     getCurrentUser(),
     getPortalContext(),
@@ -85,6 +91,7 @@ const PortalHomePage = async () => {
     getPortalMeetings().catch(() => []),
     getPortalMeetingSettings().catch(() => null),
     getPortalPendingKickoffs().catch(() => []),
+    cookies(),
   ]);
   if (!context || !user) return null;
 
@@ -108,6 +115,19 @@ const PortalHomePage = async () => {
     selfBookingEnabled: selfBooking,
     agencyName,
   });
+
+  const dashboardSummary = buildPortalSummary({
+    attention,
+    projects,
+    invoices,
+    conversations,
+    meetings,
+    agencyName,
+    now,
+  });
+  const initialView = parseHomeView(
+    cookieStore.get(PORTAL_HOME_VIEW_COOKIE)?.value,
+  );
 
   const currency = invoices[0]?.currency ?? "USD";
   const unpaid = invoices.filter(isUnpaid);
@@ -202,7 +222,6 @@ const PortalHomePage = async () => {
               Message the team
             </Link>
             {selfBooking && <BookMeetingDialog />}
-            <SummarizeClientPortalDashboard />
           </div>
         </div>
 
@@ -219,127 +238,138 @@ const PortalHomePage = async () => {
         )}
       </section>
 
-      <PortalStatTiles stats={stats} />
+      <SummarizeClientPortalDashboard
+        summary={dashboardSummary}
+        initialView={initialView}
+      >
+        <PortalStatTiles stats={stats} />
 
-      <div className={styles.columns}>
-        <div className={styles.mainCol}>
-          <section className={styles.section} aria-labelledby="attention-title">
-            <div className={styles.sectionHead}>
-              <h2 id="attention-title" className={styles.sectionTitle}>
-                Needs your attention
-                {attention.length > 0 && (
-                  <span className={styles.count}>{attention.length}</span>
-                )}
-              </h2>
-            </div>
-            <AttentionList items={attention} />
-          </section>
+        <div className={styles.columns}>
+          <div className={styles.mainCol}>
+            <section
+              className={styles.section}
+              aria-labelledby="attention-title"
+            >
+              <div className={styles.sectionHead}>
+                <h2 id="attention-title" className={styles.sectionTitle}>
+                  Needs your attention
+                  {attention.length > 0 && (
+                    <span className={styles.count}>{attention.length}</span>
+                  )}
+                </h2>
+              </div>
+              <AttentionList items={attention} />
+            </section>
 
-          <section className={styles.section} aria-labelledby="projects-title">
-            <div className={styles.sectionHead}>
-              <h2 id="projects-title" className={styles.sectionTitle}>
-                Your projects
-              </h2>
-              <Link href="/portal/projects" className={styles.viewAll}>
-                View all <ArrowRight aria-hidden="true" />
-              </Link>
-            </div>
-            {featuredProjects.length === 0 ? (
-              <p className={styles.empty}>
-                No projects yet — they&apos;ll appear here as soon as{" "}
-                {agencyName} kicks one off.
-              </p>
-            ) : (
-              <ul className={styles.projectGrid}>
-                {featuredProjects.map((project) => (
-                  <li key={project.id}>
-                    <PortalProjectCard project={project} now={now} />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+            <section
+              className={styles.section}
+              aria-labelledby="projects-title"
+            >
+              <div className={styles.sectionHead}>
+                <h2 id="projects-title" className={styles.sectionTitle}>
+                  Your projects
+                </h2>
+                <Link href="/portal/projects" className={styles.viewAll}>
+                  View all <ArrowRight aria-hidden="true" />
+                </Link>
+              </div>
+              {featuredProjects.length === 0 ? (
+                <p className={styles.empty}>
+                  No projects yet — they&apos;ll appear here as soon as{" "}
+                  {agencyName} kicks one off.
+                </p>
+              ) : (
+                <ul className={styles.projectGrid}>
+                  {featuredProjects.map((project) => (
+                    <li key={project.id}>
+                      <PortalProjectCard project={project} now={now} />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </div>
+
+          <aside className={styles.sideCol} aria-label="At a glance">
+            <GettingStartedChecklist steps={checklist} />
+
+            <section className={styles.panel} aria-labelledby="up-next-title">
+              <div className={styles.sectionHead}>
+                <h2 id="up-next-title" className={styles.panelTitle}>
+                  Up next
+                </h2>
+                <Link href="/portal/meetings" className={styles.viewAll}>
+                  Meetings <ArrowRight aria-hidden="true" />
+                </Link>
+              </div>
+              {upcoming.length === 0 ? (
+                <p className={styles.panelEmpty}>
+                  No meetings on the calendar.
+                  {selfBooking ? " Book one whenever you're ready." : ""}
+                </p>
+              ) : (
+                <ul className={styles.meetingList}>
+                  {upcoming.slice(0, 3).map((meeting) => (
+                    <li key={meeting.id} className={styles.meeting}>
+                      <span className={styles.meetingDate} aria-hidden="true">
+                        <CalendarDays />
+                      </span>
+                      <span className={styles.meetingText}>
+                        <span className={styles.meetingTitle}>
+                          {meeting.title}
+                        </span>
+                        <span className={styles.meetingMeta}>
+                          <LocalTime iso={meeting.starts_at} />
+                          {meeting.location && ` · ${meeting.location}`}
+                        </span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            <section
+              className={styles.panel}
+              aria-labelledby="conversations-title"
+            >
+              <div className={styles.sectionHead}>
+                <h2 id="conversations-title" className={styles.panelTitle}>
+                  Conversations
+                </h2>
+                <Link href="/portal/messages" className={styles.viewAll}>
+                  Inbox <ArrowRight aria-hidden="true" />
+                </Link>
+              </div>
+              {recentConversations.length === 0 ? (
+                <p className={styles.panelEmpty}>
+                  No conversations yet. Say hello to {agencyName}!
+                </p>
+              ) : (
+                <ul className={styles.conversationList}>
+                  {recentConversations.map((conversation) => (
+                    <li key={conversation.id}>
+                      <Link
+                        href={`/portal/messages/${conversation.id}`}
+                        className={styles.conversation}
+                        data-unread={conversation.unread_count > 0}
+                      >
+                        <span className={styles.conversationTitle}>
+                          {conversation.title}
+                        </span>
+                        <span className={styles.conversationPreview}>
+                          {conversation.last_message_preview ??
+                            conversation.participant_names.join(", ")}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </aside>
         </div>
-
-        <aside className={styles.sideCol} aria-label="At a glance">
-          <GettingStartedChecklist steps={checklist} />
-
-          <section className={styles.panel} aria-labelledby="up-next-title">
-            <div className={styles.sectionHead}>
-              <h2 id="up-next-title" className={styles.panelTitle}>
-                Up next
-              </h2>
-              <Link href="/portal/meetings" className={styles.viewAll}>
-                Meetings <ArrowRight aria-hidden="true" />
-              </Link>
-            </div>
-            {upcoming.length === 0 ? (
-              <p className={styles.panelEmpty}>
-                No meetings on the calendar.
-                {selfBooking ? " Book one whenever you're ready." : ""}
-              </p>
-            ) : (
-              <ul className={styles.meetingList}>
-                {upcoming.slice(0, 3).map((meeting) => (
-                  <li key={meeting.id} className={styles.meeting}>
-                    <span className={styles.meetingDate} aria-hidden="true">
-                      <CalendarDays />
-                    </span>
-                    <span className={styles.meetingText}>
-                      <span className={styles.meetingTitle}>
-                        {meeting.title}
-                      </span>
-                      <span className={styles.meetingMeta}>
-                        <LocalTime iso={meeting.starts_at} />
-                        {meeting.location && ` · ${meeting.location}`}
-                      </span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-
-          <section
-            className={styles.panel}
-            aria-labelledby="conversations-title"
-          >
-            <div className={styles.sectionHead}>
-              <h2 id="conversations-title" className={styles.panelTitle}>
-                Conversations
-              </h2>
-              <Link href="/portal/messages" className={styles.viewAll}>
-                Inbox <ArrowRight aria-hidden="true" />
-              </Link>
-            </div>
-            {recentConversations.length === 0 ? (
-              <p className={styles.panelEmpty}>
-                No conversations yet. Say hello to {agencyName}!
-              </p>
-            ) : (
-              <ul className={styles.conversationList}>
-                {recentConversations.map((conversation) => (
-                  <li key={conversation.id}>
-                    <Link
-                      href={`/portal/messages/${conversation.id}`}
-                      className={styles.conversation}
-                      data-unread={conversation.unread_count > 0}
-                    >
-                      <span className={styles.conversationTitle}>
-                        {conversation.title}
-                      </span>
-                      <span className={styles.conversationPreview}>
-                        {conversation.last_message_preview ??
-                          conversation.participant_names.join(", ")}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        </aside>
-      </div>
+      </SummarizeClientPortalDashboard>
     </div>
   );
 };
