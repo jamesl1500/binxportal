@@ -40,6 +40,9 @@ export interface CiCdStackProps extends cdk.StackProps {
 export class CiCdStack extends cdk.Stack {
   public readonly apiRepository: ecr.Repository;
   public readonly webRepository: ecr.Repository;
+  /** The custom Caddy build (deploy/Dockerfile.caddy) with the Route53 DNS
+   * plugin for the wildcard `*.binxportal.com` cert — see deploy/Caddyfile. */
+  public readonly caddyRepository: ecr.Repository;
   public readonly deployRole: iam.Role;
 
   constructor(scope: Construct, id: string, props: CiCdStackProps) {
@@ -76,6 +79,13 @@ export class CiCdStack extends cdk.Stack {
 
     this.webRepository = new ecr.Repository(this, "WebRepository", {
       repositoryName: "binx-web",
+      imageScanOnPush: true,
+      lifecycleRules,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+    });
+
+    this.caddyRepository = new ecr.Repository(this, "CaddyRepository", {
+      repositoryName: "binx-caddy",
       imageScanOnPush: true,
       lifecycleRules,
       removalPolicy: cdk.RemovalPolicy.RETAIN,
@@ -129,7 +139,11 @@ export class CiCdStack extends cdk.Stack {
           "ecr:PutImage",
           "ecr:BatchGetImage",
         ],
-        resources: [this.apiRepository.repositoryArn, this.webRepository.repositoryArn],
+        resources: [
+          this.apiRepository.repositoryArn,
+          this.webRepository.repositoryArn,
+          this.caddyRepository.repositoryArn,
+        ],
       }),
     );
 

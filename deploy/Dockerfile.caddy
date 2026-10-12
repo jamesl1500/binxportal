@@ -1,0 +1,14 @@
+# Custom Caddy build with the Route53 DNS provider module
+# (github.com/caddy-dns/route53), needed for the wildcard *.binxportal.com
+# TLS cert: Let's Encrypt can only issue a wildcard via a DNS-01 challenge,
+# which the stock caddy:2-alpine image has no provider plugin for. See
+# deploy/Caddyfile's `tls { dns route53 }` block — it authenticates via this
+# EC2 instance's own IAM role (infra/lib/dns-stack.ts), no AWS keys here.
+FROM caddy:2-builder-alpine AS builder
+
+RUN xcaddy build \
+    --with github.com/caddy-dns/route53
+
+FROM caddy:2-alpine
+
+COPY --from=builder /usr/bin/caddy /usr/bin/caddy

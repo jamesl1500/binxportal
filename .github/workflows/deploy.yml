@@ -86,6 +86,16 @@ jobs:
             api-url: https://api.staging.binxportal.com/
             site-url: https://staging.binxportal.com
             sentry-environment: staging
+          # Custom Caddy build (the Route53 DNS plugin for the wildcard
+          # *.binxportal.com cert) — shared by both environments, like
+          # binx-api. Rebuilt on every relevant push same as the others;
+          # the GHA layer cache keeps that cheap when deploy/Dockerfile.caddy
+          # itself hasn't changed.
+          - name: binx-caddy
+            repository: binx-caddy
+            dockerfile: deploy/Dockerfile.caddy
+            tag-prefix: sha-
+            cache-scope: binx-caddy
     name: build ${{ matrix.name }}
     steps:
       - uses: actions/checkout@v4
@@ -162,14 +172,37 @@ jobs:
         if: always()
         run: rm -f /tmp/next_actions_key
 
-      # Fails here, on the runner, rather than on the box — production's
-      # Caddy serves both environments from this one file.
+  # Separate job (rather than a step on the binx-caddy matrix leg above):
+  # needs the binx-caddy image this same push just built, which isn't
+  # guaranteed to exist yet from inside a sibling matrix leg. Fails here, on
+  # the runner, rather than on the box — production's Caddy serves both
+  # environments from this one file. Uses the custom image, not stock
+  # caddy:2-alpine: the stock image has no `dns route53` module, so it can't
+  # even parse the Caddyfile (see deploy/Dockerfile.caddy).
+  validate-caddyfile:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
       - name: Validate the Caddyfile
-        if: matrix.repository == 'binx-api'
-        run: docker run --rm -v "$PWD/deploy:/etc/caddy:ro" caddy:2-alpine caddy validate --config /etc/caddy/Caddyfile
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          image="${REGISTRY}/binx-caddy:sha-${GITHUB_SHA::12}"
+          docker pull "$image"
+          docker run --rm -v "$PWD/deploy:/etc/caddy:ro" "$image" caddy validate --config /etc/caddy/Caddyfile
 
   deploy-staging:
-    needs: build-and-push
+    needs: [build-and-push, validate-caddyfile]
     runs-on: ubuntu-latest
     # Shared with promote.yml: only one deploy touches the box at a time.
     concurrency:

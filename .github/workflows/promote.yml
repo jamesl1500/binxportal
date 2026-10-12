@@ -63,7 +63,7 @@ jobs:
           REGISTRY: ${{ steps.ecr.outputs.registry }}
           TAG: ${{ steps.tag.outputs.tag }}
         run: |
-          for repo in binx-api binx-web; do
+          for repo in binx-api binx-web binx-caddy; do
             if ! docker manifest inspect "$REGISTRY/$repo:$TAG" > /dev/null; then
               echo "::error::$repo:$TAG isn't in ECR — promote a commit that deploy.yml has built"
               exit 1

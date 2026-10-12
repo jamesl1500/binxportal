@@ -59,7 +59,7 @@ esac
 # The env file is regenerated on every deploy, not hand-placed — the real
 # secrets live in Secrets Manager (see infra/lib/secrets-stack.ts and
 # infra/lib/staging-stack.ts), fetched here via the instance's own IAM role.
-# API_IMAGE/WEB_IMAGE aren't secrets, so they're just computed below rather
+# API_IMAGE/WEB_IMAGE/CADDY_IMAGE aren't secrets, so they're just computed below rather
 # than stored anywhere. Nothing is sourced into this shell: compose reads the
 # file itself, and keeping one environment's values out of the process env
 # means they can't leak into a compose command for the other.
@@ -82,6 +82,10 @@ umask 077
   jq -r 'to_entries[] | select(.value != "REPLACE_ME") | "\(.key)=\(.value)"' <<<"$secret_json"
   echo "API_IMAGE=${ECR_REGISTRY}/binx-api:${TAG}"
   echo "WEB_IMAGE=${ECR_REGISTRY}/binx-web:${WEB_TAG}"
+  # Only docker-compose.prod.yml's caddy service reads this (it's shared —
+  # fronts both environments), but computing it unconditionally here is
+  # simpler than branching on $TARGET, and harmless for the staging env file.
+  echo "CADDY_IMAGE=${ECR_REGISTRY}/binx-caddy:${TAG}"
 } > "$ENV_FILE"
 
 aws ecr get-login-password --region "$AWS_REGION" | \
@@ -105,7 +109,11 @@ echo "==> Deploying $TARGET at $TAG"
 
 # Caddy belongs to the production project but fronts both environments, so a
 # staging deploy refreshes it too. --no-deps: only Caddy — a staging deploy
-# must never recreate production's api/web as a side effect.
+# must never recreate production's api/web as a side effect. An explicit
+# pull first: CADDY_IMAGE is now a moving sha-tagged image (not the stable
+# caddy:2-alpine tag `up -d` could just reuse from cache before), same as
+# the APP_SERVICES pull above.
+"${PROD_COMPOSE[@]}" pull caddy
 "${PROD_COMPOSE[@]}" up -d --no-deps caddy
 
 if [ "$TARGET" = "staging" ]; then
