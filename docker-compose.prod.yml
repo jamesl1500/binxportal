@@ -111,7 +111,10 @@ services:
       NODE_ENV: production
 
   caddy:
-    image: caddy:2-alpine
+    # Custom build (deploy/Dockerfile.caddy) with the Route53 DNS plugin —
+    # needed for the wildcard *.binxportal.com cert's DNS-01 challenge; the
+    # stock caddy:2-alpine image has no DNS provider module compiled in.
+    image: ${CADDY_IMAGE:?set in .env, e.g. <account>.dkr.ecr.<region>.amazonaws.com/binx-caddy:latest}
     restart: unless-stopped
     depends_on:
       - api
