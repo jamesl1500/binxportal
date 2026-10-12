@@ -1,24 +1,35 @@
 /**
  * proxy.ts (Next 16's renamed `middleware`)
  *
- * Keeps a session alive silently. The access token cookie is short-lived
+ * Two independent jobs on every request:
+ *
+ * 1. Keeps a session alive silently. The access token cookie is short-lived
  * (~30 min) and every authenticated call in this app is made server-side from
  * a Server Component render, where `cookies().set()` is a no-op — so there is
- * nowhere else the token can actually be refreshed. This runs before every
- * page / route handler / server action: if the access cookie is gone (or about
- * to expire) but a valid refresh cookie is present, it trades the refresh
- * token for a fresh pair, sets the new cookies on the response, AND rewrites
- * this request's `cookie` header so the render that follows sees the new token
- * immediately.
+ * nowhere else the token can actually be refreshed. If the access cookie is
+ * gone (or about to expire) but a valid refresh cookie is present, it trades
+ * the refresh token for a fresh pair, sets the new cookies on the response,
+ * AND rewrites this request's `cookie` header so the render that follows
+ * sees the new token immediately.
  *
  * A user therefore stays logged in for as long as the refresh token is valid
  * (30 days) or until it's revoked — not just for one 30-minute access window.
+ *
+ * 2. Detects an agency's custom subdomain (e.g. foundryframe.binxportal.com,
+ * see agencies/service.py::SUBDOMAIN_MIN_PLAN) and rewrites the bare
+ * subdomain root to its branded landing page at `/s/[subdomain]`
+ * (app/s/[subdomain]/page.tsx). Every other path on that host, the apex
+ * domain, `www`, and `api` pass through untouched. Requires a wildcard DNS
+ * record and TLS cert for `*.binxportal.com` in front of this app (infra —
+ * see the PR description for what's needed).
  *
  * @module apps/binx-web/src/proxy.ts
  * @author Binx Portal
  */
 import { decodeJwt } from "jose";
 import { NextRequest, NextResponse } from "next/server";
+
+import { ROOT_DOMAIN } from "@/lib/site";
 
 // Keep in sync with lib/auth.ts (can't import it here — it pulls in
 // `next/headers`, which isn't available in the proxy runtime).
@@ -28,6 +39,12 @@ const ACCESS_TOKEN_MAX_AGE = 30 * 60;
 const REFRESH_TOKEN_MAX_AGE = 30 * 24 * 60 * 60;
 /** Refresh a bit early so a token never expires mid-request. */
 const REFRESH_SKEW_MS = 60_000;
+
+// Hosts that are never an agency's subdomain, even though they share the
+// same root domain — kept in step with agencies/service.py's
+// RESERVED_SUBDOMAINS (a superset; these two are the ones actually routed
+// here today).
+const RESERVED_HOST_LABELS = new Set(["www", "api"]);
 
 export const config = {
   // Everything except static assets, image optimizer, and the auth API
@@ -46,18 +63,44 @@ function accessTokenIsFresh(token: string): boolean {
   }
 }
 
+/** The `/s/[subdomain]` URL to rewrite to if this request is an agency
+ * subdomain's bare root — otherwise null, in which case the caller should
+ * route normally (NextResponse.next). */
+function subdomainRewriteTarget(request: NextRequest): URL | null {
+  if (request.nextUrl.pathname !== "/") {
+    return null;
+  }
+
+  const hostname = (request.headers.get("host") ?? "").split(":")[0];
+  if (!hostname.endsWith(`.${ROOT_DOMAIN}`)) {
+    return null;
+  }
+
+  const label = hostname.slice(0, -(ROOT_DOMAIN.length + 1));
+  if (label === "" || label.includes(".") || RESERVED_HOST_LABELS.has(label)) {
+    return null;
+  }
+
+  return new URL(`/s/${label}`, request.url);
+}
+
 export async function proxy(request: NextRequest): Promise<NextResponse> {
+  const subdomainTarget = subdomainRewriteTarget(request);
+  const routed = (init?: Parameters<typeof NextResponse.next>[0]) =>
+    subdomainTarget ? NextResponse.rewrite(subdomainTarget, init) : NextResponse.next(init);
+
   const access = request.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
   const refresh = request.cookies.get(REFRESH_TOKEN_COOKIE)?.value;
 
-  // A usable access token, or no refresh token to fall back on → nothing to do.
+  // A usable access token, or no refresh token to fall back on → nothing to
+  // refresh, but a subdomain root may still need its rewrite.
   if ((access && accessTokenIsFresh(access)) || !refresh) {
-    return NextResponse.next();
+    return routed();
   }
 
   const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
   if (!apiBase) {
-    return NextResponse.next();
+    return routed();
   }
 
   let tokens: { access_token: string; refresh_token: string } | null = null;
@@ -75,7 +118,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
       // The refresh token is genuinely dead (expired / replayed / account
       // disabled) — clear both cookies so the user gets a clean login rather
       // than a redirect loop.
-      const dead = NextResponse.next();
+      const dead = routed();
       dead.cookies.delete(ACCESS_TOKEN_COOKIE);
       dead.cookies.delete(REFRESH_TOKEN_COOKIE);
       return dead;
@@ -87,17 +130,18 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   }
 
   if (!tokens) {
-    return NextResponse.next();
+    return routed();
   }
 
   // Make the new access token visible to THIS request's Server Components:
-  // rewrite the incoming `cookie` header and forward it via `next({ request })`.
+  // rewrite the incoming `cookie` header and forward it via `next({ request })`
+  // (or `rewrite({ request })` on a subdomain root).
   request.cookies.set(ACCESS_TOKEN_COOKIE, tokens.access_token);
   request.cookies.set(REFRESH_TOKEN_COOKIE, tokens.refresh_token);
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("cookie", request.cookies.toString());
 
-  const response = NextResponse.next({ request: { headers: requestHeaders } });
+  const response = routed({ request: { headers: requestHeaders } });
   const base = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

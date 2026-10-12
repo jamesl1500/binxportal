@@ -1285,6 +1285,59 @@
         "title": "AgencyProfileUpdate",
         "type": "object"
       },
+      "AgencyPublicBranding": {
+        "description": "Minimal, unauthenticated branding for a subdomain's landing page\n(GET /agencies/by-subdomain/{subdomain}) \u2014 nothing sensitive here.",
+        "properties": {
+          "brand_color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand Color"
+          },
+          "has_logo": {
+            "title": "Has Logo",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "logo_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Logo Version"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "subdomain": {
+            "title": "Subdomain",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "subdomain",
+          "brand_color",
+          "has_logo"
+        ],
+        "title": "AgencyPublicBranding",
+        "type": "object"
+      },
       "AgencyRead": {
         "properties": {
           "has_logo": {
@@ -1319,6 +1372,17 @@
           "slug": {
             "title": "Slug",
             "type": "string"
+          },
+          "subdomain": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subdomain"
           }
         },
         "required": [
@@ -1328,6 +1392,24 @@
           "role"
         ],
         "title": "AgencyRead",
+        "type": "object"
+      },
+      "AgencySubdomainUpdate": {
+        "properties": {
+          "subdomain": {
+            "anyOf": [
+              {
+                "maxLength": 63,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subdomain"
+          }
+        },
+        "title": "AgencySubdomainUpdate",
         "type": "object"
       },
       "AgencyUpdate": {
@@ -13317,6 +13399,49 @@
           }
         ],
         "summary": "Create Agency",
+        "tags": [
+          "agencies"
+        ]
+      }
+    },
+    "/agencies/by-subdomain/{subdomain}": {
+      "get": {
+        "description": "Unauthenticated \u2014 resolves a custom subdomain (e.g. \"foundryframe\")\nto the minimal branding binx-web's middleware/login page needs. 404 for\nan unclaimed subdomain, or one whose agency has since dropped below the\nrequired plan (service.get_agency_by_subdomain).",
+        "operationId": "read_agency_by_subdomain_agencies_by_subdomain__subdomain__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "subdomain",
+            "required": true,
+            "schema": {
+              "title": "Subdomain",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgencyPublicBranding"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Agency By Subdomain",
         "tags": [
           "agencies"
         ]
@@ -26212,6 +26337,64 @@
         "summary": "Run Schedule Now",
         "tags": [
           "invoicing"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/subdomain": {
+      "patch": {
+        "operationId": "update_agency_subdomain_endpoint_agencies__agency_id__subdomain_patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgencySubdomainUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgencyRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Agency Subdomain Endpoint",
+        "tags": [
+          "agencies"
         ]
       }
     },

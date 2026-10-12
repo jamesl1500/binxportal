@@ -16,6 +16,18 @@ export const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
 ).replace(/\/$/, "");
 
+/**
+ * The bare apex domain/host (e.g. "binxportal.com", or "localhost:3000" in
+ * dev), derived from SITE_URL by dropping the protocol and a leading
+ * "www.". Used to preview an agency's custom subdomain
+ * (`${subdomain}.${ROOT_DOMAIN}`) in settings, and by proxy.ts to detect one
+ * on the way in — see AgencySubdomainForm and proxy.ts.
+ */
+export const ROOT_DOMAIN = SITE_URL.replace(/^https?:\/\//, "").replace(
+  /^www\./,
+  "",
+);
+
 export const SITE = {
   name: "Binx",
   legalName: "Binx",

@@ -34,6 +34,9 @@ export type AgencyRead = Omit<Schemas["AgencyRead"], "role"> & {
 /** The general agency profile — branding, about/contact, socials, policies. */
 export type AgencyProfile = Schemas["AgencyProfileRead"];
 
+/** Minimal, unauthenticated branding for a subdomain's landing page. */
+export type AgencyPublicBranding = Schemas["AgencyPublicBranding"];
+
 /** Every editable profile field — the settings forms submit the full set each save. */
 export type AgencyProfileInput = Partial<
   Omit<
@@ -41,6 +44,34 @@ export type AgencyProfileInput = Partial<
     "agency_id" | "has_logo" | "has_cover" | "logo_version" | "cover_version"
   >
 >;
+
+/**
+ * getAgencyPublicBranding
+ *
+ * Unauthenticated lookup of a custom subdomain via
+ * `GET /agencies/by-subdomain/{subdomain}` — used by the `/s/[subdomain]`
+ * landing route (see middleware.ts), never by the authenticated app. Returns
+ * `null` for an unclaimed subdomain, or one whose agency has since dropped
+ * below the plan required to serve it (binx-api's
+ * agencies/service.py::get_agency_by_subdomain).
+ *
+ * @function getAgencyPublicBranding
+ */
+export async function getAgencyPublicBranding(
+  subdomain: string,
+): Promise<AgencyPublicBranding | null> {
+  try {
+    const { data } = await api.get<AgencyPublicBranding>(
+      `/agencies/by-subdomain/${encodeURIComponent(subdomain)}`,
+    );
+    return data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 404) {
+      return null;
+    }
+    throw error;
+  }
+}
 
 async function authHeader(): Promise<{ Authorization: string }> {
   const accessToken = await getAccessToken();
@@ -131,6 +162,42 @@ export async function updateAgency(
     if (axios.isAxiosError(error) && error.response) {
       throw new AuthApiError(
         extractDetailMessage(error.response.data, "Unable to update agency"),
+        error.response.status,
+      );
+    }
+    throw error;
+  }
+}
+
+/**
+ * updateAgencySubdomain
+ *
+ * Sets (or clears, with `subdomain: null`) the current agency's custom
+ * subdomain via `PATCH /agencies/{agencyId}/subdomain`. binx-api enforces
+ * the Starter-plan-or-above gate, format rules, and uniqueness — this just
+ * surfaces whatever it says (402 below the required plan, 400
+ * invalid/reserved, 409 already taken).
+ *
+ * @function updateAgencySubdomain
+ * @throws {AuthApiError} - Thrown if not authenticated, or binx-api rejects the request.
+ */
+export async function updateAgencySubdomain(
+  agencyId: string,
+  subdomain: string | null,
+): Promise<AgencyRead> {
+  const headers = await authHeader();
+
+  try {
+    const { data } = await api.patch<AgencyRead>(
+      `/agencies/${agencyId}/subdomain`,
+      { subdomain },
+      { headers },
+    );
+    return data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new AuthApiError(
+        extractDetailMessage(error.response.data, "Unable to update subdomain"),
         error.response.status,
       );
     }

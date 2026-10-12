@@ -119,6 +119,17 @@ def plan_limits(plan_key: str) -> PlanLimits:
     return PLANS.get(plan_key, PLANS[DEFAULT_PLAN])
 
 
+def plan_at_least(plan_key: str, minimum: str) -> bool:
+    """Whether ``plan_key`` sits at or above ``minimum`` in ``PLAN_ORDER`` —
+    used to gate plan-tier features (e.g. agency subdomains, starter+). An
+    unrecognised plan_key sorts as the lowest tier rather than raising."""
+    try:
+        index = PLAN_ORDER.index(plan_key)
+    except ValueError:
+        index = 0
+    return index >= PLAN_ORDER.index(minimum)
+
+
 # One row per agency, created lazily on first access — same pattern as
 # ai/models.py's AgencyAiSettings and invoicing's AgencyBillingSettings.
 class AgencySubscription(Base):

@@ -35,6 +35,7 @@ from binx_api.modules.billing.models import (
     TRIAL_DISCOUNT_GRACE_DAYS,
     AgencySubscription,
     PlanLimits,
+    plan_at_least,
     plan_limits,
 )
 from binx_api.modules.leads.models import Lead
@@ -102,6 +103,14 @@ def effective_plan_key(subscription: AgencySubscription) -> str:
 async def get_plan_limits(db: AsyncSession, agency_id: uuid.UUID) -> PlanLimits:
     subscription = await get_or_create_subscription(db, agency_id)
     return plan_limits(effective_plan_key(subscription))
+
+
+async def agency_plan_at_least(db: AsyncSession, agency_id: uuid.UUID, minimum: str) -> bool:
+    """Whether the agency's currently-effective plan (trial-adjusted, see
+    effective_plan_key) is at or above ``minimum`` — used by tier-gated
+    features like custom subdomains (agencies/service.py)."""
+    subscription = await get_or_create_subscription(db, agency_id)
+    return plan_at_least(effective_plan_key(subscription), minimum)
 
 
 async def start_trial(db: AsyncSession, agency: Agency, *, plan: str, actor: User | None) -> AgencySubscription:
