@@ -19,6 +19,22 @@ www.binxportal.com {
 	reverse_proxy web:3000
 }
 
+# Agency custom subdomains (Settings → General; Starter plan and above —
+# see binx-api's agencies/service.py::SUBDOMAIN_MIN_PLAN). DNS-01 instead of
+# the HTTP-01 challenge the blocks above use: Let's Encrypt can't issue a
+# wildcard cert any other way. The `route53` DNS plugin (built into this
+# image — see deploy/Dockerfile.caddy) authenticates via this EC2 instance's
+# own IAM role, so no AWS keys appear here (see infra/lib/dns-stack.ts for
+# the exact grant). `www` and `api` above are matched first regardless of
+# file order — Caddy always prefers the most specific host match — so this
+# block only ever catches an actual agency subdomain.
+*.binxportal.com {
+	tls {
+		dns route53
+	}
+	reverse_proxy web:3000
+}
+
 # --- Staging (docker-compose.staging.yml) -----------------------------------
 # Same box, separate compose project, reached over the shared
 # `binxportal-edge` network. If the staging stack is down these just 502 —
