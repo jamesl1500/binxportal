@@ -4,14 +4,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockedPathname = vi.fn(() => "/portal");
 vi.mock("next/navigation", () => ({ usePathname: () => mockedPathname() }));
-vi.mock("@/app/(app)/actions", () => ({ logoutAction: vi.fn(), updateTutorialProgressAction: vi.fn() }));
+vi.mock("@/app/(app)/actions", () => ({ portalLogoutAction: vi.fn(), updateTutorialProgressAction: vi.fn() }));
 
-import { logoutAction } from "@/app/(app)/actions";
+import { portalLogoutAction } from "@/app/(app)/actions";
 import PortalOnboardingProvider from "@/components/portal/PortalOnboardingProvider/PortalOnboardingProvider";
 import type { PortalBadges } from "@/lib/portal-insights";
 import PortalSidebar from "./PortalSidebar";
 
-const mockedLogout = vi.mocked(logoutAction);
+const mockedLogout = vi.mocked(portalLogoutAction);
 
 const NO_BADGES: PortalBadges = { messages: 0, invoices: 0, invoicesOverdue: false, proposals: 0, meetings: 0 };
 

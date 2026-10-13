@@ -12,7 +12,9 @@ import { useState, useTransition } from "react";
 
 import { verifyEmailAction } from "@/app/(auth)/auth/verify-email/actions";
 
-import styles from "./VerifyEmailForm.module.scss";
+import portalStyles from "@/components/portal-auth/portal-auth-form.module.scss";
+
+import defaultStyles from "./VerifyEmailForm.module.scss";
 
 interface VerifyEmailFormProps {
   /** The verification token from the emailed link — this alone authorizes the request. */
@@ -21,6 +23,8 @@ interface VerifyEmailFormProps {
   email?: string;
   /** Carried through from signup when this account came from a client-portal invite — sends the user back to accept it instead of staff onboarding. */
   portalInviteToken?: string;
+  /** "portal" swaps in the client portal's warm skin (see portal-auth-form.module.scss). */
+  variant?: "default" | "portal";
 }
 
 /**
@@ -35,7 +39,10 @@ const VerifyEmailForm = ({
   token,
   email,
   portalInviteToken,
+  variant = "default",
 }: VerifyEmailFormProps) => {
+  const isPortal = variant === "portal";
+  const styles = isPortal ? portalStyles : defaultStyles;
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -75,7 +82,11 @@ const VerifyEmailForm = ({
         onClick={handleVerify}
         disabled={isPending}
       >
-        {isPending ? "Verifying…" : "Verify Email"}
+        {isPending
+          ? "Verifying…"
+          : isPortal
+            ? "Verify and continue"
+            : "Verify Email"}
       </button>
     </div>
   );

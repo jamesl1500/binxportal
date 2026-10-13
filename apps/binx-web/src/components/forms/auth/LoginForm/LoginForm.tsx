@@ -21,7 +21,9 @@ import {
 } from "@/app/(auth)/auth/login/actions";
 import { useLoginPreferencesStore } from "@/stores/use-login-preferences-store";
 
-import styles from "./LoginForm.module.scss";
+import portalStyles from "@/components/portal-auth/portal-auth-form.module.scss";
+
+import defaultStyles from "./LoginForm.module.scss";
 
 /**
  * Login Schema
@@ -50,7 +52,20 @@ type LoginValues = z.infer<typeof loginSchema>;
  * @component
  * @returns {JSX.Element} - The rendered login form component.
  */
-const LoginForm = () => {
+interface LoginFormProps {
+  /** "portal" swaps in the client portal's warm skin (see portal-auth-form.module.scss). */
+  variant?: "default" | "portal";
+  /**
+   * A pending client-portal invite to return to after signing in — see
+   * loginAction. Only the portal's invite page passes this.
+   */
+  portalInviteToken?: string;
+}
+
+const LoginForm = ({ variant = "default", portalInviteToken }: LoginFormProps) => {
+  const isPortal = variant === "portal";
+  const styles = isPortal ? portalStyles : defaultStyles;
+
   const rememberedEmail = useLoginPreferencesStore(
     (state) => state.rememberedEmail,
   );
@@ -87,7 +102,11 @@ const LoginForm = () => {
     setRememberedEmail(values.rememberMe ? values.email : null);
 
     startTransition(async () => {
-      const result = await loginAction(values.email, values.password);
+      const result = await loginAction(
+        values.email,
+        values.password,
+        portalInviteToken,
+      );
       if (result?.error) {
         setFormError(result.error);
         setUnverifiedEmail(result.unverifiedEmail ?? null);
@@ -127,7 +146,10 @@ const LoginForm = () => {
           <label className={styles.label} htmlFor="password">
             Password
           </label>
-          <a className={styles.forgotLink} href="/auth/forgot-password">
+          <a
+            className={styles.forgotLink}
+            href={isPortal ? "/portal/forgot-password" : "/auth/forgot-password"}
+          >
             Forgot password?
           </a>
         </div>

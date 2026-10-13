@@ -12,10 +12,10 @@
 
 import { useState, useTransition } from "react";
 
-import { acceptPortalInviteAction } from "@/app/(auth)/auth/portal-invite/actions";
+import { acceptPortalInviteAction } from "@/app/(portal-auth)/auth/portal-invite/actions";
 import type { PortalInvitationPreview } from "@/lib/portal";
 
-import styles from "./AcceptPortalInviteForm.module.scss";
+import styles from "@/components/portal-auth/portal-auth-form.module.scss";
 
 interface AcceptPortalInviteFormProps {
   token: string;

@@ -57,6 +57,14 @@ async def test_password_reset_email_links_to_the_reset_page(captured: list[dict]
     assert f"{settings.frontend_url}/auth/reset-password?token=tok-reset" in call["body"]
 
 
+async def test_portal_emails_link_to_the_portal_auth_pages(captured: list[dict]) -> None:
+    await email.send_verification_email(to="client@example.com", token="tok-abc", portal_invite_token="tok-inv")
+    await email.send_password_reset_email(to="client@example.com", token="tok-reset", portal=True)
+    verify, reset = captured
+    assert verify["body"].endswith(f"{settings.frontend_url}/portal/verify-email?token=tok-abc&portal_invite=tok-inv")
+    assert f"{settings.frontend_url}/portal/reset-password?token=tok-reset" in reset["body"]
+
+
 async def test_email_change_email_goes_to_the_new_address(captured: list[dict]) -> None:
     await email.send_email_change_email(to="brand-new@example.com", token="tok-change")
     (call,) = captured

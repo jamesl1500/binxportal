@@ -1,0 +1,108 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/portal-warm" as w;
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: t.$space-3;
+  margin-bottom: t.$space-8;
+
+  > * {
+    animation: rise 0.6s w.$ease-out both;
+  }
+
+  > :nth-child(1) {
+    animation-delay: 0.25s;
+  }
+
+  > :nth-child(2) {
+    animation-delay: 0.32s;
+  }
+
+  > :nth-child(3) {
+    animation-delay: 0.39s;
+  }
+}
+
+.eyebrow {
+  padding: 0.3rem 0.75rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: w.$terracotta-deep;
+  background: rgba(216, 86, 42, 0.1);
+  border-radius: 999px;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-2xl;
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  color: w.$cocoa;
+  overflow-wrap: anywhere;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: t.$font-size-base;
+  line-height: 1.55;
+  color: w.$cocoa-soft;
+
+  strong {
+    font-weight: 600;
+    color: w.$cocoa;
+  }
+}
+
+.footer {
+  margin: t.$space-8 0 0;
+  font-size: t.$font-size-sm;
+  line-height: 1.6;
+  text-align: center;
+  color: w.$cocoa-soft;
+  animation: rise 0.6s w.$ease-out 0.75s both;
+
+  a {
+    font-weight: 600;
+    color: w.$terracotta-deep;
+    text-decoration: none;
+    background: linear-gradient(currentColor, currentColor) 0 100% / 0 1.5px
+      no-repeat;
+    transition: background-size 0.3s w.$ease-out;
+
+    &:hover,
+    &:focus-visible {
+      background-size: 100% 1.5px;
+      outline: none;
+    }
+  }
+}
+
+.notice {
+  margin: 0;
+  padding: t.$space-4;
+  font-size: t.$font-size-sm;
+  line-height: 1.55;
+  color: w.$danger;
+  background: rgba(194, 51, 28, 0.07);
+  border: 1px solid rgba(194, 51, 28, 0.2);
+  border-radius: w.$radius-field;
+  animation: rise 0.6s w.$ease-out 0.45s both;
+
+  &[data-tone="info"] {
+    color: w.$cocoa;
+    background: rgba(253, 235, 211, 0.7);
+    border-color: w.$border;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+}

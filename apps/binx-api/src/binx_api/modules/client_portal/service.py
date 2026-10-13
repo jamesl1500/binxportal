@@ -192,6 +192,67 @@ async def resend_client_invitation(
     return await create_client_invitation(db, agency, client, email=invitation.email, invited_by=invited_by)
 
 
+# How soon the same invitation can be re-sent by the invitee. The request is
+# unauthenticated and sends mail to whatever address was invited, so without
+# this anyone who knew the address could flood that inbox.
+SELF_RESEND_COOLDOWN = timedelta(minutes=2)
+
+
+async def reissue_active_invitations(
+    db: AsyncSession, *, email: str, agency_name: str, agency_id: uuid.UUID | None = None
+) -> list[tuple[ClientInvitation, Agency, AgencyClient, User, str]]:
+    """Self-service resend: the invitee names the agency and their email.
+
+    Finds every invitation from that agency to that address that is still
+    active — pending (so not accepted or revoked) and not yet expired — and
+    gives each a fresh token to email. Returns nothing when there is no match;
+    the caller answers identically either way, so this can't be used to probe
+    who has been invited where.
+
+    Unlike a staff resend this does NOT push the expiry out or change who the
+    invitation is from: an invitee can get their link again, but only staff
+    can extend an invitation. The old link stops working, because only the
+    token's hash is stored and the link can't be rebuilt from it.
+    """
+    if agency_id is not None:
+        agency_filter = Agency.id == agency_id
+    else:
+        # Agency names aren't unique; an exact (case-insensitive) match on a
+        # shared name re-sends for each of them that invited this address.
+        agency_filter = func.lower(Agency.name) == agency_name.strip().lower()
+
+    now = datetime.now(UTC)
+    result = await db.execute(
+        select(ClientInvitation, Agency, AgencyClient, User)
+        .join(Agency, Agency.id == ClientInvitation.agency_id)
+        .join(AgencyClient, AgencyClient.id == ClientInvitation.client_id)
+        .join(User, User.id == ClientInvitation.invited_by_id)
+        .where(
+            agency_filter,
+            func.lower(ClientInvitation.email) == email.lower(),
+            ClientInvitation.status == CONTACT_INVITATION_PENDING,
+            ClientInvitation.expires_at > now,
+        )
+    )
+
+    reissued: list[tuple[ClientInvitation, Agency, AgencyClient, User, str]] = []
+    for invitation, agency, client, inviter in result.all():
+        last_sent = invitation.updated_at
+        if last_sent is not None:
+            if last_sent.tzinfo is None:
+                last_sent = last_sent.replace(tzinfo=UTC)
+            if now - last_sent < SELF_RESEND_COOLDOWN:
+                continue
+        raw_token = generate_opaque_token()
+        invitation.token_hash = hash_token(raw_token)
+        invitation.updated_at = now
+        reissued.append((invitation, agency, client, inviter, raw_token))
+
+    if reissued:
+        await db.commit()
+    return reissued
+
+
 async def revoke_client_invitation(db: AsyncSession, invitation: ClientInvitation) -> None:
     invitation.status = CONTACT_INVITATION_REVOKED
     await db.commit()
@@ -207,6 +268,33 @@ async def _get_valid_client_invitation(db: AsyncSession, raw_token: str) -> Clie
     ):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "This invitation link is invalid or has expired")
     return invitation
+
+
+# Suggestions for the "which agency invited you?" field on the portal's
+# resend-invitation page. This is reachable without an account, so it is kept
+# deliberately narrow: nothing for fewer than AGENCY_SEARCH_MIN_CHARS
+# characters (no "list everything") and only a handful of names per query,
+# the ones that *start with* the text first.
+AGENCY_SEARCH_MIN_CHARS = 2
+AGENCY_SEARCH_LIMIT = 6
+
+
+async def search_agencies_by_name(db: AsyncSession, query: str) -> list[Agency]:
+    term = query.strip()
+    if len(term) < AGENCY_SEARCH_MIN_CHARS:
+        return []
+    # The text is user-supplied: escape LIKE's own wildcards so "%" or "_"
+    # match literally instead of widening the search.
+    escaped = term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    name = func.lower(Agency.name)
+    prefix = f"{escaped.lower()}%"
+    result = await db.scalars(
+        select(Agency)
+        .where(name.like(f"%{escaped.lower()}%", escape="\\"))
+        .order_by(name.like(prefix, escape="\\").desc(), name, Agency.id)
+        .limit(AGENCY_SEARCH_LIMIT)
+    )
+    return list(result)
 
 
 async def preview_client_invitation(

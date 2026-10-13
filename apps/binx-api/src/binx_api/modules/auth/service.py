@@ -228,7 +228,21 @@ async def request_password_reset(db: AsyncSession, email: str) -> None:
     if user is None:
         return
     token = await _issue_token(db, user, TokenPurpose.PASSWORD_RESET)
-    await send_password_reset_email(to=user.email, token=token)
+    await send_password_reset_email(to=user.email, token=token, portal=await _is_portal_only(db, user))
+
+
+async def _is_portal_only(db: AsyncSession, user: User) -> bool:
+    """A client-portal contact who isn't also agency staff — mirrors the
+    frontend's resolveHome(), where any agency membership wins."""
+    # Imported here: both modules import this one's dependencies at load time.
+    from binx_api.modules.agencies.models import AgencyMember
+    from binx_api.modules.client_portal.models import ClientContact
+
+    is_staff = await db.scalar(select(AgencyMember.id).where(AgencyMember.user_id == user.id).limit(1))
+    if is_staff is not None:
+        return False
+    is_contact = await db.scalar(select(ClientContact.id).where(ClientContact.user_id == user.id).limit(1))
+    return is_contact is not None
 
 
 async def reset_password(db: AsyncSession, raw_token: str, new_password: str) -> None:

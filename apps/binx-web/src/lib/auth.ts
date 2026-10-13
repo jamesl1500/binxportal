@@ -346,7 +346,7 @@ export interface SignupInput {
   email: string;
   fullName: string;
   password: string;
-  /** Set when signup started from a client-portal invite link — see app/(auth)/auth/portal-invite/page.tsx. */
+  /** Set when signup started from a client-portal invite link — see app/(portal-auth)/auth/portal-invite/page.tsx. */
   portalInviteToken?: string;
 }
 

@@ -32,7 +32,7 @@ const PortalConversationPage = async ({
 }: PortalConversationPageProps) => {
   const { conversationId } = await params;
   const user = await getCurrentUser();
-  if (!user) redirect("/auth/login");
+  if (!user) redirect("/portal/login");
 
   let detail;
   let messages;

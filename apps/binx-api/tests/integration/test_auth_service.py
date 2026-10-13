@@ -20,7 +20,7 @@ from binx_api.modules.auth.models import AuthToken, TokenPurpose
 from binx_api.modules.users.models import User
 from binx_api.modules.users.service import get_user_by_email
 from tests.conftest import extract_token
-from tests.factories import make_user
+from tests.factories import make_agency, make_client, make_client_contact, make_user
 
 pytestmark = pytest.mark.integration
 
@@ -246,6 +246,21 @@ class TestPasswordReset:
     async def test_request_is_silent_for_an_unknown_email(self, db_session, email_outbox) -> None:
         await service.request_password_reset(db_session, "nobody@example.com")
         assert email_outbox == []
+
+    async def test_link_goes_to_the_portal_only_for_a_client_who_is_not_staff(self, db_session, email_outbox) -> None:
+        owner = await make_user(db_session, email="owner-reset@example.com", user_name="ownerreset")
+        agency = await make_agency(db_session, owner=owner)
+        client = await make_client(db_session, agency=agency)
+        contact = await make_user(db_session, email="client-reset@example.com", user_name="clientreset")
+        await make_client_contact(db_session, agency=agency, client=client, user=contact)
+        # Staff who also happen to be a contact still reset on the staff pages.
+        await make_client_contact(db_session, agency=agency, client=client, user=owner)
+
+        await service.request_password_reset(db_session, "client-reset@example.com")
+        await service.request_password_reset(db_session, "owner-reset@example.com")
+
+        assert "/portal/reset-password?token=" in email_outbox[0].body
+        assert "/auth/reset-password?token=" in email_outbox[1].body
 
     async def test_reset_token_is_single_use(self, db_session, email_outbox) -> None:
         await make_user(db_session, email="reset2@example.com", password=PASSWORD)

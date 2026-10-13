@@ -2926,6 +2926,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/portal/agencies/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search Agencies */
+        get: operations["search_agencies_portal_agencies_search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/portal/context": {
         parameters: {
             query?: never;
@@ -3057,6 +3074,23 @@ export interface paths {
         get: operations["preview_invitation_portal_invitations_preview_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/portal/invitations/resend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resend Invitation */
+        post: operations["resend_invitation_portal_invitations_resend_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5198,6 +5232,28 @@ export interface components {
             /** Status */
             status: string;
         };
+        /**
+         * ClientInvitationResendRequest
+         * @description An invitee asking for their invitation email again (POST
+         *     /portal/invitations/resend). ``agency_id`` is set when they picked the
+         *     agency from the name suggestions; otherwise the name is matched exactly.
+         */
+        ClientInvitationResendRequest: {
+            /** Agency Id */
+            agency_id?: string | null;
+            /** Agency Name */
+            agency_name: string;
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+        };
+        /** ClientInvitationResendResponse */
+        ClientInvitationResendResponse: {
+            /** Message */
+            message: string;
+        };
         /** ConfirmEmailChangeRequest */
         ConfirmEmailChangeRequest: {
             /** Token */
@@ -6822,6 +6878,21 @@ export interface components {
             leads: number;
             /** Team Members */
             team_members: number;
+        };
+        /**
+         * PortalAgencyMatch
+         * @description One suggestion in the unauthenticated agency-name search (GET
+         *     /portal/agencies/search). Deliberately just enough to pick the right
+         *     agency — nothing else about it is public.
+         */
+        PortalAgencyMatch: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
         };
         /**
          * PortalAgencyRead
@@ -16361,6 +16432,37 @@ export interface operations {
             };
         };
     };
+    search_agencies_portal_agencies_search_get: {
+        parameters: {
+            query?: {
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortalAgencyMatch"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     read_context_portal_context_get: {
         parameters: {
             query?: never;
@@ -16613,6 +16715,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ClientInvitationPreview"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resend_invitation_portal_invitations_resend_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClientInvitationResendRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientInvitationResendResponse"];
                 };
             };
             /** @description Validation Error */

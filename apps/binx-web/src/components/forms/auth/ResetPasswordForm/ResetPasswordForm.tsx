@@ -17,7 +17,9 @@ import { z } from "zod";
 
 import { resetPasswordAction } from "@/app/(auth)/auth/reset-password/actions";
 
-import styles from "./ResetPasswordForm.module.scss";
+import portalStyles from "@/components/portal-auth/portal-auth-form.module.scss";
+
+import defaultStyles from "./ResetPasswordForm.module.scss";
 
 const resetPasswordSchema = z
   .object({
@@ -33,9 +35,15 @@ type ResetPasswordValues = z.infer<typeof resetPasswordSchema>;
 
 interface ResetPasswordFormProps {
   token: string;
+  /** "portal" swaps in the client portal's warm skin (see portal-auth-form.module.scss). */
+  variant?: "default" | "portal";
 }
 
-const ResetPasswordForm = ({ token }: ResetPasswordFormProps) => {
+const ResetPasswordForm = ({
+  token,
+  variant = "default",
+}: ResetPasswordFormProps) => {
+  const styles = variant === "portal" ? portalStyles : defaultStyles;
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);

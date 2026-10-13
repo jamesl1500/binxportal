@@ -5,7 +5,7 @@
  * link. On success the caller becomes a ClientContact; redirect them into
  * the portal.
  *
- * @module apps/binx-web/src/app/(auth)/auth/portal-invite/actions.ts
+ * @module apps/binx-web/src/app/(portal-auth)/auth/portal-invite/actions.ts
  * @author Binx Portal
  */
 "use server";
