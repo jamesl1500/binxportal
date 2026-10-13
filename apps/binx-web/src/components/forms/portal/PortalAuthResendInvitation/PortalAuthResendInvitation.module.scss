@@ -1,0 +1,239 @@
+@use "../../../../styles/tokens" as t;
+@use "../../../../styles/mixins" as m;
+@use "../../../../styles/portal-warm" as w;
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: t.$space-5;
+  
+    // Fields arrive one after another, just behind the page heading.
+    > * {
+      animation: rise 0.6s w.$ease-out both;
+    }
+  
+    @for $i from 1 through 8 {
+      > :nth-child(#{$i}) {
+        animation-delay: #{0.4 + $i * 0.07}s;
+      }
+    }
+  }
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+
+  // Each field is its own stacking context (the entrance animation), so lift
+  // the one in use above its siblings or the suggestions open underneath them.
+  &:focus-within {
+    position: relative;
+    z-index: 2;
+  }
+}
+
+.labelRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.label {
+  @include m.mono-label;
+  color: t.$color-ink-soft;
+}
+
+.button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-top: t.$space-2;
+  padding: 0.95rem 1.5rem;
+  overflow: hidden;
+  font-size: t.$font-size-base;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(
+    120deg,
+    w.$terracotta 0%,
+    #ec7a3c 55%,
+    w.$apricot 100%
+  );
+  background-size: 180% 100%;
+  border: none;
+  border-radius: 2px;
+  box-shadow: 0 14px 28px -14px rgba(216, 86, 42, 0.9);
+  cursor: pointer;
+  transition:
+    background-position 0.5s w.$ease-out,
+    box-shadow 0.3s ease,
+    transform 0.25s w.$ease-out;
+
+  // A soft sheen that sweeps across on hover.
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      100deg,
+      transparent 30%,
+      rgba(255, 255, 255, 0.35) 50%,
+      transparent 70%
+    );
+    translate: -120% 0;
+    transition: translate 0.7s w.$ease-out;
+  }
+
+  &:hover:not(:disabled) {
+    background-position: 100% 0;
+    box-shadow: 0 18px 32px -14px rgba(216, 86, 42, 0.95);
+    transform: translateY(-2px);
+
+    &::after {
+      translate: 120% 0;
+    }
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0) scale(0.99);
+  }
+
+  &:focus-visible {
+    outline: 3px solid rgba(255, 171, 94, 0.6);
+    outline-offset: 3px;
+  }
+
+  // Pending ("Signing in…") — the gradient breathes while we wait.
+  &:disabled {
+    cursor: progress;
+    animation: breathe 1.2s ease-in-out infinite alternate !important;
+  }
+}
+
+.input {
+  @include m.input-base;
+
+  &[aria-invalid="true"] {
+    border-color: t.$color-danger;
+  }
+}
+
+.error {
+  margin: 0;
+  font-size: t.$font-size-xs;
+  font-weight: 500;
+  color: w.$danger;
+}
+
+.hint {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  line-height: 1.55;
+  color: w.$cocoa-soft;
+}
+
+.formError {
+  margin: 0;
+  padding: t.$space-3 t.$space-4;
+  font-size: t.$font-size-sm;
+  line-height: 1.5;
+  color: w.$danger;
+  background: rgba(194, 51, 28, 0.07);
+  border: 1px solid rgba(194, 51, 28, 0.2);
+  border-radius: 2px;
+  // Overrides the staggered entrance: an error should register at once.
+  animation: shake 0.4s ease !important;
+}
+
+.formSuccess {
+  margin: 0;
+  padding: t.$space-4;
+  font-size: t.$font-size-sm;
+  line-height: 1.55;
+  color: #1f5e3d;
+  background: rgba(47, 143, 91, 0.09);
+  border: 1px solid rgba(47, 143, 91, 0.22);
+  border-radius: 2px;
+}
+
+// ---- Agency suggestions (AgencyNameField) ----
+
+.combobox {
+  position: relative;
+}
+
+.options {
+  position: absolute;
+  top: calc(100% + #{t.$space-1});
+  right: 0;
+  left: 0;
+  z-index: 10;
+  max-height: 15rem;
+  margin: 0;
+  padding: t.$space-1;
+  overflow-y: auto;
+  list-style: none;
+  background: #fff;
+  border: 1px solid w.$border;
+  border-radius: 2px;
+  box-shadow: 0 18px 36px -18px rgba(120, 60, 20, 0.45);
+  animation: rise 0.18s w.$ease-out both;
+}
+
+.option {
+  padding: t.$space-2 t.$space-3;
+  font-size: t.$font-size-sm;
+  color: w.$cocoa;
+  border-radius: 2px;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+
+  &[aria-selected="true"] {
+    background: rgba(255, 171, 94, 0.22);
+  }
+}
+
+.noOptions {
+  padding: t.$space-2 t.$space-3;
+  font-size: t.$font-size-sm;
+  color: w.$cocoa-soft;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+}
+
+@keyframes shake {
+  20%,
+  60% {
+    transform: translateX(-5px);
+  }
+
+  40%,
+  80% {
+    transform: translateX(5px);
+  }
+}
+
+@keyframes stamp {
+  from {
+    opacity: 0;
+    scale: 0.3;
+  }
+}
+
+@keyframes breathe {
+  from {
+    opacity: 0.75;
+  }
+
+  to {
+    opacity: 1;
+    background-position: 100% 0;
+  }
+}

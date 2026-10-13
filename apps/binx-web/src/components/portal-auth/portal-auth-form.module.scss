@@ -83,7 +83,7 @@
   color: w.$cocoa;
   background: rgba(255, 255, 255, 0.9);
   border: 1.5px solid w.$border;
-  border-radius: w.$radius-field;
+  border-radius: 2px;
   transition:
     border-color 0.2s ease,
     box-shadow 0.25s ease,
@@ -213,10 +213,15 @@
   font-size: t.$font-size-base;
   font-weight: 600;
   color: #fff;
-  background: linear-gradient(120deg, w.$terracotta 0%, #ec7a3c 55%, w.$apricot 100%);
+  background: linear-gradient(
+    120deg,
+    w.$terracotta 0%,
+    #ec7a3c 55%,
+    w.$apricot 100%
+  );
   background-size: 180% 100%;
   border: none;
-  border-radius: 999px;
+  border-radius: 2px;
   box-shadow: 0 14px 28px -14px rgba(216, 86, 42, 0.9);
   cursor: pointer;
   transition:

@@ -3656,6 +3656,53 @@
         "title": "ClientInvitationRead",
         "type": "object"
       },
+      "ClientInvitationResendRequest": {
+        "description": "An invitee asking for their invitation email again (POST\n/portal/invitations/resend). ``agency_id`` is set when they picked the\nagency from the name suggestions; otherwise the name is matched exactly.",
+        "properties": {
+          "agency_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agency Id"
+          },
+          "agency_name": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Agency Name",
+            "type": "string"
+          },
+          "email": {
+            "format": "email",
+            "title": "Email",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "agency_name"
+        ],
+        "title": "ClientInvitationResendRequest",
+        "type": "object"
+      },
+      "ClientInvitationResendResponse": {
+        "properties": {
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "title": "ClientInvitationResendResponse",
+        "type": "object"
+      },
       "ConfirmEmailChangeRequest": {
         "properties": {
           "token": {
@@ -8532,6 +8579,26 @@
           "team_members"
         ],
         "title": "PlanUsageRead",
+        "type": "object"
+      },
+      "PortalAgencyMatch": {
+        "description": "One suggestion in the unauthenticated agency-name search (GET\n/portal/agencies/search). Deliberately just enough to pick the right\nagency \u2014 nothing else about it is public.",
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "PortalAgencyMatch",
         "type": "object"
       },
       "PortalAgencyRead": {
@@ -27505,6 +27572,54 @@
         ]
       }
     },
+    "/portal/agencies/search": {
+      "get": {
+        "operationId": "search_agencies_portal_agencies_search_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "default": "",
+              "maxLength": 100,
+              "title": "Q",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PortalAgencyMatch"
+                  },
+                  "title": "Response Search Agencies Portal Agencies Search Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Search Agencies",
+        "tags": [
+          "client-portal"
+        ]
+      }
+    },
     "/portal/context": {
       "get": {
         "operationId": "read_context_portal_context_get",
@@ -27925,6 +28040,47 @@
           }
         },
         "summary": "Preview Invitation",
+        "tags": [
+          "client-portal"
+        ]
+      }
+    },
+    "/portal/invitations/resend": {
+      "post": {
+        "operationId": "resend_invitation_portal_invitations_resend_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientInvitationResendRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientInvitationResendResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Resend Invitation",
         "tags": [
           "client-portal"
         ]

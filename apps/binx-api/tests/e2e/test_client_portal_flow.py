@@ -7,11 +7,14 @@ and client-linked messages.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 
 import pytest
+from sqlalchemy import select
 
 from binx_api.core import stripe_client
+from binx_api.modules.client_portal.models import ClientInvitation
 from binx_api.modules.invoicing import service as invoicing_service
 from binx_api.modules.invoicing.service import issue_invoice
 from binx_api.modules.messaging.service import create_conversation
@@ -79,6 +82,133 @@ class TestOnboarding:
         ):
             r = await client.get(path, headers=auth_headers(stranger))
             assert r.status_code == 403, path
+
+
+class TestAgencySearch:
+    async def test_suggests_matching_agencies_without_an_account(self, client, db_session, portal_setup) -> None:
+        other_owner = await make_user(db_session, email="other@agency.example", user_name="otherowner")
+        await make_agency(db_session, owner=other_owner, name="Forge & Pixel Co")
+        await make_agency(db_session, owner=other_owner, name="Unrelated Studio")
+
+        response = await client.get("/portal/agencies/search", params={"q": "pixel"})
+
+        assert response.status_code == 200
+        # Names that start with the text come first; only id + name are exposed.
+        assert [match["name"] for match in response.json()] == ["Pixel Forge", "Forge & Pixel Co"]
+        assert set(response.json()[0]) == {"id", "name"}
+        assert response.json()[0]["id"] == str(portal_setup["agency"].id)
+
+    async def test_returns_nothing_for_short_or_wildcard_queries(self, client, portal_setup) -> None:
+        # One character, blank, and LIKE wildcards must not list agencies.
+        for query in ["p", " ", "", "%%", "__", "%i%"]:
+            response = await client.get("/portal/agencies/search", params={"q": query})
+            assert response.status_code == 200
+            assert response.json() == [], query
+
+    async def test_caps_the_number_of_suggestions(self, client, db_session, portal_setup) -> None:
+        for index in range(8):
+            await make_agency(db_session, owner=portal_setup["owner"], name=f"Pixel Studio {index}")
+
+        response = await client.get("/portal/agencies/search", params={"q": "pixel"})
+
+        assert len(response.json()) == 6
+
+
+class TestSelfServiceResend:
+    EMAIL = "casey@northwind.example"
+
+    async def _invite(self, client, db_session, portal_setup, *, age=timedelta(minutes=10)):
+        """Staff invite EMAIL; the invitation is then aged past the resend cooldown."""
+        invite = await client.post(
+            f"/agencies/{portal_setup['agency'].id}/clients/{portal_setup['client'].id}/contacts/invitations",
+            json={"email": self.EMAIL},
+            headers=auth_headers(portal_setup["owner"]),
+        )
+        assert invite.status_code == 201, invite.text
+        invitation = await db_session.scalar(select(ClientInvitation).where(ClientInvitation.email == self.EMAIL))
+        invitation.updated_at = datetime.now(UTC) - age
+        await db_session.commit()
+        return invitation
+
+    async def _resend(self, client, **overrides):
+        body = {"email": self.EMAIL, "agency_name": "Pixel Forge", **overrides}
+        return await client.post("/portal/invitations/resend", json=body)
+
+    async def test_resends_an_active_invitation_with_a_working_link(
+        self, client, db_session, email_outbox, portal_setup
+    ) -> None:
+        invitation = await self._invite(client, db_session, portal_setup)
+        expires_at = invitation.expires_at
+        old_token = extract_token(email_outbox[-1].body)
+
+        # Name and email are matched case-insensitively.
+        response = await self._resend(client, agency_name="pixel forge", email="Casey@Northwind.example")
+
+        assert response.status_code == 200
+        assert len(email_outbox) == 2
+        assert email_outbox[-1].to == self.EMAIL
+        new_token = extract_token(email_outbox[-1].body)
+        assert new_token != old_token
+        preview = await client.get("/portal/invitations/preview", params={"token": new_token})
+        assert preview.status_code == 200
+        assert preview.json()["client_name"] == "Northwind Traders"
+        # The earlier link is retired, and the invitee can't extend the expiry.
+        assert (await client.get("/portal/invitations/preview", params={"token": old_token})).status_code == 400
+        await db_session.refresh(invitation)
+        assert invitation.expires_at == expires_at
+
+    async def test_answers_the_same_and_sends_nothing_when_there_is_no_active_match(
+        self, client, db_session, email_outbox, portal_setup
+    ) -> None:
+        invitation = await self._invite(client, db_session, portal_setup)
+        matched = (await self._resend(client)).json()
+        sent = len(email_outbox)
+
+        async def expect_silence(**overrides) -> None:
+            invitation.updated_at = datetime.now(UTC) - timedelta(minutes=10)
+            await db_session.commit()
+            response = await self._resend(client, **overrides)
+            assert response.status_code == 200
+            assert response.json() == matched
+            assert len(email_outbox) == sent, overrides
+
+        # Someone else's email, a different agency, and a partial agency name.
+        await expect_silence(email="stranger@example.com")
+        await expect_silence(agency_name="Unrelated Studio")
+        await expect_silence(agency_name="Pixel")
+        await expect_silence(agency_id=str(portal_setup["client"].id))
+
+        # Revoked.
+        invitation.status = "revoked"
+        await db_session.commit()
+        await expect_silence()
+
+        # Expired.
+        invitation.status = "pending"
+        invitation.expires_at = datetime.now(UTC) - timedelta(minutes=1)
+        await db_session.commit()
+        await expect_silence()
+
+    async def test_matches_by_agency_id_when_one_was_picked(
+        self, client, db_session, email_outbox, portal_setup
+    ) -> None:
+        await self._invite(client, db_session, portal_setup)
+
+        # The id wins over whatever text is in the name field.
+        response = await self._resend(client, agency_name="typo", agency_id=str(portal_setup["agency"].id))
+
+        assert response.status_code == 200
+        assert len(email_outbox) == 2
+
+    async def test_will_not_resend_the_same_invitation_again_straight_away(
+        self, client, db_session, email_outbox, portal_setup
+    ) -> None:
+        await self._invite(client, db_session, portal_setup)
+
+        await self._resend(client)
+        await self._resend(client)
+
+        assert len(email_outbox) == 2  # the original + one resend
 
 
 class TestPortalReads:

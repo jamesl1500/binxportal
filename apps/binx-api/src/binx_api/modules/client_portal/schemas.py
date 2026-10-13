@@ -181,6 +181,29 @@ class ClientInvitationAccept(BaseModel):
     token: str
 
 
+class ClientInvitationResendRequest(BaseModel):
+    """An invitee asking for their invitation email again (POST
+    /portal/invitations/resend). ``agency_id`` is set when they picked the
+    agency from the name suggestions; otherwise the name is matched exactly."""
+
+    email: EmailStr
+    agency_name: str = Field(min_length=1, max_length=255)
+    agency_id: uuid.UUID | None = None
+
+
+class ClientInvitationResendResponse(BaseModel):
+    message: str
+
+
+class PortalAgencyMatch(BaseModel):
+    """One suggestion in the unauthenticated agency-name search (GET
+    /portal/agencies/search). Deliberately just enough to pick the right
+    agency — nothing else about it is public."""
+
+    id: uuid.UUID
+    name: str
+
+
 class ClientInvitationPreview(BaseModel):
     """What an unauthenticated visitor sees before logging in to accept."""
 

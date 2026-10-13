@@ -63,6 +63,7 @@ export type PortalCheckoutConfirmation = Schemas["CheckoutConfirmRead"];
 export type PortalCheckoutOutcome = PortalCheckoutConfirmation["outcome"];
 
 export type PortalInvitationPreview = Schemas["ClientInvitationPreview"];
+export type PortalAgencyMatch = Schemas["PortalAgencyMatch"];
 export type PortalMeetingSettings = Schemas["PortalMeetingSettingsRead"];
 export type PortalMeetingBookingInput = Schemas["PortalMeetingCreate"];
 
@@ -787,6 +788,61 @@ export async function submitPortalKickoffAnswers(
 }
 
 // ---- Invitation (onboarding) ----
+
+export interface PortalInvitationResendInput {
+  email: string;
+  agencyName: string;
+  /** Set when the agency was picked from the name suggestions. */
+  agencyId?: string;
+}
+
+/**
+ * resendPortalInvitation
+ *
+ * Asks binx-api (`POST /portal/invitations/resend`, unauthenticated) to email
+ * the invitation again if the named agency has an active one — pending, not
+ * revoked, not expired — for this address. Resolves with binx-api's message,
+ * which is the same whether or not anything matched.
+ */
+export async function resendPortalInvitation(
+  input: PortalInvitationResendInput,
+): Promise<string> {
+  try {
+    const { data } = await api.post<Schemas["ClientInvitationResendResponse"]>(
+      "/portal/invitations/resend",
+      {
+        email: input.email,
+        agency_name: input.agencyName,
+        agency_id: input.agencyId ?? null,
+      },
+    );
+    return data.message;
+  } catch (error) {
+    rethrow(error, "Unable to resend your invitation");
+  }
+}
+
+/**
+ * searchPortalAgencies
+ *
+ * Agencies whose name matches `query`, via the unauthenticated
+ * `GET /portal/agencies/search` — the suggestions behind the agency field on
+ * the portal's resend-invitation page. binx-api returns nothing for fewer
+ * than two characters, and only ever a handful of id + name pairs.
+ */
+export async function searchPortalAgencies(
+  query: string,
+): Promise<PortalAgencyMatch[]> {
+  try {
+    const { data } = await api.get<PortalAgencyMatch[]>(
+      "/portal/agencies/search",
+      { params: { q: query } },
+    );
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to search agencies");
+  }
+}
 
 export async function previewPortalInvitation(
   token: string,

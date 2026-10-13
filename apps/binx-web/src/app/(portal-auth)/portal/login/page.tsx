@@ -52,8 +52,16 @@ const PortalLoginPage = async ({ searchParams }: PortalLoginPageProps) => {
       <LoginForm variant="portal" portalInviteToken={invite} />
 
       <PortalAuthFooter>
-        New here? Your invitation email has a link to set up your login.
+        New here? Your invitation email has a link to set up your login.{" "}
+        <Link href="/portal/resend-invitation">Resend invitation</Link>
         <br />
+        <hr
+          style={{
+            border: "none",
+            borderTop: "1px solid #ddd",
+            margin: "1rem 0",
+          }}
+        />
         On the agency team? <Link href="/auth/login">Sign in here</Link>
       </PortalAuthFooter>
     </div>
