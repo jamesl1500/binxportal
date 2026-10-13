@@ -330,6 +330,211 @@ export function buildAttentionItems({
   return items.sort((a, b) => TONE_RANK[a.tone] - TONE_RANK[b.tone]);
 }
 
+// ---- Dashboard summary ----
+
+/** Remembers which home view the client last chose (read by the home page). */
+export const PORTAL_HOME_VIEW_COOKIE = "binx_portal_home_view";
+export type PortalHomeView = "summary" | "full";
+
+export function parseHomeView(value: string | undefined): PortalHomeView {
+  return value === "summary" ? "summary" : "full";
+}
+
+/** How many next steps / projects the summary shows before "+N more". */
+const SUMMARY_STEP_LIMIT = 3;
+const SUMMARY_PROJECT_LIMIT = 3;
+
+export type SummaryTone = AttentionTone | "positive";
+
+export interface SummaryProject {
+  id: string;
+  name: string;
+  status: string;
+  percent: number;
+  due: DueLabel | null;
+  href: string;
+}
+
+export interface SummaryFact {
+  id: "money" | "meeting";
+  tone: SummaryTone;
+  text: string;
+  href: string;
+  /** An instant to show in the viewer's own timezone (see LocalTime). */
+  at?: string;
+}
+
+export interface PortalSummary {
+  tone: SummaryTone;
+  /** One plain-language sentence: what's waiting on the client, if anything. */
+  headline: string;
+  nextSteps: AttentionItem[];
+  /** Attention items beyond the ones in `nextSteps`. */
+  moreSteps: number;
+  projects: SummaryProject[];
+  moreProjects: number;
+  facts: SummaryFact[];
+}
+
+interface SummaryInput {
+  /** Already built and sorted by the page — see buildAttentionItems. */
+  attention: AttentionItem[];
+  projects: PortalProject[];
+  invoices: PortalInvoice[];
+  conversations: Conversation[];
+  meetings: PortalMeeting[];
+  agencyName: string;
+  now: Date;
+}
+
+/** Projects still under way, the ones in flight first. */
+const SUMMARY_STATUS_ORDER: Record<string, number> = {
+  waiting_on_client: 0,
+  active: 1,
+  planning: 2,
+  on_hold: 3,
+};
+
+function countPhrase(count: number, one: string, many: string): string {
+  return count === 1 ? one : `${count} ${many}`;
+}
+
+function joinList(parts: string[]): string {
+  if (parts.length <= 1) return parts.join("");
+  return `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
+}
+
+/** "an overdue invoice, a proposal to review and 3 unread messages". */
+function describeAttention(attention: AttentionItem[], unread: number): string {
+  const count = (kind: AttentionKind, tone?: AttentionTone) =>
+    attention.filter(
+      (item) => item.kind === kind && (!tone || item.tone === tone),
+    ).length;
+  const overdue = count("invoice", "danger");
+  const toPay = count("invoice") - overdue;
+  const phrases: [number, string, string][] = [
+    [overdue, "an overdue invoice", "overdue invoices"],
+    [count("kickoff"), "a kickoff to complete", "kickoffs to complete"],
+    [toPay, "an invoice to pay", "invoices to pay"],
+    [count("proposal"), "a proposal to review", "proposals to review"],
+    [unread, "an unread message", "unread messages"],
+    [count("meeting"), "a meeting coming up", "meetings coming up"],
+  ];
+  return joinList(
+    phrases
+      .filter(([n]) => n > 0)
+      .map(([n, one, many]) => countPhrase(n, one, many)),
+  );
+}
+
+/**
+ * buildPortalSummary
+ *
+ * The short version of the portal home: one sentence on what's waiting on
+ * the client, the few most urgent things to do, where each open project
+ * stands, and the money / next-meeting facts. Derived from the lists the
+ * page already holds, so switching to it costs no request.
+ */
+export function buildPortalSummary({
+  attention,
+  projects,
+  invoices,
+  conversations,
+  meetings,
+  agencyName,
+  now,
+}: SummaryInput): PortalSummary {
+  const open = projects
+    .filter((project) => project.status in SUMMARY_STATUS_ORDER)
+    .sort(
+      (a, b) => SUMMARY_STATUS_ORDER[a.status] - SUMMARY_STATUS_ORDER[b.status],
+    );
+  const inProgress = open.filter((project) => project.status === "active");
+
+  const tone: SummaryTone =
+    attention.length === 0
+      ? "positive"
+      : attention.reduce<AttentionTone>(
+          (worst, item) =>
+            TONE_RANK[item.tone] < TONE_RANK[worst] ? item.tone : worst,
+          "info",
+        );
+
+  let headline: string;
+  if (attention.length > 0) {
+    // Message items are one per thread; the client thinks in messages.
+    const unread = conversations.reduce(
+      (total, conversation) => total + conversation.unread_count,
+      0,
+    );
+    headline = `Waiting on you: ${describeAttention(attention, unread)}.`;
+  } else if (inProgress.length > 0) {
+    headline = `Nothing needs you right now — ${agencyName} is working on ${countPhrase(inProgress.length, "your project", "of your projects")}.`;
+  } else {
+    headline = "Nothing needs you right now.";
+  }
+
+  const nextSteps = attention.slice(0, SUMMARY_STEP_LIMIT);
+
+  const facts: SummaryFact[] = [];
+  const unpaid = invoices.filter(isUnpaid);
+  if (unpaid.length > 0) {
+    const owed = unpaid.reduce((sum, inv) => sum + inv.amount_due_cents, 0);
+    const overdue = unpaid.filter(
+      (inv) => inv.display_status === "overdue",
+    ).length;
+    facts.push({
+      id: "money",
+      tone: overdue > 0 ? "danger" : "warn",
+      text:
+        `${formatMoneyCents(owed, unpaid[0].currency)} outstanding across ${countPhrase(unpaid.length, "1 invoice", "invoices")}` +
+        (overdue > 0 ? ` — ${overdue} overdue` : ""),
+      href: "/portal/invoices",
+    });
+  } else if (invoices.length > 0) {
+    facts.push({
+      id: "money",
+      tone: "positive",
+      text: "All invoices are paid",
+      href: "/portal/invoices",
+    });
+  }
+
+  const nextMeeting = meetings
+    .filter((meeting) => isUpcomingMeeting(meeting, now))
+    .sort((a, b) => a.starts_at.localeCompare(b.starts_at))[0];
+  // Skip it when it's already one of the next steps above.
+  if (
+    nextMeeting &&
+    !nextSteps.some((item) => item.id === `meeting-${nextMeeting.id}`)
+  ) {
+    facts.push({
+      id: "meeting",
+      tone: "info",
+      text: `Next meeting: ${nextMeeting.title}`,
+      href: "/portal/meetings",
+      at: nextMeeting.starts_at,
+    });
+  }
+
+  return {
+    tone,
+    headline,
+    nextSteps,
+    moreSteps: attention.length - nextSteps.length,
+    projects: open.slice(0, SUMMARY_PROJECT_LIMIT).map((project) => ({
+      id: project.id,
+      name: project.name,
+      status: project.status,
+      percent: project.progress.percent,
+      due: dueLabel(project.due_date, now),
+      href: `/portal/projects/${project.id}`,
+    })),
+    moreProjects: Math.max(0, open.length - SUMMARY_PROJECT_LIMIT),
+    facts,
+  };
+}
+
 // ---- Kickoffs ----
 
 /** sessionStorage key for the kickoff invitation's Remind-me-later snooze. */
