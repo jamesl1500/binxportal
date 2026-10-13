@@ -32,6 +32,7 @@ import {
   deleteAgencyImage,
   updateAgency,
   updateAgencyProfile,
+  updateAgencySubdomain,
   uploadAgencyImage,
 } from "@/lib/agencies";
 
@@ -57,6 +58,23 @@ export async function updateAgencyAction(
   }
   // The new name shows up in the header and org switcher — re-render them in
   // this same response.
+  refresh();
+  return {};
+}
+
+export interface UpdateAgencySubdomainActionResult {
+  error?: string;
+}
+
+export async function updateAgencySubdomainAction(
+  agencyId: string,
+  subdomain: string | null,
+): Promise<UpdateAgencySubdomainActionResult> {
+  try {
+    await updateAgencySubdomain(agencyId, subdomain);
+  } catch (error) {
+    return errorResult(error, "Unable to update subdomain");
+  }
   refresh();
   return {};
 }

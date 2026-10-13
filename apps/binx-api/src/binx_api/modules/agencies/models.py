@@ -31,6 +31,15 @@ class Agency(Base):
     name: Mapped[str] = mapped_column(String(255))
     slug: Mapped[str] = mapped_column(String(63), unique=True, index=True)
 
+    # Optional custom subdomain (e.g. "foundryframe" for
+    # foundryframe.binxportal.com) — gated to the Starter plan and above
+    # (see billing/service.py::agency_plan_at_least, SUBDOMAIN_MIN_PLAN in
+    # agencies/service.py). Unlike `slug`, this is chosen and edited by the
+    # agency itself. Nullable + unique: Postgres allows multiple NULLs under
+    # a unique constraint, so agencies without one don't collide (same
+    # pattern as AgencySubscription.stripe_customer_id).
+    subdomain: Mapped[str | None] = mapped_column(String(63), unique=True, index=True, default=None)
+
 
 # Join table: which users belong to which agencies, and with what role.
 class AgencyMember(Base):

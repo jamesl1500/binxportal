@@ -34,7 +34,9 @@ from binx_api.modules.agencies.schemas import (
     AgencyMemberRoleUpdate,
     AgencyProfileRead,
     AgencyProfileUpdate,
+    AgencyPublicBranding,
     AgencyRead,
+    AgencySubdomainUpdate,
     AgencyUpdate,
     ClientBrandingRead,
     ClientBrandingUpdate,
@@ -62,6 +64,7 @@ def _agency_read(agency: Agency, role: str, *, logo_storage_path: str | None = N
         id=agency.id,
         name=agency.name,
         slug=agency.slug,
+        subdomain=agency.subdomain,
         role=role,
         has_logo=logo_storage_path is not None,
         logo_version=image_version(logo_storage_path),
@@ -179,6 +182,26 @@ async def list_my_agencies(db: DbSession, current_user: CurrentUser) -> list[Age
 # should see what they're accepting before being asked to log in. ---
 
 
+@router.get("/by-subdomain/{subdomain}", response_model=AgencyPublicBranding)
+async def read_agency_by_subdomain(db: DbSession, subdomain: str) -> AgencyPublicBranding:
+    """Unauthenticated — resolves a custom subdomain (e.g. "foundryframe")
+    to the minimal branding binx-web's middleware/login page needs. 404 for
+    an unclaimed subdomain, or one whose agency has since dropped below the
+    required plan (service.get_agency_by_subdomain)."""
+    agency = await service.get_agency_by_subdomain(db, subdomain)
+    if agency is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No agency found for that subdomain")
+    profile = await service.get_or_create_agency_profile(db, agency)
+    return AgencyPublicBranding(
+        id=agency.id,
+        name=agency.name,
+        subdomain=agency.subdomain,  # type: ignore[arg-type]
+        brand_color=profile.brand_color,
+        has_logo=profile.logo_storage_path is not None,
+        logo_version=image_version(profile.logo_storage_path),
+    )
+
+
 @router.get("/invitations/preview", response_model=AgencyInvitationPreview)
 async def preview_invitation(db: DbSession, token: str) -> AgencyInvitationPreview:
     invitation, agency, inviter = await service.preview_invitation(db, token)
@@ -208,6 +231,17 @@ async def update_agency_endpoint(
 async def delete_agency_endpoint(db: DbSession, agency_and_role: OwnedAgency) -> None:
     agency, _role = agency_and_role
     await service.delete_agency(db, agency)
+
+
+@router.patch("/{agency_id}/subdomain", response_model=AgencyRead)
+async def update_agency_subdomain_endpoint(
+    db: DbSession, data: AgencySubdomainUpdate, current_user: CurrentUser, agency_and_role: AgencyAndRole
+) -> AgencyRead:
+    agency, role = agency_and_role
+    subdomain = data.subdomain.strip() if data.subdomain else None
+    agency = await service.update_agency_subdomain(db, agency, subdomain=subdomain or None, actor=current_user)
+    profile = await service.get_or_create_agency_profile(db, agency)
+    return _agency_read(agency, role, logo_storage_path=profile.logo_storage_path)
 
 
 # --- Profile (branding / about / policies) ---
