@@ -13,7 +13,89 @@
   min-height: 100dvh;
   overflow: hidden;
   color: w.$cocoa;
-  background: linear-gradient(160deg, w.$cream 0%, w.$sand 55%, #ffd9b8 100%);
+  background: var(--sky);
+
+  // The sky follows the visitor's clock — PortalAuthSky sets data-phase.
+  // Morning (also what the server renders) is a sunrise.
+  --sky: linear-gradient(160deg, #{w.$cream} 0%, #{w.$sand} 55%, #ffd9b8 100%);
+  --ink: #{w.$cocoa};
+  --ink-soft: #{w.$cocoa-soft};
+  --shadow: 150, 80, 30;
+  --sun: radial-gradient(
+    circle,
+    rgba(255, 211, 122, 0.95) 0%,
+    rgba(255, 171, 94, 0.75) 34%,
+    rgba(255, 141, 121, 0.35) 58%,
+    transparent 72%
+  );
+  --sun-shift: 0 0;
+  --rays-opacity: 1;
+  --orb-a: #{w.$rose};
+  --orb-b: #{w.$gold};
+  --orb-c: #{w.$apricot};
+  --orb-opacity: 0.55;
+  --glass: #{w.$card};
+
+  // Afternoon: the sun is up — smaller-looking, higher, more yellow than orange.
+  &[data-phase="day"] {
+    --sky: linear-gradient(170deg, #fffdf6 0%, #fff3d9 50%, #ffe4b3 100%);
+    --sun: radial-gradient(
+      circle,
+      rgba(255, 244, 196, 1) 0%,
+      rgba(255, 221, 128, 0.85) 26%,
+      rgba(255, 196, 96, 0.3) 52%,
+      transparent 70%
+    );
+    --sun-shift: 4rem -30rem;
+    --orb-a: #ffe08a;
+    --orb-b: #ffd0a1;
+    --orb-c: #ffc978;
+    --orb-opacity: 0.45;
+  }
+
+  // Evening: dusk overhead, the horizon on fire, the sun going down.
+  &[data-phase="evening"] {
+    --sky: linear-gradient(
+      175deg,
+      #cfa6c8 0%,
+      #f3b0a6 26%,
+      #ff9a76 56%,
+      #f47a4e 100%
+    );
+    --ink: #33190f;
+    --ink-soft: #5b3324;
+    --shadow: 120, 40, 30;
+    // A crisp disc (the hard stop at 19–20%) half-sunk below the page edge,
+    // with the afterglow spreading out around it.
+    --sun: radial-gradient(
+      circle,
+      #ffe7a8 0%,
+      #ffbd62 11%,
+      #ff8f45 19%,
+      rgba(255, 112, 66, 0.6) 20%,
+      rgba(232, 78, 84, 0.32) 44%,
+      transparent 70%
+    );
+    --sun-shift: 2rem 1.5rem;
+    --rays-opacity: 0.7;
+    --orb-a: #b06ab3;
+    --orb-b: #ff7a59;
+    --orb-c: #ffb347;
+    --orb-opacity: 0.5;
+  }
+
+  // Night: the sun is gone — a moon, and stars that only show here.
+  &[data-phase="night"] {
+    --sky: linear-gradient(170deg, #0b1030 0%, #1a1c4b 48%, #3b2a63 100%);
+    --ink: #fdf3e6;
+    --ink-soft: rgba(253, 243, 230, 0.74);
+    --shadow: 4, 6, 28;
+    --orb-a: #4c3fa8;
+    --orb-b: #7a3f8f;
+    --orb-c: #2c4a9e;
+    --orb-opacity: 0.4;
+    --glass: rgba(255, 250, 243, 0.95);
+  }
 
   @media (min-width: 1024px) {
     grid-template-columns: minmax(0, 6fr) minmax(0, 5fr);
@@ -47,16 +129,23 @@
 }
 
 .sun {
-  background: radial-gradient(
-    circle,
-    rgba(255, 211, 122, 0.95) 0%,
-    rgba(255, 171, 94, 0.75) 34%,
-    rgba(255, 141, 121, 0.35) 58%,
-    transparent 72%
-  );
+  background: var(--sun);
+  // `translate` places the sun for the phase; the animations own `transform`.
+  translate: var(--sun-shift);
   animation:
     sunrise 1.8s w.$ease-out both,
     glow 7s ease-in-out 1.8s infinite alternate;
+
+  // It arrives from above and settles onto the horizon instead of rising.
+  [data-phase="evening"] & {
+    animation:
+      sunset 3.2s w.$ease-out both,
+      glow 7s ease-in-out 3.2s infinite alternate;
+  }
+
+  [data-phase="night"] & {
+    display: none;
+  }
 }
 
 .rays {
@@ -70,9 +159,15 @@
     transparent 6deg 18deg
   );
   mask-image: radial-gradient(circle, #000 20%, transparent 68%);
+  opacity: var(--rays-opacity);
+  translate: var(--sun-shift);
   animation:
     fade 2.4s ease-out both,
     spin 90s linear infinite;
+
+  [data-phase="night"] & {
+    display: none;
+  }
 
   @media (max-width: 1023px) {
     bottom: -39rem;
@@ -85,7 +180,7 @@
   position: absolute;
   border-radius: 50%;
   filter: blur(48px);
-  opacity: 0.55;
+  opacity: var(--orb-opacity);
   animation: drift 18s ease-in-out infinite alternate;
 
   &[data-orb="a"] {
@@ -93,7 +188,7 @@
     right: 18%;
     width: 22rem;
     height: 22rem;
-    background: w.$rose;
+    background: var(--orb-a);
   }
 
   &[data-orb="b"] {
@@ -101,7 +196,7 @@
     right: -8rem;
     width: 26rem;
     height: 26rem;
-    background: w.$gold;
+    background: var(--orb-b);
     animation-duration: 24s;
     animation-delay: -6s;
   }
@@ -111,10 +206,104 @@
     left: 42%;
     width: 18rem;
     height: 18rem;
-    background: w.$apricot;
+    background: var(--orb-c);
     animation-duration: 21s;
     animation-delay: -11s;
   }
+}
+
+// ---- Night sky ----
+
+.stars,
+.shootingStar,
+.moon {
+  display: none;
+  position: absolute;
+
+  [data-phase="night"] & {
+    display: block;
+  }
+}
+
+// Three tiled layers of dots; the tile sizes share no common factor, so the
+// repeats never line up into a visible grid. Each layer twinkles on its own.
+.stars {
+  inset: 0;
+  background-repeat: repeat;
+  animation:
+    fade 2s ease-out both,
+    twinkle 4s ease-in-out 2s infinite alternate;
+
+  &[data-layer="a"] {
+    background-image:
+      radial-gradient(1.5px 1.5px at 20px 30px, #fff, transparent),
+      radial-gradient(1px 1px at 90px 140px, #fff, transparent),
+      radial-gradient(1.5px 1.5px at 160px 60px, #ffeec2, transparent),
+      radial-gradient(1px 1px at 210px 190px, #fff, transparent);
+    background-size: 233px 233px;
+  }
+
+  &[data-layer="b"] {
+    background-image:
+      radial-gradient(1px 1px at 50px 80px, #fff, transparent),
+      radial-gradient(2px 2px at 130px 20px, #fff, transparent),
+      radial-gradient(1px 1px at 250px 220px, #cfd8ff, transparent),
+      radial-gradient(1.5px 1.5px at 290px 110px, #fff, transparent);
+    background-size: 311px 311px;
+    animation-duration: 2s, 5.5s;
+    animation-delay: 0s, 1s;
+  }
+
+  &[data-layer="c"] {
+    background-image:
+      radial-gradient(1px 1px at 30px 120px, #fff, transparent),
+      radial-gradient(1.5px 1.5px at 110px 50px, #ffe9b8, transparent),
+      radial-gradient(1px 1px at 150px 150px, #fff, transparent);
+    background-size: 173px 173px;
+    animation-duration: 2s, 3.2s;
+    animation-delay: 0s, 2.6s;
+  }
+}
+
+.moon {
+  top: 4.5rem;
+  left: 36%;
+  width: 6.5rem;
+  height: 6.5rem;
+  // Craters are soft darker spots layered over the lit disc.
+  background:
+    radial-gradient(circle at 32% 30%, rgba(196, 176, 122, 0.55) 0 9%, transparent 10%),
+    radial-gradient(circle at 64% 58%, rgba(196, 176, 122, 0.45) 0 13%, transparent 14%),
+    radial-gradient(circle at 38% 72%, rgba(196, 176, 122, 0.4) 0 7%, transparent 8%),
+    radial-gradient(circle at 35% 30%, #fffdf2 0%, #f6e7b4 70%, #e9d596 100%);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 0.6rem rgba(255, 240, 190, 0.06),
+    0 0 4rem 1rem rgba(255, 236, 170, 0.35);
+  animation:
+    moonrise 2.4s w.$ease-out both,
+    bob 9s ease-in-out 2.4s infinite alternate,
+    moonglow 6s ease-in-out infinite alternate;
+
+  @media (max-width: 1023px) {
+    top: 1.25rem;
+    left: auto;
+    right: 1.25rem;
+    width: 3.5rem;
+    height: 3.5rem;
+  }
+}
+
+.shootingStar {
+  top: 12%;
+  left: 62%;
+  width: 7rem;
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent, #fff);
+  border-radius: 999px;
+  rotate: 155deg;
+  opacity: 0;
+  animation: shoot 11s ease-in 4s infinite;
 }
 
 // ---- Scene: greeting + previews (desktop) ----
@@ -139,7 +328,7 @@
   margin: 0;
   font-family: var(--font-heading);
   font-size: t.$font-size-lg;
-  color: w.$cocoa;
+  color: var(--ink);
   animation: rise 0.7s w.$ease-out both;
 }
 
@@ -171,7 +360,7 @@
   font-size: clamp(2.75rem, 4.6vw, 4.25rem);
   line-height: 1.02;
   letter-spacing: -0.02em;
-  color: w.$cocoa;
+  color: var(--ink);
   animation: rise 0.9s w.$ease-out 0.15s both;
 }
 
@@ -179,7 +368,7 @@
   margin: 0;
   font-size: t.$font-size-lg;
   line-height: 1.5;
-  color: w.$cocoa-soft;
+  color: var(--ink-soft);
 }
 
 .word {
@@ -200,12 +389,12 @@
   display: flex;
   gap: t.$space-3;
   padding: t.$space-4 t.$space-5;
-  background: w.$card;
+  background: var(--glass);
   border: 1px solid rgba(255, 255, 255, 0.9);
   border-radius: 20px;
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.9) inset,
-    0 18px 40px -18px rgba(150, 80, 30, 0.45);
+    0 18px 40px -18px rgba(var(--shadow), 0.45);
   backdrop-filter: blur(10px);
   // `translate`/`rotate` are separate properties so the entrance (which
   // animates `transform`) and the endless bob never fight over one.
@@ -352,7 +541,7 @@
 .footnote {
   margin: 0;
   font-size: t.$font-size-xs;
-  color: w.$cocoa-soft;
+  color: var(--ink-soft);
   animation: fade 1.2s ease-out 1.4s both;
 }
 
@@ -374,13 +563,13 @@
   width: 100%;
   max-width: 27rem;
   padding: t.$space-8 t.$space-6;
-  background: w.$card;
+  background: var(--glass);
   border: 1px solid rgba(255, 255, 255, 0.95);
-  border-radius: w.$radius-card;
+  //border-radius: w.$radius-card;
   box-shadow:
     0 1px 0 #fff inset,
-    0 40px 80px -40px rgba(150, 80, 30, 0.5),
-    0 12px 28px -18px rgba(150, 80, 30, 0.35);
+    0 40px 80px -40px rgba(var(--shadow), 0.5),
+    0 12px 28px -18px rgba(var(--shadow), 0.35);
   backdrop-filter: blur(16px);
   animation: card 0.9s w.$ease-out 0.1s both;
 
@@ -428,6 +617,52 @@
   from {
     opacity: 0;
     transform: translateY(12rem);
+  }
+}
+
+@keyframes sunset {
+  from {
+    opacity: 0.6;
+    transform: translateY(-11rem);
+  }
+}
+
+@keyframes moonrise {
+  from {
+    opacity: 0;
+    transform: translateY(6rem) scale(0.9);
+  }
+}
+
+@keyframes moonglow {
+  to {
+    box-shadow:
+      0 0 0 1rem rgba(255, 240, 190, 0.07),
+      0 0 6rem 1.75rem rgba(255, 236, 170, 0.45);
+  }
+}
+
+@keyframes twinkle {
+  to {
+    opacity: 0.35;
+  }
+}
+
+// Mostly waiting: the streak crosses in the first tenth of the loop.
+@keyframes shoot {
+  0% {
+    opacity: 0;
+    translate: 0 0;
+  }
+
+  2% {
+    opacity: 1;
+  }
+
+  9%,
+  100% {
+    opacity: 0;
+    translate: -22rem 10rem;
   }
 }
 

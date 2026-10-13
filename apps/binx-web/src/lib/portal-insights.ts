@@ -155,6 +155,28 @@ export function greetingFor(hour: number): string {
   return "Good evening";
 }
 
+/**
+ * The sky behind the client portal's sign-in pages (see PortalAuthSky): a
+ * sunrise, full daylight, a sunset, then a moon and stars.
+ */
+export type SkyPhase = "morning" | "day" | "evening" | "night";
+
+/** Hours at which each phase begins, in order — night wraps past midnight. */
+export const SKY_PHASE_STARTS: [number, SkyPhase][] = [
+  [5, "morning"],
+  [12, "day"],
+  [17, "evening"],
+  [20, "night"],
+];
+
+export function skyPhaseFor(hour: number): SkyPhase {
+  let phase: SkyPhase = "night";
+  for (const [start, name] of SKY_PHASE_STARTS) {
+    if (hour >= start) phase = name;
+  }
+  return phase;
+}
+
 export function firstName(fullName: string): string {
   return fullName.trim().split(/\s+/)[0] ?? fullName;
 }

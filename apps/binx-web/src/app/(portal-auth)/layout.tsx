@@ -3,10 +3,11 @@
  *
  * The client-facing counterpart of (auth)/auth/layout.tsx: signing in,
  * accepting an invitation, and password recovery for client contacts, on
- * their own warm, animated pages rather than the staff app's. A sunrise
- * backdrop, a time-of-day greeting, and three small looping previews of
- * what's waiting inside (a project moving, a message arriving, an invoice
- * settled) sit beside the form card.
+ * their own warm, animated pages rather than the staff app's. A sky that
+ * follows the visitor's own clock (sunrise, daylight, sunset, then a moon
+ * and stars — see PortalAuthSky), a time-of-day greeting, and three small
+ * looping previews of what's waiting inside (a project moving, a message
+ * arriving, an invoice settled) sit beside the form card.
  *
  * Everything animated here is decorative and CSS-only (no JS, hidden from
  * assistive tech) and switches off under `prefers-reduced-motion`.
@@ -24,6 +25,7 @@ import { Check, MessageCircle } from "lucide-react";
 import { SITE } from "@/lib/site";
 import BinxMark from "@/components/BinxMark/BinxMark";
 import PortalAuthGreeting from "@/components/portal-auth/PortalAuthGreeting/PortalAuthGreeting";
+import PortalAuthSky from "@/components/portal-auth/PortalAuthSky/PortalAuthSky";
 
 import styles from "./layout.module.scss";
 
@@ -36,8 +38,13 @@ const TAGLINE = ["Everything", "you're", "working", "on,", "in", "one", "place."
 
 const PortalAuthLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className={styles.root}>
+    <PortalAuthSky className={styles.root}>
       <div className={styles.backdrop} aria-hidden="true">
+        <span className={styles.stars} data-layer="a" />
+        <span className={styles.stars} data-layer="b" />
+        <span className={styles.stars} data-layer="c" />
+        <span className={styles.shootingStar} />
+        <span className={styles.moon} />
         <span className={styles.rays} />
         <span className={styles.sun} />
         <span className={styles.orb} data-orb="a" />
@@ -115,7 +122,7 @@ const PortalAuthLayout = ({ children }: { children: React.ReactNode }) => {
         </p>
         <div className={styles.card}>{children}</div>
       </main>
-    </div>
+    </PortalAuthSky>
   );
 };
 
