@@ -193,13 +193,20 @@ jobs:
       - id: ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      # The image is arm64-only (built for the Graviton box, see
+      # build-and-push) and this runner is amd64, so the pull has to ask for
+      # arm64 explicitly and the run goes through QEMU, same as the build.
+      - uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
       - name: Validate the Caddyfile
         env:
           REGISTRY: ${{ steps.ecr.outputs.registry }}
         run: |
           image="${REGISTRY}/binx-caddy:sha-${GITHUB_SHA::12}"
-          docker pull "$image"
-          docker run --rm -v "$PWD/deploy:/etc/caddy:ro" "$image" caddy validate --config /etc/caddy/Caddyfile
+          docker pull --platform linux/arm64 "$image"
+          docker run --rm --platform linux/arm64 -v "$PWD/deploy:/etc/caddy:ro" "$image" caddy validate --config /etc/caddy/Caddyfile
 
   deploy-staging:
     needs: [build-and-push, validate-caddyfile]
