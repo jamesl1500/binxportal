@@ -88,6 +88,21 @@ umask 077
   echo "CADDY_IMAGE=${ECR_REGISTRY}/binx-caddy:${TAG}"
 } > "$ENV_FILE"
 
+# Caddy is a production-project service, so every PROD_COMPOSE command below
+# interpolates docker-compose.prod.yml from production's .env — not the
+# staging env file just written. A staging deploy still updates the shared
+# Caddy, so record its image there too; otherwise a box whose last production
+# deploy predates the custom Caddy image has no CADDY_IMAGE in .env at all
+# and compose refuses to parse the file.
+if [ "$TARGET" != production ]; then
+  if [ ! -f .env ]; then
+    echo "ERROR: no production .env on this box — Caddy lives in the production compose project, so deploy production once first" >&2
+    exit 1
+  fi
+  { grep -v '^CADDY_IMAGE=' .env || true; echo "CADDY_IMAGE=${ECR_REGISTRY}/binx-caddy:${TAG}"; } > .env.next
+  mv .env.next .env
+fi
+
 aws ecr get-login-password --region "$AWS_REGION" | \
   docker login --username AWS --password-stdin "$ECR_REGISTRY"
 
