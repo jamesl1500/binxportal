@@ -27,6 +27,7 @@ from binx_api.modules.agencies.models import (
     ClientPortalBranding,
 )
 from binx_api.modules.billing import service as billing_service
+from binx_api.modules.billing.models import PLAN_STARTER
 from binx_api.modules.client_portal.models import ClientContact
 from binx_api.modules.notifications import service as notifications_service
 from binx_api.modules.notifications.models import CATEGORY_TEAM as NOTIFY_CATEGORY_TEAM
@@ -58,6 +59,146 @@ async def _generate_unique_slug(db: AsyncSession, name: str) -> str:
         slug = f"{base}-{suffix}"
         suffix += 1
     return slug
+
+
+# ---- Subdomain (foundryframe.binxportal.com) -----------------------------
+# Gated to this plan and above (billing_service.agency_plan_at_least). A
+# downgrade below it never clears an agency's stored subdomain — it just
+# stops get_agency_by_subdomain from resolving it, so the name stays
+# reserved for when the agency upgrades again.
+SUBDOMAIN_MIN_PLAN = PLAN_STARTER
+
+# DNS label rules: lowercase letters/digits/hyphens, 3-63 chars, can't
+# start or end with a hyphen.
+_SUBDOMAIN_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$")
+
+# Reserved so a chosen subdomain can never shadow an existing or
+# likely-future first-party host (infra/lib/dns-stack.ts's own records
+# included) or read as an official/system page.
+RESERVED_SUBDOMAINS: frozenset[str] = frozenset(
+    {
+        "www",
+        "api",
+        "app",
+        "admin",
+        "staging",
+        "mail",
+        "ftp",
+        "smtp",
+        "ns1",
+        "ns2",
+        "portal",
+        "dashboard",
+        "root",
+        "support",
+        "help",
+        "status",
+        "docs",
+        "blog",
+        "cdn",
+        "assets",
+        "static",
+        "test",
+        "dev",
+        "stage",
+        "billing",
+        "login",
+        "signup",
+        "auth",
+        "images",
+        "img",
+        "files",
+        "secure",
+        "web",
+    }
+)
+
+
+def validate_subdomain(value: str) -> str:
+    """Normalizes and validates a candidate subdomain, raising a 400 with a
+    user-facing reason on anything that wouldn't make a valid, available DNS
+    label. Doesn't check uniqueness — see _subdomain_taken for that."""
+    candidate = value.strip().lower()
+    if not _SUBDOMAIN_PATTERN.fullmatch(candidate):
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            "Subdomain must be 3-63 characters: lowercase letters, numbers, and hyphens, "
+            "and can't start or end with a hyphen.",
+        )
+    if candidate in RESERVED_SUBDOMAINS:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, f'"{candidate}" is reserved and can\'t be used')
+    return candidate
+
+
+async def _subdomain_taken(db: AsyncSession, subdomain: str, *, exclude_agency_id: uuid.UUID | None = None) -> bool:
+    stmt = select(Agency.id).where(Agency.subdomain == subdomain)
+    if exclude_agency_id is not None:
+        stmt = stmt.where(Agency.id != exclude_agency_id)
+    result = await db.execute(stmt)
+    return result.scalar_one_or_none() is not None
+
+
+async def update_agency_subdomain(
+    db: AsyncSession, agency: Agency, *, subdomain: str | None, actor: User | None = None
+) -> Agency:
+    """Sets (or clears, with ``subdomain=None``) the agency's custom
+    subdomain. Setting one requires the agency's current plan to be at
+    SUBDOMAIN_MIN_PLAN or above; clearing is always allowed."""
+    if subdomain is not None:
+        if not await billing_service.agency_plan_at_least(db, agency.id, SUBDOMAIN_MIN_PLAN):
+            raise HTTPException(
+                status.HTTP_402_PAYMENT_REQUIRED,
+                "Custom subdomains require the Starter plan or above. Upgrade in Settings → Plan.",
+            )
+        subdomain = validate_subdomain(subdomain)
+        if await _subdomain_taken(db, subdomain, exclude_agency_id=agency.id):
+            raise HTTPException(status.HTTP_409_CONFLICT, "That subdomain is already taken")
+
+    old = agency.subdomain
+    agency.subdomain = subdomain
+    try:
+        await db.commit()
+    except IntegrityError:
+        # Lost a race to someone else claiming the same subdomain between
+        # our uniqueness check above and the commit.
+        await db.rollback()
+        raise HTTPException(status.HTTP_409_CONFLICT, "That subdomain is already taken") from None
+    await db.refresh(agency)
+
+    if old != subdomain:
+        await activity_service.log_agency_activity(
+            db,
+            agency.id,
+            category=CATEGORY_TEAM,
+            event_type="agency_subdomain_changed",
+            summary=(
+                (
+                    f"{actor.full_name} set the agency subdomain to “{subdomain}”"
+                    if subdomain
+                    else f"{actor.full_name} removed the agency subdomain"
+                )
+                if actor
+                else (f"Subdomain set to “{subdomain}”" if subdomain else "Subdomain removed")
+            ),
+            actor=actor,
+        )
+    return agency
+
+
+async def get_agency_by_subdomain(db: AsyncSession, subdomain: str) -> Agency | None:
+    """Resolves a subdomain to its agency for the public branding endpoint
+    — but only while the agency's *current* plan still qualifies. A
+    downgrade below SUBDOMAIN_MIN_PLAN leaves the row (and its reservation)
+    intact but stops it from resolving, so visitors get a plain 404 instead
+    of a stale branded page."""
+    candidate = subdomain.strip().lower()
+    result = await db.execute(select(Agency).where(Agency.subdomain == candidate))
+    agency = result.scalar_one_or_none()
+    if agency is None:
+        return None
+    if not await billing_service.agency_plan_at_least(db, agency.id, SUBDOMAIN_MIN_PLAN):
+        return None
+    return agency
 
 
 # ---- Plan limits --------------------------------------------------------

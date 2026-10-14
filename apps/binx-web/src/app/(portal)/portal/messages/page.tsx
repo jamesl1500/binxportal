@@ -21,7 +21,7 @@ export const metadata: Metadata = { title: "Messages" };
 
 const PortalMessagesPage = async () => {
   const user = await getCurrentUser();
-  if (!user) redirect("/auth/login");
+  if (!user) redirect("/portal/login");
 
   const conversations = await getPortalConversations();
 

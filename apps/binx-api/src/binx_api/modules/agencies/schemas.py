@@ -10,6 +10,10 @@ class AgencyRead(BaseModel):
     id: uuid.UUID
     name: str
     slug: str
+    # Custom subdomain (e.g. "foundryframe"), Starter plan and above. None
+    # while unset, or while the agency has it reserved but is currently
+    # below the required plan — see agencies/service.py::SUBDOMAIN_MIN_PLAN.
+    subdomain: str | None = None
     # The CALLER's role in this agency — not a property of the agency itself,
     # so this is always built by hand (AgencyRead(...)), never via
     # model_validate(agency), which has no way to know who's asking.
@@ -26,6 +30,25 @@ class AgencyCreate(BaseModel):
 
 class AgencyUpdate(BaseModel):
     name: str = Field(min_length=1, max_length=255)
+
+
+class AgencySubdomainUpdate(BaseModel):
+    # None (or "") clears the subdomain; anything else goes through
+    # agencies/service.py::validate_subdomain for format/reserved-word
+    # checks before being stored.
+    subdomain: str | None = Field(default=None, max_length=63)
+
+
+class AgencyPublicBranding(BaseModel):
+    """Minimal, unauthenticated branding for a subdomain's landing page
+    (GET /agencies/by-subdomain/{subdomain}) — nothing sensitive here."""
+
+    id: uuid.UUID
+    name: str
+    subdomain: str
+    brand_color: str | None
+    has_logo: bool
+    logo_version: str | None = None
 
 
 class AgencyProfileRead(BaseModel):

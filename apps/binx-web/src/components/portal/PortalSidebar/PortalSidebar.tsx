@@ -37,7 +37,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import { logoutAction } from "@/app/(app)/actions";
+import { portalLogoutAction } from "@/app/(app)/actions";
 import { useOptionalPortalOnboarding } from "@/components/portal/PortalOnboardingProvider/PortalOnboardingProvider";
 import {
   initials,
@@ -154,7 +154,7 @@ const PortalSidebar = ({
     } catch {
       // Storage blocked — nothing to clear.
     }
-    startTransition(() => logoutAction());
+    startTransition(() => portalLogoutAction());
   };
 
   const brandMark = logoSrc ? (

@@ -2,7 +2,7 @@
  * layout.tsx - Client Portal
  *
  * Shell for the client-facing `/portal` area. Guards: an unauthenticated
- * visitor goes to login; a signed-in user who isn't a client contact is a
+ * visitor goes to the portal's own login; a signed-in user who isn't a client contact is a
  * staff member and belongs on `/dashboard`. Everyone else gets the portal
  * chrome — a branded sidebar with live badges (see PortalSidebar) — plus the
  * client onboarding layer: the first-visit welcome tour and the state the
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
 const PortalLayout = async ({ children }: { children: React.ReactNode }) => {
   const user = await getCurrentUser();
   if (!user) {
-    redirect("/auth/login");
+    redirect("/portal/login");
   }
 
   const context = await getPortalContext();

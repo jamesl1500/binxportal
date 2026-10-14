@@ -19,7 +19,9 @@ import { z } from "zod";
 import { signupAction } from "@/app/(auth)/auth/signup/actions";
 import { PLAN_INTENT_STORAGE_KEY } from "@/lib/plan-intent";
 
-import styles from "./SignupForm.module.scss";
+import portalStyles from "@/components/portal-auth/portal-auth-form.module.scss";
+
+import defaultStyles from "./SignupForm.module.scss";
 
 const signupSchema = z
   .object({
@@ -47,13 +49,17 @@ interface SignupFormProps {
    * needs no highlight — it's already the default.
    */
   planIntent?: string;
+  /** "portal" swaps in the client portal's warm skin (see portal-auth-form.module.scss). */
+  variant?: "default" | "portal";
 }
 
 const SignupForm = ({
   portalInviteToken,
   lockedEmail,
   planIntent,
+  variant = "default",
 }: SignupFormProps) => {
+  const styles = variant === "portal" ? portalStyles : defaultStyles;
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);

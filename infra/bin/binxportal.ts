@@ -65,7 +65,7 @@ const compute = new ComputeStack(app, "BinxportalCompute", {
   env,
   description: "Elastic IP + SSM access role for the existing binxportal EC2 instance",
   instanceId: INSTANCE_ID,
-  ecrRepositories: [cicd.apiRepository, cicd.webRepository],
+  ecrRepositories: [cicd.apiRepository, cicd.webRepository, cicd.caddyRepository],
   appSecret: secrets.secret,
   sesIdentityArns: [SES_IDENTITY_ARN],
 });
@@ -75,6 +75,8 @@ const dns = new DnsStack(app, "BinxportalDns", {
   description: "Route 53 hosted zone + records for binxportal.com",
   domainName: DOMAIN_NAME,
   targetIpAddress: compute.elasticIp.attrPublicIp,
+  // Literal, not `compute.instanceRole` — see DnsStackProps.instanceRoleName's docstring.
+  instanceRoleName: "binxportal-ec2",
 });
 
 new EmailStack(app, "BinxportalEmail", {

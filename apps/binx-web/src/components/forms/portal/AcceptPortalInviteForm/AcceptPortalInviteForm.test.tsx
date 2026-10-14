@@ -2,9 +2,9 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/app/(auth)/auth/portal-invite/actions", () => ({ acceptPortalInviteAction: vi.fn() }));
+vi.mock("@/app/(portal-auth)/auth/portal-invite/actions", () => ({ acceptPortalInviteAction: vi.fn() }));
 
-import { acceptPortalInviteAction } from "@/app/(auth)/auth/portal-invite/actions";
+import { acceptPortalInviteAction } from "@/app/(portal-auth)/auth/portal-invite/actions";
 import AcceptPortalInviteForm from "./AcceptPortalInviteForm";
 
 const mocked = vi.mocked(acceptPortalInviteAction);

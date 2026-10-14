@@ -26,6 +26,7 @@
 import { FormEvent, useEffect, useRef, useState, useTransition } from "react";
 import { Dialog } from "@base-ui/react/dialog";
 import { Paperclip, Pencil, Trash2, X } from "lucide-react";
+import Link from "next/link";
 
 import {
   addTaskCommentAction,
@@ -473,7 +474,8 @@ const TaskDetailPanel = ({
                   <span className={styles.fieldLabel}>Tags</span>
                   {projectTags.length === 0 ? (
                     <p className={styles.emptyText}>
-                      No tags configured. Add some in project Settings.
+                      No tags configured. Add some in project{" "}
+                      <Link href="settings#tags">settings</Link>.
                     </p>
                   ) : (
                     <div className={styles.tagPicker}>

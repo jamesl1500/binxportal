@@ -39,6 +39,7 @@ export interface LoginActionResult {
 export async function loginAction(
   email: string,
   password: string,
+  portalInviteToken?: string,
 ): Promise<LoginActionResult> {
   const baseUrl = await getInternalBaseUrl();
 
@@ -58,6 +59,14 @@ export async function loginAction(
         : { error: message };
     }
     return { error: "Unable to sign in" };
+  }
+
+  // Signed in from a client-portal invitation — straight back to accept it
+  // (they aren't a contact yet, so resolveHome would send them elsewhere).
+  if (portalInviteToken) {
+    redirect(
+      `/auth/portal-invite?token=${encodeURIComponent(portalInviteToken)}`,
+    );
   }
 
   // Staff land on the dashboard, client contacts on the portal.

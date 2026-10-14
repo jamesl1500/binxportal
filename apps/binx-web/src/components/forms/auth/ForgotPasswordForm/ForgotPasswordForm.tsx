@@ -17,7 +17,9 @@ import { z } from "zod";
 
 import { forgotPasswordAction } from "@/app/(auth)/auth/forgot-password/actions";
 
-import styles from "./ForgotPasswordForm.module.scss";
+import portalStyles from "@/components/portal-auth/portal-auth-form.module.scss";
+
+import defaultStyles from "./ForgotPasswordForm.module.scss";
 
 const forgotPasswordSchema = z.object({
   email: z.email("Enter a valid email address"),
@@ -25,7 +27,13 @@ const forgotPasswordSchema = z.object({
 
 type ForgotPasswordValues = z.infer<typeof forgotPasswordSchema>;
 
-const ForgotPasswordForm = () => {
+interface ForgotPasswordFormProps {
+  /** "portal" swaps in the client portal's warm skin (see portal-auth-form.module.scss). */
+  variant?: "default" | "portal";
+}
+
+const ForgotPasswordForm = ({ variant = "default" }: ForgotPasswordFormProps) => {
+  const styles = variant === "portal" ? portalStyles : defaultStyles;
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);

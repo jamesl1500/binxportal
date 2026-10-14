@@ -58,7 +58,24 @@ describe("LoginForm", () => {
     await user.click(screen.getByRole("button", { name: /sign in/i }));
 
     expect(await screen.findByText("Incorrect email or password")).toBeInTheDocument();
-    expect(mockedLoginAction).toHaveBeenCalledWith("a@b.com", "password123");
+    expect(mockedLoginAction).toHaveBeenCalledWith("a@b.com", "password123", undefined);
+  });
+
+  // The client portal renders the same form in its own skin: recovery stays
+  // on the portal's pages, and a pending invitation rides along to the action
+  // so signing in lands back on it.
+  it("keeps the portal variant on the portal's pages and passes the invite through", async () => {
+    mockedLoginAction.mockResolvedValueOnce({});
+    const user = userEvent.setup();
+    render(<LoginForm variant="portal" portalInviteToken="inv-123" />);
+
+    expect(screen.getByRole("link", { name: "Forgot password?" })).toHaveAttribute("href", "/portal/forgot-password");
+
+    await user.type(screen.getByLabelText("Email"), "a@b.com");
+    await user.type(screen.getByLabelText("Password"), "password123");
+    await user.click(screen.getByRole("button", { name: /sign in/i }));
+
+    await waitFor(() => expect(mockedLoginAction).toHaveBeenCalledWith("a@b.com", "password123", "inv-123"));
   });
 
   // Checking "remember me" should persist the typed email into the zustand

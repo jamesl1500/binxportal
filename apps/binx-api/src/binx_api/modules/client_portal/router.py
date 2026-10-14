@@ -7,6 +7,8 @@ from fastapi.exceptions import HTTPException
 from fastapi.responses import FileResponse
 
 from binx_api.core.dependencies import CurrentUser, DbSession
+from binx_api.core.email import send_client_invitation_email
+from binx_api.core.rate_limit import limiter
 from binx_api.modules.boards import service as boards_service
 from binx_api.modules.boards.models import AUTHOR_CLIENT, ITEM_IMAGE
 from binx_api.modules.boards.schemas import (
@@ -26,6 +28,9 @@ from binx_api.modules.client_portal.dependencies import PortalContext
 from binx_api.modules.client_portal.schemas import (
     ClientInvitationAccept,
     ClientInvitationPreview,
+    ClientInvitationResendRequest,
+    ClientInvitationResendResponse,
+    PortalAgencyMatch,
     PortalContactRead,
     PortalContextRead,
     PortalMembershipRead,
@@ -72,6 +77,43 @@ _PAYABLE_STATUSES = {"sent", "overdue", "partial"}
 
 
 # ---- Invitation preview / accept (no ClientContact required yet) --------
+
+
+# Unauthenticated, like the invitation preview below: someone looking for
+# their invitation has no account yet. binx-web calls this server-side, so
+# the limit is effectively shared by everyone using the page at once.
+@router.get("/agencies/search", response_model=list[PortalAgencyMatch])
+@limiter.limit("120/minute")
+async def search_agencies(
+    request: Request, db: DbSession, q: Annotated[str, Query(max_length=100)] = ""
+) -> list[PortalAgencyMatch]:
+    agencies = await service.search_agencies_by_name(db, q)
+    return [PortalAgencyMatch(id=agency.id, name=agency.name) for agency in agencies]
+
+
+# Self-service "send me my invitation again". Unauthenticated (the invitee
+# has no account yet) and answers the same whether or not anything matched,
+# so it never confirms that an address was invited by an agency. The email
+# only ever goes to the address on the invitation itself.
+@router.post("/invitations/resend", response_model=ClientInvitationResendResponse)
+@limiter.limit("30/hour")
+async def resend_invitation(
+    request: Request, db: DbSession, data: ClientInvitationResendRequest
+) -> ClientInvitationResendResponse:
+    reissued = await service.reissue_active_invitations(
+        db, email=data.email, agency_name=data.agency_name, agency_id=data.agency_id
+    )
+    for invitation, agency, client, inviter, raw_token in reissued:
+        await send_client_invitation_email(
+            to=invitation.email,
+            agency_name=agency.name,
+            client_name=client.name,
+            inviter_name=inviter.full_name,
+            token=raw_token,
+        )
+    return ClientInvitationResendResponse(
+        message="If that agency has an active invitation for this email, we've sent it again. Check your inbox."
+    )
 
 
 @router.get("/invitations/preview", response_model=ClientInvitationPreview)

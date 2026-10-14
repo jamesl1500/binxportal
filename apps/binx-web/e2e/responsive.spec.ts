@@ -33,6 +33,8 @@ const PUBLIC_PAGES = [
   "/contact",
   "/auth/login",
   "/auth/signup",
+  "/portal/login",
+  "/portal/forgot-password",
   "/alternatives/dubsado",
   "/alternatives/honeybook",
   "/alternatives/copilot-assembly",
