@@ -4,7 +4,13 @@
 # and 443 to be reachable from the internet, which they already are on this
 # instance's security group.
 
+# `tls force_automate` on every named host a wildcard below also covers:
+# since Caddy 2.10, a host covered by a managed wildcard gets NO certificate of
+# its own — it waits on the wildcard. If the wildcard can't be issued (its
+# DNS-01 challenge fails), every covered host fails TLS with it. This keeps
+# each one on its own HTTP-01 certificate, independent of the wildcard.
 api.binxportal.com {
+	tls force_automate
 	reverse_proxy api:8000
 }
 
@@ -16,6 +22,7 @@ binxportal.com {
 }
 
 www.binxportal.com {
+	tls force_automate
 	reverse_proxy web:3000
 }
 
@@ -27,10 +34,12 @@ www.binxportal.com {
 # own IAM role, so no AWS keys appear here (see infra/lib/dns-stack.ts for
 # the exact grant). `www` and `api` above are matched first regardless of
 # file order — Caddy always prefers the most specific host match — so this
-# block only ever catches an actual agency subdomain.
+# block only ever catches an actual agency subdomain. propagation_delay gives
+# Route 53's change time to reach every nameserver Let's Encrypt checks from.
 *.binxportal.com {
 	tls {
 		dns route53
+		propagation_delay 30s
 	}
 	reverse_proxy web:3000
 }
@@ -49,14 +58,31 @@ www.binxportal.com {
 # — none of which could answer a basic-auth challenge.
 api.staging.binxportal.com {
 	import staging
+	tls force_automate
 	reverse_proxy staging-api:8000
 }
 
 staging.binxportal.com {
 	import staging
+	tls force_automate
 	# Generated on the box by deploy/redeploy.sh from the staging secret's
 	# STAGING_BASIC_AUTH_USER / STAGING_BASIC_AUTH_PASSWORD. A glob, so a
 	# missing file (no password set) is a warning, not a config error.
+	import /etc/caddy/staging-auth.caddy*
+	reverse_proxy staging-web:3000
+}
+
+# Agency subdomains on staging (foundryframe.staging.binxportal.com). Needs
+# its own wildcard: a `*.binxportal.com` cert only ever covers ONE label, so
+# it can't match a name under `staging.`. binx-web works out the agency from
+# its own SITE_URL (staging.binxportal.com — see lib/site.ts's ROOT_DOMAIN),
+# so nothing app-side changes. Same DNS-01 + basic auth as staging above.
+*.staging.binxportal.com {
+	import staging
+	tls {
+		dns route53
+		propagation_delay 30s
+	}
 	import /etc/caddy/staging-auth.caddy*
 	reverse_proxy staging-web:3000
 }
