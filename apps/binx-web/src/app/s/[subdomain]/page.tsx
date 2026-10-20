@@ -29,7 +29,13 @@ export async function generateMetadata({
 }: AgencySubdomainPageProps): Promise<Metadata> {
   const { subdomain } = await params;
   const agency = await getAgencyPublicBranding(subdomain);
-  return { title: agency ? agency.name : "Not found" };
+  return {
+    title: agency ? agency.name : "Not found",
+    // Thin, per-agency content reachable at both the agency's own subdomain
+    // and this same route under the apex domain — noindex to avoid duplicate
+    // content (also disallowed in robots.ts for the apex-domain copy).
+    robots: { index: false, follow: false },
+  };
 }
 
 const AgencySubdomainPage = async ({ params }: AgencySubdomainPageProps) => {
