@@ -9,7 +9,12 @@
  */
 import Link from "next/link";
 
-import { SEO_LANDING_PAGES, SITE, USE_CASE_PAGES } from "@/lib/site";
+import {
+  SEO_LANDING_PAGES,
+  SITE,
+  STATUS_URL,
+  USE_CASE_PAGES,
+} from "@/lib/site";
 import BinxMark from "@/components/BinxMark/BinxMark";
 
 import styles from "./MarketingFooter.module.scss";
@@ -43,6 +48,7 @@ const COLUMNS: { heading: string; links: { href: string; label: string }[] }[] =
       links: [
         { href: "/about", label: "About" },
         { href: "/contact", label: "Contact" },
+        { href: STATUS_URL, label: "Status" },
       ],
     },
     {
