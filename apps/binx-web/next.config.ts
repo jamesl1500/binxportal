@@ -18,10 +18,9 @@ const nextConfig: NextConfig = {
     // compile time and memory. Experimental: to roll back, delete this line
     // (babel-plugin-react-compiler stays installed for exactly that reason).
     turbopackRustReactCompiler: true,
-    // Dev only: don't compile a client-side `import()` / `next/dynamic`
-    // target (e.g. the AI modal) until the browser actually asks for it.
-    // No effect on production builds.
-    turbopackLazyDynamicImports: true,
+    // Leave `turbopackLazyDynamicImports` off: in dev its lazy-compilation
+    // proxy chunk for lib/sentry-sdk-client.ts 404s ("Failed to load chunk"),
+    // so the lazily-loaded Sentry SDK never arrives.
     serverActions: {
       // Uploads (canvas images, task files, message attachments) go through
       // server actions as multipart FormData. Next caps action bodies at 1MB
