@@ -127,6 +127,14 @@ export const PLANS = [
   },
 ] as const;
 
+/**
+ * Public uptime status page (external, so it stays reachable even if the
+ * single production EC2 instance itself is down). Hosted by the uptime
+ * monitor — see the "Uptime alerting and status page" thread for the
+ * provider setup and DNS CNAME.
+ */
+export const STATUS_URL = "https://status.binxportal.com";
+
 /** Every paid tier's card-free trial — see binx-api's billing/service.py::start_trial. */
 export const TRIAL_DAYS = 14;
 export const TRIAL_DISCOUNT_PERCENT_OFF = 20;
