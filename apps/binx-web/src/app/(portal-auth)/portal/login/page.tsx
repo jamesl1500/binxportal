@@ -20,6 +20,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { resolveHome } from "@/lib/portal";
 import LoginForm from "@/components/forms/auth/LoginForm/LoginForm";
 import PortalAuthHeader, {
+  PortalAuthDivider,
   PortalAuthFooter,
 } from "@/components/portal-auth/PortalAuthHeader/PortalAuthHeader";
 
@@ -54,14 +55,7 @@ const PortalLoginPage = async ({ searchParams }: PortalLoginPageProps) => {
       <PortalAuthFooter>
         New here? Your invitation email has a link to set up your login.{" "}
         <Link href="/portal/resend-invitation">Resend invitation</Link>
-        <br />
-        <hr
-          style={{
-            border: "none",
-            borderTop: "1px solid #ddd",
-            margin: "1rem 0",
-          }}
-        />
+        <PortalAuthDivider />
         On the agency team? <Link href="/auth/login">Sign in here</Link>
       </PortalAuthFooter>
     </div>
