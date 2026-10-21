@@ -82,6 +82,12 @@
   }
 }
 
+.divider {
+  margin: t.$space-4 0;
+  border: none;
+  border-top: 1px solid w.$border;
+}
+
 .notice {
   margin: 0;
   padding: t.$space-4;

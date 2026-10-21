@@ -31,10 +31,17 @@ const PortalAuthHeader = ({
   </header>
 );
 
-/** The quiet line under a form — links inside it pick up the warm style. */
+/**
+ * The quiet line under a form — links inside it pick up the warm style. A
+ * `<div>`, not a `<p>`, so a page can split it with a `<PortalAuthDivider />`
+ * (an `<hr>` inside a `<p>` is invalid HTML and breaks hydration).
+ */
 export const PortalAuthFooter = ({ children }: { children: ReactNode }) => (
-  <p className={styles.footer}>{children}</p>
+  <div className={styles.footer}>{children}</div>
 );
+
+/** A hairline between two lines of a `PortalAuthFooter`. */
+export const PortalAuthDivider = () => <hr className={styles.divider} />;
 
 /**
  * A link/token problem the visitor can't fix by retyping anything. `info`

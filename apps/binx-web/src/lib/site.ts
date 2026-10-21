@@ -30,7 +30,7 @@ export const ROOT_DOMAIN = SITE_URL.replace(/^https?:\/\//, "").replace(
 
 export const SITE = {
   name: "Binx Portal",
-  legalName: "Binx Portal",
+  legalName: "Binx Portal, LLC",
   /** ~55 chars — used as the homepage <title>. */
   title: "Binx Portal — the operating system for creative agencies",
   tagline: "Run the whole agency from one place.",
@@ -41,6 +41,8 @@ export const SITE = {
   ogImageAlt: "Binx Portal — the operating system for creative agencies",
   twitter: "@binxhq",
   email: "hello@binxportal.com",
+  /** Dedicated inbox for privacy/data-rights requests — used on the Privacy Policy only. */
+  privacyEmail: "privacy@binxportal.com",
   keywords: [
     "agency management software",
     "creative agency operations",
@@ -124,6 +126,14 @@ export const PLANS = [
     featured: false,
   },
 ] as const;
+
+/**
+ * Public uptime status page (external, so it stays reachable even if the
+ * single production EC2 instance itself is down). Hosted by the uptime
+ * monitor — see the "Uptime alerting and status page" thread for the
+ * provider setup and DNS CNAME.
+ */
+export const STATUS_URL = "https://status.binxportal.com";
 
 /** Every paid tier's card-free trial — see binx-api's billing/service.py::start_trial. */
 export const TRIAL_DAYS = 14;

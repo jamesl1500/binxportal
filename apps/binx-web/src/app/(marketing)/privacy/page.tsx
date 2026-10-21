@@ -4,11 +4,10 @@
  * Real, structured content describing what Binx actually collects and why
  * (matches the current codebase: Stripe for billing, AWS SES for outbound
  * email, Anthropic Claude for the AI features, Google Places for the AI
- * lead prospector, the client portal, auth cookies). Business-decision
- * placeholders (registered entity, governing jurisdiction, retention
- * windows) are filled with reasonable defaults — see LEGAL_ASSUMPTIONS in
- * this file for what to confirm or change before treating this as final,
- * and have qualified counsel review it before that.
+ * lead prospector, Sentry for error monitoring, the client portal, auth
+ * cookies). Retention windows are a business decision James confirmed
+ * 2026-10-21 (keep as-is) — still worth a qualified-counsel pass before
+ * relying on this as final.
  *
  * @module apps/binx-web/src/app/(marketing)/privacy/page.tsx
  * @author Binx Portal
@@ -22,7 +21,7 @@ import styles from "../marketing.module.scss";
 
 const TITLE = "Privacy Policy";
 const DESCRIPTION = `How ${SITE.name} collects, uses, and protects your information, and your agency's and clients' data.`;
-const LAST_UPDATED = "Effective September 24, 2026";
+const LAST_UPDATED = "Effective October 21, 2026";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -59,8 +58,8 @@ const PrivacyPage = () => {
               {SITE.name}&quot;, &quot;we&quot;, &quot;us&quot;) collects when
               an agency and its team use the product, when that agency&apos;s
               clients use the client portal, and when someone simply visits this
-              marketing site. It applies to Binx, Inc., the company behind{" "}
-              {SITE.name}.
+              marketing site. It applies to {SITE.legalName}, the company
+              behind {SITE.name}.
             </p>
 
             <h2>Information we collect</h2>
@@ -158,6 +157,11 @@ const PrivacyPage = () => {
                 and outbound transactional email (account verification, password
                 resets, invitations, notifications).
               </li>
+              <li>
+                <strong>Sentry</strong> — error monitoring and crash reporting,
+                so we can diagnose and fix bugs; it can capture technical
+                details about the request when an error occurs.
+              </li>
             </ul>
             <p>
               We may also disclose information if required by law, or to protect
@@ -184,8 +188,8 @@ const PrivacyPage = () => {
               under the GDPR (EU/UK) and the CCPA/CPRA (California). Most of
               this you can already do directly from Account and Profile settings
               — for anything else, contact us at{" "}
-              <a href={`mailto:${SITE.email}`}>{SITE.email}</a>, and we&apos;ll
-              respond within the time your local law requires.
+              <a href={`mailto:${SITE.privacyEmail}`}>{SITE.privacyEmail}</a>,
+              and we&apos;ll respond within the time your local law requires.
             </p>
 
             <h2>Security</h2>
@@ -224,8 +228,8 @@ const PrivacyPage = () => {
             <h2>Contact us</h2>
             <p>
               Questions about this policy or your data can go to{" "}
-              <a href={`mailto:${SITE.email}`}>{SITE.email}</a>, or see the{" "}
-              <Link href="/contact">Contact</Link> page.
+              <a href={`mailto:${SITE.privacyEmail}`}>{SITE.privacyEmail}</a>,
+              or see the <Link href="/contact">Contact</Link> page.
             </p>
           </div>
         </div>
