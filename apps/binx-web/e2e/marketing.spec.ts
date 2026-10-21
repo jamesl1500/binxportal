@@ -6,14 +6,17 @@ import { test, expect } from "./fixtures";
 test.describe("marketing site", () => {
   test("home renders the hero and primary CTAs", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("Run the whole agency");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(
+      "Run the whole agency",
+    );
     await expect(page).toHaveTitle(/Binx/);
 
-    await expect(page.getByRole("link", { name: /get started free/i }).first()).toHaveAttribute(
-      "href",
-      "/auth/signup",
-    );
-    await expect(page.getByRole("link", { name: /see everything it does/i })).toHaveAttribute("href", "/features");
+    await expect(
+      page.getByRole("link", { name: /get started free/i }).first(),
+    ).toHaveAttribute("href", "/auth/signup");
+    await expect(
+      page.getByRole("link", { name: /see everything it does/i }),
+    ).toHaveAttribute("href", "/features");
   });
 
   const pages = [
@@ -25,7 +28,10 @@ test.describe("marketing site", () => {
     // not in the primary nav, but still real pages that need to load.
     { path: "/alternatives/dubsado", heading: "Dubsado alternative" },
     { path: "/alternatives/honeybook", heading: "HoneyBook alternative" },
-    { path: "/alternatives/copilot-assembly", heading: "client portal, plus everything" },
+    {
+      path: "/alternatives/copilot-assembly",
+      heading: "client portal, plus everything",
+    },
     { path: "/alternatives/bloom", heading: "Bloom alternative" },
     { path: "/compare/notion-stripe-drive", heading: "real competitor" },
     { path: "/for/design-studios", heading: "Review work with clients" },
@@ -36,24 +42,37 @@ test.describe("marketing site", () => {
   ];
 
   for (const { path, heading } of pages) {
-    test(`${path} loads with its heading and a suffixed title`, async ({ page }) => {
+    test(`${path} loads with its heading and a suffixed title`, async ({
+      page,
+    }) => {
       const res = await page.goto(path);
       expect(res?.status()).toBeLessThan(400);
-      await expect(page.getByRole("heading", { level: 1 })).toContainText(heading);
-      await expect(page).toHaveTitle(/· Binx$/);
+      await expect(page.getByRole("heading", { level: 1 })).toContainText(
+        heading,
+      );
+      await expect(page).toHaveTitle(/· Binx Portal$/);
     });
   }
 
-  test("primary nav moves between pages and marks the active link", async ({ page }) => {
+  test("primary nav moves between pages and marks the active link", async ({
+    page,
+  }) => {
     await page.goto("/");
-    await page.getByRole("navigation", { name: "Primary" }).getByRole("link", { name: "Pricing" }).click();
+    await page
+      .getByRole("navigation", { name: "Primary" })
+      .getByRole("link", { name: "Pricing" })
+      .click();
     await expect(page).toHaveURL(/\/pricing$/);
     await expect(
-      page.getByRole("navigation", { name: "Primary" }).getByRole("link", { name: "Pricing" }),
+      page
+        .getByRole("navigation", { name: "Primary" })
+        .getByRole("link", { name: "Pricing" }),
     ).toHaveAttribute("data-active", "true");
   });
 
-  test("the homepage feature panels show real product screenshots", async ({ page }) => {
+  test("the homepage feature panels show real product screenshots", async ({
+    page,
+  }) => {
     await page.goto("/");
     const shots = page.locator('img[src*="marketing"]');
     await expect(shots.first()).toBeVisible();
@@ -62,7 +81,9 @@ test.describe("marketing site", () => {
       // next/image lazy-loads, so an image far below the fold never starts loading until scrolled to.
       await shots.nth(i).scrollIntoViewIfNeeded();
       await expect(shots.nth(i)).toHaveJSProperty("complete", true);
-      expect(await shots.nth(i).evaluate((el: HTMLImageElement) => el.naturalWidth)).toBeGreaterThan(0);
+      expect(
+        await shots.nth(i).evaluate((el: HTMLImageElement) => el.naturalWidth),
+      ).toBeGreaterThan(0);
     }
   });
 
@@ -75,7 +96,10 @@ test.describe("marketing site", () => {
 
   test("app routes are noindex", async ({ page }) => {
     await page.goto("/auth/login");
-    await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+      "content",
+      /noindex/,
+    );
   });
 });
 
@@ -87,7 +111,10 @@ test.describe("marketing site — mobile menu", () => {
     const toggle = page.getByRole("button", { name: /open menu/i });
     await expect(toggle).toBeVisible();
     await toggle.click();
-    await page.getByRole("banner").getByRole("link", { name: "Features" }).click();
+    await page
+      .getByRole("banner")
+      .getByRole("link", { name: "Features" })
+      .click();
     await expect(page).toHaveURL(/\/features$/);
   });
 });
