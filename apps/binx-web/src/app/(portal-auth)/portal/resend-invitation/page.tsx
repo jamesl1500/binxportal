@@ -15,7 +15,10 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { resolveHome } from "@/lib/portal";
 
-import PortalAuthHeader, { PortalAuthFooter } from "@/components/portal-auth/PortalAuthHeader/PortalAuthHeader";
+import PortalAuthHeader, {
+  PortalAuthDivider,
+  PortalAuthFooter,
+} from "@/components/portal-auth/PortalAuthHeader/PortalAuthHeader";
 import PortalAuthResendInvitation from "@/components/forms/portal/PortalAuthResendInvitation/PortalAuthResendInvitation";
 
 export const metadata: Metadata = { title: "Resend invitation" };
@@ -38,14 +41,7 @@ const PortalResendInvitationPage = async () => {
 
       <PortalAuthFooter>
         Already set up? <Link href="/portal/login">Sign in</Link>
-        <br />
-        <hr
-          style={{
-            border: "none",
-            borderTop: "1px solid #ddd",
-            margin: "20px 0",
-          }}
-        />
+        <PortalAuthDivider />
         On the agency team? <Link href="/auth/login">Sign in here</Link>
       </PortalAuthFooter>
     </div>
