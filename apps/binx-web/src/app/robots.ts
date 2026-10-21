@@ -12,6 +12,11 @@
  *
  * @module apps/binx-web/src/app/robots.ts
  * @author Binx Portal
+ *
+ * `/s` (the agency subdomain landing page, app/s/[subdomain]/page.tsx) is
+ * also disallowed here: it's reachable both at the apex domain and at each
+ * agency's own subdomain, and noindex'd in its own metadata too (belt and
+ * braces, same as the (app)/(auth)/(portal) areas above).
  */
 import type { MetadataRoute } from "next";
 
@@ -51,6 +56,7 @@ export default function robots(): MetadataRoute.Robots {
         "/auth",
         "/onboarding",
         "/api",
+        "/s",
       ],
     },
     sitemap: `${SITE_URL}/sitemap.xml`,
