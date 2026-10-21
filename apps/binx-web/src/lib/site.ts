@@ -30,7 +30,7 @@ export const ROOT_DOMAIN = SITE_URL.replace(/^https?:\/\//, "").replace(
 
 export const SITE = {
   name: "Binx",
-  legalName: "Binx",
+  legalName: "Binx Portal, LLC",
   /** ~55 chars — used as the homepage <title>. */
   title: "Binx — the operating system for creative agencies",
   tagline: "Run the whole agency from one place.",
@@ -41,6 +41,8 @@ export const SITE = {
   ogImageAlt: "Binx — the operating system for creative agencies",
   twitter: "@binxhq",
   email: "hello@binxportal.com",
+  /** Dedicated inbox for privacy/data-rights requests — used on the Privacy Policy only. */
+  privacyEmail: "privacy@binxportal.com",
   keywords: [
     "agency management software",
     "creative agency operations",
