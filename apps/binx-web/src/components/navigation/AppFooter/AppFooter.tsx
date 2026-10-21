@@ -10,7 +10,7 @@
  */
 import Link from "next/link";
 
-import { SITE } from "@/lib/site";
+import { SITE, STATUS_URL } from "@/lib/site";
 
 import styles from "./AppFooter.module.scss";
 
@@ -31,6 +31,14 @@ const AppFooter = () => {
         <Link href="/contact" className={styles.link}>
           Support
         </Link>
+        <a
+          href={STATUS_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={styles.link}
+        >
+          Status
+        </a>
       </nav>
     </footer>
   );

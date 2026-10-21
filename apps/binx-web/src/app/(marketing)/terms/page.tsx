@@ -3,11 +3,9 @@
  *
  * Real, structured content describing how Binx's product actually works
  * today (accounts, plans, the client portal, AI features, billing via
- * Stripe). Business-decision placeholders (registered entity, governing
- * law/venue, liability cap) are filled with reasonable defaults — see
- * LEGAL_ASSUMPTIONS in privacy/page.tsx for what to confirm or change
- * before treating this as final, and have qualified counsel review it
- * before that.
+ * Stripe). The liability cap is a business decision James confirmed
+ * 2026-10-21 (keep as-is) — still worth a qualified-counsel pass before
+ * relying on this as final.
  *
  * @module apps/binx-web/src/app/(marketing)/terms/page.tsx
  * @author Binx Portal
@@ -21,7 +19,7 @@ import styles from "../marketing.module.scss";
 
 const TITLE = "Terms of Service";
 const DESCRIPTION = `The terms that govern using ${SITE.name} — accounts, plans and billing, the client portal, and what each side is responsible for.`;
-const LAST_UPDATED = "Effective September 24, 2026";
+const LAST_UPDATED = "Effective October 21, 2026";
 
 export const metadata: Metadata = {
   title: TITLE,
