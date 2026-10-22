@@ -77,6 +77,10 @@ services:
       # from any env var. Unset would fall back to console-logging emails —
       # never actually unset in production, since this line is a literal.
       SES_FROM_EMAIL: "Binx Portal <noreply@mail.binxportal.com>"
+      # Optional — unset means replies to any transactional email fall back
+      # to the noreply@ address above, which has no inbox. Set once a
+      # monitored inbox exists, e.g. "support@binxportal.com".
+      SES_REPLY_TO: ${SES_REPLY_TO:-}
       AWS_REGION: us-east-2
       # Cleanly off when unset (binx_api/core/config.py) — set SENTRY_DSN in
       # the binxportal/app Secrets Manager secret to turn it on.

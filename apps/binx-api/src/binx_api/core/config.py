@@ -127,6 +127,13 @@ class Settings(BaseSettings):
     # anthropic_api_key/stripe_secret_key above. Set in production via a plain
     # (non-secret) env var — see docker-compose.prod.yml.
     ses_from_email: str | None = None
+    # Unset by default: SES then leaves Reply-To unset too, which makes mail
+    # clients fall back to replying to ses_from_email — a noreply@ address
+    # with no inbox behind it, so a reply just disappears. Set this to a
+    # monitored inbox (e.g. "support@binxportal.com") once one exists, so a
+    # client who hits "reply" on an invite or invoice notice actually reaches
+    # someone.
+    ses_reply_to: str | None = None
     # Explicit rather than relying on boto3's IMDS region auto-detection,
     # which isn't guaranteed across botocore versions/configs.
     aws_region: str = "us-east-2"

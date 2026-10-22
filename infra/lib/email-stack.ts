@@ -83,6 +83,29 @@ export class EmailStack extends cdk.Stack {
       values: ["v=spf1 include:amazonses.com ~all"],
     });
 
+    // DMARC at the organizational domain (binxportal.com, i.e. the zone
+    // apex) rather than under mailDomain — RFC 7489 looks up
+    // _dmarc.<header-From domain> first and falls back to
+    // _dmarc.<organizational domain>, so one record here covers
+    // mail.binxportal.com (today's only sender) and any future sending
+    // subdomain without a second record. SPF (MailFromSpf above, aligned in
+    // relaxed mode under the shared binxportal.com org domain) and DKIM
+    // (Easy DKIM above, strictly aligned on mail.binxportal.com) both pass
+    // already, so this is the record that tells receiving mail servers to
+    // actually act — without it, a spoofed message that fails both still
+    // gets delivered. `pct=100` applies the policy to all mail rather than
+    // phasing in a fraction, since both authentication mechanisms are
+    // already live and tested (see docker-compose.prod.yml's SES_FROM_EMAIL,
+    // live since the Graviton migration). `rua`/`ruf` are left out
+    // deliberately — nothing here owns a mailbox to receive aggregate/
+    // forensic reports yet; add `rua=mailto:dmarc-reports@binxportal.com`
+    // once one exists.
+    new route53.TxtRecord(this, "Dmarc", {
+      zone: props.hostedZone,
+      recordName: `_dmarc.${props.hostedZone.zoneName}`,
+      values: ["v=DMARC1; p=quarantine; pct=100; adkim=s; aspf=r; fo=1"],
+    });
+
     new cdk.CfnOutput(this, "VerificationStatusCommand", {
       description: "Run after deploying, once DNS has propagated, to confirm SES finished verifying the identity",
       value: `aws sesv2 get-email-identity --email-identity ${props.mailDomain} --region ${this.region}`,
