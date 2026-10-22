@@ -18,7 +18,12 @@ def test_renders_heading_and_paragraphs() -> None:
 
 
 def test_cta_renders_a_link_and_a_plain_text_fallback() -> None:
-    html = render_html(heading="Verify", paragraphs=["Click below."], cta_label="Verify email", cta_url="https://example.com/verify?token=abc&x=1")
+    html = render_html(
+        heading="Verify",
+        paragraphs=["Click below."],
+        cta_label="Verify email",
+        cta_url="https://example.com/verify?token=abc&x=1",
+    )
     assert 'href="https://example.com/verify?token=abc&amp;x=1"' in html
     assert "Verify email" in html
     # Appears once as the button's href, then twice more in the plain-text
