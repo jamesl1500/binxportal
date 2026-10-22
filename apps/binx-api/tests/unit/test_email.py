@@ -49,6 +49,8 @@ async def test_verification_email_links_to_the_verify_page(captured: list[dict])
     (call,) = captured
     assert call["to"] == "new@example.com"
     assert call["body"].endswith(f"{settings.frontend_url}/auth/verify-email?token=tok-abc")
+    assert call["html"] is not None
+    assert f"{settings.frontend_url}/auth/verify-email?token=tok-abc" in call["html"]
 
 
 async def test_password_reset_email_links_to_the_reset_page(captured: list[dict]) -> None:
@@ -111,6 +113,39 @@ class TestSendEmail:
                 "Body": {"Text": {"Data": "Body text", "Charset": "UTF-8"}},
             },
         )
+
+    async def test_html_body_is_sent_alongside_the_text_body(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(email.settings, "ses_from_email", "Binx <noreply@mail.binxportal.com>")
+        fake_client = SimpleNamespace(send_email=MagicMock())
+        monkeypatch.setattr(email, "_get_ses_client", lambda: fake_client)
+
+        await email.send_email(to="x@example.com", subject="Hi", body="Body text", html="<p>Body text</p>")
+
+        kwargs = fake_client.send_email.call_args.kwargs
+        assert kwargs["Message"]["Body"]["Text"] == {"Data": "Body text", "Charset": "UTF-8"}
+        assert kwargs["Message"]["Body"]["Html"] == {"Data": "<p>Body text</p>", "Charset": "UTF-8"}
+
+    async def test_no_html_means_no_html_body_part(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(email.settings, "ses_from_email", "Binx <noreply@mail.binxportal.com>")
+        fake_client = SimpleNamespace(send_email=MagicMock())
+        monkeypatch.setattr(email, "_get_ses_client", lambda: fake_client)
+
+        await email.send_email(to="x@example.com", subject="Hi", body="Body text")
+
+        kwargs = fake_client.send_email.call_args.kwargs
+        assert "Html" not in kwargs["Message"]["Body"]
+        assert "ReplyToAddresses" not in kwargs
+
+    async def test_reply_to_is_set_when_configured(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(email.settings, "ses_from_email", "Binx <noreply@mail.binxportal.com>")
+        monkeypatch.setattr(email.settings, "ses_reply_to", "support@binxportal.com")
+        fake_client = SimpleNamespace(send_email=MagicMock())
+        monkeypatch.setattr(email, "_get_ses_client", lambda: fake_client)
+
+        await email.send_email(to="x@example.com", subject="Hi", body="Body text")
+
+        kwargs = fake_client.send_email.call_args.kwargs
+        assert kwargs["ReplyToAddresses"] == ["support@binxportal.com"]
 
     async def test_a_delivery_error_is_logged_not_raised(
         self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
