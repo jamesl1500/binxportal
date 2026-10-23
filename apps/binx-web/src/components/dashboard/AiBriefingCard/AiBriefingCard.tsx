@@ -46,7 +46,16 @@ const AiBriefingCard = ({ agencyId }: AiBriefingCardProps) => {
     setStatus("loading");
     setError(null);
     void loadAiMarkdown();
-    const result = await getAiBriefingAction(agencyId, force);
+    let result: Awaited<ReturnType<typeof getAiBriefingAction>>;
+    try {
+      result = await getAiBriefingAction(agencyId, force);
+    } catch {
+      // The request never reached the server (offline, tab waking from
+      // sleep) — without this the card would sit on "Thinking…" forever.
+      setError("Couldn't reach the server. Try refreshing.");
+      setStatus("error");
+      return;
+    }
     if (result.briefing) {
       setBriefing(result.briefing);
       setStatus("ready");
