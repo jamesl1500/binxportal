@@ -73,17 +73,30 @@ const NotificationBell = ({
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // These run in the background (focus, tab-visible, polling) — often right
+  // as a laptop wakes and before its network is back, so the action's fetch
+  // itself can reject ("Failed to fetch"). A dropped one just leaves what's
+  // on screen until the next reconcile, rather than an unhandled rejection.
   const refreshCount = useCallback(async () => {
-    setUnreadCount(await getUnreadCountAction());
+    try {
+      setUnreadCount(await getUnreadCountAction());
+    } catch {
+      // Network blip — the next reconcile catches up.
+    }
   }, []);
 
   const refreshList = useCallback(async () => {
     setLoading(true);
-    const result = await getNotificationsAction({ limit: DROPDOWN_LIMIT });
-    setLoading(false);
-    if (result.page) {
-      setItems(result.page.items);
-      setUnreadCount(result.page.unread_count);
+    try {
+      const result = await getNotificationsAction({ limit: DROPDOWN_LIMIT });
+      if (result.page) {
+        setItems(result.page.items);
+        setUnreadCount(result.page.unread_count);
+      }
+    } catch {
+      // Network blip — keep the items already shown.
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -143,7 +156,9 @@ const NotificationBell = ({
         ),
       );
       setUnreadCount((c) => Math.max(0, c - 1));
-      void markNotificationReadAction(notification.id);
+      // Fire-and-forget; we're navigating away, so a dropped request is
+      // picked up by the next count reconcile.
+      markNotificationReadAction(notification.id).catch(() => {});
     }
     setOpen(false);
     if (notification.link) router.push(notification.link);

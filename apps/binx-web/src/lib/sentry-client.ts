@@ -18,6 +18,18 @@ type SentryModule = typeof import("@/lib/sentry-sdk-client");
 
 const DSN = process.env.NEXT_PUBLIC_SENTRY_DSN;
 
+/**
+ * The browser abandoning a page-enter view transition (components/ui/PageEnter)
+ * — the tab was hidden when it started, or a newer navigation replaced it.
+ * React leaves the rejected transition promise unhandled, but the page still
+ * renders; only the animation is skipped. Filtered here so it covers the
+ * replayed early errors too.
+ */
+const VIEW_TRANSITION_NOISE = [
+  /Transition was aborted because of invalid state/,
+  /Transition was skipped/,
+];
+
 let sentry: SentryModule | undefined;
 let loading: Promise<SentryModule> | undefined;
 
@@ -29,6 +41,7 @@ export function loadSentry(): Promise<SentryModule> | null {
       dsn: DSN,
       environment: process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT ?? "development",
       tracesSampleRate: 0.1,
+      ignoreErrors: VIEW_TRANSITION_NOISE,
     });
     sentry = mod;
     return mod;
