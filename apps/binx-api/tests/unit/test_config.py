@@ -48,3 +48,27 @@ def test_sentry_traces_sample_rate_rejects_out_of_range(value: str, monkeypatch:
     monkeypatch.setenv("SENTRY_TRACES_SAMPLE_RATE", value)
     with pytest.raises(ValidationError):
         Settings(_env_file=None)
+
+
+def test_database_url_is_assembled_from_rds_parts(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("DATABASE_URL", raising=False)  # conftest sets it
+    monkeypatch.setenv("DATABASE_ENDPOINT", "db.example.rds.amazonaws.com")
+    monkeypatch.setenv("DATABASE_NAME", "binx")
+    monkeypatch.setenv("DATABASE_USERNAME", "binxapi")
+    monkeypatch.setenv("DATABASE_PASSWORD", "p@ss/w:rd")
+    s = Settings(_env_file=None)
+    # Reserved characters in the password are escaped, not parsed as URL syntax.
+    assert s.database_url == "postgresql+asyncpg://binxapi:p%40ss%2Fw%3Ard@db.example.rds.amazonaws.com:5432/binx"
+
+
+def test_explicit_database_url_wins_over_rds_parts(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DATABASE_URL", "postgresql+asyncpg://a:b@host:5432/db")
+    monkeypatch.setenv("DATABASE_ENDPOINT", "db.example.rds.amazonaws.com")
+    assert Settings(_env_file=None).database_url == "postgresql+asyncpg://a:b@host:5432/db"
+
+
+def test_rds_endpoint_without_credentials_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("DATABASE_URL", raising=False)  # conftest sets it
+    monkeypatch.setenv("DATABASE_ENDPOINT", "db.example.rds.amazonaws.com")
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None)

@@ -1,13 +1,25 @@
 from functools import lru_cache
+from typing import Self
+from urllib.parse import quote_plus
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
+    # An explicit DATABASE_URL always wins (tests, CI, docker-compose set it).
+    # Otherwise, when DATABASE_ENDPOINT is set, the URL is assembled from the
+    # RDS (Relational Database Service) parts below — see
+    # _assemble_database_url. With neither, the local dev default applies.
     database_url: str = "postgresql+asyncpg://binxapi:binxapi@localhost:5432/binxportal"
+    database_name: str | None = None
+    database_endpoint: str | None = None
+    database_username: str | None = None
+    database_password: str | None = None
+    database_port: int = 5432
+
     jwt_secret: str = "change-me"
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
@@ -149,6 +161,22 @@ class Settings(BaseSettings):
     # billed the same as an error event. Bounded because the Sentry SDK
     # silently drops traces for an out-of-range value rather than erroring.
     sentry_traces_sample_rate: float = Field(default=0.1, ge=0.0, le=1.0)
+
+    @model_validator(mode="after")
+    def _assemble_database_url(self) -> Self:
+        if "database_url" in self.model_fields_set or not self.database_endpoint:
+            return self
+        name, user, password = self.database_name, self.database_username, self.database_password
+        if not (name and user and password):
+            raise ValueError(
+                "DATABASE_ENDPOINT is set, so DATABASE_NAME, DATABASE_USERNAME and DATABASE_PASSWORD are required"
+            )
+        # RDS-generated passwords can contain URL-reserved characters (@, /, :).
+        self.database_url = (
+            f"postgresql+asyncpg://{quote_plus(user)}:{quote_plus(password)}"
+            f"@{self.database_endpoint}:{self.database_port}/{name}"
+        )
+        return self
 
 
 @lru_cache
