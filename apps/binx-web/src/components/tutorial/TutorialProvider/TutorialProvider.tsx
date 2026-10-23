@@ -78,10 +78,12 @@ const TutorialProvider = ({
   useEffect(() => {
     if (lastSaved.current === state) return;
     lastSaved.current = state;
-    void updateTutorialProgressAction({
+    // Every save sends the full state, so one lost to a network blip is
+    // made good by the next.
+    updateTutorialProgressAction({
       tour_completed: state.tourCompleted,
       dismissed_popups: state.dismissedPopups,
-    });
+    }).catch(() => {});
   }, [state]);
 
   const openTour = useCallback(() => setIsTourOpen(true), []);

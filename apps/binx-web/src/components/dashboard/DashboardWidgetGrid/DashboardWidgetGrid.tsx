@@ -82,11 +82,17 @@ const DashboardWidgetGrid = ({
   ) => {
     setError(null);
     startTransition(async () => {
-      const result = await updateDashboardLayoutAction(
-        nextOrder,
-        Array.from(nextHidden),
-      );
-      if (result.error) setError(result.error);
+      // A rejected fetch thrown inside a transition goes to the error
+      // boundary, taking the whole dashboard down — show it inline instead.
+      try {
+        const result = await updateDashboardLayoutAction(
+          nextOrder,
+          Array.from(nextHidden),
+        );
+        if (result.error) setError(result.error);
+      } catch {
+        setError("Unable to save your dashboard layout");
+      }
     });
   };
 

@@ -42,6 +42,14 @@ describe("AiBriefingCard", () => {
     expect(screen.getByRole("button", { name: /refresh/i })).toBeInTheDocument();
   });
 
+  it("shows a retryable error when the request never reaches the server", async () => {
+    mockedGetBriefing.mockRejectedValueOnce(new TypeError("Failed to fetch"));
+    render(<AiBriefingCard agencyId="a1" />);
+
+    expect(await screen.findByText("Couldn't reach the server. Try refreshing.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /refresh/i })).toBeEnabled();
+  });
+
   it("regenerates the briefing when Refresh is clicked", async () => {
     mockedGetBriefing.mockResolvedValueOnce({ briefing: "First briefing." });
     const user = userEvent.setup();
