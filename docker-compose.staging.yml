@@ -29,6 +29,12 @@ services:
       POSTGRES_USER: binxapi
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env.staging}
       POSTGRES_DB: binxportal
+    # Loopback-only, and a different host port from production's db
+    # (5432) since both run on the same box. Lets an admin reach the DB
+    # via an SSM port-forwarding session for tools like DataGrip, without
+    # opening a port in any security group.
+    ports:
+      - "127.0.0.1:5433:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
     healthcheck:

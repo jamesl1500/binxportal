@@ -18,6 +18,11 @@ services:
       POSTGRES_USER: binxapi
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env}
       POSTGRES_DB: binxportal
+    # Loopback-only — reachable from this box but never from the network.
+    # Lets an admin reach the DB via an SSM port-forwarding session for
+    # tools like DataGrip, without opening 5432 in any security group.
+    ports:
+      - "127.0.0.1:5432:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
     healthcheck:
