@@ -13,6 +13,9 @@ const nextConfig: NextConfig = {
     formats: ["image/avif", "image/webp"],
   },
   experimental: {
+    // Policy for `next upgrade --agent` and the dev/build upgrade reminders:
+    // only nag when the installed version has a published security advisory.
+    agentUpgrade: "security",
     // Run the React Compiler (`reactCompiler` above) as Turbopack's native
     // Rust port instead of the Babel plugin — same output, less build/dev
     // compile time and memory. Experimental: to roll back, delete this line
