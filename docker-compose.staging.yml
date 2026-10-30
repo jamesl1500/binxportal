@@ -20,23 +20,12 @@
 
 name: binxportal-staging
 
-services:
-  staging-db:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    mem_limit: 256m
-    environment:
-      POSTGRES_USER: binxapi
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env.staging}
-      POSTGRES_DB: binxportal
-    volumes:
-      - db-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U binxapi -d binxportal"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
+# The database is RDS (`binxportal-staging`, see infra/lib/rds-stack.ts),
+# not a service here. It used to be `staging-db` — redeploy.sh moved its data
+# across on the first deploy without it, and its old volume
+# (binxportal-staging_db-data) is left in place until removed by hand.
 
+services:
   staging-redis:
     image: redis:7-alpine
     restart: unless-stopped
@@ -54,15 +43,19 @@ services:
     restart: unless-stopped
     mem_limit: 512m
     depends_on:
-      staging-db:
-        condition: service_healthy
       staging-redis:
         condition: service_healthy
     networks:
       - default
       - edge
     environment:
-      DATABASE_URL: postgresql+asyncpg://binxapi:${POSTGRES_PASSWORD:?set in .env.staging}@staging-db:5432/binxportal
+      # Assembled into DATABASE_URL by binx_api/core/config.py; written to
+      # .env.staging by redeploy.sh from the binxportal/rds/staging secret.
+      DATABASE_ENDPOINT: ${DATABASE_ENDPOINT:?set in .env.staging}
+      DATABASE_PORT: ${DATABASE_PORT:?set in .env.staging}
+      DATABASE_NAME: ${DATABASE_NAME:?set in .env.staging}
+      DATABASE_USERNAME: ${DATABASE_USERNAME:?set in .env.staging}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:?set in .env.staging}
       REDIS_URL: redis://staging-redis:6379/0
       JWT_SECRET: ${JWT_SECRET:?set in .env.staging}
       FRONTEND_URL: https://staging.binxportal.com
@@ -136,6 +129,5 @@ networks:
     external: true
 
 volumes:
-  db-data:
   redis-data:
   uploads:

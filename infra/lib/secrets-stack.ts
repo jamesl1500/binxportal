@@ -3,8 +3,11 @@ import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import { Construct } from "constructs";
 
 /**
- * The single source of truth for every production secret this app needs —
- * `POSTGRES_PASSWORD`, `JWT_SECRET`, `ANTHROPIC_API_KEY`, `SENTRY_DSN` (all
+ * The single source of truth for every production secret this app needs
+ * except the database's (RDS credentials are CDK-generated into their own
+ * `binxportal/rds/production` secret — see RdsStack; `POSTGRES_PASSWORD`
+ * below is a leftover from the in-box Postgres, unused since) —
+ * `JWT_SECRET`, `ANTHROPIC_API_KEY`, `SENTRY_DSN` (all
  * consumed by the box at deploy time — see deploy/redeploy.sh) and
  * `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY`, `NEXT_PUBLIC_SENTRY_DSN` (consumed by
  * GitHub Actions at Docker build time — see .github/workflows/deploy.yml).

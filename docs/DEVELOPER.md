@@ -136,16 +136,18 @@ Five workflows, all in `.github/workflows/`:
 
 ## Deployment
 
-Production is **one EC2 instance** running the whole stack as five Docker
-Compose services — `api`, `web`, `db` (Postgres), `redis`, and `caddy`
-(reverse proxy + automatic Let's Encrypt TLS, no ALB/ACM). This is
-deliberately the cheap, simple option, not the "correct-at-scale" one — see
-`infra/lib/compute-stack.ts`'s docstring for the reasoning and the
-cost/complexity tradeoff against ECS Fargate + RDS + ElastiCache.
+Production is **one EC2 instance** running the app as four Docker Compose
+services — `api`, `web`, `redis`, and `caddy` (reverse proxy + automatic
+Let's Encrypt TLS, no ALB/ACM) — plus **an RDS Postgres instance**
+(`binxportal-production`). This is deliberately the cheap, simple option,
+not the "correct-at-scale" one — see `infra/lib/compute-stack.ts`'s
+docstring for the reasoning and the cost/complexity tradeoff against ECS
+Fargate + ElastiCache.
 
 **Staging runs on the same instance**, as a second compose project
-(`docker-compose.staging.yml`: `staging-api`, `staging-web`, `staging-db`,
-`staging-redis`) with its own volumes, its own secret (`binxportal/staging`),
+(`docker-compose.staging.yml`: `staging-api`, `staging-web`,
+`staging-redis`) with its own volumes, its own RDS instance
+(`binxportal-staging`), its own secret (`binxportal/staging`),
 and hard memory caps so it can't starve production. Production's Caddy
 fronts it too, at `staging.binxportal.com` / `api.staging.binxportal.com`
 (basic auth on the web host, `noindex` on both). Staging sends real email
@@ -164,11 +166,15 @@ anything smaller.
   (which also gets Secrets Manager read — the build needs one secret from it)
 - `SecretsStack` — the single Secrets Manager entry (`binxportal/app`) every
   production secret lives in; see "Environment variables" below
-- `BackupStack` — daily EBS snapshots (the only backup now that Postgres is
-  self-hosted, not RDS)
+- `BackupStack` — daily EBS snapshots (uploads, Redis, Caddy's certs; the
+  database has RDS's own automated backups)
 - `StagingStack` — the `staging.` / `api.staging.` A records and the
   `binxportal/staging` secret, self-contained so it deploys without
   touching the stacks above
+- `BinxportalRdsStaging` / `BinxportalRdsProduction` (`RdsStack`) — each
+  environment's Postgres, its security group (the instance only, plus a
+  dev IP on staging so a local binx-api can use it), and its CDK-generated
+  credentials secret `binxportal/rds/<env>`
 
 **How a deploy actually happens.** Every push to `master`
 (`.github/workflows/deploy.yml`) goes to staging:
@@ -196,15 +202,34 @@ gh workflow run promote.yml -f sha=<commit>   # or Actions → Promote to produc
 Rolling back production is the same command with an older sha.
 
 `deploy/redeploy.sh <production|staging> <tag>` itself: fetches that
-environment's secret from Secrets Manager and regenerates its env file
-(`.env` / `.env.staging`) from it, plus the two non-secret
-`API_IMAGE`/`WEB_IMAGE` lines — nothing is hand-placed on the box — then
-pulls and recreates only that environment's api/web containers and reloads
-Caddy. The databases and Redis are untouched unless their own images
-change, so a deploy never touches the named volumes holding Postgres data,
+environment's secret and its RDS credentials (`binxportal/rds/<env>`) from
+Secrets Manager and regenerates its env file (`.env` / `.env.staging`) from
+them, plus the two non-secret `API_IMAGE`/`WEB_IMAGE` lines — nothing is
+hand-placed on the box — then pulls and recreates only that environment's
+api/web containers and reloads Caddy. Redis is untouched unless its own
+image changes, so a deploy never touches the named volumes holding
 uploaded files, Redis, or Caddy's certs. **Never run `docker compose -f
 docker-compose.prod.yml down -v`** — that's the one command that would
 delete them.
+
+**The move to RDS** happens on each environment's first deploy of the
+commit that dropped its `db` / `staging-db` compose service, inside
+`redeploy.sh`: it stops that environment's api, `pg_dump`s the old
+container, restores into the (empty) RDS database, checks every table's row
+count matches, and only then starts the new api — so the api is down for
+the length of the copy. On any failure the old api restarts on the old
+database and nothing is lost; fix and redeploy. It keeps the dump in
+`/binxportal/backups/`, leaves the old `<project>_db-data` volume in place
+(remove it with `docker volume rm` once you're happy), and records
+`/binxportal/.rds-migrated-<env>` so it never runs twice. Order:
+
+1. `npx cdk deploy BinxportalRdsStaging BinxportalRdsProduction --exclusively`
+   (from `infra/`) — without the secrets, `redeploy.sh` refuses to deploy.
+2. Merge — the staging deploy moves staging's data.
+3. Promote — the production deploy moves production's.
+
+Rolling production back past that commit brings back the old `db` container
+on its old volume, i.e. the data as it was at the cutover.
 
 ### Manual / one-off operations
 
