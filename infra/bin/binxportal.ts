@@ -7,6 +7,7 @@ import { CiCdStack } from "../lib/cicd-stack";
 import { ComputeStack } from "../lib/compute-stack";
 import { DnsStack } from "../lib/dns-stack";
 import { EmailStack } from "../lib/email-stack";
+import { RdsStack } from "../lib/rds-stack";
 import { SecretsStack } from "../lib/secrets-stack";
 import { StagingStack } from "../lib/staging-stack";
 
@@ -95,6 +96,37 @@ new StagingStack(app, "BinxportalStaging", {
   targetIpAddress: compute.elasticIp.attrPublicIp,
   instanceRoleName: "binxportal-ec2",
   deployRoleName: "binxportal-github-deploy",
+});
+
+// The instance's network, from `aws ec2 describe-instances` /
+// `describe-subnets`: the account's default VPC, public subnets only.
+// launch-wizard-2 is the instance's hand-managed security group.
+const rdsNetwork = {
+  vpcId: "vpc-0967b33bf48ffe84c",
+  availabilityZones: ["us-east-2a", "us-east-2b", "us-east-2c"],
+  publicSubnetIds: ["subnet-0b19ca63b84718dd9", "subnet-0755f56eb363db9d1", "subnet-07ad1ae6c35a6b429"],
+  instanceSecurityGroupId: "sg-0511e561c142e35e5",
+  instanceRoleName: "binxportal-ec2",
+};
+
+new RdsStack(app, "BinxportalRdsStaging", {
+  env,
+  description: "Staging's managed Postgres, also reachable from local development",
+  ...rdsNetwork,
+  environmentName: "staging",
+  instanceClass: cdk.aws_ec2.InstanceType.of(cdk.aws_ec2.InstanceClass.T4G, cdk.aws_ec2.InstanceSize.MICRO),
+  backupRetention: cdk.Duration.days(1),
+  // Carried over from the hand-made binxportal-sandbox's security group.
+  devAccessCidrs: ["23.244.105.82/32"],
+});
+
+new RdsStack(app, "BinxportalRdsProduction", {
+  env,
+  description: "Production's managed Postgres, reachable only from the instance",
+  ...rdsNetwork,
+  environmentName: "production",
+  instanceClass: cdk.aws_ec2.InstanceType.of(cdk.aws_ec2.InstanceClass.T4G, cdk.aws_ec2.InstanceSize.MICRO),
+  backupRetention: cdk.Duration.days(7),
 });
 
 new BackupStack(app, "BinxportalBackup", {

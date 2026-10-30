@@ -3,29 +3,19 @@
 # holding the real secrets.
 #
 # SAFETY: never run `docker compose -f docker-compose.prod.yml down -v` — the
-# `-v` drops the named volumes below, which is the only copy of the
-# database, uploaded files, Redis data, and Caddy's TLS certs. Deploys are
-# always `pull` + `up -d` (see deploy/redeploy.sh); `down` (without `-v`) is
-# fine for a full stack restart, since named volumes outlive `down`.
+# `-v` drops the named volumes below, which is the only copy of uploaded
+# files, Redis data, and Caddy's TLS certs. Deploys are always `pull` +
+# `up -d` (see deploy/redeploy.sh); `down` (without `-v`) is fine for a full
+# stack restart, since named volumes outlive `down`.
+#
+# The database isn't here: it's RDS (`binxportal-production`, see
+# infra/lib/rds-stack.ts). It used to be a `db` service on this box —
+# redeploy.sh moved its data across on the first deploy without it, and its
+# old volume (binxportal_db-data) is left in place until removed by hand.
 
 name: binxportal
 
 services:
-  db:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: binxapi
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env}
-      POSTGRES_DB: binxportal
-    volumes:
-      - db-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U binxapi -d binxportal"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-
   redis:
     image: redis:7-alpine
     restart: unless-stopped
@@ -46,12 +36,20 @@ services:
     image: ${API_IMAGE:?set in .env, e.g. <account>.dkr.ecr.<region>.amazonaws.com/binx-api:latest}
     restart: unless-stopped
     depends_on:
-      db:
-        condition: service_healthy
       redis:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql+asyncpg://binxapi:${POSTGRES_PASSWORD:?set in .env}@db:5432/binxportal
+      # Assembled into DATABASE_URL by binx_api/core/config.py; written to
+      # .env by redeploy.sh from the binxportal/rds/production secret.
+      # Deliberately `:-`, not `:?`: a staging deploy also parses this file
+      # (to update the shared Caddy) against production's .env, which only
+      # gets these once production itself has been deployed on RDS.
+      # redeploy.sh refuses to deploy production without them.
+      DATABASE_ENDPOINT: ${DATABASE_ENDPOINT:-}
+      DATABASE_PORT: ${DATABASE_PORT:-5432}
+      DATABASE_NAME: ${DATABASE_NAME:-}
+      DATABASE_USERNAME: ${DATABASE_USERNAME:-}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-}
       REDIS_URL: redis://redis:6379/0
       JWT_SECRET: ${JWT_SECRET:?set in .env}
       FRONTEND_URL: https://www.binxportal.com
@@ -88,7 +86,7 @@ services:
       SENTRY_ENVIRONMENT: production
       # Local-disk upload dirs land on the named `uploads` volume below —
       # survives container replacement, backed up by the EBS snapshot plan
-      # (see infra/lib/backup-stack.ts) alongside the db/redis volumes.
+      # (see infra/lib/backup-stack.ts) alongside the redis volume.
       PROJECT_UPLOAD_DIR: /data/uploads/projects
       MESSAGE_UPLOAD_DIR: /data/uploads/messages
       AGENCY_UPLOAD_DIR: /data/uploads/agencies
@@ -148,7 +146,6 @@ networks:
     external: true
 
 volumes:
-  db-data:
   redis-data:
   uploads:
   caddy-data:

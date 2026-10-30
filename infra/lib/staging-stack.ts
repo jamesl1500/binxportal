@@ -38,9 +38,11 @@ export interface StagingStackProps extends cdk.StackProps {
  * and once they have, changing the JSON below and redeploying would
  * overwrite them — add keys with a merge instead (see SecretsStack's
  * docstring for the command). Blank is a valid value for everything except
- * POSTGRES_PASSWORD and JWT_SECRET, which deploy/redeploy.sh refuses to
- * deploy without. Blank STAGING_BASIC_AUTH_* means staging.binxportal.com
- * is served without a password prompt.
+ * JWT_SECRET, which deploy/redeploy.sh refuses to deploy without.
+ * POSTGRES_PASSWORD is unused since the move to RDS, whose credentials live
+ * in their own CDK-generated secret (see RdsStack). Blank
+ * STAGING_BASIC_AUTH_* means staging.binxportal.com is served without a
+ * password prompt.
  */
 export class StagingStack extends cdk.Stack {
   public readonly secret: secretsmanager.Secret;
