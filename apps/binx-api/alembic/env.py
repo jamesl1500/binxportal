@@ -29,7 +29,10 @@ from binx_api.modules.users import models as users_models  # noqa: F401
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-config.set_main_option("sqlalchemy.url", get_settings().database_url)
+# set_main_option goes through configparser interpolation, so a literal `%`
+# must be doubled — the URL-escaped RDS password (core/config.py's
+# _assemble_database_url) is full of them. get_main_option undoes it.
+config.set_main_option("sqlalchemy.url", get_settings().database_url.replace("%", "%%"))
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
