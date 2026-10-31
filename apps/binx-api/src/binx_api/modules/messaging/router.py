@@ -3,8 +3,8 @@ from datetime import datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, WebSocket, WebSocketDisconnect, status
-from fastapi.responses import FileResponse
 
+from binx_api.core import storage
 from binx_api.core.database import get_db
 from binx_api.core.dependencies import CurrentUser, DbSession
 from binx_api.core.security import decode_ws_ticket
@@ -269,7 +269,9 @@ async def download_attachment(
         db, agency.id, conversation_id, current_user
     )
     attachment = await service.get_attachment_or_404(db, conversation.id, message_id, attachment_id)
-    return FileResponse(path=attachment.storage_path, filename=attachment.file_name, media_type=attachment.mime_type)
+    return await storage.response(
+        attachment.storage_path, filename=attachment.file_name, media_type=attachment.mime_type
+    )
 
 
 # ---- Websocket ------------------------------------------------------

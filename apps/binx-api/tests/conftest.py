@@ -32,6 +32,7 @@ so the session-scoped async engine stays valid across every test.
 
 from __future__ import annotations
 
+import io
 import os
 import re
 from collections.abc import AsyncGenerator
@@ -55,11 +56,14 @@ os.environ.setdefault("FRONTEND_URL", "http://frontend.test")
 os.environ.setdefault("RATE_LIMIT_ENABLED", "false")
 
 import pytest  # noqa: E402
+from botocore.exceptions import ClientError  # noqa: E402
+from botocore.response import StreamingBody  # noqa: E402
 from httpx import ASGITransport, AsyncClient  # noqa: E402
 from sqlalchemy import text  # noqa: E402
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine  # noqa: E402
 from sqlalchemy.pool import NullPool  # noqa: E402
 
+from binx_api.core import storage as _storage  # noqa: E402
 from binx_api.core import stripe_events as _stripe_events  # noqa: E402,F401
 from binx_api.core.database import Base, get_db  # noqa: E402
 from binx_api.core.security import create_access_token  # noqa: E402
@@ -332,3 +336,68 @@ def extract_token(body: str) -> str:
     match = _TOKEN_RE.search(body)
     assert match is not None, f"no token= found in email body: {body!r}"
     return match.group(1)
+
+
+# ---------------------------------------------------------------------------
+# S3 uploads
+# ---------------------------------------------------------------------------
+
+FAKE_BUCKET = "binxportal-uploads-test"
+
+
+class FakeS3:
+    """In-memory stand-in for the boto3 S3 client — just the calls
+    ``core/storage.py`` makes, with S3's own response shapes (a real
+    botocore ``StreamingBody``, ``NoSuchKey``, 1000-key list pages)."""
+
+    def __init__(self) -> None:
+        self.objects: dict[tuple[str, str], tuple[bytes, str]] = {}
+        self.delete_objects_calls = 0
+
+    def put_object(self, *, Bucket: str, Key: str, Body: bytes, ContentType: str) -> dict:  # noqa: N803
+        self.objects[(Bucket, Key)] = (Body, ContentType)
+        return {}
+
+    def get_object(self, *, Bucket: str, Key: str) -> dict:  # noqa: N803
+        if (Bucket, Key) not in self.objects:
+            raise ClientError({"Error": {"Code": "NoSuchKey", "Message": "missing"}}, "GetObject")
+        body, content_type = self.objects[(Bucket, Key)]
+        return {
+            "Body": StreamingBody(io.BytesIO(body), len(body)),
+            "ContentLength": len(body),
+            "ContentType": content_type,
+            "ETag": f'"{len(body)}"',
+        }
+
+    def delete_object(self, *, Bucket: str, Key: str) -> dict:  # noqa: N803
+        self.objects.pop((Bucket, Key), None)
+        return {}
+
+    def delete_objects(self, *, Bucket: str, Delete: dict) -> dict:  # noqa: N803
+        assert len(Delete["Objects"]) <= 1000, "S3 rejects more than 1000 keys per DeleteObjects"
+        self.delete_objects_calls += 1
+        for obj in Delete["Objects"]:
+            self.objects.pop((Bucket, obj["Key"]), None)
+        return {}
+
+    def get_paginator(self, operation: str) -> SimpleNamespace:
+        assert operation == "list_objects_v2"
+
+        def paginate(*, Bucket: str, Prefix: str):  # noqa: N803
+            keys = sorted(k for b, k in self.objects if b == Bucket and k.startswith(Prefix))
+            for start in range(0, len(keys), 1000):
+                yield {"Contents": [{"Key": k} for k in keys[start : start + 1000]]}
+
+        return SimpleNamespace(paginate=paginate)
+
+    def keys(self) -> list[str]:
+        return sorted(k for _b, k in self.objects)
+
+
+@pytest.fixture
+def fake_s3(monkeypatch: pytest.MonkeyPatch) -> FakeS3:
+    """Switches uploads to S3 mode (``UPLOAD_BUCKET`` set) against a FakeS3."""
+    fake = FakeS3()
+    monkeypatch.setattr(_storage.settings, "upload_bucket", FAKE_BUCKET)
+    monkeypatch.setattr(_storage, "_s3_client", fake)
+    return fake

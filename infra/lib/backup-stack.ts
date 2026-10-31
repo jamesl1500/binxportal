@@ -7,11 +7,10 @@ export interface BackupStackProps extends cdk.StackProps {
 }
 
 /**
- * Daily EBS backups for the instance's root volume, via AWS Backup. Postgres
- * and Redis are self-hosted in containers on that one volume now (not
- * RDS/ElastiCache), so this is the only thing standing between a bad deploy
- * / disk failure and total data loss — there's no managed-service backup to
- * fall back on.
+ * Daily EBS backups for the instance's root volume, via AWS Backup. What's
+ * left on that volume worth keeping is Redis (self-hosted in a container,
+ * not ElastiCache) and Caddy's TLS certs — the database is RDS, with its own
+ * automated backups (RdsStack), and uploads are in S3 (UploadsStack).
  */
 export class BackupStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: BackupStackProps) {

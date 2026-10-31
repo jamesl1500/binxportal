@@ -4,8 +4,8 @@ from typing import Annotated
 
 from fastapi import APIRouter, File, Form, Query, Request, UploadFile, status
 from fastapi.exceptions import HTTPException
-from fastapi.responses import FileResponse
 
+from binx_api.core import storage
 from binx_api.core.dependencies import CurrentUser, DbSession
 from binx_api.core.email import send_client_invitation_email
 from binx_api.core.rate_limit import limiter
@@ -226,7 +226,7 @@ async def list_team(db: DbSession, membership: PortalContext) -> list[PortalTeam
 async def download_team_member_avatar(db: DbSession, membership: PortalContext, user_id: uuid.UUID):
     agency, client, _contact = membership
     profile = await service.get_portal_team_avatar_or_404(db, agency.id, client.id, user_id)
-    return FileResponse(path=profile.avatar_storage_path, media_type=profile.avatar_mime_type or "image/png")
+    return await storage.response(profile.avatar_storage_path, media_type=profile.avatar_mime_type or "image/png")
 
 
 # ---- Collaboration canvas ------------------------------------------
@@ -357,7 +357,9 @@ async def download_board_image(db: DbSession, membership: PortalContext, project
     _agency, client, _contact = membership
     project = await service.get_portal_project_or_404(db, client.id, project_id)
     file_record = await projects_service.get_project_file_or_404(db, project.id, file_id)
-    return FileResponse(path=file_record.storage_path, filename=file_record.file_name, media_type=file_record.mime_type)
+    return await storage.response(
+        file_record.storage_path, filename=file_record.file_name, media_type=file_record.mime_type
+    )
 
 
 @router.get("/logo")
@@ -367,7 +369,7 @@ async def download_portal_logo(db: DbSession, membership: PortalContext):
     if resolved is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No logo set")
     path, mime_type = resolved
-    return FileResponse(path=path, media_type=mime_type)
+    return await storage.response(path, media_type=mime_type)
 
 
 async def _portal_item(db, client_id: uuid.UUID, project_id: uuid.UUID, item_id: uuid.UUID):
@@ -852,7 +854,7 @@ async def download_participant_avatar(
     agency, client, _contact = membership
     conversation, _p = await _portal_conversation_or_404(db, agency, client.id, conversation_id, current_user)
     profile = await messaging_service.get_participant_avatar_or_404(db, conversation, user_id)
-    return FileResponse(path=profile.avatar_storage_path, media_type=profile.avatar_mime_type or "image/png")
+    return await storage.response(profile.avatar_storage_path, media_type=profile.avatar_mime_type or "image/png")
 
 
 @router.post("/conversations/{conversation_id}/read", status_code=status.HTTP_204_NO_CONTENT)

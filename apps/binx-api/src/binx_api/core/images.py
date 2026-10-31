@@ -1,12 +1,11 @@
-"""Shared helpers for validating and storing the small branded images the app
-lets people upload (agency logo/cover, client portal logo, and now a user's
+"""Shared helpers for validating the small branded images the app lets
+people upload (storing them is core/storage.py's job) (agency logo/cover, client portal logo, and now a user's
 own avatar/cover) — extracted out of agencies/service.py once user profiles
 became a third caller, to avoid every caller re-deriving the same mime/size
 rules and to sidestep a circular import (agencies/service.py already imports
 from modules.users, so modules.users can't import back from it)."""
 
 import hashlib
-from pathlib import Path
 
 from fastapi import HTTPException, status
 
@@ -31,15 +30,6 @@ def validate_image(content: bytes, mime_type: str) -> None:
     if len(content) > settings.agency_image_max_bytes:
         max_mb = settings.agency_image_max_bytes // (1024 * 1024)
         raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, f"Images must be {max_mb}MB or smaller")
-
-
-def unlink_quietly(storage_path: str) -> None:
-    """Best-effort delete of an image's bytes — a filesystem hiccup should
-    never block clearing the row that points at them."""
-    try:
-        Path(storage_path).unlink(missing_ok=True)
-    except OSError:
-        pass
 
 
 def image_version(storage_path: str | None) -> str | None:

@@ -10,6 +10,7 @@ import { EmailStack } from "../lib/email-stack";
 import { RdsStack } from "../lib/rds-stack";
 import { SecretsStack } from "../lib/secrets-stack";
 import { StagingStack } from "../lib/staging-stack";
+import { UploadsStack } from "../lib/uploads-stack";
 
 // Everything targets the account/region the existing EC2 instance already
 // lives in (see the plan's exploration notes — found via `aws sts
@@ -127,6 +128,24 @@ new RdsStack(app, "BinxportalRdsProduction", {
   environmentName: "production",
   instanceClass: cdk.aws_ec2.InstanceType.of(cdk.aws_ec2.InstanceClass.T4G, cdk.aws_ec2.InstanceSize.MICRO),
   backupRetention: cdk.Duration.days(7),
+});
+
+// Hand-made buckets (see UploadsStack's docstring) — these names are also
+// UPLOAD_BUCKET in docker-compose.staging.yml / docker-compose.prod.yml.
+new UploadsStack(app, "BinxportalUploadsStaging", {
+  env,
+  description: "The instance role's access to staging's uploads bucket",
+  environmentName: "staging",
+  bucketName: "binxportal-uploads-staging-574247905173-us-east-2-an",
+  instanceRoleName: "binxportal-ec2",
+});
+
+new UploadsStack(app, "BinxportalUploadsProduction", {
+  env,
+  description: "The instance role's access to production's uploads bucket",
+  environmentName: "production",
+  bucketName: "binxportal-uploads-prod-574247905173-us-east-2-an",
+  instanceRoleName: "binxportal-ec2",
 });
 
 new BackupStack(app, "BinxportalBackup", {

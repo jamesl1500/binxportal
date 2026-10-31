@@ -166,8 +166,8 @@ anything smaller.
   (which also gets Secrets Manager read — the build needs one secret from it)
 - `SecretsStack` — the single Secrets Manager entry (`binxportal/app`) every
   production secret lives in; see "Environment variables" below
-- `BackupStack` — daily EBS snapshots (uploads, Redis, Caddy's certs; the
-  database has RDS's own automated backups)
+- `BackupStack` — daily EBS snapshots (Redis, Caddy's certs; the database
+  has RDS's own automated backups, and uploads live in S3)
 - `StagingStack` — the `staging.` / `api.staging.` A records and the
   `binxportal/staging` secret, self-contained so it deploys without
   touching the stacks above
@@ -175,6 +175,13 @@ anything smaller.
   environment's Postgres, its security group (the instance only, plus a
   dev IP on staging so a local binx-api can use it), and its CDK-generated
   credentials secret `binxportal/rds/<env>`
+- `BinxportalUploadsStaging` / `BinxportalUploadsProduction`
+  (`UploadsStack`) — the instance role's read/write/delete on each
+  environment's (hand-made, private) uploads bucket. binx-api sends every
+  upload there when `UPLOAD_BUCKET` is set (`core/storage.py`) and streams
+  files back through its own access-checked endpoints, so nothing is ever
+  public in S3. Deploy these before the compose change that sets
+  `UPLOAD_BUCKET`, or every upload fails with AccessDenied
 
 **How a deploy actually happens.** Every push to `master`
 (`.github/workflows/deploy.yml`) goes to staging:
@@ -207,8 +214,8 @@ Secrets Manager and regenerates its env file (`.env` / `.env.staging`) from
 them, plus the two non-secret `API_IMAGE`/`WEB_IMAGE` lines — nothing is
 hand-placed on the box — then pulls and recreates only that environment's
 api/web containers and reloads Caddy. Redis is untouched unless its own
-image changes, so a deploy never touches the named volumes holding
-uploaded files, Redis, or Caddy's certs. **Never run `docker compose -f
+image changes, so a deploy never touches the named volumes holding Redis
+or Caddy's certs. **Never run `docker compose -f
 docker-compose.prod.yml down -v`** — that's the one command that would
 delete them.
 

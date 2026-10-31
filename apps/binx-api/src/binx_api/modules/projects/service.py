@@ -1,6 +1,5 @@
 import re
 import uuid
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from fastapi import HTTPException, status
@@ -9,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
+from binx_api.core import storage
 from binx_api.core.config import get_settings
 from binx_api.modules.activity import service as activity_service
 from binx_api.modules.activity.models import CATEGORY_PROJECTS as ACTIVITY_CATEGORY_PROJECTS
@@ -65,22 +65,11 @@ def _validate_task_upload(content: bytes, mime_type: str) -> None:
         raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, f"Files must be {max_mb}MB or smaller")
 
 
-def _write_upload(directory: Path, file_name: str, content: bytes) -> Path:
-    """Write bytes to ``{directory}/{uuid}_{file_name}`` (the uuid prefix
-    keeps same-named uploads from colliding) and return the full path."""
-    directory.mkdir(parents=True, exist_ok=True)
-    stored_path = directory / f"{uuid.uuid4().hex}_{file_name}"
-    stored_path.write_bytes(content)
-    return stored_path
-
-
-def _unlink_quietly(storage_path: str) -> None:
-    """Best-effort delete of an upload's bytes — a filesystem hiccup should
-    never block removing the row that points at them."""
-    try:
-        Path(storage_path).unlink(missing_ok=True)
-    except OSError:
-        pass
+async def _store_upload(prefix: str, file_name: str, content: bytes, mime_type: str) -> str:
+    """Store bytes at ``projects/{prefix}/{uuid}_{file_name}`` (the uuid
+    prefix keeps same-named uploads from colliding) and return the
+    storage_path to record."""
+    return await storage.save("projects", f"{prefix}/{uuid.uuid4().hex}_{file_name}", content, content_type=mime_type)
 
 
 _SLUG_INVALID_CHARS = re.compile(r"[^a-z0-9]+")
@@ -935,9 +924,9 @@ async def get_project_file_or_404(db: AsyncSession, project_id: uuid.UUID, file_
     return file
 
 
-# Saves an uploaded file's bytes to local disk and records its metadata.
-# Storage layout: {project_upload_dir}/{project_id}/{uuid}_{original_name} —
-# the uuid prefix avoids collisions between same-named uploads.
+# Stores an uploaded file (core/storage.py) and records its metadata.
+# Storage layout: projects/{project_id}/{uuid}_{original_name} — the uuid
+# prefix avoids collisions between same-named uploads.
 async def save_project_file(
     db: AsyncSession, project: Project, *, uploaded_by: User, file_name: str, content: bytes, mime_type: str
 ) -> ProjectFile:
@@ -945,17 +934,15 @@ async def save_project_file(
         max_mb = settings.project_upload_max_bytes // (1024 * 1024)
         raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, f"Files must be {max_mb}MB or smaller")
 
-    upload_dir = Path(settings.project_upload_dir) / str(project.id)
-    upload_dir.mkdir(parents=True, exist_ok=True)
-    stored_path = upload_dir / f"{uuid.uuid4().hex}_{file_name}"
-    stored_path.write_bytes(content)
+    mime_type = mime_type or "application/octet-stream"
+    stored_path = await _store_upload(str(project.id), file_name, content, mime_type)
 
     file_record = ProjectFile(
         project_id=project.id,
         uploaded_by_id=uploaded_by.id,
         file_name=file_name,
-        storage_path=str(stored_path),
-        mime_type=mime_type or "application/octet-stream",
+        storage_path=stored_path,
+        mime_type=mime_type,
         size=len(content),
     )
     db.add(file_record)
@@ -976,7 +963,7 @@ async def delete_project_file(db: AsyncSession, file: ProjectFile) -> None:
             status.HTTP_409_CONFLICT,
             "This file is attached to a task — remove it from that task to take it off the project.",
         )
-    _unlink_quietly(file.storage_path)
+    await storage.delete(file.storage_path)
     await db.delete(file)
     await db.commit()
 
@@ -1104,23 +1091,22 @@ async def get_task_file_or_404(db: AsyncSession, task_id: uuid.UUID, file_id: uu
     return file
 
 
-# Saves an uploaded task file's bytes to local disk and records its metadata.
+# Stores an uploaded task file (core/storage.py) and records its metadata.
 # Restricted to images/PDF/Word (see ALLOWED_TASK_FILE_MIME_TYPES) — unlike
 # project-level files, which accept anything. Storage layout:
-# {project_upload_dir}/{project_id}/tasks/{task_id}/{uuid}_{original_name}.
+# projects/{project_id}/tasks/{task_id}/{uuid}_{original_name}.
 async def save_task_file(
     db: AsyncSession, task: ProjectTask, *, uploaded_by: User, file_name: str, content: bytes, mime_type: str
 ) -> ProjectTaskFile:
     _validate_task_upload(content, mime_type)
 
-    upload_dir = Path(settings.project_upload_dir) / str(task.project_id) / "tasks" / str(task.id)
-    stored_path = _write_upload(upload_dir, file_name, content)
+    stored_path = await _store_upload(f"{task.project_id}/tasks/{task.id}", file_name, content, mime_type)
 
     file_record = ProjectTaskFile(
         task_id=task.id,
         uploaded_by_id=uploaded_by.id,
         file_name=file_name,
-        storage_path=str(stored_path),
+        storage_path=stored_path,
         mime_type=mime_type,
         size=len(content),
     )
@@ -1128,7 +1114,7 @@ async def save_task_file(
     await db.flush()  # need file_record.id for the project-level mirror below
 
     # Mirror the attachment into project_files so it also appears in the
-    # project-wide Files table. Same bytes on disk (shared storage_path), same
+    # project-wide Files table. Same stored bytes (shared storage_path), same
     # uploader; source_task_file_id ties the two together so removing the task
     # file cascades this mirror away (and the Files table won't let it be
     # deleted on its own — see delete_project_file).
@@ -1138,7 +1124,7 @@ async def save_task_file(
             uploaded_by_id=uploaded_by.id,
             source_task_file_id=file_record.id,
             file_name=file_name,
-            storage_path=str(stored_path),
+            storage_path=stored_path,
             mime_type=mime_type,
             size=len(content),
         )
@@ -1150,10 +1136,10 @@ async def save_task_file(
 
 
 # Deletes a task file's DB record and best-effort removes its bytes from
-# disk. Its project_files mirror (source_task_file_id) is removed by the DB's
-# ON DELETE CASCADE — that mirror shares these same bytes, so it must not try
-# to unlink them again.
+# storage. Its project_files mirror (source_task_file_id) is removed by the
+# DB's ON DELETE CASCADE — that mirror shares these same bytes, so it must
+# not try to delete them again.
 async def delete_task_file(db: AsyncSession, file: ProjectTaskFile) -> None:
-    _unlink_quietly(file.storage_path)
+    await storage.delete(file.storage_path)
     await db.delete(file)
     await db.commit()
