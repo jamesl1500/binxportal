@@ -14,13 +14,13 @@ import re
 import uuid
 from collections import defaultdict
 from datetime import UTC, datetime
-from pathlib import Path
 
 from fastapi import HTTPException, status
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
+from binx_api.core import storage
 from binx_api.core.config import get_settings
 from binx_api.core.images import image_version
 from binx_api.modules.agencies.models import ROLE_ADMIN, ROLE_OWNER, Agency, AgencyClient, AgencyMember
@@ -48,18 +48,10 @@ settings = get_settings()
 # ---- Upload helpers (same approach as projects/service.py) -----------------
 
 
-def _write_upload(directory: Path, file_name: str, content: bytes) -> Path:
-    directory.mkdir(parents=True, exist_ok=True)
-    stored_path = directory / f"{uuid.uuid4().hex}_{file_name}"
-    stored_path.write_bytes(content)
-    return stored_path
-
-
-def _unlink_quietly(storage_path: str) -> None:
-    try:
-        Path(storage_path).unlink(missing_ok=True)
-    except OSError:
-        pass
+async def _store_upload(conversation_id: uuid.UUID, file_name: str, content: bytes, mime_type: str) -> str:
+    return await storage.save(
+        "messages", f"{conversation_id}/{uuid.uuid4().hex}_{file_name}", content, content_type=mime_type
+    )
 
 
 def _validate_attachment(content: bytes) -> None:
@@ -842,16 +834,16 @@ async def post_message(
     db.add(message)
     await db.flush()
 
-    upload_dir = Path(settings.message_upload_dir) / str(conversation.id)
     for file_name, content, mime_type in uploads:
-        stored_path = _write_upload(upload_dir, file_name, content)
+        mime_type = mime_type or "application/octet-stream"
+        stored_path = await _store_upload(conversation.id, file_name, content, mime_type)
         db.add(
             MessageAttachment(
                 message_id=message.id,
                 uploaded_by_id=sender.id,
                 file_name=file_name,
-                storage_path=str(stored_path),
-                mime_type=mime_type or "application/octet-stream",
+                storage_path=stored_path,
+                mime_type=mime_type,
                 size=len(content),
             )
         )
@@ -907,7 +899,7 @@ async def delete_message(
 
     result = await db.execute(select(MessageAttachment).where(MessageAttachment.message_id == message.id))
     for attachment in result.scalars():
-        _unlink_quietly(attachment.storage_path)
+        await storage.delete(attachment.storage_path)
         await db.delete(attachment)
 
     message.deleted_at = datetime.now(UTC)

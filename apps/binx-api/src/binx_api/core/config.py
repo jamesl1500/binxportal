@@ -47,16 +47,19 @@ class Settings(BaseSettings):
     # Base URL of the staff portal frontend, used to build links in emails
     frontend_url: str = "http://localhost:3000"
 
-    # Local-disk root for uploaded project files. Fine for now; swap for
-    # object storage (S3, etc.) later without changing ProjectFile's shape —
-    # storage_path would just become a key instead of a filesystem path.
+    # S3 bucket every upload goes to (project files, message attachments,
+    # agency/client/user images) — set in production and staging (see the
+    # compose files). Unset, uploads go to the local *_upload_dir roots below
+    # instead. See core/storage.py for the layout and how existing rows keep
+    # working across a switch.
+    upload_bucket: str | None = None
+
+    # Local-disk root for uploaded project files, when upload_bucket is unset.
     project_upload_dir: str = "uploads/projects"
     # Per-file cap, enforced in projects/service.py's save_project_file.
     project_upload_max_bytes: int = 25 * 1024 * 1024
 
-    # Local-disk root for message attachments — same storage approach as
-    # project files (see messaging/service.py). Swap for object storage later
-    # without touching MessageAttachment's shape.
+    # Local-disk root for message attachments, when upload_bucket is unset.
     message_upload_dir: str = "uploads/messages"
     # Per-file cap, enforced in messaging/service.py's save_message_attachment.
     message_upload_max_bytes: int = 25 * 1024 * 1024
@@ -67,9 +70,8 @@ class Settings(BaseSettings):
     # auth/router.py's /auth/ws-ticket and messaging/realtime.py).
     ws_ticket_expire_seconds: int = 60
 
-    # Local-disk root for an agency's logo / cover image — same storage
-    # approach as project files (see agencies/service.py). Swap for object
-    # storage later without touching AgencyProfile's shape.
+    # Local-disk root for an agency's logo / cover image (plus client logos
+    # and user avatars/covers under it), when upload_bucket is unset.
     agency_upload_dir: str = "uploads/agencies"
     # Per-image cap, enforced in agencies/service.py's save_agency_image.
     agency_image_max_bytes: int = 5 * 1024 * 1024

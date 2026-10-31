@@ -1,16 +1,15 @@
 import re
-import shutil
 import uuid
 from datetime import UTC, datetime, timedelta
-from pathlib import Path
 
 from fastapi import HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from binx_api.core import storage
 from binx_api.core.config import get_settings
-from binx_api.core.images import IMAGE_EXTENSIONS, unlink_quietly, validate_image
+from binx_api.core.images import IMAGE_EXTENSIONS, validate_image
 from binx_api.core.security import generate_opaque_token, hash_token
 from binx_api.modules.activity import service as activity_service
 from binx_api.modules.activity.models import CATEGORY_TEAM, VISIBILITY_ADMIN
@@ -306,12 +305,12 @@ async def update_agency(db: AsyncSession, agency: Agency, *, name: str, actor: U
 
 # Permanently deletes an agency. Related rows (memberships, clients, the
 # profile) are removed via each table's ON DELETE CASCADE; the only thing the
-# DB can't do is clear the agency's uploaded images off disk.
+# DB can't do is clear the agency's uploaded images out of storage.
 async def delete_agency(db: AsyncSession, agency: Agency) -> None:
     agency_id = agency.id
     await db.delete(agency)
     await db.commit()
-    shutil.rmtree(Path(settings.agency_upload_dir) / str(agency_id), ignore_errors=True)
+    await storage.delete_prefix("agencies", str(agency_id))
 
 
 # ---- Profile (branding / about / policies) --------------------------------
@@ -339,9 +338,9 @@ async def update_agency_profile(db: AsyncSession, agency: Agency, *, data: dict)
     return profile
 
 
-# Saves a logo or cover image's bytes to local disk and records the path/mime
+# Stores a logo or cover image (core/storage.py) and records the path/mime
 # on the profile. Removes the previous file so re-uploads don't pile up.
-# Storage layout: {agency_upload_dir}/{agency_id}/{kind}_{uuid}{ext}.
+# Storage layout: agencies/{agency_id}/{kind}_{uuid}{ext}.
 async def save_agency_image(
     db: AsyncSession, agency: Agency, *, kind: str, content: bytes, mime_type: str
 ) -> AgencyProfile:
@@ -352,18 +351,20 @@ async def save_agency_image(
     mime_attr = f"{kind}_mime_type"
     old_path: str | None = getattr(profile, path_attr)
 
-    upload_dir = Path(settings.agency_upload_dir) / str(agency.id)
-    upload_dir.mkdir(parents=True, exist_ok=True)
-    stored_path = upload_dir / f"{kind}_{uuid.uuid4().hex}{IMAGE_EXTENSIONS[mime_type]}"
-    stored_path.write_bytes(content)
+    stored_path = await storage.save(
+        "agencies",
+        f"{agency.id}/{kind}_{uuid.uuid4().hex}{IMAGE_EXTENSIONS[mime_type]}",
+        content,
+        content_type=mime_type,
+    )
 
-    setattr(profile, path_attr, str(stored_path))
+    setattr(profile, path_attr, stored_path)
     setattr(profile, mime_attr, mime_type)
     await db.commit()
     await db.refresh(profile)
 
-    if old_path and old_path != str(stored_path):
-        unlink_quietly(old_path)
+    if old_path and old_path != stored_path:
+        await storage.delete(old_path)
     return profile
 
 
@@ -375,7 +376,7 @@ async def clear_agency_image(db: AsyncSession, agency: Agency, *, kind: str) -> 
     await db.commit()
     await db.refresh(profile)
     if old_path:
-        unlink_quietly(old_path)
+        await storage.delete(old_path)
     return profile
 
 
@@ -404,9 +405,9 @@ async def update_client_branding(db: AsyncSession, client: AgencyClient, *, data
     return branding
 
 
-# Storage layout: {agency_upload_dir}/clients/{client_id}/logo_{uuid}{ext} —
-# nested under the existing agency upload dir rather than a new settings
-# field. Reuses the shared image validation/extension helpers in core.images.
+# Storage layout: agencies/clients/{client_id}/logo_{uuid}{ext} — nested
+# under the agency upload area rather than an area of its own. Reuses the
+# shared image validation/extension helpers in core.images.
 async def save_client_logo(
     db: AsyncSession, client: AgencyClient, *, content: bytes, mime_type: str
 ) -> ClientPortalBranding:
@@ -414,18 +415,20 @@ async def save_client_logo(
     branding = await get_or_create_client_branding(db, client)
     old_path = branding.logo_storage_path
 
-    upload_dir = Path(settings.agency_upload_dir) / "clients" / str(client.id)
-    upload_dir.mkdir(parents=True, exist_ok=True)
-    stored_path = upload_dir / f"logo_{uuid.uuid4().hex}{IMAGE_EXTENSIONS[mime_type]}"
-    stored_path.write_bytes(content)
+    stored_path = await storage.save(
+        "agencies",
+        f"clients/{client.id}/logo_{uuid.uuid4().hex}{IMAGE_EXTENSIONS[mime_type]}",
+        content,
+        content_type=mime_type,
+    )
 
-    branding.logo_storage_path = str(stored_path)
+    branding.logo_storage_path = stored_path
     branding.logo_mime_type = mime_type
     await db.commit()
     await db.refresh(branding)
 
-    if old_path and old_path != str(stored_path):
-        unlink_quietly(old_path)
+    if old_path and old_path != stored_path:
+        await storage.delete(old_path)
     return branding
 
 
@@ -437,7 +440,7 @@ async def clear_client_logo(db: AsyncSession, client: AgencyClient) -> ClientPor
     await db.commit()
     await db.refresh(branding)
     if old_path:
-        unlink_quietly(old_path)
+        await storage.delete(old_path)
     return branding
 
 
@@ -977,4 +980,4 @@ async def delete_client(db: AsyncSession, client: AgencyClient) -> None:
         ) from None
     # ClientPortalBranding cascades in the DB; only its uploaded logo file
     # (if any) needs a manual cleanup, same as delete_agency's images.
-    shutil.rmtree(Path(settings.agency_upload_dir) / "clients" / str(client_id), ignore_errors=True)
+    await storage.delete_prefix("agencies", f"clients/{client_id}")

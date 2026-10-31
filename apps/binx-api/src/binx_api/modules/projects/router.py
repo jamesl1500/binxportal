@@ -2,8 +2,8 @@ import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, UploadFile, status
-from fastapi.responses import FileResponse
 
+from binx_api.core import storage
 from binx_api.core.dependencies import CurrentUser, DbSession
 from binx_api.modules.agencies.dependencies import require_agency_role
 from binx_api.modules.agencies.models import ROLE_ADMIN, ROLE_MEMBER, ROLE_OWNER, Agency, AgencyClient
@@ -711,7 +711,9 @@ async def download_task_file(
     await service.get_project_or_404(db, agency.id, project_id)
     await service.get_task_or_404(db, project_id, task_id)
     file_record = await service.get_task_file_or_404(db, task_id, file_id)
-    return FileResponse(path=file_record.storage_path, filename=file_record.file_name, media_type=file_record.mime_type)
+    return await storage.response(
+        file_record.storage_path, filename=file_record.file_name, media_type=file_record.mime_type
+    )
 
 
 @router.delete("/{project_id}/tasks/{task_id}/files/{file_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -766,7 +768,9 @@ async def download_project_file(db: DbSession, project_id: uuid.UUID, file_id: u
     agency, _role = agency_and_role
     await service.get_project_or_404(db, agency.id, project_id)
     file_record = await service.get_project_file_or_404(db, project_id, file_id)
-    return FileResponse(path=file_record.storage_path, filename=file_record.file_name, media_type=file_record.mime_type)
+    return await storage.response(
+        file_record.storage_path, filename=file_record.file_name, media_type=file_record.mime_type
+    )
 
 
 @router.delete("/{project_id}/files/{file_id}", status_code=status.HTTP_204_NO_CONTENT)

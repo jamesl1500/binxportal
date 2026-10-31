@@ -1,8 +1,8 @@
 from typing import Annotated
 
 from fastapi import APIRouter, File, HTTPException, UploadFile, status
-from fastapi.responses import FileResponse
 
+from binx_api.core import storage
 from binx_api.core.dependencies import CurrentUser, DbSession
 from binx_api.modules.auth.schemas import MessageResponse
 from binx_api.modules.users.schemas import (
@@ -145,7 +145,7 @@ async def download_avatar(db: DbSession, current_user: CurrentUser):
     profile = await get_or_create_profile(db, current_user)
     if not profile.avatar_storage_path:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No avatar set")
-    return FileResponse(path=profile.avatar_storage_path, media_type=profile.avatar_mime_type or "image/png")
+    return await storage.response(profile.avatar_storage_path, media_type=profile.avatar_mime_type or "image/png")
 
 
 @router.get("/me/cover")
@@ -153,7 +153,7 @@ async def download_cover(db: DbSession, current_user: CurrentUser):
     profile = await get_or_create_profile(db, current_user)
     if not profile.cover_storage_path:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No cover set")
-    return FileResponse(path=profile.cover_storage_path, media_type=profile.cover_mime_type or "image/png")
+    return await storage.response(profile.cover_storage_path, media_type=profile.cover_mime_type or "image/png")
 
 
 @router.get("/me/appearance", response_model=AppearanceSettingsRead)

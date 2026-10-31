@@ -85,11 +85,8 @@ services:
       AWS_REGION: us-east-2
       SENTRY_DSN: ${SENTRY_DSN:-}
       SENTRY_ENVIRONMENT: staging
-      PROJECT_UPLOAD_DIR: /data/uploads/projects
-      MESSAGE_UPLOAD_DIR: /data/uploads/messages
-      AGENCY_UPLOAD_DIR: /data/uploads/agencies
-    volumes:
-      - uploads:/data/uploads
+      # Staging's own bucket — see the same line in docker-compose.prod.yml.
+      UPLOAD_BUCKET: binxportal-uploads-staging-574247905173-us-east-2-an
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/ops/ready')"]
       interval: 10s
@@ -130,4 +127,3 @@ networks:
 
 volumes:
   redis-data:
-  uploads:

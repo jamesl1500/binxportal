@@ -3,9 +3,9 @@ from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
-from fastapi.responses import FileResponse
 from sqlalchemy import select
 
+from binx_api.core import storage
 from binx_api.core.dependencies import CurrentUser, DbSession
 from binx_api.core.email import (
     build_invite_accept_url,
@@ -317,7 +317,7 @@ async def download_logo(db: DbSession, agency_and_role: AnyMember):
     profile = await service.get_or_create_agency_profile(db, agency)
     if not profile.logo_storage_path:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No logo set")
-    return FileResponse(path=profile.logo_storage_path, media_type=profile.logo_mime_type or "image/png")
+    return await storage.response(profile.logo_storage_path, media_type=profile.logo_mime_type or "image/png")
 
 
 @router.get("/{agency_id}/cover")
@@ -326,7 +326,7 @@ async def download_cover(db: DbSession, agency_and_role: AnyMember):
     profile = await service.get_or_create_agency_profile(db, agency)
     if not profile.cover_storage_path:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No cover set")
-    return FileResponse(path=profile.cover_storage_path, media_type=profile.cover_mime_type or "image/png")
+    return await storage.response(profile.cover_storage_path, media_type=profile.cover_mime_type or "image/png")
 
 
 # --- Members ---
@@ -373,7 +373,7 @@ async def download_member_avatar(db: DbSession, member_id: uuid.UUID, agency_and
     member, _user, _privacy, profile = await service.get_agency_member_with_user_or_404(db, agency.id, member_id)
     if profile is None or not profile.avatar_storage_path:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No avatar set")
-    return FileResponse(path=profile.avatar_storage_path, media_type=profile.avatar_mime_type or "image/png")
+    return await storage.response(profile.avatar_storage_path, media_type=profile.avatar_mime_type or "image/png")
 
 
 @router.get("/{agency_id}/members/{member_id}/cover")
@@ -382,7 +382,7 @@ async def download_member_cover(db: DbSession, member_id: uuid.UUID, agency_and_
     member, _user, _privacy, profile = await service.get_agency_member_with_user_or_404(db, agency.id, member_id)
     if profile is None or not profile.cover_storage_path:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No cover set")
-    return FileResponse(path=profile.cover_storage_path, media_type=profile.cover_mime_type or "image/png")
+    return await storage.response(profile.cover_storage_path, media_type=profile.cover_mime_type or "image/png")
 
 
 @router.patch("/{agency_id}/members/{member_id}", response_model=AgencyMemberRead)
@@ -665,7 +665,7 @@ async def download_client_logo(db: DbSession, client_id: uuid.UUID, agency_and_r
     branding = await service.get_or_create_client_branding(db, client)
     if not branding.logo_storage_path:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No logo set")
-    return FileResponse(path=branding.logo_storage_path, media_type=branding.logo_mime_type or "image/png")
+    return await storage.response(branding.logo_storage_path, media_type=branding.logo_mime_type or "image/png")
 
 
 # --- Client portal contacts ---

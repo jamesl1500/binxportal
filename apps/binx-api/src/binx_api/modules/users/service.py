@@ -1,14 +1,13 @@
 import json
-import shutil
 import uuid
-from pathlib import Path
 
 from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from binx_api.core import storage
 from binx_api.core.config import get_settings
-from binx_api.core.images import IMAGE_EXTENSIONS, image_version, unlink_quietly, validate_image
+from binx_api.core.images import IMAGE_EXTENSIONS, image_version, validate_image
 from binx_api.core.security import hash_password, verify_password
 from binx_api.modules.activity import service as activity_service
 from binx_api.modules.users.models import (
@@ -212,11 +211,11 @@ async def update_qualifications(
     return profile
 
 
-# Saves an avatar or cover image's bytes to local disk and records the
+# Stores an avatar or cover image (core/storage.py) and records its
 # path/mime on the profile. Same shape as agencies/service.py's
-# save_agency_image. Storage layout: {agency_upload_dir}/users/{user_id}/{kind}_{uuid}{ext}
-# — nested under the existing agency upload dir, same convention as the
-# `clients/` subfolder there.
+# save_agency_image. Storage layout: agencies/users/{user_id}/{kind}_{uuid}{ext}
+# — nested under the agency upload area, same convention as its `clients/`
+# prefix.
 async def save_user_image(db: AsyncSession, user: User, *, kind: str, content: bytes, mime_type: str) -> UserProfile:
     validate_image(content, mime_type)
     profile = await get_or_create_profile(db, user)
@@ -225,18 +224,20 @@ async def save_user_image(db: AsyncSession, user: User, *, kind: str, content: b
     mime_attr = f"{kind}_mime_type"
     old_path: str | None = getattr(profile, path_attr)
 
-    upload_dir = Path(settings.agency_upload_dir) / "users" / str(user.id)
-    upload_dir.mkdir(parents=True, exist_ok=True)
-    stored_path = upload_dir / f"{kind}_{uuid.uuid4().hex}{IMAGE_EXTENSIONS[mime_type]}"
-    stored_path.write_bytes(content)
+    stored_path = await storage.save(
+        "agencies",
+        f"users/{user.id}/{kind}_{uuid.uuid4().hex}{IMAGE_EXTENSIONS[mime_type]}",
+        content,
+        content_type=mime_type,
+    )
 
-    setattr(profile, path_attr, str(stored_path))
+    setattr(profile, path_attr, stored_path)
     setattr(profile, mime_attr, mime_type)
     await db.commit()
     await db.refresh(profile)
 
-    if old_path and old_path != str(stored_path):
-        unlink_quietly(old_path)
+    if old_path and old_path != stored_path:
+        await storage.delete(old_path)
     return profile
 
 
@@ -248,7 +249,7 @@ async def clear_user_image(db: AsyncSession, user: User, *, kind: str) -> UserPr
     await db.commit()
     await db.refresh(profile)
     if old_path:
-        unlink_quietly(old_path)
+        await storage.delete(old_path)
     return profile
 
 
@@ -409,12 +410,12 @@ async def change_password(db: AsyncSession, user: User, *, current_password: str
 # password as proof of ownership. Related rows (agency memberships,
 # notification/privacy/profile/appearance settings, auth tokens) are removed
 # via each table's ON DELETE CASCADE — the only thing the DB can't do is
-# clear the user's uploaded images off disk (same reasoning as delete_agency
-# in agencies/service.py).
+# clear the user's uploaded images out of storage (same reasoning as
+# delete_agency in agencies/service.py).
 async def delete_account(db: AsyncSession, user: User, *, current_password: str) -> None:
     if not verify_password(current_password, user.hashed_password):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Incorrect password")
     user_id = user.id
     await db.delete(user)
     await db.commit()
-    shutil.rmtree(Path(settings.agency_upload_dir) / "users" / str(user_id), ignore_errors=True)
+    await storage.delete_prefix("agencies", f"users/{user_id}")

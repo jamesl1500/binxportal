@@ -3,15 +3,18 @@
 # holding the real secrets.
 #
 # SAFETY: never run `docker compose -f docker-compose.prod.yml down -v` — the
-# `-v` drops the named volumes below, which is the only copy of uploaded
-# files, Redis data, and Caddy's TLS certs. Deploys are always `pull` +
-# `up -d` (see deploy/redeploy.sh); `down` (without `-v`) is fine for a full
-# stack restart, since named volumes outlive `down`.
+# `-v` drops the named volumes below, which is the only copy of Redis data
+# and Caddy's TLS certs. Deploys are always `pull` + `up -d` (see
+# deploy/redeploy.sh); `down` (without `-v`) is fine for a full stack
+# restart, since named volumes outlive `down`.
 #
 # The database isn't here: it's RDS (`binxportal-production`, see
 # infra/lib/rds-stack.ts). It used to be a `db` service on this box —
 # redeploy.sh moved its data across on the first deploy without it, and its
 # old volume (binxportal_db-data) is left in place until removed by hand.
+# Nor are uploads: they're in S3 (UPLOAD_BUCKET below). The `uploads` volume
+# they were meant to use never held a file — the api couldn't write to it —
+# so binxportal_uploads is empty and safe to `docker volume rm`.
 
 name: binxportal
 
@@ -84,14 +87,10 @@ services:
       # the binxportal/app Secrets Manager secret to turn it on.
       SENTRY_DSN: ${SENTRY_DSN:-}
       SENTRY_ENVIRONMENT: production
-      # Local-disk upload dirs land on the named `uploads` volume below —
-      # survives container replacement, backed up by the EBS snapshot plan
-      # (see infra/lib/backup-stack.ts) alongside the redis volume.
-      PROJECT_UPLOAD_DIR: /data/uploads/projects
-      MESSAGE_UPLOAD_DIR: /data/uploads/messages
-      AGENCY_UPLOAD_DIR: /data/uploads/agencies
-    volumes:
-      - uploads:/data/uploads
+      # Every upload goes to S3 (binx_api/core/storage.py) — not a secret,
+      # so a literal. boto3 authenticates via the instance's own IAM role,
+      # granted on this bucket by infra/lib/uploads-stack.ts.
+      UPLOAD_BUCKET: binxportal-uploads-prod-574247905173-us-east-2-an
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/ops/ready')"]
       interval: 10s
@@ -147,6 +146,5 @@ networks:
 
 volumes:
   redis-data:
-  uploads:
   caddy-data:
   caddy-config:
