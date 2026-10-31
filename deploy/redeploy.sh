@@ -100,7 +100,12 @@ umask 077
   # A key still holding CDK's REPLACE_ME placeholder is left out entirely, so
   # it reads as unset (= that feature cleanly off) rather than as a bogus
   # value — SENTRY_DSN=REPLACE_ME, for one, would crash the API on boot.
-  jq -r 'to_entries[] | select(.value != "REPLACE_ME") | "\(.key)=\(.value)"' <<<"$secret_json"
+  # DATABASE_* keys are dropped too: the database settings come only from the
+  # RDS secret below, and a stale copy in the app secret (left over from the
+  # hand-made sandbox instance) would otherwise be a second, conflicting
+  # DATABASE_PASSWORD= line in the env file.
+  jq -r 'to_entries[] | select(.value != "REPLACE_ME" and (.key | startswith("DATABASE_") | not))
+    | "\(.key)=\(.value)"' <<<"$secret_json"
   # binx-api assembles DATABASE_URL from these (core/config.py). CDK's
   # generated password never contains `$`, quotes or whitespace (see
   # RdsStack's docstring), so it's safe unquoted in a compose env file.
