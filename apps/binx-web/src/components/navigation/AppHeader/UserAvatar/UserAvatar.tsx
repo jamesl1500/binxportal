@@ -24,20 +24,41 @@ import styles from "./UserAvatar.module.scss";
 interface UserAvatarProps {
   /** The user's full name — its first character is the fallback initial. */
   name: string;
+  /** Stable user id to scope browser cache keys across account switches. */
+  userId: string;
+  /** Whether this user currently has an avatar to request at all. */
+  hasAvatar: boolean;
+  /** Cache-bust token from profile metadata. */
+  avatarVersion?: string | null;
 }
 
-const UserAvatar = ({ name }: UserAvatarProps) => {
-  const [failed, setFailed] = useState(false);
+function accountAvatarSrc(
+  userId: string,
+  avatarVersion?: string | null,
+): string {
+  const base = userImageUrl("avatar", avatarVersion);
+  const separator = base.includes("?") ? "&" : "?";
+  return `${base}${separator}u=${encodeURIComponent(userId)}`;
+}
+
+const UserAvatar = ({
+  name,
+  userId,
+  hasAvatar,
+  avatarVersion,
+}: UserAvatarProps) => {
+  const src = hasAvatar ? accountAvatarSrc(userId, avatarVersion) : null;
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const initial = name.trim().charAt(0).toUpperCase() || "?";
 
-  if (!failed) {
+  if (src && src !== failedSrc) {
     return (
       <Image
         className={styles.avatar}
-        src={userImageUrl("avatar")}
+        src={src}
         alt=""
         aria-hidden="true"
-        onError={() => setFailed(true)}
+        onError={() => setFailedSrc(src)}
         width={28}
         height={28}
         // The avatar proxy authenticates with the browser's session cookie,
