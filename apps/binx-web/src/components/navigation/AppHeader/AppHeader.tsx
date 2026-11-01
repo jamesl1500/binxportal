@@ -36,6 +36,8 @@ interface AppHeaderProps {
   user: CurrentUser;
   agencies: AgencyRead[];
   currentAgency: AgencyRead;
+  userHasAvatar?: boolean;
+  userAvatarVersion?: string | null;
   /** Unread messages across the current agency's conversations — badges the Messages link. */
   unreadMessages?: number;
   /** Unread in-app notifications for the signed-in user — badges the bell. */
@@ -69,6 +71,8 @@ const AppHeader = ({
   user,
   agencies,
   currentAgency,
+  userHasAvatar = false,
+  userAvatarVersion = null,
   unreadMessages = 0,
   unreadNotifications = 0,
   notifications = [],
@@ -175,7 +179,12 @@ const AppHeader = ({
             className={styles.accountTrigger}
             aria-label={`${user.full_name} account menu`}
           >
-            <UserAvatar name={user.full_name} />
+            <UserAvatar
+              name={user.full_name}
+              userId={user.id}
+              hasAvatar={userHasAvatar}
+              avatarVersion={userAvatarVersion}
+            />
             <span className={styles.userName} aria-hidden="true">
               {user.full_name}
             </span>

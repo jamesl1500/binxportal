@@ -24,7 +24,11 @@ import { getCurrentAgencyContext } from "@/lib/agencies";
 import { getUnreadMessageCount } from "@/lib/messaging";
 import { getNotifications } from "@/lib/notifications";
 import { getPortalContext } from "@/lib/portal";
-import { getAppearanceSettings, getTutorialProgress } from "@/lib/users";
+import {
+  getAppearanceSettings,
+  getTutorialProgress,
+  getUserProfile,
+} from "@/lib/users";
 import AppFooter from "@/components/navigation/AppFooter/AppFooter";
 import AppHeader from "@/components/navigation/AppHeader/AppHeader";
 import TutorialProvider from "@/components/tutorial/TutorialProvider/TutorialProvider";
@@ -55,7 +59,7 @@ const AppLayout = async ({ children }: { children: React.ReactNode }) => {
     redirect(portal ? "/portal" : "/onboarding/two");
   }
 
-  const [unreadMessages, notifications, appearance, tutorialProgress] =
+  const [unreadMessages, notifications, appearance, tutorialProgress, profile] =
     await Promise.all([
       getUnreadMessageCount(currentAgency.id),
       getNotifications({ limit: 8 }).catch(() => ({
@@ -68,6 +72,9 @@ const AppLayout = async ({ children }: { children: React.ReactNode }) => {
         tour_completed: true,
         dismissed_popups: [],
       })),
+      getUserProfile()
+        .then(({ has_avatar, avatar_version }) => ({ has_avatar, avatar_version }))
+        .catch(() => ({ has_avatar: false, avatar_version: null })),
     ]);
 
   return (
@@ -84,6 +91,8 @@ const AppLayout = async ({ children }: { children: React.ReactNode }) => {
           user={user}
           agencies={agencies}
           currentAgency={currentAgency}
+          userHasAvatar={profile.has_avatar}
+          userAvatarVersion={profile.avatar_version}
           unreadMessages={unreadMessages}
           unreadNotifications={notifications.unread_count}
           notifications={notifications.items}
