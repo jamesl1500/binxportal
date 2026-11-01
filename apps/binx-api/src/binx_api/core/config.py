@@ -148,6 +148,14 @@ class Settings(BaseSettings):
     # client who hits "reply" on an invite or invoice notice actually reaches
     # someone.
     ses_reply_to: str | None = None
+    # Local-dev guard for running with SES_FROM_EMAIL set on a laptop. The
+    # account is out of the SES sandbox, so without this every seeded or
+    # imported @example.com address would really be mailed — and bounce,
+    # against the same domain reputation production sends from. A
+    # comma-separated list of full addresses and/or "@domain" entries; mail to
+    # anyone else is logged instead of sent (see core/email.py). Unset (the
+    # default — production, staging) means no restriction.
+    ses_allowed_recipients: str | None = None
     # Explicit rather than relying on boto3's IMDS region auto-detection,
     # which isn't guaranteed across botocore versions/configs.
     aws_region: str = "us-east-2"

@@ -54,6 +54,11 @@ os.environ.setdefault("FRONTEND_URL", "http://frontend.test")
 # tests can hammer /auth/login without tripping each other. The one test that
 # exercises it (tests/e2e/test_auth_flow.py::TestRateLimiting) flips it on.
 os.environ.setdefault("RATE_LIMIT_ENABLED", "false")
+# Forced (not setdefault) so a developer's .env with SES turned on for local
+# testing can't make the suite send real email. tests/unit/test_email.py
+# covers the SES path with a mocked client instead.
+os.environ["SES_FROM_EMAIL"] = ""
+os.environ["SES_ALLOWED_RECIPIENTS"] = ""
 
 import pytest  # noqa: E402
 from botocore.exceptions import ClientError  # noqa: E402

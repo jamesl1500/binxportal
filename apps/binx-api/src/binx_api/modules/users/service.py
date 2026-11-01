@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from binx_api.core import storage
 from binx_api.core.config import get_settings
+from binx_api.core.database import get_or_create
 from binx_api.core.images import IMAGE_EXTENSIONS, image_version, validate_image
 from binx_api.core.security import hash_password, verify_password
 from binx_api.modules.activity import service as activity_service
@@ -172,14 +173,7 @@ async def update_privacy_settings(
 # Get the current user's profile row, creating a default one on first access
 # — same lazy-creation rationale as get_notification_settings/get_privacy_settings.
 async def get_or_create_profile(db: AsyncSession, user: User) -> UserProfile:
-    result = await db.execute(select(UserProfile).where(UserProfile.user_id == user.id))
-    profile = result.scalar_one_or_none()
-    if profile is None:
-        profile = UserProfile(user_id=user.id)
-        db.add(profile)
-        await db.commit()
-        await db.refresh(profile)
-    return profile
+    return await get_or_create(db, UserProfile, user_id=user.id)
 
 
 def profile_skills(profile: UserProfile) -> list[str]:
@@ -265,14 +259,7 @@ def cover_version(profile: UserProfile) -> str | None:
 
 
 async def get_or_create_appearance_settings(db: AsyncSession, user: User) -> UserAppearanceSettings:
-    result = await db.execute(select(UserAppearanceSettings).where(UserAppearanceSettings.user_id == user.id))
-    settings_row = result.scalar_one_or_none()
-    if settings_row is None:
-        settings_row = UserAppearanceSettings(user_id=user.id)
-        db.add(settings_row)
-        await db.commit()
-        await db.refresh(settings_row)
-    return settings_row
+    return await get_or_create(db, UserAppearanceSettings, user_id=user.id)
 
 
 async def update_appearance_settings(
@@ -318,14 +305,7 @@ async def update_tutorial_progress(
 # Get the current user's dashboard layout, creating a default row (default
 # order, nothing hidden) on first access, same as the settings tables above.
 async def get_or_create_dashboard_layout(db: AsyncSession, user: User) -> UserDashboardLayout:
-    result = await db.execute(select(UserDashboardLayout).where(UserDashboardLayout.user_id == user.id))
-    layout = result.scalar_one_or_none()
-    if layout is None:
-        layout = UserDashboardLayout(user_id=user.id)
-        db.add(layout)
-        await db.commit()
-        await db.refresh(layout)
-    return layout
+    return await get_or_create(db, UserDashboardLayout, user_id=user.id)
 
 
 # Any widget id missing from the stored order (new widget shipped after the

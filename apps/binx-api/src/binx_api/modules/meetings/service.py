@@ -16,6 +16,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
+from binx_api.core.database import get_or_create
 from binx_api.core.email import send_meeting_cancelled_email, send_meeting_scheduled_email
 from binx_api.modules.activity import service as activity_service
 from binx_api.modules.activity.models import CATEGORY_MEETINGS as ACTIVITY_CATEGORY_MEETINGS
@@ -44,14 +45,7 @@ from binx_api.modules.users.models import User
 
 
 async def get_or_create_meeting_settings(db: AsyncSession, agency: Agency) -> AgencyMeetingSettings:
-    result = await db.execute(select(AgencyMeetingSettings).where(AgencyMeetingSettings.agency_id == agency.id))
-    settings = result.scalar_one_or_none()
-    if settings is None:
-        settings = AgencyMeetingSettings(agency_id=agency.id)
-        db.add(settings)
-        await db.commit()
-        await db.refresh(settings)
-    return settings
+    return await get_or_create(db, AgencyMeetingSettings, agency_id=agency.id)
 
 
 async def update_meeting_settings(db: AsyncSession, agency: Agency, *, data: dict) -> AgencyMeetingSettings:

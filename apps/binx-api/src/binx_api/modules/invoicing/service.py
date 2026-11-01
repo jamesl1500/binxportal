@@ -20,6 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from binx_api.core import stripe_client
 from binx_api.core.config import get_settings
+from binx_api.core.database import get_or_create
 from binx_api.modules.activity import service as activity_service
 from binx_api.modules.activity.models import CATEGORY_INVOICING as ACTIVITY_CATEGORY_INVOICING
 from binx_api.modules.activity.models import CATEGORY_SETTINGS as ACTIVITY_CATEGORY_SETTINGS
@@ -109,14 +110,7 @@ def _display_status(invoice: Invoice, today: date | None = None) -> str:
 
 
 async def get_or_create_billing_settings(db: AsyncSession, agency: Agency) -> AgencyBillingSettings:
-    result = await db.execute(select(AgencyBillingSettings).where(AgencyBillingSettings.agency_id == agency.id))
-    settings = result.scalar_one_or_none()
-    if settings is None:
-        settings = AgencyBillingSettings(agency_id=agency.id)
-        db.add(settings)
-        await db.commit()
-        await db.refresh(settings)
-    return settings
+    return await get_or_create(db, AgencyBillingSettings, agency_id=agency.id)
 
 
 async def update_billing_settings(

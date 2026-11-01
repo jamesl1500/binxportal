@@ -147,6 +147,32 @@ class TestSendEmail:
         kwargs = fake_client.send_email.call_args.kwargs
         assert kwargs["ReplyToAddresses"] == ["support@binxportal.com"]
 
+    @pytest.mark.parametrize(
+        ("to", "sent"),
+        [
+            ("me@jameslatten.com", True),
+            ("ME@JamesLatten.com", True),
+            ("anyone@team.test", True),
+            ("seeded@example.com", False),
+            ("me@notjameslatten.com", False),
+        ],
+    )
+    async def test_allowed_recipients_limits_who_actually_gets_mail(
+        self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture, to: str, sent: bool
+    ) -> None:
+        monkeypatch.setattr(email.settings, "ses_from_email", "Binx <noreply@mail.binxportal.com>")
+        monkeypatch.setattr(email.settings, "ses_allowed_recipients", "me@jameslatten.com, @team.test")
+        fake_client = SimpleNamespace(send_email=MagicMock())
+        monkeypatch.setattr(email, "_get_ses_client", lambda: fake_client)
+
+        with caplog.at_level(logging.INFO, logger="binx_api.email"):
+            await email.send_email(to=to, subject="Hi", body="Body text")
+
+        assert fake_client.send_email.called is sent
+        if not sent:
+            assert "not in SES_ALLOWED_RECIPIENTS" in caplog.text
+            assert "Body text" in caplog.text
+
     async def test_a_delivery_error_is_logged_not_raised(
         self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
     ) -> None:
