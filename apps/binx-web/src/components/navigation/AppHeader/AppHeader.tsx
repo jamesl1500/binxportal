@@ -30,11 +30,14 @@ import AiAssistantLauncher from "@/components/ai/AiAssistantLauncher/AiAssistant
 import TutorialLauncher from "@/components/tutorial/TutorialLauncher/TutorialLauncher";
 
 import styles from "./AppHeader.module.scss";
+import UserAvatar from "./UserAvatar/UserAvatar";
 
 interface AppHeaderProps {
   user: CurrentUser;
   agencies: AgencyRead[];
   currentAgency: AgencyRead;
+  userHasAvatar?: boolean;
+  userAvatarVersion?: string | null;
   /** Unread messages across the current agency's conversations — badges the Messages link. */
   unreadMessages?: number;
   /** Unread in-app notifications for the signed-in user — badges the bell. */
@@ -68,6 +71,8 @@ const AppHeader = ({
   user,
   agencies,
   currentAgency,
+  userHasAvatar = false,
+  userAvatarVersion = null,
   unreadMessages = 0,
   unreadNotifications = 0,
   notifications = [],
@@ -75,8 +80,6 @@ const AppHeader = ({
   const pathname = usePathname();
   const [isSigningOut, startTransition] = useTransition();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-
-  const initial = user.full_name.trim().charAt(0).toUpperCase() || "?";
 
   const handleSignOut = () => {
     startTransition(async () => {
@@ -176,9 +179,12 @@ const AppHeader = ({
             className={styles.accountTrigger}
             aria-label={`${user.full_name} account menu`}
           >
-            <span className={styles.avatar} aria-hidden="true">
-              {initial}
-            </span>
+            <UserAvatar
+              name={user.full_name}
+              userId={user.id}
+              hasAvatar={userHasAvatar}
+              avatarVersion={userAvatarVersion}
+            />
             <span className={styles.userName} aria-hidden="true">
               {user.full_name}
             </span>

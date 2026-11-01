@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from binx_api.core import storage
 from binx_api.core.config import get_settings
+from binx_api.core.database import get_or_create
 from binx_api.core.images import IMAGE_EXTENSIONS, validate_image
 from binx_api.core.security import generate_opaque_token, hash_token
 from binx_api.modules.activity import service as activity_service
@@ -317,14 +318,7 @@ async def delete_agency(db: AsyncSession, agency: Agency) -> None:
 
 
 async def get_or_create_agency_profile(db: AsyncSession, agency: Agency) -> AgencyProfile:
-    result = await db.execute(select(AgencyProfile).where(AgencyProfile.agency_id == agency.id))
-    profile = result.scalar_one_or_none()
-    if profile is None:
-        profile = AgencyProfile(agency_id=agency.id)
-        db.add(profile)
-        await db.commit()
-        await db.refresh(profile)
-    return profile
+    return await get_or_create(db, AgencyProfile, agency_id=agency.id)
 
 
 # Full replace of the editable text fields — the settings forms always submit
@@ -384,14 +378,7 @@ async def clear_agency_image(db: AsyncSession, agency: Agency, *, kind: str) -> 
 
 
 async def get_or_create_client_branding(db: AsyncSession, client: AgencyClient) -> ClientPortalBranding:
-    result = await db.execute(select(ClientPortalBranding).where(ClientPortalBranding.client_id == client.id))
-    branding = result.scalar_one_or_none()
-    if branding is None:
-        branding = ClientPortalBranding(client_id=client.id)
-        db.add(branding)
-        await db.commit()
-        await db.refresh(branding)
-    return branding
+    return await get_or_create(db, ClientPortalBranding, client_id=client.id)
 
 
 # Partial patch — only the fields the request actually sent (see

@@ -20,6 +20,18 @@ def _get_ses_client():
     return _ses_client
 
 
+def _recipient_allowed(to: str) -> bool:
+    # See core/config.py's ses_allowed_recipients — unset allows everyone.
+    if not settings.ses_allowed_recipients:
+        return True
+    address = to.strip().lower()
+    for entry in settings.ses_allowed_recipients.split(","):
+        entry = entry.strip().lower()
+        if entry and (address == entry or (entry.startswith("@") and address.endswith(entry))):
+            return True
+    return False
+
+
 async def send_email(*, to: str, subject: str, body: str, html: str | None = None) -> None:
     """Sends via Amazon SES when configured (``SES_FROM_EMAIL`` set) — the
     boto3 call is sync, so it runs in a thread rather than blocking the event
@@ -48,6 +60,9 @@ async def send_email(*, to: str, subject: str, body: str, html: str | None = Non
     """
     if not settings.ses_from_email:
         logger.info("EMAIL to=%s subject=%s\n%s", to, subject, body)
+        return
+    if not _recipient_allowed(to):
+        logger.info("EMAIL (not in SES_ALLOWED_RECIPIENTS, not sent) to=%s subject=%s\n%s", to, subject, body)
         return
     message_body: dict = {"Text": {"Data": body, "Charset": "UTF-8"}}
     if html:
