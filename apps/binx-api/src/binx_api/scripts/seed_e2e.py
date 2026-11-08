@@ -16,7 +16,9 @@ The credentials and slugs it creates are consumed by
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
+import uuid
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
@@ -66,14 +68,47 @@ _TUTORIAL_POPUP_IDS = [
 
 _PORTAL_TOUR_IDS = ["portal-welcome"]
 
-_BOARD_NOTES = [
-    (60, 60, "Moodboard: coastal, warm neutrals, lots of air", "#fef3c7"),
-    (320, 60, "Logo needs to work at 16px favicon size", "#e0f2fe"),
-    (60, 260, "Homepage hero: product shot > illustration", "#f3e8ff"),
-    (320, 260, "Client: 'make the CTA impossible to miss'", "#dcfce7"),
-    (590, 130, "Launch target: end of Q3", "#fee2e2"),
-    (590, 340, "Photography reshoot booked for the 14th", "#e2e8f0"),
+# The Milanote-style showcase canvas (also what the marketing screenshots
+# capture): a column of logo directions out for client review, a to-do list
+# backed by the project's real tasks, a nested moodboard, a link, a file and
+# connector lines.
+_LOGO_DIRECTIONS = [
+    ("Direction A — bold geometric wordmark, single colour.", "#ffffff"),
+    ("Direction B — hand-drawn monogram with a warm, coastal palette.", "#fef9c3"),
+    ("Direction C — minimal mark that still reads at 16px favicon size.", "#dbeafe"),
 ]
+# Existing seeded tasks pulled onto the canvas to-do list (so the Kanban's
+# task counts don't change).
+_CHECKLIST_TASKS = [
+    "Kick-off workshop notes",
+    "Competitive audit",
+    "Logo refinement",
+    "Colour + type system",
+    "Homepage wireframe",
+]
+_MOODBOARD_NOTES = [
+    (40, 40, "Coastal, warm neutrals, lots of air.", "#fef3c7"),
+    (300, 40, "Photography: natural light, real product in use.", "#ffffff"),
+    (40, 230, "Type: a confident serif for headlines, quiet sans for body.", "#ede9fe"),
+]
+
+_PALETTE = [
+    ("Sea glass", "#dcfce7"),
+    ("Driftwood", "#f1f5f9"),
+    ("Harbour blue", "#dbeafe"),
+    ("Sandstone", "#fef9c3"),
+]
+
+
+async def _offline_preview(url: str) -> dict:
+    """Seed link cards without a network round-trip (CI runs this offline)."""
+    return {
+        "url": url,
+        "title": "Fjord & Field — current website",
+        "description": "The site we're replacing: product range, stockists and the journal.",
+        "image": None,
+        "site_name": "fjordandfield.example.com",
+    }
 
 
 async def _run() -> None:
@@ -82,7 +117,19 @@ async def _run() -> None:
     from binx_api.core.database import async_session_factory
     from binx_api.modules.agencies.models import Agency, AgencyMember
     from binx_api.modules.agencies.service import create_agency_with_owner, create_client
-    from binx_api.modules.boards.service import create_item, get_or_create_board
+    from binx_api.modules.boards import link_preview
+    from binx_api.modules.boards.service import (
+        add_comment,
+        attach_task,
+        create_item,
+        decide_approval,
+        file_card_content,
+        get_or_create_board,
+        request_approval,
+        resolve_board,
+        save_board_file,
+        toggle_reaction,
+    )
     from binx_api.modules.client_portal.models import ClientContact
     from binx_api.modules.invoicing.schemas import LineItemInput
     from binx_api.modules.invoicing.service import create_invoice, issue_invoice
@@ -202,8 +249,9 @@ async def _run() -> None:
         ]
         # Column index per task: 2 = Done, 1 = In progress, 0 = To do.
         layout = [2, 2, 1, 1] + [0] * (len(task_titles) - 4)
+        tasks_by_title = {}
         for title, col_index in zip(task_titles, layout, strict=True):
-            task = await create_task(
+            task = tasks_by_title[title] = await create_task(
                 db,
                 project,
                 list_id=columns[0].id,
@@ -215,36 +263,136 @@ async def _run() -> None:
             if col_index != 0:
                 await move_task(db, task, list_id=columns[col_index].id, position=0)
 
-        # --- Collaboration canvas -------------------------------------------
+        # --- Collaboration canvas (Milanote-style showcase) -----------------
         board = await get_or_create_board(db, project)
-        for x, y, text, color in _BOARD_NOTES:
-            await create_item(
+
+        async def card(type_, x, y, *, width=None, height=None, content=None, color=None, actor=owner, **kw):
+            return await create_item(
                 db,
                 board,
+                project,
+                actor=actor,
+                author_kind="client" if actor is client_contact_user else "agency",
+                type_=type_,
+                x=float(x),
+                y=float(y),
+                width=width,
+                height=height,
+                content=content or {},
+                color=color,
+                **kw,
+            )
+
+        column = await card("column", 40, 30, width=260.0, content={"title": "Logo directions"}, color="#4f46e5")
+        directions = [
+            await card("note", 0, 0, height=110.0, content={"text": text}, color=color, parent_id=column.id)
+            for text, color in _LOGO_DIRECTIONS
+        ]
+        # The whole column goes to the client for review; they've already
+        # signed off on one direction and are weighing the other two.
+        await request_approval(db, column, project, actor=owner)
+        await decide_approval(db, directions[2], project, decider=client_contact_user, decision="approved", note=None)
+        await toggle_reaction(db, directions[1], project, user=client_contact_user, kind="❤️")
+        await toggle_reaction(db, directions[1], project, user=owner, kind="👍")
+        await add_comment(
+            db,
+            directions[1],
+            project,
+            author=client_contact_user,
+            author_kind="client",
+            body="Love the warmth here — can we see it on the packaging too?",
+        )
+
+        checklist = await card("todo", 340, 30, width=280.0, content={"title": "Brand launch checklist"})
+        for title in _CHECKLIST_TASKS:
+            await attach_task(db, checklist, project, tasks_by_title[title])
+
+        moodboard = await card("board", 340, 330, width=280.0, content={"title": "Moodboard"}, color="#10b981")
+        mood = await resolve_board(db, project, uuid.UUID(json.loads(moodboard.content)["board_id"]))
+        for x, y, text, color in _MOODBOARD_NOTES:
+            note = await create_item(
+                db,
+                mood,
                 project,
                 actor=owner,
                 type_="note",
                 x=float(x),
                 y=float(y),
-                width=240.0,
-                height=170.0,
+                width=230.0,
+                height=150.0,
                 content={"text": text},
                 color=color,
             )
-        await create_item(
+        await request_approval(db, note, project, actor=owner)
+        palette = await create_item(
             db,
-            board,
+            mood,
             project,
-            actor=client_contact_user,
-            author_kind="client",
-            type_="note",
-            x=850.0,
-            y=210.0,
-            width=240.0,
+            actor=owner,
+            type_="column",
+            x=580.0,
+            y=40.0,
+            width=230.0,
+            height=None,
+            content={"title": "Palette"},
+            color="#0ea5e9",
+        )
+        for text, color in _PALETTE:
+            await create_item(
+                db,
+                mood,
+                project,
+                actor=owner,
+                type_="note",
+                x=0.0,
+                y=0.0,
+                width=None,
+                height=70.0,
+                content={"text": text},
+                color=color,
+                parent_id=palette.id,
+            )
+
+        brief = await save_board_file(
+            db,
+            project,
+            uploaded_by=owner,
+            file_name="Brand guidelines v2.pdf",
+            content=b"%PDF-1.4\n% Fjord & Field brand guidelines (demo)\n",
+            mime_type="application/pdf",
+        )
+        await card("file", 340, 440, width=280.0, height=72.0, content=file_card_content(brief))
+
+        kickoff = await card(
+            "note",
+            680,
+            30,
+            width=250.0,
             height=170.0,
+            content={
+                "text": "Kick-off notes\n\n• Launch before the spring range\n"
+                "• Keep it warm, never twee\n• Packaging follows the logo"
+            },
+            color="#dcfce7",
+        )
+        original_preview = link_preview.fetch_preview
+        link_preview.fetch_preview = _offline_preview
+        try:
+            await card("link", 680, 240, width=270.0, content={"url": "https://fjordandfield.example.com"})
+        finally:
+            link_preview.fetch_preview = original_preview
+        await card(
+            "note",
+            680,
+            395,
+            width=250.0,
+            height=115.0,
             content={"text": "Love concept 2 — can we see it on the About page too?"},
             color="#fde68a",
+            actor=client_contact_user,
         )
+        await card("line", 0, 0, content={"from": str(kickoff.id), "to": str(checklist.id), "arrow": "end"})
+        await card("line", 0, 0, content={"from": str(column.id), "to": str(checklist.id), "arrow": "end"})
 
         # --- Invoice (issued) --------------------------------------------
         invoice = await create_invoice(

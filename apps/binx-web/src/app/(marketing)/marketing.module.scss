@@ -806,3 +806,31 @@
   font-size: t.$font-size-sm;
   color: t.$color-ink-soft;
 }
+
+// ---- Full-width product shot under a feature page's hero ---------
+
+.heroShot {
+  margin: t.$space-10 auto 0;
+  max-width: 68rem;
+  overflow: hidden;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-lg;
+  background: t.$color-surface;
+  box-shadow:
+    0 1px 2px rgba(10, 10, 11, 0.06),
+    0 24px 60px rgba(10, 10, 11, 0.12);
+
+  img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+}
+
+.heroShotCaption {
+  margin: t.$space-3 auto 0;
+  max-width: 68rem;
+  font-size: t.$font-size-xs;
+  text-align: center;
+  color: t.$color-ink-faint;
+}

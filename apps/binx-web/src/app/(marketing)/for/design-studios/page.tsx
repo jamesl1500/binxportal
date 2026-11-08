@@ -32,7 +32,7 @@ const CAPABILITIES = [
   {
     icon: PanelsTopLeft,
     title: "Concepts on a shared canvas",
-    text: "Pin drafts, moodboards and revisions to a project canvas the client can comment on, then request approval on a card and get a clear yes or a note on what to change. No separate review tool.",
+    text: "Lay out drafts, moodboards and revisions on a visual project canvas, group the options into a column, and send the whole column to the client for review. They approve or note what to change, and each sign-off is kept against the version they saw.",
   },
   {
     icon: FileStack,
@@ -173,7 +173,9 @@ const DesignStudiosPage = () => {
             ))}
           </div>
           <p className={styles.faqRelated}>
-            Coming from Bloom? See the{" "}
+            See how <Link href="/client-approvals">client approvals</Link> and
+            the <Link href="/visual-canvas">visual canvas</Link> work. Coming
+            from Bloom? See the{" "}
             <Link href="/alternatives/bloom">Bloom.io alternative</Link> page,
             or <Link href="/pricing">check the plans</Link>.
           </p>

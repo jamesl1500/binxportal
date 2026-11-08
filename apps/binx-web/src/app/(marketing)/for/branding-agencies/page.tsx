@@ -32,7 +32,7 @@ const CAPABILITIES = [
   {
     icon: PanelsTopLeft,
     title: "Present concepts, not attachments",
-    text: "Lay out logo directions, palettes and moodboards on a shared canvas, and ask the client to approve the direction right on the card. A presentation that stays live, with sign-off on record.",
+    text: "Put logo directions in a column, palettes on their own moodboard, and send the column to the client for review. They approve a direction right on the canvas, and the approved version stays on record.",
   },
   {
     icon: FileStack,
@@ -58,7 +58,7 @@ const FAQ = [
   },
   {
     q: "Does the canvas work for moodboards and logo directions, not just tasks?",
-    a: "Yes — it's a general shared surface, not a task-only board. Pin concepts, palettes and directions and the client can react and comment directly on them.",
+    a: "Yes — it's a visual board, not a task-only one. Group directions into columns, give the moodboard its own nested board, and the client can react, comment and approve directly on the cards.",
   },
   {
     q: "Is there a free plan to try it on a real brand project?",
@@ -175,6 +175,7 @@ const BrandingAgenciesPage = () => {
             ))}
           </div>
           <p className={styles.faqRelated}>
+            See how <Link href="/client-approvals">client approvals</Link> work.
             Comparing client-portal tools? See the{" "}
             <Link href="/alternatives/copilot-assembly">
               Copilot &amp; Assembly alternative
