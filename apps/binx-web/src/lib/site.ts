@@ -36,7 +36,7 @@ export const SITE = {
   tagline: "Run the whole agency from one place.",
   /** ~155 chars — default meta description. */
   description:
-    "Binx brings AI lead prospecting, proposals, clients, projects, invoicing and a live client portal into one calm workspace built for creative agencies.",
+    "AI lead prospecting, proposals, a visual project canvas, client approvals, invoicing and a branded client portal: one calm workspace for creative agencies.",
   url: SITE_URL,
   ogImageAlt: "Binx Portal — the operating system for creative agencies",
   twitter: "@binxhq",
@@ -54,6 +54,12 @@ export const SITE = {
     "proposal software for agencies",
     "AI lead generation",
     "client approval workflow",
+    "client approval software",
+    "creative approval software",
+    "design feedback and sign-off",
+    "visual project canvas",
+    "moodboard tool for agencies",
+    "Milanote alternative",
     "agency dashboard",
   ],
 } as const;
@@ -63,7 +69,7 @@ export const SITE = {
  * `lastModified`. A per-request `new Date()` tells crawlers every page
  * changes on every fetch, which teaches them to ignore lastmod entirely.
  */
-export const MARKETING_LAST_UPDATED = new Date("2026-09-24");
+export const MARKETING_LAST_UPDATED = new Date("2026-11-08");
 
 /** Shared pricing tiers — rendered on /pricing and summarised in JSON-LD offers. */
 export const PLANS = [
@@ -206,11 +212,22 @@ export const SEO_LANDING_PAGES = [
     label: "Copilot & Assembly alternative",
   },
   { href: "/alternatives/bloom", label: "Bloom.io alternative" },
+  { href: "/alternatives/milanote", label: "Milanote alternative" },
   {
     href: "/compare/notion-stripe-drive",
     label: "vs. Notion + Stripe + Drive",
   },
   { href: "/free-client-portal", label: "Free client portal" },
+] as const;
+
+/**
+ * Deep-dive pages for the flagship features — linked from the footer's
+ * Product column, the homepage and /features, and weighted above the
+ * comparison pages in the sitemap.
+ */
+export const FEATURE_PAGES = [
+  { href: "/client-approvals", label: "Client approvals" },
+  { href: "/visual-canvas", label: "Visual canvas" },
 ] as const;
 
 /** The four segments named on the homepage trust bar — each gets its own use-case page. */

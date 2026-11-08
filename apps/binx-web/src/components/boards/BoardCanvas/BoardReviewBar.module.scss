@@ -1,8 +1,10 @@
 @use "../../../styles/tokens" as t;
 
+// Bottom-centre: the top edge is where the board's first row of cards
+// sits, and the bar would cover their titles.
 .bar {
   position: absolute;
-  top: t.$space-3;
+  bottom: t.$space-4;
   left: 50%;
   transform: translateX(-50%);
   z-index: 5;

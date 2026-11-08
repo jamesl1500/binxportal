@@ -8,6 +8,7 @@
  * @author Binx Portal
  */
 import type { Metadata } from "next";
+import Link from "next/link";
 import {
   Bell,
   Bookmark,
@@ -16,6 +17,7 @@ import {
   FileStack,
   LayoutDashboard,
   LayoutGrid,
+  ListChecks,
   MessagesSquare,
   PanelsTopLeft,
   Radar,
@@ -23,6 +25,7 @@ import {
   Sparkles,
   Users,
   Wand2,
+  ArrowRight,
 } from "lucide-react";
 
 import { breadcrumbJsonLd, marketingOpenGraph } from "@/lib/site";
@@ -32,7 +35,7 @@ import styles from "../marketing.module.scss";
 
 const TITLE = "Features";
 const DESCRIPTION =
-  "AI lead prospecting, signable proposals, a live client portal, canvas approvals, invoicing and a dashboard you arrange. A tour of everything Binx does.";
+  "AI lead prospecting, signable proposals, a visual project canvas, client approvals, a live client portal and invoicing. A tour of everything Binx does.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -46,6 +49,8 @@ type Feature = {
   title: string;
   text: string;
   isNew?: boolean;
+  /** A deep-dive page for this feature. */
+  href?: string;
 };
 
 const GROUPS: { eyebrow: string; heading: string; items: Feature[] }[] = [
@@ -121,14 +126,23 @@ const GROUPS: { eyebrow: string; heading: string; items: Feature[] }[] = [
       },
       {
         icon: PanelsTopLeft,
-        title: "Collaboration canvas",
-        text: "A Miro-style wall per project: pan, zoom and a minimap, with notes and images the team and client arrange together in real time, plus comments and reactions on every card.",
+        title: "Visual project canvas",
+        text: "A canvas per project that the team and client build together, live: notes, images, links with previews, files, columns, boards inside boards and connector lines, dragged in from a card rail.",
+        isNew: true,
+        href: "/visual-canvas",
+      },
+      {
+        icon: ListChecks,
+        title: "To-do lists that are real tasks",
+        text: "Every row on a canvas to-do list is a project task. Tick it on the canvas and it moves to Done on the Kanban; move it on the Kanban and the canvas ticks it.",
+        isNew: true,
       },
       {
         icon: CheckCheck,
-        title: "Seamless client approvals",
-        text: "A guided review bar walks the client through every card waiting on them. They approve, request changes with a note, or pin a comment anywhere on the board, and the whole team sees the decision live.",
+        title: "Client approvals, card or column",
+        text: "Send one card or a whole column of options for review. A guided review bar walks the client through it in their portal, and each sign-off is pinned to the version they saw.",
         isNew: true,
+        href: "/client-approvals",
       },
       {
         icon: FileStack,
@@ -200,7 +214,7 @@ const FeaturesPage = () => {
               <h2 className={styles.h2}>{group.heading}</h2>
             </div>
             <div className={styles.grid}>
-              {group.items.map(({ icon: Icon, title, text, isNew }) => (
+              {group.items.map(({ icon: Icon, title, text, isNew, href }) => (
                 <article key={title} className={styles.card}>
                   <span className={styles.cardIcon}>
                     <Icon aria-hidden="true" />
@@ -210,6 +224,11 @@ const FeaturesPage = () => {
                     {isNew && <span className={styles.newTag}>New</span>}
                   </h3>
                   <p className={styles.cardText}>{text}</p>
+                  {href && (
+                    <Link href={href} className={styles.cardLinkArrow}>
+                      Learn more <ArrowRight aria-hidden="true" />
+                    </Link>
+                  )}
                 </article>
               ))}
             </div>

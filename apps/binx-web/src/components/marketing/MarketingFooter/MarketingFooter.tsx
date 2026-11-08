@@ -10,6 +10,7 @@
 import Link from "next/link";
 
 import {
+  FEATURE_PAGES,
   SEO_LANDING_PAGES,
   SITE,
   STATUS_URL,
@@ -25,6 +26,7 @@ const COLUMNS: { heading: string; links: { href: string; label: string }[] }[] =
       heading: "Product",
       links: [
         { href: "/features", label: "Features" },
+        ...FEATURE_PAGES,
         { href: "/pricing", label: "Pricing" },
         { href: "/auth/signup", label: "Get started" },
         { href: "/auth/login", label: "Sign in" },

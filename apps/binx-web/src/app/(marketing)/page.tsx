@@ -17,10 +17,10 @@ import {
   FileSignature,
   LayoutDashboard,
   LayoutGrid,
+  PanelsTopLeft,
   Radar,
   Receipt,
   Users,
-  Wand2,
 } from "lucide-react";
 
 import {
@@ -54,7 +54,7 @@ const FLOW = [
   {
     index: "03",
     title: "Run the project",
-    text: "Boards, files and a shared canvas where clients approve work, all inside a portal branded as yours.",
+    text: "Tasks, files and a visual canvas where clients review and approve the work, all inside a portal branded as yours.",
   },
   {
     index: "04",
@@ -75,19 +75,21 @@ const NEW_FEATURES = [
     text: "Build a priced proposal, send one link, and see when it's viewed. Clients sign or decline online, and it's filed on their client record and in their portal.",
   },
   {
+    icon: PanelsTopLeft,
+    title: "A visual canvas for every project",
+    text: "Notes, images, links, files, columns and boards inside boards, dragged in from a card rail. To-do lists on the canvas are your real project tasks, so ticking one moves it to Done on the Kanban.",
+    href: "/visual-canvas",
+  },
+  {
     icon: CheckCheck,
-    title: "Seamless client approvals",
-    text: "A guided review bar walks clients through every card waiting on them, on a Miro-style canvas with pan, zoom and a minimap. They approve, request changes, or pin a comment anywhere on the board, and everyone sees it the moment it lands.",
+    title: "Client approvals, column by column",
+    text: "Send one card or a whole column of options for review. Clients approve or request changes from their portal, guided by a review bar, and every sign-off is pinned to the version they saw.",
+    href: "/client-approvals",
   },
   {
     icon: LayoutDashboard,
     title: "A dashboard you arrange",
     text: "Drag, reorder and hide widgets until the home screen shows what you care about, including your tasks and one-click quick actions.",
-  },
-  {
-    icon: Wand2,
-    title: "Recipient auto-fill",
-    text: "Pick a client and their contact details drop straight into the proposal or invoice. No more copying emails between tabs.",
   },
 ];
 
@@ -110,7 +112,7 @@ const CAPABILITIES = [
   {
     icon: LayoutGrid,
     title: "Projects & canvas",
-    text: "Boards, tasks, versioned files and a Miro-style canvas with a guided review bar that makes client approvals seamless.",
+    text: "Kanban boards, versioned files and a visual canvas where to-do lists are real tasks and clients approve work in place.",
   },
   {
     icon: Receipt,
@@ -128,7 +130,9 @@ const FEATURE_LIST = [
   "AI lead prospecting with saved searches",
   "Proposals with online e-signature",
   "Client portal",
-  "Seamless client approvals on a Miro-style canvas",
+  "Visual project canvas with columns, nested boards, links and files",
+  "To-do lists on the canvas synced with project tasks",
+  "Client approvals on cards or whole columns, with version history",
   "Project boards and file versioning",
   "Invoicing with pay-from-portal",
   "Customizable drag-and-drop dashboard",
@@ -228,7 +232,7 @@ const HomePage = () => {
           </div>
 
           <div className={styles.grid}>
-            {NEW_FEATURES.map(({ icon: Icon, title, text }) => (
+            {NEW_FEATURES.map(({ icon: Icon, title, text, href }) => (
               <article key={title} className={styles.card}>
                 <span className={styles.cardIcon}>
                   <Icon aria-hidden="true" />
@@ -237,6 +241,11 @@ const HomePage = () => {
                   {title} <span className={styles.newTag}>New</span>
                 </h3>
                 <p className={styles.cardText}>{text}</p>
+                {href && (
+                  <Link href={href} className={styles.cardLinkArrow}>
+                    Learn more <ArrowRight aria-hidden="true" />
+                  </Link>
+                )}
               </article>
             ))}
             <Link
@@ -317,25 +326,27 @@ const HomePage = () => {
 
           <div className={`${styles.split} ${styles.splitAlt}`}>
             <div className={styles.splitBody}>
-              <span className={styles.eyebrow}>Collaboration canvas</span>
-              <h2 className={styles.h3}>Client sign-off, made seamless.</h2>
+              <span className={styles.eyebrow}>Visual canvas</span>
+              <h2 className={styles.h3}>Plan the project the way you think.</h2>
               <p className={styles.cardText}>
-                A Miro-style canvas with pan, zoom and a minimap, so clients
-                never get lost in a big board. A guided review bar walks them
-                through every card waiting on a decision, and they can pin a
-                comment anywhere on the board, not just on a card, to flag
-                something before it is even up for approval.
+                Every project gets a visual canvas the team and client build
+                together, live. Drag notes, to-do lists, links, columns, boards
+                and files in from the card rail, and connect them with lines.
+                To-do rows are your real tasks, so the canvas and the Kanban
+                never disagree.
               </p>
               <ul className={styles.splitList}>
-                <li>A review bar guides clients through every pending card</li>
-                <li>Pin comments anywhere on the board, not just on cards</li>
-                <li>Request, approve or reject any card, live with the team</li>
+                <li>Columns, boards inside boards, links, files and lines</li>
+                <li>To-do lists synced with the project&apos;s tasks</li>
+                <li>
+                  <Link href="/visual-canvas">Tour the canvas →</Link>
+                </li>
               </ul>
             </div>
             <div className={styles.splitMedia}>
               <Image
                 src="/marketing/canvas.webp"
-                alt="A project's collaboration canvas with colour-coded notes from the team and client."
+                alt="A project canvas with a column of logo directions out for review, a launch checklist of project tasks, a moodboard card, notes, a link and a PDF."
                 width={1600}
                 height={1138}
                 sizes="(min-width: 900px) 32rem, 100vw"
@@ -344,6 +355,35 @@ const HomePage = () => {
           </div>
 
           <div className={styles.split}>
+            <div className={styles.splitBody}>
+              <span className={styles.eyebrow}>Client approvals</span>
+              <h2 className={styles.h3}>Client sign-off, made seamless.</h2>
+              <p className={styles.cardText}>
+                Send a card, or a whole column of options, for review. A guided
+                review bar walks the client through everything waiting on them
+                in their portal. They approve or request changes with a note,
+                and each decision is pinned to the exact version they saw.
+              </p>
+              <ul className={styles.splitList}>
+                <li>Review one card or a whole column at once</li>
+                <li>Version history behind every approval</li>
+                <li>
+                  <Link href="/client-approvals">How approvals work →</Link>
+                </li>
+              </ul>
+            </div>
+            <div className={styles.splitMedia}>
+              <Image
+                src="/marketing/approvals.webp"
+                alt="A client reviewing a column of logo directions in their portal, with Approve all and Request changes."
+                width={1600}
+                height={1138}
+                sizes="(min-width: 900px) 32rem, 100vw"
+              />
+            </div>
+          </div>
+
+          <div className={`${styles.split} ${styles.splitAlt}`}>
             <div className={styles.splitBody}>
               <span className={styles.eyebrow}>Dashboard</span>
               <h2 className={styles.h3}>
@@ -371,7 +411,7 @@ const HomePage = () => {
             </div>
           </div>
 
-          <div className={`${styles.split} ${styles.splitAlt}`}>
+          <div className={styles.split}>
             <div className={styles.splitBody}>
               <span className={styles.eyebrow}>Invoicing</span>
               <h2 className={styles.h3}>Bill without leaving the workspace.</h2>
@@ -389,7 +429,7 @@ const HomePage = () => {
             <div className={styles.splitMedia}>
               <Image
                 src="/marketing/invoicing.webp"
-                alt="An issued invoice in Binx with line items, totals and payment status."
+                alt="Creating an invoice in Binx: the client and project picked, line items with live totals, notes and payment instructions."
                 width={1600}
                 height={1138}
                 sizes="(min-width: 900px) 32rem, 100vw"

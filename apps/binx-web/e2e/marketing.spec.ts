@@ -33,6 +33,10 @@ test.describe("marketing site", () => {
       heading: "client portal, plus everything",
     },
     { path: "/alternatives/bloom", heading: "Bloom alternative" },
+    { path: "/alternatives/milanote", heading: "Milanote alternative" },
+    // Feature deep-dives.
+    { path: "/client-approvals", heading: "clear yes from clients" },
+    { path: "/visual-canvas", heading: "way creative people think" },
     { path: "/compare/notion-stripe-drive", heading: "real competitor" },
     { path: "/for/design-studios", heading: "Review work with clients" },
     { path: "/for/marketing-teams", heading: "Run every client" },

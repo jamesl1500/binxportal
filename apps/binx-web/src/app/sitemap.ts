@@ -10,6 +10,7 @@
 import type { MetadataRoute } from "next";
 
 import {
+  FEATURE_PAGES,
   MARKETING_LAST_UPDATED,
   MARKETING_NAV,
   SEO_LANDING_PAGES,
@@ -32,6 +33,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified,
       changeFrequency: "monthly" as const,
       priority: item.href === "/pricing" ? 0.9 : 0.7,
+    })),
+    ...FEATURE_PAGES.map((item) => ({
+      url: `${SITE_URL}${item.href}`,
+      lastModified,
+      changeFrequency: "monthly" as const,
+      priority: 0.8,
     })),
     ...[...SEO_LANDING_PAGES, ...USE_CASE_PAGES].map((item) => ({
       url: `${SITE_URL}${item.href}`,
