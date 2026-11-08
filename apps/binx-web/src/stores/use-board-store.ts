@@ -18,6 +18,10 @@
  * realtime `board.item.*` events omit them, and `upsertItem` carries the
  * existing values forward so an `updated` echo never wipes them.
  *
+ * `tasksById` holds the rows of the board's to-do cards (real project tasks,
+ * see binx-api BoardTaskRead) — kept live by `board.task.*` events, which
+ * also fire when a task is moved on the Kanban.
+ *
  * @module apps/binx-web/src/stores/use-board-store.ts
  * @author Binx Portal
  */
@@ -28,6 +32,7 @@ import type {
   BoardEvent,
   BoardItem,
   BoardItemPatch,
+  BoardTask,
 } from "@/lib/boards-client";
 
 export type SocketStatus = "connecting" | "open" | "closed";
@@ -42,12 +47,26 @@ interface BoardState {
   boardId: string | null;
   currentUserId: string;
   itemsById: Record<string, BoardItem>;
+  tasksById: Record<string, BoardTask>;
+  /** Rendered size of each free card / column (canvas units). Auto-height
+   * cards (to-do, link, column…) don't keep `height` current, so connector
+   * lines, the minimap and fit-to-view read this instead. */
+  sizesById: Record<string, { width: number; height: number }>;
   commentsByItem: Record<string, BoardComment[]>;
   activeIds: Set<string>;
   socketStatus: SocketStatus;
 
-  seed: (boardId: string, items: BoardItem[], currentUserId: string) => void;
-  setItems: (items: BoardItem[]) => void;
+  seed: (
+    boardId: string,
+    items: BoardItem[],
+    currentUserId: string,
+    tasks?: BoardTask[],
+  ) => void;
+  setItems: (items: BoardItem[], tasks?: BoardTask[]) => void;
+  upsertTask: (task: BoardTask) => void;
+  patchTask: (id: string, patch: Partial<BoardTask>) => void;
+  removeTask: (id: string) => void;
+  setSize: (id: string, width: number, height: number) => void;
   upsertItem: (item: BoardItem) => void;
   patchItem: (id: string, patch: BoardItemPatch) => void;
   removeItem: (id: string) => void;
@@ -88,30 +107,67 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   boardId: null,
   currentUserId: "",
   itemsById: {},
+  tasksById: {},
+  sizesById: {},
   commentsByItem: {},
   activeIds: new Set(),
   socketStatus: "connecting",
 
-  seed: (boardId, items, currentUserId) =>
+  seed: (boardId, items, currentUserId, tasks = []) =>
     set({
       boardId,
       currentUserId,
       itemsById: Object.fromEntries(
         items.map((item) => [item.id, { ...EMPTY_META, ...item }]),
       ),
+      tasksById: Object.fromEntries(tasks.map((task) => [task.id, task])),
+      sizesById: {},
       commentsByItem: {},
       activeIds: new Set(),
     }),
 
-  setItems: (items) =>
+  setItems: (items, tasks) =>
     set((state) => ({
       itemsById: Object.fromEntries(
         items.map((item) => [
           item.id,
-          mergeItem(state.itemsById[item.id], item),
+          // A card mid-gesture keeps its local geometry (resync can land
+          // while the user is dragging).
+          state.activeIds.has(item.id) && state.itemsById[item.id]
+            ? state.itemsById[item.id]
+            : mergeItem(state.itemsById[item.id], item),
         ]),
       ),
+      ...(tasks
+        ? { tasksById: Object.fromEntries(tasks.map((t) => [t.id, t])) }
+        : {}),
     })),
+
+  upsertTask: (task) =>
+    set((state) => ({ tasksById: { ...state.tasksById, [task.id]: task } })),
+
+  patchTask: (id, patch) =>
+    set((state) => {
+      const existing = state.tasksById[id];
+      if (!existing) return state;
+      return { tasksById: { ...state.tasksById, [id]: { ...existing, ...patch } } };
+    }),
+
+  setSize: (id, width, height) =>
+    set((state) => {
+      const prev = state.sizesById[id];
+      if (prev && Math.abs(prev.width - width) < 0.5 && Math.abs(prev.height - height) < 0.5)
+        return state;
+      return { sizesById: { ...state.sizesById, [id]: { width, height } } };
+    }),
+
+  removeTask: (id) =>
+    set((state) => {
+      if (!(id in state.tasksById)) return state;
+      const rest = { ...state.tasksById };
+      delete rest[id];
+      return { tasksById: rest };
+    }),
 
   upsertItem: (item) =>
     set((state) => ({
@@ -133,7 +189,15 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       if (patch.z !== undefined) next.z = patch.z;
       if (patch.clear_color) next.color = null;
       else if (patch.color !== undefined) next.color = patch.color;
-      if (patch.content !== undefined) next.content = patch.content;
+      if (patch.content !== undefined)
+        next.content = patch.content as BoardItem["content"];
+      if (patch.clear_parent) {
+        next.parent_id = null;
+        next.position = 0;
+      } else if (patch.parent_id !== undefined) {
+        next.parent_id = patch.parent_id;
+      }
+      if (patch.position !== undefined) next.position = patch.position;
       return { itemsById: { ...state.itemsById, [id]: next } };
     }),
 
@@ -261,6 +325,12 @@ export const useBoardStore = create<BoardState>((set, get) => ({
         return;
       case "board.comment.deleted":
         get().removeComment(event.data.item_id, event.data.id);
+        return;
+      case "board.task.upserted":
+        get().upsertTask(event.data);
+        return;
+      case "board.task.deleted":
+        get().removeTask(event.data.id);
         return;
     }
   },

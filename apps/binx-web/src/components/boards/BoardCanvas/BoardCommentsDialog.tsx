@@ -24,7 +24,7 @@ import { relativeTime } from "@/lib/notifications-client";
 import { useBoardStore } from "@/stores/use-board-store";
 
 import styles from "./BoardCommentsDialog.module.scss";
-import type { BoardCanvasActions } from "./BoardCanvas";
+import type { BoardCanvasActions } from "./BoardCanvasContext";
 
 interface BoardCommentsDialogProps {
   item: BoardItem;

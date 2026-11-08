@@ -23,7 +23,11 @@ import type {
   BoardItemPatch,
   BoardItemVersion,
 } from "@/lib/boards-client";
-import type { BoardReactions, CreateBoardItemInput } from "@/lib/boards";
+import type {
+  BoardReactions,
+  CreateBoardItemInput,
+  UploadPlacement,
+} from "@/lib/boards";
 import type { InvoiceDetail, Invoice as StaffInvoice } from "@/lib/invoicing";
 import type { Meeting as StaffMeeting, Slot } from "@/lib/meetings";
 import type {
@@ -510,10 +514,16 @@ function canvasBase(projectId: string): string {
   return `/portal/projects/${projectId}/canvas`;
 }
 
-export async function getPortalBoard(projectId: string): Promise<Board> {
+export async function getPortalBoard(
+  projectId: string,
+  boardId?: string,
+): Promise<Board> {
   const headers = await authHeader();
   try {
-    const { data } = await api.get<Board>(canvasBase(projectId), { headers });
+    const { data } = await api.get<Board>(canvasBase(projectId), {
+      headers,
+      params: boardId ? { board_id: boardId } : undefined,
+    });
     return data;
   } catch (error) {
     rethrow(error, "Unable to load the canvas");
@@ -567,10 +577,38 @@ export async function deletePortalBoardItem(
   }
 }
 
+export async function uploadPortalBoardFile(
+  projectId: string,
+  file: File,
+  placement: UploadPlacement,
+): Promise<BoardItem> {
+  const headers = await authHeader();
+  const form = new FormData();
+  form.append("file", file);
+  try {
+    const { data } = await api.post<BoardItem>(
+      `${canvasBase(projectId)}/files`,
+      form,
+      {
+        headers: { ...headers, "Content-Type": undefined },
+        params: {
+          x: placement.x,
+          y: placement.y,
+          board_id: placement.board_id,
+          parent_id: placement.parent_id,
+        },
+      },
+    );
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to upload the file");
+  }
+}
+
 export async function uploadPortalBoardImage(
   projectId: string,
   file: File,
-  placement: { x: number; y: number; width?: number; height?: number },
+  placement: UploadPlacement,
 ): Promise<BoardItem> {
   const headers = await authHeader();
   const form = new FormData();

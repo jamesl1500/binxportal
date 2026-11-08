@@ -9,6 +9,7 @@ from binx_api.modules.agencies.dependencies import require_agency_role
 from binx_api.modules.agencies.models import ROLE_ADMIN, ROLE_MEMBER, ROLE_OWNER, Agency, AgencyClient
 from binx_api.modules.ai import service as ai_service
 from binx_api.modules.ai.schemas import AiDraftRead, AiTaskListSuggestion, AiTaskSuggestionsRead
+from binx_api.modules.boards import service as boards_service
 from binx_api.modules.projects import service
 from binx_api.modules.projects.models import ProjectRole
 from binx_api.modules.projects.schemas import (
@@ -538,7 +539,7 @@ async def update_task(
     agency_and_role: AnyMember,
 ) -> TaskRead:
     agency, _role = agency_and_role
-    await service.get_project_or_404(db, agency.id, project_id)
+    project = await service.get_project_or_404(db, agency.id, project_id)
     task = await service.get_task_or_404(db, project_id, task_id)
     task = await service.update_task(
         db,
@@ -550,6 +551,7 @@ async def update_task(
         assignee_id=data.assignee_id,
         actor=current_user,
     )
+    await boards_service.sync_task_change(db, project, task.id)
     assignee_name = await _resolve_assignee_name(db, task.assignee_id)
     comment_count, file_count = await service.get_task_counts(db, task.id)
     tags = await service.get_task_tags(db, task.id)
@@ -561,9 +563,11 @@ async def move_task(
     db: DbSession, project_id: uuid.UUID, task_id: uuid.UUID, data: TaskMove, agency_and_role: AnyMember
 ) -> TaskRead:
     agency, _role = agency_and_role
-    await service.get_project_or_404(db, agency.id, project_id)
+    project = await service.get_project_or_404(db, agency.id, project_id)
     task = await service.get_task_or_404(db, project_id, task_id)
     task = await service.move_task(db, task, list_id=data.list_id, position=data.position)
+    # A move into/out of the last list ticks/unticks it on a canvas to-do card.
+    await boards_service.sync_task_change(db, project, task.id)
     assignee_name = await _resolve_assignee_name(db, task.assignee_id)
     comment_count, file_count = await service.get_task_counts(db, task.id)
     tags = await service.get_task_tags(db, task.id)
@@ -573,9 +577,12 @@ async def move_task(
 @router.delete("/{project_id}/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_task(db: DbSession, project_id: uuid.UUID, task_id: uuid.UUID, agency_and_role: AnyMember) -> None:
     agency, _role = agency_and_role
-    await service.get_project_or_404(db, agency.id, project_id)
+    project = await service.get_project_or_404(db, agency.id, project_id)
     task = await service.get_task_or_404(db, project_id, task_id)
+    task_id, card_id = task.id, task.board_item_id
     await service.delete_task(db, task)
+    if card_id is not None:
+        await boards_service.sync_task_change(db, project, task_id, previous_item_id=card_id)
 
 
 @router.put("/{project_id}/tasks/{task_id}/tags", response_model=TaskRead)

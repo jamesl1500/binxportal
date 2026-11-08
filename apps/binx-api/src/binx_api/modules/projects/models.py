@@ -142,6 +142,14 @@ class ProjectTask(Base):
     position: Mapped[int] = mapped_column(Integer, default=0)
     due_date: Mapped[date | None] = mapped_column(Date, default=None)
 
+    # The canvas to-do card this task is a row of, if any (boards/models.py
+    # ITEM_TODO) — ordered within it by todo_position. SET NULL: deleting the
+    # card leaves the task on the Kanban.
+    board_item_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("board_items.id", ondelete="SET NULL"), index=True, default=None
+    )
+    todo_position: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+
 
 # Who wrote a task comment. "agency_member" is the only kind possible today —
 # binx-api has no client-facing portal yet. "client" is reserved for when it

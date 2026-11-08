@@ -1780,6 +1780,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agencies/{agency_id}/projects/{project_id}/canvas/files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload File */
+        post: operations["upload_file_agencies__agency_id__projects__project_id__canvas_files_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agencies/{agency_id}/projects/{project_id}/canvas/images": {
         parameters: {
             query?: never;
@@ -1933,6 +1950,62 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/projects/{project_id}/canvas/items/{item_id}/tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add Todo Task */
+        post: operations["add_todo_task_agencies__agency_id__projects__project_id__canvas_items__item_id__tasks_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/projects/{project_id}/canvas/items/{item_id}/tasks/attach": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Attach Todo Task */
+        post: operations["attach_todo_task_agencies__agency_id__projects__project_id__canvas_items__item_id__tasks_attach_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/projects/{project_id}/canvas/items/{item_id}/tasks/{task_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove Todo Task
+         * @description Take a row off the card — the task stays on the Kanban unless
+         *     ``?delete_task=true``.
+         */
+        delete: operations["remove_todo_task_agencies__agency_id__projects__project_id__canvas_items__item_id__tasks__task_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Todo Task */
+        patch: operations["update_todo_task_agencies__agency_id__projects__project_id__canvas_items__item_id__tasks__task_id__patch"];
         trace?: never;
     };
     "/agencies/{agency_id}/projects/{project_id}/canvas/items/{item_id}/versions": {
@@ -3394,6 +3467,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/portal/projects/{project_id}/canvas/files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload Board File */
+        post: operations["upload_board_file_portal_projects__project_id__canvas_files_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/portal/projects/{project_id}/canvas/images": {
         parameters: {
             query?: never;
@@ -4817,8 +4907,20 @@ export interface components {
              */
             item_id: string;
         };
+        /** BoardCrumb */
+        BoardCrumb: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Title */
+            title: string | null;
+        };
         /** BoardItemCreate */
         BoardItemCreate: {
+            /** Board Id */
+            board_id?: string | null;
             /** Color */
             color?: string | null;
             /** Content */
@@ -4827,6 +4929,10 @@ export interface components {
             };
             /** Height */
             height?: number | null;
+            /** Parent Id */
+            parent_id?: string | null;
+            /** Position */
+            position?: number | null;
             /** Type */
             type: string;
             /** Width */
@@ -4863,6 +4969,8 @@ export interface components {
              * Format: uuid
              */
             board_id: string;
+            /** Child Count */
+            child_count?: number | null;
             /** Color */
             color: string | null;
             /**
@@ -4890,6 +4998,15 @@ export interface components {
              * @default []
              */
             my_reactions: string[];
+            /** Parent Id */
+            parent_id?: string | null;
+            /** Pending Count */
+            pending_count?: number | null;
+            /**
+             * Position
+             * @default 0
+             */
+            position: number;
             /**
              * Reactions
              * @default {}
@@ -4916,11 +5033,18 @@ export interface components {
          *     sends x/y, a resize sends width/height, an edit sends content).
          */
         BoardItemUpdate: {
+            /** Board Id */
+            board_id?: string | null;
             /**
              * Clear Color
              * @default false
              */
             clear_color: boolean;
+            /**
+             * Clear Parent
+             * @default false
+             */
+            clear_parent: boolean;
             /** Color */
             color?: string | null;
             /** Content */
@@ -4929,6 +5053,10 @@ export interface components {
             } | null;
             /** Height */
             height?: number | null;
+            /** Parent Id */
+            parent_id?: string | null;
+            /** Position */
+            position?: number | null;
             /** Width */
             width?: number | null;
             /** X */
@@ -5000,6 +5128,87 @@ export interface components {
             board_id: string;
             /** Items */
             items: components["schemas"]["BoardItemRead"][];
+            /** Parent Id */
+            parent_id?: string | null;
+            /**
+             * Path
+             * @default []
+             */
+            path: components["schemas"]["BoardCrumb"][];
+            /**
+             * Tasks
+             * @default []
+             */
+            tasks: components["schemas"]["BoardTaskRead"][];
+            /** Title */
+            title?: string | null;
+        };
+        /** BoardTaskAttach */
+        BoardTaskAttach: {
+            /**
+             * Task Id
+             * Format: uuid
+             */
+            task_id: string;
+        };
+        /** BoardTaskCreate */
+        BoardTaskCreate: {
+            /** Title */
+            title: string;
+        };
+        /**
+         * BoardTaskRead
+         * @description A row on a to-do card — a ProjectTask, trimmed. ``done`` = the task is
+         *     in the project's last Kanban list. Assignee fields are always null on
+         *     the portal (clients never see who internally owns a task).
+         */
+        BoardTaskRead: {
+            /** Assignee Id */
+            assignee_id?: string | null;
+            /** Assignee Name */
+            assignee_name?: string | null;
+            /** Done */
+            done: boolean;
+            /** Due Date */
+            due_date: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Item Id */
+            item_id: string | null;
+            /** Position */
+            position: number;
+            /** Title */
+            title: string;
+        };
+        /**
+         * BoardTaskUpdate
+         * @description Every field optional — a tick sends ``done``, an inline rename sends
+         *     ``title``, a drag sends ``position``.
+         */
+        BoardTaskUpdate: {
+            /** Assignee Id */
+            assignee_id?: string | null;
+            /**
+             * Clear Assignee
+             * @default false
+             */
+            clear_assignee: boolean;
+            /**
+             * Clear Due Date
+             * @default false
+             */
+            clear_due_date: boolean;
+            /** Done */
+            done?: boolean | null;
+            /** Due Date */
+            due_date?: string | null;
+            /** Position */
+            position?: number | null;
+            /** Title */
+            title?: string | null;
         };
         /** Body_create_task_comment_agencies__agency_id__projects__project_id__tasks__task_id__comments_post */
         Body_create_task_comment_agencies__agency_id__projects__project_id__tasks__task_id__comments_post: {
@@ -5038,6 +5247,11 @@ export interface components {
             /** File */
             file: string;
         };
+        /** Body_upload_board_file_portal_projects__project_id__canvas_files_post */
+        Body_upload_board_file_portal_projects__project_id__canvas_files_post: {
+            /** File */
+            file: string;
+        };
         /** Body_upload_board_image_portal_projects__project_id__canvas_images_post */
         Body_upload_board_image_portal_projects__project_id__canvas_images_post: {
             /** File */
@@ -5055,6 +5269,11 @@ export interface components {
         };
         /** Body_upload_cover_users_me_cover_put */
         Body_upload_cover_users_me_cover_put: {
+            /** File */
+            file: string;
+        };
+        /** Body_upload_file_agencies__agency_id__projects__project_id__canvas_files_post */
+        Body_upload_file_agencies__agency_id__projects__project_id__canvas_files_post: {
             /** File */
             file: string;
         };
@@ -13476,7 +13695,9 @@ export interface operations {
     };
     read_board_agencies__agency_id__projects__project_id__canvas_get: {
         parameters: {
-            query?: never;
+            query?: {
+                board_id?: string | null;
+            };
             header?: never;
             path: {
                 project_id: string;
@@ -13506,6 +13727,47 @@ export interface operations {
             };
         };
     };
+    upload_file_agencies__agency_id__projects__project_id__canvas_files_post: {
+        parameters: {
+            query?: {
+                x?: number;
+                y?: number;
+                board_id?: string | null;
+                parent_id?: string | null;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_file_agencies__agency_id__projects__project_id__canvas_files_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardItemRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     upload_image_agencies__agency_id__projects__project_id__canvas_images_post: {
         parameters: {
             query?: {
@@ -13513,6 +13775,8 @@ export interface operations {
                 y?: number;
                 width?: number | null;
                 height?: number | null;
+                board_id?: string | null;
+                parent_id?: string | null;
             };
             header?: never;
             path: {
@@ -13876,6 +14140,152 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BoardReactionsRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_todo_task_agencies__agency_id__projects__project_id__canvas_items__item_id__tasks_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                item_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BoardTaskCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardTaskRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    attach_todo_task_agencies__agency_id__projects__project_id__canvas_items__item_id__tasks_attach_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                item_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BoardTaskAttach"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardTaskRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_todo_task_agencies__agency_id__projects__project_id__canvas_items__item_id__tasks__task_id__delete: {
+        parameters: {
+            query?: {
+                delete_task?: boolean;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+                item_id: string;
+                task_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_todo_task_agencies__agency_id__projects__project_id__canvas_items__item_id__tasks__task_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                item_id: string;
+                task_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BoardTaskUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardTaskRead"];
                 };
             };
             /** @description Validation Error */
@@ -17284,7 +17694,9 @@ export interface operations {
     };
     read_board_portal_projects__project_id__canvas_get: {
         parameters: {
-            query?: never;
+            query?: {
+                board_id?: string | null;
+            };
             header?: never;
             path: {
                 project_id: string;
@@ -17313,6 +17725,46 @@ export interface operations {
             };
         };
     };
+    upload_board_file_portal_projects__project_id__canvas_files_post: {
+        parameters: {
+            query?: {
+                x?: number;
+                y?: number;
+                board_id?: string | null;
+                parent_id?: string | null;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_board_file_portal_projects__project_id__canvas_files_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardItemRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     upload_board_image_portal_projects__project_id__canvas_images_post: {
         parameters: {
             query?: {
@@ -17320,6 +17772,8 @@ export interface operations {
                 y?: number;
                 width?: number | null;
                 height?: number | null;
+                board_id?: string | null;
+                parent_id?: string | null;
             };
             header?: never;
             path: {

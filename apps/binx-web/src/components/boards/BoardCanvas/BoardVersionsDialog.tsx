@@ -25,7 +25,7 @@ import type { BoardItem, BoardItemVersion } from "@/lib/boards-client";
 import { relativeTime } from "@/lib/notifications-client";
 
 import styles from "./BoardVersionsDialog.module.scss";
-import type { BoardCanvasActions } from "./BoardCanvas";
+import type { BoardCanvasActions } from "./BoardCanvasContext";
 
 interface BoardVersionsDialogProps {
   item: BoardItem;
@@ -42,7 +42,11 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const versionText = (version: BoardItemVersion): string => {
-  if ("text" in version.content) return version.content.text.trim();
+  const c = version.content as Record<string, unknown>;
+  for (const key of ["text", "title", "file_name", "url"]) {
+    const value = c[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
   return "";
 };
 

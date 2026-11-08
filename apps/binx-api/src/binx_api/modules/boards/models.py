@@ -14,7 +14,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint, Uuid
+from sqlalchemy import DateTime, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint, Uuid, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from binx_api.core.database import Base
@@ -28,7 +28,46 @@ from binx_api.core.database import Base
 ITEM_NOTE = "note"
 ITEM_IMAGE = "image"
 ITEM_PIN = "pin"
-BOARD_ITEM_TYPES: list[str] = [ITEM_NOTE, ITEM_IMAGE, ITEM_PIN]
+# Milanote-style card kinds:
+# - "todo": a checklist whose rows are real ProjectTasks (ProjectTask.board_item_id
+#   points back here), so ticking one on the canvas moves it to the last Kanban
+#   list and vice versa. content -> {"title"}.
+# - "link": a URL with a server-fetched preview. content -> {"url", "title",
+#   "description", "image", "site_name"}.
+# - "file": any non-image upload (PDF, doc...). content -> {"file_id",
+#   "file_name", "mime_type", "size"}. Stored as a ProjectFile like images.
+# - "column": a vertical stack other cards snap into (their parent_id points
+#   at it, ordered by position). content -> {"title"}.
+# - "board": a card that opens a nested ProjectBoard. content -> {"board_id", "title"}.
+# - "line": an arrow/connector between two cards (or free points). content ->
+#   {"from", "to", "x1", "y1", "x2", "y2", "arrow"}; x/y/width/height hold
+#   its bounding box so the minimap and fit-to-view treat it like any card.
+ITEM_TODO = "todo"
+ITEM_LINK = "link"
+ITEM_FILE = "file"
+ITEM_COLUMN = "column"
+ITEM_BOARD = "board"
+ITEM_LINE = "line"
+BOARD_ITEM_TYPES: list[str] = [
+    ITEM_NOTE,
+    ITEM_IMAGE,
+    ITEM_PIN,
+    ITEM_TODO,
+    ITEM_LINK,
+    ITEM_FILE,
+    ITEM_COLUMN,
+    ITEM_BOARD,
+    ITEM_LINE,
+]
+# What a column may hold — no nested columns, and pins/lines are positional
+# by nature so they stay on the open board.
+COLUMN_CHILD_TYPES: set[str] = {ITEM_NOTE, ITEM_IMAGE, ITEM_TODO, ITEM_LINK, ITEM_FILE, ITEM_BOARD}
+# Cards a client can be asked to approve. A column's own approval request fans
+# out to its approvable children (see service.request_approval).
+APPROVABLE_TYPES: set[str] = {ITEM_NOTE, ITEM_IMAGE, ITEM_LINK, ITEM_FILE}
+# Only agency members create to-do cards — their rows are agency tasks.
+AGENCY_ONLY_TYPES: set[str] = {ITEM_TODO}
+LINE_ARROWS: list[str] = ["none", "end", "both"]
 
 # Who created a card — mirrors ProjectTaskComment.author_type so the UI can
 # badge a client-authored card.
@@ -42,6 +81,10 @@ ALLOWED_BOARD_IMAGE_MIME_TYPES: set[str] = {"image/png", "image/jpeg", "image/we
 # Default geometry for a freshly-dropped note (canvas units == CSS px at zoom 1).
 DEFAULT_NOTE_WIDTH = 220.0
 DEFAULT_NOTE_HEIGHT = 160.0
+DEFAULT_COLUMN_WIDTH = 260.0
+# Nested boards can go this deep (root = 1) — keeps breadcrumbs and the
+# recursive pending-count walk bounded.
+MAX_BOARD_DEPTH = 8
 # A pin is always this size — fixed, not resizable (see service.create_item).
 # Taller than wide: it renders as a map-pin teardrop (round head + a pointed
 # tail), and the tail's tip — not the bounding box's center — is the anchored
@@ -65,16 +108,28 @@ APPROVAL_CHANGES_REQUESTED = "changes_requested"
 BOARD_APPROVAL_STATUSES: list[str] = [APPROVAL_PENDING, APPROVAL_APPROVED, APPROVAL_CHANGES_REQUESTED]
 
 
-# One canvas per project. A row (rather than hanging items straight off
-# project_id) gives a stable board_id for the socket fan-out and room to grow
-# to multiple boards later.
+# A canvas. Each project has exactly one root board (parent_id null — the
+# partial unique index enforces it) and any number of nested boards, each
+# opened from a "board" card on its parent (Milanote's boards-in-boards).
+# Deleting a board cascades to its sub-boards via parent_id.
 class ProjectBoard(Base):
     __tablename__ = "project_boards"
+    __table_args__ = (
+        Index(
+            "uq_project_boards_root",
+            "project_id",
+            unique=True,
+            postgresql_where=text("parent_id IS NULL"),
+        ),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
-    project_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("projects.id", ondelete="CASCADE"), unique=True, index=True
+    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"), index=True)
+    parent_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("project_boards.id", ondelete="CASCADE"), index=True, default=None
     )
+    # Null on the root board (the UI calls it after the project).
+    title: Mapped[str | None] = mapped_column(String(120), default=None)
 
 
 # A single card on the canvas.
@@ -85,6 +140,15 @@ class BoardItem(Base):
     board_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("project_boards.id", ondelete="CASCADE"), index=True)
 
     type: Mapped[str] = mapped_column(String(20))
+
+    # Column membership: a card inside a column has parent_id = the column's id
+    # and is laid out by `position` (its own x/y are ignored until it's dragged
+    # back out). SET NULL is only a backstop — delete_item releases children
+    # onto the board explicitly.
+    parent_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("board_items.id", ondelete="SET NULL"), index=True, default=None
+    )
+    position: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 
     x: Mapped[float] = mapped_column(Float, default=0.0)
     y: Mapped[float] = mapped_column(Float, default=0.0)

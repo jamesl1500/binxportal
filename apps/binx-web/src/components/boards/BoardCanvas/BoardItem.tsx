@@ -1,23 +1,40 @@
 /**
  * BoardItem.tsx
  *
- * One card on the collaboration canvas. Handles its own pointer-drag (move),
- * corner-handle resize, note text editing, colour, delete, emoji reactions and
- * the comments dialog — all optimistic against `useBoardStore`, persisted to
- * the server on gesture-end, and reconciled by the realtime broadcast.
- * Geometry math converts screen deltas to canvas units by dividing by the
- * current zoom.
+ * One card on the collaboration canvas — free on the board, or stacked inside
+ * a column (`inColumn`). Owns the shared card chrome: selection, the
+ * floating toolbar (reactions, comments, version history, colour, approval,
+ * delete), the resize handle, and the approval / reaction / author meta row.
+ * The body is per type (note, image, pin, to-do, link, file, board, column);
+ * connector lines are drawn separately by BoardLines.
+ *
+ * Moving a card is a canvas-level gesture (`startDrag` from context) so a
+ * card can be dragged out of a column, into another, or onto a board card;
+ * resize stays local. Everything is optimistic against `useBoardStore`,
+ * persisted on gesture end, and reconciled by the realtime broadcast.
  *
  * @module apps/binx-web/src/components/boards/BoardCanvas/BoardItem.tsx
  * @author Binx Portal
  */
 "use client";
 
-import { useRef, useState } from "react";
-import { History, MessageCircle, MessageSquare, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import {
+  ArrowUpRight,
+  History,
+  MessageCircle,
+  MessageSquare,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 
 import {
+  APPROVABLE_TYPES,
+  AUTO_HEIGHT_TYPES,
+  BOARD_COLORS,
+  childBoardId,
   clamp,
+  columnApprovalSummary,
   DEFAULT_NOTE_COLOR,
   MAX_ITEM_SIZE,
   MIN_ITEM_SIZE,
@@ -25,87 +42,106 @@ import {
   noteText,
   REACTION_EMOJI,
   type BoardItem as BoardItemModel,
+  type LinkContent,
 } from "@/lib/boards-client";
 import { useBoardStore } from "@/stores/use-board-store";
 import BoardCommentsDialog from "@/components/boards/BoardCanvas/BoardCommentsDialog";
 import BoardVersionsDialog from "@/components/boards/BoardCanvas/BoardVersionsDialog";
+import {
+  isInteractiveTarget,
+  useBoardCanvas,
+} from "@/components/boards/BoardCanvas/BoardCanvasContext";
+import ColumnCard, {
+  useColumnChildren,
+} from "@/components/boards/BoardCanvas/cards/ColumnCard";
+import TodoCard from "@/components/boards/BoardCanvas/cards/TodoCard";
+import {
+  BoardCard,
+  FileCard,
+  LinkCard,
+} from "@/components/boards/BoardCanvas/cards/SimpleCards";
 
 import styles from "./BoardCanvas.module.scss";
-import type { BoardCanvasActions } from "./BoardCanvas";
 
 interface BoardItemProps {
   item: BoardItemModel;
-  zoom: number;
-  selected: boolean;
-  actions: BoardCanvasActions;
-  imageUrl: (fileId: string) => string;
-  currentUserId: string;
-  canModerate: boolean;
-  viewerKind: "agency" | "client";
-  /** True for exactly one render after this pin was just dropped — read once
-   * as the comments dialog's initial open state. */
-  autoOpenComments?: boolean;
-  onSelect: () => void;
-  onError: (message: string) => void;
+  /** Rendered inside a column's stack rather than absolutely on the board. */
+  inColumn?: boolean;
 }
 
-type Gesture = {
-  mode: "move" | "resize";
+type Resize = {
   startX: number;
   startY: number;
-  origX: number;
-  origY: number;
   origW: number;
   origH: number;
 };
 
-const BoardItemView = ({
-  item,
-  zoom,
-  selected,
-  actions,
-  imageUrl,
-  currentUserId,
-  canModerate,
-  viewerKind,
-  autoOpenComments,
-  onSelect,
-  onError,
-}: BoardItemProps) => {
+const DELETE_PROMPT: Partial<Record<BoardItemModel["type"], string>> = {
+  board: "Delete this board and everything on it?",
+  column: "Delete this column? Its cards stay on the board.",
+  todo: "Delete this list? Its tasks stay on the Board tab.",
+};
+
+const BoardItemView = ({ item, inColumn = false }: BoardItemProps) => {
+  const ctx = useBoardCanvas();
+  const {
+    actions,
+    viewerKind,
+    zoom,
+    selectedId,
+    select,
+    startDrag,
+    startConnect,
+    dropTarget,
+    autoEditId,
+    autoOpenCommentsId,
+    openBoard,
+    onError,
+  } = ctx;
+  const selected = selectedId === item.id;
+
   const patchItem = useBoardStore((s) => s.patchItem);
   const removeItem = useBoardStore((s) => s.removeItem);
   const upsertItem = useBoardStore((s) => s.upsertItem);
   const setActive = useBoardStore((s) => s.setActive);
   const setReactions = useBoardStore((s) => s.setReactions);
+  const setSize = useBoardStore((s) => s.setSize);
 
-  const gestureRef = useRef<Gesture | null>(null);
+  const elRef = useRef<HTMLDivElement | null>(null);
+  const resizeRef = useRef<Resize | null>(null);
   const textRef = useRef<HTMLTextAreaElement | null>(null);
   const cancelledRef = useRef(false);
-  const [editing, setEditing] = useState(false);
-  const [commentsOpen, setCommentsOpen] = useState(autoOpenComments ?? false);
-  // The initializer above only covers mounting with the prop already true.
-  // The realtime `board.item.*` broadcast can also mount this card (via the
-  // websocket's own upsert) before BoardCanvas's local `setAutoOpenCommentsId`
-  // lands, so the prop can turn true only after first mount too — adjust
-  // state during render (React's documented pattern for this) instead of a
-  // `useEffect`, so it isn't a second, cascading render.
-  const [seenAutoOpen, setSeenAutoOpen] = useState(autoOpenComments);
-  if (autoOpenComments && autoOpenComments !== seenAutoOpen) {
-    setSeenAutoOpen(autoOpenComments);
-    setCommentsOpen(true);
+
+  const autoEdit = autoEditId === item.id;
+  const [editing, setEditing] = useState(autoEdit && item.type === "note");
+  const [commentsOpen, setCommentsOpen] = useState(autoOpenCommentsId === item.id);
+  // The initializers above only cover mounting with the flags already set.
+  // The realtime broadcast can mount this card (via the websocket's upsert)
+  // before BoardCanvas's local flag lands, so a flag can turn on after first
+  // mount too — adjust state during render (React's documented pattern),
+  // not in an effect, so it isn't a second cascading render.
+  const [seenAutoEdit, setSeenAutoEdit] = useState(autoEdit);
+  if (autoEdit !== seenAutoEdit) {
+    setSeenAutoEdit(autoEdit);
+    if (autoEdit && item.type === "note") setEditing(true);
   }
+  const [seenAutoOpen, setSeenAutoOpen] = useState(autoOpenCommentsId === item.id);
+  if ((autoOpenCommentsId === item.id) !== seenAutoOpen) {
+    setSeenAutoOpen(autoOpenCommentsId === item.id);
+    if (autoOpenCommentsId === item.id) setCommentsOpen(true);
+  }
+
   const [versionsOpen, setVersionsOpen] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [requestingChanges, setRequestingChanges] = useState(false);
   const [changesNote, setChangesNote] = useState("");
+  const [editingLink, setEditingLink] = useState(false);
+  const [linkDraft, setLinkDraft] = useState("");
   const [approvalBusy, setApprovalBusy] = useState(false);
 
-  // The toolbar (and its confirm step) only renders while selected, but this
-  // component itself stays mounted across selection toggles — reset the
-  // pending confirm when the card is deselected, adjusted during render
-  // (React's own pattern for this, same as MemberDetailDrawer's
-  // seededMemberId reset) rather than an effect, so re-selecting the card
-  // later doesn't reopen "Delete this card?" out of nowhere.
+  // The toolbar only renders while selected, but this component stays
+  // mounted across selection toggles — reset pending confirms on deselect,
+  // during render (same pattern as MemberDetailDrawer's seededMemberId).
   const [wasSelected, setWasSelected] = useState(selected);
   if (selected !== wasSelected) {
     setWasSelected(selected);
@@ -113,101 +149,81 @@ const BoardItemView = ({
       setConfirmingDelete(false);
       setRequestingChanges(false);
       setChangesNote("");
+      setEditingLink(false);
     }
   }
 
+  const columnChildren = useColumnChildren(item.type === "column" ? item.id : "");
+
+  // Report the rendered size — auto-height cards and columns don't keep
+  // `height` current, and connector lines / the minimap need the real box.
+  useEffect(() => {
+    const el = elRef.current;
+    if (!el || inColumn || typeof ResizeObserver === "undefined") return;
+    const report = () => setSize(item.id, el.offsetWidth, el.offsetHeight);
+    report();
+    const observer = new ResizeObserver(report);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [item.id, inColumn, setSize]);
+
   const versionSuffix =
     item.version_number != null ? ` (v${item.version_number})` : "";
+  const autoHeight = AUTO_HEIGHT_TYPES.has(item.type);
 
-  const bumpToFront = () => {
-    // A cheap "bring to front": one past the current view is fine, the server
-    // reconciles the exact value.
-    const maxZ = Math.max(
-      0,
-      ...Object.values(useBoardStore.getState().itemsById).map((i) => i.z),
-    );
-    if (item.z < maxZ) {
-      patchItem(item.id, { z: maxZ + 1 });
-      return maxZ + 1;
-    }
-    return item.z;
-  };
-
-  const endGesture = (persist: () => Promise<{ error?: string }>) => {
-    gestureRef.current = null;
-    setActive(item.id, false);
-    void persist().then((result) => {
-      if (result.error) onError(result.error);
-    });
-  };
+  // ---- Gestures ----
 
   const onPointerDownBody = (event: React.PointerEvent) => {
-    if (editing) return;
+    if (editing || event.button !== 0) return;
     event.stopPropagation();
-    onSelect();
-    const z = bumpToFront();
-    (event.target as HTMLElement).setPointerCapture(event.pointerId);
-    setActive(item.id, true);
-    gestureRef.current = {
-      mode: "move",
-      startX: event.clientX,
-      startY: event.clientY,
-      origX: item.x,
-      origY: item.y,
-      origW: item.width,
-      origH: item.height,
-    };
-    (gestureRef.current as Gesture & { z: number }).z = z;
+    select(item.id);
+    if (isInteractiveTarget(event.target)) return;
+    // No native text-selection drag — it would auto-scroll the board.
+    event.preventDefault();
+    startDrag(item, event);
   };
 
   const onPointerDownHandle = (event: React.PointerEvent) => {
     event.stopPropagation();
     (event.target as HTMLElement).setPointerCapture(event.pointerId);
     setActive(item.id, true);
-    gestureRef.current = {
-      mode: "resize",
+    const el = elRef.current;
+    resizeRef.current = {
       startX: event.clientX,
       startY: event.clientY,
-      origX: item.x,
-      origY: item.y,
       origW: item.width,
-      origH: item.height,
+      origH: autoHeight && el ? el.offsetHeight : item.height,
     };
   };
 
-  const onPointerMove = (event: React.PointerEvent) => {
-    const g = gestureRef.current;
+  const onPointerMoveHandle = (event: React.PointerEvent) => {
+    const g = resizeRef.current;
     if (!g) return;
     const dx = (event.clientX - g.startX) / zoom;
     const dy = (event.clientY - g.startY) / zoom;
-    if (g.mode === "move") {
-      patchItem(item.id, { x: g.origX + dx, y: g.origY + dy });
-    } else {
-      patchItem(item.id, {
-        width: clamp(g.origW + dx, MIN_ITEM_SIZE, MAX_ITEM_SIZE),
-        height: clamp(g.origH + dy, MIN_ITEM_SIZE, MAX_ITEM_SIZE),
-      });
-    }
+    patchItem(item.id, {
+      width: clamp(g.origW + dx, MIN_ITEM_SIZE, MAX_ITEM_SIZE),
+      ...(autoHeight
+        ? {}
+        : { height: clamp(g.origH + dy, MIN_ITEM_SIZE, MAX_ITEM_SIZE) }),
+    });
   };
 
-  const onPointerUp = () => {
-    const g = gestureRef.current;
-    if (!g) return;
+  const onPointerUpHandle = () => {
+    if (!resizeRef.current) return;
+    resizeRef.current = null;
+    setActive(item.id, false);
     const fresh = useBoardStore.getState().itemsById[item.id];
-    if (!fresh) {
-      gestureRef.current = null;
-      setActive(item.id, false);
-      return;
-    }
-    if (g.mode === "move") {
-      const z = (g as Gesture & { z?: number }).z ?? fresh.z;
-      endGesture(() => actions.update(item.id, { x: fresh.x, y: fresh.y, z }));
-    } else {
-      endGesture(() =>
-        actions.update(item.id, { width: fresh.width, height: fresh.height }),
-      );
-    }
+    if (!fresh) return;
+    void actions
+      .update(item.id, {
+        width: fresh.width,
+        ...(autoHeight ? {} : { height: fresh.height }),
+      })
+      .then((r) => r.error && onError(r.error));
   };
+
+  // ---- Edits ----
 
   const startEditing = () => {
     if (item.type !== "note") return;
@@ -227,9 +243,26 @@ const BoardItemView = ({
       .then((r) => r.error && onError(r.error));
   };
 
+  const saveTitle = (title: string) => {
+    patchItem(item.id, { content: { ...item.content, title } });
+    void actions.update(item.id, { content: { title } }).then((r) => {
+      if (r.error) return onError(r.error);
+      if (r.item) upsertItem(r.item);
+    });
+  };
+
+  const saveLink = () => {
+    const url = linkDraft.trim();
+    setEditingLink(false);
+    if (!url || url === (item.content as LinkContent).url) return;
+    void actions.update(item.id, { content: { url } }).then((r) => {
+      if (r.error) return onError(r.error);
+      if (r.item) upsertItem(r.item);
+    });
+  };
+
   const applyColor = (color: string) => {
-    const clearing = color === DEFAULT_NOTE_COLOR && item.color === null;
-    if (clearing) return;
+    if (color === item.color) return;
     patchItem(item.id, { color });
     void actions
       .update(item.id, { color })
@@ -239,6 +272,12 @@ const BoardItemView = ({
   const handleDelete = () => {
     const snapshot = item;
     removeItem(item.id);
+    select(null);
+    // A column's stack lands back on the board — the server broadcasts the
+    // released cards; drop them locally too so they don't vanish meanwhile.
+    for (const child of columnChildren) {
+      patchItem(child.id, { clear_parent: true, x: item.x, y: item.y + 56 });
+    }
     void actions.remove(item.id).then((r) => {
       if (r.error) {
         upsertItem(snapshot);
@@ -270,8 +309,25 @@ const BoardItemView = ({
     });
   };
 
+  // ---- Approval ----
+
+  const isColumn = item.type === "column";
+  const approvable = APPROVABLE_TYPES.has(item.type);
+  const summary = columnApprovalSummary(columnChildren);
+
+  /** A column's request/decision fans out server-side to its stack; mirror
+   * that locally so the cards update even before (or without) the socket. */
+  const applyToChildren = (fn: (child: BoardItemModel) => BoardItemModel | null) => {
+    for (const child of columnChildren) {
+      if (!APPROVABLE_TYPES.has(child.type)) continue;
+      const next = fn(child);
+      if (next) upsertItem(next);
+    }
+  };
+
   const runApproval = (
     fn: () => Promise<{ item?: BoardItemModel; error?: string }>,
+    onSuccess?: () => void,
   ) => {
     setApprovalBusy(true);
     void fn().then((r) => {
@@ -281,61 +337,120 @@ const BoardItemView = ({
         return;
       }
       if (r.item) upsertItem(r.item);
+      onSuccess?.();
     });
   };
 
   const requestApproval = () => {
     if (!actions.requestApproval) return;
-    runApproval(() => actions.requestApproval!(item.id));
+    runApproval(
+      () => actions.requestApproval!(item.id),
+      isColumn
+        ? () =>
+            applyToChildren((c) =>
+              c.approval_status === "pending"
+                ? null
+                : {
+                    ...c,
+                    approval_status: "pending",
+                    approval_decided_by_name: null,
+                    approval_note: null,
+                    version_number: (c.version_number ?? 0) + 1,
+                  },
+            )
+        : undefined,
+    );
   };
 
   const withdrawApproval = () => {
     if (!actions.withdrawApproval) return;
-    runApproval(() => actions.withdrawApproval!(item.id));
+    runApproval(
+      () => actions.withdrawApproval!(item.id),
+      isColumn
+        ? () =>
+            applyToChildren((c) =>
+              c.approval_status === "pending"
+                ? { ...c, approval_status: null }
+                : null,
+            )
+        : undefined,
+    );
   };
 
-  const approve = () => {
+  const decide = (decision: "approved" | "changes_requested", note?: string) => {
     if (!actions.decideApproval) return;
-    runApproval(() => actions.decideApproval!(item.id, "approved"));
+    runApproval(
+      () =>
+        note === undefined
+          ? actions.decideApproval!(item.id, decision)
+          : actions.decideApproval!(item.id, decision, note),
+      isColumn
+        ? () =>
+            applyToChildren((c) =>
+              c.approval_status === "pending"
+                ? {
+                    ...c,
+                    approval_status: decision,
+                    approval_note: note ?? null,
+                    approved_version_number:
+                      decision === "approved"
+                        ? c.version_number
+                        : c.approved_version_number,
+                  }
+                : null,
+            )
+        : undefined,
+    );
   };
 
   const sendRequestedChanges = () => {
-    if (!actions.decideApproval) return;
     const note = changesNote.trim();
-    runApproval(() =>
-      actions.decideApproval!(item.id, "changes_requested", note || undefined),
-    );
+    decide("changes_requested", note || undefined);
     setRequestingChanges(false);
     setChangesNote("");
   };
 
-  return (
-    <div
-      className={styles.item}
-      data-type={item.type}
-      data-author={item.author_kind}
-      data-selected={selected}
-      style={{
+  // ---- Render ----
+
+  const background =
+    item.type === "note" ? (item.color ?? DEFAULT_NOTE_COLOR) : undefined;
+  const style: React.CSSProperties = inColumn
+    ? {
+        background,
+        aspectRatio:
+          item.type === "image" ? `${item.width} / ${item.height}` : undefined,
+        minHeight: item.type === "note" ? Math.min(item.height, 120) : undefined,
+      }
+    : {
         left: item.x,
         top: item.y,
         width: item.width,
-        height: item.height,
-        zIndex: item.z,
-        background:
-          item.type === "note" ? (item.color ?? DEFAULT_NOTE_COLOR) : undefined,
-      }}
-      onPointerDown={onPointerDownBody}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onDoubleClick={startEditing}
-    >
-      {item.type === "note" ? (
-        editing ? (
+        height: autoHeight ? undefined : item.height,
+        zIndex: selected ? 100_000 : item.z,
+        background,
+      };
+
+  const childBoard = childBoardId(item);
+  const canEditStructure = true; // full collaboration — both sides edit
+  const isDropBoard =
+    dropTarget?.kind === "board" && dropTarget.id === item.id;
+  const swatches =
+    item.type === "note"
+      ? NOTE_COLORS
+      : item.type === "board" || item.type === "column"
+        ? BOARD_COLORS
+        : null;
+
+  const body = (() => {
+    switch (item.type) {
+      case "note":
+        return editing ? (
           <textarea
             ref={textRef}
             autoFocus
             className={styles.noteInput}
             defaultValue={noteText(item)}
+            aria-label="Note text"
             onBlur={commitText}
             onKeyDown={(e) => {
               if (e.key === "Escape") {
@@ -350,42 +465,96 @@ const BoardItemView = ({
           <p className={styles.noteText} data-empty={noteText(item) === ""}>
             {noteText(item) || "Double-click to write…"}
           </p>
-        )
-      ) : item.type === "pin" ? (
-        <div className={styles.pinShape} aria-hidden="true">
-          <div className={styles.pinTail} />
-          <div className={styles.pinHead}>
-            <MessageSquare aria-hidden="true" />
-            {item.comment_count > 0 && (
-              <span className={styles.pinCount}>{item.comment_count}</span>
-            )}
+        );
+      case "pin":
+        return (
+          <div className={styles.pinShape} aria-hidden="true">
+            <div className={styles.pinTail} />
+            <div className={styles.pinHead}>
+              <MessageSquare aria-hidden="true" />
+              {item.comment_count > 0 && (
+                <span className={styles.pinCount}>{item.comment_count}</span>
+              )}
+            </div>
           </div>
-        </div>
-      ) : (
-        // eslint-disable-next-line @next/next/no-img-element -- canvas images are user-positioned at arbitrary sizes; next/image's layout constraints don't fit a freeform board
-        <img
-          className={styles.image}
-          src={
-            item.content && "file_id" in item.content && item.content.file_id
-              ? imageUrl(item.content.file_id)
-              : ""
-          }
-          alt={
-            ("file_name" in item.content && item.content.file_name) ||
-            "Canvas image"
-          }
-          draggable={false}
-        />
-      )}
+        );
+      case "image":
+        return (
+          // eslint-disable-next-line @next/next/no-img-element -- canvas images are user-positioned at arbitrary sizes; next/image's layout constraints don't fit a freeform board
+          <img
+            className={styles.image}
+            src={
+              "file_id" in item.content && item.content.file_id
+                ? ctx.imageUrl(item.content.file_id)
+                : ""
+            }
+            alt={
+              ("file_name" in item.content && item.content.file_name) ||
+              "Canvas image"
+            }
+            draggable={false}
+          />
+        );
+      case "todo":
+        return <TodoCard item={item} autoEdit={autoEdit} onSaveTitle={saveTitle} />;
+      case "link":
+        return <LinkCard item={item} />;
+      case "file":
+        return <FileCard item={item} fileUrl={ctx.fileUrl} />;
+      case "board":
+        return (
+          <BoardCard
+            item={item}
+            autoEdit={autoEdit}
+            canEdit={canEditStructure}
+            onSaveTitle={saveTitle}
+            onOpen={openBoard}
+            dropping={isDropBoard}
+          />
+        );
+      case "column":
+        return (
+          <ColumnCard
+            item={item}
+            autoEdit={autoEdit}
+            canEdit={canEditStructure}
+            onSaveTitle={saveTitle}
+            renderChild={(child) => <BoardItemView key={child.id} item={child} inColumn />}
+          />
+        );
+      default:
+        return null;
+    }
+  })();
+
+  return (
+    <div
+      ref={elRef}
+      className={styles.item}
+      data-item-id={item.id}
+      data-type={item.type}
+      data-author={item.author_kind}
+      data-selected={selected}
+      data-in-column={inColumn || undefined}
+      data-column-child={inColumn || undefined}
+      data-drop-column={isColumn || undefined}
+      data-drop-board={childBoard ?? undefined}
+      style={{
+        ...style,
+        ...(isColumn && item.color ? { ["--column-accent" as string]: item.color } : {}),
+      }}
+      onPointerDown={onPointerDownBody}
+      onDoubleClick={startEditing}
+    >
+      {body}
 
       {/* Everything that floats above the card shares one row (.itemMeta) so
           the approval badge, reaction pills and author tag lay out next to
           each other instead of stacking on the same spot. */}
       <div className={styles.itemMeta}>
-        {/* Approval state — visible whenever set, not just on hover/select, so
-          a resting board still shows what's waiting on the client. Each
-          decision is tied to a pinned version number, so this always names
-          exactly which snapshot is pending / was approved. */}
+        {/* Approval state — visible whenever set, so a resting board still
+          shows what's waiting on the client. Each decision is tied to a
+          pinned version number. */}
         {item.approval_status && (
           <div
             className={styles.approvalBadge}
@@ -411,9 +580,9 @@ const BoardItemView = ({
           </div>
         )}
 
-        {/* The card was edited since its last approved snapshot — the decision
-          was cleared (see boards/service.py::update_item), but the earlier
-          sign-off is still pinned and viewable in the history dialog. */}
+        {/* Edited since its last approved snapshot — the decision was cleared
+          (boards/service.py::update_item), but the earlier sign-off is still
+          pinned and viewable in the history dialog. */}
         {!item.approval_status && item.approved_version_number != null && (
           <div
             className={styles.approvalBadge}
@@ -426,8 +595,6 @@ const BoardItemView = ({
           </div>
         )}
 
-        {/* Reaction pills sit above the card whenever there are any — visible
-          without selecting, like Milanote / Figma. */}
         {Object.keys(item.reactions).length > 0 && (
           <div
             className={styles.reactionPills}
@@ -447,8 +614,6 @@ const BoardItemView = ({
           </div>
         )}
 
-        {/* Who dropped the card — a faint tag at the row's right end, revealed
-          on hover/select (styling in .authorTag). */}
         <span
           className={styles.authorTag}
           data-client={item.author_kind === "client"}
@@ -466,7 +631,9 @@ const BoardItemView = ({
           >
             {confirmingDelete ? (
               <div className={styles.confirmRow}>
-                <span className={styles.confirmText}>Delete this card?</span>
+                <span className={styles.confirmText}>
+                  {DELETE_PROMPT[item.type] ?? "Delete this card?"}
+                </span>
                 <div className={styles.confirmActions}>
                   <button
                     type="button"
@@ -515,6 +682,38 @@ const BoardItemView = ({
                   </button>
                 </div>
               </div>
+            ) : editingLink ? (
+              <div className={styles.confirmRow}>
+                <input
+                  className={styles.changesInput}
+                  value={linkDraft}
+                  onChange={(e) => setLinkDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveLink();
+                    if (e.key === "Escape") setEditingLink(false);
+                  }}
+                  placeholder="https://"
+                  aria-label="Link address"
+                  autoFocus
+                />
+                <div className={styles.confirmActions}>
+                  <button
+                    type="button"
+                    className={styles.confirmDelete}
+                    data-tone="neutral"
+                    onClick={saveLink}
+                  >
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.confirmCancel}
+                    onClick={() => setEditingLink(false)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
             ) : (
               <>
                 <span className={styles.reactionPicker}>
@@ -552,15 +751,42 @@ const BoardItemView = ({
                     <span>v{item.version_number}</span>
                   </button>
                 )}
-                {item.type === "note" && (
+                {item.type === "board" && childBoard && (
+                  <button
+                    type="button"
+                    className={styles.commentButton}
+                    onClick={() => openBoard(childBoard)}
+                  >
+                    <ArrowUpRight aria-hidden="true" />
+                    <span>Open board</span>
+                  </button>
+                )}
+                {item.type === "link" && (
+                  <button
+                    type="button"
+                    className={styles.commentButton}
+                    onClick={() => {
+                      setLinkDraft((item.content as LinkContent).url ?? "");
+                      setEditingLink(true);
+                    }}
+                  >
+                    <Pencil aria-hidden="true" />
+                    <span>Edit link</span>
+                  </button>
+                )}
+                {swatches && (
                   <>
                     <span className={styles.barDivider} aria-hidden="true" />
                     <span className={styles.swatches}>
-                      {NOTE_COLORS.map((color) => (
+                      {swatches.map((color) => (
                         <button
                           key={color}
                           type="button"
                           className={styles.swatch}
+                          data-active={
+                            (item.color ??
+                              (item.type === "note" ? DEFAULT_NOTE_COLOR : null)) === color
+                          }
                           style={{ background: color }}
                           aria-label={`Colour ${color}`}
                           onClick={() => applyColor(color)}
@@ -569,36 +795,36 @@ const BoardItemView = ({
                     </span>
                   </>
                 )}
-                {item.type !== "pin" &&
-                  viewerKind === "agency" &&
-                  actions.requestApproval && (
-                    <>
-                      <span className={styles.barDivider} aria-hidden="true" />
-                      {item.approval_status === "pending" ? (
-                        <button
-                          type="button"
-                          className={styles.approvalButton}
-                          onClick={withdrawApproval}
-                          disabled={approvalBusy}
-                        >
-                          Withdraw request
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          className={styles.approvalButton}
-                          data-tone="accent"
-                          onClick={requestApproval}
-                          disabled={approvalBusy}
-                        >
-                          {item.approval_status
-                            ? "Request re-approval"
-                            : "Request approval"}
-                        </button>
-                      )}
-                    </>
-                  )}
-                {item.type !== "pin" &&
+
+                {/* Per-card approval (agency asks, client decides). */}
+                {approvable && viewerKind === "agency" && actions.requestApproval && (
+                  <>
+                    <span className={styles.barDivider} aria-hidden="true" />
+                    {item.approval_status === "pending" ? (
+                      <button
+                        type="button"
+                        className={styles.approvalButton}
+                        onClick={withdrawApproval}
+                        disabled={approvalBusy}
+                      >
+                        Withdraw request
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className={styles.approvalButton}
+                        data-tone="accent"
+                        onClick={requestApproval}
+                        disabled={approvalBusy}
+                      >
+                        {item.approval_status
+                          ? "Request re-approval"
+                          : "Request approval"}
+                      </button>
+                    )}
+                  </>
+                )}
+                {approvable &&
                   viewerKind === "client" &&
                   actions.decideApproval &&
                   item.approval_status === "pending" && (
@@ -608,7 +834,7 @@ const BoardItemView = ({
                         type="button"
                         className={styles.approvalButton}
                         data-tone="approve"
-                        onClick={approve}
+                        onClick={() => decide("approved")}
                         disabled={approvalBusy}
                       >
                         Approve
@@ -623,6 +849,60 @@ const BoardItemView = ({
                       </button>
                     </>
                   )}
+
+                {/* Column-wide review — sends / decides its whole stack. */}
+                {isColumn && viewerKind === "agency" && actions.requestApproval && summary.total > 0 && (
+                  <>
+                    <span className={styles.barDivider} aria-hidden="true" />
+                    {summary.pending > 0 && (
+                      <button
+                        type="button"
+                        className={styles.approvalButton}
+                        onClick={withdrawApproval}
+                        disabled={approvalBusy}
+                      >
+                        Withdraw reviews
+                      </button>
+                    )}
+                    {summary.pending < summary.total && (
+                      <button
+                        type="button"
+                        className={styles.approvalButton}
+                        data-tone="accent"
+                        onClick={requestApproval}
+                        disabled={approvalBusy}
+                      >
+                        Send column for review
+                      </button>
+                    )}
+                  </>
+                )}
+                {isColumn &&
+                  viewerKind === "client" &&
+                  actions.decideApproval &&
+                  summary.pending > 0 && (
+                    <>
+                      <span className={styles.barDivider} aria-hidden="true" />
+                      <button
+                        type="button"
+                        className={styles.approvalButton}
+                        data-tone="approve"
+                        onClick={() => decide("approved")}
+                        disabled={approvalBusy}
+                      >
+                        Approve all ({summary.pending})
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.approvalButton}
+                        onClick={() => setRequestingChanges(true)}
+                        disabled={approvalBusy}
+                      >
+                        Request changes
+                      </button>
+                    </>
+                  )}
+
                 <span className={styles.barDivider} aria-hidden="true" />
                 <button
                   type="button"
@@ -635,13 +915,26 @@ const BoardItemView = ({
               </>
             )}
           </div>
-          {item.type !== "pin" && (
-            <div
-              className={styles.resizeHandle}
-              onPointerDown={onPointerDownHandle}
-              onPointerMove={onPointerMove}
-              onPointerUp={onPointerUp}
-            />
+          {item.type !== "pin" && !inColumn && (
+            <>
+              <div
+                className={styles.resizeHandle}
+                data-axis={autoHeight ? "x" : "both"}
+                onPointerDown={onPointerDownHandle}
+                onPointerMove={onPointerMoveHandle}
+                onPointerUp={onPointerUpHandle}
+              />
+              <button
+                type="button"
+                className={styles.connectHandle}
+                aria-label="Draw a line from this card"
+                title="Drag to connect"
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                  startConnect(item, e);
+                }}
+              />
+            </>
           )}
         </>
       )}
@@ -650,8 +943,8 @@ const BoardItemView = ({
         <BoardCommentsDialog
           item={item}
           actions={actions}
-          currentUserId={currentUserId}
-          canModerate={canModerate}
+          currentUserId={ctx.currentUserId}
+          canModerate={ctx.canModerate}
           open={commentsOpen}
           onOpenChange={setCommentsOpen}
           onError={onError}
