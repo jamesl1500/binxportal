@@ -22,6 +22,8 @@ import type {
   BoardItemPatch,
   BoardItemType,
   BoardItemVersion,
+  BoardTask,
+  BoardTaskPatch,
 } from "@/lib/boards-client";
 
 export type {
@@ -31,12 +33,29 @@ export type {
   BoardItemPatch,
   BoardItemType,
   BoardItemVersion,
+  BoardTask,
+  BoardTaskPatch,
 };
 
 export type BoardReactions = Schemas["BoardReactionsRead"];
 
+/** Where an uploaded image/file card lands. */
+export interface UploadPlacement {
+  x: number;
+  y: number;
+  width?: number;
+  height?: number;
+  board_id?: string;
+  parent_id?: string;
+}
+
 export interface CreateBoardItemInput {
   type: BoardItemType;
+  /** Defaults to the project's root board. */
+  board_id?: string;
+  /** Drop straight into this column. */
+  parent_id?: string;
+  position?: number;
   x: number;
   y: number;
   width?: number;
@@ -70,11 +89,13 @@ function base(agencyId: string, projectId: string): string {
 export async function getBoard(
   agencyId: string,
   projectId: string,
+  boardId?: string,
 ): Promise<Board> {
   const headers = await authHeader();
   try {
     const { data } = await api.get<Board>(base(agencyId, projectId), {
       headers,
+      params: boardId ? { board_id: boardId } : undefined,
     });
     return data;
   } catch (error) {
@@ -138,7 +159,7 @@ export async function uploadBoardImage(
   agencyId: string,
   projectId: string,
   file: File,
-  placement: { x: number; y: number; width?: number; height?: number },
+  placement: UploadPlacement,
 ): Promise<BoardItem> {
   const headers = await authHeader();
   const form = new FormData();
@@ -280,5 +301,112 @@ export async function getBoardItemVersions(
     return data;
   } catch (error) {
     rethrow(error, "Unable to load the version history");
+  }
+}
+
+export async function uploadBoardFile(
+  agencyId: string,
+  projectId: string,
+  file: File,
+  placement: UploadPlacement,
+): Promise<BoardItem> {
+  const headers = await authHeader();
+  const form = new FormData();
+  form.append("file", file);
+  try {
+    const { data } = await api.post<BoardItem>(
+      `${base(agencyId, projectId)}/files`,
+      form,
+      {
+        headers: { ...headers, "Content-Type": undefined },
+        params: {
+          x: placement.x,
+          y: placement.y,
+          board_id: placement.board_id,
+          parent_id: placement.parent_id,
+        },
+      },
+    );
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to upload the file");
+  }
+}
+
+// ---- To-do cards (rows are real project tasks) ----
+
+export async function addBoardTask(
+  agencyId: string,
+  projectId: string,
+  itemId: string,
+  title: string,
+): Promise<BoardTask> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.post<BoardTask>(
+      `${base(agencyId, projectId)}/items/${itemId}/tasks`,
+      { title },
+      { headers },
+    );
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to add the task");
+  }
+}
+
+export async function attachBoardTask(
+  agencyId: string,
+  projectId: string,
+  itemId: string,
+  taskId: string,
+): Promise<BoardTask> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.post<BoardTask>(
+      `${base(agencyId, projectId)}/items/${itemId}/tasks/attach`,
+      { task_id: taskId },
+      { headers },
+    );
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to add that task");
+  }
+}
+
+export async function updateBoardTask(
+  agencyId: string,
+  projectId: string,
+  itemId: string,
+  taskId: string,
+  patch: BoardTaskPatch,
+): Promise<BoardTask> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.patch<BoardTask>(
+      `${base(agencyId, projectId)}/items/${itemId}/tasks/${taskId}`,
+      patch,
+      { headers },
+    );
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to update the task");
+  }
+}
+
+export async function removeBoardTask(
+  agencyId: string,
+  projectId: string,
+  itemId: string,
+  taskId: string,
+  deleteTask: boolean,
+): Promise<void> {
+  const headers = await authHeader();
+  try {
+    await api.delete(
+      `${base(agencyId, projectId)}/items/${itemId}/tasks/${taskId}`,
+      { headers, params: deleteTask ? { delete_task: true } : undefined },
+    );
+  } catch (error) {
+    rethrow(error, "Unable to remove the task");
   }
 }

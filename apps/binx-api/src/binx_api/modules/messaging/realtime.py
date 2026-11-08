@@ -43,6 +43,10 @@ EVENT_BOARD_ITEM_DELETED = "board.item.deleted"
 EVENT_BOARD_REACTION = "board.item.reaction"
 EVENT_BOARD_COMMENT_CREATED = "board.comment.created"
 EVENT_BOARD_COMMENT_DELETED = "board.comment.deleted"
+# A row on a canvas to-do card (a ProjectTask linked via board_item_id) was
+# added/changed (incl. ticked, or moved on the Kanban) or removed from the card.
+EVENT_BOARD_TASK_UPSERTED = "board.task.upserted"
+EVENT_BOARD_TASK_DELETED = "board.task.deleted"
 
 # In-app notifications (notifications/service.py::notify_many) and the
 # activity/audit log (activity/service.py::log_agency_activity /

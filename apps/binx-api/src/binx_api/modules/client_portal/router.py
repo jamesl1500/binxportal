@@ -10,7 +10,7 @@ from binx_api.core.dependencies import CurrentUser, DbSession
 from binx_api.core.email import send_client_invitation_email
 from binx_api.core.rate_limit import limiter
 from binx_api.modules.boards import service as boards_service
-from binx_api.modules.boards.models import AUTHOR_CLIENT, ITEM_IMAGE
+from binx_api.modules.boards.models import AUTHOR_CLIENT, DEFAULT_NOTE_WIDTH, ITEM_FILE, ITEM_IMAGE
 from binx_api.modules.boards.schemas import (
     BoardApprovalDecision,
     BoardCommentCreate,
@@ -236,20 +236,24 @@ async def download_team_member_avatar(db: DbSession, membership: PortalContext, 
 # portal contact over the shared websocket.
 
 
-async def _portal_project_and_board(db, client_id: uuid.UUID, project_id: uuid.UUID):
+async def _portal_project_and_board(db, client_id: uuid.UUID, project_id: uuid.UUID, board_id: uuid.UUID | None = None):
     project = await service.get_portal_project_or_404(db, client_id, project_id)
-    board = await boards_service.get_or_create_board(db, project)
+    board = await boards_service.resolve_board(db, project, board_id)
     return project, board
 
 
 @router.get("/projects/{project_id}/canvas", response_model=BoardRead)
 async def read_board(
-    db: DbSession, current_user: CurrentUser, membership: PortalContext, project_id: uuid.UUID
+    db: DbSession,
+    current_user: CurrentUser,
+    membership: PortalContext,
+    project_id: uuid.UUID,
+    board_id: uuid.UUID | None = None,
 ) -> BoardRead:
     _agency, client, _contact = membership
-    _project, board = await _portal_project_and_board(db, client.id, project_id)
-    rows = await boards_service.board_read_items(db, board.id, current_user.id)
-    return BoardRead(board_id=board.id, items=[BoardItemRead(**row) for row in rows])
+    project, board = await _portal_project_and_board(db, client.id, project_id, board_id)
+    # To-do rows are shown read-only and without assignees (internal staff).
+    return BoardRead(**await boards_service.board_read(db, project, board, current_user.id, include_assignee=False))
 
 
 @router.post("/projects/{project_id}/canvas/items", response_model=BoardItemRead, status_code=status.HTTP_201_CREATED)
@@ -257,7 +261,7 @@ async def create_board_item(
     db: DbSession, current_user: CurrentUser, membership: PortalContext, project_id: uuid.UUID, data: BoardItemCreate
 ) -> BoardItemRead:
     _agency, client, _contact = membership
-    project, board = await _portal_project_and_board(db, client.id, project_id)
+    project, board = await _portal_project_and_board(db, client.id, project_id, data.board_id)
     item = await boards_service.create_item(
         db,
         board,
@@ -271,6 +275,8 @@ async def create_board_item(
         height=data.height,
         content=data.content,
         color=data.color,
+        parent_id=data.parent_id,
+        position=data.position,
     )
     return BoardItemRead(**await boards_service.item_read(db, item, current_user.id))
 
@@ -285,8 +291,7 @@ async def update_board_item(
     data: BoardItemUpdate,
 ) -> BoardItemRead:
     _agency, client, _contact = membership
-    project, board = await _portal_project_and_board(db, client.id, project_id)
-    item = await boards_service.get_item_or_404(db, board.id, item_id)
+    project, item = await _portal_item(db, client.id, project_id, item_id)
     item = await boards_service.update_item(
         db,
         item,
@@ -299,6 +304,10 @@ async def update_board_item(
         content=data.content,
         color=data.color,
         clear_color=data.clear_color,
+        parent_id=data.parent_id,
+        clear_parent=data.clear_parent,
+        position=data.position,
+        board_id=data.board_id,
     )
     return BoardItemRead(**await boards_service.item_read(db, item, current_user.id))
 
@@ -308,8 +317,7 @@ async def delete_board_item(
     db: DbSession, membership: PortalContext, project_id: uuid.UUID, item_id: uuid.UUID
 ) -> None:
     _agency, client, _contact = membership
-    project, board = await _portal_project_and_board(db, client.id, project_id)
-    item = await boards_service.get_item_or_404(db, board.id, item_id)
+    project, item = await _portal_item(db, client.id, project_id, item_id)
     await boards_service.delete_item(db, item, project)
 
 
@@ -324,9 +332,11 @@ async def upload_board_image(
     y: float = 0.0,
     width: float | None = None,
     height: float | None = None,
+    board_id: uuid.UUID | None = None,
+    parent_id: uuid.UUID | None = None,
 ) -> BoardItemRead:
     _agency, client, _contact = membership
-    project, board = await _portal_project_and_board(db, client.id, project_id)
+    project, board = await _portal_project_and_board(db, client.id, project_id, board_id)
     stored = await boards_service.save_board_image(
         db,
         project,
@@ -346,8 +356,49 @@ async def upload_board_image(
         y=y,
         width=width,
         height=height,
-        content={"file_id": str(stored.id), "file_name": stored.file_name},
+        content=boards_service.file_card_content(stored),
         color=None,
+        parent_id=parent_id,
+    )
+    return BoardItemRead(**await boards_service.item_read(db, item, current_user.id))
+
+
+@router.post("/projects/{project_id}/canvas/files", response_model=BoardItemRead, status_code=status.HTTP_201_CREATED)
+async def upload_board_file(
+    db: DbSession,
+    current_user: CurrentUser,
+    membership: PortalContext,
+    project_id: uuid.UUID,
+    file: Annotated[UploadFile, File()],
+    x: float = 0.0,
+    y: float = 0.0,
+    board_id: uuid.UUID | None = None,
+    parent_id: uuid.UUID | None = None,
+) -> BoardItemRead:
+    _agency, client, _contact = membership
+    project, board = await _portal_project_and_board(db, client.id, project_id, board_id)
+    stored = await boards_service.save_board_file(
+        db,
+        project,
+        uploaded_by=current_user,
+        file_name=file.filename or "file",
+        content=await file.read(),
+        mime_type=file.content_type or "application/octet-stream",
+    )
+    item = await boards_service.create_item(
+        db,
+        board,
+        project,
+        actor=current_user,
+        author_kind=AUTHOR_CLIENT,
+        type_=ITEM_FILE,
+        x=x,
+        y=y,
+        width=DEFAULT_NOTE_WIDTH + 20,
+        height=72.0,
+        content=boards_service.file_card_content(stored),
+        color=None,
+        parent_id=parent_id,
     )
     return BoardItemRead(**await boards_service.item_read(db, item, current_user.id))
 
@@ -373,8 +424,8 @@ async def download_portal_logo(db: DbSession, membership: PortalContext):
 
 
 async def _portal_item(db, client_id: uuid.UUID, project_id: uuid.UUID, item_id: uuid.UUID):
-    project, board = await _portal_project_and_board(db, client_id, project_id)
-    return project, await boards_service.get_item_or_404(db, board.id, item_id)
+    project = await service.get_portal_project_or_404(db, client_id, project_id)
+    return project, await boards_service.get_project_item_or_404(db, project, item_id)
 
 
 @router.post("/projects/{project_id}/canvas/items/{item_id}/reactions", response_model=BoardReactionsRead)

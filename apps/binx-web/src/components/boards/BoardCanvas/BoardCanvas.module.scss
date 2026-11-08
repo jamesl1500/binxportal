@@ -1,59 +1,84 @@
 @use "../../../styles/tokens" as t;
 @use "../../../styles/mixins" as m;
 
+// Milanote-flavoured canvas: a warm, flat grey board; plain white cards with
+// soft shadows and near-square corners; a labelled card rail on the left; a
+// breadcrumb bar across the top; blue selection.
+$board-bg: #f1f0ee;
+$card-shadow:
+  0 1px 2px rgba(15, 23, 42, 0.12),
+  0 1px 1px rgba(15, 23, 42, 0.04);
+$card-shadow-hover:
+  0 2px 4px rgba(15, 23, 42, 0.12),
+  0 8px 20px rgba(15, 23, 42, 0.08);
+$select: t.$color-focus;
+$rail-width: 4.25rem;
+
 .wrapper {
   position: relative;
+  display: flex;
+  flex-direction: column;
   height: calc(100vh - 24rem);
-  min-height: 30rem;
+  min-height: 34rem;
   border: 1px solid t.$color-border;
   border-radius: t.$radius-md;
   overflow: hidden;
-  background: t.$color-paper;
+  background: $board-bg;
 }
 
-// ---- Floating controls (Miro-style: the canvas is edge-to-edge, every
-// control floats on top of it instead of sitting in a fixed header) -------
+// ---- Top bar: breadcrumbs + view controls -----------------------------
 
-.floatingToolbar {
-  position: absolute;
-  left: 50%;
-  bottom: t.$space-4;
-  transform: translateX(-50%);
-  z-index: 5;
+.topBar {
   display: flex;
   align-items: center;
-  gap: t.$space-1;
-  padding: t.$space-1;
-  max-width: calc(100% - #{t.$space-6});
-  background: color-mix(in srgb, t.$color-surface 94%, transparent);
-  border: 1px solid t.$color-border;
-  border-radius: 999px;
-  box-shadow: 0 10px 30px rgba(10, 10, 11, 0.16);
-  backdrop-filter: blur(8px);
-  overflow-x: auto;
+  justify-content: space-between;
+  gap: t.$space-3;
+  min-height: 2.75rem;
+  padding: 0 t.$space-3;
+  background: t.$color-surface;
+  border-bottom: 1px solid t.$color-border;
+  z-index: 6;
 }
 
-.tool {
+.crumbs {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.crumb {
   display: inline-flex;
   align-items: center;
-  gap: t.$space-2;
-  padding: t.$space-2 t.$space-3;
-  font-size: t.$font-size-xs;
-  font-weight: 600;
-  color: t.$color-ink;
-  background: transparent;
-  border: none;
-  border-radius: 999px;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background-color t.$duration-fast t.$ease-standard;
+  flex: none;
+  min-width: 0;
+}
 
-  svg {
-    width: 0.85rem;
-    height: 0.85rem;
-  }
+.crumbSep {
+  width: 0.9rem;
+  height: 0.9rem;
+  margin: 0 2px;
+  color: t.$color-ink-faint;
+}
+
+.crumbLink,
+.crumbCurrent {
+  max-width: 14rem;
+  padding: 4px 6px;
+  font-size: t.$font-size-sm;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-radius: t.$radius-sm;
+}
+
+.crumbLink {
+  color: t.$color-ink-soft;
+  text-decoration: none;
 
   &:hover {
+    color: t.$color-ink;
     background: t.$color-paper;
   }
 
@@ -62,11 +87,36 @@
   }
 }
 
-.divider {
-  width: 1px;
-  align-self: stretch;
-  margin: t.$space-1 t.$space-1;
-  background: t.$color-border;
+.crumbCurrent {
+  font-weight: 600;
+  color: t.$color-ink;
+}
+
+.topActions {
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+  flex: none;
+}
+
+.liveChip {
+  @include m.mono-label;
+  padding: 2px t.$space-2;
+  font-size: 0.5625rem;
+  color: t.$color-ink-faint;
+  border: 1px solid t.$color-border;
+  border-radius: 999px;
+
+  &[data-status="open"] {
+    color: #0f9d58;
+    border-color: color-mix(in srgb, #0f9d58 30%, transparent);
+  }
+}
+
+.zoomGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
 }
 
 .zoomButton {
@@ -78,18 +128,22 @@
   color: t.$color-ink-soft;
   background: transparent;
   border: none;
-  border-radius: 999px;
+  border-radius: t.$radius-sm;
   cursor: pointer;
   transition: background-color t.$duration-fast t.$ease-standard;
 
   svg {
-    width: 0.85rem;
-    height: 0.85rem;
+    width: 0.9rem;
+    height: 0.9rem;
   }
 
   &:hover {
     color: t.$color-ink;
     background: t.$color-paper;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
   }
 }
 
@@ -111,50 +165,97 @@
   }
 }
 
-.liveChip {
-  position: absolute;
-  top: t.$space-3;
-  left: t.$space-3;
-  z-index: 5;
-  @include m.mono-label;
-  padding: t.$space-1 t.$space-2;
-  font-size: 0.5625rem;
-  color: t.$color-ink-faint;
-  background: color-mix(in srgb, t.$color-surface 90%, transparent);
-  border: 1px solid t.$color-border;
-  border-radius: 999px;
-  box-shadow: 0 2px 8px rgba(10, 10, 11, 0.08);
-  backdrop-filter: blur(6px);
+// ---- Body: card rail + board -------------------------------------------
 
-  &[data-status="open"] {
-    color: #0f9d58;
+.body {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: clip;
+}
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  width: $rail-width;
+  flex: none;
+  padding: t.$space-2 6px;
+  background: t.$color-surface;
+  border-right: 1px solid t.$color-border;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  z-index: 5;
+
+  @media (max-width: 40rem) {
+    width: 3.25rem;
+    padding: t.$space-1 4px;
   }
 }
 
-.minimapSlot {
-  position: absolute;
-  right: t.$space-3;
-  bottom: t.$space-3;
-  z-index: 5;
-  display: none;
+.railTile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 2px 6px;
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: t.$color-ink-soft;
+  background: transparent;
+  border: none;
+  border-radius: t.$radius-md;
+  cursor: grab;
+  user-select: none;
+  transition:
+    background-color t.$duration-fast t.$ease-standard,
+    color t.$duration-fast t.$ease-standard;
 
-  @media (min-width: 48rem) {
-    display: block;
+  svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: t.$color-ink;
+    transition: transform t.$duration-fast t.$ease-standard;
+  }
+
+  &:hover {
+    color: t.$color-ink;
+    background: t.$color-paper;
+
+    svg {
+      transform: translateY(-1px);
+    }
+  }
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+
+  @media (max-width: 40rem) {
+    span {
+      display: none;
+    }
   }
 }
 
 .surface {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  // clip, not hidden: a hidden box is still a scroll container, and the
+  // browser would auto-scroll it when a dragged card nears the edge — which
+  // fights the canvas's own pan.
   overflow: hidden;
-  cursor: grab;
+  overflow: clip;
+  cursor: default;
   touch-action: none;
-  background-image: radial-gradient(
-    circle,
-    color-mix(in srgb, t.$color-ink 12%, transparent) 1px,
-    transparent 1px
-  );
-  background-size: 24px 24px;
+  background: $board-bg;
 
   &:active {
     cursor: grabbing;
@@ -173,71 +274,143 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  max-width: 22rem;
+  max-width: 24rem;
   text-align: center;
   font-size: t.$font-size-sm;
+  line-height: 1.6;
   color: t.$color-ink-faint;
   pointer-events: none;
+}
+
+.minimapSlot {
+  position: absolute;
+  right: t.$space-3;
+  bottom: t.$space-3;
+  z-index: 5;
+  display: none;
+
+  @media (min-width: 48rem) {
+    display: block;
+  }
+}
+
+// The "paste a link" prompt — floats top-centre of the board.
+.linkPrompt {
+  position: absolute;
+  top: t.$space-4;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 8;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: t.$space-2;
+  width: min(28rem, calc(100% - #{t.$space-6}));
+  padding: t.$space-3;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-lg;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18);
+  animation: board-fade t.$duration-fast t.$ease-standard;
+
+  label {
+    width: 100%;
+    font-size: t.$font-size-xs;
+    font-weight: 600;
+    color: t.$color-ink-soft;
+  }
+
+  input {
+    @include m.input-base;
+    flex: 1;
+    min-width: 10rem;
+  }
+
+  button {
+    padding: t.$space-2 t.$space-3;
+    font-size: t.$font-size-xs;
+    font-weight: 600;
+    color: t.$color-accent-foreground;
+    background: t.$color-accent;
+    border: none;
+    border-radius: t.$radius-sm;
+    cursor: pointer;
+
+    &[data-tone="ghost"] {
+      color: t.$color-ink-soft;
+      background: transparent;
+    }
+  }
 }
 
 // ---- Cards ------------------------------------------------------------
 
 .item {
   position: absolute;
-  border: 1px solid color-mix(in srgb, t.$color-ink 8%, transparent);
-  border-radius: t.$radius-md;
-  box-shadow:
-    0 1px 2px rgba(10, 10, 11, 0.05),
-    0 8px 24px rgba(10, 10, 11, 0.06);
+  background: t.$color-surface;
+  border-radius: 3px;
+  box-shadow: $card-shadow;
   cursor: grab;
   user-select: none;
-  // visible so the like chips, toolbar and resize handle sit just outside the
-  // card edge. The note body / image clip themselves (border-radius: inherit).
+  // visible so the reaction chips, toolbar and handles sit just outside the
+  // card edge. Bodies clip themselves (border-radius: inherit).
   overflow: visible;
-  transition:
-    box-shadow t.$duration-fast t.$ease-standard,
-    transform t.$duration-fast t.$ease-standard;
+  transition: box-shadow t.$duration-fast t.$ease-standard;
 
   &:active {
     cursor: grabbing;
   }
 
   &:hover:not([data-selected="true"]) {
-    box-shadow:
-      0 1px 2px rgba(10, 10, 11, 0.06),
-      0 12px 30px rgba(10, 10, 11, 0.1);
+    box-shadow: $card-shadow-hover;
   }
 
   &[data-selected="true"] {
     box-shadow:
-      0 0 0 2px t.$color-accent,
-      0 1px 2px rgba(10, 10, 11, 0.06),
-      0 16px 38px rgba(10, 10, 11, 0.16);
+      0 0 0 2px $select,
+      $card-shadow-hover;
   }
 
-  // A hairline accent stripe marks a card the client added — not on a pin,
-  // which has no card body for the stripe to sit against.
-  &[data-author="client"]:not([data-type="pin"])::before {
+  // A thin accent stripe marks a card the client added (not on a pin or a
+  // column — neither has a card face for it).
+  &[data-author="client"]:not([data-type="pin"]):not([data-type="column"])::before {
     content: "";
     position: absolute;
     inset: 0 auto 0 0;
     z-index: 1;
     width: 3px;
-    border-radius: t.$radius-md 0 0 t.$radius-md;
-    background: t.$color-accent;
+    border-radius: 3px 0 0 3px;
+    background: #f59e0b;
     pointer-events: none;
   }
 
-  &[data-type="image"] {
-    background: t.$color-surface;
+  // Stacked inside a column: laid out by the column, full width.
+  &[data-in-column] {
+    position: relative;
+    width: 100%;
+    flex: none;
+
+    &[data-selected="true"] {
+      z-index: 5;
+    }
   }
 
-  // A pin is a map-pin marker, not a card — it exists only to anchor a
-  // comment thread to an exact spot on the board, so it skips the shared
-  // card chrome (border, shadow, selection ring) entirely; `.pinHead` draws
-  // its own, and reacts to this element's own hover/selected state below.
+  &[data-type="column"] {
+    background: #e7e6e3;
+    box-shadow: none;
+    border-radius: 6px;
+
+    &:hover:not([data-selected="true"]) {
+      box-shadow: none;
+    }
+
+    &[data-selected="true"] {
+      box-shadow: 0 0 0 2px $select;
+    }
+  }
+
+  // A pin is a map-pin marker, not a card — it skips the card chrome.
   &[data-type="pin"] {
-    border: none;
     background: transparent;
     box-shadow: none;
 
@@ -248,12 +421,9 @@
   }
 }
 
-// The pin's bounding box is taller than it is wide (see boards-client.ts
-// PIN_WIDTH/PIN_HEIGHT) so it can render as a teardrop: `.pinHead` is the
-// round part at the top, `.pinTail` a rotated square tucked behind it whose
-// exposed bottom corner forms the point — and that point, not the box's
-// center, is the spot the pin actually marks (see BoardCanvas.tsx
-// handleAddPin, which offsets x/y accordingly).
+// The pin renders as a teardrop: `.pinHead` is the round part, `.pinTail` a
+// rotated square behind it whose exposed corner forms the point — and that
+// point, not the box's centre, is the spot the pin marks.
 .pinShape {
   position: relative;
   width: 100%;
@@ -267,7 +437,7 @@
   z-index: 0;
   width: 14px;
   height: 14px;
-  background: t.$color-accent;
+  background: #f59e0b;
   border-radius: 0 0 3px 0;
   transform: translateX(-50%) rotate(45deg);
 }
@@ -282,9 +452,9 @@
   justify-content: center;
   width: 26px;
   height: 26px;
-  color: t.$color-accent-foreground;
-  background: t.$color-accent;
-  border: 1.5px solid color-mix(in srgb, t.$color-ink 15%, t.$color-accent);
+  color: #fff;
+  background: #f59e0b;
+  border: 1.5px solid #d97706;
   border-radius: 50%;
   box-shadow: 0 2px 6px rgba(10, 10, 11, 0.28);
   transition:
@@ -306,7 +476,7 @@
 .item[data-type="pin"][data-selected="true"] .pinHead {
   box-shadow:
     0 0 0 2px t.$color-surface,
-    0 0 0 4px t.$color-accent,
+    0 0 0 4px $select,
     0 3px 10px rgba(10, 10, 11, 0.3);
 }
 
@@ -323,7 +493,7 @@
   font-size: 0.5625rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: t.$color-accent-foreground;
+  color: #fff;
   background: t.$color-danger;
   border: 1.5px solid t.$color-surface;
   border-radius: 999px;
@@ -334,8 +504,8 @@
   width: 100%;
   height: 100%;
   margin: 0;
-  padding: t.$space-4;
-  font-size: 0.9375rem;
+  padding: 14px 16px;
+  font-size: 0.875rem;
   line-height: 1.55;
   color: #1f2937;
   white-space: pre-wrap;
@@ -345,12 +515,18 @@
   scrollbar-width: thin;
 }
 
+.item[data-in-column] .noteText {
+  height: auto;
+  overflow: visible;
+}
+
 .noteText[data-empty="true"] {
-  color: color-mix(in srgb, #1f2937 42%, transparent);
+  color: color-mix(in srgb, #1f2937 40%, transparent);
   font-style: italic;
 }
 
 .noteInput {
+  min-height: 6rem;
   border: none;
   background: transparent;
   resize: none;
@@ -366,15 +542,71 @@
   border-radius: inherit;
 }
 
+// ---- Connector lines ----------------------------------------------------
+
+.lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.lineHit {
+  stroke: transparent;
+  stroke-width: 14;
+  pointer-events: stroke;
+  cursor: pointer;
+}
+
+.lineStroke {
+  stroke-width: 2;
+  stroke-linecap: round;
+  pointer-events: none;
+
+  g[data-selected="true"] & {
+    stroke: $select;
+    stroke-width: 2.5;
+  }
+}
+
+.linePreview {
+  stroke: $select;
+  stroke-width: 2;
+  stroke-dasharray: 6 5;
+}
+
+.lineHandle {
+  position: absolute;
+  z-index: 100001;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  background: t.$color-surface;
+  border: 2px solid $select;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(10, 10, 11, 0.22);
+  cursor: crosshair;
+}
+
+.lineBar {
+  position: absolute;
+  z-index: 100001;
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  transform: translate(-50%, calc(-100% - 10px));
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.16);
+}
+
 // ---- Meta row (approval badge, reaction chips, author tag) -----------
 
-// One row floating just above the card. The three pieces used to be
-// absolutely positioned on the same edge and collided as soon as a card had
-// an approval badge; as flex siblings they push each other aside instead.
-// The row is at least as wide as the card (so the author tag reaches the
-// top-right corner) and grows past it rather than wrapping when the card is
-// narrow. It ignores the pointer itself so the empty space between the
-// pieces doesn't swallow clicks meant for the board underneath.
+// One row floating just above the card; flex siblings push each other aside
+// instead of colliding. Ignores the pointer itself so gaps don't swallow
+// clicks meant for the board.
 .itemMeta {
   position: absolute;
   left: 0;
@@ -386,9 +618,19 @@
   min-width: 100%;
   padding-bottom: 6px;
   pointer-events: none;
-}
 
-// ---- Likes (reaction chips, shown above the card at any time) --------
+  .item[data-in-column] & {
+    position: static;
+    width: auto;
+    min-width: 0;
+    padding: 0 8px 6px;
+    flex-wrap: wrap;
+
+    &:empty {
+      display: none;
+    }
+  }
+}
 
 .reactionPills {
   display: flex;
@@ -413,9 +655,6 @@
   border-radius: 999px;
   box-shadow: 0 1px 3px rgba(10, 10, 11, 0.1);
   cursor: pointer;
-  transition:
-    border-color t.$duration-fast t.$ease-standard,
-    background-color t.$duration-fast t.$ease-standard;
 
   span {
     font-size: 0.8125rem;
@@ -427,23 +666,26 @@
   }
 
   &[data-mine="true"] {
-    border-color: t.$color-accent;
-    background: color-mix(in srgb, t.$color-accent 10%, t.$color-surface);
+    border-color: $select;
+    background: color-mix(in srgb, $select 10%, t.$color-surface);
     color: t.$color-ink;
   }
 }
 
-// ---- Selected-card floating toolbar ---------------------------------
+// ---- Selected-card toolbar ----------------------------------------------
 
 .itemBar {
   position: absolute;
   left: 0;
   top: 100%;
-  margin-top: 6px;
+  z-index: 10;
+  margin-top: 8px;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: t.$space-2;
   width: max-content;
+  max-width: 34rem;
   padding: 4px 6px;
   background: t.$color-surface;
   border: 1px solid t.$color-border;
@@ -462,10 +704,8 @@
   background: t.$color-border;
 }
 
-// Replaces the toolbar's normal contents when a delete is pending — a
-// client can add/move/edit/delete cards the agency also edits live, so an
-// accidental tap-delete has real consequences. Same "swap the row for an
-// inline Yes/Cancel" pattern as MemberDetailDrawer's confirmingRemove.
+// Replaces the toolbar's contents when a delete (or a note / link edit) is
+// pending — swap the row for an inline Yes/Cancel.
 .confirmRow {
   display: flex;
   align-items: center;
@@ -499,6 +739,14 @@
   &:hover {
     opacity: 0.9;
   }
+
+  &[data-tone="changes"] {
+    background: #9a2f2f;
+  }
+
+  &[data-tone="neutral"] {
+    background: t.$color-accent;
+  }
 }
 
 .confirmCancel {
@@ -518,9 +766,6 @@
 
 // ---- Client approval ---------------------------------------------------
 
-// First in the meta row, so it sits at the card's top-left (the author tag
-// owns top-right). Always visible when set so a resting board still shows
-// what's awaiting the client without anyone needing to select the card.
 .approvalBadge {
   display: flex;
   flex: none;
@@ -542,7 +787,6 @@
   background: #fef3c7;
   border: 1px solid #f2d691;
   border-radius: 999px;
-  box-shadow: 0 1px 3px rgba(10, 10, 11, 0.1);
   white-space: nowrap;
 
   .approvalBadge[data-status="approved"] & {
@@ -584,9 +828,6 @@
   border-radius: t.$radius-sm;
   cursor: pointer;
   white-space: nowrap;
-  transition:
-    border-color t.$duration-fast t.$ease-standard,
-    color t.$duration-fast t.$ease-standard;
 
   &:hover:not(:disabled) {
     color: t.$color-ink;
@@ -633,13 +874,8 @@
   }
 }
 
-.confirmDelete[data-tone="changes"] {
-  background: #9a2f2f;
-}
-
-// Author label — a faint tag at the end of the meta row (the auto margin
-// pushes it to the card's top-right), revealed on hover or select so a
-// resting board stays clean.
+// Author label — a faint tag at the end of the meta row, revealed on hover
+// or select so a resting board stays clean.
 .authorTag {
   flex: none;
   margin-left: auto;
@@ -648,12 +884,10 @@
   font-size: 0.625rem;
   font-weight: 500;
   line-height: 1.5;
-  letter-spacing: 0.01em;
   color: t.$color-ink-soft;
   background: t.$color-surface;
   border: 1px solid t.$color-border;
   border-radius: 999px;
-  box-shadow: 0 1px 3px rgba(10, 10, 11, 0.1);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -667,13 +901,17 @@
   &[data-client="true"] {
     color: t.$color-ink;
     font-weight: 600;
-    border-color: t.$color-accent;
+    border-color: #f59e0b;
   }
 
-  .item:hover &,
-  .item[data-selected="true"] & {
+  .item:hover > .itemMeta > &,
+  .item[data-selected="true"] > .itemMeta > & {
     opacity: 1;
     transform: none;
+  }
+
+  .item[data-in-column] & {
+    display: none;
   }
 }
 
@@ -704,8 +942,8 @@
   }
 
   &[data-mine="true"] {
-    border-color: t.$color-accent;
-    background: color-mix(in srgb, t.$color-accent 12%, transparent);
+    border-color: $select;
+    background: color-mix(in srgb, $select 12%, transparent);
   }
 }
 
@@ -723,20 +961,14 @@
   border: 1px solid t.$color-border;
   border-radius: t.$radius-sm;
   cursor: pointer;
-  transition:
-    border-color t.$duration-fast t.$ease-standard,
-    color t.$duration-fast t.$ease-standard;
+  white-space: nowrap;
 
   svg {
     width: 0.8125rem;
     height: 0.8125rem;
   }
 
-  &[data-has="true"] {
-    color: t.$color-ink;
-    border-color: t.$color-border-strong;
-  }
-
+  &[data-has="true"],
   &:hover {
     color: t.$color-ink;
     border-color: t.$color-border-strong;
@@ -751,17 +983,20 @@
 .swatch {
   width: 15px;
   height: 15px;
-  border-radius: t.$radius-sm;
-  border: 1px solid rgba(10, 10, 11, 0.12);
-  cursor: pointer;
   padding: 0;
-  transition:
-    transform t.$duration-fast t.$ease-standard,
-    box-shadow t.$duration-fast t.$ease-standard;
+  border-radius: 50%;
+  border: 1px solid rgba(10, 10, 11, 0.16);
+  cursor: pointer;
+  transition: transform t.$duration-fast t.$ease-standard;
 
   &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(10, 10, 11, 0.16);
+    transform: scale(1.12);
+  }
+
+  &[data-active="true"] {
+    box-shadow:
+      0 0 0 2px t.$color-surface,
+      0 0 0 3.5px $select;
   }
 }
 
@@ -776,9 +1011,6 @@
   border: none;
   border-radius: t.$radius-sm;
   cursor: pointer;
-  transition:
-    color t.$duration-fast t.$ease-standard,
-    background-color t.$duration-fast t.$ease-standard;
 
   svg {
     width: 0.8125rem;
@@ -795,13 +1027,45 @@
   position: absolute;
   right: -5px;
   bottom: -5px;
+  z-index: 3;
   width: 12px;
   height: 12px;
-  border-radius: t.$radius-sm;
+  border-radius: 2px;
   background: t.$color-surface;
-  border: 1.5px solid t.$color-accent;
+  border: 1.5px solid $select;
   box-shadow: 0 1px 3px rgba(10, 10, 11, 0.22);
   cursor: nwse-resize;
+
+  // Auto-height cards only resize sideways.
+  &[data-axis="x"] {
+    top: 50%;
+    bottom: auto;
+    height: 20px;
+    margin-top: -10px;
+    width: 8px;
+    right: -4px;
+    cursor: ew-resize;
+  }
+}
+
+// Drag from here to draw a connector line to another card.
+.connectHandle {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  z-index: 3;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  background: $select;
+  border: 2px solid t.$color-surface;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(10, 10, 11, 0.25);
+  cursor: crosshair;
+
+  &:hover {
+    transform: scale(1.15);
+  }
 }
 
 @keyframes board-pop {
@@ -815,5 +1079,11 @@
   from {
     opacity: 0;
     transform: translateY(-4px);
+  }
+}
+
+@keyframes board-fade {
+  from {
+    opacity: 0;
   }
 }

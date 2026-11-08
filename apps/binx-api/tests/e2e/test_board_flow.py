@@ -443,3 +443,147 @@ class TestRealtime:
         assert len(sock.sent) == 1
         assert sock.sent[0]["type"] == realtime.EVENT_BOARD_ITEM_CREATED
         assert sock.sent[0]["data"]["content"] == {"text": "live"}
+
+
+class TestMilanoteStructure:
+    """Nested boards, columns, to-do rows and column review over HTTP."""
+
+    @pytest.fixture(autouse=True)
+    def _no_network(self, monkeypatch):
+        from binx_api.modules.boards import link_preview
+
+        async def fake_preview(url: str) -> dict:
+            return {"url": url, "title": "Example", "description": None, "image": None, "site_name": "example"}
+
+        monkeypatch.setattr(link_preview, "fetch_preview", fake_preview)
+
+    async def test_nested_board_round_trip(self, client, canvas_ctx) -> None:
+        ctx = canvas_ctx
+        h = auth_headers(ctx["owner"])
+        base = _staff_base(ctx)
+        card = await client.post(
+            f"{base}/items", json={"type": "board", "x": 0, "y": 0, "content": {"title": "Moodboard"}}, headers=h
+        )
+        assert card.status_code == 201, card.text
+        child_id = card.json()["content"]["board_id"]
+
+        note = await client.post(
+            f"{base}/items",
+            json={"type": "note", "board_id": child_id, "x": 10, "y": 10, "content": {"text": "inside"}},
+            headers=h,
+        )
+        assert note.status_code == 201
+        assert note.json()["board_id"] == child_id
+
+        child = (await client.get(base, params={"board_id": child_id}, headers=h)).json()
+        assert [c["title"] for c in child["path"]] == [None, "Moodboard"]
+        assert [i["content"].get("text") for i in child["items"]] == ["inside"]
+
+        root = (await client.get(base, headers=h)).json()
+        assert root["path"][0]["id"] == root["board_id"]
+        assert next(i for i in root["items"] if i["type"] == "board")["child_count"] == 1
+
+        # Item endpoints find a card on any of the project's boards.
+        patched = await client.patch(f"{base}/items/{note.json()['id']}", json={"x": 99}, headers=h)
+        assert patched.status_code == 200
+
+        # The client sees the same sub-board.
+        portal = await client.get(
+            f"/portal/projects/{ctx['project'].id}/canvas",
+            params={"board_id": child_id},
+            headers=auth_headers(ctx["contact"]),
+        )
+        assert portal.status_code == 200
+        assert len(portal.json()["items"]) == 1
+
+    async def test_todo_rows_staff_edit_portal_reads(self, client, canvas_ctx) -> None:
+        ctx = canvas_ctx
+        h = auth_headers(ctx["owner"])
+        base = _staff_base(ctx)
+        todo = await client.post(
+            f"{base}/items", json={"type": "todo", "x": 0, "y": 0, "content": {"title": "Launch"}}, headers=h
+        )
+        assert todo.status_code == 201
+        tid = todo.json()["id"]
+
+        row = await client.post(f"{base}/items/{tid}/tasks", json={"title": "Write copy"}, headers=h)
+        assert row.status_code == 201, row.text
+        task_id = row.json()["id"]
+        ticked = await client.patch(
+            f"{base}/items/{tid}/tasks/{task_id}", json={"done": True, "assignee_id": str(ctx["owner"].id)}, headers=h
+        )
+        assert ticked.status_code == 200, ticked.text
+        assert ticked.json()["done"] is True
+        assert ticked.json()["assignee_name"] == "Olivia Owner"
+
+        # The Kanban sees it in the last ("Done") column.
+        kanban = (
+            await client.get(f"/agencies/{ctx['agency'].id}/projects/{ctx['project'].id}/board", headers=h)
+        ).json()
+        assert [t["id"] for t in kanban[-1]["tasks"]] == [task_id]
+
+        client_h = auth_headers(ctx["contact"])
+        portal_base = f"/portal/projects/{ctx['project'].id}/canvas"
+        portal = (await client.get(portal_base, headers=client_h)).json()
+        assert portal["tasks"][0]["done"] is True
+        assert portal["tasks"][0]["assignee_name"] is None
+        # Clients can't add to-do lists or edit their rows.
+        denied = await client.post(f"{portal_base}/items", json={"type": "todo", "x": 0, "y": 0}, headers=client_h)
+        assert denied.status_code == 403
+        no_route = await client.post(f"{portal_base}/items/{tid}/tasks", json={"title": "x"}, headers=client_h)
+        assert no_route.status_code in (404, 405)
+
+        removed = await client.delete(f"{base}/items/{tid}/tasks/{task_id}", headers=h)
+        assert removed.status_code == 204
+        assert (await client.get(base, headers=h)).json()["tasks"] == []
+
+    async def test_column_review_by_the_client(self, client, canvas_ctx) -> None:
+        ctx = canvas_ctx
+        h = auth_headers(ctx["owner"])
+        base = _staff_base(ctx)
+        column = (
+            await client.post(
+                f"{base}/items", json={"type": "column", "x": 0, "y": 0, "content": {"title": "Logos"}}, headers=h
+            )
+        ).json()
+        for text in ("A", "B"):
+            r = await client.post(
+                f"{base}/items",
+                json={"type": "note", "parent_id": column["id"], "x": 0, "y": 0, "content": {"text": text}},
+                headers=h,
+            )
+            assert r.status_code == 201 and r.json()["parent_id"] == column["id"]
+
+        sent = await client.post(f"{base}/items/{column['id']}/approval/request", headers=h)
+        assert sent.status_code == 200, sent.text
+
+        decided = await client.post(
+            f"/portal/projects/{ctx['project'].id}/canvas/items/{column['id']}/approval/decide",
+            json={"status": "approved"},
+            headers=auth_headers(ctx["contact"]),
+        )
+        assert decided.status_code == 200, decided.text
+        items = (await client.get(base, headers=h)).json()["items"]
+        assert {i["approval_status"] for i in items if i["type"] == "note"} == {"approved"}
+
+    async def test_file_and_link_cards(self, client, canvas_ctx) -> None:
+        ctx = canvas_ctx
+        h = auth_headers(ctx["owner"])
+        base = _staff_base(ctx)
+        f = await client.post(
+            f"{base}/files", files={"file": ("brief.pdf", io.BytesIO(b"%PDF-1.4"), "application/pdf")}, headers=h
+        )
+        assert f.status_code == 201, f.text
+        assert f.json()["type"] == "file"
+        assert f.json()["content"]["file_name"] == "brief.pdf"
+        assert f.json()["content"]["mime_type"] == "application/pdf"
+
+        link = await client.post(
+            f"{base}/items", json={"type": "link", "x": 0, "y": 0, "content": {"url": "example.com"}}, headers=h
+        )
+        assert link.status_code == 201
+        assert link.json()["content"]["url"] == "https://example.com"
+        bad = await client.post(
+            f"{base}/items", json={"type": "link", "x": 0, "y": 0, "content": {"url": "javascript:x"}}, headers=h
+        )
+        assert bad.status_code == 400

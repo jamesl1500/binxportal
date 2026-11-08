@@ -148,4 +148,34 @@ describe("useBoardStore", () => {
     expect(useBoardStore.getState().commentsByItem.a).toEqual([]);
     expect(useBoardStore.getState().itemsById.a.comment_count).toBe(0);
   });
+
+  it("task events upsert and drop to-do rows; resync replaces them", () => {
+    const store = useBoardStore.getState();
+    const row = { id: "t1", item_id: "a", title: "Ship", done: false, due_date: null, position: 0 };
+    store.seed("b1", [item({ id: "a", type: "todo" })], "u1", [row]);
+    store.applyEvent({ type: "board.task.upserted", board_id: "b1", data: { ...row, done: true } });
+    expect(useBoardStore.getState().tasksById.t1.done).toBe(true);
+    store.applyEvent({ type: "board.task.deleted", board_id: "b1", data: { id: "t1", item_id: "a" } });
+    expect(useBoardStore.getState().tasksById.t1).toBeUndefined();
+    store.setItems([item({ id: "a", type: "todo" })], [{ ...row, id: "t9" }]);
+    expect(Object.keys(useBoardStore.getState().tasksById)).toEqual(["t9"]);
+  });
+
+  it("patchItem moves a card into and out of a column", () => {
+    const store = useBoardStore.getState();
+    store.seed("b1", [item({ id: "a" })], "u1");
+    store.patchItem("a", { parent_id: "col", position: 2 });
+    expect(useBoardStore.getState().itemsById.a).toMatchObject({ parent_id: "col", position: 2 });
+    store.patchItem("a", { clear_parent: true, x: 5, y: 6 });
+    expect(useBoardStore.getState().itemsById.a).toMatchObject({ parent_id: null, position: 0, x: 5, y: 6 });
+  });
+
+  it("resync keeps the geometry of a card mid-drag", () => {
+    const store = useBoardStore.getState();
+    store.seed("b1", [item({ id: "a", x: 0 })], "u1");
+    store.setActive("a", true);
+    store.patchItem("a", { x: 300 });
+    store.setItems([item({ id: "a", x: 0 })]);
+    expect(useBoardStore.getState().itemsById.a.x).toBe(300);
+  });
 });

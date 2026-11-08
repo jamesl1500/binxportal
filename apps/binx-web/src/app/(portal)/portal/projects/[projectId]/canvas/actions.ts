@@ -11,12 +11,17 @@
 "use server";
 
 import { AuthApiError } from "@/lib/auth";
-import type { BoardReactions, CreateBoardItemInput } from "@/lib/boards";
+import type {
+  BoardReactions,
+  CreateBoardItemInput,
+  UploadPlacement,
+} from "@/lib/boards";
 import type {
   BoardComment,
   BoardItem,
   BoardItemPatch,
   BoardItemVersion,
+  BoardTask,
 } from "@/lib/boards-client";
 import {
   addPortalBoardComment,
@@ -29,6 +34,7 @@ import {
   getPortalBoardItemVersions,
   togglePortalBoardReaction,
   updatePortalBoardItem,
+  uploadPortalBoardFile,
   uploadPortalBoardImage,
 } from "@/lib/portal";
 
@@ -75,29 +81,71 @@ export async function uploadPortalBoardImageAction(
   projectId: string,
   formData: FormData,
 ): Promise<{ item?: BoardItem; error?: string }> {
-  const file = formData.get("file");
-  if (!(file instanceof File) || file.size === 0) {
-    return { error: "No image selected" };
-  }
-  const num = (key: string) => Number(formData.get(key) ?? 0);
+  const upload = readUpload(formData);
+  if (!upload) return { error: "No image selected" };
   try {
-    const item = await uploadPortalBoardImage(projectId, file, {
-      x: num("x"),
-      y: num("y"),
-      width: num("width") || undefined,
-      height: num("height") || undefined,
-    });
-    return { item };
+    return {
+      item: await uploadPortalBoardImage(
+        projectId,
+        upload.file,
+        upload.placement,
+      ),
+    };
   } catch (error) {
     return fail(error, "Unable to upload the image");
   }
 }
 
+export async function uploadPortalBoardFileAction(
+  projectId: string,
+  formData: FormData,
+): Promise<{ item?: BoardItem; error?: string }> {
+  const upload = readUpload(formData);
+  if (!upload) return { error: "No file selected" };
+  try {
+    return {
+      item: await uploadPortalBoardFile(
+        projectId,
+        upload.file,
+        upload.placement,
+      ),
+    };
+  } catch (error) {
+    return fail(error, "Unable to upload the file");
+  }
+}
+
+/** Reads the shared upload form (file + placement). */
+function readUpload(
+  formData: FormData,
+): { file: File; placement: UploadPlacement } | null {
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) return null;
+  const num = (key: string) => Number(formData.get(key) ?? 0);
+  const str = (key: string) => {
+    const value = formData.get(key);
+    return typeof value === "string" && value ? value : undefined;
+  };
+  return {
+    file,
+    placement: {
+      x: num("x"),
+      y: num("y"),
+      width: num("width") || undefined,
+      height: num("height") || undefined,
+      board_id: str("board_id"),
+      parent_id: str("parent_id"),
+    },
+  };
+}
+
 export async function resyncPortalBoardAction(
   projectId: string,
-): Promise<{ items?: BoardItem[]; error?: string }> {
+  boardId?: string,
+): Promise<{ items?: BoardItem[]; tasks?: BoardTask[]; error?: string }> {
   try {
-    return { items: (await getPortalBoard(projectId)).items };
+    const board = await getPortalBoard(projectId, boardId);
+    return { items: board.items, tasks: board.tasks };
   } catch (error) {
     return fail(error, "Unable to reload the canvas");
   }

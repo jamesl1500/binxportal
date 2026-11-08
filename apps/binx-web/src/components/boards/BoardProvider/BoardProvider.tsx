@@ -17,7 +17,7 @@
 
 import { useCallback, useEffect, useRef } from "react";
 
-import type { BoardEvent, BoardItem } from "@/lib/boards-client";
+import type { BoardEvent, BoardItem, BoardTask } from "@/lib/boards-client";
 import { BOARD_EVENT_TYPES } from "@/lib/boards-client";
 import { useBoardStore } from "@/stores/use-board-store";
 
@@ -25,8 +25,10 @@ interface BoardProviderProps {
   boardId: string;
   currentUserId: string;
   initialItems: BoardItem[];
+  /** The rows of this board's to-do cards. */
+  initialTasks?: BoardTask[];
   /** Re-pull the whole board from the server (reconnect / focus reconcile). */
-  resync: () => Promise<BoardItem[] | null>;
+  resync: () => Promise<{ items: BoardItem[]; tasks?: BoardTask[] } | null>;
   children: React.ReactNode;
 }
 
@@ -40,6 +42,7 @@ const BoardProvider = ({
   boardId,
   currentUserId,
   initialItems,
+  initialTasks,
   resync,
   children,
 }: BoardProviderProps) => {
@@ -54,12 +57,12 @@ const BoardProvider = ({
   const closedRef = useRef(false);
 
   useEffect(() => {
-    seed(boardId, initialItems, currentUserId);
+    seed(boardId, initialItems, currentUserId, initialTasks ?? []);
   }, [seed, boardId, currentUserId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const doResync = useCallback(async () => {
-    const items = await resync().catch(() => null);
-    if (items) setItems(items);
+    const board = await resync().catch(() => null);
+    if (board) setItems(board.items, board.tasks);
   }, [resync, setItems]);
 
   useEffect(() => {
