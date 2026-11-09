@@ -16,7 +16,14 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const srcDir = path.join(root, "e2e", "screenshots");
 const outDir = path.join(root, "public", "marketing");
 
-const TARGETS = ["portal", "canvas", "invoicing", "dashboard"];
+const TARGETS = [
+  "portal",
+  "canvas",
+  "canvas-moodboard",
+  "approvals",
+  "invoicing",
+  "dashboard",
+];
 const WIDTH = 1600;
 
 fs.mkdirSync(outDir, { recursive: true });
