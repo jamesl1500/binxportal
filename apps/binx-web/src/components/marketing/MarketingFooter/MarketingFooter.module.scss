@@ -68,6 +68,7 @@
   &:hover {
     color: t.$color-ink;
   }
+  @include m.touch-target;
 }
 
 .legal {
@@ -91,4 +92,5 @@
   &:hover {
     color: t.$color-ink-soft;
   }
+  @include m.touch-target;
 }

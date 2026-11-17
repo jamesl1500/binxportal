@@ -53,6 +53,7 @@
   &:hover {
     color: t.$color-ink;
   }
+  @include m.touch-target;
 }
 
 .formCard {

@@ -158,6 +158,7 @@
   &:hover {
     text-decoration: underline;
   }
+  @include m.touch-target;
 }
 
 .noContact {

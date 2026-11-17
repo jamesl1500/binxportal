@@ -13,7 +13,7 @@
 
 import { redirect } from "next/navigation";
 
-import { AuthApiError } from "@/lib/auth";
+import { AuthApiError, logout } from "@/lib/auth";
 import { acceptAgencyInvitation, setCurrentAgencyId } from "@/lib/agencies";
 
 export interface AcceptInviteActionResult {
@@ -37,4 +37,14 @@ export async function acceptInviteAction(
 
   await setCurrentAgencyId(agencyId);
   redirect("/dashboard");
+}
+
+/**
+ * Signed in as a different account than the invitation is for: sign out and
+ * come back to this invitation, which then offers log-in / sign-up for the
+ * invited address instead of an Accept button that can only fail.
+ */
+export async function signOutForInviteAction(token: string): Promise<void> {
+  await logout();
+  redirect(`/auth/accept-invite?token=${encodeURIComponent(token)}`);
 }

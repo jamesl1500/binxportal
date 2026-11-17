@@ -63,6 +63,10 @@ const MessageAvatar = ({
         src={src}
         alt=""
         aria-hidden="true"
+        // Rendered once per message in long threads: don't fetch avatars
+        // for messages scrolled out of view.
+        loading="lazy"
+        decoding="async"
         onError={() => setFailedSrc(src)}
       />
     );

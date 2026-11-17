@@ -17,6 +17,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { api } from "@/lib/api";
 import { AuthApiError, extractDetailMessage, getAccessToken } from "@/lib/auth";
+import { apiPath, fileResponseHeaders, upstreamErrorBody } from "@/lib/file-proxy";
 
 interface RouteParams {
   params: Promise<{ agencyId: string; projectId: string; fileId: string }>;
@@ -32,7 +33,7 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
 
   try {
     const upstream = await api.get<ArrayBuffer>(
-      `/agencies/${agencyId}/projects/${projectId}/files/${fileId}/download`,
+      apiPath`/agencies/${agencyId}/projects/${projectId}/files/${fileId}/download`,
       {
         headers: { Authorization: `Bearer ${accessToken}` },
         responseType: "arraybuffer",
@@ -41,24 +42,14 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
 
     return new NextResponse(upstream.data, {
       status: 200,
-      headers: {
-        "Content-Type": String(
-          upstream.headers["content-type"] ?? "application/octet-stream",
-        ),
-        "Content-Disposition": String(
-          upstream.headers["content-disposition"] ?? "attachment",
-        ),
-      },
+      headers: fileResponseHeaders(upstream.headers, { fallbackType: "application/octet-stream", defaultDisposition: "attachment" }),
     });
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       // The failed response body is also an ArrayBuffer (responseType above
       // applies to every response, error or not) — decode it back to JSON to
       // read binx-api's { detail: ... } the normal way.
-      const data =
-        error.response.data instanceof ArrayBuffer
-          ? JSON.parse(Buffer.from(error.response.data).toString("utf-8"))
-          : error.response.data;
+      const data = upstreamErrorBody(error.response.data);
       const message = extractDetailMessage(data, "Unable to download file");
       return NextResponse.json({ message }, { status: error.response.status });
     }

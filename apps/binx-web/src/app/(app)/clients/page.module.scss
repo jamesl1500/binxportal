@@ -1,4 +1,5 @@
 @use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
 
 .eyebrow {
   display: block;
@@ -42,6 +43,7 @@
   &:hover {
     color: t.$color-ink;
   }
+  @include m.touch-target;
 }
 
 .formCard {

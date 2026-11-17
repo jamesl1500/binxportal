@@ -431,6 +431,7 @@
     width: 1rem;
     height: 1rem;
   }
+  @include m.touch-target;
 }
 
 // ---- Steps -----------------------------------------------------

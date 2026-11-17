@@ -15,6 +15,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { api } from "@/lib/api";
 import { AuthApiError, extractDetailMessage, getAccessToken } from "@/lib/auth";
+import { apiPath, fileResponseHeaders, upstreamErrorBody } from "@/lib/file-proxy";
 
 interface RouteParams {
   params: Promise<{ projectId: string; fileId: string }>;
@@ -29,24 +30,18 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
   }
 
   try {
-    const upstream = await api.get<ArrayBuffer>(`/portal/projects/${projectId}/canvas/images/${fileId}`, {
+    const upstream = await api.get<ArrayBuffer>(apiPath`/portal/projects/${projectId}/canvas/images/${fileId}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
       responseType: "arraybuffer",
     });
 
     return new NextResponse(upstream.data, {
       status: 200,
-      headers: {
-        "Content-Type": String(upstream.headers["content-type"] ?? "application/octet-stream"),
-        "Content-Disposition": String(upstream.headers["content-disposition"] ?? "inline"),
-      },
+      headers: fileResponseHeaders(upstream.headers, { fallbackType: "application/octet-stream", defaultDisposition: "inline" }),
     });
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
-      const data =
-        error.response.data instanceof ArrayBuffer
-          ? JSON.parse(Buffer.from(error.response.data).toString("utf-8"))
-          : error.response.data;
+      const data = upstreamErrorBody(error.response.data);
       const message = extractDetailMessage(data, "Unable to load image");
       return NextResponse.json({ message }, { status: error.response.status });
     }

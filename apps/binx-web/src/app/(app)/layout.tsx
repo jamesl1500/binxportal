@@ -44,13 +44,35 @@ export const metadata: Metadata = {
 };
 
 const AppLayout = async ({ children }: { children: React.ReactNode }) => {
+  // Everything that doesn't need the agency id starts now, in parallel with
+  // the user check — two sequential round trips to binx-api instead of three.
+  // Each has its own fallback, so an unauthenticated request (redirected
+  // below) never leaves an unhandled rejection behind.
+  const agencyContext = getCurrentAgencyContext();
+  agencyContext.catch(() => undefined);
+  const independent = Promise.all([
+    getNotifications({ limit: 8 }).catch(() => ({
+      items: [],
+      unread_count: 0,
+      has_more: false,
+    })),
+    getAppearanceSettings().catch(() => ({ accent_color: null })),
+    getTutorialProgress().catch(() => ({
+      tour_completed: true,
+      dismissed_popups: [],
+    })),
+    getUserProfile()
+      .then(({ has_avatar, avatar_version }) => ({ has_avatar, avatar_version }))
+      .catch(() => ({ has_avatar: false, avatar_version: null })),
+  ]);
+
   const user = await getCurrentUser();
 
   if (!user) {
     redirect("/auth/login");
   }
 
-  const { agencies, currentAgency } = await getCurrentAgencyContext();
+  const { agencies, currentAgency } = await agencyContext;
 
   if (!currentAgency) {
     // A client contact (no agency membership) belongs in the portal, not
@@ -59,23 +81,8 @@ const AppLayout = async ({ children }: { children: React.ReactNode }) => {
     redirect(portal ? "/portal" : "/onboarding/two");
   }
 
-  const [unreadMessages, notifications, appearance, tutorialProgress, profile] =
-    await Promise.all([
-      getUnreadMessageCount(currentAgency.id),
-      getNotifications({ limit: 8 }).catch(() => ({
-        items: [],
-        unread_count: 0,
-        has_more: false,
-      })),
-      getAppearanceSettings().catch(() => ({ accent_color: null })),
-      getTutorialProgress().catch(() => ({
-        tour_completed: true,
-        dismissed_popups: [],
-      })),
-      getUserProfile()
-        .then(({ has_avatar, avatar_version }) => ({ has_avatar, avatar_version }))
-        .catch(() => ({ has_avatar: false, avatar_version: null })),
-    ]);
+  const [unreadMessages, [notifications, appearance, tutorialProgress, profile]] =
+    await Promise.all([getUnreadMessageCount(currentAgency.id), independent]);
 
   return (
     <TutorialProvider initialProgress={tutorialProgress}>

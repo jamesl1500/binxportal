@@ -1,4 +1,5 @@
 @use "../../../../styles/tokens" as t;
+@use "../../../../styles/mixins" as m;
 
 // Header links on the dashboard's widget cards — the cards themselves are
 // styled by ProjectDashboardGrid.
@@ -13,4 +14,5 @@
     color: t.$color-ink;
     text-decoration: underline;
   }
+  @include m.touch-target;
 }

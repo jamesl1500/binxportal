@@ -1,5 +1,6 @@
 @use "../../styles/tokens" as t;
 @use "../../styles/portal-warm" as w;
+@use "../../styles/mixins" as m;
 
 // The client-portal skin for the shared auth forms (LoginForm, SignupForm,
 // ForgotPasswordForm, ResetPasswordForm, VerifyEmailForm,
@@ -60,6 +61,7 @@
     text-decoration: underline;
     text-underline-offset: 3px;
   }
+  @include m.touch-target;
 }
 
 .resendLink {
@@ -142,6 +144,7 @@
   width: 1.05rem;
   height: 1.05rem;
   accent-color: w.$terracotta;
+  @include m.touch-checkbox;
 }
 
 .formError {

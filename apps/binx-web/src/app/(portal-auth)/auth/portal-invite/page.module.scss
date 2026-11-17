@@ -30,8 +30,16 @@
   }
 }
 
+.promptForm {
+  display: flex;
+  flex-direction: column;
+}
+
 .primary,
 .secondary {
+  border: 0;
+  font-family: inherit;
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;

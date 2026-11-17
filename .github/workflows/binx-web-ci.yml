@@ -19,12 +19,14 @@ on:
       - "apps/binx-web/**"
       - "apps/binx-api/**"
       - "pnpm-lock.yaml"
+      - "scripts/check-code-integrity.mjs"
       - ".github/workflows/binx-web-ci.yml"
   pull_request:
     paths:
       - "apps/binx-web/**"
       - "apps/binx-api/**"
       - "pnpm-lock.yaml"
+      - "scripts/check-code-integrity.mjs"
       - ".github/workflows/binx-web-ci.yml"
 
 concurrency:
@@ -36,7 +38,19 @@ defaults:
     working-directory: apps/binx-web
 
 jobs:
+  # Text-only scan for injected config-file code — runs before anything
+  # installs or loads a config (see docs/security/2026-11-config-injection.md).
+  # Every other job depends on it, so an infected branch never gets as far as
+  # executing its postcss/eslint/vitest config on a runner.
+  integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: node scripts/check-code-integrity.mjs
+        working-directory: .
+
   lint:
+    needs: integrity
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -54,6 +68,7 @@ jobs:
           git diff --exit-code src/lib/api-schema.d.ts
 
   unit:
+    needs: integrity
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -75,6 +90,7 @@ jobs:
           if-no-files-found: ignore
 
   e2e:
+    needs: integrity
     runs-on: ubuntu-latest
     services:
       postgres:

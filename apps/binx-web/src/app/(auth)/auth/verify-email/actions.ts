@@ -63,7 +63,7 @@ export async function verifyEmailAction(
   // this token through in the first place.
   redirect(
     portalInviteToken
-      ? `/auth/portal-invite?token=${portalInviteToken}`
+      ? `/auth/portal-invite?token=${encodeURIComponent(portalInviteToken)}`
       : "/onboarding/one",
   );
 }

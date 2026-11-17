@@ -53,6 +53,7 @@
   &:focus-visible {
     @include m.focus-ring;
   }
+  @include m.touch-target;
 }
 
 .backLink {
@@ -65,6 +66,7 @@
   &:hover {
     color: t.$color-ink;
   }
+  @include m.touch-target;
 }
 
 .notice {

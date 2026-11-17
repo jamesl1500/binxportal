@@ -18,6 +18,9 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { previewAgencyInvitation } from "@/lib/agencies";
 import AcceptInviteForm from "@/components/forms/auth/AcceptInviteForm/AcceptInviteForm";
+import { sameEmail } from "@/lib/utils";
+
+import { signOutForInviteAction } from "./actions";
 
 import styles from "./page.module.scss";
 
@@ -79,6 +82,21 @@ const AcceptInvitePage = async ({ searchParams }: AcceptInvitePageProps) => {
               Create account
             </Link>
           </div>
+        </div>
+      ) : !sameEmail(user.email, preview.email) ? (
+        // Signed in as someone else: binx-api would reject the accept, so
+        // offer a way to switch accounts instead of a button that can only fail.
+        <div className={styles.authPrompt}>
+          <p className={styles.authPromptText}>
+            You&apos;re signed in as <strong>{user.email}</strong>, but this
+            invitation is for <strong>{preview.email}</strong>. Sign out, then
+            log in or create an account with the invited address.
+          </p>
+          <form action={signOutForInviteAction.bind(null, token)} className={styles.authPromptActions}>
+            <button type="submit" className={styles.primaryButton}>
+              Sign out and continue
+            </button>
+          </form>
         </div>
       ) : (
         <AcceptInviteForm token={token} preview={preview} />

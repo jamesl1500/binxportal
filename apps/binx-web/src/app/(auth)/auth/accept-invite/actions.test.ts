@@ -9,6 +9,11 @@ vi.mock("@/lib/agencies", () => ({
 // that the framework catches further up to actually perform the navigation.
 // We mimic that "redirect = throw" behavior with our own sentinel error so we
 // can assert on `.rejects.toThrow(...)` instead of needing a full Next runtime.
+vi.mock("@/lib/auth", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/auth")>()),
+  logout: vi.fn(async () => undefined),
+}));
+
 vi.mock("next/navigation", () => ({
   redirect: vi.fn((url: string) => {
     throw new Error(`REDIRECT:${url}`);
@@ -17,9 +22,9 @@ vi.mock("next/navigation", () => ({
 
 import { redirect } from "next/navigation";
 
-import { AuthApiError } from "@/lib/auth";
+import { AuthApiError, logout } from "@/lib/auth";
 import { acceptAgencyInvitation, setCurrentAgencyId } from "@/lib/agencies";
-import { acceptInviteAction } from "./actions";
+import { acceptInviteAction, signOutForInviteAction } from "./actions";
 
 const mockedAcceptAgencyInvitation = vi.mocked(acceptAgencyInvitation);
 const mockedSetCurrentAgencyId = vi.mocked(setCurrentAgencyId);
@@ -62,5 +67,17 @@ describe("acceptInviteAction", () => {
     mockedAcceptAgencyInvitation.mockRejectedValueOnce(new Error("network down"));
 
     await expect(acceptInviteAction("raw-token")).resolves.toEqual({ error: "Unable to accept invitation" });
+  });
+});
+
+describe("signOutForInviteAction", () => {
+  it("signs out, then returns to the same invitation with the token encoded", async () => {
+    await expect(signOutForInviteAction("tok/en+1")).rejects.toThrow(
+      "REDIRECT:/auth/accept-invite?token=tok%2Fen%2B1",
+    );
+    expect(vi.mocked(logout)).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(logout).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(redirect).mock.invocationCallOrder[0],
+    );
   });
 });

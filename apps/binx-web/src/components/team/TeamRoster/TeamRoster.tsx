@@ -274,6 +274,8 @@ const TeamRoster = ({
                           )}
                           alt=""
                           aria-hidden="true"
+                          loading="lazy"
+                          decoding="async"
                         />
                       ) : (
                         <span className={styles.avatar} aria-hidden="true">

@@ -32,6 +32,7 @@
     color: t.$color-ink;
     text-decoration: underline;
   }
+  @include m.touch-target;
 }
 
 .manageLink {
