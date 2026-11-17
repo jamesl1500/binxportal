@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Noto_Sans, Playfair_Display } from "next/font/google";
+import { Geist_Mono, Noto_Sans, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { SITE, SITE_URL } from "@/lib/site";
@@ -8,14 +8,15 @@ const playfairDisplayHeading = Playfair_Display({ subsets: ["latin"], variable: 
 
 const notoSans = Noto_Sans({ subsets: ["latin"], variable: "--font-sans" });
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
+// Only used for small uppercase labels (never the largest paint), so it
+// isn't preloaded: it loads normally instead of competing with the heading
+// and body fonts for early bandwidth. next/font's size-adjusted fallback
+// keeps the swap from shifting layout. (Geist Sans used to be loaded here
+// too, but nothing referenced it.)
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -78,7 +79,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={cn(
         "h-full",
         "antialiased",
-        geistSans.variable,
         geistMono.variable,
         "font-sans",
         notoSans.variable,

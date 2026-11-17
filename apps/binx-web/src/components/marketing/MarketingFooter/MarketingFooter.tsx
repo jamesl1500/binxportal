@@ -8,6 +8,7 @@
  * @author Binx Portal
  */
 import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 
 import {
   FEATURE_PAGES,
@@ -100,8 +101,13 @@ const MarketingFooter = () => {
         <span>
           &copy; {new Date().getFullYear()} {SITE.legalName}
         </span>
-        <a href={`mailto:${SITE.email}`} className={styles.legalLink}>
-          {SITE.email}
+        {/* Opens the studio's site in a new tab. `noopener` keeps it from
+            reaching back into this page; no `noreferrer`, so Foundry Frame's
+            analytics can see the visit came from Binx. */}
+        <a href={SITE.parent.url} target="_blank" rel="noopener" className={styles.legalLink}>
+          A {SITE.parent.name} Project
+          <ArrowUpRight aria-hidden="true" />
+          <span className={styles.srOnly}> (opens in a new tab)</span>
         </a>
       </div>
     </footer>

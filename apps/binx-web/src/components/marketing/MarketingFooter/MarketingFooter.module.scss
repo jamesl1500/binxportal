@@ -83,14 +83,47 @@
   @include m.mono-label;
   font-size: 0.625rem;
   color: t.$color-ink-faint;
+
+  // 10px mono reads fine on a desktop screen; on a phone, 12px minimum.
+  @media (max-width: 640px) {
+    font-size: 0.75rem;
+  }
 }
 
 .legalLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   color: t.$color-ink-faint;
   text-decoration: none;
+  border-radius: t.$radius-sm;
+  transition: color t.$duration-fast t.$ease-standard;
+
+  svg {
+    width: 0.8em;
+    height: 0.8em;
+    transition: transform t.$duration-base t.$ease-standard;
+  }
 
   &:hover {
     color: t.$color-ink-soft;
+
+    svg {
+      transform: translate(2px, -2px);
+    }
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
   }
   @include m.touch-target;
+}
+// Read by screen readers, not shown.
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

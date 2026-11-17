@@ -52,6 +52,12 @@
   &:focus-visible {
     @include focus-ring;
   }
+
+  // iOS Safari zooms the whole page into any field under 16px on focus, and
+  // doesn't zoom back out. 16px on phones; desktop keeps the compact size.
+  @media (max-width: 640px) {
+    font-size: 1rem;
+  }
 }
 
 // Wrap a wide <table> in a horizontal scroller so it never forces the page

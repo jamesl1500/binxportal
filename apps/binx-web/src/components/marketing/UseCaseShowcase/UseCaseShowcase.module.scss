@@ -1,0 +1,155 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+@use "../../../styles/motion" as mo;
+
+@include mo.keyframes;
+
+.section {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: t.$space-20 t.$space-6 t.$space-16;
+}
+
+.head {
+  max-width: 40rem;
+  margin-bottom: t.$space-10;
+  @include mo.reveal;
+}
+
+.eyebrow {
+  display: inline-block;
+  margin-bottom: t.$space-4;
+  @include m.mono-label;
+  color: t.$color-ink-faint;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: clamp(1.875rem, 4vw, 2.75rem);
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+}
+
+.grid {
+  display: grid;
+  gap: t.$space-4;
+  grid-template-columns: 1fr;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (min-width: 1100px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.item {
+  // Staggered: each card starts its reveal a little later in its entry.
+  @include mo.motion-ok {
+    @supports (animation-timeline: view()) {
+      animation: mo-reveal linear both;
+      animation-timeline: view();
+      animation-range: entry calc(var(--i) * 8%) entry calc(50% + var(--i) * 8%);
+      --mo-reveal-y: 2.5rem;
+      --mo-reveal-scale: 0.97;
+    }
+  }
+}
+
+.card {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: 14px;
+  color: #fff;
+  text-decoration: none;
+  isolation: isolate;
+  box-shadow: 0 1px 2px rgba(10, 10, 11, 0.06);
+  transition:
+    transform 0.5s mo.$ease-out-soft,
+    box-shadow 0.5s mo.$ease-out-soft;
+
+  @media (min-width: 640px) and (max-width: 1099px) {
+    aspect-ratio: 4 / 3;
+  }
+
+  &:hover {
+    box-shadow: 0 24px 48px -20px rgba(10, 10, 11, 0.45);
+
+    @include mo.motion-ok {
+      transform: translateY(-6px);
+    }
+  }
+
+  &:focus-visible {
+    outline: 3px solid t.$color-focus;
+    outline-offset: 3px;
+  }
+}
+
+.photo {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 1.2s mo.$ease-out-soft;
+
+  @include mo.motion-ok {
+    .card:hover & {
+      transform: scale(1.07);
+    }
+  }
+}
+
+.shade {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(10, 10, 11, 0) 35%, rgba(10, 10, 11, 0.82) 100%);
+  transition: opacity 0.5s mo.$ease-out-soft;
+}
+
+.body {
+  position: absolute;
+  inset: auto 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: t.$space-5;
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-xl;
+  line-height: 1.15;
+
+  svg {
+    width: 1.1rem;
+    height: 1.1rem;
+    flex: none;
+    transition: transform 0.4s mo.$ease-out-soft;
+
+    @include mo.motion-ok {
+      .card:hover & {
+        transform: translate(3px, -3px);
+      }
+    }
+  }
+}
+
+.line {
+  font-size: t.$font-size-sm;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.82);
+}

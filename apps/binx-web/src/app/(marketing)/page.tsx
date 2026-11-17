@@ -8,6 +8,7 @@
  * @module apps/binx-web/src/app/(marketing)/page.tsx
  * @author Binx Portal
  */
+import { Fragment } from "react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -23,13 +24,11 @@ import {
   Users,
 } from "lucide-react";
 
-import {
-  SITE,
-  USE_CASE_PAGES,
-  marketingOpenGraph,
-  softwareApplicationJsonLd,
-} from "@/lib/site";
+import { SITE, marketingOpenGraph, softwareApplicationJsonLd } from "@/lib/site";
+import FeatureMarquee from "@/components/marketing/FeatureMarquee/FeatureMarquee";
+import HeroStage from "@/components/marketing/HeroStage/HeroStage";
 import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
+import UseCaseShowcase from "@/components/marketing/UseCaseShowcase/UseCaseShowcase";
 
 import styles from "./marketing.module.scss";
 
@@ -138,6 +137,10 @@ const FEATURE_LIST = [
   "Customizable drag-and-drop dashboard",
 ];
 
+// The headline, word by word, for the staggered entrance; "calm" and
+// "place." are rendered separately so "calm" can carry the underline.
+const HERO_WORDS = ["Run", "the", "whole", "agency", "from", "one"];
+
 const HomePage = () => {
   return (
     <>
@@ -148,15 +151,54 @@ const HomePage = () => {
         }}
       />
 
-      <section className={styles.hero}>
-        <div className={styles.heroGlow} aria-hidden="true" />
+      <section className={`${styles.hero} ${styles.heroHome}`}>
+        {/* Slow-drifting colour fields + a faint dot grid behind the copy. */}
+        <div className={styles.aurora} aria-hidden="true">
+          <span className={styles.auroraA} />
+          <span className={styles.auroraB} />
+          <span className={styles.auroraC} />
+        </div>
+        <div className={styles.heroGrid} aria-hidden="true" />
+
         <div className={styles.container}>
           <div className={styles.heroInner}>
-            <span className={styles.eyebrow}>Agency operating system</span>
-            <h1 className={styles.h1}>
-              Run the whole agency from one calm place.
+            <Link href="/client-approvals" className={styles.announce}>
+              <span className={styles.announceDot} aria-hidden="true" />
+              <span className={styles.announceTag}>New</span>
+              Client approvals, right on the canvas
+              <ArrowRight aria-hidden="true" />
+            </Link>
+            <h1 className={`${styles.h1} ${styles.heroTitle}`}>
+              {/* Spaces sit between the inline-block word spans, not inside
+                  them: trailing whitespace in an inline-block is dropped. */}
+              {HERO_WORDS.map((word, i) => (
+                <Fragment key={word}>
+                  <span className={styles.word} style={{ "--i": i } as React.CSSProperties}>
+                    {word}
+                  </span>{" "}
+                </Fragment>
+              ))}
+              <span
+                className={`${styles.word} ${styles.flourish}`}
+                style={{ "--i": HERO_WORDS.length } as React.CSSProperties}
+              >
+                <em>calm</em>
+                <svg viewBox="0 0 200 18" preserveAspectRatio="none" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="hero-flourish-gradient" x1="0" x2="1" y1="0" y2="0">
+                      <stop offset="0%" stopColor="#6366f1" />
+                      <stop offset="55%" stopColor="#a855f7" />
+                      <stop offset="100%" stopColor="#f59e0b" />
+                    </linearGradient>
+                  </defs>
+                  <path pathLength={1} d="M3 13 C 45 3, 95 3, 135 9 S 185 14, 197 6" />
+                </svg>
+              </span>{" "}
+              <span className={styles.word} style={{ "--i": HERO_WORDS.length + 1 } as React.CSSProperties}>
+                place.
+              </span>
             </h1>
-            <p className={styles.lead}>
+            <p className={`${styles.lead} ${styles.heroLead}`}>
               {SITE.name} takes you from the first lead to the final invoice.
               Find prospects with AI, send proposals clients sign online, run
               projects they approve in a live portal, and get paid, all in one
@@ -174,21 +216,14 @@ const HomePage = () => {
               Free plan available · no card required · your data stays yours.
             </p>
           </div>
+
+          <HeroStage />
         </div>
       </section>
 
-      <div className={styles.trust}>
-        <p className={styles.trustLabel}>
-          Built for the way small agencies actually work
-        </p>
-        <div className={styles.trustRow}>
-          {USE_CASE_PAGES.map((page) => (
-            <Link key={page.href} href={page.href} className={styles.trustLink}>
-              {page.label}
-            </Link>
-          ))}
-        </div>
-      </div>
+      <FeatureMarquee items={FEATURE_LIST} label="What Binx does" />
+
+      <UseCaseShowcase />
 
       <section className={`${styles.section} ${styles.sectionDark}`}>
         <div className={styles.container}>

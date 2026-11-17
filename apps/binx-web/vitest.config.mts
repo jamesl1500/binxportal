@@ -1,8 +1,37 @@
+import path from "node:path";
+
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vitest/config";
+import sharp from "sharp";
+import { defineConfig, type Plugin } from "vitest/config";
+
+/**
+ * Static image imports the way Next's bundler sees them. Under Next,
+ * `import photo from "./a.webp"` yields `{ src, width, height, blurDataURL }`
+ * (what `next/image` needs for a static import); plain Vite yields a URL
+ * string, which `next/image` rejects for lacking a width. Real dimensions
+ * are read with sharp so layout-dependent code sees true values.
+ */
+const nextStaticImages = (): Plugin => ({
+  name: "next-static-images",
+  enforce: "pre",
+  async load(id) {
+    const file = id.split("?")[0];
+    if (!/\.(png|jpe?g|webp|avif|gif)$/i.test(file) || !file.includes(`${path.sep}src${path.sep}`) && !file.includes("/src/")) {
+      return null;
+    }
+    const { width = 1, height = 1 } = await sharp(file).metadata();
+    const src = `/_next/static/media/${path.basename(file)}`;
+    return `export default ${JSON.stringify({
+      src,
+      width,
+      height,
+      blurDataURL: "data:image/gif;base64,R0lGODlhAQABAAAAACw=",
+    })};`;
+  },
+});
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [nextStaticImages(), react()],
   // Vite 8 resolves tsconfig `paths` (the `@/*` alias) natively — replaces
   // the vite-tsconfig-paths plugin.
   resolve: { tsconfigPaths: true },

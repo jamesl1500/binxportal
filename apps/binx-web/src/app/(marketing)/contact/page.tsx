@@ -16,13 +16,16 @@ import { breadcrumbJsonLd, marketingOpenGraph, SITE } from "@/lib/site";
 import styles from "../marketing.module.scss";
 
 const TITLE = "Contact";
+// <title> / social title: searchable, not just the nav label (TITLE stays the
+// short breadcrumb name). Kept to 60 characters with the " · Binx Portal" suffix.
+const SEO_TITLE = "Contact the Binx team: sales & support";
 const DESCRIPTION = `Get in touch with the ${SITE.name} team — questions, feedback, or help moving your agency over.`;
 
 export const metadata: Metadata = {
-  title: TITLE,
+  title: SEO_TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/contact" },
-  ...marketingOpenGraph(TITLE, DESCRIPTION, "/contact"),
+  ...marketingOpenGraph(SEO_TITLE, DESCRIPTION, "/contact"),
 };
 
 const ContactPage = () => {

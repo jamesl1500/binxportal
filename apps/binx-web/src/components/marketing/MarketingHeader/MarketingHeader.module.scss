@@ -1,13 +1,38 @@
 @use "../../../styles/tokens" as t;
 @use "../../../styles/mixins" as m;
+@use "../../../styles/motion" as mo;
+
+@include mo.keyframes;
 
 .header {
   position: sticky;
   top: 0;
   z-index: 50;
-  background: color-mix(in srgb, t.$color-paper 88%, transparent);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid t.$color-border;
+  border-bottom: 1px solid transparent;
+  background: transparent;
+  transition:
+    background-color 0.35s mo.$ease-out-soft,
+    border-color 0.35s mo.$ease-out-soft,
+    box-shadow 0.35s mo.$ease-out-soft,
+    backdrop-filter 0.35s mo.$ease-out-soft;
+
+  @include mo.motion-ok {
+    animation: header-in 0.7s mo.$ease-out-expo both;
+  }
+
+  &[data-scrolled="true"] {
+    background: color-mix(in srgb, t.$color-paper 80%, transparent);
+    backdrop-filter: saturate(1.4) blur(14px);
+    border-bottom-color: t.$color-border;
+    box-shadow: 0 8px 28px -18px rgba(10, 10, 11, 0.28);
+  }
+}
+
+@keyframes header-in {
+  from {
+    opacity: 0;
+    translate: 0 -100%;
+  }
 }
 
 .inner {
@@ -17,6 +42,12 @@
   max-width: 72rem;
   margin: 0 auto;
   padding: t.$space-4 t.$space-6;
+  transition: padding 0.35s mo.$ease-out-soft;
+
+  .header[data-scrolled="true"] & {
+    padding-top: t.$space-3;
+    padding-bottom: t.$space-3;
+  }
 }
 
 .brand {
@@ -28,15 +59,30 @@
   letter-spacing: t.$tracking-wide;
   color: t.$color-ink;
   text-decoration: none;
+  border-radius: t.$radius-sm;
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
 }
 
 .brandMark {
   width: 1.4rem;
   height: 1.4rem;
   flex-shrink: 0;
+  transition: transform 0.6s mo.$ease-out-expo;
+
+  @include mo.motion-ok {
+    .brand:hover & {
+      transform: rotate(-12deg) scale(1.1);
+    }
+  }
 }
 
+// ---- Desktop nav with the sliding highlight pill -----------------------
+
 .nav {
+  position: relative;
   display: none;
   align-items: center;
   gap: t.$space-1;
@@ -47,13 +93,39 @@
   }
 }
 
+.pill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, t.$color-ink 6%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s mo.$ease-out-soft;
+
+  @include mo.motion-ok {
+    transition:
+      transform 0.45s mo.$ease-out-expo,
+      width 0.45s mo.$ease-out-expo,
+      opacity 0.25s mo.$ease-out-soft;
+  }
+
+  &[data-visible="true"] {
+    opacity: 1;
+  }
+}
+
 .navLink {
+  position: relative;
+  z-index: 1;
   padding: t.$space-2 t.$space-3;
   font-size: t.$font-size-sm;
   color: t.$color-ink-soft;
   text-decoration: none;
-  border-radius: t.$radius-sm;
-  transition: color t.$duration-fast t.$ease-standard;
+  border-radius: 999px;
+  transition: color 0.25s mo.$ease-out-soft;
 
   &:hover {
     color: t.$color-ink;
@@ -69,6 +141,8 @@
   }
 }
 
+// ---- Actions ---------------------------------------------------------------
+
 .actions {
   display: none;
   align-items: center;
@@ -81,6 +155,7 @@
 }
 
 .signIn {
+  position: relative;
   padding: t.$space-2 t.$space-3;
   font-size: t.$font-size-sm;
   font-weight: 600;
@@ -88,8 +163,21 @@
   text-decoration: none;
   border-radius: t.$radius-sm;
 
-  &:hover {
-    color: t.$color-ink-soft;
+  // Underline that grows from the centre on hover.
+  &::after {
+    content: "";
+    position: absolute;
+    left: t.$space-3;
+    right: t.$space-3;
+    bottom: 4px;
+    height: 1.5px;
+    background: currentColor;
+    transform: scaleX(0);
+    transition: transform 0.35s mo.$ease-out-soft;
+  }
+
+  &:hover::after {
+    transform: scaleX(1);
   }
 
   &:focus-visible {
@@ -98,20 +186,38 @@
 }
 
 .cta {
+  @include mo.sheen-on-hover;
   display: inline-flex;
   align-items: center;
+  gap: 6px;
   padding: t.$space-2 t.$space-4;
   font-size: t.$font-size-sm;
   font-weight: 600;
   color: t.$color-accent-foreground;
   background: t.$color-accent;
   border: 1px solid t.$color-accent;
-  border-radius: t.$radius-sm;
+  border-radius: 999px;
   text-decoration: none;
-  transition: opacity t.$duration-fast t.$ease-standard;
+  transition:
+    transform 0.3s mo.$ease-out-soft,
+    box-shadow 0.3s mo.$ease-out-soft;
+
+  svg {
+    width: 0.85rem;
+    height: 0.85rem;
+    transition: transform 0.35s mo.$ease-out-soft;
+  }
 
   &:hover {
-    opacity: 0.88;
+    box-shadow: 0 10px 22px -10px rgba(10, 10, 11, 0.55);
+
+    svg {
+      transform: translateX(3px);
+    }
+
+    @include mo.motion-ok {
+      transform: translateY(-1px);
+    }
   }
 
   &:focus-visible {
@@ -119,25 +225,76 @@
   }
 }
 
+// ---- Mobile ----------------------------------------------------------------
+
 .menuToggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
   margin-left: auto;
-  padding: t.$space-2;
   color: t.$color-ink;
-  background: transparent;
+  background: color-mix(in srgb, t.$color-surface 70%, transparent);
   border: 1px solid t.$color-border;
-  border-radius: t.$radius-sm;
+  border-radius: 999px;
   cursor: pointer;
 
-  svg {
-    width: 1.1rem;
-    height: 1.1rem;
+  &:focus-visible {
+    @include m.focus-ring;
   }
 
   @media (min-width: 900px) {
     display: none;
+  }
+}
+
+// Three lines that fold into an ✕.
+.burger {
+  position: relative;
+  width: 1rem;
+  height: 0.75rem;
+
+  > span {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 1.5px;
+    border-radius: 2px;
+    background: currentColor;
+    transition:
+      transform 0.4s mo.$ease-out-expo,
+      opacity 0.2s mo.$ease-out-soft,
+      top 0.4s mo.$ease-out-expo;
+  }
+
+  > span:nth-child(1) {
+    top: 0;
+  }
+
+  > span:nth-child(2) {
+    top: calc(50% - 0.75px);
+  }
+
+  > span:nth-child(3) {
+    top: calc(100% - 1.5px);
+  }
+
+  &[data-open="true"] {
+    > span:nth-child(1) {
+      top: calc(50% - 0.75px);
+      transform: rotate(45deg);
+    }
+
+    > span:nth-child(2) {
+      opacity: 0;
+      transform: scaleX(0.2);
+    }
+
+    > span:nth-child(3) {
+      top: calc(50% - 0.75px);
+      transform: rotate(-45deg);
+    }
   }
 }
 
@@ -147,18 +304,64 @@
   gap: t.$space-1;
   padding: t.$space-3 t.$space-6 t.$space-5;
   border-top: 1px solid t.$color-border;
+  transform-origin: top center;
+
+  @include mo.motion-ok {
+    animation: panel-unfold 0.45s mo.$ease-out-expo both;
+  }
 
   @media (min-width: 900px) {
     display: none;
   }
 }
 
+@keyframes panel-unfold {
+  from {
+    opacity: 0;
+    scale: 1 0.96;
+    translate: 0 -0.5rem;
+  }
+}
+
 .mobileLink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: t.$space-3 0;
-  font-size: t.$font-size-base;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-xl;
   color: t.$color-ink;
   text-decoration: none;
   border-bottom: 1px solid t.$color-border;
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+    color: t.$color-ink-faint;
+    transition: transform 0.35s mo.$ease-out-soft;
+  }
+
+  &:hover svg,
+  &:focus-visible svg {
+    transform: translateX(3px);
+  }
+
+  &[data-active="true"] {
+    font-style: italic;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.mobileLink,
+.mobileActions {
+  @include mo.motion-ok {
+    animation: mo-enter 0.5s mo.$ease-out-expo both;
+    animation-delay: calc(80ms + var(--i) * 45ms);
+    --mo-enter-y: 0.6rem;
+  }
 }
 
 .mobileActions {
