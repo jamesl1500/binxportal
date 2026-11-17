@@ -101,8 +101,9 @@ def trial_discount_eligible(subscription: AgencySubscription) -> bool:
 def effective_plan_key(subscription: AgencySubscription) -> str:
     """The plan whose limits actually apply right now — the trial's plan
     while an active card-free trial is running, otherwise the billed plan."""
-    if trial_is_active(subscription):
-        return subscription.trial_plan  # type: ignore[return-value]
+    trial_plan = subscription.trial_plan
+    if trial_plan is not None and trial_is_active(subscription):
+        return trial_plan
     return subscription.plan
 
 
@@ -199,9 +200,12 @@ async def max_owned_agencies_for(db: AsyncSession, owner: User) -> int | None:
     owned_plans = [plan_limits(plan) for (plan,) in result.all()]
     if not owned_plans:
         return PLANS["free"].max_owned_agencies
-    if any(limits.max_owned_agencies is None for limits in owned_plans):
-        return None
-    return max(limits.max_owned_agencies for limits in owned_plans)  # type: ignore[type-var]
+    caps: list[int] = []
+    for limits in owned_plans:
+        if limits.max_owned_agencies is None:
+            return None  # any plan without a cap means unlimited
+        caps.append(limits.max_owned_agencies)
+    return max(caps)
 
 
 async def _count(db: AsyncSession, stmt) -> int:

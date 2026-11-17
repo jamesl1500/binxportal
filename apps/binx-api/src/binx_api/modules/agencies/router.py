@@ -189,13 +189,15 @@ async def read_agency_by_subdomain(db: DbSession, subdomain: str) -> AgencyPubli
     an unclaimed subdomain, or one whose agency has since dropped below the
     required plan (service.get_agency_by_subdomain)."""
     agency = await service.get_agency_by_subdomain(db, subdomain)
-    if agency is None:
+    # Found *by* its subdomain, so it has one; checking says so to the type
+    # checker for free.
+    if agency is None or agency.subdomain is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No agency found for that subdomain")
     profile = await service.get_or_create_agency_profile(db, agency)
     return AgencyPublicBranding(
         id=agency.id,
         name=agency.name,
-        subdomain=agency.subdomain,  # type: ignore[arg-type]
+        subdomain=agency.subdomain,
         brand_color=profile.brand_color,
         has_logo=profile.logo_storage_path is not None,
         logo_version=image_version(profile.logo_storage_path),
