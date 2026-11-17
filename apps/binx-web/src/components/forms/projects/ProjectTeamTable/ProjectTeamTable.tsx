@@ -241,118 +241,120 @@ const ProjectTeamTable = ({
           <p className={styles.emptyText}>Try a different search.</p>
         </div>
       ) : (
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th
-                className={`${styles.headCell} ${styles.sortable}`}
-                aria-sort={ariaSort("name")}
-              >
-                <button
-                  type="button"
-                  className={styles.sortButton}
-                  onClick={() => toggleSort("name")}
+        <div className={styles.tableScroll}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th
+                  className={`${styles.headCell} ${styles.sortable}`}
+                  aria-sort={ariaSort("name")}
                 >
-                  Member {sortIcon("name")}
-                </button>
-              </th>
-              <th className={styles.headCell}>Contact</th>
-              <th
-                className={`${styles.headCell} ${styles.sortable}`}
-                aria-sort={ariaSort("job_title")}
-              >
-                <button
-                  type="button"
-                  className={styles.sortButton}
-                  onClick={() => toggleSort("job_title")}
+                  <button
+                    type="button"
+                    className={styles.sortButton}
+                    onClick={() => toggleSort("name")}
+                  >
+                    Member {sortIcon("name")}
+                  </button>
+                </th>
+                <th className={styles.headCell}>Contact</th>
+                <th
+                  className={`${styles.headCell} ${styles.sortable}`}
+                  aria-sort={ariaSort("job_title")}
                 >
-                  Job title {sortIcon("job_title")}
-                </button>
-              </th>
-              <th
-                className={`${styles.headCell} ${styles.sortable}`}
-                aria-sort={ariaSort("role")}
-              >
-                <button
-                  type="button"
-                  className={styles.sortButton}
-                  onClick={() => toggleSort("role")}
+                  <button
+                    type="button"
+                    className={styles.sortButton}
+                    onClick={() => toggleSort("job_title")}
+                  >
+                    Job title {sortIcon("job_title")}
+                  </button>
+                </th>
+                <th
+                  className={`${styles.headCell} ${styles.sortable}`}
+                  aria-sort={ariaSort("role")}
                 >
-                  Project role {sortIcon("role")}
-                </button>
-              </th>
-              <th className={styles.headCell}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {visible.map((member) => {
-              const isBusy = isPending && busyId === member.id;
-
-              return (
-                <tr key={member.id} className={styles.row}>
-                  <td className={styles.cell}>
-                    <div className={styles.person}>
-                      <span className={styles.avatar} aria-hidden="true">
-                        {initials(member.full_name)}
-                      </span>
-                      <p className={styles.name}>{member.full_name}</p>
-                    </div>
-                  </td>
-                  <td className={styles.cell}>
-                    <a
-                      href={`mailto:${member.email}`}
-                      className={styles.contactDetail}
-                    >
-                      {member.email}
-                    </a>
-                  </td>
-                  <td className={styles.cell}>
-                    {member.job_title || (
-                      <span className={styles.muted}>—</span>
-                    )}
-                  </td>
-                  <td className={styles.cell}>
-                    <div className={styles.roleControl}>
-                      <span
-                        className={styles.roleDot}
-                        style={{
-                          background: member.role_color ?? "transparent",
-                        }}
-                        aria-hidden="true"
-                      />
-                      <select
-                        className={styles.roleSelect}
-                        value={member.role_id ?? ""}
-                        disabled={isBusy}
-                        onChange={(event) =>
-                          handleRoleChange(member.id, event.target.value)
-                        }
-                        aria-label={`Project role for ${member.full_name}`}
+                  <button
+                    type="button"
+                    className={styles.sortButton}
+                    onClick={() => toggleSort("role")}
+                  >
+                    Project role {sortIcon("role")}
+                  </button>
+                </th>
+                <th className={styles.headCell}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visible.map((member) => {
+                const isBusy = isPending && busyId === member.id;
+  
+                return (
+                  <tr key={member.id} className={styles.row}>
+                    <td className={styles.cell}>
+                      <div className={styles.person}>
+                        <span className={styles.avatar} aria-hidden="true">
+                          {initials(member.full_name)}
+                        </span>
+                        <p className={styles.name}>{member.full_name}</p>
+                      </div>
+                    </td>
+                    <td className={styles.cell}>
+                      <a
+                        href={`mailto:${member.email}`}
+                        className={styles.contactDetail}
                       >
-                        <option value="">No role</option>
-                        {roles.map((role) => (
-                          <option key={role.id} value={role.id}>
-                            {role.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </td>
-                  <td className={styles.cell}>
-                    <button
-                      type="button"
-                      className={styles.removeButton}
-                      onClick={() => handleRemove(member.id, member.full_name)}
-                      disabled={isBusy}
-                    >
-                      Remove
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                        {member.email}
+                      </a>
+                    </td>
+                    <td className={styles.cell}>
+                      {member.job_title || (
+                        <span className={styles.muted}>—</span>
+                      )}
+                    </td>
+                    <td className={styles.cell}>
+                      <div className={styles.roleControl}>
+                        <span
+                          className={styles.roleDot}
+                          style={{
+                            background: member.role_color ?? "transparent",
+                          }}
+                          aria-hidden="true"
+                        />
+                        <select
+                          className={styles.roleSelect}
+                          value={member.role_id ?? ""}
+                          disabled={isBusy}
+                          onChange={(event) =>
+                            handleRoleChange(member.id, event.target.value)
+                          }
+                          aria-label={`Project role for ${member.full_name}`}
+                        >
+                          <option value="">No role</option>
+                          {roles.map((role) => (
+                            <option key={role.id} value={role.id}>
+                              {role.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </td>
+                    <td className={styles.cell}>
+                      <button
+                        type="button"
+                        className={styles.removeButton}
+                        onClick={() => handleRemove(member.id, member.full_name)}
+                        disabled={isBusy}
+                      >
+                        Remove
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {roles.length === 0 && members.length > 0 && (

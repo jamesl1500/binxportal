@@ -11,6 +11,7 @@
  */
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -35,14 +36,25 @@ const ProjectTabs = ({ projectId }: ProjectTabsProps) => {
     { href: `${base}/settings`, label: "Settings" },
   ];
 
+  // On a phone the row scrolls; keep the active tab (e.g. Settings, the last
+  // one) in view instead of hidden past the edge. `block: "nearest"` so this
+  // never scrolls the page vertically.
+  const navRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    navRef.current
+      ?.querySelector<HTMLElement>('[data-active="true"]')
+      ?.scrollIntoView?.({ inline: "nearest", block: "nearest" });
+  }, [pathname]);
+
   return (
-    <nav className={styles.tabs} aria-label="Project">
+    <nav ref={navRef} className={styles.tabs} aria-label="Project">
       {tabs.map((tab) => (
         <Link
           key={tab.href}
           href={tab.href}
           className={styles.tab}
           data-active={pathname === tab.href}
+          aria-current={pathname === tab.href ? "page" : undefined}
         >
           {tab.label}
         </Link>

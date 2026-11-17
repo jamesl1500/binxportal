@@ -230,126 +230,128 @@ const ProjectFilesTable = ({
           <p className={styles.emptyText}>Try a different search.</p>
         </div>
       ) : (
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th
-                className={`${styles.headCell} ${styles.sortable}`}
-                aria-sort={ariaSort("file_name")}
-              >
-                <button
-                  type="button"
-                  className={styles.sortButton}
-                  onClick={() => toggleSort("file_name")}
+        <div className={styles.tableScroll}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th
+                  className={`${styles.headCell} ${styles.sortable}`}
+                  aria-sort={ariaSort("file_name")}
                 >
-                  Name {sortIcon("file_name")}
-                </button>
-              </th>
-              <th className={styles.headCell}>Type</th>
-              <th
-                className={`${styles.headCell} ${styles.sortable}`}
-                aria-sort={ariaSort("size")}
-              >
-                <button
-                  type="button"
-                  className={styles.sortButton}
-                  onClick={() => toggleSort("size")}
+                  <button
+                    type="button"
+                    className={styles.sortButton}
+                    onClick={() => toggleSort("file_name")}
+                  >
+                    Name {sortIcon("file_name")}
+                  </button>
+                </th>
+                <th className={styles.headCell}>Type</th>
+                <th
+                  className={`${styles.headCell} ${styles.sortable}`}
+                  aria-sort={ariaSort("size")}
                 >
-                  Size {sortIcon("size")}
-                </button>
-              </th>
-              <th
-                className={`${styles.headCell} ${styles.sortable}`}
-                aria-sort={ariaSort("uploaded_by")}
-              >
-                <button
-                  type="button"
-                  className={styles.sortButton}
-                  onClick={() => toggleSort("uploaded_by")}
+                  <button
+                    type="button"
+                    className={styles.sortButton}
+                    onClick={() => toggleSort("size")}
+                  >
+                    Size {sortIcon("size")}
+                  </button>
+                </th>
+                <th
+                  className={`${styles.headCell} ${styles.sortable}`}
+                  aria-sort={ariaSort("uploaded_by")}
                 >
-                  Uploaded by {sortIcon("uploaded_by")}
-                </button>
-              </th>
-              <th
-                className={`${styles.headCell} ${styles.sortable}`}
-                aria-sort={ariaSort("created_at")}
-              >
-                <button
-                  type="button"
-                  className={styles.sortButton}
-                  onClick={() => toggleSort("created_at")}
+                  <button
+                    type="button"
+                    className={styles.sortButton}
+                    onClick={() => toggleSort("uploaded_by")}
+                  >
+                    Uploaded by {sortIcon("uploaded_by")}
+                  </button>
+                </th>
+                <th
+                  className={`${styles.headCell} ${styles.sortable}`}
+                  aria-sort={ariaSort("created_at")}
                 >
-                  Added {sortIcon("created_at")}
-                </button>
-              </th>
-              <th className={styles.headCell}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {visible.map((file) => {
-              const isBusy = isPending && busyId === file.id;
-
-              // A mirror of a task attachment: binx-api rejects deleting it
-              // here, so the button is disabled with a hint to detach it from
-              // the task instead.
-              const fromTask = file.source_task_id !== null;
-
-              return (
-                <tr key={file.id} className={styles.row}>
-                  <td className={styles.cell}>
-                    <span className={styles.name}>{file.file_name}</span>
-                    {fromTask && (
-                      <span className={styles.sourceBadge}>
-                        Task · {file.source_task_title ?? "Untitled task"}
-                      </span>
-                    )}
-                  </td>
-                  <td className={styles.cell}>{fileKind(file.mime_type)}</td>
-                  <td className={`${styles.cell} ${styles.nowrap}`}>
-                    {formatSize(file.size)}
-                  </td>
-                  <td className={styles.cell}>
-                    {file.uploaded_by_name || (
-                      <span className={styles.muted}>—</span>
-                    )}
-                  </td>
-                  <td className={`${styles.cell} ${styles.nowrap}`}>
-                    {formatUploadedAt(file.created_at)}
-                  </td>
-                  <td className={styles.cell}>
-                    <div className={styles.actions}>
-                      <a
-                        className={styles.download}
-                        href={getProjectFileDownloadUrl(
-                          agencyId,
-                          projectId,
-                          file.id,
-                        )}
-                        aria-label={`Download ${file.file_name}`}
-                      >
-                        <Download aria-hidden="true" />
-                      </a>
-                      <button
-                        type="button"
-                        className={styles.delete}
-                        onClick={() => handleDelete(file.id, file.file_name)}
-                        disabled={isBusy || fromTask}
-                        aria-label={`Delete ${file.file_name}`}
-                        title={
-                          fromTask
-                            ? `Attached to the task “${file.source_task_title ?? "Untitled task"}” — remove it there`
-                            : undefined
-                        }
-                      >
-                        <Trash2 aria-hidden="true" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                  <button
+                    type="button"
+                    className={styles.sortButton}
+                    onClick={() => toggleSort("created_at")}
+                  >
+                    Added {sortIcon("created_at")}
+                  </button>
+                </th>
+                <th className={styles.headCell}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visible.map((file) => {
+                const isBusy = isPending && busyId === file.id;
+  
+                // A mirror of a task attachment: binx-api rejects deleting it
+                // here, so the button is disabled with a hint to detach it from
+                // the task instead.
+                const fromTask = file.source_task_id !== null;
+  
+                return (
+                  <tr key={file.id} className={styles.row}>
+                    <td className={styles.cell}>
+                      <span className={styles.name}>{file.file_name}</span>
+                      {fromTask && (
+                        <span className={styles.sourceBadge}>
+                          Task · {file.source_task_title ?? "Untitled task"}
+                        </span>
+                      )}
+                    </td>
+                    <td className={styles.cell}>{fileKind(file.mime_type)}</td>
+                    <td className={`${styles.cell} ${styles.nowrap}`}>
+                      {formatSize(file.size)}
+                    </td>
+                    <td className={styles.cell}>
+                      {file.uploaded_by_name || (
+                        <span className={styles.muted}>—</span>
+                      )}
+                    </td>
+                    <td className={`${styles.cell} ${styles.nowrap}`}>
+                      {formatUploadedAt(file.created_at)}
+                    </td>
+                    <td className={styles.cell}>
+                      <div className={styles.actions}>
+                        <a
+                          className={styles.download}
+                          href={getProjectFileDownloadUrl(
+                            agencyId,
+                            projectId,
+                            file.id,
+                          )}
+                          aria-label={`Download ${file.file_name}`}
+                        >
+                          <Download aria-hidden="true" />
+                        </a>
+                        <button
+                          type="button"
+                          className={styles.delete}
+                          onClick={() => handleDelete(file.id, file.file_name)}
+                          disabled={isBusy || fromTask}
+                          aria-label={`Delete ${file.file_name}`}
+                          title={
+                            fromTask
+                              ? `Attached to the task “${file.source_task_title ?? "Untitled task"}” — remove it there`
+                              : undefined
+                          }
+                        >
+                          <Trash2 aria-hidden="true" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {error && (

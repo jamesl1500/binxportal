@@ -12,6 +12,7 @@
  */
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -32,14 +33,23 @@ const PortalProjectTabs = ({ projectId }: PortalProjectTabsProps) => {
     { href: `${base}/kickoff`, label: "Kickoff" },
   ];
 
+  // Keep the active tab in view when the row scrolls on a narrow phone.
+  const navRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    navRef.current
+      ?.querySelector<HTMLElement>('[data-active="true"]')
+      ?.scrollIntoView?.({ inline: "nearest", block: "nearest" });
+  }, [pathname]);
+
   return (
-    <nav className={styles.tabs} aria-label="Project">
+    <nav ref={navRef} className={styles.tabs} aria-label="Project">
       {tabs.map((tab) => (
         <Link
           key={tab.href}
           href={tab.href}
           className={styles.tab}
           data-active={pathname === tab.href}
+          aria-current={pathname === tab.href ? "page" : undefined}
         >
           {tab.label}
         </Link>

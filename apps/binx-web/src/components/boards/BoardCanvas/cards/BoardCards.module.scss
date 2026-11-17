@@ -97,6 +97,15 @@ $muted: #6b7280;
     color: #9ca3af;
     text-decoration: line-through;
   }
+
+  // Touch: the whole row is the tap target and long press opens its menu
+  // (TodoCard's TodoRow), so keep the OS from selecting text or showing its
+  // own long-press callout over it.
+  @media (pointer: coarse) {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
 }
 
 .todoCheck {
@@ -236,6 +245,23 @@ $muted: #6b7280;
     color: $ink;
     background: #eceae6;
   }
+
+  // Touch opens this row's menu by long press, so the 18px button (and its
+  // hover-only reveal) goes away visually. It stays in the accessibility
+  // tree: screen-reader users on touch still reach the menu with a swipe +
+  // double tap rather than having to discover a long press.
+  @media (pointer: coarse) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    // Out of touch hit-testing, so the browser's touch adjustment can't snap
+    // a tap near the row's edge onto it. Screen readers activate it directly
+    // through the accessibility API, not by hit-testing.
+    pointer-events: none;
+  }
 }
 
 .todoMenu {
@@ -271,6 +297,122 @@ $muted: #6b7280;
     &[data-tone="danger"] {
       color: t.$color-danger;
     }
+  }
+}
+
+// ---- To-do row menu as a bottom sheet (touch) -----------------------------
+// Rendered in a portal outside the canvas zoom, so these sizes are real
+// on-screen pixels: 44px rows and 16px inputs (iOS zooms the page into any
+// smaller input on focus).
+
+.todoSheetBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.35);
+  animation: todo-sheet-fade t.$duration-fast t.$ease-standard;
+}
+
+.todoSheet {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 32rem;
+  max-height: 80dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 8px 16px calc(16px + env(safe-area-inset-bottom));
+  background: t.$color-surface;
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -12px 40px rgba(15, 23, 42, 0.2);
+  animation: todo-sheet-rise 0.22s t.$ease-standard;
+
+  &:focus {
+    outline: none;
+  }
+
+  .todoMenuField {
+    min-height: 44px;
+    font-size: t.$font-size-sm;
+
+    input,
+    select {
+      min-height: 40px;
+      font-size: 16px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+}
+
+.todoSheetHandle {
+  align-self: center;
+  width: 36px;
+  height: 4px;
+  margin-bottom: 4px;
+  background: t.$color-border-strong;
+  border-radius: 999px;
+}
+
+.todoSheetMenu {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  > button {
+    min-height: 44px;
+    padding: 0 8px;
+    font-size: 1rem;
+    text-align: left;
+    color: $ink;
+    background: transparent;
+    border: none;
+    border-radius: t.$radius-sm;
+
+    &:active {
+      background: t.$color-paper;
+    }
+
+    &[data-tone="danger"] {
+      color: t.$color-danger;
+    }
+  }
+}
+
+.todoSheetDone {
+  min-height: 44px;
+  margin-top: 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: $ink;
+  background: t.$color-paper;
+  border: none;
+  border-radius: t.$radius-md;
+}
+
+@keyframes todo-sheet-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes todo-sheet-rise {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .todoSheetBackdrop,
+  .todoSheet {
+    animation: none;
   }
 }
 
