@@ -225,8 +225,8 @@ async def list_team(db: DbSession, membership: PortalContext) -> list[PortalTeam
 @router.get("/team/{user_id}/avatar")
 async def download_team_member_avatar(db: DbSession, membership: PortalContext, user_id: uuid.UUID):
     agency, client, _contact = membership
-    profile = await service.get_portal_team_avatar_or_404(db, agency.id, client.id, user_id)
-    return await storage.response(profile.avatar_storage_path, media_type=profile.avatar_mime_type or "image/png")
+    path, mime_type = await service.get_portal_team_avatar_or_404(db, agency.id, client.id, user_id)
+    return await storage.response(path, media_type=mime_type or "image/png")
 
 
 # ---- Collaboration canvas ------------------------------------------
@@ -904,8 +904,8 @@ async def download_participant_avatar(
 ):
     agency, client, _contact = membership
     conversation, _p = await _portal_conversation_or_404(db, agency, client.id, conversation_id, current_user)
-    profile = await messaging_service.get_participant_avatar_or_404(db, conversation, user_id)
-    return await storage.response(profile.avatar_storage_path, media_type=profile.avatar_mime_type or "image/png")
+    path, mime_type = await messaging_service.get_participant_avatar_or_404(db, conversation, user_id)
+    return await storage.response(path, media_type=mime_type or "image/png")
 
 
 @router.post("/conversations/{conversation_id}/read", status_code=status.HTTP_204_NO_CONTENT)

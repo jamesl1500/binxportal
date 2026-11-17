@@ -23,7 +23,7 @@ from binx_api.core import stripe_client
 from binx_api.modules.ai import client as ai_client
 from binx_api.modules.billing import service
 from tests.factories import make_agency, make_user
-from tests.stripe_helpers import sign_stripe_payload
+from tests.stripe_helpers import make_checkout_session, make_subscription, sign_stripe_payload
 
 pytestmark = pytest.mark.integration
 
@@ -285,8 +285,8 @@ class TestStartBillingPortal:
 
         await service.start_billing_portal(db_session, agency, target_plan="scale")
         assert captured["flow_data"] == {
-            "type": "subscription_update",
-            "subscription_update": {
+            "type": "subscription_update_confirm",
+            "subscription_update_confirm": {
                 "subscription": "sub_123",
                 "items": [{"id": "si_123", "price": "price_scale", "quantity": 1}],
             },
@@ -342,14 +342,7 @@ class TestWebhookMutators:
         subscription.stripe_customer_id = "cus_123"
         await db_session.commit()
 
-        item = SimpleNamespace(price=SimpleNamespace(id="price_pro"), current_period_end=2_000_000_000, id="si_1")
-        live_subscription = SimpleNamespace(
-            id="sub_123",
-            status="active",
-            cancel_at_period_end=False,
-            items=SimpleNamespace(data=[item]),
-            customer="cus_123",
-        )
+        live_subscription = make_subscription(price_id="price_pro")
 
         async def fake_retrieve_subscription(subscription_id):
             assert subscription_id == "sub_123"
@@ -357,10 +350,8 @@ class TestWebhookMutators:
 
         monkeypatch.setattr(stripe_client, "retrieve_subscription", fake_retrieve_subscription)
 
-        session = SimpleNamespace(
-            customer="cus_123",
-            subscription="sub_123",
-            metadata=SimpleNamespace(to_dict=lambda: {"agency_id": str(agency.id)}),
+        session = make_checkout_session(
+            customer="cus_123", subscription="sub_123", metadata={"agency_id": str(agency.id)}
         )
         await service.sync_from_checkout_completed(db_session, session)
 
@@ -387,14 +378,7 @@ class TestWebhookMutators:
         ai_settings.daily_user_request_cap = 180
         await db_session.commit()
 
-        item = SimpleNamespace(price=SimpleNamespace(id="price_starter"), current_period_end=2_000_000_000, id="si_1")
-        stripe_subscription = SimpleNamespace(
-            id="sub_123",
-            status="active",
-            cancel_at_period_end=True,
-            items=SimpleNamespace(data=[item]),
-            customer="cus_123",
-        )
+        stripe_subscription = make_subscription(price_id="price_starter", cancel_at_period_end=True)
         await service.sync_from_subscription_event(db_session, stripe_subscription)
 
         await db_session.refresh(subscription)
@@ -420,7 +404,7 @@ class TestWebhookMutators:
         subscription.plan = "pro"
         await db_session.commit()
 
-        stripe_subscription = SimpleNamespace(customer="cus_123")
+        stripe_subscription = make_subscription(customer="cus_123")
         await service.sync_from_subscription_deleted(db_session, stripe_subscription)
 
         await db_session.refresh(subscription)

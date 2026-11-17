@@ -7,6 +7,7 @@ from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from binx_api.core.config import get_settings
+from binx_api.core.database import execute_dml
 from binx_api.core.email import send_email_change_email, send_password_reset_email, send_verification_email
 from binx_api.core.security import (
     create_access_token,
@@ -62,10 +63,11 @@ async def _consume_token(db: AsyncSession, raw_token: str, purpose: TokenPurpose
     """Marks a single-use token spent. The UPDATE is guarded on ``used_at IS
     NULL`` so two requests racing the same token can't both win."""
     record = await _peek_token(db, raw_token, purpose)
-    result = await db.execute(
+    result = await execute_dml(
+        db,
         update(AuthToken)
         .where(AuthToken.id == record.id, AuthToken.used_at.is_(None))
-        .values(used_at=datetime.now(UTC))
+        .values(used_at=datetime.now(UTC)),
     )
     if result.rowcount != 1:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid or expired token")

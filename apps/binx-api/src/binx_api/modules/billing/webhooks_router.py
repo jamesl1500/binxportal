@@ -7,11 +7,12 @@ verification + replay protection.
 
 from __future__ import annotations
 
+import stripe
 from fastapi import APIRouter, Request, Response
 
 from binx_api.core.config import get_settings
 from binx_api.core.dependencies import DbSession
-from binx_api.core.stripe_events import verify_and_dedupe
+from binx_api.core.stripe_events import event_object, verify_and_dedupe
 from binx_api.modules.billing import service
 from binx_api.modules.invoicing import service as invoicing_service
 from binx_api.modules.invoicing.webhooks_router import INVOICE_CHECKOUT_EVENTS
@@ -35,17 +36,21 @@ async def platform_webhook(request: Request, db: DbSession) -> Response:
     # invoice stayed unpaid, and Stripe never retried. Hand it to invoicing.
     if getattr(event, "account", None):
         if event.type in INVOICE_CHECKOUT_EVENTS:
-            await invoicing_service.record_checkout_payment(db, event.data.object)
+            if session := event_object(event, stripe.checkout.Session):
+                await invoicing_service.record_checkout_payment(db, session)
         await db.commit()  # keep the dedupe ledger row even when there was nothing to record
         return Response(status_code=200)
 
     match event.type:
         case "checkout.session.completed":
-            await service.sync_from_checkout_completed(db, event.data.object)
+            if session := event_object(event, stripe.checkout.Session):
+                await service.sync_from_checkout_completed(db, session)
         case "customer.subscription.updated":
-            await service.sync_from_subscription_event(db, event.data.object)
+            if subscription := event_object(event, stripe.Subscription):
+                await service.sync_from_subscription_event(db, subscription)
         case "customer.subscription.deleted":
-            await service.sync_from_subscription_deleted(db, event.data.object)
+            if subscription := event_object(event, stripe.Subscription):
+                await service.sync_from_subscription_deleted(db, subscription)
         case "invoice.payment_failed":
             await service.mark_payment_failed(db, event.data.object.customer)
 

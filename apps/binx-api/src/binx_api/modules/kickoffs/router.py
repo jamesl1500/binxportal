@@ -7,7 +7,13 @@ from binx_api.core.dependencies import CurrentUser, DbSession
 from binx_api.modules.agencies.dependencies import require_agency_role
 from binx_api.modules.agencies.models import ROLE_ADMIN, ROLE_MEMBER, ROLE_OWNER, Agency
 from binx_api.modules.kickoffs import service
-from binx_api.modules.kickoffs.models import Kickoff, KickoffAnswer, KickoffQuestion, KickoffTemplate
+from binx_api.modules.kickoffs.models import (
+    Kickoff,
+    KickoffAnswer,
+    KickoffQuestion,
+    KickoffTemplate,
+    KickoffTemplateQuestion,
+)
 from binx_api.modules.kickoffs.schemas import (
     KickoffAnswerRead,
     KickoffConvertRequest,
@@ -30,7 +36,7 @@ router = APIRouter(prefix="/agencies/{agency_id}", tags=["kickoffs"])
 AnyMember = Annotated[tuple[Agency, str], Depends(require_agency_role(ROLE_OWNER, ROLE_ADMIN, ROLE_MEMBER))]
 
 
-def _question_read(question: KickoffQuestion) -> KickoffQuestionRead:
+def _question_read(question: KickoffQuestion | KickoffTemplateQuestion) -> KickoffQuestionRead:
     return KickoffQuestionRead(
         id=question.id,
         position=question.position,

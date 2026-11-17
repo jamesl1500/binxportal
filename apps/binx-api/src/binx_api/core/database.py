@@ -1,6 +1,7 @@
 from collections.abc import AsyncGenerator
+from typing import Any, cast
 
-from sqlalchemy import DateTime, select, text
+from sqlalchemy import CursorResult, DateTime, Executable, select, text
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, mapped_column
@@ -47,6 +48,13 @@ async def get_or_create[M: Base](db: AsyncSession, model: type[M], **key: object
         await db.commit()
         row = (await db.execute(query)).scalar_one()
     return row
+
+
+async def execute_dml(db: AsyncSession, statement: Executable) -> CursorResult[Any]:
+    """Run an INSERT/UPDATE/DELETE and get its ``CursorResult`` (for
+    ``.rowcount``). That's what SQLAlchemy returns at runtime for DML, but
+    ``AsyncSession.execute`` is typed as a plain ``Result``."""
+    return cast(CursorResult[Any], await db.execute(statement))
 
 
 # DB status

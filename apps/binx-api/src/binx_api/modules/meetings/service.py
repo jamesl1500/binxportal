@@ -11,7 +11,7 @@ from datetime import UTC, date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from fastapi import HTTPException, status
-from sqlalchemy import text
+from sqlalchemy import delete, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -72,7 +72,11 @@ async def list_availability_rules(db: AsyncSession, agency_id: uuid.UUID) -> lis
 async def replace_availability_rules(db: AsyncSession, agency: Agency, *, rules: list[dict]) -> list[AvailabilityRule]:
     """Full replace — the availability editor always submits the whole
     week's rules together, same convention as invoicing's line items."""
-    await db.execute(AvailabilityRule.__table__.delete().where(AvailabilityRule.agency_id == agency.id))
+    await db.execute(
+        delete(AvailabilityRule)
+        .where(AvailabilityRule.agency_id == agency.id)
+        .execution_options(synchronize_session=False)
+    )
     new_rules = [AvailabilityRule(agency_id=agency.id, **rule) for rule in rules]
     db.add_all(new_rules)
     await db.commit()

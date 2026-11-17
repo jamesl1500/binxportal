@@ -20,6 +20,7 @@ from binx_api.modules.ai import client as ai_client
 from binx_api.modules.billing import models as billing_models
 from binx_api.modules.billing import service
 from tests.factories import make_agency, make_user
+from tests.stripe_helpers import make_subscription
 
 pytestmark = pytest.mark.integration
 
@@ -201,14 +202,7 @@ class TestTrial:
         await service.start_trial(db_session, agency, plan="pro", actor=owner)
         subscription = await service.get_or_create_subscription(db_session, agency.id)
 
-        stripe_subscription = SimpleNamespace(
-            id="sub_123",
-            status="active",
-            cancel_at_period_end=False,
-            items=SimpleNamespace(
-                data=[SimpleNamespace(price=SimpleNamespace(id="price_pro"), current_period_end=None)]
-            ),
-        )
+        stripe_subscription = make_subscription(price_id="price_pro", current_period_end=None)
         with mock.patch.object(service, "_plan_for_price_id", return_value="pro"):
             await service._apply_stripe_subscription(db_session, subscription, stripe_subscription)
 

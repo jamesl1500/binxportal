@@ -21,6 +21,7 @@ pytestmark = pytest.mark.unit
 def _xlsx(rows: list[list[object]]) -> bytes:
     workbook = Workbook()
     sheet = workbook.active
+    assert sheet is not None  # a new Workbook always has one sheet
     for row in rows:
         sheet.append(row)
     buffer = io.BytesIO()

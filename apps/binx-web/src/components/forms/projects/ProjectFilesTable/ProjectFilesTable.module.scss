@@ -56,6 +56,12 @@
   border: 0;
 }
 
+.tableScroll {
+  // Wide on phones: scroll the table itself, not the whole page.
+  @include m.table-scroll;
+  border-radius: t.$radius-md;
+}
+
 .table {
   width: 100%;
   border-collapse: separate;

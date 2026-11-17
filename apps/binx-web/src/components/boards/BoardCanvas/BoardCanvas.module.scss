@@ -670,6 +670,12 @@ $rail-width: 4.25rem;
     background: color-mix(in srgb, $select 10%, t.$color-surface);
     color: t.$color-ink;
   }
+
+  // WCAG 2.5.8 minimum on touch screens (was ~23px tall).
+  @media (pointer: coarse) {
+    min-height: 24px;
+    padding-inline: 10px;
+  }
 }
 
 // ---- Selected-card toolbar ----------------------------------------------

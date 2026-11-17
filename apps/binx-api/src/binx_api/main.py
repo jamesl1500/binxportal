@@ -1,7 +1,7 @@
 import logging
 
 import sentry_sdk
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
@@ -39,6 +39,15 @@ from binx_api.modules.users.router import router as users_router
 logging.basicConfig(level=logging.INFO)
 
 
+def _on_rate_limited(request: Request, exc: Exception) -> Response:
+    """slowapi's 429 handler, typed the way Starlette's handler registry
+    expects (any ``Exception``). Only ever registered for
+    ``RateLimitExceeded``; anything else is re-raised untouched."""
+    if not isinstance(exc, RateLimitExceeded):
+        raise exc
+    return _rate_limit_exceeded_handler(request, exc)
+
+
 def create_app() -> FastAPI:
     settings = get_settings()
 
@@ -57,7 +66,7 @@ def create_app() -> FastAPI:
     # Rate limiting — the @limiter.limit decorators in modules/auth/router.py
     # need the limiter on app.state, and a handler to turn a breach into 429.
     app.state.limiter = limiter
-    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    app.add_exception_handler(RateLimitExceeded, _on_rate_limited)
 
     # API Ops
     app.include_router(ops_router)

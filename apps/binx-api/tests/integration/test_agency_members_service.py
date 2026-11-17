@@ -31,7 +31,9 @@ class TestListAgencyMembers:
         by_user = {user.id: (member, user, privacy, profile) for member, user, privacy, profile in rows}
         assert set(by_user) == {owner.id, teammate.id}
         assert by_user[owner.id][2] is None
-        assert by_user[teammate.id][2].profile_visibility == "private"
+        teammate_privacy = by_user[teammate.id][2]
+        assert teammate_privacy is not None
+        assert teammate_privacy.profile_visibility == "private"
         # Neither has visited their own /profile pages yet — no row created.
         assert by_user[owner.id][3] is None
         assert by_user[teammate.id][3] is None

@@ -9,9 +9,9 @@ path — nothing here makes a real network call.
 from __future__ import annotations
 
 import json
-from types import SimpleNamespace
 
 import pytest
+from anthropic.types import ContentBlock, Message, StopReason, TextBlock, ToolUseBlock, Usage
 
 from binx_api.modules.agencies.models import ROLE_MEMBER, AgencyMember
 from binx_api.modules.ai import client as ai_client
@@ -38,16 +38,27 @@ def _configure(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(ai_client.settings, "anthropic_api_key", "sk-test-fake-key")
 
 
-def _fake_usage() -> SimpleNamespace:
-    return SimpleNamespace(
-        input_tokens=500, output_tokens=100, cache_creation_input_tokens=0, cache_read_input_tokens=0
+def _fake_usage() -> Usage:
+    return Usage(input_tokens=500, output_tokens=100, cache_creation_input_tokens=0, cache_read_input_tokens=0)
+
+
+def _message(content: list[ContentBlock], stop_reason: StopReason) -> Message:
+    """A real ``anthropic.types.Message`` — the same class the SDK hands the
+    service, so these tests exercise the same attribute access."""
+    return Message(
+        id="msg_test",
+        type="message",
+        role="assistant",
+        model="claude-test",
+        content=content,
+        stop_reason=stop_reason,
+        stop_sequence=None,
+        usage=_fake_usage(),
     )
 
 
-def _text_message(text: str) -> SimpleNamespace:
-    return SimpleNamespace(
-        content=[SimpleNamespace(type="text", text=text)], usage=_fake_usage(), stop_reason="end_turn"
-    )
+def _text_message(text: str) -> Message:
+    return _message([TextBlock(type="text", text=text)], "end_turn")
 
 
 def _stub_reply(monkeypatch: pytest.MonkeyPatch, text: str) -> None:
@@ -374,12 +385,11 @@ class TestMessageReplyDraft:
         assert drafted.json() == {"draft": "We expect it done by Friday."}
 
 
-def _tool_use_message(tool_name: str, tool_input: dict) -> SimpleNamespace:
-    block = SimpleNamespace(type="tool_use", id="toolu_1", name=tool_name, input=tool_input)
-    return SimpleNamespace(content=[block], usage=_fake_usage(), stop_reason="tool_use")
+def _tool_use_message(tool_name: str, tool_input: dict) -> Message:
+    return _message([ToolUseBlock(type="tool_use", id="toolu_1", name=tool_name, input=tool_input)], "tool_use")
 
 
-def _stub_stream(monkeypatch: pytest.MonkeyPatch, *messages: SimpleNamespace) -> None:
+def _stub_stream(monkeypatch: pytest.MonkeyPatch, *messages: Message) -> None:
     """Scripts ``complete_stream``: each call streams the next message's text
     as deltas, then completes with it."""
     remaining = list(messages)

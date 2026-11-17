@@ -89,6 +89,10 @@
 }
 
 .identityText {
+  // Flex items default to min-width: auto; let a long name/email wrap
+  // instead of pushing the page sideways on a phone.
+  min-width: 0;
+  overflow-wrap: anywhere;
   padding-bottom: t.$space-2;
 }
 
@@ -216,7 +220,7 @@
 
 .metaList {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
   gap: t.$space-4;
   margin: 0;
 }
@@ -224,6 +228,8 @@
 .metaItem {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  overflow-wrap: anywhere;
   gap: t.$space-1;
 }
 

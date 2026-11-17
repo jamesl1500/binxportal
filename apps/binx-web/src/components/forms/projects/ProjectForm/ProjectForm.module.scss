@@ -9,13 +9,17 @@
 
 .row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  // Two columns where they fit, one on a phone. A fixed `1fr 1fr` cannot
+  // shrink below its inputs (date pickers have a wide intrinsic size) and
+  // pushed the page sideways at 320–360px.
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
   gap: t.$space-4;
 }
 
 .field {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   gap: t.$space-2;
 }
 

@@ -588,7 +588,8 @@ async def import_prospects(
         if name.lower() in seen_names or (host and host in seen_hosts):
             out.skipped.append({"name": name, "reason": "Already a lead"})
             continue
-        source_label = source_labels.get(cand.get("source"), "web search")
+        source = cand.get("source")
+        source_label = source_labels.get(source, "web search") if isinstance(source, str) else "web search"
         lead = await create_lead(
             db,
             agency,

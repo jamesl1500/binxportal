@@ -18,11 +18,12 @@ See ``core/stripe_events.py`` for signature verification + replay protection.
 
 from __future__ import annotations
 
+import stripe
 from fastapi import APIRouter, Request, Response
 
 from binx_api.core.config import get_settings
 from binx_api.core.dependencies import DbSession
-from binx_api.core.stripe_events import verify_and_dedupe, verify_and_dedupe_thin_event
+from binx_api.core.stripe_events import event_object, verify_and_dedupe, verify_and_dedupe_thin_event
 from binx_api.modules.invoicing import service
 
 router = APIRouter(prefix="/webhooks/stripe", tags=["invoicing-webhooks"])
@@ -41,8 +42,8 @@ async def connect_webhook(request: Request, db: DbSession) -> Response:
     if event is None:
         return Response(status_code=200)
 
-    if event.type in INVOICE_CHECKOUT_EVENTS:
-        await service.record_checkout_payment(db, event.data.object)
+    if event.type in INVOICE_CHECKOUT_EVENTS and (session := event_object(event, stripe.checkout.Session)):
+        await service.record_checkout_payment(db, session)
 
     return Response(status_code=200)
 

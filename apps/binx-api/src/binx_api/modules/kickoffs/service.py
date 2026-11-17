@@ -19,7 +19,7 @@ import uuid
 from datetime import UTC, datetime
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from binx_api.core import email as email_service
@@ -121,7 +121,9 @@ async def _replace_template_questions(
     db: AsyncSession, template: KickoffTemplate, questions: list[KickoffQuestionInput]
 ) -> None:
     await db.execute(
-        KickoffTemplateQuestion.__table__.delete().where(KickoffTemplateQuestion.template_id == template.id)
+        delete(KickoffTemplateQuestion)
+        .where(KickoffTemplateQuestion.template_id == template.id)
+        .execution_options(synchronize_session=False)
     )
     for position, q in enumerate(questions):
         db.add(
@@ -243,7 +245,11 @@ async def list_answers(db: AsyncSession, kickoff_id: uuid.UUID) -> list[KickoffA
 
 
 async def _replace_questions(db: AsyncSession, kickoff: Kickoff, questions: list[KickoffQuestionInput]) -> None:
-    await db.execute(KickoffQuestion.__table__.delete().where(KickoffQuestion.kickoff_id == kickoff.id))
+    await db.execute(
+        delete(KickoffQuestion)
+        .where(KickoffQuestion.kickoff_id == kickoff.id)
+        .execution_options(synchronize_session=False)
+    )
     for position, q in enumerate(questions):
         db.add(
             KickoffQuestion(
@@ -420,7 +426,9 @@ async def submit_answers(
             raise HTTPException(status.HTTP_400_BAD_REQUEST, f"“{question.label}” is required")
 
     now = datetime.now(UTC)
-    await db.execute(KickoffAnswer.__table__.delete().where(KickoffAnswer.kickoff_id == kickoff.id))
+    await db.execute(
+        delete(KickoffAnswer).where(KickoffAnswer.kickoff_id == kickoff.id).execution_options(synchronize_session=False)
+    )
     for question_id, text_value, selected_options, file_id in answers:
         if question_id not in questions_by_id:
             raise HTTPException(status.HTTP_400_BAD_REQUEST, "Answer given for a question that isn't on this kickoff")

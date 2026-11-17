@@ -362,6 +362,7 @@ class TestDeleteAccount:
     async def test_deletes_the_users_uploaded_images_off_disk(self, db_session) -> None:
         user = await make_user(db_session, password=PASSWORD)
         profile = await service.save_user_image(db_session, user, kind="avatar", content=PNG, mime_type="image/png")
+        assert profile.avatar_storage_path is not None
         avatar_path = Path(profile.avatar_storage_path)
         assert avatar_path.exists()
 

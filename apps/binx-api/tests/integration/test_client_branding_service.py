@@ -92,6 +92,7 @@ class TestLogo:
 
     async def test_delete_client_cleans_up_the_uploaded_logo(self, db_session, client) -> None:
         branding = await service.save_client_logo(db_session, client, content=PNG, mime_type="image/png")
+        assert branding.logo_storage_path is not None
         logo_path = Path(branding.logo_storage_path)
         assert logo_path.exists()
 

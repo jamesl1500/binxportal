@@ -8,13 +8,15 @@ issued an invoice is frozen except for recording payments and voiding.
 
 from __future__ import annotations
 
+import logging
 import uuid
 from datetime import UTC, date, datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal
+from typing import TYPE_CHECKING
 
 import stripe
 from fastapi import HTTPException, status
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -37,13 +39,18 @@ from binx_api.modules.invoicing.models import (
     InvoiceLineItem,
     InvoicePayment,
 )
-from binx_api.modules.invoicing.schemas import LineItemInput
+from binx_api.modules.invoicing.schemas import CheckoutOutcome, LineItemInput
 from binx_api.modules.notifications import service as notifications_service
 from binx_api.modules.notifications.models import CATEGORY_INVOICING, EVENT_INVOICE_ISSUED, EVENT_INVOICE_PAID
 from binx_api.modules.projects.models import Project
 from binx_api.modules.users.models import User
 
+if TYPE_CHECKING:
+    from stripe.params.checkout import SessionCreateParams as CheckoutSessionCreateParams
+    from stripe.params.v2.core import AccountCreateParams
+
 settings = get_settings()
+logger = logging.getLogger(__name__)
 
 
 def _format_money(amount_cents: int, currency: str) -> str:
@@ -156,44 +163,49 @@ async def start_connect_onboarding(db: AsyncSession, agency: Agency, *, country:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Stripe isn't configured")
     billing_settings = await get_or_create_billing_settings(db, agency)
     if billing_settings.stripe_connect_account_id is None:
-        account = await stripe_client.create_connect_account(
-            {
-                "contact_email": billing_settings.contact_email,
-                "dashboard": "full",
-                "identity": {"country": country},
-                "configuration": {
-                    "merchant": {
-                        "capabilities": {
-                            "card_payments": {"requested": True},
-                        },
+        account_params: AccountCreateParams = {
+            "dashboard": "full",
+            "identity": {"country": country},
+            "configuration": {
+                "merchant": {
+                    "capabilities": {
+                        "card_payments": {"requested": True},
                     },
                 },
-                "defaults": {
-                    "responsibilities": {
-                        "fees_collector": "stripe",
-                        "losses_collector": "stripe",
-                    },
+            },
+            "defaults": {
+                "responsibilities": {
+                    "fees_collector": "stripe",
+                    "losses_collector": "stripe",
                 },
-            }
-        )
+            },
+        }
+        if billing_settings.contact_email:
+            account_params["contact_email"] = billing_settings.contact_email
+        account = await stripe_client.create_connect_account(account_params)
         billing_settings.stripe_connect_account_id = account.id
         await db.commit()
         await db.refresh(billing_settings)
 
+    account_id = billing_settings.stripe_connect_account_id
+    if account_id is None:  # set just above; narrows the type
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, "Couldn't create a Stripe account")
     link = await stripe_client.create_account_link(
         {
-            "account": billing_settings.stripe_connect_account_id,
+            "account": account_id,
+            # No `configurations` here: Stripe removed that field from
+            # Account Links (API 2026-09-30.endive, which the SDK pins). The
+            # link onboards whatever the account was created with — merchant.
             "use_case": {
                 "type": "account_onboarding",
                 "account_onboarding": {
-                    "configurations": ["merchant"],
                     "refresh_url": f"{settings.frontend_url}/settings/invoicing?stripe=refresh",
                     "return_url": f"{settings.frontend_url}/settings/invoicing?stripe=return",
                 },
             },
         }
     )
-    return link.url
+    return stripe_client.require_url(link.url)
 
 
 async def sync_connect_status(db: AsyncSession, account: stripe.v2.core.Account) -> AgencyBillingSettings | None:
@@ -217,9 +229,15 @@ async def sync_connect_status(db: AsyncSession, account: stripe.v2.core.Account)
         return None
 
     merchant = account.configuration.merchant if account.configuration else None
-    card_payments_active = bool(merchant and merchant.capabilities.card_payments.status == "active")
-    stripe_balance = merchant.capabilities.stripe_balance if merchant else None
-    payouts_active = bool(stripe_balance and stripe_balance.payouts.status == "active")
+    # Every level here is optional in the v2 Account: a capability that hasn't
+    # been requested (or a merchant config still being applied) is simply
+    # absent. A webhook must never 500 on that, so read each one defensively.
+    capabilities = merchant.capabilities if merchant else None
+    card_payments = capabilities.card_payments if capabilities else None
+    card_payments_active = bool(card_payments and card_payments.status == "active")
+    stripe_balance = capabilities.stripe_balance if capabilities else None
+    payouts = stripe_balance.payouts if stripe_balance else None
+    payouts_active = bool(payouts and payouts.status == "active")
 
     billing_settings.stripe_connect_charges_enabled = card_payments_active
     billing_settings.stripe_connect_details_submitted = merchant is not None
@@ -258,7 +276,7 @@ async def start_invoice_checkout(
     balance = invoice.total_cents - invoice.amount_paid_cents
     fee_cents = round(balance * settings.stripe_application_fee_bps / 10_000)
 
-    params: dict = {
+    params: CheckoutSessionCreateParams = {
         "mode": "payment",
         "line_items": [
             {
@@ -289,7 +307,7 @@ async def start_invoice_checkout(
     session = await stripe_client.create_checkout_session(
         params, stripe_account=billing_settings.stripe_connect_account_id
     )
-    return session.url
+    return stripe_client.require_url(session.url)
 
 
 # Checkout Session payment_status values that mean the money is actually in.
@@ -319,9 +337,23 @@ async def record_checkout_payment(db: AsyncSession, session: stripe.checkout.Ses
     if invoice_id is None or agency_id is None:
         return None
 
+    # The PaymentIntent id is what makes recording idempotent (it's the
+    # unique key the webhook and the return page race on). A settled card
+    # payment always has one and an amount; without either we can't record
+    # safely, so leave it for the agency to record by hand rather than risk a
+    # duplicate (NULL never matches the dedupe lookup below).
+    payment_intent_id = stripe_client.expandable_id(session.payment_intent)
+    if payment_intent_id is None or session.amount_total is None:
+        logger.warning(
+            "Checkout session %s settled without a payment intent/amount; not auto-recording invoice %s",
+            session.id,
+            invoice_id,
+        )
+        return None
+
     invoice = await get_invoice_or_404(db, uuid.UUID(agency_id), uuid.UUID(invoice_id))
     existing = await db.execute(
-        select(InvoicePayment.id).where(InvoicePayment.stripe_payment_intent_id == session.payment_intent)
+        select(InvoicePayment.id).where(InvoicePayment.stripe_payment_intent_id == payment_intent_id)
     )
     if existing.scalar_one_or_none() is not None:
         return invoice  # already recorded — a redelivery, or the other path got here first
@@ -337,7 +369,7 @@ async def record_checkout_payment(db: AsyncSession, session: stripe.checkout.Ses
             paid_on=datetime.now(UTC).date(),
             method="stripe",
             reference=None,
-            stripe_payment_intent_id=session.payment_intent,
+            stripe_payment_intent_id=payment_intent_id,
             stripe_checkout_session_id=session.id,
         )
     except IntegrityError:
@@ -355,7 +387,7 @@ _SESSION_NOT_FOUND = (
 
 async def confirm_checkout_session(
     db: AsyncSession, invoice: Invoice, agency: Agency, billing_settings: AgencyBillingSettings, session_id: str
-) -> str:
+) -> CheckoutOutcome:
     """The portal return page's direct check with Stripe, so a client sees a
     real answer without waiting on (or depending on) webhook delivery.
     Fetches the session from the agency's connected account, refuses one that
@@ -444,7 +476,11 @@ async def list_line_items(db: AsyncSession, invoice_id: uuid.UUID) -> list[Invoi
 async def _replace_line_items(
     db: AsyncSession, invoice: Invoice, line_items: list[LineItemInput]
 ) -> list[InvoiceLineItem]:
-    await db.execute(InvoiceLineItem.__table__.delete().where(InvoiceLineItem.invoice_id == invoice.id))
+    await db.execute(
+        delete(InvoiceLineItem)
+        .where(InvoiceLineItem.invoice_id == invoice.id)
+        .execution_options(synchronize_session=False)
+    )
     rows: list[InvoiceLineItem] = []
     for position, item in enumerate(line_items):
         row = InvoiceLineItem(

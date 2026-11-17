@@ -193,7 +193,7 @@ async def _run(agency_name: str, client_name: str) -> None:
             )
         ).all()
         role_rank = {"owner": 0, "admin": 1}
-        members.sort(key=lambda row: role_rank.get(row[0].role, 2))
+        members = sorted(members, key=lambda row: role_rank.get(row[0].role, 2))
         staff: list[User] = [row[1] for row in members]
         owner = staff[0]
         teammate = staff[1] if len(staff) > 1 else owner

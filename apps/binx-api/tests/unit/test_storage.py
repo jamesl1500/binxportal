@@ -23,7 +23,10 @@ def _local_roots(tmp_path, monkeypatch: pytest.MonkeyPatch):
 
 
 async def _body(response: StreamingResponse) -> bytes:
-    return b"".join([chunk async for chunk in response.body_iterator])
+    # body_iterator is typed as str | bytes | memoryview chunks; normalise each.
+    return b"".join(
+        [chunk.encode() if isinstance(chunk, str) else bytes(chunk) async for chunk in response.body_iterator]
+    )
 
 
 class TestS3:

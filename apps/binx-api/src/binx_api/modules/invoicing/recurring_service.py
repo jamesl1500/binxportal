@@ -22,7 +22,7 @@ from datetime import UTC, date, datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from binx_api.modules.agencies import service as agencies_service
@@ -105,7 +105,9 @@ async def _replace_line_items(
     db: AsyncSession, schedule: RecurringInvoiceSchedule, line_items: list[RecurringLineItemInput]
 ) -> list[RecurringInvoiceLineItem]:
     await db.execute(
-        RecurringInvoiceLineItem.__table__.delete().where(RecurringInvoiceLineItem.schedule_id == schedule.id)
+        delete(RecurringInvoiceLineItem)
+        .where(RecurringInvoiceLineItem.schedule_id == schedule.id)
+        .execution_options(synchronize_session=False)
     )
     rows: list[RecurringInvoiceLineItem] = []
     for position, item in enumerate(line_items):

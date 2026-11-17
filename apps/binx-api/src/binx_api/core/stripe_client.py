@@ -15,9 +15,19 @@ turns warnings into errors).
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Protocol
 
 import stripe
+from fastapi import HTTPException, status
+
+if TYPE_CHECKING:
+    # The SDK's own TypedDicts for each call: a misspelled or mistyped Stripe
+    # field at any call site is a type error instead of a runtime 400.
+    from stripe import RequestOptions
+    from stripe.params import CustomerCreateParams
+    from stripe.params.billing_portal import SessionCreateParams as PortalSessionCreateParams
+    from stripe.params.checkout import SessionCreateParams as CheckoutSessionCreateParams
+    from stripe.params.v2.core import AccountCreateParams, AccountLinkCreateParams, AccountRetrieveParams
 
 from binx_api.core.config import get_settings
 
@@ -33,28 +43,56 @@ def _get_client() -> stripe.StripeClient:
     return _client
 
 
-async def create_customer(params: dict[str, Any]) -> stripe.Customer:
+class _HasId(Protocol):
+    @property
+    def id(self) -> str: ...
+
+
+def expandable_id(field: str | _HasId | None) -> str | None:
+    """The id behind a Stripe "expandable" field (``session.subscription``,
+    ``subscription.customer``, ``session.payment_intent``, …): a plain id
+    string normally, the full object if the request expanded it. Code that
+    needs the id must not assume which one it got."""
+    if field is None or isinstance(field, str):
+        return field
+    return field.id
+
+
+def require_url(url: str | None) -> str:
+    """A hosted Checkout / Billing Portal session always has a URL in the
+    modes this app uses; if Stripe ever returns one without, fail clearly
+    instead of handing ``None`` to the frontend as a redirect target."""
+    if not url:
+        raise HTTPException(
+            status.HTTP_502_BAD_GATEWAY, "Stripe didn't return a page to send you to. Please try again."
+        )
+    return url
+
+
+def _account_options(stripe_account: str | None) -> RequestOptions | None:
+    return {"stripe_account": stripe_account} if stripe_account else None
+
+
+async def create_customer(params: CustomerCreateParams) -> stripe.Customer:
     return await _get_client().v1.customers.create_async(params)
 
 
 async def create_checkout_session(
-    params: dict[str, Any], *, stripe_account: str | None = None
+    params: CheckoutSessionCreateParams, *, stripe_account: str | None = None
 ) -> stripe.checkout.Session:
     """``stripe_account`` targets a Connect connected account (the "direct
     charge" pattern) — omitted for platform-subscription checkouts."""
-    options = {"stripe_account": stripe_account} if stripe_account else None
-    return await _get_client().v1.checkout.sessions.create_async(params, options)
+    return await _get_client().v1.checkout.sessions.create_async(params, _account_options(stripe_account))
 
 
 async def retrieve_checkout_session(session_id: str, *, stripe_account: str | None = None) -> stripe.checkout.Session:
     """Same ``stripe_account`` targeting as ``create_checkout_session`` — a
     client-invoice session lives on the agency's connected account, so it has
     to be fetched from there too."""
-    options = {"stripe_account": stripe_account} if stripe_account else None
-    return await _get_client().v1.checkout.sessions.retrieve_async(session_id, None, options)
+    return await _get_client().v1.checkout.sessions.retrieve_async(session_id, None, _account_options(stripe_account))
 
 
-async def create_billing_portal_session(params: dict[str, Any]) -> stripe.billing_portal.Session:
+async def create_billing_portal_session(params: PortalSessionCreateParams) -> stripe.billing_portal.Session:
     return await _get_client().v1.billing_portal.sessions.create_async(params)
 
 
@@ -68,15 +106,17 @@ async def retrieve_subscription(subscription_id: str) -> stripe.Subscription:
 # Connect integrations"). Account Links (hosted onboarding) are v2-native
 # too (`.v2.core.account_links`, not `.v1.account_links` — the v1 endpoint
 # doesn't accept a v2-created account id).
-async def create_connect_account(params: dict[str, Any]) -> stripe.v2.core.Account:
+async def create_connect_account(params: AccountCreateParams) -> stripe.v2.core.Account:
     return await _get_client().v2.core.accounts.create_async(params)
 
 
-async def retrieve_connect_account(account_id: str, params: dict[str, Any] | None = None) -> stripe.v2.core.Account:
+async def retrieve_connect_account(
+    account_id: str, params: AccountRetrieveParams | None = None
+) -> stripe.v2.core.Account:
     return await _get_client().v2.core.accounts.retrieve_async(account_id, params)
 
 
-async def create_account_link(params: dict[str, Any]) -> stripe.v2.core.AccountLink:
+async def create_account_link(params: AccountLinkCreateParams) -> stripe.v2.core.AccountLink:
     return await _get_client().v2.core.account_links.create_async(params)
 
 

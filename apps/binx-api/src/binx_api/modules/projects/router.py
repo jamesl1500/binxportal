@@ -8,7 +8,7 @@ from binx_api.core.dependencies import CurrentUser, DbSession
 from binx_api.modules.agencies.dependencies import require_agency_role
 from binx_api.modules.agencies.models import ROLE_ADMIN, ROLE_MEMBER, ROLE_OWNER, Agency, AgencyClient
 from binx_api.modules.ai import service as ai_service
-from binx_api.modules.ai.schemas import AiDraftRead, AiTaskListSuggestion, AiTaskSuggestionsRead
+from binx_api.modules.ai.schemas import AiDraftRead, AiTaskListSuggestion, AiTaskSuggestion, AiTaskSuggestionsRead
 from binx_api.modules.boards import service as boards_service
 from binx_api.modules.projects import service
 from binx_api.modules.projects.models import ProjectRole
@@ -261,7 +261,7 @@ async def suggest_project_ai_tasks(
         lists=[
             AiTaskListSuggestion(
                 name=lst.name,
-                tasks=[{"title": t.title, "description": t.description} for t in lst.tasks],
+                tasks=[AiTaskSuggestion(title=t.title, description=t.description) for t in lst.tasks],
             )
             for lst in suggestions
         ]

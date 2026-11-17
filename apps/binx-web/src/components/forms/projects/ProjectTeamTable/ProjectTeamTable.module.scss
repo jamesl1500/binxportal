@@ -24,12 +24,16 @@
 .addRow {
   display: flex;
   gap: t.$space-2;
+  // Never wider than the toolbar: on a 320px phone the 12rem select plus
+  // the button overflowed the page.
+  max-width: 100%;
 }
 
 .select {
   @include m.input-base;
   width: auto;
-  min-width: 12rem;
+  min-width: 0;
+  flex: 1 1 12rem;
   cursor: pointer;
 }
 
@@ -41,6 +45,12 @@
   &:hover:not(:disabled) {
     background: color-mix(in srgb, t.$color-accent 85%, white);
   }
+}
+
+.tableScroll {
+  // Wide on phones: scroll the table itself, not the whole page.
+  @include m.table-scroll;
+  border-radius: t.$radius-md;
 }
 
 .table {

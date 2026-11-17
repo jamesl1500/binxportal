@@ -151,6 +151,7 @@ class TestAnalyzeStub:
 
         analyzed = await service.analyze_lead(db_session, lead, actor=owner)
         assert analyzed.score is not None
+        assert analyzed.ai_summary is not None
         assert "Heuristic read of" in analyzed.ai_summary
 
 

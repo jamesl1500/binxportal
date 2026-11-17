@@ -14,7 +14,7 @@ from datetime import UTC, datetime
 from decimal import ROUND_HALF_UP, Decimal
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from binx_api.core.config import get_settings
@@ -104,7 +104,11 @@ async def list_line_items(db: AsyncSession, proposal_id: uuid.UUID) -> list[Prop
 async def _replace_line_items(
     db: AsyncSession, proposal: Proposal, line_items: list[ProposalLineItemInput]
 ) -> list[ProposalLineItem]:
-    await db.execute(ProposalLineItem.__table__.delete().where(ProposalLineItem.proposal_id == proposal.id))
+    await db.execute(
+        delete(ProposalLineItem)
+        .where(ProposalLineItem.proposal_id == proposal.id)
+        .execution_options(synchronize_session=False)
+    )
     rows: list[ProposalLineItem] = []
     for position, item in enumerate(line_items):
         row = ProposalLineItem(

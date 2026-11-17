@@ -562,15 +562,16 @@ async def list_portal_team(db: AsyncSession, agency_id: uuid.UUID, client_id: uu
 
 async def get_portal_team_avatar_or_404(
     db: AsyncSession, agency_id: uuid.UUID, client_id: uuid.UUID, user_id: uuid.UUID
-) -> UserProfile:
-    """The avatar of someone on this client's team — 404 for anyone who isn't
-    on one of the client's projects, so this can't be used to look up
-    arbitrary users."""
+) -> tuple[str, str | None]:
+    """The ``(storage_path, mime_type)`` of the avatar of someone on this
+    client's team — 404 for anyone who isn't on one of the client's projects,
+    so this can't be used to look up arbitrary users. The path is returned
+    already checked (typed ``str``, never ``None``)."""
     row = (await db.execute(_client_team_query(agency_id, client_id).where(User.id == user_id).limit(1))).first()
     profile = row[6] if row else None
     if profile is None or not profile.avatar_storage_path:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No avatar set")
-    return profile
+    return profile.avatar_storage_path, profile.avatar_mime_type
 
 
 async def portal_client_read(db: AsyncSession, client: AgencyClient) -> PortalClientRead:

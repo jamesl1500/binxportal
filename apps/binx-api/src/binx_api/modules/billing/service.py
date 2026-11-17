@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, datetime, timedelta
+from typing import TYPE_CHECKING
 
 import stripe
 from fastapi import HTTPException, status
@@ -21,6 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from binx_api.core import stripe_client
 from binx_api.core.config import get_settings
+from binx_api.core.database import execute_dml
 from binx_api.modules.activity import service as activity_service
 from binx_api.modules.activity.models import CATEGORY_SETTINGS, VISIBILITY_ADMIN
 from binx_api.modules.agencies.models import ROLE_OWNER, Agency, AgencyClient, AgencyMember
@@ -41,6 +43,10 @@ from binx_api.modules.billing.models import (
 from binx_api.modules.leads.models import Lead
 from binx_api.modules.projects.models import STATUS_ARCHIVED, Project
 from binx_api.modules.users.models import User
+
+if TYPE_CHECKING:
+    from stripe.params.billing_portal import SessionCreateParams as PortalSessionCreateParams
+    from stripe.params.checkout import SessionCreateParams as CheckoutSessionCreateParams
 
 settings = get_settings()
 
@@ -131,7 +137,8 @@ async def start_trial(db: AsyncSession, agency: Agency, *, plan: str, actor: Use
     trial_ends_at = now + timedelta(days=TRIAL_DAYS)
     trial_discount_expires_at = trial_ends_at + timedelta(days=TRIAL_DISCOUNT_GRACE_DAYS)
 
-    result = await db.execute(
+    result = await execute_dml(
+        db,
         update(AgencySubscription)
         .where(
             AgencySubscription.id == subscription.id,
@@ -143,7 +150,7 @@ async def start_trial(db: AsyncSession, agency: Agency, *, plan: str, actor: Use
             trial_ends_at=trial_ends_at,
             trial_discount_expires_at=trial_discount_expires_at,
             has_used_trial=True,
-        )
+        ),
     )
     await db.commit()
     await db.refresh(subscription)
@@ -275,7 +282,7 @@ async def start_checkout(db: AsyncSession, agency: Agency, *, plan: str, return_
         await db.commit()
         await db.refresh(subscription)
 
-    params: dict = {
+    params: CheckoutSessionCreateParams = {
         "mode": "subscription",
         "customer": subscription.stripe_customer_id,
         "line_items": [{"price": price_id, "quantity": 1}],
@@ -290,7 +297,7 @@ async def start_checkout(db: AsyncSession, agency: Agency, *, plan: str, return_
         params["discounts"] = [{"coupon": settings.stripe_launch_discount_coupon_id}]
 
     session = await stripe_client.create_checkout_session(params)
-    return session.url
+    return stripe_client.require_url(session.url)
 
 
 async def start_billing_portal(db: AsyncSession, agency: Agency, *, target_plan: str | None = None) -> str:
@@ -303,7 +310,7 @@ async def start_billing_portal(db: AsyncSession, agency: Agency, *, target_plan:
     if subscription.stripe_customer_id is None:
         raise HTTPException(status.HTTP_409_CONFLICT, "This agency has no Stripe customer yet — subscribe first")
 
-    params: dict = {
+    params: PortalSessionCreateParams = {
         "customer": subscription.stripe_customer_id,
         "return_url": f"{settings.frontend_url}/settings/plan",
     }
@@ -322,16 +329,20 @@ async def start_billing_portal(db: AsyncSession, agency: Agency, *, target_plan:
         price_id = _price_id_for_plan(target_plan)
         live_subscription = await stripe_client.retrieve_subscription(subscription.stripe_subscription_id)
         item_id = live_subscription.items.data[0].id
+        # `subscription_update_confirm` (not `subscription_update`) is the
+        # portal flow that takes a target price: it opens straight on "confirm
+        # switching to <plan>". `subscription_update` accepts only the
+        # subscription id, so Stripe rejects an `items` list there.
         params["flow_data"] = {
-            "type": "subscription_update",
-            "subscription_update": {
+            "type": "subscription_update_confirm",
+            "subscription_update_confirm": {
                 "subscription": subscription.stripe_subscription_id,
                 "items": [{"id": item_id, "price": price_id, "quantity": 1}],
             },
         }
 
     session = await stripe_client.create_billing_portal_session(params)
-    return session.url
+    return stripe_client.require_url(session.url)
 
 
 async def _apply_stripe_subscription(
@@ -385,30 +396,33 @@ async def sync_from_checkout_completed(db: AsyncSession, session: stripe.checkou
     # StripeObject isn't a real dict (no .get()) — .to_dict() gives us one.
     metadata = session.metadata.to_dict() if session.metadata else {}
     agency_id = metadata.get("agency_id")
-    if agency_id is None or session.subscription is None:
+    subscription_id = stripe_client.expandable_id(session.subscription)
+    if agency_id is None or subscription_id is None:
         return
     result = await db.execute(select(AgencySubscription).where(AgencySubscription.agency_id == uuid.UUID(agency_id)))
     subscription = result.scalar_one_or_none()
     if subscription is None:
         return
-    live_subscription = await stripe_client.retrieve_subscription(session.subscription)
+    live_subscription = await stripe_client.retrieve_subscription(subscription_id)
     await _apply_stripe_subscription(db, subscription, live_subscription)
 
 
-async def _subscription_by_customer(db: AsyncSession, customer_id: str) -> AgencySubscription | None:
+async def _subscription_by_customer(db: AsyncSession, customer_id: str | None) -> AgencySubscription | None:
+    if customer_id is None:
+        return None
     result = await db.execute(select(AgencySubscription).where(AgencySubscription.stripe_customer_id == customer_id))
     return result.scalar_one_or_none()
 
 
 async def sync_from_subscription_event(db: AsyncSession, stripe_subscription: stripe.Subscription) -> None:
-    subscription = await _subscription_by_customer(db, stripe_subscription.customer)
+    subscription = await _subscription_by_customer(db, stripe_client.expandable_id(stripe_subscription.customer))
     if subscription is None:
         return
     await _apply_stripe_subscription(db, subscription, stripe_subscription)
 
 
 async def sync_from_subscription_deleted(db: AsyncSession, stripe_subscription: stripe.Subscription) -> None:
-    subscription = await _subscription_by_customer(db, stripe_subscription.customer)
+    subscription = await _subscription_by_customer(db, stripe_client.expandable_id(stripe_subscription.customer))
     if subscription is None:
         return
     previous = subscription.plan

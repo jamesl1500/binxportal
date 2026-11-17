@@ -25,7 +25,7 @@ import uuid
 from asyncio import Lock
 from collections.abc import AsyncIterator, Awaitable, Callable
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 from fastapi import HTTPException, status
 from pydantic import ValidationError
@@ -869,7 +869,7 @@ _ACTION_TOOLS = [
 _ACTION_TOOL_NAMES = frozenset(tool["name"] for tool in _ACTION_TOOLS)
 
 
-def _invoice_status_label(invoice: Invoice, today: datetime) -> str:
+def _invoice_status_label(invoice: Invoice, today: date) -> str:
     """A small, local re-derivation of invoicing/service.py's private
     ``_display_status`` — kept in sync by hand rather than reaching across
     the module boundary for one label."""
