@@ -1,0 +1,137 @@
+// Motion primitives for the marketing + auth surfaces.
+// Consumed via `@use "…/motion" as mo;`.
+//
+// Rules every mixin here follows:
+// - Only `transform`, `opacity` and `filter` animate (compositor-only, no
+//   layout or paint work per frame).
+// - Everything is wrapped in `prefers-reduced-motion: no-preference`, so
+//   people who ask for less motion get the static, fully visible design.
+// - Scroll reveals are CSS scroll-driven animations behind `@supports`, so
+//   there is no JavaScript, no flash of hidden content, and no layout shift.
+//   A browser without support simply shows everything, static.
+
+$ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+$ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+$ease-in-out-sine: cubic-bezier(0.37, 0, 0.63, 1);
+
+@mixin motion-ok {
+  @media (prefers-reduced-motion: no-preference) {
+    @content;
+  }
+}
+
+// Fade + rise as the element scrolls into view. `$start`/`$end` are offsets
+// within the element's `entry` range — staggering siblings is just giving
+// later ones a later start.
+@mixin reveal($distance: 1.5rem, $start: 0%, $end: 55%, $scale: 1) {
+  @include motion-ok {
+    @supports (animation-timeline: view()) {
+      animation: mo-reveal linear both;
+      animation-timeline: view();
+      animation-range: entry $start entry $end;
+      --mo-reveal-y: #{$distance};
+      --mo-reveal-scale: #{$scale};
+    }
+  }
+}
+
+// One-off entrance on first paint (hero copy, auth card). `$i` staggers.
+@mixin enter($i: 0, $step: 80ms, $base: 60ms, $distance: 0.9rem, $duration: 900ms) {
+  @include motion-ok {
+    animation: mo-enter $duration $ease-out-expo both;
+    animation-delay: calc(#{$base} + #{$i} * #{$step});
+    --mo-enter-y: #{$distance};
+  }
+}
+
+// Emitted once per module that uses the mixins above (CSS-module scoping
+// renames keyframes per file, so each file needs its own copy).
+@mixin keyframes {
+  // Individual `translate`/`scale` (not `transform`): a filled reveal
+  // must not pin `transform`, or it would override hover lifts that use it.
+  @keyframes mo-reveal {
+    from {
+      opacity: 0;
+      translate: 0 var(--mo-reveal-y, 1.5rem);
+      scale: var(--mo-reveal-scale, 1);
+    }
+    to {
+      opacity: 1;
+      translate: 0 0;
+      scale: 1;
+    }
+  }
+
+  @keyframes mo-enter {
+    from {
+      opacity: 0;
+      translate: 0 var(--mo-enter-y, 0.9rem);
+      filter: blur(6px);
+    }
+    to {
+      opacity: 1;
+      translate: 0 0;
+      filter: none;
+    }
+  }
+
+  @keyframes mo-float {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0);
+    }
+    50% {
+      transform: translate3d(0, var(--mo-float-y, -10px), 0);
+    }
+  }
+
+  @keyframes mo-drift {
+    0% {
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+    33% {
+      transform: translate3d(var(--mo-drift-x, 6%), var(--mo-drift-y, -4%), 0) scale(1.08);
+    }
+    66% {
+      transform: translate3d(calc(var(--mo-drift-x, 6%) * -0.6), calc(var(--mo-drift-y, -4%) * -0.8), 0)
+        scale(0.96);
+    }
+    100% {
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+  }
+
+  @keyframes mo-sheen {
+    from {
+      transform: translateX(-120%) skewX(-18deg);
+    }
+    to {
+      transform: translateX(320%) skewX(-18deg);
+    }
+  }
+}
+
+// Soft light sweep across a button on hover (needs `position: relative;
+// overflow: hidden` on the host, which this sets).
+@mixin sheen-on-hover {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    z-index: -1;
+    width: 40%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.28), transparent);
+    transform: translateX(-120%) skewX(-18deg);
+    pointer-events: none;
+  }
+
+  @include motion-ok {
+    &:hover::after {
+      animation: mo-sheen 0.9s $ease-out-soft;
+    }
+  }
+}

@@ -1,0 +1,81 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/motion" as mo;
+
+.marquee {
+  position: relative;
+  overflow: hidden;
+  padding: t.$space-5 0;
+  border-top: 1px solid t.$color-border;
+  border-bottom: 1px solid t.$color-border;
+  background: t.$color-surface;
+  // Fade the ends so items glide in and out rather than being cut off.
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+
+.track {
+  display: flex;
+  width: max-content;
+
+  @include mo.motion-ok {
+    animation: marquee 48s linear infinite;
+
+    .marquee:hover & {
+      animation-play-state: paused;
+    }
+  }
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.list {
+  display: flex;
+  flex: none;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-6;
+  padding-right: t.$space-6;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  white-space: nowrap;
+  color: t.$color-ink-soft;
+
+  &::after {
+    content: "✦";
+    font-family: var(--font-sans);
+    font-size: 0.7rem;
+    color: #6366f1;
+  }
+}
+
+// Reduced motion: a calm, wrapped list instead of a ticker.
+@media (prefers-reduced-motion: reduce) {
+  .track {
+    width: auto;
+    justify-content: center;
+  }
+
+  .list {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: t.$space-2 0;
+    padding: 0 t.$space-6;
+
+    &[aria-hidden="true"] {
+      display: none;
+    }
+  }
+
+  .marquee {
+    mask-image: none;
+  }
+}

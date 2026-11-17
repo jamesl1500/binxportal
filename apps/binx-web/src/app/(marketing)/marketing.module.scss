@@ -1,5 +1,8 @@
 @use "../../styles/tokens" as t;
 @use "../../styles/mixins" as m;
+@use "../../styles/motion" as mo;
+
+@include mo.keyframes;
 
 // ---- Shell ----------------------------------------------------------
 
@@ -249,25 +252,45 @@
 
 // ---- Hero -------------------------------------------------------
 
+// The header is transparent until the page scrolls, so every hero slides
+// up underneath it (by the header's height) — its glow and colour fields
+// reach the top of the window instead of stopping at a hard edge.
+$header-height: 4.5rem;
+
 .hero {
   position: relative;
   overflow: hidden;
-  padding-top: t.$space-20;
+  margin-top: -$header-height;
+  padding-top: calc(#{t.$space-20} + #{$header-height});
   padding-bottom: t.$space-20;
 }
 
+// Every marketing page's hero: a soft glow that slowly drifts, and the copy
+// arriving in a short stagger on first paint.
 .heroGlow {
   position: absolute;
   inset: -30% -10% auto 40%;
   height: 32rem;
   pointer-events: none;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.14), transparent 70%);
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.16), transparent 70%);
   filter: blur(12px);
+
+  @include mo.motion-ok {
+    animation: mo-drift 22s mo.$ease-in-out-sine infinite;
+    --mo-drift-x: -8%;
+    --mo-drift-y: 6%;
+  }
 }
 
 .heroInner {
   position: relative;
   max-width: 48rem;
+
+  @for $i from 1 through 6 {
+    > :nth-child(#{$i}) {
+      @include mo.enter($i - 1, $step: 90ms);
+    }
+  }
 }
 
 .heroActions {
@@ -280,40 +303,269 @@
   color: t.$color-ink-faint;
 }
 
-// ---- Logo / trust strip --------------------------------------
+// ---- Homepage hero ------------------------------------------------
 
-.trust {
-  padding: t.$space-10 t.$space-6;
-  border-top: 1px solid t.$color-border;
-  border-bottom: 1px solid t.$color-border;
+.heroHome {
+  padding-top: calc(#{t.$space-16} + #{$header-height});
+  padding-bottom: t.$space-16;
+
+  > .container {
+    position: relative;
+  }
+
+  .heroInner {
+    max-width: 56rem;
+    margin: 0 auto;
+    text-align: center;
+
+    // The headline animates word by word instead. The lead is usually the
+    // page's largest paint (LCP), so it must not wait for the headline to
+    // finish: it starts almost immediately, and the rest follows shortly.
+    > .heroTitle {
+      animation: none;
+    }
+
+    > .heroLead {
+      @include mo.enter(0, $base: 140ms);
+    }
+
+    > .heroActions {
+      @include mo.enter(0, $base: 240ms);
+    }
+
+    > .heroNote {
+      @include mo.enter(0, $base: 340ms);
+    }
+  }
+
+  .btnRow {
+    justify-content: center;
+  }
 }
 
-.trustLabel {
-  @include m.mono-label;
-  font-size: 0.625rem;
-  color: t.$color-ink-faint;
-  text-align: center;
+.heroLead {
+  max-width: 40rem;
+  margin: 0 auto;
 }
 
-.trustRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: t.$space-8;
-  justify-content: center;
+// Three slow-drifting colour fields. Plain radial gradients (no `filter:
+// blur`), and only `transform` animates, so this costs the compositor
+// almost nothing.
+.aurora {
+  position: absolute;
+  inset: -25% -10% 0;
+  pointer-events: none;
+}
+
+.auroraA,
+.auroraB,
+.auroraC {
+  position: absolute;
+  border-radius: 50%;
+  will-change: transform;
+
+  @include mo.motion-ok {
+    animation: mo-drift mo.$ease-in-out-sine infinite;
+  }
+}
+
+.auroraA {
+  top: 0;
+  left: 4%;
+  width: 40rem;
+  height: 40rem;
+  background: radial-gradient(circle, rgba(129, 140, 248, 0.42), transparent 64%);
+  animation-duration: 24s;
+  --mo-drift-x: 9%;
+  --mo-drift-y: 5%;
+}
+
+.auroraB {
+  top: 4%;
+  right: 0;
+  width: 34rem;
+  height: 34rem;
+  background: radial-gradient(circle, rgba(244, 114, 182, 0.3), transparent 64%);
+  animation-duration: 29s;
+  animation-direction: reverse;
+  --mo-drift-x: -8%;
+  --mo-drift-y: 7%;
+}
+
+.auroraC {
+  top: 26%;
+  left: 34%;
+  width: 30rem;
+  height: 30rem;
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.22), transparent 64%);
+  animation-duration: 34s;
+  --mo-drift-x: 6%;
+  --mo-drift-y: -8%;
+}
+
+.heroGrid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(10, 10, 11, 0.12) 1px, transparent 1px);
+  background-size: 22px 22px;
+  mask-image: radial-gradient(ellipse 70% 55% at 50% 22%, #000 25%, transparent 72%);
+}
+
+// "New · …" announcement pill with a live, pulsing dot.
+.announce {
+  display: inline-flex;
   align-items: center;
-  margin-top: t.$space-5;
-  font-family: var(--font-heading);
-  font-size: t.$font-size-lg;
-  color: t.$color-ink-faint;
-}
-
-.trustLink {
-  color: inherit;
+  gap: 8px;
+  margin-bottom: t.$space-6;
+  padding: 5px 14px 5px 10px;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
   text-decoration: none;
+  background: color-mix(in srgb, t.$color-surface 72%, transparent);
+  backdrop-filter: blur(8px);
+  border: 1px solid t.$color-border;
+  border-radius: 999px;
+  box-shadow: 0 1px 2px rgba(10, 10, 11, 0.05);
+  transition:
+    border-color 0.3s mo.$ease-out-soft,
+    box-shadow 0.3s mo.$ease-out-soft;
+
+  > svg {
+    width: 0.85rem;
+    height: 0.85rem;
+    transition: transform 0.35s mo.$ease-out-soft;
+  }
 
   &:hover {
-    color: t.$color-ink;
-    text-decoration: underline;
+    border-color: t.$color-border-strong;
+    box-shadow: 0 8px 22px -12px rgba(79, 70, 229, 0.45);
+
+    > svg {
+      transform: translateX(3px);
+    }
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+
+  // Phones: one line, a touch smaller, no dot.
+  @media (max-width: 480px) {
+    gap: 6px;
+    padding: 4px 12px 4px 6px;
+    font-size: 0.8125rem;
+    white-space: nowrap;
+
+    .announceDot {
+      display: none;
+    }
+  }
+}
+
+.announceTag {
+  padding: 2px 8px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  border-radius: 999px;
+}
+
+.announceDot {
+  position: relative;
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
+  background: #22c55e;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: inherit;
+
+    @include mo.motion-ok {
+      animation: ping 2.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+  }
+}
+
+@keyframes ping {
+  75%,
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
+.heroTitle {
+  font-size: clamp(2.75rem, 7.4vw, 5.25rem);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+}
+
+// Each word rises in from a soft blur, one after another.
+.word {
+  display: inline-block;
+
+  @include mo.motion-ok {
+    animation: word-rise 1s mo.$ease-out-expo both;
+    animation-delay: calc(80ms + var(--i) * 70ms);
+  }
+}
+
+@keyframes word-rise {
+  from {
+    opacity: 0;
+    translate: 0 0.45em;
+    rotate: 2deg;
+    filter: blur(8px);
+  }
+}
+
+// "calm", underlined by a hand-drawn stroke that draws itself in once the
+// headline has landed.
+.flourish {
+  position: relative;
+
+  em {
+    font-style: italic;
+  }
+
+  svg {
+    position: absolute;
+    left: -3%;
+    bottom: -0.1em;
+    width: 106%;
+    height: 0.3em;
+    overflow: visible;
+  }
+
+  path {
+    fill: none;
+    stroke: url(#hero-flourish-gradient);
+    stroke-width: 4;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+
+    @include mo.motion-ok {
+      stroke-dasharray: 1;
+      animation: draw-stroke 1.1s mo.$ease-out-soft 1s both;
+    }
+  }
+}
+
+@keyframes draw-stroke {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
   }
 }
 
@@ -706,6 +958,7 @@
 }
 
 .faqFooterLink {
+  @include m.touch-target;
   display: inline-block;
   margin-top: t.$space-6;
   font-size: t.$font-size-sm;
@@ -834,4 +1087,199 @@
   font-size: t.$font-size-xs;
   text-align: center;
   color: t.$color-ink-faint;
+}
+
+// ---- Motion layer ---------------------------------------------------
+// Shared by every marketing page through the classes above: content
+// fades/rises in as it scrolls into view, and interactive pieces respond to
+// the pointer. All of it is off under `prefers-reduced-motion`, and the
+// scroll reveals only run where CSS scroll-driven animations are supported
+// (elsewhere the page is simply static and fully visible).
+
+.sectionHead,
+.prose,
+.heroShot {
+  @include mo.reveal;
+}
+
+// Cards in a grid reveal with a stagger across each row.
+.grid > *,
+.gridTwo > * {
+  @include mo.reveal(1.75rem, 0%, 50%);
+}
+
+@include mo.motion-ok {
+  @supports (animation-timeline: view()) {
+    .grid > :nth-child(3n + 2),
+    .gridTwo > :nth-child(2n) {
+      animation-range: entry 8% entry 58%;
+    }
+
+    .grid > :nth-child(3n + 3) {
+      animation-range: entry 16% entry 66%;
+    }
+  }
+}
+
+.card {
+  transition:
+    border-color 0.3s mo.$ease-out-soft,
+    transform 0.45s mo.$ease-out-soft,
+    box-shadow 0.45s mo.$ease-out-soft;
+
+  &:hover {
+    box-shadow: 0 18px 40px -22px rgba(10, 10, 11, 0.3);
+
+    @include mo.motion-ok {
+      transform: translateY(-4px);
+    }
+  }
+}
+
+.cardIcon {
+  transition:
+    transform 0.45s mo.$ease-out-soft,
+    background-color 0.3s mo.$ease-out-soft,
+    color 0.3s mo.$ease-out-soft;
+
+  .card:hover & {
+    color: t.$color-paper;
+    background: t.$color-ink;
+
+    @include mo.motion-ok {
+      transform: rotate(-8deg) scale(1.08);
+    }
+  }
+}
+
+// Buttons: a light sweep and a forward-nudging arrow.
+.btnPrimary {
+  @include mo.sheen-on-hover;
+  transition:
+    transform 0.3s mo.$ease-out-soft,
+    box-shadow 0.3s mo.$ease-out-soft;
+
+  &:hover {
+    opacity: 1;
+    box-shadow: 0 12px 26px -12px rgba(10, 10, 11, 0.55);
+
+    @include mo.motion-ok {
+      transform: translateY(-1px);
+    }
+  }
+}
+
+.btnGhost {
+  transition:
+    border-color 0.3s mo.$ease-out-soft,
+    background-color 0.3s mo.$ease-out-soft,
+    transform 0.3s mo.$ease-out-soft;
+
+  &:hover {
+    background: t.$color-surface;
+
+    @include mo.motion-ok {
+      transform: translateY(-1px);
+    }
+  }
+}
+
+.btnPrimary,
+.btnGhost,
+.cardLinkArrow {
+  svg {
+    transition: transform 0.35s mo.$ease-out-soft;
+  }
+
+  &:hover svg {
+    transform: translateX(3px);
+  }
+}
+
+.card:hover .cardLinkArrow svg {
+  transform: translateX(3px);
+}
+
+// Lead-to-paid steps: each step's top rule draws itself in, left to right,
+// as the row scrolls into view; the copy follows.
+.step {
+  position: relative;
+  border-top-color: color-mix(in srgb, currentColor 14%, transparent);
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: t.$color-ink;
+    transform-origin: left center;
+  }
+
+  .sectionDark &::before {
+    background: t.$color-panel-foreground;
+  }
+
+  @include mo.reveal(1.25rem, 10%, 60%);
+
+  @include mo.motion-ok {
+    @supports (animation-timeline: view()) {
+      &::before {
+        animation: draw-rule linear both;
+        animation-timeline: view();
+        animation-range: entry 20% cover 35%;
+      }
+
+      // Later steps start later, so the rules draw one after another across
+      // the row rather than all at once.
+      @for $n from 2 through 4 {
+        &:nth-child(#{$n}) {
+          animation-range: entry #{10% + ($n - 1) * 6%} entry #{60% + ($n - 1) * 6%};
+
+          &::before {
+            animation-range: entry #{20% + ($n - 1) * 10%} cover #{35% + ($n - 1) * 6%};
+          }
+        }
+      }
+    }
+  }
+}
+
+@keyframes draw-rule {
+  from {
+    scale: 0 1;
+  }
+  to {
+    scale: 1 1;
+  }
+}
+
+// Split feature rows: copy and screenshot rise in; the screenshot lifts and
+// its image slowly zooms on hover.
+.splitBody {
+  @include mo.reveal(2rem, 0%, 55%);
+}
+
+.splitMedia {
+  @include mo.reveal(2.5rem, 5%, 60%, 0.96);
+  transition:
+    box-shadow 0.5s mo.$ease-out-soft,
+    transform 0.5s mo.$ease-out-soft;
+
+  img {
+    transition: transform 1.2s mo.$ease-out-soft;
+  }
+
+  &:hover {
+    box-shadow: 0 26px 56px -28px rgba(10, 10, 11, 0.35);
+
+    @include mo.motion-ok {
+      transform: translateY(-4px);
+
+      img {
+        transform: scale(1.03);
+      }
+    }
+  }
 }

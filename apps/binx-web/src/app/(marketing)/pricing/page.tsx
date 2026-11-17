@@ -24,14 +24,17 @@ import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 import styles from "../marketing.module.scss";
 
 const TITLE = "Pricing";
+// <title> / social title: searchable, not just the nav label (TITLE stays the
+// short breadcrumb name). Kept to 60 characters with the " · Binx Portal" suffix.
+const SEO_TITLE = "Agency software pricing, free plan included";
 const DESCRIPTION =
-  "Simple, flat plans for agencies: start free, then Starter, Pro and Scale as you grow. Every paid plan starts with a 14-day free trial, no card required. Proposals, portal, invoicing and AI on every tier.";
+  "Flat plans for agencies: start free, then Starter, Pro or Scale with a 14-day free trial, no card needed. Proposals, portal, invoicing and AI on every plan.";
 
 export const metadata: Metadata = {
-  title: TITLE,
+  title: SEO_TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/pricing" },
-  ...marketingOpenGraph(TITLE, DESCRIPTION, "/pricing"),
+  ...marketingOpenGraph(SEO_TITLE, DESCRIPTION, "/pricing"),
 };
 
 const FAQ = [

@@ -163,7 +163,10 @@ const VisualCanvasPage = () => {
               width={1600}
               height={1138}
               sizes="(min-width: 1100px) 68rem, 100vw"
-              priority
+              // Near the top on desktop (often the largest paint), below the fold
+              // on phones: fetched right away, but without a preload or high
+              // priority that would compete with fonts/CSS on slow connections.
+              loading="eager"
             />
           </figure>
           <p className={styles.heroShotCaption}>

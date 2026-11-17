@@ -34,14 +34,17 @@ import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 import styles from "../marketing.module.scss";
 
 const TITLE = "Features";
+// <title> / social title: searchable, not just the nav label (TITLE stays the
+// short breadcrumb name). Kept to 60 characters with the " · Binx Portal" suffix.
+const SEO_TITLE = "Features: proposals, client portal, invoicing";
 const DESCRIPTION =
   "AI lead prospecting, signable proposals, a visual project canvas, client approvals, a live client portal and invoicing. A tour of everything Binx does.";
 
 export const metadata: Metadata = {
-  title: TITLE,
+  title: SEO_TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/features" },
-  ...marketingOpenGraph(TITLE, DESCRIPTION, "/features"),
+  ...marketingOpenGraph(SEO_TITLE, DESCRIPTION, "/features"),
 };
 
 type Feature = {

@@ -23,6 +23,11 @@ const orgJsonLd = {
   description: SITE.description,
   logo: `${SITE_URL}/icon-512.png`,
   sameAs: [`https://twitter.com/${SITE.twitter.replace("@", "")}`],
+  parentOrganization: {
+    "@type": "Organization",
+    name: SITE.parent.name,
+    url: SITE.parent.url,
+  },
 };
 
 const siteJsonLd = {

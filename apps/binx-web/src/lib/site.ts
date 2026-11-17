@@ -43,6 +43,9 @@ export const SITE = {
   email: "hello@binxportal.com",
   /** Dedicated inbox for privacy/data-rights requests — used on the Privacy Policy only. */
   privacyEmail: "privacy@binxportal.com",
+  /** The studio behind Binx — credited in the footer and named as the
+   * parentOrganization in the Organization JSON-LD. */
+  parent: { name: "Foundry Frame", url: "https://www.foundryframe.com" },
   keywords: [
     "agency management software",
     "creative agency operations",
@@ -69,7 +72,7 @@ export const SITE = {
  * `lastModified`. A per-request `new Date()` tells crawlers every page
  * changes on every fetch, which teaches them to ignore lastmod entirely.
  */
-export const MARKETING_LAST_UPDATED = new Date("2026-11-08");
+export const MARKETING_LAST_UPDATED = new Date("2026-11-17");
 
 /** Shared pricing tiers — rendered on /pricing and summarised in JSON-LD offers. */
 export const PLANS = [

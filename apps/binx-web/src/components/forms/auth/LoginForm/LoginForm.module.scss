@@ -1,5 +1,8 @@
 @use "../../../../styles/tokens" as t;
 @use "../../../../styles/mixins" as m;
+@use "../../../../styles/motion" as mo;
+
+@include mo.keyframes;
 
 .form {
   display: flex;
@@ -115,5 +118,29 @@
 
   &:hover:not(:disabled) {
     background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+}
+
+// Motion (submit-motion): a light sweep and a slight lift on hover, a press
+// on click. Off under prefers-reduced-motion (see styles/_motion.scss).
+.submit {
+  @include mo.sheen-on-hover;
+  transition:
+    background-color 0.25s mo.$ease-out-soft,
+    transform 0.25s mo.$ease-out-soft,
+    box-shadow 0.25s mo.$ease-out-soft;
+
+  &:hover:not(:disabled) {
+    box-shadow: 0 12px 26px -14px rgba(10, 10, 11, 0.55);
+
+    @include mo.motion-ok {
+      transform: translateY(-1px);
+    }
+  }
+
+  &:active:not(:disabled) {
+    @include mo.motion-ok {
+      transform: translateY(0) scale(0.99);
+    }
   }
 }

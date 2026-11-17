@@ -21,10 +21,15 @@ describe("MarketingFooter", () => {
     expect(useCases.querySelector('a[href="/for/freelance-collectives"]')).not.toBeNull();
   });
 
-  it("shows the current year and a contact mailto link", () => {
+  it("shows the current year and credits Foundry Frame in a new tab", () => {
     render(<MarketingFooter />);
     expect(screen.getByText(new RegExp(String(new Date().getFullYear())))).toBeInTheDocument();
-    const mail = screen.getByRole("link", { name: /@/ });
-    expect(mail).toHaveAttribute("href", expect.stringContaining("mailto:"));
+    const credit = screen.getByRole("link", { name: /a foundry frame project/i });
+    expect(credit).toHaveAttribute("href", "https://www.foundryframe.com");
+    expect(credit).toHaveAttribute("target", "_blank");
+    // noopener for safety; no noreferrer, so the studio's analytics see Binx.
+    expect(credit).toHaveAttribute("rel", "noopener");
+    // Screen readers are told it opens a new tab.
+    expect(credit).toHaveAccessibleName(/opens in a new tab/i);
   });
 });

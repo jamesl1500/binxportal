@@ -1,5 +1,12 @@
 @use "../../../styles/tokens" as t;
 @use "../../../styles/mixins" as m;
+@use "../../../styles/motion" as mo;
+
+@include mo.keyframes;
+
+// One full cycle of the lead-to-paid highlight: each of the four steps is
+// "current" for a quarter of it.
+$flow-cycle: 12s;
 
 .root {
   display: grid;
@@ -12,12 +19,15 @@
   }
 }
 
+// ---- Story panel ------------------------------------------------------------
+
 .panel {
   position: relative;
   display: none;
   flex-direction: column;
   justify-content: space-between;
   overflow: hidden;
+  isolation: isolate;
   padding: t.$space-12;
   background: t.$color-panel;
   color: t.$color-panel-foreground;
@@ -27,18 +37,57 @@
   }
 }
 
-.panelGlow {
+.panelPhoto {
   position: absolute;
-  inset: -20% -20% auto auto;
-  width: 28rem;
-  height: 28rem;
-  pointer-events: none;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.35), transparent 70%);
-  filter: blur(10px);
+  inset: 0;
+  z-index: -3;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+
+  // A slow push-in, like a held camera shot.
+  @include mo.motion-ok {
+    animation: ken-burns 28s mo.$ease-in-out-sine infinite alternate;
+  }
 }
 
-.brand {
-  position: relative;
+@keyframes ken-burns {
+  from {
+    scale: 1.04;
+  }
+  to {
+    scale: 1.14;
+    translate: -2% -1%;
+  }
+}
+
+.panelShade {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background:
+    linear-gradient(180deg, rgba(11, 11, 12, 0.55) 0%, rgba(11, 11, 12, 0.78) 45%, rgba(11, 11, 12, 0.94) 100%),
+    linear-gradient(120deg, rgba(79, 70, 229, 0.25), transparent 55%);
+}
+
+.panelGlow {
+  position: absolute;
+  inset: auto auto -20% -20%;
+  z-index: -1;
+  width: 34rem;
+  height: 34rem;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(129, 140, 248, 0.4), transparent 65%);
+
+  @include mo.motion-ok {
+    animation: mo-drift 22s mo.$ease-in-out-sine infinite;
+    --mo-drift-x: 14%;
+    --mo-drift-y: -10%;
+  }
+}
+
+.brand,
+.mobileBrand {
   display: flex;
   align-items: center;
   gap: t.$space-2;
@@ -48,69 +97,237 @@
   letter-spacing: t.$tracking-wide;
   color: inherit;
   text-decoration: none;
+  border-radius: t.$radius-sm;
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.brand {
+  @include mo.enter(0);
 }
 
 .brandMark {
   width: 1.5rem;
   height: 1.5rem;
   flex-shrink: 0;
+  transition: transform 0.6s mo.$ease-out-expo;
+
+  @include mo.motion-ok {
+    .brand:hover &,
+    .mobileBrand:hover & {
+      transform: rotate(-12deg) scale(1.1);
+    }
+  }
+}
+
+.story {
+  max-width: 28rem;
 }
 
 .headline {
-  position: relative;
-  max-width: 26rem;
   margin: 0 0 t.$space-10;
   font-family: var(--font-heading);
-  font-size: t.$font-size-3xl;
-  line-height: 1.1;
-  letter-spacing: -0.01em;
+  font-size: clamp(2rem, 2.6vw, 2.5rem);
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+  @include mo.enter(1, $distance: 1.25rem);
+
+  em {
+    // Italic glyphs lean past their box and background-clip: text clips to
+    // it — pad the box (on every line it wraps across) so nothing is cut.
+    padding: 0 0.12em 0 0.04em;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+    font-style: italic;
+    background: linear-gradient(90deg, #c7d2fe, #f5d0fe, #fde68a);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
 }
 
-.features {
-  position: relative;
+.flow {
   display: flex;
   flex-direction: column;
-  gap: t.$space-6;
+  gap: t.$space-2;
   margin: 0;
-  padding: t.$space-10 0 0;
+  padding: 0;
   list-style: none;
-  border-top: 1px solid t.$color-panel-border;
 }
 
-.feature {
+// Each step arrives in turn, then the "current" highlight cycles through
+// them on a loop: a step brightens and its bar fills while it's current.
+.flowStep {
+  position: relative;
   display: grid;
   grid-template-columns: 2.5rem 1fr;
-  gap: t.$space-4;
+  gap: t.$space-3;
+  padding: t.$space-3 t.$space-4 t.$space-4;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(6px);
+
+  @include mo.motion-ok {
+    animation:
+      mo-enter 0.8s mo.$ease-out-expo both,
+      step-current $flow-cycle linear infinite;
+    animation-delay:
+      calc(300ms + var(--i) * 110ms),
+      calc(1.2s + var(--i) * #{$flow-cycle * 0.25});
+    --mo-enter-y: 1rem;
+  }
 }
 
-.featureIndex {
+@keyframes step-current {
+  0%,
+  25% {
+    border-color: rgba(255, 255, 255, 0.22);
+    background: rgba(255, 255, 255, 0.09);
+  }
+  30%,
+  100% {
+    border-color: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+  }
+}
+
+.flowIndex {
   @include m.mono-label;
-  color: t.$color-panel-muted;
+  padding-top: 2px;
+  color: rgba(245, 245, 246, 0.55);
 }
 
-.featureTitle {
-  margin: 0 0 t.$space-1;
+.flowTitle {
+  margin: 0 0 2px;
   font-size: t.$font-size-sm;
   font-weight: 600;
 }
 
-.featureText {
+.flowText {
   margin: 0;
   font-size: t.$font-size-sm;
-  line-height: 1.5;
-  color: t.$color-panel-muted;
+  line-height: 1.45;
+  color: rgba(245, 245, 246, 0.68);
+}
+
+.flowBar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #818cf8, #e879f9, #fbbf24);
+  transform-origin: left center;
+  transform: scaleX(0);
+
+  @include mo.motion-ok {
+    animation: bar-fill $flow-cycle linear infinite;
+    animation-delay: calc(1.2s + var(--i) * #{$flow-cycle * 0.25});
+  }
+}
+
+@keyframes bar-fill {
+  0% {
+    transform: scaleX(0);
+    opacity: 1;
+  }
+  25% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  30%,
+  100% {
+    transform: scaleX(1);
+    opacity: 0;
+  }
+}
+
+.toast {
+  position: absolute;
+  top: 16%;
+  right: t.$space-10;
+  display: flex;
+  align-items: center;
+  gap: t.$space-3;
+  padding: 10px 18px 10px 10px;
+  color: t.$color-ink;
+  background: rgba(255, 255, 255, 0.94);
+  border-radius: 12px;
+  box-shadow: 0 18px 40px -16px rgba(0, 0, 0, 0.55);
+
+  @include mo.motion-ok {
+    animation:
+      toast-in 0.9s mo.$ease-out-expo 1.4s both,
+      mo-float 7s mo.$ease-in-out-sine 2.3s infinite;
+    --mo-float-y: -10px;
+  }
+
+  @media (min-width: 1024px) and (max-width: 1199px) {
+    display: none;
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    translate: 1.5rem 0;
+  }
+}
+
+.toastIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  flex: none;
+  color: #fff;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #059669, #10b981);
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+.toastText {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+  white-space: nowrap;
+
+  strong {
+    font-size: t.$font-size-sm;
+  }
+
+  span {
+    font-size: 0.75rem;
+    color: t.$color-ink-soft;
+  }
 }
 
 .footnote {
-  position: relative;
   @include m.mono-label;
-  color: t.$color-panel-muted;
+  color: rgba(245, 245, 246, 0.55);
+  @include mo.enter(6);
 }
 
+// ---- Form side --------------------------------------------------------------
+
 .content {
+  position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: t.$space-8;
+  overflow: hidden;
+  isolation: isolate;
   padding: t.$space-6;
 
   @media (min-width: 640px) {
@@ -118,7 +335,42 @@
   }
 }
 
+.contentGlow {
+  position: absolute;
+  top: -12rem;
+  right: -10rem;
+  z-index: -1;
+  width: 32rem;
+  height: 32rem;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(129, 140, 248, 0.18), transparent 65%);
+
+  @include mo.motion-ok {
+    animation: mo-drift 26s mo.$ease-in-out-sine infinite reverse;
+    --mo-drift-x: -10%;
+    --mo-drift-y: 8%;
+  }
+}
+
+.mobileBrand {
+  position: absolute;
+  top: t.$space-6;
+  left: t.$space-6;
+  color: t.$color-ink;
+
+  @media (min-width: 1024px) {
+    display: none;
+  }
+}
+
 .card {
   width: 100%;
   max-width: 26rem;
+
+  // The page's own blocks (heading, form, footer) arrive in a short stagger.
+  @for $n from 1 through 4 {
+    > * > :nth-child(#{$n}) {
+      @include mo.enter($n - 1, $base: 120ms, $step: 90ms, $distance: 0.75rem, $duration: 750ms);
+    }
+  }
 }

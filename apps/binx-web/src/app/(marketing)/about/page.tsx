@@ -14,14 +14,17 @@ import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 import styles from "../marketing.module.scss";
 
 const TITLE = "About";
+// <title> / social title: searchable, not just the nav label (TITLE stays the
+// short breadcrumb name). Kept to 60 characters with the " · Binx Portal" suffix.
+const SEO_TITLE = "About Binx: one workspace for small agencies";
 const DESCRIPTION =
   "Binx is one workspace for the whole agency: leads, proposals, clients, projects, invoicing and a client portal, built for small teams who'd rather do the work.";
 
 export const metadata: Metadata = {
-  title: TITLE,
+  title: SEO_TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/about" },
-  ...marketingOpenGraph(TITLE, DESCRIPTION, "/about"),
+  ...marketingOpenGraph(SEO_TITLE, DESCRIPTION, "/about"),
 };
 
 const PRINCIPLES = [
