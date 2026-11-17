@@ -114,6 +114,7 @@ class TestEmailVerification:
 
         assert pair.access_token and pair.refresh_token
         user = await get_user_by_email(db_session, "verify@example.com")
+        assert user is not None
         assert user.is_verified is True
 
     async def test_a_verification_token_is_single_use(self, db_session, email_outbox) -> None:
@@ -137,9 +138,9 @@ class TestEmailVerification:
     async def test_rejects_an_expired_token(self, db_session, email_outbox) -> None:
         await service.signup(db_session, user_name="v4", email="expired@example.com", full_name="V", password=PASSWORD)
         raw_token = extract_token(email_outbox[0].body)
-        token_row = await _latest_token_row(
-            db_session, (await get_user_by_email(db_session, "expired@example.com")).id, TokenPurpose.EMAIL_VERIFICATION
-        )
+        expired_user = await get_user_by_email(db_session, "expired@example.com")
+        assert expired_user is not None
+        token_row = await _latest_token_row(db_session, expired_user.id, TokenPurpose.EMAIL_VERIFICATION)
         token_row.expires_at = datetime.now(UTC) - timedelta(hours=1)
         await db_session.commit()
 

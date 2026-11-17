@@ -19,29 +19,9 @@ from fastapi import HTTPException
 from binx_api.core import stripe_client, stripe_events
 from binx_api.modules.invoicing import service
 from tests.factories import make_agency, make_user
-from tests.stripe_helpers import sign_stripe_payload
+from tests.stripe_helpers import make_v2_account, sign_stripe_payload
 
 pytestmark = pytest.mark.integration
-
-
-def make_fake_v2_account(
-    account_id: str, *, card_payments_active: bool, payouts_active: bool, has_merchant: bool = True
-) -> SimpleNamespace:
-    """Builds a v2 Core Account shaped just enough for
-    ``sync_connect_status`` to read — ``configuration.merchant`` is ``None``
-    until the Merchant configuration has actually been applied (see
-    ``stripe_connect_details_submitted``'s mapping in service.py)."""
-    merchant = None
-    if has_merchant:
-        merchant = SimpleNamespace(
-            capabilities=SimpleNamespace(
-                card_payments=SimpleNamespace(status="active" if card_payments_active else "restricted"),
-                stripe_balance=SimpleNamespace(
-                    payouts=SimpleNamespace(status="active" if payouts_active else "restricted")
-                ),
-            )
-        )
-    return SimpleNamespace(id=account_id, configuration=SimpleNamespace(merchant=merchant))
 
 
 class TestStripeNotConfigured:
@@ -110,7 +90,7 @@ class TestSyncConnectStatus:
         settings_row.stripe_connect_account_id = "acct_123"
         await db_session.commit()
 
-        account = make_fake_v2_account("acct_123", card_payments_active=True, payouts_active=False)
+        account = make_v2_account("acct_123", card_payments_active=True, payouts_active=False)
         updated = await service.sync_connect_status(db_session, account)
         assert updated is not None
         assert updated.stripe_connect_charges_enabled is True
@@ -119,8 +99,9 @@ class TestSyncConnectStatus:
         assert first_onboarded_at is not None
 
         # A later event doesn't reset the onboarded_at timestamp.
-        account_again = make_fake_v2_account("acct_123", card_payments_active=True, payouts_active=True)
+        account_again = make_v2_account("acct_123", card_payments_active=True, payouts_active=True)
         updated_again = await service.sync_connect_status(db_session, account_again)
+        assert updated_again is not None
         assert updated_again.stripe_connect_onboarded_at == first_onboarded_at
         assert updated_again.stripe_connect_payouts_enabled is True
 
@@ -131,7 +112,7 @@ class TestSyncConnectStatus:
         settings_row.stripe_connect_account_id = "acct_123"
         await db_session.commit()
 
-        account = make_fake_v2_account("acct_123", card_payments_active=False, payouts_active=False, has_merchant=False)
+        account = make_v2_account("acct_123", card_payments_active=False, payouts_active=False, has_merchant=False)
         updated = await service.sync_connect_status(db_session, account)
         assert updated is not None
         assert updated.stripe_connect_details_submitted is False
@@ -140,7 +121,7 @@ class TestSyncConnectStatus:
 
     async def test_unrecognised_account_is_a_no_op(self, db_session) -> None:
         result = await service.sync_connect_status(
-            db_session, make_fake_v2_account("acct_unknown", card_payments_active=True, payouts_active=True)
+            db_session, make_v2_account("acct_unknown", card_payments_active=True, payouts_active=True)
         )
         assert result is None
 
@@ -156,7 +137,7 @@ class TestGetConnectStatus:
         async def fake_retrieve(account_id, params=None):
             assert account_id == "acct_123"
             assert params == {"include": ["configuration.merchant"]}
-            return make_fake_v2_account("acct_123", card_payments_active=True, payouts_active=True)
+            return make_v2_account("acct_123", card_payments_active=True, payouts_active=True)
 
         monkeypatch.setattr(stripe_client, "retrieve_connect_account", fake_retrieve)
 
@@ -225,7 +206,7 @@ class TestConnectAccountWebhookRouter:
         await db_session.commit()
 
         async def fake_fetch_related_object_async():
-            return make_fake_v2_account("acct_123", card_payments_active=True, payouts_active=False)
+            return make_v2_account("acct_123", card_payments_active=True, payouts_active=False)
 
         fake_notification = SimpleNamespace(
             id="evt_connect_1",

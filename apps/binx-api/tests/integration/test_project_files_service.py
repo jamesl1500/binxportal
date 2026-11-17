@@ -204,6 +204,7 @@ class TestCommentAttachments:
             attachment_content=PNG_BYTES,
             attachment_mime_type="image/png",
         )
+        assert attachment is not None
         stored = Path(attachment.storage_path)
         assert stored.exists()
 

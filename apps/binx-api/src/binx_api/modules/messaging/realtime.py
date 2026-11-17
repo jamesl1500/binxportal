@@ -19,9 +19,7 @@ from __future__ import annotations
 import asyncio
 import uuid
 from collections import defaultdict
-from typing import Any
-
-from fastapi import WebSocket
+from typing import Any, Protocol
 
 # Event type constants (the ``type`` field of every payload send_to_users emits).
 EVENT_MESSAGE_CREATED = "message.created"
@@ -58,17 +56,27 @@ EVENT_NOTIFICATION_CREATED = "notification.created"
 EVENT_ACTIVITY_CREATED = "activity.created"
 
 
+class RealtimeSocket(Protocol):
+    """The two things the hub does with a socket. Starlette's ``WebSocket``
+    satisfies this structurally; so does any test double, without having to
+    impersonate a full WebSocket."""
+
+    async def accept(self) -> None: ...
+
+    async def send_json(self, data: dict[str, Any]) -> None: ...
+
+
 class ConnectionManager:
     def __init__(self) -> None:
-        self._sockets: dict[uuid.UUID, set[WebSocket]] = defaultdict(set)
+        self._sockets: dict[uuid.UUID, set[RealtimeSocket]] = defaultdict(set)
         self._lock = asyncio.Lock()
 
-    async def connect(self, user_id: uuid.UUID, websocket: WebSocket) -> None:
+    async def connect(self, user_id: uuid.UUID, websocket: RealtimeSocket) -> None:
         await websocket.accept()
         async with self._lock:
             self._sockets[user_id].add(websocket)
 
-    async def disconnect(self, user_id: uuid.UUID, websocket: WebSocket) -> None:
+    async def disconnect(self, user_id: uuid.UUID, websocket: RealtimeSocket) -> None:
         async with self._lock:
             self._sockets.get(user_id, set()).discard(websocket)
             if not self._sockets.get(user_id):

@@ -9,8 +9,20 @@ from __future__ import annotations
 
 import pytest
 from pydantic import ValidationError
+from pydantic_settings import SettingsConfigDict
 
 from binx_api.core.config import Settings, get_settings
+
+
+class _SettingsWithoutDotenv(Settings):
+    """``Settings`` that ignores any ``.env`` on disk, so each test sees only
+    the field defaults plus what it sets with monkeypatch — the typed
+    equivalent of passing pydantic-settings' ``_env_file=None`` init kwarg
+    (which isn't in the constructor signature type checkers see). Every
+    validator is inherited."""
+
+    model_config = SettingsConfigDict(env_file=None, extra="ignore")
+
 
 pytestmark = pytest.mark.unit
 
@@ -21,7 +33,7 @@ def test_get_settings_is_cached() -> None:
 
 def test_defaults_are_present_when_no_env() -> None:
     # _env_file=None -> ignore any .env on disk, exercise the field defaults.
-    s = Settings(_env_file=None)
+    s = _SettingsWithoutDotenv()
     assert s.jwt_algorithm == "HS256"
     assert s.access_token_expire_minutes == 30
     assert s.project_upload_max_bytes == 25 * 1024 * 1024
@@ -31,14 +43,14 @@ def test_defaults_are_present_when_no_env() -> None:
 def test_env_vars_override_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("JWT_SECRET", "from-the-environment")
     monkeypatch.setenv("ACCESS_TOKEN_EXPIRE_MINUTES", "5")
-    s = Settings(_env_file=None)
+    s = _SettingsWithoutDotenv()
     assert s.jwt_secret == "from-the-environment"
     assert s.access_token_expire_minutes == 5
 
 
 def test_unknown_env_vars_are_ignored(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("TOTALLY_UNRELATED_SETTING", "whatever")
-    Settings(_env_file=None)  # extra="ignore" -> no ValidationError
+    _SettingsWithoutDotenv()  # extra="ignore" -> no ValidationError
 
 
 @pytest.mark.parametrize("value", ["-0.1", "1.1", "2"])
@@ -47,7 +59,7 @@ def test_sentry_traces_sample_rate_rejects_out_of_range(value: str, monkeypatch:
     # than erroring, so this is caught here instead.
     monkeypatch.setenv("SENTRY_TRACES_SAMPLE_RATE", value)
     with pytest.raises(ValidationError):
-        Settings(_env_file=None)
+        _SettingsWithoutDotenv()
 
 
 def test_database_url_is_assembled_from_rds_parts(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -56,7 +68,7 @@ def test_database_url_is_assembled_from_rds_parts(monkeypatch: pytest.MonkeyPatc
     monkeypatch.setenv("DATABASE_NAME", "binx")
     monkeypatch.setenv("DATABASE_USERNAME", "binxapi")
     monkeypatch.setenv("DATABASE_PASSWORD", "p@ss/w:rd")
-    s = Settings(_env_file=None)
+    s = _SettingsWithoutDotenv()
     # Reserved characters in the password are escaped, not parsed as URL syntax.
     assert s.database_url == "postgresql+asyncpg://binxapi:p%40ss%2Fw%3Ard@db.example.rds.amazonaws.com:5432/binx"
 
@@ -64,11 +76,11 @@ def test_database_url_is_assembled_from_rds_parts(monkeypatch: pytest.MonkeyPatc
 def test_explicit_database_url_wins_over_rds_parts(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("DATABASE_URL", "postgresql+asyncpg://a:b@host:5432/db")
     monkeypatch.setenv("DATABASE_ENDPOINT", "db.example.rds.amazonaws.com")
-    assert Settings(_env_file=None).database_url == "postgresql+asyncpg://a:b@host:5432/db"
+    assert _SettingsWithoutDotenv().database_url == "postgresql+asyncpg://a:b@host:5432/db"
 
 
 def test_rds_endpoint_without_credentials_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("DATABASE_URL", raising=False)  # conftest sets it
     monkeypatch.setenv("DATABASE_ENDPOINT", "db.example.rds.amazonaws.com")
     with pytest.raises(ValidationError):
-        Settings(_env_file=None)
+        _SettingsWithoutDotenv()

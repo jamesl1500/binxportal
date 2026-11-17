@@ -292,7 +292,7 @@ class TestComplete:
     async def test_pricing_matches_a_dated_snapshot_model_id_by_prefix(self) -> None:
         # AI_FAST_MODEL is often set to a dated id like "claude-haiku-4-5-20251001"
         # rather than the bare alias — cost math should still use haiku pricing.
-        usage = SimpleNamespace(
+        usage = anthropic.types.Usage(
             input_tokens=1000, output_tokens=200, cache_creation_input_tokens=0, cache_read_input_tokens=0
         )
         assert ai_client._cost_cents("claude-haiku-4-5-20251001", usage) == ai_client._cost_cents(
