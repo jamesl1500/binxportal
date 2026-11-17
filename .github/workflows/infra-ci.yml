@@ -28,6 +28,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Code-integrity check (see docs/security/2026-11-config-injection.md)
+        run: node scripts/check-code-integrity.mjs
+        working-directory: .
       - uses: actions/setup-node@v4
         with:
           node-version: 22

@@ -16,6 +16,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { api } from "@/lib/api";
 import { getAccessToken } from "@/lib/auth";
+import { apiPath, fileResponseHeaders } from "@/lib/file-proxy";
 
 interface RouteParams {
   params: Promise<{ userId: string }>;
@@ -31,7 +32,7 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
 
   try {
     const upstream = await api.get<ArrayBuffer>(
-      `/portal/team/${userId}/avatar`,
+      apiPath`/portal/team/${userId}/avatar`,
       {
         headers: { Authorization: `Bearer ${accessToken}` },
         responseType: "arraybuffer",
@@ -40,12 +41,9 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
 
     return new NextResponse(upstream.data, {
       status: 200,
-      headers: {
-        "Content-Type": String(upstream.headers["content-type"] ?? "image/png"),
-        // The URL is cache-busted with ?v=<version> by the caller, so the
-        // bytes for a given URL never change — safe to cache hard.
-        "Cache-Control": "private, max-age=86400",
-      },
+      // The URL is cache-busted with ?v=<version> by the caller, so the
+      // bytes for a given URL never change — safe to cache hard.
+      headers: fileResponseHeaders(upstream.headers, { fallbackType: "image/png", defaultDisposition: "inline", cacheControl: "private, max-age=86400" }),
     });
   } catch (error) {
     const statusCode =

@@ -45,24 +45,13 @@ export const metadata: Metadata = {
 };
 
 const PortalLayout = async ({ children }: { children: React.ReactNode }) => {
-  const user = await getCurrentUser();
-  if (!user) {
-    redirect("/portal/login");
-  }
-
-  const context = await getPortalContext();
-  if (!context) {
-    redirect("/dashboard");
-  }
-
-  const [
-    conversations,
-    invoices,
-    proposals,
-    meetings,
-    pendingKickoffs,
-    tutorialProgress,
-  ] = await Promise.all([
+  // None of the badge/tour data depends on the portal context, so it all
+  // starts in parallel with the auth + context checks — one round trip to
+  // binx-api instead of three. Every fetch has its own fallback, so a
+  // request redirected below never leaves an unhandled rejection.
+  const portalContext = getPortalContext();
+  portalContext.catch(() => undefined);
+  const shellData = Promise.all([
     getPortalConversations().catch(() => []),
     getPortalInvoices().catch(() => []),
     getPortalProposals().catch(() => []),
@@ -75,6 +64,25 @@ const PortalLayout = async ({ children }: { children: React.ReactNode }) => {
       dismissed_popups: [PORTAL_TOUR_ID],
     })),
   ]);
+
+  const user = await getCurrentUser();
+  if (!user) {
+    redirect("/portal/login");
+  }
+
+  const context = await portalContext;
+  if (!context) {
+    redirect("/dashboard");
+  }
+
+  const [
+    conversations,
+    invoices,
+    proposals,
+    meetings,
+    pendingKickoffs,
+    tutorialProgress,
+  ] = await shellData;
   const badges = buildBadges({
     conversations,
     invoices,

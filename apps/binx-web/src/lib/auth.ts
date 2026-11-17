@@ -11,6 +11,7 @@
 import axios from "axios";
 import { cookies, headers } from "next/headers";
 import { NextResponse } from "next/server";
+import { cache } from "react";
 import { api } from "@/lib/api";
 import type { Schemas } from "@/lib/api-types";
 
@@ -246,7 +247,11 @@ export async function getRefreshToken(): Promise<string | undefined> {
  * @returns {Promise<CurrentUser | null>} - The current user if authenticated, otherwise null.
  * @throws {Error} - Throws an error if the access token is invalid or expired.
  */
-export async function getCurrentUser(): Promise<CurrentUser | null> {
+// Wrapped in React's per-request `cache()`: the layout and the page both ask
+// for the current user, and without this every render hit GET /users/me
+// twice. Server actions don't read it (none mutate-then-read the user), and
+// each new request/refresh() gets a fresh value.
+export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   const accessToken = await getAccessToken();
   if (!accessToken) return null;
 
@@ -265,7 +270,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   } catch {
     return null;
   }
-}
+});
 
 /**
  * refreshSession

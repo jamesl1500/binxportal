@@ -14,6 +14,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { api } from "@/lib/api";
 import { AuthApiError, extractDetailMessage, getAccessToken } from "@/lib/auth";
+import { apiPath, fileResponseHeaders, upstreamErrorBody } from "@/lib/file-proxy";
 
 interface RouteParams {
   params: Promise<{
@@ -34,23 +35,17 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
 
   try {
     const upstream = await api.get<ArrayBuffer>(
-      `/agencies/${agencyId}/conversations/${conversationId}/messages/${messageId}/attachments/${attachmentId}/download`,
+      apiPath`/agencies/${agencyId}/conversations/${conversationId}/messages/${messageId}/attachments/${attachmentId}/download`,
       { headers: { Authorization: `Bearer ${accessToken}` }, responseType: "arraybuffer" },
     );
 
     return new NextResponse(upstream.data, {
       status: 200,
-      headers: {
-        "Content-Type": String(upstream.headers["content-type"] ?? "application/octet-stream"),
-        "Content-Disposition": String(upstream.headers["content-disposition"] ?? "attachment"),
-      },
+      headers: fileResponseHeaders(upstream.headers, { fallbackType: "application/octet-stream", defaultDisposition: "attachment" }),
     });
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
-      const data =
-        error.response.data instanceof ArrayBuffer
-          ? JSON.parse(Buffer.from(error.response.data).toString("utf-8"))
-          : error.response.data;
+      const data = upstreamErrorBody(error.response.data);
       const message = extractDetailMessage(data, "Unable to download attachment");
       return NextResponse.json({ message }, { status: error.response.status });
     }

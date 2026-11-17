@@ -213,6 +213,7 @@ $brand: var(--portal-primary, #{t.$color-ink});
   &:focus-visible {
     @include m.focus-ring;
   }
+  @include m.touch-target;
 }
 
 .projectGrid {

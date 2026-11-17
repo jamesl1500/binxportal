@@ -13,6 +13,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { api } from "@/lib/api";
 import { getAccessToken } from "@/lib/auth";
+import { apiPath, fileResponseHeaders } from "@/lib/file-proxy";
 
 interface RouteParams {
   params: Promise<{ agencyId: string; memberId: string }>;
@@ -27,17 +28,16 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
   }
 
   try {
-    const upstream = await api.get<ArrayBuffer>(`/agencies/${agencyId}/members/${memberId}/avatar`, {
+    const upstream = await api.get<ArrayBuffer>(apiPath`/agencies/${agencyId}/members/${memberId}/avatar`, {
       headers: { Authorization: `Bearer ${accessToken}` },
       responseType: "arraybuffer",
     });
 
     return new NextResponse(upstream.data, {
       status: 200,
-      headers: {
-        "Content-Type": String(upstream.headers["content-type"] ?? "image/png"),
-        "Cache-Control": "private, max-age=86400",
-      },
+      // The URL is cache-busted with ?v=<version> by the caller, so the
+      // bytes for a given URL never change — safe to cache hard.
+      headers: fileResponseHeaders(upstream.headers, { fallbackType: "image/png", defaultDisposition: "inline", cacheControl: "private, max-age=86400" }),
     });
   } catch (error) {
     const statusCode = axios.isAxiosError(error) && error.response ? error.response.status : 500;

@@ -31,6 +31,11 @@ RUN pnpm install --frozen-lockfile --filter binx-web...
 
 FROM deps AS build
 COPY apps/binx-web ./apps/binx-web
+# Text-only scan for injected config-file code (see
+# docs/security/2026-11-config-injection.md). `pnpm build` runs it before
+# `next build` loads postcss/next config — i.e. before the build-time secret
+# below is ever in an environment a malicious config could read.
+COPY scripts/check-code-integrity.mjs ./scripts/check-code-integrity.mjs
 
 ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_SITE_URL

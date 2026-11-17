@@ -9,6 +9,24 @@
   text-transform: uppercase;
 }
 
+// Grows a small standalone link to the 24px WCAG 2.5.8 target minimum on
+// touch screens only — mouse/trackpad layouts are untouched. Padding (not
+// min-height/display) so an inline link gains hit area without reflowing
+// the text around it.
+@mixin touch-target {
+  @media (pointer: coarse) {
+    padding-block: 0.25rem;
+  }
+}
+
+// Native checkbox/radio sized for a fingertip on touch screens.
+@mixin touch-checkbox {
+  @media (pointer: coarse) {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+}
+
 @mixin focus-ring {
   outline: none;
   border-color: t.$color-focus;

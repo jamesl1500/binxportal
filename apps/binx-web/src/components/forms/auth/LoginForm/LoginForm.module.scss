@@ -33,6 +33,7 @@
   &:hover {
     color: t.$color-ink;
   }
+  @include m.touch-target;
 }
 
 .input {
@@ -61,6 +62,7 @@
   width: 1rem;
   height: 1rem;
   accent-color: t.$color-accent;
+  @include m.touch-checkbox;
 }
 
 .formError {

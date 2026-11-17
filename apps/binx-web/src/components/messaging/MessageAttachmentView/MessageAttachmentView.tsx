@@ -55,7 +55,7 @@ const MessageAttachmentView = ({
         title={attachment.file_name}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={href} alt={attachment.file_name} loading="lazy" />
+        <img src={href} alt={attachment.file_name} loading="lazy" decoding="async" />
       </a>
     );
   }

@@ -16,6 +16,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getAccessToken } from "@/lib/auth";
+import { apiPath } from "@/lib/file-proxy";
 
 interface RouteParams {
   params: Promise<{ agencyId: string; conversationId: string }>;
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   const body = await req.text();
   let upstream: Response;
   try {
-    upstream = await fetch(`${base}/agencies/${agencyId}/ai/conversations/${conversationId}/messages/stream`, {
+    upstream = await fetch(base + apiPath`/agencies/${agencyId}/ai/conversations/${conversationId}/messages/stream`, {
       method: "POST",
       headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
       body,

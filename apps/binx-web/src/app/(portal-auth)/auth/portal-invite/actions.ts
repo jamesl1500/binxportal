@@ -12,7 +12,7 @@
 
 import { redirect } from "next/navigation";
 
-import { AuthApiError } from "@/lib/auth";
+import { AuthApiError, logout } from "@/lib/auth";
 import { acceptPortalInvitation } from "@/lib/portal";
 
 export interface AcceptPortalInviteResult {
@@ -32,4 +32,16 @@ export async function acceptPortalInviteAction(
   }
 
   redirect("/portal");
+}
+
+/**
+ * Signed in as a different account than the invitation is for (e.g. the
+ * agency owner opening a client's invite in the same browser): sign out and
+ * come back to this invitation, which then offers signup / sign-in for the
+ * invited address. Without this the user is stuck — /portal/login bounces a
+ * signed-in user straight back here.
+ */
+export async function signOutForPortalInviteAction(token: string): Promise<void> {
+  await logout();
+  redirect(`/auth/portal-invite?token=${encodeURIComponent(token)}`);
 }

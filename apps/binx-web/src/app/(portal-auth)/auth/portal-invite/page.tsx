@@ -19,6 +19,9 @@ import Link from "next/link";
 
 import { getCurrentUser } from "@/lib/auth";
 import { previewPortalInvitation } from "@/lib/portal";
+import { sameEmail } from "@/lib/utils";
+
+import { signOutForPortalInviteAction } from "./actions";
 import AcceptPortalInviteForm from "@/components/forms/portal/AcceptPortalInviteForm/AcceptPortalInviteForm";
 import PortalAuthHeader, {
   PortalAuthFooter,
@@ -92,6 +95,22 @@ const PortalInvitePage = async ({ searchParams }: PortalInvitePageProps) => {
           <Link href={`/portal/login${inviteQuery}`} className={styles.secondary}>
             I already have one — sign in
           </Link>
+        </div>
+      ) : !sameEmail(user.email, preview.email) ? (
+        // Signed in as someone else (often the agency owner testing an invite
+        // in their own browser). binx-api would reject the accept, so don't
+        // offer it; offer a way out instead.
+        <div className={styles.prompt}>
+          <p className={styles.promptText}>
+            You&apos;re signed in as <strong>{user.email}</strong>, but this
+            invitation is for <strong>{preview.email}</strong>. Sign out to
+            continue with the invited address.
+          </p>
+          <form action={signOutForPortalInviteAction.bind(null, token)} className={styles.promptForm}>
+            <button type="submit" className={styles.primary}>
+              Sign out and continue
+            </button>
+          </form>
         </div>
       ) : (
         <AcceptPortalInviteForm token={token} preview={preview} />

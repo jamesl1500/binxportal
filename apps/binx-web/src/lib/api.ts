@@ -6,7 +6,9 @@
  * @module apps/binx-web/src/lib/api.ts
  * @author Binx Portal
  */
-import axios from "axios";
+import axios, { AxiosError } from "axios";
+
+import { hasDotSegment } from "@/lib/file-proxy";
 
 /**
  * api
@@ -28,4 +30,16 @@ export const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+});
+
+// Route params (already URL-decoded by Next) are interpolated into request
+// paths all over lib/*. A param like `..%2F..%2Fusers` would otherwise walk
+// the path to a different binx-api endpoint, called with the viewer's token.
+// Rejected as a response-less AxiosError, which every caller already treats
+// as a generic failure.
+api.interceptors.request.use((config) => {
+  if (hasDotSegment(config.url)) {
+    throw new AxiosError("Refusing an API path with a dot-segment", AxiosError.ERR_BAD_REQUEST, config);
+  }
+  return config;
 });
