@@ -561,15 +561,16 @@ async def _avatar_paths(db: AsyncSession, user_ids: list[uuid.UUID]) -> dict[uui
             UserProfile.user_id.in_(user_ids), UserProfile.avatar_storage_path.is_not(None)
         )
     )
-    return dict(result.all())
+    return {user_id: path for user_id, path in result.all() if path}
 
 
 async def get_participant_avatar_or_404(
     db: AsyncSession, conversation: Conversation, user_id: uuid.UUID
-) -> UserProfile:
-    """The profile holding the avatar of someone who is (or was) in the
-    conversation — anyone the caller can see messages from. 404 for anyone
-    else, so the endpoint can't be used to fetch arbitrary users' photos."""
+) -> tuple[str, str | None]:
+    """The ``(storage_path, mime_type)`` of the avatar of someone who is (or
+    was) in the conversation — anyone the caller can see messages from. 404
+    for anyone else, so the endpoint can't be used to fetch arbitrary users'
+    photos. The path is returned already checked (typed ``str``)."""
     result = await db.execute(
         select(UserProfile)
         .join(ConversationParticipant, ConversationParticipant.user_id == UserProfile.user_id)
@@ -580,9 +581,11 @@ async def get_participant_avatar_or_404(
         )
     )
     profile = result.scalar_one_or_none()
-    if profile is None:
+    # The query already excludes NULL paths; checking again here also rejects
+    # an empty string and narrows the type for callers.
+    if profile is None or not profile.avatar_storage_path:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No avatar set")
-    return profile
+    return profile.avatar_storage_path, profile.avatar_mime_type
 
 
 async def unread_total(db: AsyncSession, agency: Agency, user: User) -> int:
@@ -902,7 +905,8 @@ async def delete_message(
         await storage.delete(attachment.storage_path)
         await db.delete(attachment)
 
-    message.deleted_at = datetime.now(UTC)
+    deleted_at = datetime.now(UTC)
+    message.deleted_at = deleted_at
     message.body = ""
     await db.commit()
 
@@ -910,7 +914,7 @@ async def delete_message(
         db,
         conversation.id,
         realtime.EVENT_MESSAGE_DELETED,
-        {"id": str(message.id), "deleted_at": message.deleted_at.isoformat()},
+        {"id": str(message.id), "deleted_at": deleted_at.isoformat()},
     )
 
 

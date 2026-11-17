@@ -113,8 +113,9 @@ async def stop_timer(db: AsyncSession, entry: TimeEntry) -> TimeEntry:
     project = await db.get(Project, entry.project_id)
     assert project is not None
 
-    entry.ended_at = datetime.now(UTC)
-    entry.duration_minutes = _duration_minutes(entry.started_at, entry.ended_at)
+    ended_at = datetime.now(UTC)
+    entry.ended_at = ended_at
+    entry.duration_minutes = _duration_minutes(entry.started_at, ended_at)
     entry.hourly_rate_cents = resolve_hourly_rate_cents(entry.hourly_rate_cents, project)
     await db.commit()
     await db.refresh(entry)
@@ -245,14 +246,11 @@ async def uninvoiced_summary(db: AsyncSession, agency_id: uuid.UUID, *, project_
     )
     entries = list(result.scalars().all())
     total_minutes = sum(e.duration_minutes for e in entries)
-    rated = [e for e in entries if e.hourly_rate_cents is not None]
+    # (minutes, rate) for the entries that have a rate.
+    rated = [(e.duration_minutes, rate) for e in entries if (rate := e.hourly_rate_cents) is not None]
     amount = sum(
-        int(
-            (Decimal(e.duration_minutes) / Decimal(60) * Decimal(e.hourly_rate_cents)).quantize(
-                Decimal("1"), rounding=ROUND_HALF_UP
-            )
-        )
-        for e in rated
+        int((Decimal(minutes) / Decimal(60) * Decimal(rate)).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+        for minutes, rate in rated
     )
     return {
         "entry_count": len(entries),
@@ -263,6 +261,9 @@ async def uninvoiced_summary(db: AsyncSession, agency_id: uuid.UUID, *, project_
 
 
 def _entry_line_item(entry: TimeEntry, project_name: str) -> LineItemInput:
+    rate = entry.hourly_rate_cents
+    if rate is None:  # the caller rejects unrated entries first; this narrows the type
+        raise HTTPException(status.HTTP_409_CONFLICT, "An entry has no hourly rate")
     hours = (Decimal(entry.duration_minutes) / Decimal(60)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     date_label = entry.started_at.date().isoformat()
     description = (
@@ -270,7 +271,7 @@ def _entry_line_item(entry: TimeEntry, project_name: str) -> LineItemInput:
         if entry.description
         else f"{project_name} — time logged {date_label}"
     )
-    return LineItemInput(description=description[:1024], quantity=hours, unit_price_cents=entry.hourly_rate_cents)
+    return LineItemInput(description=description[:1024], quantity=hours, unit_price_cents=rate)
 
 
 async def create_invoice_from_entries(

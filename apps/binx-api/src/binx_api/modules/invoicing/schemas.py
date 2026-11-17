@@ -149,7 +149,11 @@ class InvoiceDetailRead(InvoiceRead):
     payment_instructions: str | None
     issued_at: datetime | None
     voided_at: datetime | None
-    from_: InvoiceParty = Field(alias="from")
+    # `from` is a Python keyword, so the field is `from_` in code and
+    # `from` on the wire (both directions — FastAPI re-validates responses
+    # from their serialized form). Split aliases, not `alias=`, so type
+    # checkers see `from_` as the constructor argument.
+    from_: InvoiceParty = Field(validation_alias="from", serialization_alias="from")
     bill_to: InvoiceParty
     line_items: list[LineItemRead]
     payments: list[PaymentRead]
@@ -187,6 +191,11 @@ class CheckoutConfirmRequest(BaseModel):
     session_id: str = Field(min_length=1, max_length=255)
 
 
+# Shared by CheckoutConfirmRead and service.confirm_checkout_session, so the
+# function's return type and the response schema can't drift apart.
+CheckoutOutcome = Literal["paid", "processing", "failed", "open"]
+
+
 class CheckoutConfirmRead(BaseModel):
     """What the portal's return page shows after Stripe Checkout:
 
@@ -197,7 +206,7 @@ class CheckoutConfirmRead(BaseModel):
     - ``open``: checkout was never finished (nothing was charged).
     """
 
-    outcome: Literal["paid", "processing", "failed", "open"]
+    outcome: CheckoutOutcome
     invoice: InvoiceDetailRead
 
 

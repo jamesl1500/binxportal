@@ -309,6 +309,7 @@ async def _run() -> None:
 
         moodboard = await card("board", 340, 330, width=280.0, content={"title": "Moodboard"}, color="#10b981")
         mood = await resolve_board(db, project, uuid.UUID(json.loads(moodboard.content)["board_id"]))
+        notes = []
         for x, y, text, color in _MOODBOARD_NOTES:
             note = await create_item(
                 db,
@@ -323,7 +324,9 @@ async def _run() -> None:
                 content={"text": text},
                 color=color,
             )
-        await request_approval(db, note, project, actor=owner)
+            notes.append(note)
+        # The last note on the moodboard goes out for approval.
+        await request_approval(db, notes[-1], project, actor=owner)
         palette = await create_item(
             db,
             mood,

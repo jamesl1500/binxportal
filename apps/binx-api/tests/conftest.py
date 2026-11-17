@@ -59,6 +59,11 @@ os.environ.setdefault("RATE_LIMIT_ENABLED", "false")
 # covers the SES path with a mocked client instead.
 os.environ["SES_FROM_EMAIL"] = ""
 os.environ["SES_ALLOWED_RECIPIENTS"] = ""
+# Same for the other real third-party key a developer's .env carries: tests
+# that need Places opt in by setting the key themselves and patching
+# places_client._call_places, so the suite never depends on (or spends
+# against) a real key.
+os.environ["GOOGLE_PLACES_API_KEY"] = ""
 
 import pytest  # noqa: E402
 from botocore.exceptions import ClientError  # noqa: E402

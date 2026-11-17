@@ -3,7 +3,7 @@ import uuid
 from typing import TYPE_CHECKING
 
 from fastapi import HTTPException, status
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
@@ -556,7 +556,11 @@ async def set_task_tags(db: AsyncSession, task: ProjectTask, *, tag_ids: list[uu
     for tag_id in unique_ids:
         tags.append(await get_project_tag_or_404(db, task.project_id, tag_id))
 
-    await db.execute(ProjectTaskTagLink.__table__.delete().where(ProjectTaskTagLink.task_id == task.id))
+    await db.execute(
+        delete(ProjectTaskTagLink)
+        .where(ProjectTaskTagLink.task_id == task.id)
+        .execution_options(synchronize_session=False)
+    )
     for tag in tags:
         db.add(ProjectTaskTagLink(task_id=task.id, tag_id=tag.id))
     await db.commit()

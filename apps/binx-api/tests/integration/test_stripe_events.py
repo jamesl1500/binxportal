@@ -47,6 +47,7 @@ class TestReplayProtectionIsAtomicWithTheHandler:
             "account": "acct_123",
             "data": {
                 "object": {
+                    "object": "checkout.session",
                     "id": "cs_test_1",
                     "mode": "payment",
                     "status": "complete",

@@ -285,8 +285,8 @@ class TestStartBillingPortal:
 
         await service.start_billing_portal(db_session, agency, target_plan="scale")
         assert captured["flow_data"] == {
-            "type": "subscription_update",
-            "subscription_update": {
+            "type": "subscription_update_confirm",
+            "subscription_update_confirm": {
                 "subscription": "sub_123",
                 "items": [{"id": "si_123", "price": "price_scale", "quantity": 1}],
             },

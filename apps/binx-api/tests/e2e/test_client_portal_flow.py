@@ -355,6 +355,7 @@ class TestPortalReads:
             "account": "acct_test123",
             "data": {
                 "object": {
+                    "object": "checkout.session",
                     "id": "cs_test_1",
                     "mode": "payment",
                     "status": "complete",
@@ -418,6 +419,7 @@ def _checkout_event(event_id, event_type, *, invoice_id, agency_id, paid_by, amo
         "account": "acct_test123",
         "data": {
             "object": {
+                "object": "checkout.session",
                 "id": f"cs_{event_id}",
                 "mode": "payment",
                 "status": "complete",

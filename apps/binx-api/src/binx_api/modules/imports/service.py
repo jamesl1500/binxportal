@@ -18,7 +18,9 @@ Policy (product decisions, see the import feature notes):
 from __future__ import annotations
 
 from fastapi import HTTPException, status
-from pydantic import EmailStr, TypeAdapter, ValidationError
+from pydantic import ValidationError
+from pydantic.networks import validate_email
+from pydantic_core import PydanticCustomError
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -48,7 +50,6 @@ from binx_api.modules.imports.schemas import (
 from binx_api.modules.users.models import User
 
 _FIELD_LABELS = {field.key: field.label for field in CLIENT_FIELDS}
-_email_adapter = TypeAdapter(EmailStr)
 
 
 def _clean(value: str | None) -> str | None:
@@ -243,8 +244,10 @@ async def import_team(
             results.append(ImportRowResult(row=row.row, label=label, status="invalid", message="Email is required"))
             continue
         try:
-            email = _email_adapter.validate_python(raw_email)
-        except ValidationError:
+            # pydantic's own EmailStr validator (EmailStr is a thin wrapper
+            # around it) — same normalisation and the same rejections.
+            _name, email = validate_email(raw_email)
+        except PydanticCustomError:
             results.append(
                 ImportRowResult(row=row.row, label=label, status="invalid", message="That isn't a valid email address")
             )

@@ -20,6 +20,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 import anthropic
+from anthropic.lib.streaming import AsyncMessageStreamManager
 from anthropic.types import Message, Usage
 from fastapi import HTTPException, status
 from sqlalchemy import func, select
@@ -105,7 +106,7 @@ async def _call_anthropic(**kwargs: Any) -> Message:
     return await _get_client().messages.create(**kwargs)
 
 
-def _stream_anthropic(**kwargs: Any) -> anthropic.lib.streaming.AsyncMessageStreamManager:
+def _stream_anthropic(**kwargs: Any) -> AsyncMessageStreamManager:
     """Thin, monkeypatchable wrapper around the one real streaming network
     call this module makes — mirrors ``_call_anthropic``. Returns the async
     context manager directly (``messages.stream(...)`` isn't itself

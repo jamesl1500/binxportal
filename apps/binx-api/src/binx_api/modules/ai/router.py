@@ -261,7 +261,8 @@ async def stream_conversation_message(
                     yield _sse({"type": "delta", "text": chunk})
             yield _sse({"type": "done"})
         except Exception as exc:  # must never crash the stream silently — always tell the client
-            message = exc.detail if hasattr(exc, "detail") else "Something went wrong generating that reply."
+            detail = getattr(exc, "detail", None)  # HTTPException and friends carry a user-safe message
+            message = detail if detail is not None else "Something went wrong generating that reply."
             yield _sse({"type": "error", "message": str(message)})
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")

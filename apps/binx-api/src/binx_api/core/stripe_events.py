@@ -9,6 +9,7 @@ feature-specific reason to duplicate that bookkeeping per module.
 
 from __future__ import annotations
 
+import logging
 import uuid
 
 import stripe
@@ -20,6 +21,28 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from binx_api.core.database import Base
 from binx_api.core.stripe_client import construct_event, parse_connect_account_event_notification
+
+logger = logging.getLogger(__name__)
+
+
+def event_object[T: stripe.StripeObject](event: stripe.Event, cls: type[T]) -> T | None:
+    """The event's ``data.object`` as ``cls`` — the SDK builds the right
+    class from the payload's ``object`` field (``checkout.session`` →
+    ``stripe.checkout.Session``), but types it loosely. A misrouted event
+    carrying some other object is logged and skipped rather than handed to a
+    handler that would crash on it (a webhook must never 500 on payload
+    shape)."""
+    obj = event.data.object
+    if isinstance(obj, cls):
+        return obj
+    logger.warning(
+        "Stripe event %s (%s) carried a %r object, expected %s; skipped",
+        event.id,
+        event.type,
+        getattr(obj, "object", None),
+        cls.__name__,
+    )
+    return None
 
 
 class StripeWebhookEvent(Base):
@@ -101,11 +124,14 @@ async def verify_and_dedupe_thin_event(request: Request, db: AsyncSession, secre
     except (ValueError, stripe.SignatureVerificationError) as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid Stripe signature") from exc
 
+    # Only some notification types reference an object, and only some of those
+    # references carry an id (the SDK models singletons without one).
+    related = getattr(notification, "related_object", None)
     db.add(
         StripeWebhookEvent(
             stripe_event_id=notification.id,
             event_type=notification.type,
-            connect_account_id=getattr(notification, "related_object", None) and notification.related_object.id,
+            connect_account_id=getattr(related, "id", None),
         )
     )
     try:

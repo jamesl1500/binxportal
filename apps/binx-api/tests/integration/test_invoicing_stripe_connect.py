@@ -96,7 +96,10 @@ class TestStartConnectOnboarding:
         assert len(create_calls) == 1
         assert len(link_calls) == 2
         assert link_calls[1]["account"] == "acct_123"
-        assert link_calls[1]["use_case"]["account_onboarding"]["configurations"] == ["merchant"]
+        # No `configurations`: Stripe removed it from Account Links (API
+        # 2026-09-30.endive) and rejects unknown fields on v2 endpoints.
+        assert "configurations" not in link_calls[1]["use_case"]["account_onboarding"]
+        assert link_calls[1]["use_case"]["type"] == "account_onboarding"
 
 
 class TestSyncConnectStatus:
