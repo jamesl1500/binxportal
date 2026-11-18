@@ -49,7 +49,7 @@ interface SignupFormProps {
    * needs no highlight — it's already the default.
    */
   planIntent?: string;
-  /** "portal" swaps in the client portal's warm skin (see portal-auth-form.module.scss). */
+  /** "portal" swaps in the client portal's form skin (see portal-auth-form.module.scss). */
   variant?: "default" | "portal";
 }
 

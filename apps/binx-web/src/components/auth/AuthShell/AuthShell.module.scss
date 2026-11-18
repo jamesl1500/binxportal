@@ -92,6 +92,7 @@ $flow-cycle: 12s;
   align-items: center;
   gap: t.$space-2;
   width: fit-content;
+  margin: 0; // the portal renders the brand as a <p>, not a link
   font-family: var(--font-heading);
   font-size: t.$font-size-lg;
   letter-spacing: t.$tracking-wide;
@@ -124,6 +125,13 @@ $flow-cycle: 12s;
 
 .story {
   max-width: 28rem;
+}
+
+.kicker {
+  @include m.mono-label;
+  margin: 0 0 t.$space-4;
+  color: rgba(245, 245, 246, 0.7);
+  @include mo.enter(1);
 }
 
 .headline {
@@ -315,6 +323,34 @@ $flow-cycle: 12s;
   @include m.mono-label;
   color: rgba(245, 245, 246, 0.55);
   @include mo.enter(6);
+}
+
+// ---- Client portal tone -----------------------------------------------------
+// Same shell, warmer light: terracotta/apricot where the staff pages use
+// indigo, so clients know they're at their own door.
+
+.root[data-tone="portal"] {
+  .panelShade {
+    background:
+      linear-gradient(180deg, rgba(20, 12, 8, 0.5) 0%, rgba(20, 12, 8, 0.78) 45%, rgba(20, 12, 8, 0.94) 100%),
+      linear-gradient(120deg, rgba(216, 86, 42, 0.3), transparent 55%);
+  }
+
+  .panelGlow {
+    background: radial-gradient(circle, rgba(255, 171, 94, 0.36), transparent 65%);
+  }
+
+  .headline em {
+    background-image: linear-gradient(90deg, #fed7aa, #fecdd3, #fde68a);
+  }
+
+  .flowBar {
+    background: linear-gradient(90deg, #d8562a, #ffab5e, #ffd37a);
+  }
+
+  .contentGlow {
+    background: radial-gradient(circle, rgba(255, 171, 94, 0.16), transparent 65%);
+  }
 }
 
 // ---- Form side --------------------------------------------------------------

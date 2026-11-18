@@ -28,7 +28,7 @@ const forgotPasswordSchema = z.object({
 type ForgotPasswordValues = z.infer<typeof forgotPasswordSchema>;
 
 interface ForgotPasswordFormProps {
-  /** "portal" swaps in the client portal's warm skin (see portal-auth-form.module.scss). */
+  /** "portal" swaps in the client portal's form skin (see portal-auth-form.module.scss). */
   variant?: "default" | "portal";
 }
 

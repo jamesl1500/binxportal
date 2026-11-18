@@ -2,15 +2,11 @@
  * layout.tsx - Client Portal Auth Layout
  *
  * The client-facing counterpart of (auth)/auth/layout.tsx: signing in,
- * accepting an invitation, and password recovery for client contacts, on
- * their own warm, animated pages rather than the staff app's. A sky that
- * follows the visitor's own clock (sunrise, daylight, sunset, then a moon
- * and stars — see PortalAuthSky), a time-of-day greeting, and three small
- * looping previews of what's waiting inside (a project moving, a message
- * arriving, an invoice settled) sit beside the form card.
- *
- * Everything animated here is decorative and CSS-only (no JS, hidden from
- * assistive tech) and switches off under `prefers-reduced-motion`.
+ * accepting an invitation, and password recovery for client contacts. Same
+ * AuthShell as the staff pages (and so the marketing site's look and motion),
+ * told from the client's side — a time-of-day greeting, the steps of working
+ * with an agency through the portal, an "approved" toast — in the shell's
+ * warm "portal" tone.
  *
  * Shares the `/portal` URL prefix with the signed-in (portal) group, but as
  * its own route group so none of that group's guards or chrome apply.
@@ -20,110 +16,46 @@
  */
 import React from "react";
 import type { Metadata } from "next";
-import { Check, MessageCircle } from "lucide-react";
+import { Check } from "lucide-react";
 
+import teamCelebrate from "@/assets/marketing/photos/team-celebrate.webp";
 import { SITE } from "@/lib/site";
-import BinxMark from "@/components/BinxMark/BinxMark";
+import AuthShell from "@/components/auth/AuthShell/AuthShell";
 import PortalAuthGreeting from "@/components/portal-auth/PortalAuthGreeting/PortalAuthGreeting";
-import PortalAuthSky from "@/components/portal-auth/PortalAuthSky/PortalAuthSky";
-
-import styles from "./layout.module.scss";
 
 export const metadata: Metadata = {
   title: { default: "Client portal", template: "%s · Binx" },
   robots: { index: false, follow: false },
 };
 
-const TAGLINE = ["Everything", "you're", "working", "on,", "in", "one", "place."];
+const STEPS = [
+  { title: "Review the proposal", text: "Read it, ask questions, sign from one link." },
+  { title: "Follow the project", text: "Progress, files and messages as they happen." },
+  { title: "Approve the work", text: "Sign off on designs and deliverables in a click." },
+  { title: "Pay the invoice", text: "Settle up securely, right from the portal." },
+];
 
-const PortalAuthLayout = ({ children }: { children: React.ReactNode }) => {
-  return (
-    <PortalAuthSky className={styles.root}>
-      <div className={styles.backdrop} aria-hidden="true">
-        <span className={styles.stars} data-layer="a" />
-        <span className={styles.stars} data-layer="b" />
-        <span className={styles.stars} data-layer="c" />
-        <span className={styles.shootingStar} />
-        <span className={styles.moon} />
-        <span className={styles.rays} />
-        <span className={styles.sun} />
-        <span className={styles.orb} data-orb="a" />
-        <span className={styles.orb} data-orb="b" />
-        <span className={styles.orb} data-orb="c" />
-      </div>
-
-      <aside className={styles.scene}>
-        <p className={styles.brand}>
-          <BinxMark className={styles.brandMark} />
-          Client portal
-        </p>
-
-        <div className={styles.welcome}>
-          <p className={styles.greeting}>
-            <PortalAuthGreeting />
-          </p>
-          <p className={styles.tagline}>
-            {TAGLINE.map((word, index) => (
-              <span
-                key={index}
-                className={styles.word}
-                style={{ "--i": index } as React.CSSProperties}
-              >
-                {word}{" "}
-              </span>
-            ))}
-          </p>
-
-          <div className={styles.previews} aria-hidden="true">
-            <div className={styles.preview} data-preview="project">
-              <span className={styles.previewLabel}>Your project</span>
-              <span className={styles.previewTitle}>Website redesign</span>
-              <span className={styles.bar}>
-                <span className={styles.barFill} />
-              </span>
-              <span className={styles.previewMeta}>On track</span>
-            </div>
-
-            <div className={styles.preview} data-preview="message">
-              <span className={styles.avatar}>
-                <MessageCircle />
-              </span>
-              <span className={styles.bubble}>
-                <span className={styles.typing}>
-                  <i />
-                  <i />
-                  <i />
-                </span>
-                <span className={styles.bubbleText}>
-                  The new mockups are ready for you
-                </span>
-              </span>
-            </div>
-
-            <div className={styles.preview} data-preview="invoice">
-              <span className={styles.tick}>
-                <Check />
-              </span>
-              <span>
-                <span className={styles.previewTitle}>Invoice paid</span>
-                <span className={styles.previewMeta}>Thank you!</span>
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <p className={styles.footnote}>Powered by {SITE.name}</p>
-      </aside>
-
-      <main className={styles.content}>
-        <p className={styles.mobileBrand}>
-          <BinxMark className={styles.brandMark} />
-          Client portal
-        </p>
-        <div className={styles.card}>{children}</div>
-      </main>
-    </PortalAuthSky>
-  );
-};
+const PortalAuthLayout = ({ children }: { children: React.ReactNode }) => (
+  <AuthShell
+    tone="portal"
+    photo={teamCelebrate}
+    brandLabel="Client portal"
+    kicker={<PortalAuthGreeting />}
+    headline={
+      <>
+        Everything you&apos;re working on, <em>in one place</em>.
+      </>
+    }
+    steps={STEPS}
+    toast={{
+      icon: <Check />,
+      title: "Homepage design approved",
+      meta: "Website redesign · just now",
+    }}
+    footnote={<>Powered by {SITE.name}</>}
+  >
+    {children}
+  </AuthShell>
+);
 
 export default PortalAuthLayout;

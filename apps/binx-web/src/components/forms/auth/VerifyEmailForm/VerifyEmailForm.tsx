@@ -23,7 +23,7 @@ interface VerifyEmailFormProps {
   email?: string;
   /** Carried through from signup when this account came from a client-portal invite — sends the user back to accept it instead of staff onboarding. */
   portalInviteToken?: string;
-  /** "portal" swaps in the client portal's warm skin (see portal-auth-form.module.scss). */
+  /** "portal" swaps in the client portal's form skin (see portal-auth-form.module.scss). */
   variant?: "default" | "portal";
 }
 
