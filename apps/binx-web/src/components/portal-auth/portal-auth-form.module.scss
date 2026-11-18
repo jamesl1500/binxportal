@@ -1,28 +1,24 @@
 @use "../../styles/tokens" as t;
-@use "../../styles/portal-warm" as w;
 @use "../../styles/mixins" as m;
+@use "../../styles/motion" as mo;
+
+@include mo.keyframes;
 
 // The client-portal skin for the shared auth forms (LoginForm, SignupForm,
 // ForgotPasswordForm, ResetPasswordForm, VerifyEmailForm,
 // AcceptPortalInviteForm). Each of those picks this module over its own when
 // rendered with `variant="portal"`, so the class names here are the union of
 // theirs — add a class to one of those forms and it needs a rule here too.
+//
+// It deliberately matches the staff forms (mono labels, input-base, the ink
+// submit with its sheen); the portal's own character lives in AuthShell's
+// warm "portal" tone. What it adds: a checkmark on the success state and the
+// invitation summary card.
 
 .form {
   display: flex;
   flex-direction: column;
   gap: t.$space-5;
-
-  // Fields arrive one after another, just behind the page heading.
-  > * {
-    animation: rise 0.6s w.$ease-out both;
-  }
-
-  @for $i from 1 through 8 {
-    > :nth-child(#{$i}) {
-      animation-delay: #{0.4 + $i * 0.07}s;
-    }
-  }
 }
 
 .row {
@@ -44,91 +40,46 @@
 }
 
 .label {
-  font-size: t.$font-size-sm;
-  font-weight: 600;
-  color: w.$cocoa;
+  @include m.mono-label;
+  color: t.$color-ink-soft;
 }
 
-.forgotLink,
-.resendLink {
+.forgotLink {
   font-size: t.$font-size-xs;
-  font-weight: 600;
-  color: w.$terracotta-deep;
-  text-decoration: none;
+  color: t.$color-ink-soft;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 
-  &:hover,
-  &:focus-visible {
-    text-decoration: underline;
-    text-underline-offset: 3px;
+  &:hover {
+    color: t.$color-ink;
   }
   @include m.touch-target;
 }
 
-.resendLink {
-  padding: 0;
-  font: inherit;
-  font-weight: 600;
-  background: none;
-  border: none;
-  cursor: pointer;
-
-  &:disabled {
-    cursor: default;
-    opacity: 0.7;
-  }
-}
-
 .input {
-  width: 100%;
-  padding: 0.85rem 1rem;
-  font-size: t.$font-size-base;
-  color: w.$cocoa;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1.5px solid w.$border;
-  border-radius: 2px;
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.25s ease,
-    transform 0.25s w.$ease-out;
-
-  &::placeholder {
-    color: w.$cocoa-faint;
-  }
-
-  &:hover:not(:disabled):not(:read-only) {
-    border-color: w.$border-strong;
-  }
-
-  &:focus-visible {
-    outline: none;
-    border-color: w.$apricot;
-    box-shadow: 0 0 0 4px rgba(255, 171, 94, 0.28);
-    transform: translateY(-1px);
-  }
+  @include m.input-base;
 
   &[aria-invalid="true"] {
-    border-color: w.$danger;
-    animation: shake 0.4s ease;
+    border-color: t.$color-danger;
   }
 
   &:read-only,
   &:disabled {
-    color: w.$cocoa-soft;
-    background: rgba(253, 235, 211, 0.6);
+    color: t.$color-ink-soft;
+    background: t.$color-paper;
   }
 }
 
 .error {
   margin: 0;
   font-size: t.$font-size-xs;
-  font-weight: 500;
-  color: w.$danger;
+  color: t.$color-danger;
 }
 
 .hint {
   margin: 0;
   font-size: t.$font-size-xs;
-  color: w.$cocoa-soft;
+  color: t.$color-ink-faint;
 }
 
 .checkboxRow {
@@ -136,42 +87,59 @@
   align-items: center;
   gap: t.$space-2;
   font-size: t.$font-size-sm;
-  color: w.$cocoa-soft;
-  cursor: pointer;
+  color: t.$color-ink-soft;
 }
 
 .checkbox {
-  width: 1.05rem;
-  height: 1.05rem;
-  accent-color: w.$terracotta;
+  width: 1rem;
+  height: 1rem;
+  accent-color: t.$color-accent;
   @include m.touch-checkbox;
 }
 
 .formError {
   margin: 0;
-  padding: t.$space-3 t.$space-4;
+  padding: t.$space-3;
   font-size: t.$font-size-sm;
-  line-height: 1.5;
-  color: w.$danger;
-  background: rgba(194, 51, 28, 0.07);
-  border: 1px solid rgba(194, 51, 28, 0.2);
-  border-radius: w.$radius-field;
-  // Overrides the staggered entrance: an error should register at once.
-  animation: shake 0.4s ease !important;
+  color: t.$color-danger;
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-radius: t.$radius-sm;
 }
 
-// Replaces the whole form once the request has gone through.
+.resendLink {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: t.$font-size-sm;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    color: t.$color-ink;
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.7;
+  }
+}
+
+// Replaces the whole form once the request has gone through — the staff
+// success box, plus a check that stamps in.
 .formSuccess {
   position: relative;
   margin: 0;
-  padding: t.$space-5 t.$space-5 t.$space-5 4rem;
+  padding: t.$space-3 t.$space-3 t.$space-3 2.75rem;
   font-size: t.$font-size-sm;
   line-height: 1.55;
-  color: #1f5e3d;
-  background: rgba(47, 143, 91, 0.09);
-  border: 1px solid rgba(47, 143, 91, 0.22);
-  border-radius: 18px;
-  animation: rise 0.5s w.$ease-out both;
+  color: #15803d;
+  background: rgba(21, 128, 61, 0.08);
+  border: 1px solid rgba(21, 128, 61, 0.2);
+  border-radius: t.$radius-sm;
 
   &::before,
   &::after {
@@ -180,153 +148,33 @@
   }
 
   &::before {
-    top: 50%;
-    left: t.$space-5;
-    width: 2rem;
-    height: 2rem;
-    margin-top: -1rem;
-    background: w.$leaf;
+    top: t.$space-3;
+    left: t.$space-3;
+    width: 1.25rem;
+    height: 1.25rem;
+    background: #15803d;
     border-radius: 50%;
-    animation: stamp 0.5s w.$ease-spring 0.15s both;
   }
 
-  // The check mark: two borders of a rotated box, drawn in after the disc.
+  // The check mark: two borders of a rotated box.
   &::after {
-    top: 50%;
-    left: calc(#{t.$space-5} + 0.72rem);
-    width: 0.45rem;
-    height: 0.85rem;
-    margin-top: -0.55rem;
+    top: calc(#{t.$space-3} + 0.25rem);
+    left: calc(#{t.$space-3} + 0.45rem);
+    width: 0.3rem;
+    height: 0.6rem;
     border: solid #fff;
-    border-width: 0 2.5px 2.5px 0;
+    border-width: 0 2px 2px 0;
     rotate: 45deg;
-    animation: stamp 0.4s w.$ease-spring 0.4s both;
-  }
-}
-
-.submit {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  margin-top: t.$space-2;
-  padding: 0.95rem 1.5rem;
-  overflow: hidden;
-  font-size: t.$font-size-base;
-  font-weight: 600;
-  color: #fff;
-  background: linear-gradient(
-    120deg,
-    w.$terracotta 0%,
-    #ec7a3c 55%,
-    w.$apricot 100%
-  );
-  background-size: 180% 100%;
-  border: none;
-  border-radius: 2px;
-  box-shadow: 0 14px 28px -14px rgba(216, 86, 42, 0.9);
-  cursor: pointer;
-  transition:
-    background-position 0.5s w.$ease-out,
-    box-shadow 0.3s ease,
-    transform 0.25s w.$ease-out;
-
-  // A soft sheen that sweeps across on hover.
-  &::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      100deg,
-      transparent 30%,
-      rgba(255, 255, 255, 0.35) 50%,
-      transparent 70%
-    );
-    translate: -120% 0;
-    transition: translate 0.7s w.$ease-out;
   }
 
-  &:hover:not(:disabled) {
-    background-position: 100% 0;
-    box-shadow: 0 18px 32px -14px rgba(216, 86, 42, 0.95);
-    transform: translateY(-2px);
+  @include mo.motion-ok {
+    &::before {
+      animation: stamp 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both;
+    }
 
     &::after {
-      translate: 120% 0;
+      animation: stamp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s both;
     }
-  }
-
-  &:active:not(:disabled) {
-    transform: translateY(0) scale(0.99);
-  }
-
-  &:focus-visible {
-    outline: 3px solid rgba(255, 171, 94, 0.6);
-    outline-offset: 3px;
-  }
-
-  // Pending ("Signing in…") — the gradient breathes while we wait.
-  &:disabled {
-    cursor: progress;
-    animation: breathe 1.2s ease-in-out infinite alternate !important;
-  }
-}
-
-// ---- Invitation summary (AcceptPortalInviteForm) ----
-
-.summary {
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-  background: rgba(255, 255, 255, 0.7);
-  border: 1.5px solid w.$border;
-  border-radius: 18px;
-}
-
-.summaryRow {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: t.$space-4;
-  padding: t.$space-3 t.$space-4;
-
-  & + & {
-    border-top: 1px solid w.$border;
-  }
-}
-
-.summaryLabel {
-  font-size: t.$font-size-xs;
-  font-weight: 600;
-  color: w.$cocoa-soft;
-}
-
-.summaryValue {
-  margin: 0;
-  font-size: t.$font-size-sm;
-  font-weight: 600;
-  text-align: right;
-  color: w.$cocoa;
-  overflow-wrap: anywhere;
-}
-
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(0.75rem);
-  }
-}
-
-@keyframes shake {
-  20%,
-  60% {
-    transform: translateX(-5px);
-  }
-
-  40%,
-  80% {
-    transform: translateX(5px);
   }
 }
 
@@ -337,13 +185,69 @@
   }
 }
 
-@keyframes breathe {
-  from {
-    opacity: 0.75;
+// A light sweep and a slight lift on hover, a press on click — motion off
+// under prefers-reduced-motion (see styles/_motion.scss).
+.submit {
+  @include m.button-base;
+  @include mo.sheen-on-hover;
+  width: 100%;
+  margin-top: t.$space-2;
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+  transition:
+    background-color 0.25s mo.$ease-out-soft,
+    transform 0.25s mo.$ease-out-soft,
+    box-shadow 0.25s mo.$ease-out-soft;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+    box-shadow: 0 12px 26px -14px rgba(10, 10, 11, 0.55);
+
+    @include mo.motion-ok {
+      transform: translateY(-1px);
+    }
   }
 
-  to {
-    opacity: 1;
-    background-position: 100% 0;
+  &:active:not(:disabled) {
+    @include mo.motion-ok {
+      transform: translateY(0) scale(0.99);
+    }
   }
+}
+
+// ---- Invitation summary (AcceptPortalInviteForm) ----
+
+.summary {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+}
+
+.summaryRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: t.$space-4;
+  padding: t.$space-3 t.$space-4;
+
+  & + & {
+    border-top: 1px solid t.$color-border;
+  }
+}
+
+.summaryLabel {
+  @include m.mono-label;
+  color: t.$color-ink-soft;
+}
+
+.summaryValue {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  text-align: right;
+  color: t.$color-ink;
+  overflow-wrap: anywhere;
 }

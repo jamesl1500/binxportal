@@ -53,7 +53,7 @@ type LoginValues = z.infer<typeof loginSchema>;
  * @returns {JSX.Element} - The rendered login form component.
  */
 interface LoginFormProps {
-  /** "portal" swaps in the client portal's warm skin (see portal-auth-form.module.scss). */
+  /** "portal" swaps in the client portal's form skin (see portal-auth-form.module.scss). */
   variant?: "default" | "portal";
   /**
    * A pending client-portal invite to return to after signing in — see

@@ -32,7 +32,7 @@ const PortalAuthHeader = ({
 );
 
 /**
- * The quiet line under a form — links inside it pick up the warm style. A
+ * The quiet line under a form — links inside it are underlined in ink. A
  * `<div>`, not a `<p>`, so a page can split it with a `<PortalAuthDivider />`
  * (an `<hr>` inside a `<p>` is invalid HTML and breaks hydration).
  */
