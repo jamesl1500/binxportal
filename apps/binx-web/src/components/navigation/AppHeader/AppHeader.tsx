@@ -28,6 +28,7 @@ import OrgSwitcher from "@/components/navigation/OrgSwitcher/OrgSwitcher";
 import NotificationBell from "@/components/notifications/NotificationBell/NotificationBell";
 import AiAssistantLauncher from "@/components/ai/AiAssistantLauncher/AiAssistantLauncher";
 import TutorialLauncher from "@/components/tutorial/TutorialLauncher/TutorialLauncher";
+import FeedbackLauncher from "@/components/feedback/FeedbackLauncher/FeedbackLauncher";
 
 import styles from "./AppHeader.module.scss";
 import UserAvatar from "./UserAvatar/UserAvatar";
@@ -168,6 +169,7 @@ const AppHeader = ({
         </button>
 
         <TutorialLauncher />
+        <FeedbackLauncher />
         <AiAssistantLauncher agencyId={currentAgency.id} />
         <NotificationBell
           initialUnreadCount={unreadNotifications}
@@ -222,6 +224,22 @@ const AppHeader = ({
                   >
                     Agency settings
                   </Menu.LinkItem>
+                  <Menu.LinkItem
+                    render={<Link href="/feedback" />}
+                    className={styles.menuItem}
+                    closeOnClick
+                  >
+                    Your feedback
+                  </Menu.LinkItem>
+                  {user.role === "admin" && (
+                    <Menu.LinkItem
+                      render={<Link href="/admin/feedback" />}
+                      className={styles.menuItem}
+                      closeOnClick
+                    >
+                      Feedback inbox
+                    </Menu.LinkItem>
+                  )}
                 </Menu.Group>
                 <Menu.Item
                   className={`${styles.menuItem} ${styles.signOut}`}

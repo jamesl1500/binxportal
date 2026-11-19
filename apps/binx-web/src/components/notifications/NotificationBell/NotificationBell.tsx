@@ -23,6 +23,7 @@ import {
   AtSign,
   Bell,
   FolderKanban,
+  MessageSquareHeart,
   Receipt,
   Users,
   type LucideIcon,
@@ -56,6 +57,7 @@ const CATEGORY_ICON: Record<NotificationCategory, LucideIcon> = {
   invoicing: Receipt,
   projects: FolderKanban,
   messages: AtSign,
+  product: MessageSquareHeart,
 };
 
 interface NotificationBellProps {

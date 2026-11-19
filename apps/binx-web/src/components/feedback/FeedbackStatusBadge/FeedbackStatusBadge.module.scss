@@ -1,0 +1,33 @@
+@use "../../../styles/tokens" as t;
+
+.badge {
+  --tone: #{t.$color-ink-soft};
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem t.$space-2;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: t.$tracking-wide;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--tone);
+  background: color-mix(in srgb, var(--tone) 9%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tone) 22%, transparent);
+  border-radius: 999px;
+
+  &[data-tone="info"] {
+    --tone: #2563eb;
+  }
+
+  &[data-tone="accent"] {
+    --tone: #7c5cff;
+  }
+
+  &[data-tone="success"] {
+    --tone: #0f9d58;
+  }
+
+  &[data-tone="muted"] {
+    --tone: #{t.$color-ink-faint};
+  }
+}

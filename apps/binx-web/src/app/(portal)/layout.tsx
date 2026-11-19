@@ -21,6 +21,7 @@ import { redirect } from "next/navigation";
 import { Toaster } from "sonner";
 
 import { getCurrentUser } from "@/lib/auth";
+import { getDuePulse } from "@/lib/feedback";
 import {
   getPortalContext,
   getPortalConversations,
@@ -31,6 +32,8 @@ import {
 } from "@/lib/portal";
 import { buildBadges, firstName, PORTAL_TOUR_ID } from "@/lib/portal-insights";
 import { getTutorialProgress } from "@/lib/users";
+import FeedbackProvider from "@/components/feedback/FeedbackProvider/FeedbackProvider";
+import FeedbackPulse from "@/components/feedback/FeedbackPulse/FeedbackPulse";
 import PortalBrandVars from "@/components/portal/PortalBrandVars/PortalBrandVars";
 import PortalKickoffInvite from "@/components/portal/PortalKickoffInvite/PortalKickoffInvite";
 import PortalOnboardingProvider from "@/components/portal/PortalOnboardingProvider/PortalOnboardingProvider";
@@ -63,6 +66,7 @@ const PortalLayout = async ({ children }: { children: React.ReactNode }) => {
       tour_completed: true,
       dismissed_popups: [PORTAL_TOUR_ID],
     })),
+    getDuePulse().catch(() => null),
   ]);
 
   const user = await getCurrentUser();
@@ -82,6 +86,7 @@ const PortalLayout = async ({ children }: { children: React.ReactNode }) => {
     meetings,
     pendingKickoffs,
     tutorialProgress,
+    pulseKey,
   ] = await shellData;
   const badges = buildBadges({
     conversations,
@@ -108,42 +113,45 @@ const PortalLayout = async ({ children }: { children: React.ReactNode }) => {
 
   return (
     <PortalOnboardingProvider initialProgress={tutorialProgress}>
-      <div
-        className={styles.root}
-        style={
-          {
-            "--portal-primary": primaryColor,
-            "--portal-accent": accentColor,
-          } as React.CSSProperties
-        }
-      >
-        <PortalBrandVars primary={primaryColor} accent={accentColor} />
-        <PortalSidebar
-          agencyName={context.agency.name}
-          clientName={context.client.name}
-          contactName={user.full_name}
-          contactDetail={context.contact.title || context.contact.email}
-          logoSrc={logoSrc}
-          badges={badges}
-        />
-        <main className={styles.main}>
-          <div className={styles.content}>{children}</div>
-        </main>
-        <PortalWelcomeTour
-          agencyName={context.agency.name}
-          clientName={context.client.name}
-          contactFirstName={firstName(user.full_name)}
-          logoSrc={logoSrc}
-        />
-        {/* Waits for the welcome tour above to close before it opens. */}
-        <PortalKickoffInvite
-          kickoffs={pendingKickoffs}
-          agencyName={context.agency.name}
-          contactFirstName={firstName(user.full_name)}
-          logoSrc={logoSrc}
-        />
-        <Toaster position="bottom-right" richColors />
-      </div>
+      <FeedbackProvider surface="portal" agencyName={context.agency.name}>
+        <div
+          className={styles.root}
+          style={
+            {
+              "--portal-primary": primaryColor,
+              "--portal-accent": accentColor,
+            } as React.CSSProperties
+          }
+        >
+          <PortalBrandVars primary={primaryColor} accent={accentColor} />
+          <PortalSidebar
+            agencyName={context.agency.name}
+            clientName={context.client.name}
+            contactName={user.full_name}
+            contactDetail={context.contact.title || context.contact.email}
+            logoSrc={logoSrc}
+            badges={badges}
+          />
+          <main className={styles.main}>
+            <div className={styles.content}>{children}</div>
+          </main>
+          <PortalWelcomeTour
+            agencyName={context.agency.name}
+            clientName={context.client.name}
+            contactFirstName={firstName(user.full_name)}
+            logoSrc={logoSrc}
+          />
+          {/* Waits for the welcome tour above to close before it opens. */}
+          <PortalKickoffInvite
+            kickoffs={pendingKickoffs}
+            agencyName={context.agency.name}
+            contactFirstName={firstName(user.full_name)}
+            logoSrc={logoSrc}
+          />
+          <FeedbackPulse pulseKey={pulseKey} />
+          <Toaster position="bottom-right" richColors />
+        </div>
+      </FeedbackProvider>
     </PortalOnboardingProvider>
   );
 };

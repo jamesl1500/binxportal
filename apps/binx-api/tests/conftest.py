@@ -87,6 +87,7 @@ from binx_api.modules.auth import models as _auth_models  # noqa: E402,F401
 from binx_api.modules.billing import models as _billing_models  # noqa: E402,F401
 from binx_api.modules.boards import models as _boards_models  # noqa: E402,F401
 from binx_api.modules.client_portal import models as _client_portal_models  # noqa: E402,F401
+from binx_api.modules.feedback import models as _feedback_models  # noqa: E402,F401
 from binx_api.modules.files import models as _file_models  # noqa: E402,F401
 from binx_api.modules.invoicing import models as _invoicing_models  # noqa: E402,F401
 from binx_api.modules.kickoffs import models as _kickoffs_models  # noqa: E402,F401

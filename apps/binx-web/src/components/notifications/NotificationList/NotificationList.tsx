@@ -17,6 +17,7 @@ import {
   AtSign,
   Bell,
   FolderKanban,
+  MessageSquareHeart,
   Receipt,
   Users,
   X,
@@ -45,6 +46,7 @@ const CATEGORY_ICON: Record<NotificationCategory, LucideIcon> = {
   invoicing: Receipt,
   projects: FolderKanban,
   messages: AtSign,
+  product: MessageSquareHeart,
 };
 
 type Filter = "all" | "unread";

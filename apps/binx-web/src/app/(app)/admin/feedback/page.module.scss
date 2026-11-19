@@ -1,0 +1,104 @@
+@use "../../../../styles/tokens" as t;
+
+.eyebrow {
+  display: block;
+  margin-bottom: t.$space-2;
+  font-family: var(--font-mono);
+  font-size: t.$font-size-xs;
+  letter-spacing: t.$tracking-widest;
+  text-transform: uppercase;
+  color: t.$color-ink-soft;
+}
+
+.title {
+  margin: 0 0 t.$space-2;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-2xl;
+  color: t.$color-ink;
+}
+
+.subtitle {
+  margin: 0;
+  max-width: 44rem;
+  font-size: t.$font-size-sm;
+  line-height: 1.6;
+  color: t.$color-ink-soft;
+}
+
+.body {
+  margin-top: t.$space-8;
+}
+
+.back {
+  display: inline-block;
+  margin-bottom: t.$space-4;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+
+  &:hover {
+    color: t.$color-ink;
+  }
+}
+
+.detail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
+  gap: t.$space-6;
+  align-items: start;
+
+  @media (max-width: 900px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.card {
+  padding: t.$space-5 t.$space-6;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-lg;
+}
+
+.message {
+  margin: 0;
+  font-size: t.$font-size-base;
+  line-height: 1.65;
+  color: t.$color-ink;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: t.$space-2 t.$space-4;
+  margin: 0;
+  font-size: t.$font-size-sm;
+
+  dt {
+    color: t.$color-ink-soft;
+  }
+
+  dd {
+    margin: 0;
+    color: t.$color-ink;
+    overflow-wrap: anywhere;
+  }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: t.$font-size-xs;
+  }
+}
+
+.sectionTitle {
+  margin: t.$space-6 0 t.$space-3;
+  font-size: t.$font-size-xs;
+  font-family: var(--font-mono);
+  letter-spacing: t.$tracking-widest;
+  text-transform: uppercase;
+  color: t.$color-ink-soft;
+}
+
+.mailto {
+  color: t.$color-ink;
+}

@@ -25,11 +25,14 @@ import { SITE_URL } from "@/lib/site";
 export const APP_SEGMENTS = [
   "account",
   "activity",
+  // The Binx team's feedback inbox (/admin/feedback) — platform admins only.
+  "admin",
   "agencies",
   "ai",
   "billing",
   "clients",
   "dashboard",
+  "feedback",
   // Server actions only (no page) today — listed so robots.test.ts stays
   // happy and a future /imports page is covered without anyone remembering.
   "imports",

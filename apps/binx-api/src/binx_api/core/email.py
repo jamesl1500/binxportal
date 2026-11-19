@@ -290,3 +290,48 @@ async def send_kickoff_reminder_email(*, to: str, agency_name: str, project_name
             ],
         ),
     )
+
+
+def _clip(text: str, limit: int) -> str:
+    text = text.strip()
+    return text if len(text) <= limit else f"{text[: limit - 1].rstrip()}…"
+
+
+async def send_feedback_received_email(
+    *, to: str, title: str, message: str, surface: str, page_path: str | None, feedback_id: str
+) -> None:
+    """New product feedback, to the Binx team's inbox (``FEEDBACK_INBOX_EMAIL``)."""
+    link = f"{settings.frontend_url}/admin/feedback/{feedback_id}"
+    where = f"From the {'client portal' if surface == 'portal' else 'agency app'}" + (
+        f", on {page_path}" if page_path else ""
+    )
+    quoted = _clip(message, 2000) if message else "(No comment — just a rating.)"
+    await send_email(
+        to=to,
+        subject=title,
+        body=f"{title}\n{where}\n\n{quoted}\n\nTriage it: {link}",
+        html=render_html(
+            heading=title,
+            paragraphs=[where, quoted],
+            cta_label="Open in the feedback inbox",
+            cta_url=link,
+        ),
+    )
+
+
+async def send_feedback_reply_email(*, to: str, label: str, original: str, response: str, path: str) -> None:
+    """The Binx team's written reply, to someone who said it's fine to
+    follow up. One recipient, like every other send here."""
+    link = f"{settings.frontend_url}{path}"
+    quoted = _clip(original, 600)
+    await send_email(
+        to=to,
+        subject=f"We replied to your {label}",
+        body=f"{response}\n\nYou wrote:\n{quoted}\n\nSee all your feedback: {link}",
+        html=render_html(
+            heading=f"We replied to your {label}",
+            paragraphs=[response, f"You wrote: “{quoted}”"] if quoted else [response],
+            cta_label="See your feedback",
+            cta_url=link,
+        ),
+    )
