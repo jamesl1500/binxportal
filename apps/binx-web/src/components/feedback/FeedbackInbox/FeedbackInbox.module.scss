@@ -1,0 +1,239 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.inbox {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-6;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: t.$space-3;
+  margin: 0;
+}
+
+.tile {
+  @include m.card-base;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-1;
+  padding: t.$space-4 t.$space-5;
+
+  dt {
+    @include m.mono-label;
+    color: t.$color-ink-soft;
+  }
+
+  dd {
+    margin: 0;
+    font-family: var(--font-heading);
+    font-size: t.$font-size-2xl;
+    color: t.$color-ink;
+  }
+}
+
+.split {
+  display: flex;
+  gap: t.$space-3;
+  font-size: t.$font-size-lg !important;
+}
+
+.tileHint {
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+}
+
+.tabs {
+  display: flex;
+  gap: t.$space-1;
+  overflow-x: auto;
+  border-bottom: 1px solid t.$color-border;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-2;
+  padding: t.$space-2 t.$space-3;
+  font-size: t.$font-size-sm;
+  white-space: nowrap;
+  color: t.$color-ink-soft;
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+
+  &:hover {
+    color: t.$color-ink;
+  }
+
+  &[data-active="true"] {
+    color: t.$color-ink;
+    border-bottom-color: t.$color-accent;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.tabCount {
+  font-family: var(--font-mono);
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: t.$space-3;
+}
+
+.filter {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-1;
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  color: t.$color-ink-soft;
+}
+
+.search {
+  flex: 1 1 14rem;
+}
+
+.select,
+.input {
+  @include m.input-base;
+  padding-block: t.$space-2;
+}
+
+.apply {
+  @include m.button-base;
+  padding-block: t.$space-2;
+  min-height: 2.4rem;
+  color: t.$color-ink;
+  background: t.$color-surface;
+  border-color: t.$color-border;
+
+  &:hover {
+    border-color: t.$color-border-strong;
+  }
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  @include m.card-base;
+  overflow: hidden;
+
+  li + li {
+    border-top: 1px solid t.$color-border;
+  }
+}
+
+.row {
+  display: block;
+  padding: t.$space-4 t.$space-5;
+  color: inherit;
+  text-decoration: none;
+
+  &:hover {
+    background: t.$color-paper;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.rowTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: t.$space-2;
+  margin-bottom: t.$space-2;
+}
+
+.kind {
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  color: t.$color-ink;
+
+  &[data-kind="bug"] {
+    color: t.$color-danger;
+  }
+}
+
+.rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+
+  svg {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+}
+
+.replied {
+  font-size: t.$font-size-xs;
+  color: #0f9d58;
+}
+
+.date {
+  margin-left: auto;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+}
+
+.message {
+  margin: 0 0 t.$space-1;
+  font-size: t.$font-size-sm;
+  line-height: 1.5;
+  color: t.$color-ink;
+  overflow-wrap: anywhere;
+}
+
+.who {
+  margin: 0;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+  overflow-wrap: anywhere;
+
+  code {
+    font-family: var(--font-mono);
+    color: t.$color-ink-faint;
+  }
+}
+
+.empty {
+  margin: 0;
+  padding: t.$space-8;
+  text-align: center;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+  @include m.card-base;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: t.$font-size-sm;
+}
+
+.pageLink {
+  color: t.$color-ink;
+}
+
+.pageInfo {
+  color: t.$color-ink-soft;
+}

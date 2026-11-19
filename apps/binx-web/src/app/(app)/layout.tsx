@@ -21,6 +21,7 @@ import { Toaster } from "sonner";
 
 import { getCurrentUser } from "@/lib/auth";
 import { getCurrentAgencyContext } from "@/lib/agencies";
+import { getDuePulse } from "@/lib/feedback";
 import { getUnreadMessageCount } from "@/lib/messaging";
 import { getNotifications } from "@/lib/notifications";
 import { getPortalContext } from "@/lib/portal";
@@ -31,6 +32,8 @@ import {
 } from "@/lib/users";
 import AppFooter from "@/components/navigation/AppFooter/AppFooter";
 import AppHeader from "@/components/navigation/AppHeader/AppHeader";
+import FeedbackProvider from "@/components/feedback/FeedbackProvider/FeedbackProvider";
+import FeedbackPulse from "@/components/feedback/FeedbackPulse/FeedbackPulse";
 import TutorialProvider from "@/components/tutorial/TutorialProvider/TutorialProvider";
 import WelcomeTourModal from "@/components/tutorial/WelcomeTourModal/WelcomeTourModal";
 
@@ -62,8 +65,13 @@ const AppLayout = async ({ children }: { children: React.ReactNode }) => {
       dismissed_popups: [],
     })),
     getUserProfile()
-      .then(({ has_avatar, avatar_version }) => ({ has_avatar, avatar_version }))
+      .then(({ has_avatar, avatar_version }) => ({
+        has_avatar,
+        avatar_version,
+      }))
       .catch(() => ({ has_avatar: false, avatar_version: null })),
+    // The new-account check-in, if one is due. Never worth failing a page.
+    getDuePulse().catch(() => null),
   ]);
 
   const user = await getCurrentUser();
@@ -81,37 +89,42 @@ const AppLayout = async ({ children }: { children: React.ReactNode }) => {
     redirect(portal ? "/portal" : "/onboarding/two");
   }
 
-  const [unreadMessages, [notifications, appearance, tutorialProgress, profile]] =
-    await Promise.all([getUnreadMessageCount(currentAgency.id), independent]);
+  const [
+    unreadMessages,
+    [notifications, appearance, tutorialProgress, profile, pulseKey],
+  ] = await Promise.all([getUnreadMessageCount(currentAgency.id), independent]);
 
   return (
     <TutorialProvider initialProgress={tutorialProgress}>
-      <div
-        className={styles.root}
-        style={
-          {
-            "--app-accent": appearance.accent_color ?? undefined,
-          } as React.CSSProperties
-        }
-      >
-        <AppHeader
-          user={user}
-          agencies={agencies}
-          currentAgency={currentAgency}
-          userHasAvatar={profile.has_avatar}
-          userAvatarVersion={profile.avatar_version}
-          unreadMessages={unreadMessages}
-          unreadNotifications={notifications.unread_count}
-          notifications={notifications.items}
-        />
+      <FeedbackProvider surface="app" agencyId={currentAgency.id}>
+        <div
+          className={styles.root}
+          style={
+            {
+              "--app-accent": appearance.accent_color ?? undefined,
+            } as React.CSSProperties
+          }
+        >
+          <AppHeader
+            user={user}
+            agencies={agencies}
+            currentAgency={currentAgency}
+            userHasAvatar={profile.has_avatar}
+            userAvatarVersion={profile.avatar_version}
+            unreadMessages={unreadMessages}
+            unreadNotifications={notifications.unread_count}
+            notifications={notifications.items}
+          />
 
-        <main className={styles.content}>{children}</main>
+          <main className={styles.content}>{children}</main>
 
-        <AppFooter />
+          <AppFooter />
 
-        <WelcomeTourModal />
-        <Toaster position="bottom-right" richColors />
-      </div>
+          <WelcomeTourModal />
+          <FeedbackPulse pulseKey={pulseKey} />
+          <Toaster position="bottom-right" richColors />
+        </div>
+      </FeedbackProvider>
     </TutorialProvider>
   );
 };

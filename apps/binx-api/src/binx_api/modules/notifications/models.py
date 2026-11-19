@@ -15,6 +15,10 @@ CATEGORY_INVOICING = "invoicing"
 CATEGORY_PROJECTS = "projects"
 CATEGORY_MESSAGES = "messages"
 CATEGORY_MEETINGS = "meetings"
+# Replies and status changes on product feedback (modules/feedback). No mute
+# toggle on purpose: it only fires when someone asked us something and we
+# answered, or (for platform admins) when new feedback arrives.
+CATEGORY_PRODUCT = "product"
 
 notification_categories: list[str] = [
     CATEGORY_TEAM,
@@ -22,6 +26,7 @@ notification_categories: list[str] = [
     CATEGORY_PROJECTS,
     CATEGORY_MESSAGES,
     CATEGORY_MEETINGS,
+    CATEGORY_PRODUCT,
 ]
 
 # Fine-grained event kinds (free-form; the frontend only needs `category` to
@@ -38,6 +43,8 @@ EVENT_MEETING_BOOKED = "meeting_booked"
 EVENT_MEETING_SCHEDULED = "meeting_scheduled"
 EVENT_MEETING_CANCELLED = "meeting_cancelled"
 EVENT_MEETING_RESCHEDULED = "meeting_rescheduled"
+EVENT_FEEDBACK_RECEIVED = "feedback_received"
+EVENT_FEEDBACK_UPDATED = "feedback_updated"
 
 
 # A single in-app notification for one recipient. Notifications are per-user

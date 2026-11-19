@@ -148,6 +148,9 @@ class Settings(BaseSettings):
     # client who hits "reply" on an invite or invoice notice actually reaches
     # someone.
     ses_reply_to: str | None = None
+    # Where new product feedback (modules/feedback) is emailed, on top of the
+    # in-app alert every platform admin gets. Unset means in-app only.
+    feedback_inbox_email: str | None = None
     # Local-dev guard for running with SES_FROM_EMAIL set on a laptop. The
     # account is out of the SES sandbox, so without this every seeded or
     # imported @example.com address would really be mailed — and bounce,

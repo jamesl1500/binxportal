@@ -133,4 +133,10 @@ export function useTutorial(): TutorialContextValue {
   return context;
 }
 
+/** For components that also render outside a TutorialProvider (e.g. the
+ * feedback pulse, which the portal shell mounts too). */
+export function useOptionalTutorial(): TutorialContextValue | null {
+  return useContext(TutorialContext);
+}
+
 export default TutorialProvider;

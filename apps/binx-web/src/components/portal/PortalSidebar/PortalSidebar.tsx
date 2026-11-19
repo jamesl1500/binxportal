@@ -4,7 +4,8 @@
  * The client portal's navigation: a branded sidebar (agency logo or
  * monogram, the client's name), grouped sections with live badges — unread
  * messages, unpaid invoices, proposals awaiting a decision, upcoming
- * meetings — a help card that reopens the welcome tour, and the signed-in
+ * meetings — a help card that reopens the welcome tour and opens the
+ * product-feedback dialog (FeedbackProvider), and the signed-in
  * contact with sign-out.
  *
  * Desktop (≥900px) it's a fixed column beside the page. Below that it
@@ -38,6 +39,7 @@ import {
 } from "lucide-react";
 
 import { portalLogoutAction } from "@/app/(app)/actions";
+import SendFeedbackButton from "@/components/feedback/SendFeedbackButton/SendFeedbackButton";
 import { useOptionalPortalOnboarding } from "@/components/portal/PortalOnboardingProvider/PortalOnboardingProvider";
 import {
   initials,
@@ -267,6 +269,7 @@ const PortalSidebar = ({
                   Take the tour
                 </button>
               )}
+              <SendFeedbackButton className={styles.helpLink} />
             </div>
           </div>
 

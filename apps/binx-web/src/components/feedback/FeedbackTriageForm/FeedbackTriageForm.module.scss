@@ -1,0 +1,70 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-4;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+}
+
+.label {
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  color: t.$color-ink-soft;
+}
+
+.input {
+  @include m.input-base;
+}
+
+.textarea {
+  @include m.input-base;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.hint {
+  margin: 0;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+}
+
+.error {
+  margin: 0;
+  font-size: t.$font-size-xs;
+  color: t.$color-danger;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: t.$space-3;
+}
+
+.saved {
+  font-size: t.$font-size-xs;
+  color: #0f9d58;
+}
+
+.primary {
+  @include m.button-base;
+  color: t.$color-accent-foreground;
+  background: t.$color-accent;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}

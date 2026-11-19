@@ -13,10 +13,7 @@
 
 /** Keep in sync with binx-api's notifications/models.py `notification_categories`. */
 export type NotificationCategory =
-  | "team"
-  | "invoicing"
-  | "projects"
-  | "messages";
+  "team" | "invoicing" | "projects" | "messages" | "product";
 
 export interface NotificationCategoryMeta {
   label: string;
@@ -32,6 +29,8 @@ export const NOTIFICATION_CATEGORY_META: Record<
   invoicing: { label: "Invoicing", accent: "#0f9d58" },
   projects: { label: "Projects", accent: "#7c5cff" },
   messages: { label: "Messages", accent: "#e8833a" },
+  // Product feedback replies / new feedback for the Binx team (lib/feedback).
+  product: { label: "Feedback", accent: "#d6336c" },
 };
 
 /** Relative time like "3m", "2h", "5d", falling back to a date for anything older than ~30 days. */
