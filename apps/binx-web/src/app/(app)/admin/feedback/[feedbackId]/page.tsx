@@ -66,6 +66,27 @@ const FeedbackDetailPage = async ({ params }: FeedbackDetailPageProps) => {
         {item.pulse_key ? ` · ${item.pulse_key}` : ""}
       </span>
       <h1 className={styles.title}>From {item.user_name}</h1>
+      {(item.user_id || item.agency_id) && (
+        <p className={styles.related}>
+          {item.user_id && (
+            <Link
+              href={`/admin/users/${item.user_id}`}
+              className={styles.mailto}
+            >
+              Open {item.user_name}&apos;s account
+            </Link>
+          )}
+          {item.user_id && item.agency_id && " · "}
+          {item.agency_id && (
+            <Link
+              href={`/admin/agencies/${item.agency_id}`}
+              className={styles.mailto}
+            >
+              Open {item.agency_name ?? "the agency"}
+            </Link>
+          )}
+        </p>
+      )}
 
       <div className={`${styles.body} ${styles.detail}`}>
         <div>

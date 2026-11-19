@@ -233,11 +233,11 @@ const AppHeader = ({
                   </Menu.LinkItem>
                   {user.role === "admin" && (
                     <Menu.LinkItem
-                      render={<Link href="/admin/feedback" />}
+                      render={<Link href="/admin" />}
                       className={styles.menuItem}
                       closeOnClick
                     >
-                      Feedback inbox
+                      Binx admin
                     </Menu.LinkItem>
                   )}
                 </Menu.Group>

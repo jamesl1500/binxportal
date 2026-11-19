@@ -9,6 +9,7 @@ from binx_api.core import stripe_events as stripe_events_models  # noqa: F401
 from binx_api.core.config import get_settings
 from binx_api.core.database import Base
 from binx_api.modules.activity import models as activity_models  # noqa: F401
+from binx_api.modules.admin import models as admin_models  # noqa: F401
 from binx_api.modules.agencies import models as agencies_models  # noqa: F401
 from binx_api.modules.ai import models as ai_models  # noqa: F401
 from binx_api.modules.auth import models as auth_models  # noqa: F401

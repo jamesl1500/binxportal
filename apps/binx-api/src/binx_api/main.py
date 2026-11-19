@@ -8,6 +8,7 @@ from slowapi.errors import RateLimitExceeded
 from binx_api.core.config import get_settings
 from binx_api.core.rate_limit import limiter
 from binx_api.modules.activity.router import router as activity_router
+from binx_api.modules.admin.router import router as admin_router
 from binx_api.modules.agencies.router import router as agencies_router
 from binx_api.modules.ai.router import router as ai_router
 from binx_api.modules.auth.router import router as auth_router
@@ -103,6 +104,7 @@ def create_app() -> FastAPI:
     app.include_router(imports_router)
     app.include_router(feedback_router)
     app.include_router(feedback_admin_router)
+    app.include_router(admin_router)
 
     return app
 

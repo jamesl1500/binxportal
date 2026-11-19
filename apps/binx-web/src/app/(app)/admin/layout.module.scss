@@ -1,0 +1,22 @@
+@use "../../../styles/tokens" as t;
+
+// Binx-team admin shell: sidebar beside the page, stacking on narrow screens.
+.layout {
+  display: grid;
+  grid-template-columns: 13rem minmax(0, 1fr);
+  gap: t.$space-8;
+  align-items: start;
+
+  @media (max-width: 900px) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: t.$space-4;
+  }
+}
+
+.main {
+  min-width: 0;
+}
+
+.body {
+  margin-top: t.$space-6;
+}

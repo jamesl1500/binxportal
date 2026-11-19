@@ -80,6 +80,7 @@ from binx_api.core.security import create_access_token  # noqa: E402
 
 # Import every module that defines ORM models so ``Base.metadata`` is complete
 # before ``create_all``. Ordering doesn't matter — SQLAlchemy resolves the FKs.
+from binx_api.modules.admin import models as _admin_models  # noqa: E402,F401
 from binx_api.modules.agencies import models as _agency_models  # noqa: E402,F401
 from binx_api.modules.ai import client as _ai_client  # noqa: E402
 from binx_api.modules.ai import models as _ai_models  # noqa: E402,F401
