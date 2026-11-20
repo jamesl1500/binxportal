@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import Self
+from typing import Literal, Self
 from urllib.parse import quote_plus
 
 from pydantic import Field, model_validator
@@ -21,7 +21,9 @@ class Settings(BaseSettings):
     database_port: int = 5432
 
     jwt_secret: str = "change-me"
-    jwt_algorithm: str = "HS256"
+    # Pinned to the HMAC family: tokens are signed and verified with the one
+    # shared jwt_secret, so an asymmetric or "none" algorithm is never valid.
+    jwt_algorithm: Literal["HS256", "HS384", "HS512"] = "HS256"
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 30
     email_verification_token_expire_hours: int = 24
@@ -45,7 +47,7 @@ class Settings(BaseSettings):
     redis_url: str | None = None
     # Shared with binx-web (same env var name there). When set, binx-web's
     # server forwards each visitor's IP with this secret and the rate limiter
-    # keys on that IP — see core/rate_limit.py::_client_ip. Unset, every call
+    # keys on that IP — see core/rate_limit.py::client_ip. Unset, every call
     # binx-web makes on a visitor's behalf shares one rate-limit bucket.
     proxy_shared_secret: str | None = None
     # Serve the interactive API docs (/docs, /redoc, /openapi.json). Off in

@@ -93,6 +93,7 @@ async def get_ai_usage(db: DbSession, agency_and_role: AnyMember, current_user: 
         .where(
             AiUsageEvent.agency_id == agency.id,
             AiUsageEvent.user_id == current_user.id,
+            AiUsageEvent.counts_toward_cap.is_(True),
             AiUsageEvent.created_at >= day_start,
         )
     )

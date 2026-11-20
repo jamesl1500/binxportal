@@ -215,7 +215,7 @@ class TestRateLimiting:
 
 class TestRateLimitClientIp:
     """Calls binx-web makes for a visitor carry that visitor's IP — only
-    trusted alongside the shared secret (core/rate_limit.py::_client_ip)."""
+    trusted alongside the shared secret (core/rate_limit.py::client_ip)."""
 
     @pytest.fixture(autouse=True)
     def _enable_limiter(self, monkeypatch):
