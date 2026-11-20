@@ -11,8 +11,8 @@ from __future__ import annotations
 import time
 from datetime import timedelta
 
-import pytest
 import jwt
+import pytest
 
 from binx_api.core import security
 from binx_api.core.config import get_settings
