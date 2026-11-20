@@ -48,7 +48,7 @@ _TEST_DATABASE_URL = os.environ.get(
     "postgresql+asyncpg://binxapi:binxapi@localhost:5432/binxportal_test",
 )
 os.environ["DATABASE_URL"] = _TEST_DATABASE_URL
-os.environ.setdefault("JWT_SECRET", "test-secret-not-for-production")
+os.environ.setdefault("JWT_SECRET", "test-secret-not-for-production-0123456789")
 os.environ.setdefault("FRONTEND_URL", "http://frontend.test")
 # The auth-endpoint rate limiter is off by default under test so unrelated
 # tests can hammer /auth/login without tripping each other. The one test that

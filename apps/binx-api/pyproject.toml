@@ -27,7 +27,7 @@ dependencies = [
     "passlib[bcrypt]>=1.7.4",
     "pydantic-settings>=2.15.0",
     "pydantic[email]>=2.13.4",
-    "python-jose[cryptography]>=3.5.0",
+    "pyjwt>=2.10",
     "python-multipart>=0.0.32",
     # Only imported by `limits` (slowapi's dependency) when REDIS_URL is set —
     # see core/rate_limit.py. Unused, harmless dead weight otherwise.

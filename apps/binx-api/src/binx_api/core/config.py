@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import Self
+from typing import Literal, Self
 from urllib.parse import quote_plus
 
 from pydantic import Field, model_validator
@@ -21,7 +21,9 @@ class Settings(BaseSettings):
     database_port: int = 5432
 
     jwt_secret: str = "change-me"
-    jwt_algorithm: str = "HS256"
+    # Pinned to the HMAC family: tokens are signed and verified with the one
+    # shared jwt_secret, so an asymmetric or "none" algorithm is never valid.
+    jwt_algorithm: Literal["HS256", "HS384", "HS512"] = "HS256"
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 30
     email_verification_token_expire_hours: int = 24

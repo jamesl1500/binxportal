@@ -12,7 +12,7 @@ import time
 from datetime import timedelta
 
 import pytest
-from jose import jwt
+import jwt
 
 from binx_api.core import security
 from binx_api.core.config import get_settings
@@ -64,10 +64,14 @@ class TestAccessTokens:
     def test_rejects_a_token_signed_with_a_different_secret(self) -> None:
         forged = jwt.encode(
             {"sub": "user-123", "exp": time.time() + 3600},
-            "not-the-real-secret",
+            "not-the-real-secret-but-long-enough-for-hs256",
             algorithm=settings.jwt_algorithm,
         )
         assert security.decode_access_token(forged) is None
+
+    def test_rejects_an_unsigned_alg_none_token(self) -> None:
+        unsigned = jwt.encode({"sub": "user-123", "type": "access", "exp": time.time() + 3600}, None, algorithm="none")
+        assert security.decode_access_token(unsigned) is None
 
     def test_rejects_a_garbage_string(self) -> None:
         assert security.decode_access_token("not.a.jwt") is None

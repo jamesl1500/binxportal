@@ -3,7 +3,8 @@ import secrets
 from datetime import UTC, datetime, timedelta
 from typing import Annotated, Any
 
-from jose import JWTError, jwt
+import jwt
+from jwt import PyJWTError
 from passlib.context import CryptContext
 from pydantic import AfterValidator, Field
 
@@ -32,7 +33,7 @@ def create_access_token(subject: str, extra_claims: dict[str, Any] | None = None
 def decode_access_token(token: str) -> dict[str, Any] | None:
     try:
         return jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
-    except JWTError:
+    except PyJWTError:
         return None
 
 
@@ -50,7 +51,7 @@ def decode_ws_ticket(token: str) -> str | None:
     """Returns the subject (user id) of a valid, unexpired ws ticket, or None."""
     try:
         payload = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
-    except JWTError:
+    except PyJWTError:
         return None
     if payload.get("type") != "ws" or "sub" not in payload:
         return None
