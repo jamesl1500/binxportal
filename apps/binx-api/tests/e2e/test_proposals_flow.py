@@ -105,3 +105,30 @@ class TestProposalLifecycle:
 
         deleted = await client.delete(f"/agencies/{agency.id}/proposals/{proposal['id']}", headers=auth_headers(owner))
         assert deleted.status_code == 204
+
+
+class TestSignatureIpAddress:
+    async def test_records_the_forwarded_signer_ip(self, client, ctx, db_session, monkeypatch) -> None:
+        """The signature keeps the signer's real IP, not binx-web's: binx-web
+        signs on their behalf and forwards it with the shared secret."""
+        from sqlalchemy import select
+
+        from binx_api.core import rate_limit
+        from binx_api.modules.proposals.models import ProposalSignature
+
+        monkeypatch.setattr(rate_limit._settings, "proxy_shared_secret", "s3cret")
+        agency, owner = ctx
+        proposal = await _create_proposal(client, agency.id, owner)
+        await client.post(
+            f"/agencies/{agency.id}/proposals/{proposal['id']}/send", json={}, headers=auth_headers(owner)
+        )
+        token = _token_from_share_url(proposal["share_url"])
+
+        sign = await client.post(
+            f"/proposals/public/{token}/sign",
+            json={"signer_name": "Jane Prospect", "signer_email": "jane@example.com"},
+            headers={"x-binx-client-ip": "203.0.113.50", "x-binx-proxy-secret": "s3cret"},
+        )
+        assert sign.status_code == 200, sign.text
+        signature = (await db_session.execute(select(ProposalSignature))).scalars().one()
+        assert signature.ip_address == "203.0.113.50"

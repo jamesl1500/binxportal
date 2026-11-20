@@ -35,7 +35,7 @@ CLIENT_IP_HEADER = "x-binx-client-ip"
 PROXY_SECRET_HEADER = "x-binx-proxy-secret"
 
 
-def _client_ip(request: Request) -> str:
+def client_ip(request: Request) -> str:
     """The real client IP.
 
     1. When ``PROXY_SHARED_SECRET`` is set and the request carries it,
@@ -45,6 +45,10 @@ def _client_ip(request: Request) -> str:
        this can't be spoofed as long as the API is only reachable through
        Caddy (port 8000 isn't published in docker-compose.prod.yml).
     3. The socket peer, when neither header is there (local dev, tests).
+
+    Also the IP to record wherever the app keeps one as evidence (proposal
+    and approval signatures): behind Caddy and binx-web, ``request.client``
+    is a container address, not the person's.
     """
     secret = _settings.proxy_shared_secret
     if secret:
@@ -61,7 +65,7 @@ def _client_ip(request: Request) -> str:
 
 
 limiter = Limiter(
-    key_func=_client_ip,
+    key_func=client_ip,
     enabled=_settings.rate_limit_enabled,
     storage_uri=_settings.redis_url,
 )

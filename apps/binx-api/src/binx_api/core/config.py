@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     redis_url: str | None = None
     # Shared with binx-web (same env var name there). When set, binx-web's
     # server forwards each visitor's IP with this secret and the rate limiter
-    # keys on that IP — see core/rate_limit.py::_client_ip. Unset, every call
+    # keys on that IP — see core/rate_limit.py::client_ip. Unset, every call
     # binx-web makes on a visitor's behalf shares one rate-limit bucket.
     proxy_shared_secret: str | None = None
     # Serve the interactive API docs (/docs, /redoc, /openapi.json). Off in

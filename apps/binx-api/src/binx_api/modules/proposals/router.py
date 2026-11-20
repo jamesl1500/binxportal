@@ -4,6 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, Request, status
 
 from binx_api.core.dependencies import CurrentUser, DbSession
+from binx_api.core.rate_limit import client_ip
 from binx_api.modules.agencies.dependencies import require_agency_role
 from binx_api.modules.agencies.models import ROLE_ADMIN, ROLE_MEMBER, ROLE_OWNER, Agency
 from binx_api.modules.proposals import service
@@ -241,7 +242,7 @@ async def sign_public_proposal(
         proposal,
         signer_name=data.signer_name,
         signer_email=data.signer_email,
-        ip_address=request.client.host if request.client else None,
+        ip_address=client_ip(request),
     )
     return await read_public_proposal(db, token)
 

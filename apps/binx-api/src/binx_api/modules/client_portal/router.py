@@ -8,7 +8,7 @@ from fastapi.exceptions import HTTPException
 from binx_api.core import storage
 from binx_api.core.dependencies import CurrentUser, DbSession
 from binx_api.core.email import send_client_invitation_email
-from binx_api.core.rate_limit import limiter
+from binx_api.core.rate_limit import client_ip, limiter
 from binx_api.modules.boards import service as boards_service
 from binx_api.modules.boards.models import AUTHOR_CLIENT, DEFAULT_NOTE_WIDTH, ITEM_FILE, ITEM_IMAGE
 from binx_api.modules.boards.schemas import (
@@ -80,8 +80,9 @@ _PAYABLE_STATUSES = {"sent", "overdue", "partial"}
 
 
 # Unauthenticated, like the invitation preview below: someone looking for
-# their invitation has no account yet. binx-web calls this server-side, so
-# the limit is effectively shared by everyone using the page at once.
+# their invitation has no account yet. binx-web calls this server-side and
+# forwards the visitor's IP (core/rate_limit.py::client_ip), so the limit is
+# per visitor once PROXY_SHARED_SECRET is set — shared by everyone until then.
 @router.get("/agencies/search", response_model=list[PortalAgencyMatch])
 @limiter.limit("120/minute")
 async def search_agencies(
@@ -811,7 +812,7 @@ async def sign_portal_proposal(
         proposal,
         signer_name=current_user.full_name,
         signer_email=current_user.email,
-        ip_address=request.client.host if request.client else None,
+        ip_address=client_ip(request),
     )
     lead_name, client_name = await _proposal_names(db, proposal)
     return await _proposal_detail_read(db, proposal, lead_name, client_name)
