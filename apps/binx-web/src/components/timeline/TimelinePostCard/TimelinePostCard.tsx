@@ -31,21 +31,21 @@ import {
 } from "@/app/(app)/dashboard/timeline/actions";
 import MessageAvatar from "@/components/messaging/MessageAvatar/MessageAvatar";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog/ConfirmDialog";
-import MentionTextarea from "@/components/timeline/MentionTextarea/MentionTextarea";
+import MentionTextarea from "@/components/ui/MentionTextarea/MentionTextarea";
 import TimelineTime from "@/components/timeline/TimelineTime/TimelineTime";
 import {
   COMMENT_MAX_CHARS,
   POST_MAX_CHARS,
   REACTIONS,
+  authorAvatarSrc,
   mentionSegments,
   reactionEmoji,
-  type MentionableMember,
   type TimelineAuthor,
+  type MentionableMember,
   type TimelineComment,
   type TimelinePost,
   type TimelineReactionKey,
 } from "@/lib/timeline-client";
-import { memberImageUrl } from "@/lib/users-client";
 
 import styles from "./TimelinePostCard.module.scss";
 
@@ -56,12 +56,6 @@ interface TimelinePostCardProps {
   onChange: (post: TimelinePost) => void;
   onDelete: (postId: string) => void;
   highlighted?: boolean;
-}
-
-function avatarSrc(agencyId: string, author: TimelineAuthor): string | null {
-  return author.has_avatar && author.member_id
-    ? memberImageUrl(agencyId, author.member_id, "avatar", author.avatar_version)
-    : null;
 }
 
 const ROLE_LABELS: Record<string, string> = { owner: "Owner", admin: "Admin" };
@@ -226,7 +220,7 @@ const TimelinePostCard = ({ agencyId, post, members, onChange, onDelete, highlig
     >
       {dialog}
       <header className={styles.header}>
-        <MessageAvatar name={post.author.name} src={avatarSrc(agencyId, post.author)} />
+        <MessageAvatar name={post.author.name} src={authorAvatarSrc(agencyId, post.author)} />
         <div className={styles.headerText}>
           <AuthorLine author={post.author} createdAt={post.created_at} editedAt={post.edited_at} />
           {(post.is_announcement || post.pinned) && (
@@ -366,7 +360,7 @@ const TimelinePostCard = ({ agencyId, post, members, onChange, onDelete, highlig
           <ul className={styles.commentList}>
             {comments.map((comment) => (
               <li key={comment.id} className={styles.comment}>
-                <MessageAvatar name={comment.author.name} src={avatarSrc(agencyId, comment.author)} size="sm" />
+                <MessageAvatar name={comment.author.name} src={authorAvatarSrc(agencyId, comment.author)} size="sm" />
                 <div className={styles.commentBubble}>
                   <AuthorLine author={comment.author} createdAt={comment.created_at} editedAt={comment.edited_at} />
                   {editingCommentId === comment.id ? (

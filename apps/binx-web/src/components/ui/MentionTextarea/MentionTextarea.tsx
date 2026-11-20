@@ -1,37 +1,65 @@
 /**
  * MentionTextarea.tsx
  *
- * A textarea with an @mention picker: type "@" and part of a teammate's name
- * or handle, then pick them with the arrow keys + Enter/Tab (or a click) to
- * insert "@user_name". Same handle syntax and picker behavior as the
- * messaging composer, so a mention looks and works the same everywhere.
- * Cmd/Ctrl+Enter submits.
+ * A textarea with an @mention picker, shared by the messaging composer and
+ * the team timeline: type "@" and part of a teammate's name or handle, then
+ * pick them with the arrow keys + Enter/Tab (or a click) to insert
+ * "@user_name". The handle syntax mirrors binx-api's _MENTION_RE, so what
+ * gets inserted is exactly what notifies someone.
  *
- * @module apps/binx-web/src/components/timeline/MentionTextarea/MentionTextarea.tsx
+ * It grows with its content up to `maxHeight`. `submitOn` picks the send key:
+ * "modEnter" (Cmd/Ctrl+Enter, for long-form posts) or "enter" (Enter sends,
+ * Shift+Enter is a newline, for chat). While the picker is open, Enter/Tab
+ * always pick a teammate instead of submitting.
+ *
+ * @module apps/binx-web/src/components/ui/MentionTextarea/MentionTextarea.tsx
  */
 "use client";
 
-import { useId, useLayoutEffect, useMemo, useRef, useState } from "react";
-
-import type { MentionableMember } from "@/lib/timeline-client";
+import {
+  useId,
+  useImperativeHandle,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type Ref,
+} from "react";
 
 import styles from "./MentionTextarea.module.scss";
 
+/** Someone the picker can offer. Extra fields (ids, avatars) are ignored. */
+export interface MentionCandidate {
+  user_name: string;
+  full_name: string;
+}
+
+// The token being typed right before the caret: "@" then an optional handle
+// fragment, at a word boundary.
 const MENTION_QUERY_RE = /(?:^|\s)@([A-Za-z0-9_.-]*)$/;
 const MENTION_LIMIT = 6;
-const MAX_HEIGHT_PX = 320;
 
 interface MentionTextareaProps {
   value: string;
   onChange: (value: string) => void;
-  members: MentionableMember[];
+  members: readonly MentionCandidate[];
   onSubmit?: () => void;
+  /** "modEnter" (default): Cmd/Ctrl+Enter submits. "enter": Enter submits, Shift+Enter is a newline. */
+  submitOn?: "modEnter" | "enter";
+  /** Where the picker opens — "above" for a composer pinned to the bottom of the screen. */
+  menuPlacement?: "below" | "above";
   placeholder?: string;
-  maxLength: number;
+  maxLength?: number;
   ariaLabel: string;
   disabled?: boolean;
   autoFocus?: boolean;
   minRows?: number;
+  /** Growth cap in px; it scrolls past this. */
+  maxHeight?: number;
+  /** Replaces the default textarea styling (the picker keeps its own). */
+  textareaClassName?: string;
+  className?: string;
+  ref?: Ref<HTMLTextAreaElement>;
 }
 
 const MentionTextarea = ({
@@ -39,12 +67,18 @@ const MentionTextarea = ({
   onChange,
   members,
   onSubmit,
+  submitOn = "modEnter",
+  menuPlacement = "below",
   placeholder,
   maxLength,
   ariaLabel,
   disabled = false,
   autoFocus = false,
   minRows = 2,
+  maxHeight = 320,
+  textareaClassName,
+  className,
+  ref,
 }: MentionTextareaProps) => {
   const listId = useId();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -53,35 +87,44 @@ const MentionTextarea = ({
   const [query, setQuery] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
+  // The handle is only read after mount, when the textarea exists.
+  useImperativeHandle(ref, () => textareaRef.current as HTMLTextAreaElement, []);
+
   const matches = useMemo(() => {
     if (query === null) return [];
     const q = query.toLowerCase();
     return members
-      .filter((m) => m.user_name.toLowerCase().includes(q) || m.full_name.toLowerCase().includes(q))
+      .filter(
+        (m) =>
+          m.user_name.toLowerCase().includes(q) ||
+          m.full_name.toLowerCase().includes(q),
+      )
       .slice(0, MENTION_LIMIT);
   }, [query, members]);
   const open = query !== null && matches.length > 0;
 
-  const grow = (node: HTMLTextAreaElement) => {
-    node.style.height = "auto";
-    node.style.height = `${Math.min(node.scrollHeight, MAX_HEIGHT_PX)}px`;
-  };
-
-  // Restore the caret (and re-grow) after a mention insertion re-renders.
+  // Re-grow on every value change (typing, a mention insert, a reset to ""
+  // after sending, a draft filled in from outside), and restore the caret
+  // after a mention insertion.
   useLayoutEffect(() => {
     const node = textareaRef.current;
-    if (pendingCaretRef.current !== null && node) {
+    if (!node) return;
+    node.style.height = "auto";
+    node.style.height = `${Math.min(node.scrollHeight, maxHeight)}px`;
+    if (pendingCaretRef.current !== null) {
       node.setSelectionRange(pendingCaretRef.current, pendingCaretRef.current);
       pendingCaretRef.current = null;
     }
-    if (node) grow(node);
-  });
+  }, [value, maxHeight]);
 
   const refreshQuery = (node: HTMLTextAreaElement) => {
     const before = node.value.slice(0, node.selectionStart ?? node.value.length);
     const match = MENTION_QUERY_RE.exec(before);
-    setQuery(match ? match[1] : null);
-    if (match) setActiveIndex(0);
+    const next = match ? match[1] : null;
+    if (next !== query) {
+      setQuery(next);
+      setActiveIndex(0);
+    }
   };
 
   const insert = (userName: string) => {
@@ -120,17 +163,20 @@ const MentionTextarea = ({
         return;
       }
     }
-    if (event.key === "Enter" && (event.metaKey || event.ctrlKey) && onSubmit) {
+    if (event.key !== "Enter" || !onSubmit || event.nativeEvent.isComposing) return;
+    const submits =
+      submitOn === "enter" ? !event.shiftKey : event.metaKey || event.ctrlKey;
+    if (submits) {
       event.preventDefault();
       onSubmit();
     }
   };
 
   return (
-    <div className={styles.wrap}>
+    <div className={[styles.wrap, className].filter(Boolean).join(" ")}>
       <textarea
         ref={textareaRef}
-        className={styles.textarea}
+        className={textareaClassName ?? styles.textarea}
         value={value}
         rows={minRows}
         maxLength={maxLength}
@@ -145,11 +191,17 @@ const MentionTextarea = ({
           refreshQuery(event.target);
         }}
         onKeyDown={handleKeyDown}
-        onClick={(event) => refreshQuery(event.currentTarget)}
+        onSelect={(event) => refreshQuery(event.currentTarget)}
         onBlur={() => setQuery(null)}
       />
       {open && (
-        <ul id={listId} className={styles.menu} role="listbox" aria-label="Mention a teammate">
+        <ul
+          id={listId}
+          className={styles.menu}
+          data-placement={menuPlacement}
+          role="listbox"
+          aria-label="Mention a teammate"
+        >
           {matches.map((member, index) => (
             <li key={member.user_name}>
               <button

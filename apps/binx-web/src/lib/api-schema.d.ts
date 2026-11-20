@@ -3221,6 +3221,27 @@ export interface paths {
         patch: operations["update_comment_agencies__agency_id__timeline_comments__comment_id__patch"];
         trace?: never;
     };
+    "/agencies/{agency_id}/timeline/highlights": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read Highlights
+         * @description The side rail next to the feed: upcoming meetings, people to
+         *     celebrate, recent wins and this week's timeline activity.
+         */
+        get: operations["read_highlights_agencies__agency_id__timeline_highlights_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agencies/{agency_id}/timeline/posts": {
         parameters: {
             query?: never;
@@ -10108,6 +10129,24 @@ export interface components {
             /** User Id */
             user_id: string | null;
         };
+        /** TimelineCelebration */
+        TimelineCelebration: {
+            /**
+             * Day
+             * Format: date
+             */
+            day: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "joined" | "anniversary";
+            person: components["schemas"]["TimelineAuthor"];
+            /** User Name */
+            user_name: string;
+            /** Years */
+            years: number | null;
+        };
         /** TimelineCommentCreate */
         TimelineCommentCreate: {
             /** Body */
@@ -10145,6 +10184,14 @@ export interface components {
             /** Body */
             body: string;
         };
+        /** TimelineContributor */
+        TimelineContributor: {
+            /** Comments */
+            comments: number;
+            person: components["schemas"]["TimelineAuthor"];
+            /** Posts */
+            posts: number;
+        };
         /** TimelineFeedRead */
         TimelineFeedRead: {
             /** Can Moderate */
@@ -10155,6 +10202,19 @@ export interface components {
             pinned: components["schemas"]["TimelinePostRead"][];
             /** Posts */
             posts: components["schemas"]["TimelinePostRead"][];
+        };
+        /**
+         * TimelineHighlightsRead
+         * @description Everything the timeline's side rail shows, in one request.
+         */
+        TimelineHighlightsRead: {
+            /** Celebrations */
+            celebrations: components["schemas"]["TimelineCelebration"][];
+            this_week: components["schemas"]["TimelineWeekStats"];
+            /** Upcoming Meetings */
+            upcoming_meetings: components["schemas"]["TimelineUpcomingMeeting"][];
+            /** Wins */
+            wins: components["schemas"]["TimelineWin"][];
         };
         /** TimelinePinUpdate */
         TimelinePinUpdate: {
@@ -10223,6 +10283,60 @@ export interface components {
              * @enum {string}
              */
             reaction: "like" | "love" | "celebrate" | "laugh" | "wow" | "thanks";
+        };
+        /** TimelineUpcomingMeeting */
+        TimelineUpcomingMeeting: {
+            /** Client Name */
+            client_name: string;
+            /**
+             * Ends At
+             * Format: date-time
+             */
+            ends_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Starts At
+             * Format: date-time
+             */
+            starts_at: string;
+            /** Title */
+            title: string;
+        };
+        /** TimelineWeekStats */
+        TimelineWeekStats: {
+            /** Comments */
+            comments: number;
+            /** Posts */
+            posts: number;
+            /** Reactions */
+            reactions: number;
+            /** Top Contributors */
+            top_contributors: components["schemas"]["TimelineContributor"][];
+        };
+        /** TimelineWin */
+        TimelineWin: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Event Type */
+            event_type: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Summary */
+            summary: string;
+            /** Target Id */
+            target_id: string | null;
+            /** Target Type */
+            target_type: string | null;
         };
         /** TimerStart */
         TimerStart: {
@@ -18961,6 +19075,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TimelineCommentRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_highlights_agencies__agency_id__timeline_highlights_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimelineHighlightsRead"];
                 };
             };
             /** @description Validation Error */

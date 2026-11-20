@@ -33,6 +33,12 @@
   border: 1px solid t.$color-border;
   border-radius: t.$radius-md;
   box-shadow: 0 12px 32px rgba(10, 10, 11, 0.16);
+
+  &[data-placement="above"] {
+    top: auto;
+    bottom: 100%;
+    margin: 0 0 t.$space-1;
+  }
 }
 
 .option {

@@ -1,11 +1,44 @@
 @use "../../../styles/tokens" as t;
 @use "../../../styles/mixins" as m;
 
+// The feed, plus the highlights rail: above the feed on narrow screens,
+// beside it (on the right) from 1100px.
+.layout {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-6;
+
+  @media (min-width: 1100px) {
+    &[data-rail="true"] {
+      display: grid;
+      grid-template-columns: minmax(0, 44rem) minmax(17rem, 20rem);
+      align-items: start;
+      gap: t.$space-8;
+    }
+  }
+}
+
+.aside {
+  min-width: 0;
+
+  @media (min-width: 1100px) {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: stretch;
+  }
+}
+
 .feed {
   display: flex;
   flex-direction: column;
   gap: t.$space-6;
   max-width: 44rem;
+  min-width: 0;
+
+  @media (min-width: 1100px) {
+    grid-column: 1;
+    grid-row: 1;
+  }
 }
 
 .composer {

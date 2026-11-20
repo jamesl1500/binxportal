@@ -26,6 +26,8 @@ import {
 } from "@/app/(app)/dashboard/timeline/actions";
 import { mentionSegments, type TimelineFeed as Feed, type TimelinePost } from "@/lib/timeline-client";
 
+import { highlights, myWork } from "@/components/timeline/TimelineSidebar/fixtures";
+
 import TimelineFeed from "./TimelineFeed";
 
 const members = [
@@ -161,5 +163,30 @@ describe("TimelineFeed", () => {
     expect(box).toHaveValue("@bob nice");
     await userEvent.click(screen.getByRole("button", { name: "Reply" }));
     expect(createTimelineCommentAction).toHaveBeenCalledWith("a1", "p1", "@bob nice");
+  });
+
+  it("leaves the rail out without highlight data, and 'Say congrats' fills the composer", async () => {
+    const { unmount } = render(<TimelineFeed agencyId="a1" initialFeed={feed()} members={members} />);
+    expect(screen.queryByRole("complementary", { name: "Timeline highlights" })).not.toBeInTheDocument();
+    unmount();
+
+    render(
+      <TimelineFeed
+        agencyId="a1"
+        initialFeed={feed()}
+        members={members}
+        highlights={highlights()}
+        myWork={myWork()}
+        currentUserId="u1"
+      />,
+    );
+    const rail = screen.getByRole("complementary", { name: "Timeline highlights" });
+    const box = screen.getByLabelText("New timeline post");
+    await userEvent.type(box, "Big week!");
+    await userEvent.click(within(rail).getByRole("button", { name: "Say congrats to Bob Member" }));
+
+    // What was already typed is kept; the congrats goes on a new line.
+    expect(box).toHaveValue("Big week!\n👋 Welcome to the team, @bob! ");
+    expect(box).toHaveFocus();
   });
 });

@@ -16,6 +16,7 @@ import { apiPath } from "@/lib/file-proxy";
 import type {
   TimelineComment,
   TimelineFeed,
+  TimelineHighlights,
   TimelinePost,
   TimelineReactionKey,
 } from "@/lib/timeline-client";
@@ -46,6 +47,13 @@ const base = (agencyId: string) => apiPath`/agencies/${agencyId}/timeline`;
 export function getTimelineFeed(agencyId: string, cursor?: string | null): Promise<TimelineFeed> {
   return call("Unable to load the timeline", (headers) =>
     api.get<TimelineFeed>(base(agencyId), { headers, params: cursor ? { cursor } : undefined }),
+  );
+}
+
+/** The side rail: upcoming meetings, people to celebrate, wins, and this week's numbers. */
+export function getTimelineHighlights(agencyId: string): Promise<TimelineHighlights> {
+  return call("Unable to load timeline highlights", (headers) =>
+    api.get<TimelineHighlights>(`${base(agencyId)}/highlights`, { headers }),
   );
 }
 

@@ -10,6 +10,7 @@
  * @module apps/binx-web/src/lib/dashboard.ts
  * @author Binx Portal
  */
+import { cache } from "react";
 import axios from "axios";
 
 import { api } from "@/lib/api";
@@ -73,7 +74,17 @@ export async function getDashboard(
   }
 }
 
-export async function getMyWork(agencyId: string): Promise<MyWork> {
+/**
+ * getMyWork
+ *
+ * The caller's open tasks via `GET /agencies/{agencyId}/my-work`. Wrapped in
+ * React's per-request `cache()`: the dashboard layout (tab badge) and the My
+ * work / Timeline pages all ask for it in the same render.
+ *
+ * @function getMyWork
+ * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't a member of this agency.
+ */
+export const getMyWork = cache(async (agencyId: string): Promise<MyWork> => {
   const headers = await authHeader();
   try {
     const { data } = await api.get<MyWork>(`/agencies/${agencyId}/my-work`, {
@@ -83,4 +94,4 @@ export async function getMyWork(agencyId: string): Promise<MyWork> {
   } catch (error) {
     throw apiError(error, "Unable to load your work");
   }
-}
+});

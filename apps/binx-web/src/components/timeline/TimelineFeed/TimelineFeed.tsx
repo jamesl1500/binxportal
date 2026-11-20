@@ -10,22 +10,29 @@
  * A notification links to `/dashboard/timeline#post-<id>`; when that post is
  * on the page it's scrolled to and briefly highlighted.
  *
+ * Beside the feed (above it on narrow screens) sits TimelineSidebar: your
+ * week, upcoming meetings, people to celebrate, wins, and this week's
+ * numbers. Its "Say congrats" buttons start a post here via `startPost`.
+ *
  * @module apps/binx-web/src/components/timeline/TimelineFeed/TimelineFeed.tsx
  */
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Newspaper } from "lucide-react";
 
 import { createTimelinePostAction, loadTimelinePageAction } from "@/app/(app)/dashboard/timeline/actions";
-import MentionTextarea from "@/components/timeline/MentionTextarea/MentionTextarea";
+import MentionTextarea from "@/components/ui/MentionTextarea/MentionTextarea";
 import TimelinePostCard from "@/components/timeline/TimelinePostCard/TimelinePostCard";
+import TimelineSidebar from "@/components/timeline/TimelineSidebar/TimelineSidebar";
+import type { Schemas } from "@/lib/api-types";
 import {
   POST_MAX_CHARS,
   replacePost,
   type MentionableMember,
   type TimelineFeed as Feed,
+  type TimelineHighlights,
   type TimelinePost,
 } from "@/lib/timeline-client";
 
@@ -35,11 +42,22 @@ interface TimelineFeedProps {
   agencyId: string;
   initialFeed: Feed;
   members: MentionableMember[];
+  /** The side rail's data; the rail is left out when both are missing. */
+  highlights?: TimelineHighlights | null;
+  myWork?: Schemas["MyWorkRead"] | null;
+  currentUserId?: string | null;
 }
 
 const HIGHLIGHT_MS = 2500;
 
-const TimelineFeed = ({ agencyId, initialFeed, members }: TimelineFeedProps) => {
+const TimelineFeed = ({
+  agencyId,
+  initialFeed,
+  members,
+  highlights = null,
+  myWork = null,
+  currentUserId = null,
+}: TimelineFeedProps) => {
   const [pinned, setPinned] = useState(initialFeed.pinned);
   const [posts, setPosts] = useState(initialFeed.posts);
   const [cursor, setCursor] = useState(initialFeed.next_cursor);
@@ -49,6 +67,26 @@ const TimelineFeed = ({ agencyId, initialFeed, members }: TimelineFeedProps) => 
   const [isPosting, startPosting] = useTransition();
   const [isLoading, startLoading] = useTransition();
   const canModerate = initialFeed.can_moderate;
+  const composerRef = useRef<HTMLTextAreaElement>(null);
+  const focusComposerRef = useRef(false);
+
+  // After startPost fills the draft: focus the composer with the caret at
+  // the end, and bring it into view (it may be far up the page).
+  useEffect(() => {
+    if (!focusComposerRef.current) return;
+    focusComposerRef.current = false;
+    const node = composerRef.current;
+    if (!node) return;
+    node.focus();
+    node.setSelectionRange(node.value.length, node.value.length);
+    node.scrollIntoView?.({ block: "center", behavior: "smooth" });
+  }, [draft]);
+
+  /** Starts a post from outside the composer, keeping anything already typed. */
+  const startPost = (text: string) => {
+    focusComposerRef.current = true;
+    setDraft((current) => (current.trim() ? `${current.trimEnd()}\n${text}` : text));
+  };
 
   // Scroll to (and flash) the post a notification linked to.
   useEffect(() => {
@@ -129,7 +167,21 @@ const TimelineFeed = ({ agencyId, initialFeed, members }: TimelineFeedProps) => 
     </li>
   );
 
+  const showRail = highlights !== null || myWork !== null;
+
   return (
+    <div className={styles.layout} data-rail={showRail}>
+      {showRail && (
+        <aside className={styles.aside} aria-label="Timeline highlights">
+          <TimelineSidebar
+            agencyId={agencyId}
+            currentUserId={currentUserId}
+            highlights={highlights}
+            myWork={myWork}
+            onStartPost={startPost}
+          />
+        </aside>
+      )}
     <div className={styles.feed}>
       <form
         className={styles.composer}
@@ -139,6 +191,7 @@ const TimelineFeed = ({ agencyId, initialFeed, members }: TimelineFeedProps) => 
         }}
       >
         <MentionTextarea
+          ref={composerRef}
           value={draft}
           onChange={setDraft}
           members={members}
@@ -194,6 +247,7 @@ const TimelineFeed = ({ agencyId, initialFeed, members }: TimelineFeedProps) => 
           </button>
         )}
       </section>
+    </div>
     </div>
   );
 };
