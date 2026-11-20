@@ -15737,6 +15737,50 @@
         "title": "TimelineAuthor",
         "type": "object"
       },
+      "TimelineCelebration": {
+        "properties": {
+          "day": {
+            "format": "date",
+            "title": "Day",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "joined",
+              "anniversary"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "person": {
+            "$ref": "#/components/schemas/TimelineAuthor"
+          },
+          "user_name": {
+            "title": "User Name",
+            "type": "string"
+          },
+          "years": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Years"
+          }
+        },
+        "required": [
+          "kind",
+          "person",
+          "user_name",
+          "day",
+          "years"
+        ],
+        "title": "TimelineCelebration",
+        "type": "object"
+      },
       "TimelineCommentCreate": {
         "properties": {
           "body": {
@@ -15823,6 +15867,28 @@
         "title": "TimelineCommentUpdate",
         "type": "object"
       },
+      "TimelineContributor": {
+        "properties": {
+          "comments": {
+            "title": "Comments",
+            "type": "integer"
+          },
+          "person": {
+            "$ref": "#/components/schemas/TimelineAuthor"
+          },
+          "posts": {
+            "title": "Posts",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "person",
+          "posts",
+          "comments"
+        ],
+        "title": "TimelineContributor",
+        "type": "object"
+      },
       "TimelineFeedRead": {
         "properties": {
           "can_moderate": {
@@ -15862,6 +15928,43 @@
           "can_moderate"
         ],
         "title": "TimelineFeedRead",
+        "type": "object"
+      },
+      "TimelineHighlightsRead": {
+        "description": "Everything the timeline's side rail shows, in one request.",
+        "properties": {
+          "celebrations": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineCelebration"
+            },
+            "title": "Celebrations",
+            "type": "array"
+          },
+          "this_week": {
+            "$ref": "#/components/schemas/TimelineWeekStats"
+          },
+          "upcoming_meetings": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineUpcomingMeeting"
+            },
+            "title": "Upcoming Meetings",
+            "type": "array"
+          },
+          "wins": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineWin"
+            },
+            "title": "Wins",
+            "type": "array"
+          }
+        },
+        "required": [
+          "upcoming_meetings",
+          "celebrations",
+          "wins",
+          "this_week"
+        ],
+        "title": "TimelineHighlightsRead",
         "type": "object"
       },
       "TimelinePinUpdate": {
@@ -16035,6 +16138,128 @@
           "names"
         ],
         "title": "TimelineReactionSummary",
+        "type": "object"
+      },
+      "TimelineUpcomingMeeting": {
+        "properties": {
+          "client_name": {
+            "title": "Client Name",
+            "type": "string"
+          },
+          "ends_at": {
+            "format": "date-time",
+            "title": "Ends At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "starts_at": {
+            "format": "date-time",
+            "title": "Starts At",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "starts_at",
+          "ends_at",
+          "client_name"
+        ],
+        "title": "TimelineUpcomingMeeting",
+        "type": "object"
+      },
+      "TimelineWeekStats": {
+        "properties": {
+          "comments": {
+            "title": "Comments",
+            "type": "integer"
+          },
+          "posts": {
+            "title": "Posts",
+            "type": "integer"
+          },
+          "reactions": {
+            "title": "Reactions",
+            "type": "integer"
+          },
+          "top_contributors": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineContributor"
+            },
+            "title": "Top Contributors",
+            "type": "array"
+          }
+        },
+        "required": [
+          "posts",
+          "comments",
+          "reactions",
+          "top_contributors"
+        ],
+        "title": "TimelineWeekStats",
+        "type": "object"
+      },
+      "TimelineWin": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "target_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Id"
+          },
+          "target_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Type"
+          }
+        },
+        "required": [
+          "id",
+          "event_type",
+          "summary",
+          "target_type",
+          "target_id",
+          "created_at"
+        ],
+        "title": "TimelineWin",
         "type": "object"
       },
       "TimerStart": {
@@ -32648,6 +32873,55 @@
           }
         ],
         "summary": "Update Comment",
+        "tags": [
+          "timeline"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/timeline/highlights": {
+      "get": {
+        "description": "The side rail next to the feed: upcoming meetings, people to\ncelebrate, recent wins and this week's timeline activity.",
+        "operationId": "read_highlights_agencies__agency_id__timeline_highlights_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimelineHighlightsRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Read Highlights",
         "tags": [
           "timeline"
         ]

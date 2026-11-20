@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
@@ -98,3 +98,55 @@ class TimelineCommentCreate(BaseModel):
 
 class TimelineCommentUpdate(TimelineCommentCreate):
     pass
+
+
+# ---- Sidebar highlights ------------------------------------------------------
+
+
+class TimelineUpcomingMeeting(BaseModel):
+    id: uuid.UUID
+    title: str
+    starts_at: datetime
+    ends_at: datetime
+    client_name: str
+
+
+class TimelineCelebration(BaseModel):
+    kind: Literal["joined", "anniversary"]
+    person: TimelineAuthor
+    # For the "Say congrats" draft's @mention.
+    user_name: str
+    # The day being celebrated: when they joined, or this year's anniversary.
+    day: date
+    years: int | None  # anniversaries only
+
+
+class TimelineWin(BaseModel):
+    id: uuid.UUID
+    event_type: str
+    summary: str
+    target_type: str | None
+    target_id: uuid.UUID | None
+    created_at: datetime
+
+
+class TimelineContributor(BaseModel):
+    person: TimelineAuthor
+    posts: int
+    comments: int
+
+
+class TimelineWeekStats(BaseModel):
+    posts: int
+    comments: int
+    reactions: int
+    top_contributors: list[TimelineContributor]
+
+
+class TimelineHighlightsRead(BaseModel):
+    """Everything the timeline's side rail shows, in one request."""
+
+    upcoming_meetings: list[TimelineUpcomingMeeting]
+    celebrations: list[TimelineCelebration]
+    wins: list[TimelineWin]
+    this_week: TimelineWeekStats

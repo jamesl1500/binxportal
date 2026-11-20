@@ -109,7 +109,7 @@ async def get_comment_or_404(
     return row[0], row[1]
 
 
-async def _authors(db: AsyncSession, agency_id: uuid.UUID, user_ids: Iterable[uuid.UUID | None]) -> dict:
+async def authors_by_id(db: AsyncSession, agency_id: uuid.UUID, user_ids: Iterable[uuid.UUID | None]) -> dict:
     ids = {user_id for user_id in user_ids if user_id}
     if not ids:
         return {}
@@ -133,7 +133,7 @@ async def _authors(db: AsyncSession, agency_id: uuid.UUID, user_ids: Iterable[uu
     return authors
 
 
-def _author(authors: dict, user_id: uuid.UUID | None) -> TimelineAuthor:
+def author_for(authors: dict, user_id: uuid.UUID | None) -> TimelineAuthor:
     if user_id and user_id in authors:
         return authors[user_id]
     return TimelineAuthor(
@@ -146,7 +146,7 @@ def _comment_read(comment: TimelineComment, authors: dict, *, viewer: User, role
     return TimelineCommentRead(
         id=comment.id,
         post_id=comment.post_id,
-        author=_author(authors, comment.author_id),
+        author=author_for(authors, comment.author_id),
         body=comment.body,
         created_at=comment.created_at,
         edited_at=comment.edited_at,
@@ -201,7 +201,7 @@ async def build_post_reads(
     for comment in recent_rows.scalars().all():
         recent.setdefault(comment.post_id, []).append(comment)
 
-    authors = await _authors(
+    authors = await authors_by_id(
         db,
         agency_id,
         [post.author_id for post in posts] + [c.author_id for comments in recent.values() for c in comments],
@@ -214,7 +214,7 @@ async def build_post_reads(
         reads.append(
             TimelinePostRead(
                 id=post.id,
-                author=_author(authors, post.author_id),
+                author=author_for(authors, post.author_id),
                 body=post.body,
                 is_announcement=post.is_announcement,
                 pinned=post.pinned_at is not None,
@@ -455,14 +455,14 @@ async def list_comments(db: AsyncSession, post: TimelinePost, *, viewer: User, r
         .scalars()
         .all()
     )
-    authors = await _authors(db, post.agency_id, [comment.author_id for comment in comments])
+    authors = await authors_by_id(db, post.agency_id, [comment.author_id for comment in comments])
     return [_comment_read(comment, authors, viewer=viewer, role=role) for comment in comments]
 
 
 async def read_comment(
     db: AsyncSession, comment: TimelineComment, post: TimelinePost, *, viewer: User, role: str
 ) -> TimelineCommentRead:
-    authors = await _authors(db, post.agency_id, [comment.author_id])
+    authors = await authors_by_id(db, post.agency_id, [comment.author_id])
     return _comment_read(comment, authors, viewer=viewer, role=role)
 
 

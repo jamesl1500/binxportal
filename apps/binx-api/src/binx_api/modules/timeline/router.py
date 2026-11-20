@@ -14,13 +14,14 @@ from fastapi import APIRouter, Depends, Query, Response, status
 from binx_api.core.dependencies import CurrentUser, DbSession
 from binx_api.modules.agencies.dependencies import require_agency_role
 from binx_api.modules.agencies.models import ROLE_ADMIN, ROLE_MEMBER, ROLE_OWNER, Agency
-from binx_api.modules.timeline import service
+from binx_api.modules.timeline import highlights, service
 from binx_api.modules.timeline.schemas import (
     ReactionKey,
     TimelineCommentCreate,
     TimelineCommentRead,
     TimelineCommentUpdate,
     TimelineFeedRead,
+    TimelineHighlightsRead,
     TimelinePinUpdate,
     TimelinePostCreate,
     TimelinePostRead,
@@ -42,6 +43,14 @@ async def read_feed(
 ) -> TimelineFeedRead:
     agency, role = agency_and_role
     return await service.list_feed(db, agency, viewer=current_user, role=role, cursor=cursor, limit=limit)
+
+
+@router.get("/highlights", response_model=TimelineHighlightsRead)
+async def read_highlights(db: DbSession, agency_and_role: AnyMember) -> TimelineHighlightsRead:
+    """The side rail next to the feed: upcoming meetings, people to
+    celebrate, recent wins and this week's timeline activity."""
+    agency, role = agency_and_role
+    return await highlights.read_highlights(db, agency, role=role)
 
 
 @router.post("/posts", response_model=TimelinePostRead, status_code=status.HTTP_201_CREATED)
