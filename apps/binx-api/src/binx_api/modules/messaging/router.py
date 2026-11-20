@@ -295,6 +295,12 @@ async def messages_socket(websocket: WebSocket, ticket: str = Query(...), db=Dep
         return
 
     user = await get_user_by_id(db, user_id)
+    # This session lives as long as the socket does. Ending each read's
+    # transaction right away keeps it from sitting "idle in transaction" for
+    # hours, holding locks that make a migration (any ALTER on users or a
+    # table it touches) wait on every open browser tab. expire_on_commit is
+    # off, so `user` stays loaded.
+    await db.commit()
     if user is None or not user.is_active:
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
@@ -314,6 +320,7 @@ async def messages_socket(websocket: WebSocket, ticket: str = Query(...), db=Dep
                 except ValueError:
                     continue
                 targets = await service.typing_participants(db, conversation_id, user)
+                await db.commit()  # see above: never hold a transaction between frames
                 if targets:
                     await realtime.manager.send_to_users(
                         targets,
