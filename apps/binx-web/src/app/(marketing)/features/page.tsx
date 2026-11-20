@@ -19,6 +19,7 @@ import {
   LayoutGrid,
   ListChecks,
   MessagesSquare,
+  Newspaper,
   PanelsTopLeft,
   Radar,
   Receipt,
@@ -38,7 +39,7 @@ const TITLE = "Features";
 // short breadcrumb name). Kept to 60 characters with the " · Binx Portal" suffix.
 const SEO_TITLE = "Features: proposals, client portal, invoicing";
 const DESCRIPTION =
-  "AI lead prospecting, signable proposals, a visual project canvas, client approvals, a live client portal and invoicing. A tour of everything Binx does.";
+  "AI lead prospecting, signable proposals, a visual project canvas, client approvals, a team timeline, a client portal and invoicing: everything Binx does.";
 
 export const metadata: Metadata = {
   title: SEO_TITLE,
@@ -156,6 +157,12 @@ const GROUPS: { eyebrow: string; heading: string; items: Feature[] }[] = [
         icon: LayoutDashboard,
         title: "Customizable dashboard",
         text: "Drag, reorder and hide widgets, including My tasks and Quick actions. Every teammate keeps their own layout.",
+        isNew: true,
+      },
+      {
+        icon: Newspaper,
+        title: "Team timeline",
+        text: "A shared feed on the dashboard for team updates. Post, comment, react and @mention teammates; owners and admins pin announcements that notify everyone. A side rail shows your week, upcoming client meetings, recent wins and who to congratulate.",
         isNew: true,
       },
     ],
