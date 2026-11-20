@@ -132,10 +132,14 @@ async def create_project(
     tags: list[tuple[str, str]] | None = None,
     roles: list[tuple[str, str]] | None = None,
     team: list[tuple[uuid.UUID, str | None]] | None = None,
+    log_activity: bool = True,
 ) -> Project:
     """tags/roles are (name, color) pairs; team is (user_id, role name or
     None) pairs, the role name matching one of `roles` (case-insensitive).
-    All of it lands in the same commit as the project itself."""
+    All of it lands in the same commit as the project itself.
+
+    ``log_activity=False`` skips the per-project activity entry — a bulk
+    import logs one summary entry for the whole batch instead."""
     await _check_can_create_project(db, agency)
     await agencies_service.get_client_or_404(db, agency.id, client_id)
 
@@ -212,6 +216,8 @@ async def create_project(
             actor=created_by,
         )
 
+    if not log_activity:
+        return project
     await activity_service.log_agency_activity(
         db,
         agency.id,

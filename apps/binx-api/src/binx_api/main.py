@@ -17,6 +17,7 @@ from binx_api.modules.billing.webhooks_router import router as billing_webhooks_
 from binx_api.modules.boards.router import router as boards_router
 from binx_api.modules.client_portal.router import router as client_portal_router
 from binx_api.modules.dashboard.router import router as dashboard_router
+from binx_api.modules.exports.router import router as exports_router
 from binx_api.modules.feedback.router import admin_router as feedback_admin_router
 from binx_api.modules.feedback.router import router as feedback_router
 from binx_api.modules.files.router import router as files_router
@@ -108,6 +109,7 @@ def create_app() -> FastAPI:
     app.include_router(kickoffs_router)
     app.include_router(kickoff_templates_router)
     app.include_router(imports_router)
+    app.include_router(exports_router)
     app.include_router(feedback_router)
     app.include_router(feedback_admin_router)
     app.include_router(admin_router)

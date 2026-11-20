@@ -1,5 +1,6 @@
 """
-Bulk import of clients and team invitations from .csv / .xlsx.
+Bulk import of clients, team invitations, leads, projects, tasks and time
+entries from .csv / .xlsx.
 
 Two calls per import, both stateless:
 1. ``POST /{kind}/parse`` (multipart) — read the file, return its columns,
@@ -7,8 +8,9 @@ Two calls per import, both stateless:
 2. ``POST /clients`` or ``POST /team`` (JSON) — the mapped rows, with
    ``dry_run=true`` for the Review step, then ``false`` to import.
 
-Clients can be imported by any member (same as adding one); team invites
-only by owners/admins (same as inviting one).
+Each kind follows the permission of adding one by hand: team invites are
+owners/admins only; everything else is open to any member, and a member can
+import only their own time entries.
 """
 
 from __future__ import annotations
@@ -27,14 +29,17 @@ from binx_api.modules.imports import service
 from binx_api.modules.imports.fields import field_reads, suggest_mapping
 from binx_api.modules.imports.parsing import ImportFileError, parse_upload
 from binx_api.modules.imports.schemas import (
-    MAX_CLIENT_ROWS,
-    MAX_TEAM_ROWS,
+    MAX_ROWS_BY_KIND,
     ClientImportRequest,
     ImportKind,
     ImportParsedRow,
     ImportParseRead,
     ImportResultRead,
+    LeadImportRequest,
+    ProjectImportRequest,
+    TaskImportRequest,
     TeamImportRequest,
+    TimeEntryImportRequest,
 )
 
 router = APIRouter(prefix="/agencies/{agency_id}/imports", tags=["imports"])
@@ -64,7 +69,7 @@ async def parse_import_file(
         sheet = parse_upload(
             file.filename or "upload",
             content,
-            max_rows=MAX_TEAM_ROWS if kind == "team" else MAX_CLIENT_ROWS,
+            max_rows=MAX_ROWS_BY_KIND[kind],
         )
     except ImportFileError as error:
         raise HTTPException(error.status_code, str(error)) from None
@@ -113,3 +118,41 @@ async def import_team(
             _send_invite_emails, invites, agency_name=agency.name, inviter_name=current_user.full_name
         )
     return result
+
+
+@router.post("/leads", response_model=ImportResultRead)
+@limiter.limit("120/hour")
+async def import_leads(
+    request: Request, db: DbSession, data: LeadImportRequest, current_user: CurrentUser, agency_and_role: AnyMember
+) -> ImportResultRead:
+    agency, _role = agency_and_role
+    return await service.import_leads(db, agency, rows=data.rows, actor=current_user, dry_run=data.dry_run)
+
+
+@router.post("/projects", response_model=ImportResultRead)
+@limiter.limit("120/hour")
+async def import_projects(
+    request: Request, db: DbSession, data: ProjectImportRequest, current_user: CurrentUser, agency_and_role: AnyMember
+) -> ImportResultRead:
+    agency, _role = agency_and_role
+    return await service.import_projects(db, agency, rows=data.rows, actor=current_user, dry_run=data.dry_run)
+
+
+@router.post("/tasks", response_model=ImportResultRead)
+@limiter.limit("120/hour")
+async def import_tasks(
+    request: Request, db: DbSession, data: TaskImportRequest, current_user: CurrentUser, agency_and_role: AnyMember
+) -> ImportResultRead:
+    agency, _role = agency_and_role
+    return await service.import_tasks(db, agency, rows=data.rows, actor=current_user, dry_run=data.dry_run)
+
+
+@router.post("/time_entries", response_model=ImportResultRead)
+@limiter.limit("120/hour")
+async def import_time_entries(
+    request: Request, db: DbSession, data: TimeEntryImportRequest, current_user: CurrentUser, agency_and_role: AnyMember
+) -> ImportResultRead:
+    agency, role = agency_and_role
+    return await service.import_time_entries(
+        db, agency, rows=data.rows, actor=current_user, role=role, dry_run=data.dry_run
+    )
