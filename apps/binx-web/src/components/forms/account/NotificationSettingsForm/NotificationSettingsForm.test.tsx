@@ -24,6 +24,7 @@ const settings: NotificationSettings = {
   inapp_projects: false,
   inapp_messages: true,
   inapp_meetings: true,
+  inapp_timeline: true,
 };
 
 beforeEach(() => {

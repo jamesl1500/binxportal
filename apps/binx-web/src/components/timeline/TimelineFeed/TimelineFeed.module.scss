@@ -1,0 +1,116 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.feed {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-6;
+  max-width: 44rem;
+}
+
+.composer {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+  padding: t.$space-4;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+}
+
+.composerFooter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: t.$space-3;
+}
+
+.announce {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-2;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+  cursor: pointer;
+
+  input {
+    @include m.touch-checkbox;
+  }
+}
+
+.composerActions {
+  display: flex;
+  align-items: center;
+  gap: t.$space-3;
+}
+
+.hint {
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+
+  @media (pointer: coarse) {
+    display: none;
+  }
+}
+
+.postButton {
+  @include m.button-base;
+  color: t.$color-accent-foreground;
+  background: t.$color-accent;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+}
+
+.sectionLabel {
+  @include m.mono-label;
+  margin: 0 0 t.$space-3;
+  color: t.$color-ink-soft;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-4;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: t.$space-3;
+  padding: t.$space-10 t.$space-6;
+  text-align: center;
+  color: t.$color-ink-soft;
+  border: 1px dashed t.$color-border-strong;
+  border-radius: t.$radius-md;
+
+  svg {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
+  p {
+    margin: 0;
+    max-width: 26rem;
+    font-size: t.$font-size-sm;
+  }
+}
+
+.loadMore {
+  @include m.button-base;
+  align-self: center;
+  margin-top: t.$space-4;
+  color: t.$color-ink;
+  background: t.$color-surface;
+  border-color: t.$color-border-strong;
+
+  &:hover:not(:disabled) {
+    background: t.$color-paper;
+  }
+}

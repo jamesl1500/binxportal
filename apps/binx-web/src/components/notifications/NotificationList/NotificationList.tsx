@@ -18,6 +18,7 @@ import {
   Bell,
   FolderKanban,
   MessageSquareHeart,
+  Newspaper,
   Receipt,
   Users,
   X,
@@ -46,6 +47,7 @@ const CATEGORY_ICON: Record<NotificationCategory, LucideIcon> = {
   invoicing: Receipt,
   projects: FolderKanban,
   messages: AtSign,
+  timeline: Newspaper,
   product: MessageSquareHeart,
 };
 

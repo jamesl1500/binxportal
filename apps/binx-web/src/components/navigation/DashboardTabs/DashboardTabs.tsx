@@ -21,6 +21,7 @@ import styles from "./DashboardTabs.module.scss";
 const TABS = [
   { href: "/dashboard", label: "Overview" },
   { href: "/dashboard/my-work", label: "My work" },
+  { href: "/dashboard/timeline", label: "Timeline" },
   { href: "/dashboard/pulse", label: "Pulse" },
 ];
 

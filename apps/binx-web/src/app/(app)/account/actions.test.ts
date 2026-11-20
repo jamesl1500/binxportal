@@ -61,6 +61,7 @@ const notificationSettings = {
   inapp_projects: true,
   inapp_messages: true,
   inapp_meetings: true,
+  inapp_timeline: true,
 };
 
 const privacySettings = {

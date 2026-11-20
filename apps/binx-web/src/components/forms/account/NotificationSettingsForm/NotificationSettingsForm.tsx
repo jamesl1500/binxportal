@@ -76,7 +76,7 @@ const GROUPS: SettingGroup[] = [
       {
         key: "inapp_team",
         label: "Team",
-        description: "When an invitation you sent is accepted.",
+        description: "When an invitation you sent is accepted, or an admin posts a timeline announcement.",
       },
       {
         key: "inapp_invoicing",
@@ -92,12 +92,17 @@ const GROUPS: SettingGroup[] = [
       {
         key: "inapp_messages",
         label: "Mentions",
-        description: "When a teammate @mentions you in a conversation.",
+        description: "When a teammate @mentions you in a conversation or on the team timeline.",
       },
       {
         key: "inapp_meetings",
         label: "Meetings",
         description: "When a meeting is booked, scheduled, or cancelled.",
+      },
+      {
+        key: "inapp_timeline",
+        label: "Timeline",
+        description: "When someone comments on or reacts to your team timeline post.",
       },
     ],
   },

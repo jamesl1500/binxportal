@@ -21,6 +21,7 @@ describe("DashboardTabs", () => {
     render(<DashboardTabs />);
     expect(screen.getByRole("link", { name: "Overview" })).toHaveAttribute("href", "/dashboard");
     expect(screen.getByRole("link", { name: /My work/ })).toHaveAttribute("href", "/dashboard/my-work");
+    expect(screen.getByRole("link", { name: "Timeline" })).toHaveAttribute("href", "/dashboard/timeline");
     expect(screen.getByRole("link", { name: "Pulse" })).toHaveAttribute("href", "/dashboard/pulse");
   });
 

@@ -1,7 +1,7 @@
 /**
  * layout.tsx - Dashboard
  *
- * Shared chrome for the dashboard tabs (Overview / My work / Pulse): a
+ * Shared chrome for the dashboard tabs (Overview / My work / Timeline / Pulse): a
  * greeting header and the tab nav. The (app) layout above already guards for
  * a signed-in session with a current agency.
  *
