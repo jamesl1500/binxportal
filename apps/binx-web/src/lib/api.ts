@@ -8,6 +8,7 @@
  */
 import axios, { AxiosError } from "axios";
 
+import { clientIpHeaders } from "@/lib/client-ip";
 import { hasDotSegment } from "@/lib/file-proxy";
 
 /**
@@ -39,7 +40,22 @@ export const api = axios.create({
 // as a generic failure.
 api.interceptors.request.use((config) => {
   if (hasDotSegment(config.url)) {
-    throw new AxiosError("Refusing an API path with a dot-segment", AxiosError.ERR_BAD_REQUEST, config);
+    throw new AxiosError(
+      "Refusing an API path with a dot-segment",
+      AxiosError.ERR_BAD_REQUEST,
+      config,
+    );
+  }
+  return config;
+});
+
+// Every call carries the visitor's IP (when PROXY_SHARED_SECRET is set) so
+// binx-api's per-IP rate limits apply per visitor, not to this server as a
+// whole — see lib/client-ip.ts. Only ever runs server-side: nothing in the
+// client bundle imports this module.
+api.interceptors.request.use(async (config) => {
+  for (const [name, value] of Object.entries(await clientIpHeaders())) {
+    config.headers.set(name, value);
   }
   return config;
 });

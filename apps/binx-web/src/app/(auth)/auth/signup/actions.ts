@@ -15,6 +15,7 @@
 import axios from "axios";
 
 import { getInternalBaseUrl } from "@/lib/auth";
+import { clientIpHeaders } from "@/lib/client-ip";
 
 /**
  * SignupActionResult
@@ -37,12 +38,16 @@ export async function signupAction(
   const baseUrl = await getInternalBaseUrl();
 
   try {
-    const response = await axios.post(`${baseUrl}/api/auth/signup`, {
-      email,
-      fullName,
-      password,
-      portalInviteToken,
-    });
+    const response = await axios.post(
+      `${baseUrl}/api/auth/signup`,
+      {
+        email,
+        fullName,
+        password,
+        portalInviteToken,
+      },
+      { headers: await clientIpHeaders() },
+    );
     return {
       message:
         response.data?.message ??

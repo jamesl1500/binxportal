@@ -30,7 +30,9 @@ vi.mock("next/navigation", () => ({
 // errors below are recognized correctly by the code under test.
 vi.mock("axios", () => {
   const isAxiosError = (payload: unknown): boolean =>
-    typeof payload === "object" && payload !== null && (payload as { isAxiosError?: boolean }).isAxiosError === true;
+    typeof payload === "object" &&
+    payload !== null &&
+    (payload as { isAxiosError?: boolean }).isAxiosError === true;
   return { default: { post: vi.fn(), isAxiosError } };
 });
 
@@ -46,7 +48,10 @@ const mockedRedirect = vi.mocked(redirect);
 
 /** Shapes a fake error the same way axios does for a non-2xx response. */
 function axiosError(status: number, message: string) {
-  return Object.assign(new Error(message), { isAxiosError: true, response: { status, data: { message } } });
+  return Object.assign(new Error(message), {
+    isAxiosError: true,
+    response: { status, data: { message } },
+  });
 }
 
 beforeEach(() => {
@@ -61,14 +66,22 @@ describe("loginAction", () => {
   // "successful" call actually rejects — that's expected and is how real
   // Next.js Server Actions behave too.
   it("forwards Set-Cookie headers and redirects to /dashboard on success", async () => {
-    mockedPost.mockResolvedValueOnce({ headers: { "set-cookie": ["a=1", "b=2"] } });
-
-    await expect(loginAction("a@b.com", "password123")).rejects.toThrow("REDIRECT:/dashboard");
-
-    expect(mockedPost).toHaveBeenCalledWith("http://localhost:3000/api/auth/login", {
-      email: "a@b.com",
-      password: "password123",
+    mockedPost.mockResolvedValueOnce({
+      headers: { "set-cookie": ["a=1", "b=2"] },
     });
+
+    await expect(loginAction("a@b.com", "password123")).rejects.toThrow(
+      "REDIRECT:/dashboard",
+    );
+
+    expect(mockedPost).toHaveBeenCalledWith(
+      "http://localhost:3000/api/auth/login",
+      {
+        email: "a@b.com",
+        password: "password123",
+      },
+      { headers: {} },
+    );
     expect(mockedForwardSetCookies).toHaveBeenCalledWith(["a=1", "b=2"]);
     expect(mockedRedirect).toHaveBeenCalledWith("/dashboard");
   });
@@ -78,16 +91,18 @@ describe("loginAction", () => {
   it("redirects back to a pending portal invitation when given its token", async () => {
     mockedPost.mockResolvedValueOnce({ headers: { "set-cookie": ["a=1"] } });
 
-    await expect(loginAction("a@b.com", "password123", "inv 123")).rejects.toThrow(
-      "REDIRECT:/auth/portal-invite?token=inv%20123",
-    );
+    await expect(
+      loginAction("a@b.com", "password123", "inv 123"),
+    ).rejects.toThrow("REDIRECT:/auth/portal-invite?token=inv%20123");
   });
 
   // On failure there's nothing to forward and nowhere to redirect — the
   // action should just resolve with `{ error }` so the client-side form can
   // render it, instead of throwing and taking down the whole action.
   it("returns the upstream error message without redirecting", async () => {
-    mockedPost.mockRejectedValueOnce(axiosError(401, "Incorrect email or password"));
+    mockedPost.mockRejectedValueOnce(
+      axiosError(401, "Incorrect email or password"),
+    );
 
     await expect(loginAction("a@b.com", "wrong")).resolves.toEqual({
       error: "Incorrect email or password",
@@ -134,15 +149,21 @@ describe("loginAction", () => {
 describe("resendVerificationAction", () => {
   it("calls our own resend-verification route and returns its message", async () => {
     mockedPost.mockResolvedValueOnce({
-      data: { message: "If that account exists, a verification email has been sent." },
+      data: {
+        message: "If that account exists, a verification email has been sent.",
+      },
     });
 
     await expect(resendVerificationAction("a@b.com")).resolves.toEqual({
       message: "If that account exists, a verification email has been sent.",
     });
-    expect(mockedPost).toHaveBeenCalledWith("http://localhost:3000/api/auth/resend-verification", {
-      email: "a@b.com",
-    });
+    expect(mockedPost).toHaveBeenCalledWith(
+      "http://localhost:3000/api/auth/resend-verification",
+      {
+        email: "a@b.com",
+      },
+      { headers: {} },
+    );
   });
 
   it("returns the upstream error message on failure", async () => {

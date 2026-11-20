@@ -211,3 +211,39 @@ class TestRateLimiting:
         # login is capped at 10/minute — the tail of the burst is throttled.
         assert 429 in codes
         assert codes[-1] == 429
+
+
+class TestRateLimitClientIp:
+    """Calls binx-web makes for a visitor carry that visitor's IP — only
+    trusted alongside the shared secret (core/rate_limit.py::_client_ip)."""
+
+    @pytest.fixture(autouse=True)
+    def _enable_limiter(self, monkeypatch):
+        from binx_api.core import rate_limit
+
+        monkeypatch.setattr(rate_limit.limiter, "enabled", True)
+        monkeypatch.setattr(rate_limit._settings, "proxy_shared_secret", "s3cret")
+        rate_limit.limiter.reset()
+        yield
+        rate_limit.limiter.reset()
+
+    async def _login(self, client, user, headers) -> int:
+        response = await client.post(
+            "/auth/login", json={"email": user.email, "password": "wrong-password-1"}, headers=headers
+        )
+        return response.status_code
+
+    async def test_forwarded_visitors_get_their_own_buckets(self, client, user) -> None:
+        first = {"x-binx-client-ip": "203.0.113.1", "x-binx-proxy-secret": "s3cret"}
+        second = {"x-binx-client-ip": "203.0.113.2", "x-binx-proxy-secret": "s3cret"}
+        assert 429 in [await self._login(client, user, first) for _ in range(12)]
+        # A different visitor through the same proxy isn't throttled by the first.
+        assert await self._login(client, user, second) != 429
+
+    async def test_a_wrong_secret_cant_pick_a_fresh_ip(self, client, user) -> None:
+        codes = [
+            await self._login(client, user, {"x-binx-client-ip": f"198.51.100.{i}", "x-binx-proxy-secret": "guess"})
+            for i in range(12)
+        ]
+        # Without the secret the header is ignored, so every attempt shares one bucket.
+        assert codes[-1] == 429

@@ -83,7 +83,7 @@ async def get_ai_usage(db: DbSession, agency_and_role: AnyMember, current_user: 
     day_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
     spent = await db.execute(
-        select(func.coalesce(func.sum(AiUsageEvent.cost_cents), 0)).where(
+        select(func.coalesce(func.sum(AiUsageEvent.cost_microcents), 0)).where(
             AiUsageEvent.agency_id == agency.id, AiUsageEvent.status == "ok", AiUsageEvent.created_at >= month_start
         )
     )
@@ -108,7 +108,7 @@ async def get_ai_usage(db: DbSession, agency_and_role: AnyMember, current_user: 
         configured=bool(settings.anthropic_api_key),
         is_enabled=ai_settings.is_enabled,
         monthly_budget_cents=ai_settings.monthly_budget_cents,
-        month_spent_cents=spent.scalar_one(),
+        month_spent_cents=round(spent.scalar_one() / ai_client.MICROCENTS_PER_CENT),
         daily_user_request_cap=ai_settings.daily_user_request_cap,
         today_request_count=today_count.scalar_one(),
         plan_monthly_budget_cents=limits.ai_monthly_budget_cents,

@@ -64,7 +64,13 @@ def create_app() -> FastAPI:
             traces_sample_rate=settings.sentry_traces_sample_rate,
         )
 
-    app = FastAPI(title="Binx API")
+    docs = settings.api_docs_enabled
+    app = FastAPI(
+        title="Binx API",
+        docs_url="/docs" if docs else None,
+        redoc_url="/redoc" if docs else None,
+        openapi_url="/openapi.json" if docs else None,
+    )
 
     # Rate limiting — the @limiter.limit decorators in modules/auth/router.py
     # need the limiter on app.state, and a handler to turn a breach into 429.

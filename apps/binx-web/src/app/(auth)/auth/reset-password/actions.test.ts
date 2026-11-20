@@ -8,7 +8,9 @@ vi.mock("@/lib/auth", () => ({
 // using the real axios package here.
 vi.mock("axios", () => {
   const isAxiosError = (payload: unknown): boolean =>
-    typeof payload === "object" && payload !== null && (payload as { isAxiosError?: boolean }).isAxiosError === true;
+    typeof payload === "object" &&
+    payload !== null &&
+    (payload as { isAxiosError?: boolean }).isAxiosError === true;
   return { default: { post: vi.fn(), isAxiosError } };
 });
 
@@ -19,7 +21,10 @@ import { resetPasswordAction } from "./actions";
 const mockedPost = vi.mocked(axios.post);
 
 function axiosError(status: number, message: string) {
-  return Object.assign(new Error(message), { isAxiosError: true, response: { status, data: { message } } });
+  return Object.assign(new Error(message), {
+    isAxiosError: true,
+    response: { status, data: { message } },
+  });
 }
 
 beforeEach(() => {
@@ -30,21 +35,33 @@ describe("resetPasswordAction", () => {
   // Confirms the token from the emailed link and the new password are both
   // forwarded to /api/auth/reset-password under the field names it expects.
   it("returns the success message", async () => {
-    mockedPost.mockResolvedValueOnce({ data: { message: "Password reset successfully." } });
+    mockedPost.mockResolvedValueOnce({
+      data: { message: "Password reset successfully." },
+    });
 
-    await expect(resetPasswordAction("token123", "newpassword123")).resolves.toEqual({
+    await expect(
+      resetPasswordAction("token123", "newpassword123"),
+    ).resolves.toEqual({
       message: "Password reset successfully.",
     });
-    expect(mockedPost).toHaveBeenCalledWith("http://localhost:3000/api/auth/reset-password", {
-      token: "token123",
-      newPassword: "newpassword123",
-    });
+    expect(mockedPost).toHaveBeenCalledWith(
+      "http://localhost:3000/api/auth/reset-password",
+      {
+        token: "token123",
+        newPassword: "newpassword123",
+      },
+      { headers: {} },
+    );
   });
 
   it("returns the upstream error message for an invalid token", async () => {
-    mockedPost.mockRejectedValueOnce(axiosError(400, "Invalid or expired token"));
+    mockedPost.mockRejectedValueOnce(
+      axiosError(400, "Invalid or expired token"),
+    );
 
-    await expect(resetPasswordAction("bad-token", "newpassword123")).resolves.toEqual({
+    await expect(
+      resetPasswordAction("bad-token", "newpassword123"),
+    ).resolves.toEqual({
       error: "Invalid or expired token",
     });
   });

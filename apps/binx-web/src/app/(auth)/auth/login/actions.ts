@@ -16,6 +16,7 @@ import axios from "axios";
 import { redirect } from "next/navigation";
 
 import { forwardSetCookies, getInternalBaseUrl } from "@/lib/auth";
+import { clientIpHeaders } from "@/lib/client-ip";
 import { resolveHome } from "@/lib/portal";
 
 /**
@@ -44,10 +45,14 @@ export async function loginAction(
   const baseUrl = await getInternalBaseUrl();
 
   try {
-    const response = await axios.post(`${baseUrl}/api/auth/login`, {
-      email,
-      password,
-    });
+    const response = await axios.post(
+      `${baseUrl}/api/auth/login`,
+      {
+        email,
+        password,
+      },
+      { headers: await clientIpHeaders() },
+    );
     await forwardSetCookies(response.headers["set-cookie"]);
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
@@ -87,6 +92,7 @@ export async function resendVerificationAction(
     const response = await axios.post(
       `${baseUrl}/api/auth/resend-verification`,
       { email },
+      { headers: await clientIpHeaders() },
     );
     return {
       message:

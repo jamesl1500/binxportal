@@ -74,6 +74,12 @@ from binx_api.modules.projects.schemas import TaskCreate, TaskUpdate
 from binx_api.modules.users.models import User
 
 MAX_ASSISTANT_ITERATIONS = 6
+# How many past messages of an Ask AI thread are resent with each new one.
+# The API is stateless, so without a cap every turn re-pays for the whole
+# thread and a long conversation's cost grows with its length. 20 messages
+# is the last ~10 exchanges — plenty for follow-ups; older turns stay saved
+# and visible, just not re-sent.
+ASSISTANT_HISTORY_MESSAGES = 20
 
 
 def _money(cents: int, currency: str) -> str:
@@ -180,7 +186,7 @@ async def analyze_lead_website(
         response_format=_LEAD_ANALYSIS_FORMAT,
         lock=lock,
     )
-    data = json.loads(result.text)
+    data = ai_client.parse_json(result)
     fit = str(data.get("fit") or "").strip().lower()
     return LeadAnalysis(
         score=max(0, min(100, int(data["score"]))),
@@ -305,7 +311,11 @@ async def find_prospects(
         messages=[{"role": "user", "content": prompt}],
         max_tokens=2500,
         effort="medium",
-        tools=[{"type": "web_search_20260209", "name": "web_search", "max_uses": 5}],
+        # The basic web_search, not the dynamic-filtering web_search_20260209:
+        # that variant isn't supported on the Haiku-class fast tier, and it
+        # runs every search through a code-execution sandbox (extra latency
+        # and container cost) that a short company list never needs.
+        tools=[{"type": "web_search_20250305", "name": "web_search", "max_uses": 5}],
         response_format=_PROSPECTS_FORMAT,
         fast=True,
     )
@@ -314,7 +324,7 @@ async def find_prospects(
         value = str(raw.get(key) or "").strip()[:length]
         return value or None
 
-    data = json.loads(result.text)
+    data = ai_client.parse_json(result)
     candidates: list[ProspectCandidate] = []
     for raw in (data.get("candidates") or [])[:count]:
         name = _trimmed(raw, "name", 255)
@@ -591,7 +601,7 @@ async def suggest_project_tasks(
         response_format=_PROJECT_TASKS_FORMAT,
         fast=True,
     )
-    data = json.loads(result.text)
+    data = ai_client.parse_json(result)
     lists: list[TaskListSuggestion] = []
     for raw_list in data.get("lists") or []:
         name = str(raw_list.get("name") or "").strip()[:100]
@@ -1248,7 +1258,10 @@ async def list_conversation_messages(db: AsyncSession, conversation_id: uuid.UUI
     result = await db.execute(
         select(AiConversationMessage)
         .where(AiConversationMessage.conversation_id == conversation_id)
-        .order_by(AiConversationMessage.created_at)
+        # A turn's user + assistant rows are committed together, so they share
+        # one created_at (Postgres stamps the transaction start). Break the tie
+        # so the question always sorts before its answer ("user" > "assistant").
+        .order_by(AiConversationMessage.created_at, AiConversationMessage.role.desc())
     )
     return list(result.scalars().all())
 
@@ -1373,7 +1386,11 @@ async def _build_assistant_messages(db: AsyncSession, conversation: AiConversati
     carries a note of the changes it made/proposed and where they stand now
     (an approval happens after the turn ends), so Claude knows what's
     already been done without replaying the old tool calls."""
-    history = await list_conversation_messages(db, conversation.id)
+    history = (await list_conversation_messages(db, conversation.id))[-ASSISTANT_HISTORY_MESSAGES:]
+    # Start on a user turn — the API requires it, and a cut that lands
+    # mid-exchange would otherwise open on an orphaned assistant reply.
+    while history and history[0].role != ROLE_USER:
+        history = history[1:]
     actions_by_message = await list_conversation_actions(db, conversation.id)
     messages: list[dict] = []
     for m in history:

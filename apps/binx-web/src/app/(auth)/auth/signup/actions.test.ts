@@ -11,7 +11,9 @@ vi.mock("@/lib/auth", () => ({
 // recognized correctly, without needing the real axios/HTTP stack.
 vi.mock("axios", () => {
   const isAxiosError = (payload: unknown): boolean =>
-    typeof payload === "object" && payload !== null && (payload as { isAxiosError?: boolean }).isAxiosError === true;
+    typeof payload === "object" &&
+    payload !== null &&
+    (payload as { isAxiosError?: boolean }).isAxiosError === true;
   return { default: { post: vi.fn(), isAxiosError } };
 });
 
@@ -23,7 +25,10 @@ const mockedPost = vi.mocked(axios.post);
 
 /** Shapes a fake error the same way axios does for a non-2xx response. */
 function axiosError(status: number, message: string) {
-  return Object.assign(new Error(message), { isAxiosError: true, response: { status, data: { message } } });
+  return Object.assign(new Error(message), {
+    isAxiosError: true,
+    response: { status, data: { message } },
+  });
 }
 
 beforeEach(() => {
@@ -36,23 +41,35 @@ describe("signupAction", () => {
   // message is passed straight through to the caller.
   it("returns the success message from the signup route", async () => {
     mockedPost.mockResolvedValueOnce({
-      data: { message: "Account created. Check your email to verify your address." },
+      data: {
+        message: "Account created. Check your email to verify your address.",
+      },
     });
 
     const result = await signupAction("a@b.com", "A B", "password123");
 
-    expect(mockedPost).toHaveBeenCalledWith("http://localhost:3000/api/auth/signup", {
-      email: "a@b.com",
-      fullName: "A B",
-      password: "password123",
+    expect(mockedPost).toHaveBeenCalledWith(
+      "http://localhost:3000/api/auth/signup",
+      {
+        email: "a@b.com",
+        fullName: "A B",
+        password: "password123",
+      },
+      { headers: {} },
+    );
+    expect(result).toEqual({
+      message: "Account created. Check your email to verify your address.",
     });
-    expect(result).toEqual({ message: "Account created. Check your email to verify your address." });
   });
 
   it("returns the upstream error message on failure", async () => {
-    mockedPost.mockRejectedValueOnce(axiosError(409, "Email already registered"));
+    mockedPost.mockRejectedValueOnce(
+      axiosError(409, "Email already registered"),
+    );
 
-    await expect(signupAction("a@b.com", "A B", "password123")).resolves.toEqual({
+    await expect(
+      signupAction("a@b.com", "A B", "password123"),
+    ).resolves.toEqual({
       error: "Email already registered",
     });
   });
@@ -62,18 +79,24 @@ describe("signupAction", () => {
 
     await signupAction("a@b.com", "A B", "password123", "inv-token");
 
-    expect(mockedPost).toHaveBeenCalledWith("http://localhost:3000/api/auth/signup", {
-      email: "a@b.com",
-      fullName: "A B",
-      password: "password123",
-      portalInviteToken: "inv-token",
-    });
+    expect(mockedPost).toHaveBeenCalledWith(
+      "http://localhost:3000/api/auth/signup",
+      {
+        email: "a@b.com",
+        fullName: "A B",
+        password: "password123",
+        portalInviteToken: "inv-token",
+      },
+      { headers: {} },
+    );
   });
 
   it("falls back to a generic message for non-axios errors", async () => {
     mockedPost.mockRejectedValueOnce(new Error("network down"));
 
-    await expect(signupAction("a@b.com", "A B", "password123")).resolves.toEqual({
+    await expect(
+      signupAction("a@b.com", "A B", "password123"),
+    ).resolves.toEqual({
       error: "Unable to create account",
     });
   });

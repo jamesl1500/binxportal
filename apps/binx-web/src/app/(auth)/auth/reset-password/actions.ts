@@ -14,6 +14,7 @@
 import axios from "axios";
 
 import { getInternalBaseUrl } from "@/lib/auth";
+import { clientIpHeaders } from "@/lib/client-ip";
 
 export interface ResetPasswordActionResult {
   error?: string;
@@ -27,10 +28,14 @@ export async function resetPasswordAction(
   const baseUrl = await getInternalBaseUrl();
 
   try {
-    const response = await axios.post(`${baseUrl}/api/auth/reset-password`, {
-      token,
-      newPassword,
-    });
+    const response = await axios.post(
+      `${baseUrl}/api/auth/reset-password`,
+      {
+        token,
+        newPassword,
+      },
+      { headers: await clientIpHeaders() },
+    );
     return {
       message: response.data?.message ?? "Password reset successfully.",
     };
