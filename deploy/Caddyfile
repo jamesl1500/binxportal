@@ -1,4 +1,12 @@
 # Reverse proxy + automatic TLS for both apps on the single EC2 instance.
+#
+# Every reverse_proxy below sets X-Forwarded-For to the TCP peer it saw
+# ({remote_host}) instead of trusting or appending to a client-sent one.
+# Both apps key per-IP rate limits on the first X-Forwarded-For hop
+# (binx-api core/rate_limit.py, binx-web lib/client-ip.ts), so it must never
+# be something a client can choose. Caddy already does this by default for
+# untrusted clients; this makes it explicit so a future `trusted_proxies`
+# setting or a change in defaults can't quietly undo it.
 # Caddy requests/renews Let's Encrypt certs for each host block below on its
 # own — no ACM, no ALB. Requires ports 80 (ACME HTTP-01 challenge + redirect)
 # and 443 to be reachable from the internet, which they already are on this
@@ -11,7 +19,9 @@
 # each one on its own HTTP-01 certificate, independent of the wildcard.
 api.binxportal.com {
 	tls force_automate
-	reverse_proxy api:8000
+	reverse_proxy api:8000 {
+		header_up X-Forwarded-For {remote_host}
+	}
 }
 
 # www is canonical (see lib/site.ts's SITE_URL / NEXT_PUBLIC_SITE_URL) — the
@@ -23,7 +33,9 @@ binxportal.com {
 
 www.binxportal.com {
 	tls force_automate
-	reverse_proxy web:3000
+	reverse_proxy web:3000 {
+		header_up X-Forwarded-For {remote_host}
+	}
 }
 
 # Agency custom subdomains (Settings → General; Starter plan and above —
@@ -41,7 +53,9 @@ www.binxportal.com {
 		dns route53
 		propagation_delay 30s
 	}
-	reverse_proxy web:3000
+	reverse_proxy web:3000 {
+		header_up X-Forwarded-For {remote_host}
+	}
 }
 
 # --- Staging (docker-compose.staging.yml) -----------------------------------
@@ -59,7 +73,9 @@ www.binxportal.com {
 api.staging.binxportal.com {
 	import staging
 	tls force_automate
-	reverse_proxy staging-api:8000
+	reverse_proxy staging-api:8000 {
+		header_up X-Forwarded-For {remote_host}
+	}
 }
 
 staging.binxportal.com {
@@ -69,7 +85,9 @@ staging.binxportal.com {
 	# STAGING_BASIC_AUTH_USER / STAGING_BASIC_AUTH_PASSWORD. A glob, so a
 	# missing file (no password set) is a warning, not a config error.
 	import /etc/caddy/staging-auth.caddy*
-	reverse_proxy staging-web:3000
+	reverse_proxy staging-web:3000 {
+		header_up X-Forwarded-For {remote_host}
+	}
 }
 
 # Agency subdomains on staging (foundryframe.staging.binxportal.com). Needs
@@ -84,5 +102,7 @@ staging.binxportal.com {
 		propagation_delay 30s
 	}
 	import /etc/caddy/staging-auth.caddy*
-	reverse_proxy staging-web:3000
+	reverse_proxy staging-web:3000 {
+		header_up X-Forwarded-For {remote_host}
+	}
 }
