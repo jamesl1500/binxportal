@@ -306,6 +306,7 @@ async def check_budget_and_rate(db: AsyncSession, agency_id: uuid.UUID, user_id:
             .where(
                 AiUsageEvent.agency_id == agency_id,
                 AiUsageEvent.user_id == user_id,
+                AiUsageEvent.counts_toward_cap.is_(True),
                 AiUsageEvent.created_at >= _day_start(now),
             )
         )
@@ -329,6 +330,7 @@ async def _log_event(
     input_tokens: int = 0,
     output_tokens: int = 0,
     error_message: str | None = None,
+    counts_toward_cap: bool = True,
 ) -> None:
     db.add(
         AiUsageEvent(
@@ -342,6 +344,7 @@ async def _log_event(
             cost_microcents=cost_microcents,
             status=status_,
             error_message=error_message,
+            counts_toward_cap=counts_toward_cap,
         )
     )
     await db.commit()
@@ -447,6 +450,7 @@ async def complete(
     fast: bool = False,
     cache_system: bool = False,
     lock: Lock | None = None,
+    counts_toward_cap: bool = True,
 ) -> CompletionResult:
     """``fast=True`` routes the call through ``settings.ai_fast_model`` (a
     cheaper/quicker model) instead of the default ``settings.ai_model`` —
@@ -475,12 +479,22 @@ async def complete(
 
     async def _log_error(exc: Exception) -> None:
         await _log_locked(
-            lock, db, agency_id, user_id, feature=feature, model=model, status_=STATUS_ERROR, error_message=str(exc)
+            lock,
+            db,
+            agency_id,
+            user_id,
+            feature=feature,
+            model=model,
+            status_=STATUS_ERROR,
+            error_message=str(exc),
+            counts_toward_cap=counts_toward_cap,
         )
 
     async with lock or _NO_OP_LOCK:
         try:
-            await check_budget_and_rate(db, agency_id, user_id)
+            # A follow-up call skips the daily-cap check (user_id=None): the
+            # question it belongs to was already counted. The budget still applies.
+            await check_budget_and_rate(db, agency_id, user_id if counts_toward_cap else None)
         except (AiNotConfigured, AiBudgetExceeded) as exc:
             await _log_event(
                 db,
@@ -490,6 +504,7 @@ async def complete(
                 model=model,
                 status_=STATUS_BLOCKED,
                 error_message=str(exc.detail),
+                counts_toward_cap=counts_toward_cap,
             )
             raise
 
@@ -542,6 +557,7 @@ async def complete(
         cost_microcents=_cost_microcents(_served_model(message, model), message.usage),
         input_tokens=message.usage.input_tokens,
         output_tokens=message.usage.output_tokens,
+        counts_toward_cap=counts_toward_cap,
     )
     if message.stop_reason == "refusal":
         # Logged as ok above — the tokens were billed either way.
@@ -564,6 +580,7 @@ async def complete_stream(
     fast: bool = False,
     cache_system: bool = False,
     lock: Lock | None = None,
+    counts_toward_cap: bool = True,
 ) -> AsyncIterator[StreamEvent]:
     """Streaming counterpart to :func:`complete` for one Claude call — same
     budget check, error mapping, and cost logging (parameters mean exactly
@@ -582,12 +599,22 @@ async def complete_stream(
 
     async def _log_error(exc: Exception) -> None:
         await _log_locked(
-            lock, db, agency_id, user_id, feature=feature, model=model, status_=STATUS_ERROR, error_message=str(exc)
+            lock,
+            db,
+            agency_id,
+            user_id,
+            feature=feature,
+            model=model,
+            status_=STATUS_ERROR,
+            error_message=str(exc),
+            counts_toward_cap=counts_toward_cap,
         )
 
     async with lock or _NO_OP_LOCK:
         try:
-            await check_budget_and_rate(db, agency_id, user_id)
+            # A follow-up call skips the daily-cap check (user_id=None): the
+            # question it belongs to was already counted. The budget still applies.
+            await check_budget_and_rate(db, agency_id, user_id if counts_toward_cap else None)
         except (AiNotConfigured, AiBudgetExceeded) as exc:
             await _log_event(
                 db,
@@ -597,6 +624,7 @@ async def complete_stream(
                 model=model,
                 status_=STATUS_BLOCKED,
                 error_message=str(exc.detail),
+                counts_toward_cap=counts_toward_cap,
             )
             raise
 
@@ -652,5 +680,6 @@ async def complete_stream(
         cost_microcents=_cost_microcents(_served_model(message, model), message.usage),
         input_tokens=message.usage.input_tokens,
         output_tokens=message.usage.output_tokens,
+        counts_toward_cap=counts_toward_cap,
     )
     yield TurnComplete(message=message)

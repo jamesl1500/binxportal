@@ -581,6 +581,43 @@ def _system_text(kwargs: dict) -> str:
     return system if isinstance(system, str) else "".join(block["text"] for block in system)
 
 
+class TestAssistantDailyCap:
+    async def test_a_multi_step_question_counts_once(self, db_session, monkeypatch: pytest.MonkeyPatch) -> None:
+        from sqlalchemy import select
+
+        from binx_api.modules.ai.models import AiUsageEvent
+
+        _configure(monkeypatch)
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        ai_settings = await ai_client.get_or_create_ai_settings(db_session, agency.id)
+        ai_settings.daily_user_request_cap = 1
+        await db_session.commit()
+        conversation = await ai_service.create_conversation(db_session, agency.id, owner.id)
+
+        # Two tool steps, then the answer: three calls for one question.
+        monkeypatch.setattr(
+            ai_client,
+            "_call_anthropic",
+            _sequenced(
+                _tool_use_message("search_leads", {}),
+                _tool_use_message("search_clients", {}, tool_use_id="toolu_2"),
+                _text_message("Done."),
+            ),
+        )
+        reply = await ai_service.assistant_reply(
+            db_session, conversation, agency, actor=owner, user_message="Leads and clients?"
+        )
+        assert reply.content == "Done."  # a cap of 1 didn't cut the loop short
+
+        events = (await db_session.execute(select(AiUsageEvent).where(AiUsageEvent.agency_id == agency.id))).scalars()
+        assert sorted(e.counts_toward_cap for e in events) == [False, False, True]
+
+        # The next question is over the cap.
+        with pytest.raises(ai_client.AiBudgetExceeded):
+            await ai_service.assistant_reply(db_session, conversation, agency, actor=owner, user_message="Again?")
+
+
 class TestAssistantHistory:
     async def test_only_recent_history_is_resent(self, db_session, monkeypatch: pytest.MonkeyPatch) -> None:
         from datetime import UTC, datetime, timedelta

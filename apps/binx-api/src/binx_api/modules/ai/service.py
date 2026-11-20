@@ -1509,8 +1509,12 @@ async def assistant_reply(
     turn, messages, call_kwargs = await _start_turn(db, conversation, agency, actor, user_message)
 
     final_text = _NO_ANSWER
-    for _iteration in range(MAX_ASSISTANT_ITERATIONS):
-        result = await ai_client.complete(db, agency.id, actor.id, messages=messages, **call_kwargs)
+    for iteration in range(MAX_ASSISTANT_ITERATIONS):
+        # Only the first call of a turn counts toward the daily cap (one
+        # question, however many tool steps it takes).
+        result = await ai_client.complete(
+            db, agency.id, actor.id, messages=messages, counts_toward_cap=iteration == 0, **call_kwargs
+        )
         message = result.message
         if message.stop_reason != "tool_use":
             final_text = result.text or final_text
@@ -1540,10 +1544,12 @@ async def assistant_reply_stream(
     turn, messages, call_kwargs = await _start_turn(db, conversation, agency, actor, user_message)
 
     final_text = _NO_ANSWER
-    for _iteration in range(MAX_ASSISTANT_ITERATIONS):
+    for iteration in range(MAX_ASSISTANT_ITERATIONS):
         message = None
         turn_text = ""
-        async for event in ai_client.complete_stream(db, agency.id, actor.id, messages=messages, **call_kwargs):
+        async for event in ai_client.complete_stream(
+            db, agency.id, actor.id, messages=messages, counts_toward_cap=iteration == 0, **call_kwargs
+        ):
             if isinstance(event, ai_client.TextDelta):
                 turn_text += event.text
                 yield event.text

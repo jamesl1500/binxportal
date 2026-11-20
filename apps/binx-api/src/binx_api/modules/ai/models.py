@@ -1,7 +1,19 @@
 import uuid
 from datetime import date
 
-from sqlalchemy import BigInteger, Date, ForeignKey, Index, Integer, String, Text, UniqueConstraint, Uuid
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    Date,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    Uuid,
+    true,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from binx_api.core.database import Base
@@ -108,6 +120,11 @@ class AiUsageEvent(Base):
     cost_microcents: Mapped[int] = mapped_column(BigInteger, default=0, server_default="0")
     status: Mapped[str] = mapped_column(String(10))
     error_message: Mapped[str | None] = mapped_column(String(1024), default=None)
+    # Whether this call counts as one of the member's daily requests. False
+    # for the follow-up calls of an Ask AI tool loop: one question can take
+    # several calls, and the cap is meant to count questions. Every call still
+    # counts toward the monthly budget.
+    counts_toward_cap: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())
 
 
 # One "Ask AI" chat thread. Personal to the member who started it — see
