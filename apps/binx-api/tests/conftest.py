@@ -48,7 +48,10 @@ _TEST_DATABASE_URL = os.environ.get(
     "postgresql+asyncpg://binxapi:binxapi@localhost:5432/binxportal_test",
 )
 os.environ["DATABASE_URL"] = _TEST_DATABASE_URL
-os.environ.setdefault("JWT_SECRET", "test-secret-not-for-production-0123456789")
+# Forced, like DATABASE_URL: PyJWT warns on an HMAC key under 32 bytes, and
+# the suite runs with warnings as errors, so a shorter JWT_SECRET from CI or
+# a developer's shell would fail every test that issues a token.
+os.environ["JWT_SECRET"] = "test-secret-not-for-production-0123456789"
 os.environ.setdefault("FRONTEND_URL", "http://frontend.test")
 # The auth-endpoint rate limiter is off by default under test so unrelated
 # tests can hammer /auth/login without tripping each other. The one test that

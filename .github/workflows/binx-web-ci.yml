@@ -108,7 +108,7 @@ jobs:
           --health-retries 10
     env:
       DATABASE_URL: postgresql+asyncpg://binxapi:binxapi@127.0.0.1:5432/binxportal
-      JWT_SECRET: ci-secret-not-for-production
+      JWT_SECRET: ci-secret-not-for-production-0123456789  # >= 32 bytes (PyJWT HS256 minimum)
       NEXT_PUBLIC_API_URL: http://localhost:8000/
       NEXT_PUBLIC_SITE_URL: http://localhost:3000
       # The E2E suite logs in and out many times from one IP — the auth rate
