@@ -69,6 +69,7 @@ class NotificationSettingsRead(BaseModel):
     inapp_projects: bool
     inapp_messages: bool
     inapp_meetings: bool
+    inapp_timeline: bool
 
 
 class NotificationSettingsUpdate(BaseModel):
@@ -83,6 +84,8 @@ class NotificationSettingsUpdate(BaseModel):
     inapp_projects: bool
     inapp_messages: bool
     inapp_meetings: bool
+    # Defaulted so a client that predates the timeline toggle can still save.
+    inapp_timeline: bool = True
 
 
 class PrivacySettingsRead(BaseModel):

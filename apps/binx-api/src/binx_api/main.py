@@ -37,6 +37,7 @@ from binx_api.modules.projects.router import router as projects_router
 from binx_api.modules.proposals.router import public_router as proposals_public_router
 from binx_api.modules.proposals.router import router as proposals_router
 from binx_api.modules.time_tracking.router import router as time_tracking_router
+from binx_api.modules.timeline.router import router as timeline_router
 from binx_api.modules.users.router import router as users_router
 
 # Ensures binx_api.* loggers (e.g. the console-log email backend) are actually emitted.
@@ -110,6 +111,7 @@ def create_app() -> FastAPI:
     app.include_router(kickoff_templates_router)
     app.include_router(imports_router)
     app.include_router(exports_router)
+    app.include_router(timeline_router)
     app.include_router(feedback_router)
     app.include_router(feedback_admin_router)
     app.include_router(admin_router)

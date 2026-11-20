@@ -1177,6 +1177,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agencies/{agency_id}/exports/{kind}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export Data */
+        get: operations["export_data_agencies__agency_id__exports__kind__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agencies/{agency_id}/imports/clients": {
         parameters: {
             query?: never;
@@ -1188,6 +1205,57 @@ export interface paths {
         put?: never;
         /** Import Clients */
         post: operations["import_clients_agencies__agency_id__imports_clients_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/imports/leads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import Leads */
+        post: operations["import_leads_agencies__agency_id__imports_leads_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/imports/projects": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import Projects */
+        post: operations["import_projects_agencies__agency_id__imports_projects_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/imports/tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import Tasks */
+        post: operations["import_tasks_agencies__agency_id__imports_tasks_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1211,6 +1279,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agencies/{agency_id}/imports/time_entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import Time Entries */
+        post: operations["import_time_entries_agencies__agency_id__imports_time_entries_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agencies/{agency_id}/imports/{kind}/parse": {
         parameters: {
             query?: never;
@@ -1222,6 +1307,23 @@ export interface paths {
         put?: never;
         /** Parse Import File */
         post: operations["parse_import_file_agencies__agency_id__imports__kind__parse_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/imports/{kind}/template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Import Template */
+        get: operations["import_template_agencies__agency_id__imports__kind__template_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -3079,6 +3181,130 @@ export interface paths {
         /** Stop Timer */
         post: operations["stop_timer_agencies__agency_id__time_entries__entry_id__stop_post"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/timeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Feed */
+        get: operations["read_feed_agencies__agency_id__timeline_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/timeline/comments/{comment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Comment */
+        delete: operations["delete_comment_agencies__agency_id__timeline_comments__comment_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Comment */
+        patch: operations["update_comment_agencies__agency_id__timeline_comments__comment_id__patch"];
+        trace?: never;
+    };
+    "/agencies/{agency_id}/timeline/posts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Post */
+        post: operations["create_post_agencies__agency_id__timeline_posts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/timeline/posts/{post_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Post */
+        get: operations["read_post_agencies__agency_id__timeline_posts__post_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Post */
+        delete: operations["delete_post_agencies__agency_id__timeline_posts__post_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Post */
+        patch: operations["update_post_agencies__agency_id__timeline_posts__post_id__patch"];
+        trace?: never;
+    };
+    "/agencies/{agency_id}/timeline/posts/{post_id}/comments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Comments */
+        get: operations["list_comments_agencies__agency_id__timeline_posts__post_id__comments_get"];
+        put?: never;
+        /** Create Comment */
+        post: operations["create_comment_agencies__agency_id__timeline_posts__post_id__comments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/timeline/posts/{post_id}/pin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set Pinned */
+        put: operations["set_pinned_agencies__agency_id__timeline_posts__post_id__pin_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/timeline/posts/{post_id}/reactions/{reaction}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Add Reaction */
+        put: operations["add_reaction_agencies__agency_id__timeline_posts__post_id__reactions__reaction__put"];
+        post?: never;
+        /** Remove Reaction */
+        delete: operations["remove_reaction_agencies__agency_id__timeline_posts__post_id__reactions__reaction__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -7396,11 +7622,6 @@ export interface components {
             /** Candidates */
             candidates: components["schemas"]["ProspectRead"][];
         };
-        /** LeadImportRequest */
-        LeadImportRequest: {
-            /** Candidates */
-            candidates: components["schemas"]["ProspectRead"][];
-        };
         /** LeadImportResponse */
         LeadImportResponse: {
             /** Imported */
@@ -7409,6 +7630,27 @@ export interface components {
             skipped: {
                 [key: string]: unknown;
             }[];
+        };
+        /** LeadImportRow */
+        LeadImportRow: {
+            /** Contact Email */
+            contact_email?: string | null;
+            /** Contact Name */
+            contact_name?: string | null;
+            /** Contact Phone */
+            contact_phone?: string | null;
+            /** Estimated Value */
+            estimated_value?: string | null;
+            /** Name */
+            name?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Row */
+            row: number;
+            /** Status */
+            status?: string | null;
+            /** Website */
+            website?: string | null;
         };
         /** LeadListRead */
         LeadListRead: {
@@ -8011,6 +8253,8 @@ export interface components {
             inapp_projects: boolean;
             /** Inapp Team */
             inapp_team: boolean;
+            /** Inapp Timeline */
+            inapp_timeline: boolean;
         };
         /** NotificationSettingsUpdate */
         NotificationSettingsUpdate: {
@@ -8034,6 +8278,11 @@ export interface components {
             inapp_projects: boolean;
             /** Inapp Team */
             inapp_team: boolean;
+            /**
+             * Inapp Timeline
+             * @default true
+             */
+            inapp_timeline: boolean;
         };
         /** ParticipantAdd */
         ParticipantAdd: {
@@ -8616,6 +8865,35 @@ export interface components {
             source_task_title?: string | null;
             /** Uploaded By Name */
             uploaded_by_name: string | null;
+        };
+        /** ProjectImportRequest */
+        ProjectImportRequest: {
+            /**
+             * Dry Run
+             * @default true
+             */
+            dry_run: boolean;
+            /** Rows */
+            rows: components["schemas"]["ProjectImportRow"][];
+        };
+        /** ProjectImportRow */
+        ProjectImportRow: {
+            /** Client */
+            client?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Due Date */
+            due_date?: string | null;
+            /** Hourly Rate */
+            hourly_rate?: string | null;
+            /** Name */
+            name?: string | null;
+            /** Row */
+            row: number;
+            /** Start Date */
+            start_date?: string | null;
+            /** Status */
+            status?: string | null;
         };
         /**
          * ProjectLabelSeed
@@ -9533,6 +9811,33 @@ export interface components {
             /** Uploaded By Name */
             uploaded_by_name: string | null;
         };
+        /** TaskImportRequest */
+        TaskImportRequest: {
+            /**
+             * Dry Run
+             * @default true
+             */
+            dry_run: boolean;
+            /** Rows */
+            rows: components["schemas"]["TaskImportRow"][];
+        };
+        /** TaskImportRow */
+        TaskImportRow: {
+            /** Assignee */
+            assignee?: string | null;
+            /** Column */
+            column?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Due Date */
+            due_date?: string | null;
+            /** Project */
+            project?: string | null;
+            /** Row */
+            row: number;
+            /** Title */
+            title?: string | null;
+        };
         /** TaskListCreate */
         TaskListCreate: {
             /** Name */
@@ -9682,6 +9987,37 @@ export interface components {
             /** Row */
             row: number;
         };
+        /** TimeEntryImportRequest */
+        TimeEntryImportRequest: {
+            /**
+             * Dry Run
+             * @default true
+             */
+            dry_run: boolean;
+            /** Rows */
+            rows: components["schemas"]["TimeEntryImportRow"][];
+        };
+        /** TimeEntryImportRow */
+        TimeEntryImportRow: {
+            /** Billable */
+            billable?: string | null;
+            /** Date */
+            date?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Hourly Rate */
+            hourly_rate?: string | null;
+            /** Hours */
+            hours?: string | null;
+            /** Member */
+            member?: string | null;
+            /** Project */
+            project?: string | null;
+            /** Row */
+            row: number;
+            /** Task */
+            task?: string | null;
+        };
         /** TimeEntryRead */
         TimeEntryRead: {
             /** Amount Cents */
@@ -9756,6 +10092,137 @@ export interface components {
             label: string;
             /** Value */
             value: number;
+        };
+        /** TimelineAuthor */
+        TimelineAuthor: {
+            /** Avatar Version */
+            avatar_version: string | null;
+            /** Has Avatar */
+            has_avatar: boolean;
+            /** Member Id */
+            member_id: string | null;
+            /** Name */
+            name: string;
+            /** Role */
+            role: string | null;
+            /** User Id */
+            user_id: string | null;
+        };
+        /** TimelineCommentCreate */
+        TimelineCommentCreate: {
+            /** Body */
+            body: string;
+        };
+        /** TimelineCommentRead */
+        TimelineCommentRead: {
+            author: components["schemas"]["TimelineAuthor"];
+            /** Body */
+            body: string;
+            /** Can Delete */
+            can_delete: boolean;
+            /** Can Edit */
+            can_edit: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Edited At */
+            edited_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Post Id
+             * Format: uuid
+             */
+            post_id: string;
+        };
+        /** TimelineCommentUpdate */
+        TimelineCommentUpdate: {
+            /** Body */
+            body: string;
+        };
+        /** TimelineFeedRead */
+        TimelineFeedRead: {
+            /** Can Moderate */
+            can_moderate: boolean;
+            /** Next Cursor */
+            next_cursor: string | null;
+            /** Pinned */
+            pinned: components["schemas"]["TimelinePostRead"][];
+            /** Posts */
+            posts: components["schemas"]["TimelinePostRead"][];
+        };
+        /** TimelinePinUpdate */
+        TimelinePinUpdate: {
+            /** Pinned */
+            pinned: boolean;
+        };
+        /** TimelinePostCreate */
+        TimelinePostCreate: {
+            /** Body */
+            body: string;
+            /**
+             * Is Announcement
+             * @default false
+             */
+            is_announcement: boolean;
+        };
+        /** TimelinePostRead */
+        TimelinePostRead: {
+            author: components["schemas"]["TimelineAuthor"];
+            /** Body */
+            body: string;
+            /** Can Delete */
+            can_delete: boolean;
+            /** Can Edit */
+            can_edit: boolean;
+            /** Can Pin */
+            can_pin: boolean;
+            /** Comment Count */
+            comment_count: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Edited At */
+            edited_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Is Announcement */
+            is_announcement: boolean;
+            /** Pinned */
+            pinned: boolean;
+            /** Reactions */
+            reactions: components["schemas"]["TimelineReactionSummary"][];
+            /** Recent Comments */
+            recent_comments: components["schemas"]["TimelineCommentRead"][];
+        };
+        /** TimelinePostUpdate */
+        TimelinePostUpdate: {
+            /** Body */
+            body: string;
+        };
+        /** TimelineReactionSummary */
+        TimelineReactionSummary: {
+            /** Count */
+            count: number;
+            /** Names */
+            names: string[];
+            /** Reacted */
+            reacted: boolean;
+            /**
+             * Reaction
+             * @enum {string}
+             */
+            reaction: "like" | "love" | "celebrate" | "laugh" | "wow" | "thanks";
         };
         /** TimerStart */
         TimerStart: {
@@ -9966,6 +10433,21 @@ export interface components {
         WsTicketResponse: {
             /** Ticket */
             ticket: string;
+        };
+        /** LeadImportRequest */
+        binx_api__modules__imports__schemas__LeadImportRequest: {
+            /**
+             * Dry Run
+             * @default true
+             */
+            dry_run: boolean;
+            /** Rows */
+            rows: components["schemas"]["LeadImportRow"][];
+        };
+        /** LeadImportRequest */
+        binx_api__modules__leads__schemas__LeadImportRequest: {
+            /** Candidates */
+            candidates: components["schemas"]["ProspectRead"][];
         };
     };
     responses: never;
@@ -12809,6 +13291,40 @@ export interface operations {
             };
         };
     };
+    export_data_agencies__agency_id__exports__kind__get: {
+        parameters: {
+            query?: {
+                format?: "csv" | "xlsx";
+            };
+            header?: never;
+            path: {
+                kind: "clients" | "team" | "leads" | "projects" | "tasks" | "time_entries" | "invoices" | "proposals";
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     import_clients_agencies__agency_id__imports_clients_post: {
         parameters: {
             query?: never;
@@ -12821,6 +13337,111 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["ClientImportRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportResultRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_leads_agencies__agency_id__imports_leads_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["binx_api__modules__imports__schemas__LeadImportRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportResultRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_projects_agencies__agency_id__imports_projects_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectImportRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportResultRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_tasks_agencies__agency_id__imports_tasks_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskImportRequest"];
             };
         };
         responses: {
@@ -12879,12 +13500,47 @@ export interface operations {
             };
         };
     };
+    import_time_entries_agencies__agency_id__imports_time_entries_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TimeEntryImportRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportResultRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     parse_import_file_agencies__agency_id__imports__kind__parse_post: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                kind: "clients" | "team";
+                kind: "clients" | "team" | "leads" | "projects" | "tasks" | "time_entries";
                 agency_id: string;
             };
             cookie?: never;
@@ -12902,6 +13558,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ImportParseRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_template_agencies__agency_id__imports__kind__template_get: {
+        parameters: {
+            query?: {
+                format?: "csv" | "xlsx";
+            };
+            header?: never;
+            path: {
+                kind: "clients" | "team" | "leads" | "projects" | "tasks" | "time_entries";
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
@@ -13793,7 +14483,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["LeadImportRequest"];
+                "application/json": components["schemas"]["binx_api__modules__leads__schemas__LeadImportRequest"];
             };
         };
         responses: {
@@ -18171,6 +18861,409 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TimeEntryRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_feed_agencies__agency_id__timeline_get: {
+        parameters: {
+            query?: {
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimelineFeedRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_comment_agencies__agency_id__timeline_comments__comment_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                comment_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_comment_agencies__agency_id__timeline_comments__comment_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                comment_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TimelineCommentUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimelineCommentRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_post_agencies__agency_id__timeline_posts_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TimelinePostCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimelinePostRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_post_agencies__agency_id__timeline_posts__post_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                post_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimelinePostRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_post_agencies__agency_id__timeline_posts__post_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                post_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_post_agencies__agency_id__timeline_posts__post_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                post_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TimelinePostUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimelinePostRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_comments_agencies__agency_id__timeline_posts__post_id__comments_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                post_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimelineCommentRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_comment_agencies__agency_id__timeline_posts__post_id__comments_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                post_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TimelineCommentCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimelineCommentRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_pinned_agencies__agency_id__timeline_posts__post_id__pin_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                post_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TimelinePinUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimelinePostRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_reaction_agencies__agency_id__timeline_posts__post_id__reactions__reaction__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                post_id: string;
+                reaction: "like" | "love" | "celebrate" | "laugh" | "wow" | "thanks";
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimelinePostRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_reaction_agencies__agency_id__timeline_posts__post_id__reactions__reaction__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                post_id: string;
+                reaction: "like" | "love" | "celebrate" | "laugh" | "wow" | "thanks";
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimelinePostRead"];
                 };
             };
             /** @description Validation Error */
