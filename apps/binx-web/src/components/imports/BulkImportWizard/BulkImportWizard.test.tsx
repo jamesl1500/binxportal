@@ -150,6 +150,6 @@ describe("BulkImportWizard", () => {
 
   it("offers templates", () => {
     render(<BulkImportWizard agencyId="a1" kind="team" />);
-    expect(screen.getByRole("link", { name: "Excel" })).toHaveAttribute("href", "/templates/team-import-template.xlsx");
+    expect(screen.getByRole("link", { name: "Excel" })).toHaveAttribute("href", "/api/agencies/a1/imports/team/template?format=xlsx");
   });
 });

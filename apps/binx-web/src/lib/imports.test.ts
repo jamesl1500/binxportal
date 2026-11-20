@@ -105,6 +105,8 @@ describe("imports-client helpers", () => {
   });
 
   it("points at the static templates", () => {
-    expect(importTemplateHref("clients", "xlsx")).toBe("/templates/clients-import-template.xlsx");
+    expect(importTemplateHref("agency-1", "clients", "xlsx")).toBe(
+      "/api/agencies/agency-1/imports/clients/template?format=xlsx",
+    );
   });
 });

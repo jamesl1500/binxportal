@@ -1,0 +1,142 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.eyebrow {
+  display: block;
+  margin-bottom: t.$space-2;
+  font-family: var(--font-mono);
+  font-size: t.$font-size-xs;
+  letter-spacing: t.$tracking-widest;
+  text-transform: uppercase;
+  color: t.$color-ink-soft;
+}
+
+.title {
+  margin: 0 0 t.$space-2;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-2xl;
+  color: t.$color-ink;
+}
+
+.subtitle {
+  margin: 0;
+  max-width: 44rem;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+}
+
+.header {
+  margin-bottom: t.$space-8;
+}
+
+.backLink {
+  display: inline-block;
+  margin-bottom: t.$space-4;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+  text-decoration: none;
+
+  &:hover {
+    color: t.$color-ink;
+  }
+  @include m.touch-target;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+  gap: t.$space-4;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+  padding: t.$space-5;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+}
+
+.cardTitle {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-ink;
+}
+
+.cardText {
+  flex: 1;
+  margin: 0 0 t.$space-2;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: t.$space-2;
+}
+
+%action {
+  @include m.button-base;
+  gap: t.$space-2;
+  text-decoration: none;
+
+  svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+}
+
+.secondary {
+  @extend %action;
+  color: t.$color-ink;
+  background: t.$color-surface;
+  border-color: t.$color-border-strong;
+
+  &:hover {
+    background: t.$color-paper;
+  }
+}
+
+.primary {
+  @extend %action;
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+
+  &:hover {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+}
+
+.note {
+  font-family: var(--font-mono);
+  font-size: t.$font-size-xs;
+  letter-spacing: t.$tracking-widest;
+  text-transform: uppercase;
+  color: t.$color-ink-faint;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.formCard {
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  padding: t.$space-6;
+}

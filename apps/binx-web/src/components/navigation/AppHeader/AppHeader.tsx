@@ -66,6 +66,7 @@ const MANAGE_LINKS: NavLink[] = [
   { href: "/proposals", label: "Proposals" },
   { href: "/meetings", label: "Meetings" },
   { href: "/activity", label: "Activity" },
+  { href: "/data", label: "Import & export" },
 ];
 
 const AppHeader = ({

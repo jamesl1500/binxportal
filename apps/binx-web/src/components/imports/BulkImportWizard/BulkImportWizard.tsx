@@ -55,6 +55,8 @@ const COPY: Record<
   ImportKind,
   {
     labelHeading: string;
+    /** For the upload control's accessible name: "Upload a … spreadsheet". */
+    noun: string;
     maxRows: number;
     action: (n: number) => string;
     done: (n: number) => string;
@@ -63,6 +65,7 @@ const COPY: Record<
 > = {
   clients: {
     labelHeading: "Client",
+    noun: "clients",
     maxRows: 500,
     action: (n) => `Import ${n} ${n === 1 ? "client" : "clients"}`,
     done: (n) => `Imported ${n} ${n === 1 ? "client" : "clients"}`,
@@ -70,11 +73,44 @@ const COPY: Record<
   },
   team: {
     labelHeading: "Email",
+    noun: "team",
     maxRows: 100,
     action: (n) => `Send ${n} ${n === 1 ? "invite" : "invites"}`,
     done: (n) =>
       `Invited ${n} ${n === 1 ? "person" : "people"} — they'll get an email shortly`,
     limitNoun: "team members (including pending invites)",
+  },
+  leads: {
+    labelHeading: "Lead",
+    noun: "leads",
+    maxRows: 500,
+    action: (n) => `Import ${n} ${n === 1 ? "lead" : "leads"}`,
+    done: (n) => `Imported ${n} ${n === 1 ? "lead" : "leads"}`,
+    limitNoun: "leads",
+  },
+  projects: {
+    labelHeading: "Project",
+    noun: "projects",
+    maxRows: 200,
+    action: (n) => `Import ${n} ${n === 1 ? "project" : "projects"}`,
+    done: (n) => `Imported ${n} ${n === 1 ? "project" : "projects"}`,
+    limitNoun: "active projects",
+  },
+  tasks: {
+    labelHeading: "Task",
+    noun: "tasks",
+    maxRows: 1000,
+    action: (n) => `Import ${n} ${n === 1 ? "task" : "tasks"}`,
+    done: (n) => `Imported ${n} ${n === 1 ? "task" : "tasks"}`,
+    limitNoun: "tasks",
+  },
+  time_entries: {
+    labelHeading: "Entry",
+    noun: "time entries",
+    maxRows: 2000,
+    action: (n) => `Import ${n} time ${n === 1 ? "entry" : "entries"}`,
+    done: (n) => `Imported ${n} time ${n === 1 ? "entry" : "entries"}`,
+    limitNoun: "time entries",
   },
 };
 
@@ -289,18 +325,18 @@ const BulkImportWizard = ({
             onChange={(event: ChangeEvent<HTMLInputElement>) =>
               handleFile(event.target.files?.[0])
             }
-            aria-label={`Upload a ${kind} spreadsheet`}
+            aria-label={`Upload a ${copy.noun} spreadsheet`}
           />
         </label>
 
         <p className={styles.templates}>
           <Download aria-hidden="true" />
           Start from a template:{" "}
-          <a href={importTemplateHref(kind, "csv")} download>
+          <a href={importTemplateHref(agencyId, kind, "csv")} download>
             CSV
           </a>{" "}
           ·{" "}
-          <a href={importTemplateHref(kind, "xlsx")} download>
+          <a href={importTemplateHref(agencyId, kind, "xlsx")} download>
             Excel
           </a>
         </p>
