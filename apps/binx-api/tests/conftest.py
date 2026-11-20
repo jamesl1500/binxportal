@@ -58,6 +58,13 @@ os.environ.setdefault("RATE_LIMIT_ENABLED", "false")
 # testing can't make the suite send real email. tests/unit/test_email.py
 # covers the SES path with a mocked client instead.
 os.environ["SES_FROM_EMAIL"] = ""
+# Same for Sentry: create_app() calls sentry_sdk.init() whenever SENTRY_DSN is
+# set, so a developer's .env would otherwise report the suite's own errors
+# (and traces) to the real project.
+os.environ["SENTRY_DSN"] = ""
+# And for the proxy secret, so a local .env can't change how rate-limit tests
+# key their buckets. TestRateLimitClientIp sets it explicitly.
+os.environ["PROXY_SHARED_SECRET"] = ""
 os.environ["SES_ALLOWED_RECIPIENTS"] = ""
 # Same for the other real third-party key a developer's .env carries: tests
 # that need Places opt in by setting the key themselves and patching
