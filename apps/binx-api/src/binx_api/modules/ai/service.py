@@ -315,7 +315,10 @@ async def find_prospects(
         # that variant isn't supported on the Haiku-class fast tier, and it
         # runs every search through a code-execution sandbox (extra latency
         # and container cost) that a short company list never needs.
-        tools=[{"type": "web_search_20250305", "name": "web_search", "max_uses": 5}],
+        # At 1 cent per search, searches were most of this feature's cost (a
+        # 3-company brief used ~3 of the old 5). 3 is enough when Places
+        # supplies the list, and still finds candidates when it doesn't.
+        tools=[{"type": "web_search_20250305", "name": "web_search", "max_uses": 3}],
         response_format=_PROSPECTS_FORMAT,
         fast=True,
     )
