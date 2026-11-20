@@ -26,7 +26,9 @@ vi.mock("next/navigation", () => ({
 // errors below are recognized correctly by the code under test.
 vi.mock("axios", () => {
   const isAxiosError = (payload: unknown): boolean =>
-    typeof payload === "object" && payload !== null && (payload as { isAxiosError?: boolean }).isAxiosError === true;
+    typeof payload === "object" &&
+    payload !== null &&
+    (payload as { isAxiosError?: boolean }).isAxiosError === true;
   return { default: { post: vi.fn(), isAxiosError } };
 });
 
@@ -42,7 +44,10 @@ const mockedRedirect = vi.mocked(redirect);
 
 /** Shapes a fake error the same way axios does for a non-2xx response. */
 function axiosError(status: number, message: string) {
-  return Object.assign(new Error(message), { isAxiosError: true, response: { status, data: { message } } });
+  return Object.assign(new Error(message), {
+    isAxiosError: true,
+    response: { status, data: { message } },
+  });
 }
 
 beforeEach(() => {
@@ -58,13 +63,21 @@ describe("verifyEmailAction", () => {
   // actually rejects — that's expected and is how real Next.js Server
   // Actions behave too.
   it("forwards Set-Cookie headers and redirects to /onboarding/one on success", async () => {
-    mockedPost.mockResolvedValueOnce({ headers: { "set-cookie": ["a=1", "b=2"] } });
-
-    await expect(verifyEmailAction("test-token")).rejects.toThrow("REDIRECT:/onboarding/one");
-
-    expect(mockedPost).toHaveBeenCalledWith("http://localhost:3000/api/auth/verify-email", {
-      token: "test-token",
+    mockedPost.mockResolvedValueOnce({
+      headers: { "set-cookie": ["a=1", "b=2"] },
     });
+
+    await expect(verifyEmailAction("test-token")).rejects.toThrow(
+      "REDIRECT:/onboarding/one",
+    );
+
+    expect(mockedPost).toHaveBeenCalledWith(
+      "http://localhost:3000/api/auth/verify-email",
+      {
+        token: "test-token",
+      },
+      { headers: {} },
+    );
     expect(mockedForwardSetCookies).toHaveBeenCalledWith(["a=1", "b=2"]);
     expect(mockedRedirect).toHaveBeenCalledWith("/onboarding/one");
   });
@@ -78,14 +91,18 @@ describe("verifyEmailAction", () => {
       "REDIRECT:/auth/portal-invite?token=inv-token",
     );
 
-    expect(mockedRedirect).toHaveBeenCalledWith("/auth/portal-invite?token=inv-token");
+    expect(mockedRedirect).toHaveBeenCalledWith(
+      "/auth/portal-invite?token=inv-token",
+    );
   });
 
   // On failure there's nothing to forward and nowhere to redirect — the
   // action should just resolve with `{ error }` so the client-side form can
   // render it, instead of throwing and taking down the whole action.
   it("returns the upstream error message without redirecting", async () => {
-    mockedPost.mockRejectedValueOnce(axiosError(400, "Invalid or expired token"));
+    mockedPost.mockRejectedValueOnce(
+      axiosError(400, "Invalid or expired token"),
+    );
 
     await expect(verifyEmailAction("bad-token")).resolves.toEqual({
       error: "Invalid or expired token",

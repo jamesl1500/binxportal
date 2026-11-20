@@ -14,6 +14,7 @@
 import axios from "axios";
 
 import { getInternalBaseUrl } from "@/lib/auth";
+import { clientIpHeaders } from "@/lib/client-ip";
 
 export interface ForgotPasswordActionResult {
   error?: string;
@@ -26,9 +27,13 @@ export async function forgotPasswordAction(
   const baseUrl = await getInternalBaseUrl();
 
   try {
-    const response = await axios.post(`${baseUrl}/api/auth/forgot-password`, {
-      email,
-    });
+    const response = await axios.post(
+      `${baseUrl}/api/auth/forgot-password`,
+      {
+        email,
+      },
+      { headers: await clientIpHeaders() },
+    );
     return {
       message:
         response.data?.message ??

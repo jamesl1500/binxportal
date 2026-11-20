@@ -43,6 +43,15 @@ class Settings(BaseSettings):
     # in-process store, which is correct as long as only one API process is
     # running.
     redis_url: str | None = None
+    # Shared with binx-web (same env var name there). When set, binx-web's
+    # server forwards each visitor's IP with this secret and the rate limiter
+    # keys on that IP — see core/rate_limit.py::_client_ip. Unset, every call
+    # binx-web makes on a visitor's behalf shares one rate-limit bucket.
+    proxy_shared_secret: str | None = None
+    # Serve the interactive API docs (/docs, /redoc, /openapi.json). Off in
+    # production (docker-compose.prod.yml) so the full route map isn't public;
+    # binx-web's types come from the committed openapi.json, not the live one.
+    api_docs_enabled: bool = True
 
     # Base URL of the staff portal frontend, used to build links in emails
     frontend_url: str = "http://localhost:3000"
@@ -84,8 +93,11 @@ class Settings(BaseSettings):
     # The default, capable model — real reasoning tasks (lead-website
     # analysis, the "Ask AI" assistant). ai_fast_model is the cheaper/quicker
     # model for templated drafts; see ai/client.py::complete's `fast` flag.
-    ai_model: str = "claude-opus-5"
-    ai_fast_model: str = "claude-haiku-4-5"
+    ai_model: str = "claude-sonnet-5-5"
+    # Haiku 5.5 is ~10x cheaper per token than Haiku 4.5 ($0.10/$0.50 vs
+    # $1/$5 per MTok) and supports effort, so drafts run at each feature's
+    # own (mostly "low") effort.
+    ai_fast_model: str = "claude-haiku-5-5"
     # Seeded onto a new agency's AgencyAiSettings row on first access; each
     # agency's owner/admin can raise these afterward (ai/router.py).
     ai_default_monthly_budget_cents: int = 2000

@@ -130,13 +130,26 @@ def _attachment_disposition(filename: str) -> str:
     return f'attachment; filename="{filename}"'
 
 
+# On every stored-file response. These are user uploads served from the API
+# origin: nosniff stops a browser second-guessing the stored type (an "image"
+# that's really HTML), and the sandbox CSP means a file opened directly can
+# never run script. Neither affects an <img> tag or a download.
+_UPLOAD_HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    # Same policy binx-web's file proxy sets (lib/file-proxy.ts FILE_RESPONSE_CSP).
+    "Content-Security-Policy": (
+        "default-src 'none'; img-src 'self' data:; media-src 'self'; style-src 'unsafe-inline'; sandbox"
+    ),
+}
+
+
 async def response(storage_path: str, *, media_type: str, filename: str | None = None) -> Response:
     """The HTTP response serving a stored file — inline, or as a download
     named ``filename`` when given. 404s if the bytes are gone."""
     if not storage_path.startswith(_S3_SCHEME):
         if not Path(storage_path).is_file():
             raise HTTPException(status.HTTP_404_NOT_FOUND, "File not found")
-        return FileResponse(path=storage_path, filename=filename, media_type=media_type)
+        return FileResponse(path=storage_path, filename=filename, media_type=media_type, headers=_UPLOAD_HEADERS)
 
     bucket, key = _split_s3(storage_path)
     try:
@@ -147,7 +160,7 @@ async def response(storage_path: str, *, media_type: str, filename: str | None =
         raise
 
     body = obj["Body"]
-    headers = {"Content-Length": str(obj["ContentLength"])}
+    headers = {**_UPLOAD_HEADERS, "Content-Length": str(obj["ContentLength"])}
     if obj.get("ETag"):
         headers["ETag"] = obj["ETag"]
     if filename is not None:

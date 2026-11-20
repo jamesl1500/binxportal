@@ -112,6 +112,7 @@ class TestCheckBudgetAndRate:
                 input_tokens=1,
                 output_tokens=1,
                 cost_cents=150,
+                cost_microcents=150 * ai_client.MICROCENTS_PER_CENT,
                 status=STATUS_OK,
             )
         )
@@ -285,9 +286,15 @@ class TestComplete:
 
         assert captured["model"] == "claude-haiku-4-5"
         events = await _events(db_session, agency.id)
-        # claude-haiku-4-5: $1/$5 per 1M tokens -> (1000*100 + 200*500)/1e6 = 0.2 cent -> rounds to 0
+        # claude-haiku-4-5: $1/$5 per 1M tokens -> (1000*100 + 200*500)/1e6 = 0.2 cent.
+        # Displays as 0 whole cents, but the exact cost is what the budget sums.
         assert events[0].model == "claude-haiku-4-5"
         assert events[0].cost_cents == 0
+        assert events[0].cost_microcents == 200_000
+        # Haiku 4.5 rejects thinking and effort outright.
+        assert "thinking" not in captured
+        assert "output_config" not in captured
+        assert captured["max_tokens"] == 100
 
     async def test_pricing_matches_a_dated_snapshot_model_id_by_prefix(self) -> None:
         # AI_FAST_MODEL is often set to a dated id like "claude-haiku-4-5-20251001"
@@ -357,7 +364,112 @@ async def _async_raise(fn):
     fn()
 
 
+class TestCostMath:
+    def test_sub_cent_calls_add_up_against_the_budget(self) -> None:
+        usage = _fake_usage(input_tokens=1000, output_tokens=200)
+        # claude-haiku-5-5: $0.10/$0.50 per 1M -> 1000*10 + 200*50 = 20,000 microcents.
+        assert ai_client._cost_microcents("claude-haiku-5-5", usage) == 20_000
+        assert ai_client._cost_cents("claude-haiku-5-5", usage) == 0
+
+    def test_web_searches_are_billed_at_a_cent_each(self) -> None:
+        usage = SimpleNamespace(**vars(_fake_usage(0, 0)), server_tool_use=SimpleNamespace(web_search_requests=3))
+        assert ai_client._cost_microcents("claude-haiku-5-5", usage) == 3 * ai_client.MICROCENTS_PER_CENT
+
+    def test_cache_reads_use_the_models_own_rate(self) -> None:
+        usage = SimpleNamespace(
+            input_tokens=0, output_tokens=0, cache_creation_input_tokens=0, cache_read_input_tokens=1_000_000
+        )
+        # Sonnet 5.5 reads cache at $0.10/MTok (0.05x input), not the old flat 0.1x.
+        assert ai_client._cost_microcents("claude-sonnet-5-5", usage) == 10 * ai_client.MICROCENTS_PER_CENT
+
+    def test_dated_snapshot_matches_the_longest_alias(self) -> None:
+        # "claude-sonnet-5-5-<date>" starts with "claude-sonnet-5" too — it must
+        # still get Sonnet 5.5's prices.
+        assert ai_client._pricing_for("claude-sonnet-5-5-20261101") == ai_client._pricing_for("claude-sonnet-5-5")
+        assert ai_client._pricing_for("claude-haiku-5-5-20261101")["input"] == 10
+
+    async def test_budget_blocks_once_fractional_spend_reaches_it(
+        self, db_session, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _configure(monkeypatch)
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        ai_settings = await ai_client.get_or_create_ai_settings(db_session, agency.id)
+        ai_settings.monthly_budget_cents = 1
+        await db_session.commit()
+        for _ in range(2):  # 2 x 0.5 cent: each rounds to 0 cents, together a full cent
+            db_session.add(
+                AiUsageEvent(
+                    agency_id=agency.id,
+                    user_id=owner.id,
+                    feature=FEATURE_ASSISTANT,
+                    model="claude-haiku-5-5",
+                    cost_cents=0,
+                    cost_microcents=500_000,
+                    status=STATUS_OK,
+                )
+            )
+        await db_session.commit()
+
+        with pytest.raises(ai_client.AiBudgetExceeded):
+            await ai_client.check_budget_and_rate(db_session, agency.id, None)
+
+
 class TestBuildKwargs:
+    def _kwargs(self, model: str, **overrides) -> dict:
+        params = {
+            "model": model,
+            "system": "s",
+            "messages": [],
+            "max_tokens": 400,
+            "effort": "low",
+            "tools": None,
+            "response_format": None,
+            "cache_system": False,
+        }
+        return ai_client._build_kwargs(**(params | overrides))
+
+    def test_adaptive_model_gets_effort_thinking_and_headroom(self) -> None:
+        kwargs = self._kwargs("claude-haiku-5-5")
+        assert kwargs["thinking"] == {"type": "adaptive"}
+        assert kwargs["output_config"] == {"effort": "low"}
+        assert kwargs["max_tokens"] == 400 + ai_client._THINKING_HEADROOM_TOKENS
+
+    def test_every_call_opts_into_server_side_refusal_fallback(self) -> None:
+        for model in ("claude-sonnet-5-5", "claude-haiku-4-5"):
+            kwargs = self._kwargs(model)
+            assert kwargs["betas"] == ["server-side-fallback-2026-07-01"]
+            assert kwargs["fallbacks"] == "default"
+
+    async def test_a_fallback_reply_is_logged_and_priced_as_the_model_that_served_it(
+        self, db_session, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _configure(monkeypatch)
+        monkeypatch.setattr(ai_client.settings, "ai_model", "claude-sonnet-5-5")
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        served = _fake_message(input_tokens=1000, output_tokens=200)
+        served.model = "claude-sonnet-5"
+        monkeypatch.setattr(ai_client, "_call_anthropic", lambda **kwargs: _async_return(served))
+
+        await ai_client.complete(
+            db_session,
+            agency.id,
+            owner.id,
+            feature=FEATURE_ASSISTANT,
+            system="s",
+            messages=[{"role": "user", "content": "hi"}],
+            max_tokens=100,
+        )
+        events = await _events(db_session, agency.id)
+        assert events[0].model == "claude-sonnet-5"
+
+    def test_haiku_4_5_snapshot_gets_neither_but_keeps_its_format(self) -> None:
+        kwargs = self._kwargs("claude-haiku-4-5-20251001", response_format={"type": "json_schema", "schema": {}})
+        assert "thinking" not in kwargs
+        assert kwargs["output_config"] == {"format": {"type": "json_schema", "schema": {}}}
+        assert kwargs["max_tokens"] == 400
+
     def test_cache_system_false_sends_plain_string_system(self) -> None:
         kwargs = ai_client._build_kwargs(
             model="claude-opus-5",
@@ -367,7 +479,6 @@ class TestBuildKwargs:
             effort="low",
             tools=None,
             response_format=None,
-            fast=False,
             cache_system=False,
         )
         assert kwargs["system"] == "hello"
@@ -382,7 +493,6 @@ class TestBuildKwargs:
             effort="low",
             tools=[{"name": "x"}],
             response_format=None,
-            fast=False,
             cache_system=True,
         )
         # A breakpoint on the last system block caches tools rendered before
@@ -653,3 +763,43 @@ class TestCompleteStream:
         events = await _events(db_session, agency.id)
         assert len(events) == 1
         assert events[0].status == STATUS_ERROR
+
+
+class TestStopReasons:
+    async def test_refusal_is_logged_then_raised(self, db_session, monkeypatch: pytest.MonkeyPatch) -> None:
+        _configure(monkeypatch)
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        monkeypatch.setattr(
+            ai_client, "_call_anthropic", lambda **kwargs: _async_return(_fake_message(text="", stop_reason="refusal"))
+        )
+
+        with pytest.raises(HTTPException) as exc_info:
+            await ai_client.complete(
+                db_session,
+                agency.id,
+                owner.id,
+                feature=FEATURE_ASSISTANT,
+                system="s",
+                messages=[{"role": "user", "content": "hi"}],
+                max_tokens=100,
+            )
+        assert exc_info.value.status_code == 422
+        events = await _events(db_session, agency.id)
+        assert [e.status for e in events] == [STATUS_OK]  # the tokens were still billed
+
+    def test_parse_json_rejects_a_cut_off_reply(self) -> None:
+        result = ai_client.CompletionResult(message=_fake_message(stop_reason="max_tokens"), text='{"score": 4')
+        with pytest.raises(HTTPException) as exc_info:
+            ai_client.parse_json(result)
+        assert exc_info.value.status_code == 502
+
+    def test_parse_json_rejects_invalid_json(self) -> None:
+        result = ai_client.CompletionResult(message=_fake_message(), text="not json")
+        with pytest.raises(HTTPException) as exc_info:
+            ai_client.parse_json(result)
+        assert exc_info.value.status_code == 502
+
+    def test_parse_json_returns_the_body(self) -> None:
+        result = ai_client.CompletionResult(message=_fake_message(), text='{"ok": true}')
+        assert ai_client.parse_json(result) == {"ok": True}

@@ -58,6 +58,12 @@ services:
       DATABASE_PASSWORD: ${DATABASE_PASSWORD:?set in .env.staging}
       REDIS_URL: redis://staging-redis:6379/0
       JWT_SECRET: ${JWT_SECRET:?set in .env.staging}
+      # Shared with the web service below: lets binx-web forward each
+      # visitor's IP so rate limits are per visitor, not one bucket for all
+      # (binx_api/core/rate_limit.py). Optional — unset keeps the old behavior.
+      PROXY_SHARED_SECRET: ${PROXY_SHARED_SECRET:-}
+      # Don't publish /docs, /redoc, /openapi.json on the public API host.
+      API_DOCS_ENABLED: "false"
       FRONTEND_URL: https://staging.binxportal.com
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       # Same optional integrations as production, read from the
@@ -116,6 +122,8 @@ services:
       # no way to answer the challenge, which surfaces as "Unable to sign in"
       # on every login/signup. Loopback inside the container skips Caddy.
       APP_ORIGIN: http://localhost:3000
+      # Must match the API's — see apps/binx-web/src/lib/client-ip.ts.
+      PROXY_SHARED_SECRET: ${PROXY_SHARED_SECRET:-}
       NODE_ENV: production
 
 networks:

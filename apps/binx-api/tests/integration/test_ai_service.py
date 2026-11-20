@@ -581,6 +581,78 @@ def _system_text(kwargs: dict) -> str:
     return system if isinstance(system, str) else "".join(block["text"] for block in system)
 
 
+class TestAssistantHistory:
+    async def test_only_recent_history_is_resent(self, db_session, monkeypatch: pytest.MonkeyPatch) -> None:
+        from datetime import UTC, datetime, timedelta
+
+        from binx_api.modules.ai.models import AiConversationMessage
+
+        _configure(monkeypatch)
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        conversation = await ai_service.create_conversation(db_session, agency.id, owner.id)
+        start = datetime.now(UTC) - timedelta(hours=1)
+        # 15 exchanges = 30 messages, one second apart.
+        for i in range(30):
+            db_session.add(
+                AiConversationMessage(
+                    conversation_id=conversation.id,
+                    role="user" if i % 2 == 0 else "assistant",
+                    content=f"message {i}",
+                    created_at=start + timedelta(seconds=i),
+                )
+            )
+        await db_session.commit()
+
+        call, calls = _capturing(_text_message("ok"))
+        monkeypatch.setattr(ai_client, "_call_anthropic", call)
+        await ai_service.assistant_reply(db_session, conversation, agency, actor=owner, user_message="latest")
+
+        sent = calls[0]["messages"]
+        assert len(sent) == ai_service.ASSISTANT_HISTORY_MESSAGES + 1
+        assert sent[0] == {"role": "user", "content": "message 10"}
+        assert sent[-1] == {"role": "user", "content": "latest"}
+
+    async def test_a_cut_landing_on_an_assistant_reply_starts_at_the_next_question(
+        self, db_session, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from datetime import UTC, datetime, timedelta
+
+        from binx_api.modules.ai.models import AiConversationMessage
+
+        monkeypatch.setattr(ai_service, "ASSISTANT_HISTORY_MESSAGES", 3)
+        _configure(monkeypatch)
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        conversation = await ai_service.create_conversation(db_session, agency.id, owner.id)
+        start = datetime.now(UTC) - timedelta(hours=1)
+        # Each exchange's two rows share a timestamp, as a real turn's do.
+        for i, (role, content) in enumerate(
+            [("user", "first"), ("assistant", "re: first"), ("user", "second"), ("assistant", "re: second")]
+        ):
+            db_session.add(
+                AiConversationMessage(
+                    conversation_id=conversation.id,
+                    role=role,
+                    content=content,
+                    created_at=start + timedelta(seconds=i // 2),
+                )
+            )
+        await db_session.commit()
+
+        call, calls = _capturing(_text_message("ok"))
+        monkeypatch.setattr(ai_client, "_call_anthropic", call)
+        await ai_service.assistant_reply(db_session, conversation, agency, actor=owner, user_message="third")
+
+        # The last 3 of [first, re: first, second, re: second] open on an
+        # assistant reply, which is dropped.
+        assert calls[0]["messages"] == [
+            {"role": "user", "content": "second"},
+            {"role": "assistant", "content": "re: second"},
+            {"role": "user", "content": "third"},
+        ]
+
+
 class TestAssistantActions:
     async def test_proposes_a_change_without_making_it_until_approved(
         self, db_session, monkeypatch: pytest.MonkeyPatch
@@ -695,7 +767,8 @@ class TestAssistantActions:
         assert "search_leads" in tool_names
         assert "read-only" in _system_text(calls[0])
         assert "Always answer in British English." in _system_text(calls[0])
-        assert calls[0]["max_tokens"] == 800
+        # 800 for a concise reply, plus thinking headroom on an adaptive model.
+        assert calls[0]["max_tokens"] == 800 + ai_client._THINKING_HEADROOM_TOKENS
 
     async def test_approving_a_stale_proposal_fails_onto_the_card(
         self, db_session, monkeypatch: pytest.MonkeyPatch

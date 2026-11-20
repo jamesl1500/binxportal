@@ -13,6 +13,7 @@ import axios from "axios";
 import { redirect } from "next/navigation";
 
 import { forwardSetCookies, getInternalBaseUrl } from "@/lib/auth";
+import { clientIpHeaders } from "@/lib/client-ip";
 
 /**
  * VerifyEmailActionResult
@@ -43,9 +44,13 @@ export async function verifyEmailAction(
   const baseUrl = await getInternalBaseUrl();
 
   try {
-    const response = await axios.post(`${baseUrl}/api/auth/verify-email`, {
-      token,
-    });
+    const response = await axios.post(
+      `${baseUrl}/api/auth/verify-email`,
+      {
+        token,
+      },
+      { headers: await clientIpHeaders() },
+    );
     await forwardSetCookies(response.headers["set-cookie"]);
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {

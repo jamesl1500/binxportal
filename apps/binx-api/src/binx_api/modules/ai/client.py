@@ -12,6 +12,7 @@ network call in the suite.
 
 from __future__ import annotations
 
+import json
 import uuid
 from asyncio import Lock
 from collections.abc import AsyncIterator
@@ -20,8 +21,9 @@ from datetime import UTC, datetime
 from typing import Any
 
 import anthropic
-from anthropic.lib.streaming import AsyncMessageStreamManager
-from anthropic.types import Message, Usage
+from anthropic.lib.streaming import BetaAsyncMessageStreamManager
+from anthropic.types import Usage
+from anthropic.types.beta import BetaMessage as Message
 from fastapi import HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
@@ -33,22 +35,60 @@ from binx_api.modules.ai.models import STATUS_BLOCKED, STATUS_ERROR, STATUS_OK, 
 settings = get_settings()
 
 # USD cents per 1,000,000 tokens. Kept in sync with the claude-api skill's
-# pricing table — see the AI settings memory for the full source table.
-# cache_creation reads at ~1.25x the input rate, cache_read at ~0.1x — only
-# nonzero when a call passes cache_system=True (see _build_kwargs); every
-# other call's cache_creation/cache_read tokens are always 0.
-_PRICING_CENTS_PER_MTOK: dict[str, dict[str, int]] = {
-    "claude-opus-5": {"input": 500, "output": 2500},
-    "claude-fable-5": {"input": 1000, "output": 5000},
-    "claude-mythos-5": {"input": 1000, "output": 5000},
-    "claude-opus-4-8": {"input": 500, "output": 2500},
-    "claude-opus-4-7": {"input": 500, "output": 2500},
-    "claude-opus-4-6": {"input": 500, "output": 2500},
-    "claude-sonnet-5": {"input": 200, "output": 1000},
-    "claude-sonnet-4-6": {"input": 300, "output": 1500},
-    "claude-haiku-4-5": {"input": 100, "output": 500},
+# pricing table. ``cache_read`` is listed per model because the 5.5
+# generation dropped it below the old flat 0.1x-of-input (Opus/Sonnet 5.5
+# read cache at 0.05x); cache writes (5-minute TTL) are 1.25x input on every
+# model. Cache tokens are only nonzero when a call passes cache_system=True
+# (see _build_kwargs).
+_PRICING_CENTS_PER_MTOK: dict[str, dict[str, float]] = {
+    "claude-fable-5-2": {"input": 800, "output": 4000, "cache_read": 20},
+    "claude-mythos-5-2": {"input": 800, "output": 4000, "cache_read": 20},
+    "claude-fable-5": {"input": 1000, "output": 5000, "cache_read": 100},
+    "claude-mythos-5": {"input": 1000, "output": 5000, "cache_read": 100},
+    "claude-opus-5-5": {"input": 400, "output": 2000, "cache_read": 20},
+    "claude-opus-5": {"input": 500, "output": 2500, "cache_read": 50},
+    "claude-opus-4-8": {"input": 500, "output": 2500, "cache_read": 50},
+    "claude-opus-4-7": {"input": 500, "output": 2500, "cache_read": 50},
+    "claude-opus-4-6": {"input": 500, "output": 2500, "cache_read": 50},
+    "claude-sonnet-5-5": {"input": 200, "output": 1000, "cache_read": 10},
+    "claude-sonnet-5": {"input": 200, "output": 1000, "cache_read": 20},
+    "claude-sonnet-4-6": {"input": 300, "output": 1500, "cache_read": 30},
+    "claude-haiku-5-5": {"input": 10, "output": 50, "cache_read": 1},
+    "claude-haiku-4-5": {"input": 100, "output": 500, "cache_read": 10},
 }
 _DEFAULT_PRICING = _PRICING_CENTS_PER_MTOK["claude-opus-5"]
+_CACHE_WRITE_MULTIPLIER = 1.25
+
+# Server-tool fees billed on top of tokens. Web search is $10 per 1,000
+# searches (1 cent each); web fetch has no per-use fee beyond the tokens the
+# fetched page adds.
+_WEB_SEARCH_CENTS_PER_REQUEST = 1
+
+# Cost is tracked in microcents (1 cent = 1,000,000) so a call that costs a
+# fraction of a cent — nearly every fast-tier call — still counts against the
+# agency's budget instead of rounding down to zero.
+MICROCENTS_PER_CENT = 1_000_000
+
+# Models that predate adaptive thinking and the effort control, and reject
+# both with a 400 ("not supported"). Matched by prefix, so dated snapshots
+# (e.g. "claude-haiku-4-5-20251001") are covered. Every newer model accepts
+# `thinking: adaptive` + `output_config.effort`, including Haiku 5.5.
+_NO_ADAPTIVE_THINKING_PREFIXES = ("claude-haiku-4-5", "claude-sonnet-4-5", "claude-opus-4-5", "claude-opus-4-1")
+
+# Extra output room given to a model that thinks: `max_tokens` covers
+# thinking plus the visible reply, and each feature's max_tokens was sized
+# for the reply alone. Without this a draft can be cut off mid-sentence (or a
+# structured response left unparseable) after the tokens were already paid
+# for. A ceiling, not a target: unused headroom costs nothing.
+_THINKING_HEADROOM_TOKENS = 1024
+
+# Server-side refusal fallback: when the requested model declines on policy
+# grounds, the API re-runs the request on a substitute model inside the same
+# call (for Sonnet 5.5, "cyber"/"frontier_llm" declines retry on Sonnet 5).
+# "default" lets the API pick the substitute, and on a model without
+# fallbacks the request simply runs alone — so it's safe on every tier.
+# Why every call goes through client.beta.messages.
+_FALLBACK_BETA = "server-side-fallback-2026-07-01"
 
 
 class AiNotConfigured(HTTPException):
@@ -103,40 +143,60 @@ async def _call_anthropic(**kwargs: Any) -> Message:
     """Thin, monkeypatchable wrapper around the one real non-streaming
     network call this module makes. Nothing else should import ``anthropic``
     directly."""
-    return await _get_client().messages.create(**kwargs)
+    return await _get_client().beta.messages.create(**kwargs)
 
 
-def _stream_anthropic(**kwargs: Any) -> AsyncMessageStreamManager:
+def _stream_anthropic(**kwargs: Any) -> BetaAsyncMessageStreamManager:
     """Thin, monkeypatchable wrapper around the one real streaming network
     call this module makes — mirrors ``_call_anthropic``. Returns the async
     context manager directly (``messages.stream(...)`` isn't itself
     awaitable); the caller does ``async with _stream_anthropic(**kwargs) as
     stream:``."""
-    return _get_client().messages.stream(**kwargs)
+    return _get_client().beta.messages.stream(**kwargs)
 
 
-def _pricing_for(model: str) -> dict[str, int]:
+def _pricing_for(model: str) -> dict[str, float]:
     if model in _PRICING_CENTS_PER_MTOK:
         return _PRICING_CENTS_PER_MTOK[model]
     # A dated snapshot id (e.g. "claude-haiku-4-5-20251001") prices the same
-    # as its alias — match by prefix rather than requiring an exact key.
-    for alias, pricing in _PRICING_CENTS_PER_MTOK.items():
-        if model.startswith(alias):
-            return pricing
+    # as its alias. Longest prefix wins, so "claude-sonnet-5-5-<date>" gets
+    # Sonnet 5.5's prices rather than matching the shorter "claude-sonnet-5".
+    matches = [alias for alias in _PRICING_CENTS_PER_MTOK if model.startswith(alias)]
+    if matches:
+        return _PRICING_CENTS_PER_MTOK[max(matches, key=len)]
     return _DEFAULT_PRICING
 
 
-def _cost_cents(model: str, usage: Usage) -> int:
+def supports_adaptive_thinking(model: str) -> bool:
+    return not model.startswith(_NO_ADAPTIVE_THINKING_PREFIXES)
+
+
+def _cost_microcents(model: str, usage: Usage) -> int:
     pricing = _pricing_for(model)
     cache_creation = getattr(usage, "cache_creation_input_tokens", None) or 0
     cache_read = getattr(usage, "cache_read_input_tokens", None) or 0
-    cents = (
+    # Per-MTok cents x tokens = microcents exactly (cents / 1e6 tokens).
+    token_cost = (
         usage.input_tokens * pricing["input"]
         + usage.output_tokens * pricing["output"]
-        + cache_creation * pricing["input"] * 1.25
-        + cache_read * pricing["input"] * 0.1
-    ) / 1_000_000
-    return round(cents)
+        + cache_creation * pricing["input"] * _CACHE_WRITE_MULTIPLIER
+        + cache_read * pricing["cache_read"]
+    )
+    server_tool_use = getattr(usage, "server_tool_use", None)
+    web_searches = (getattr(server_tool_use, "web_search_requests", None) or 0) if server_tool_use else 0
+    return round(token_cost) + web_searches * _WEB_SEARCH_CENTS_PER_REQUEST * MICROCENTS_PER_CENT
+
+
+def _cost_cents(model: str, usage: Usage) -> int:
+    """Whole-cent cost for display. Budget enforcement uses the exact
+    :func:`_cost_microcents` instead."""
+    return round(_cost_microcents(model, usage) / MICROCENTS_PER_CENT)
+
+
+def _served_model(message: Message, requested: str) -> str:
+    """The model that produced the reply — the fallback model when a
+    refusal fallback ran, which is what the call is billed at."""
+    return getattr(message, "model", None) or requested
 
 
 def _extract_text(message: Message) -> str:
@@ -224,13 +284,13 @@ async def check_budget_and_rate(db: AsyncSession, agency_id: uuid.UUID, user_id:
 
     now = datetime.now(UTC)
     spent = await db.execute(
-        select(func.coalesce(func.sum(AiUsageEvent.cost_cents), 0)).where(
+        select(func.coalesce(func.sum(AiUsageEvent.cost_microcents), 0)).where(
             AiUsageEvent.agency_id == agency_id,
             AiUsageEvent.status == STATUS_OK,
             AiUsageEvent.created_at >= _month_start(now),
         )
     )
-    if spent.scalar_one() >= effective_budget:
+    if spent.scalar_one() >= effective_budget * MICROCENTS_PER_CENT:
         capped_by_plan = effective_budget == plan_budget and plan_budget < ai_settings.monthly_budget_cents
         where = (
             "Upgrade in Settings → Plan for a bigger budget."
@@ -265,7 +325,7 @@ async def _log_event(
     feature: str,
     model: str,
     status_: str,
-    cost_cents: int = 0,
+    cost_microcents: int = 0,
     input_tokens: int = 0,
     output_tokens: int = 0,
     error_message: str | None = None,
@@ -278,7 +338,8 @@ async def _log_event(
             model=model,
             input_tokens=input_tokens,
             output_tokens=output_tokens,
-            cost_cents=cost_cents,
+            cost_cents=round(cost_microcents / MICROCENTS_PER_CENT),
+            cost_microcents=cost_microcents,
             status=status_,
             error_message=error_message,
         )
@@ -318,15 +379,24 @@ def _build_kwargs(
     effort: str,
     tools: list[dict[str, Any]] | None,
     response_format: dict[str, Any] | None,
-    fast: bool,
     cache_system: bool,
 ) -> dict[str, Any]:
-    output_config: dict[str, Any] = {} if fast else {"effort": effort}
+    # Thinking + effort are decided by what the model supports, not by which
+    # tier it was picked for: Haiku 4.5 rejects both (400), while Haiku 5.5 —
+    # like the Opus/Sonnet/Fable 5 family — thinks adaptively by default, so
+    # leaving effort unset there would run every fast-tier draft at the
+    # model's default effort instead of the feature's chosen one.
+    thinks = supports_adaptive_thinking(model)
+    output_config: dict[str, Any] = {"effort": effort} if thinks else {}
     if response_format is not None:
         output_config["format"] = response_format
 
     system_param: str | list[dict[str, Any]] = system
-    kwargs: dict[str, Any] = {"model": model, "max_tokens": max_tokens, "messages": messages}
+    kwargs: dict[str, Any] = {
+        "model": model,
+        "max_tokens": max_tokens + (_THINKING_HEADROOM_TOKENS if thinks else 0),
+        "messages": messages,
+    }
     if cache_system:
         # An explicit breakpoint on the system block — per Anthropic's
         # documented render order (tools -> system -> messages), this caches
@@ -338,13 +408,28 @@ def _build_kwargs(
         system_param = [{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}]
         kwargs["cache_control"] = {"type": "ephemeral"}
     kwargs["system"] = system_param
-    if not fast:
+    kwargs["betas"] = [_FALLBACK_BETA]
+    kwargs["fallbacks"] = "default"
+    if thinks:
         kwargs["thinking"] = {"type": "adaptive"}
     if output_config:
         kwargs["output_config"] = output_config
     if tools:
         kwargs["tools"] = tools
     return kwargs
+
+
+def parse_json(result: CompletionResult) -> Any:
+    """The parsed body of a structured-output (``response_format``) call.
+    Raises a clean 502 instead of a bare JSONDecodeError/500 when the reply
+    was cut off at ``max_tokens`` or isn't valid JSON for any other reason —
+    the call's cost is already logged by then."""
+    if result.message.stop_reason == "max_tokens":
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, "The AI response was cut off — try again.")
+    try:
+        return json.loads(result.text)
+    except ValueError as exc:
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, "The AI returned an unreadable response.") from exc
 
 
 async def complete(
@@ -368,11 +453,11 @@ async def complete(
     for templated drafts that don't need the stronger model's reasoning.
     See modules/ai/service.py for which features pass which.
 
-    Haiku-class models (the fast tier today) reject both extended thinking
-    and ``output_config.effort`` outright (400 "not supported")  — unlike
-    Opus/Sonnet/Fable 5, they were never adaptive-thinking models. So a fast
-    call omits ``thinking`` and ``effort`` entirely; ``response_format`` (not
-    used by any fast-tier feature today, but kept general) still applies.
+    Whether ``thinking``/``effort`` are sent depends on the model, not the
+    tier — see ``_build_kwargs`` and ``supports_adaptive_thinking``.
+
+    A ``refusal`` stop reason is logged (the tokens were billed) and then
+    raised as a 422, so no feature mistakes an empty reply for a real one.
 
     ``cache_system=True`` caches the system+tools prefix (see
     ``_build_kwargs``) — only worth it for a prefix resent many times, which
@@ -416,7 +501,6 @@ async def complete(
         effort=effort,
         tools=tools,
         response_format=response_format,
-        fast=fast,
         cache_system=cache_system,
     )
 
@@ -447,19 +531,21 @@ async def complete(
         await _log_error(exc)
         raise HTTPException(status.HTTP_502_BAD_GATEWAY, "AI is temporarily unavailable — try again shortly.") from exc
 
-    cost = _cost_cents(model, message.usage)
     await _log_locked(
         lock,
         db,
         agency_id,
         user_id,
         feature=feature,
-        model=model,
+        model=_served_model(message, model),
         status_=STATUS_OK,
-        cost_cents=cost,
+        cost_microcents=_cost_microcents(_served_model(message, model), message.usage),
         input_tokens=message.usage.input_tokens,
         output_tokens=message.usage.output_tokens,
     )
+    if message.stop_reason == "refusal":
+        # Logged as ok above — the tokens were billed either way.
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "The AI declined to help with this request.")
     return CompletionResult(message=message, text=_extract_text(message))
 
 
@@ -522,7 +608,6 @@ async def complete_stream(
         effort=effort,
         tools=tools,
         response_format=response_format,
-        fast=fast,
         cache_system=cache_system,
     )
 
@@ -556,16 +641,15 @@ async def complete_stream(
         await _log_error(exc)
         raise HTTPException(status.HTTP_502_BAD_GATEWAY, "AI is temporarily unavailable — try again shortly.") from exc
 
-    cost = _cost_cents(model, message.usage)
     await _log_locked(
         lock,
         db,
         agency_id,
         user_id,
         feature=feature,
-        model=model,
+        model=_served_model(message, model),
         status_=STATUS_OK,
-        cost_cents=cost,
+        cost_microcents=_cost_microcents(_served_model(message, model), message.usage),
         input_tokens=message.usage.input_tokens,
         output_tokens=message.usage.output_tokens,
     )

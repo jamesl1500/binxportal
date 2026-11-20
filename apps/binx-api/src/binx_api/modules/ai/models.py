@@ -1,7 +1,7 @@
 import uuid
 from datetime import date
 
-from sqlalchemy import Date, ForeignKey, Integer, String, Text, UniqueConstraint, Uuid
+from sqlalchemy import BigInteger, Date, ForeignKey, Index, Integer, String, Text, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column
 
 from binx_api.core.database import Base
@@ -87,6 +87,9 @@ class AgencyAiSettings(Base):
 # nothing about spend is tracked anywhere else.
 class AiUsageEvent(Base):
     __tablename__ = "ai_usage_events"
+    # Every AI call pre-flights a month-to-date spend sum and a per-member
+    # day count over this table (ai/client.py::check_budget_and_rate).
+    __table_args__ = (Index("ix_ai_usage_events_agency_created", "agency_id", "created_at"),)
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     agency_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("agencies.id", ondelete="CASCADE"), index=True)
@@ -98,7 +101,11 @@ class AiUsageEvent(Base):
     model: Mapped[str] = mapped_column(String(50))
     input_tokens: Mapped[int] = mapped_column(Integer, default=0)
     output_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    # Whole cents, for display only. Budget enforcement sums cost_microcents
+    # (1 cent = 1,000,000) — a typical fast-tier call costs a fraction of a
+    # cent and would otherwise round to 0 and never count against the budget.
     cost_cents: Mapped[int] = mapped_column(Integer, default=0)
+    cost_microcents: Mapped[int] = mapped_column(BigInteger, default=0, server_default="0")
     status: Mapped[str] = mapped_column(String(10))
     error_message: Mapped[str | None] = mapped_column(String(1024), default=None)
 
