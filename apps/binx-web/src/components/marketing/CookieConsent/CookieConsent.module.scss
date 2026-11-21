@@ -1,0 +1,87 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.banner {
+  position: fixed;
+  right: t.$space-4;
+  bottom: t.$space-4;
+  left: t.$space-4;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+  max-width: 24rem;
+  padding: t.$space-4 t.$space-5;
+  color: t.$color-ink;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border-strong;
+  border-radius: t.$radius-lg;
+  box-shadow: 0 16px 40px rgba(10, 10, 11, 0.16);
+
+  @media (min-width: 640px) {
+    right: auto;
+    left: t.$space-6;
+    bottom: t.$space-6;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: rise t.$duration-base t.$ease-standard;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-base;
+  font-weight: 600;
+}
+
+.text,
+.current {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  line-height: 1.5;
+  color: t.$color-ink-soft;
+
+  a {
+    color: t.$color-ink;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+}
+
+.current {
+  font-size: t.$font-size-xs;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: t.$space-2;
+  margin-top: t.$space-2;
+}
+
+// Both choices look the same on purpose: declining is as easy as accepting.
+.button {
+  @include m.button-base;
+  @include m.touch-target;
+  padding: t.$space-2 t.$space-4;
+  color: t.$color-ink;
+  background: t.$color-surface;
+  border-color: t.$color-border-strong;
+
+  &:hover {
+    background: t.$color-paper;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}

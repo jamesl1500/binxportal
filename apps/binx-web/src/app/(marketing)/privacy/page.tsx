@@ -113,8 +113,16 @@ const PrivacyPage = () => {
               sets first-party analytics cookies and sends Google details like
               the pages viewed, the referring site, and approximate location
               and device type. Advertising storage and ad personalization are
-              turned off. You can block these cookies in your browser, or opt
-              out with Google&apos;s{" "}
+              turned off.
+            </p>
+            <p>
+              A cookie banner asks for your choice on your first visit. In the
+              EEA, the UK and Switzerland, analytics stays off unless you
+              accept; elsewhere it&apos;s on unless you decline. Your choice is
+              saved in a small first-party cookie for about six months, and you
+              can change it any time with &quot;Cookie settings&quot; in the
+              footer. You can also block these cookies in your browser or use
+              Google&apos;s{" "}
               <a href="https://tools.google.com/dlpage/gaoptout" rel="noopener noreferrer" target="_blank">
                 Analytics opt-out add-on
               </a>

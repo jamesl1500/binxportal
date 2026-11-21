@@ -18,6 +18,8 @@ import {
   USE_CASE_PAGES,
 } from "@/lib/site";
 import BinxMark from "@/components/BinxMark/BinxMark";
+import { CookieSettingsButton } from "@/components/marketing/CookieConsent/CookieConsent";
+import { gtmContainerId } from "@/components/marketing/GoogleTagManager/GoogleTagManager";
 
 import styles from "./MarketingFooter.module.scss";
 
@@ -101,6 +103,7 @@ const MarketingFooter = () => {
         <span>
           &copy; {new Date().getFullYear()} {SITE.legalName}
         </span>
+        {gtmContainerId() && <CookieSettingsButton className={styles.legalButton} />}
         {/* Opens the studio's site in a new tab. `noopener` keeps it from
             reaching back into this page; no `noreferrer`, so Foundry Frame's
             analytics can see the visit came from Binx. */}

@@ -12,7 +12,8 @@
 import { SITE, SITE_URL } from "@/lib/site";
 import MarketingHeader from "@/components/marketing/MarketingHeader/MarketingHeader";
 import MarketingFooter from "@/components/marketing/MarketingFooter/MarketingFooter";
-import GoogleTagManager from "@/components/marketing/GoogleTagManager/GoogleTagManager";
+import GoogleTagManager, { gtmContainerId } from "@/components/marketing/GoogleTagManager/GoogleTagManager";
+import CookieConsent from "@/components/marketing/CookieConsent/CookieConsent";
 
 import styles from "./marketing.module.scss";
 
@@ -52,6 +53,8 @@ const MarketingLayout = ({ children }: { children: React.ReactNode }) => {
       <main className={styles.main}>{children}</main>
       <MarketingFooter />
       <GoogleTagManager />
+      {/* Only where there's analytics to consent to (production). */}
+      {gtmContainerId() && <CookieConsent />}
     </div>
   );
 };
