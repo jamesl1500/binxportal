@@ -72,7 +72,7 @@ export const SITE = {
  * `lastModified`. A per-request `new Date()` tells crawlers every page
  * changes on every fetch, which teaches them to ignore lastmod entirely.
  */
-export const MARKETING_LAST_UPDATED = new Date("2026-11-17");
+export const MARKETING_LAST_UPDATED = new Date("2026-11-20");
 
 /** Shared pricing tiers — rendered on /pricing and summarised in JSON-LD offers. */
 export const PLANS = [
