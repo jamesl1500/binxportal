@@ -17,6 +17,7 @@ import {
   deleteTimelinePost,
   getTimelineComments,
   getTimelineFeed,
+  getTimelineHighlights,
   getTimelinePost,
   setTimelinePostPinned,
   setTimelineReaction,
@@ -50,6 +51,11 @@ describe("timeline API wrappers", () => {
 
     await getTimelineFeed("a1", "c-xyz");
     expect(mockedApi.get).toHaveBeenLastCalledWith("/agencies/a1/timeline", { ...AUTH, params: { cursor: "c-xyz" } });
+  });
+
+  it("reads the side rail's highlights", async () => {
+    await expect(getTimelineHighlights("a1")).resolves.toEqual({ ok: "get" });
+    expect(mockedApi.get).toHaveBeenLastCalledWith("/agencies/a1/timeline/highlights", AUTH);
   });
 
   it("creates, edits, pins and deletes posts", async () => {
