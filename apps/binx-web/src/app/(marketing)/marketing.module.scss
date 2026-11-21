@@ -291,6 +291,13 @@ $header-height: 4.5rem;
       @include mo.enter($i - 1, $step: 90ms);
     }
   }
+
+  // The headline and lead are the page's largest paint: they rise without
+  // fading or waiting (see mo.enter-visible). Same specificity as the
+  // :nth-child rules above, and later, so this wins.
+  > :is(h1, .lead) {
+    @include mo.enter-visible;
+  }
 }
 
 .heroActions {
@@ -319,14 +326,14 @@ $header-height: 4.5rem;
     text-align: center;
 
     // The headline animates word by word instead. The lead is usually the
-    // page's largest paint (LCP), so it must not wait for the headline to
-    // finish: it starts almost immediately, and the rest follows shortly.
+    // page's largest paint (LCP), so it's visible from the first frame and
+    // only rises (mo.enter-visible); the rest follows shortly.
     > .heroTitle {
       animation: none;
     }
 
     > .heroLead {
-      @include mo.enter(0, $base: 140ms);
+      @include mo.enter-visible;
     }
 
     > .heroActions {

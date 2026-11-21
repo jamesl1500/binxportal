@@ -140,7 +140,8 @@ $flow-cycle: 12s;
   font-size: clamp(2rem, 2.6vw, 2.5rem);
   line-height: 1.08;
   letter-spacing: -0.015em;
-  @include mo.enter(1, $distance: 1.25rem);
+  // The largest paint on a desktop screen, so no fade (mo.enter-visible).
+  @include mo.enter-visible(1.25rem);
 
   em {
     // Italic glyphs lean past their box and background-clip: text clips to
@@ -408,5 +409,11 @@ $flow-cycle: 12s;
     > * > :nth-child(#{$n}) {
       @include mo.enter($n - 1, $base: 120ms, $step: 90ms, $distance: 0.75rem, $duration: 750ms);
     }
+  }
+
+  // The heading block is the largest paint on a phone: visible from the
+  // first frame, rising only (see mo.enter-visible).
+  > * > :nth-child(1) {
+    @include mo.enter-visible;
   }
 }

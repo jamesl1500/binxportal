@@ -12,6 +12,7 @@
  */
 import { redirect } from "next/navigation";
 
+import { getAiBriefingAction } from "@/app/(app)/dashboard/actions";
 import { getCurrentAgencyContext } from "@/lib/agencies";
 import { getDashboard } from "@/lib/dashboard";
 import { getMeetings } from "@/lib/meetings";
@@ -31,6 +32,11 @@ const DashboardOverviewPage = async () => {
     redirect("/onboarding/two");
   }
   const agencyId = currentAgency.id;
+
+  // Started now and not awaited: the briefing card streams in under Suspense
+  // when it resolves (instantly once it's cached for the day), without
+  // holding up the rest of the page. The action never rejects.
+  const briefing = getAiBriefingAction(agencyId);
 
   const [overview, upcomingMeetings, layout] = await Promise.all([
     getDashboard(agencyId),
@@ -91,7 +97,7 @@ const DashboardOverviewPage = async () => {
     <PageEnter>
       <div>
         <div style={{ marginBottom: "25px" }}>
-          <AiBriefingCard agencyId={agencyId} />
+          <AiBriefingCard agencyId={agencyId} initial={briefing} />
         </div>
 
         <ClientStatGrid stats={stats} />
