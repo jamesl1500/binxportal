@@ -9,6 +9,7 @@
  */
 import type { MetadataRoute } from "next";
 
+import { INVESTORS_PATH } from "@/lib/investors";
 import {
   FEATURE_PAGES,
   MARKETING_LAST_UPDATED,
@@ -46,6 +47,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly" as const,
       priority: 0.6,
     })),
+    {
+      url: `${SITE_URL}${INVESTORS_PATH}`,
+      lastModified,
+      changeFrequency: "monthly" as const,
+      priority: 0.5,
+    },
     ...["/privacy", "/terms"].map((path) => ({
       url: `${SITE_URL}${path}`,
       lastModified,

@@ -16,14 +16,45 @@ import teamCelebrate from "@/assets/marketing/photos/team-celebrate.webp";
 
 import styles from "./MarketingCta.module.scss";
 
+interface CtaAction {
+  href: string;
+  label: string;
+}
+
 interface MarketingCtaProps {
   heading?: string;
   sub?: string;
+  /** Defaults to "Get started free" → signup. */
+  primary?: CtaAction;
+  /** Defaults to "Talk to us" → /contact. */
+  secondary?: CtaAction;
 }
+
+/** A plain anchor for mailto:/external hrefs, next/link for app routes. */
+const CtaLink = ({
+  action,
+  className,
+  children,
+}: {
+  action: CtaAction;
+  className: string;
+  children: React.ReactNode;
+}) =>
+  action.href.startsWith("/") ? (
+    <Link href={action.href} className={className}>
+      {children}
+    </Link>
+  ) : (
+    <a href={action.href} className={className}>
+      {children}
+    </a>
+  );
 
 const MarketingCta = ({
   heading = "Give your agency one place to run from.",
   sub = "Set up your workspace in a few minutes. No card required.",
+  primary = { href: "/auth/signup", label: "Get started free" },
+  secondary = { href: "/contact", label: "Talk to us" },
 }: MarketingCtaProps) => {
   return (
     <section className={styles.band}>
@@ -40,12 +71,12 @@ const MarketingCta = ({
         <h2 className={styles.heading}>{heading}</h2>
         <p className={styles.sub}>{sub}</p>
         <div className={styles.actions}>
-          <Link href="/auth/signup" className={styles.primary}>
-            Get started free <ArrowRight aria-hidden="true" />
-          </Link>
-          <Link href="/contact" className={styles.secondary}>
-            Talk to us
-          </Link>
+          <CtaLink action={primary} className={styles.primary}>
+            {primary.label} <ArrowRight aria-hidden="true" />
+          </CtaLink>
+          <CtaLink action={secondary} className={styles.secondary}>
+            {secondary.label}
+          </CtaLink>
         </div>
       </div>
     </section>
