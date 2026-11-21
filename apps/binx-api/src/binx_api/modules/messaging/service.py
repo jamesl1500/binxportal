@@ -17,6 +17,7 @@ from datetime import UTC, datetime
 
 from fastapi import HTTPException, status
 from sqlalchemy import and_, func, or_, select
+from sqlalchemy.dialects.postgresql import distinct_on
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
@@ -390,6 +391,71 @@ async def _unread_count(db: AsyncSession, conversation_id: uuid.UUID, participan
     return result.scalar_one()
 
 
+def _unread_conditions(user_id: uuid.UUID) -> list:
+    """What counts as unread for a participant row joined to Message: someone
+    else's live user message, newer than the participant's last read."""
+    return [
+        Message.message_type == MESSAGE_USER,
+        Message.deleted_at.is_(None),
+        or_(Message.sender_id != user_id, Message.sender_id.is_(None)),
+        or_(ConversationParticipant.last_read_at.is_(None), Message.created_at > ConversationParticipant.last_read_at),
+    ]
+
+
+# ---- Batched reads for the inbox list ---------------------------------------
+# The list used to make three queries per conversation (participants, last
+# message, unread count). These fetch each of those for every conversation at
+# once, so the inbox (and the unread badge on every page) is a fixed handful
+# of queries however many conversations someone is in.
+
+
+async def _participants_for(
+    db: AsyncSession, conversation_ids: list[uuid.UUID]
+) -> dict[uuid.UUID, list[tuple[ConversationParticipant, User]]]:
+    if not conversation_ids:
+        return {}
+    result = await db.execute(
+        select(ConversationParticipant, User)
+        .join(User, User.id == ConversationParticipant.user_id)
+        .where(ConversationParticipant.conversation_id.in_(conversation_ids), ConversationParticipant.left_at.is_(None))
+        .order_by(ConversationParticipant.created_at)
+    )
+    grouped: dict[uuid.UUID, list[tuple[ConversationParticipant, User]]] = defaultdict(list)
+    for participant, user in result.all():
+        grouped[participant.conversation_id].append((participant, user))
+    return grouped
+
+
+async def _last_messages_for(db: AsyncSession, conversation_ids: list[uuid.UUID]) -> dict[uuid.UUID, Message]:
+    if not conversation_ids:
+        return {}
+    result = await db.execute(
+        select(Message)
+        .where(Message.conversation_id.in_(conversation_ids))
+        .order_by(Message.conversation_id, Message.created_at.desc())
+        .ext(distinct_on(Message.conversation_id))
+    )
+    return {message.conversation_id: message for message in result.scalars().all()}
+
+
+async def _unread_counts_for(db: AsyncSession, user: User, conversation_ids: list[uuid.UUID]) -> dict[uuid.UUID, int]:
+    if not conversation_ids:
+        return {}
+    result = await db.execute(
+        select(Message.conversation_id, func.count())
+        .join(
+            ConversationParticipant,
+            and_(
+                ConversationParticipant.conversation_id == Message.conversation_id,
+                ConversationParticipant.user_id == user.id,
+            ),
+        )
+        .where(Message.conversation_id.in_(conversation_ids), *_unread_conditions(user.id))
+        .group_by(Message.conversation_id)
+    )
+    return dict(result.all())
+
+
 async def _last_message(db: AsyncSession, conversation_id: uuid.UUID) -> Message | None:
     result = await db.execute(
         select(Message).where(Message.conversation_id == conversation_id).order_by(Message.created_at.desc()).limit(1)
@@ -429,15 +495,21 @@ async def _conversation_summary(
     *,
     participants: list[tuple[ConversationParticipant, User]] | None = None,
     context: tuple[str | None, str | None] | None = None,
+    prefetched: tuple[Message | None, int] | None = None,
 ) -> dict:
     """The inbox-row shape (ConversationRead) for one conversation, as seen by
-    ``user``. ``participants`` / ``context`` can be passed in when the caller
-    already has them (list view) to avoid re-querying."""
+    ``user``. ``participants`` / ``context`` / ``prefetched`` (the last
+    message and unread count) can be passed in when the caller already has
+    them (the list view batches them) to avoid re-querying."""
     if participants is None:
         participants = await _participants_with_users(db, conversation.id, include_left=False)
     client_name, project_name = context if context is not None else await _context_names(db, conversation)
 
-    last = await _last_message(db, conversation.id)
+    if prefetched is not None:
+        last, unread = prefetched
+    else:
+        last = await _last_message(db, conversation.id)
+        unread = await _unread_count(db, conversation.id, my_participant)
     return {
         "id": conversation.id,
         "agency_id": conversation.agency_id,
@@ -450,7 +522,7 @@ async def _conversation_summary(
         "participant_names": [u.full_name for _p, u in participants if u.id != user.id],
         "participant_count": len(participants),
         "is_muted": my_participant.is_muted,
-        "unread_count": await _unread_count(db, conversation.id, my_participant),
+        "unread_count": unread,
         "last_message_preview": _preview(last),
         "last_message_at": conversation.last_message_at,
         "created_at": conversation.created_at,
@@ -491,9 +563,14 @@ async def list_conversations(
     if project_id is not None:
         rows = [r for r in rows if r[0].project_id == project_id]
 
+    ids = [row[0].id for row in rows]
+    participants_by_id = await _participants_for(db, ids)
+    last_by_id = await _last_messages_for(db, ids)
+    unread_by_id = await _unread_counts_for(db, user, ids)
+
     conversations: list[dict] = []
     for conversation, my_participant, client_name, project_name in rows:
-        participants = await _participants_with_users(db, conversation.id, include_left=False)
+        participants = participants_by_id.get(conversation.id, [])
         summary = await _conversation_summary(
             db,
             conversation,
@@ -501,6 +578,7 @@ async def list_conversations(
             my_participant,
             participants=participants,
             context=(client_name, project_name),
+            prefetched=(last_by_id.get(conversation.id), unread_by_id.get(conversation.id, 0)),
         )
 
         if query_text:
@@ -589,8 +667,24 @@ async def get_participant_avatar_or_404(
 
 
 async def unread_total(db: AsyncSession, agency: Agency, user: User) -> int:
-    rows = await list_conversations(db, agency, user)
-    return sum(c["unread_count"] for c in rows)
+    """Unread messages across every conversation the user is active in — the
+    nav badge on every staff page, so it's one aggregate query rather than
+    building the whole inbox. Same rules as each row's ``unread_count``."""
+    result = await db.execute(
+        select(func.count())
+        .select_from(Message)
+        .join(
+            ConversationParticipant,
+            and_(
+                ConversationParticipant.conversation_id == Message.conversation_id,
+                ConversationParticipant.user_id == user.id,
+                ConversationParticipant.left_at.is_(None),
+            ),
+        )
+        .join(Conversation, Conversation.id == Message.conversation_id)
+        .where(Conversation.agency_id == agency.id, *_unread_conditions(user.id))
+    )
+    return result.scalar_one()
 
 
 # ---- Context / title edits ------------------------------------------------
