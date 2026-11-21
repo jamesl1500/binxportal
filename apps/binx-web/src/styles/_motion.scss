@@ -44,6 +44,19 @@ $ease-in-out-sine: cubic-bezier(0.37, 0, 0.63, 1);
   }
 }
 
+// The entrance for a page's largest paint (the hero headline or lead): the
+// same rise, but no fade and no delay. Chrome only counts an element for
+// Largest Contentful Paint once it's visibly painted, so fading the LCP
+// element in from opacity 0 pushed LCP back by the delay plus the fade
+// (~300ms on a throttled phone). It's fully visible from the first frame.
+@mixin enter-visible($distance: 0.6rem, $duration: 700ms) {
+  @include motion-ok {
+    animation: mo-enter-visible $duration $ease-out-expo both;
+    animation-delay: 0ms;
+    --mo-enter-y: #{$distance};
+  }
+}
+
 // Emitted once per module that uses the mixins above (CSS-module scoping
 // renames keyframes per file, so each file needs its own copy).
 @mixin keyframes {
@@ -75,6 +88,14 @@ $ease-in-out-sine: cubic-bezier(0.37, 0, 0.63, 1);
     }
   }
 
+  @keyframes mo-enter-visible {
+    from {
+      translate: 0 var(--mo-enter-y, 0.6rem);
+    }
+    to {
+      translate: 0 0;
+    }
+  }
   @keyframes mo-float {
     0%,
     100% {

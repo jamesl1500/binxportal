@@ -7,9 +7,17 @@
  * @module apps/binx-web/src/app/not-found.tsx
  * @author Binx Portal
  */
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import styles from "./not-found.module.scss";
+
+// Without this the root layout's `robots: index, follow` is emitted next to
+// the `noindex` Next adds for a 404: two contradicting robots tags.
+export const metadata: Metadata = {
+  title: "Page not found",
+  robots: { index: false, follow: true },
+};
 
 const NotFound = () => {
   return (

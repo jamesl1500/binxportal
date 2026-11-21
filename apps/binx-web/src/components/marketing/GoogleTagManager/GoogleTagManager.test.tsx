@@ -26,16 +26,30 @@ describe("gtmContainerId", () => {
 });
 
 describe("gtmBootstrap", () => {
-  it("sets Consent Mode defaults before loading the container", () => {
+  it("sets Consent Mode defaults and the saved choice before loading the container", () => {
     const script = gtmBootstrap("GTM-MKJJJHG5");
-    const consent = script.indexOf("gtag('consent','default'");
+    const optInDefault = script.indexOf("gtag('consent','default',{analytics_storage:'denied'");
+    const globalDefault = script.indexOf("gtag('consent','default',{analytics_storage:'granted'");
+    const savedChoice = script.indexOf("gtag('consent','update'");
     const loader = script.indexOf("googletagmanager.com/gtm.js");
-    expect(consent).toBeGreaterThan(-1);
-    expect(loader).toBeGreaterThan(consent);
-    expect(script).toContain("analytics_storage:'granted'");
-    expect(script).toContain("ad_storage:'denied'");
-    expect(script).toContain("ad_personalization:'denied'");
+    expect(optInDefault).toBeGreaterThan(-1);
+    expect(globalDefault).toBeGreaterThan(optInDefault);
+    expect(savedChoice).toBeGreaterThan(globalDefault);
+    expect(loader).toBeGreaterThan(savedChoice);
+    expect(script).toContain('region:["AT",');
+    expect(script).toContain('"GB","CH"]');
+    expect(script).not.toContain("ad_storage:'granted'");
     expect(script).toContain('"GTM-MKJJJHG5"');
+  });
+
+  it("reads the saved choice with a regex that runs", () => {
+    const script = gtmBootstrap("GTM-MKJJJHG5");
+    const source = /document\.cookie\.match\((\/.*\/)\);/.exec(script)?.[1];
+    expect(source).toBeDefined();
+    // Evaluate the bootstrap's own regex literal, exactly as the browser will.
+    const pattern = new Function(`return ${source}`)() as RegExp;
+    expect(pattern.exec("a=1; binx_consent=denied; b=2")?.[1]).toBe("denied");
+    expect(pattern.exec("other_binx_consent=granted")).toBeNull();
   });
 });
 
