@@ -15,5 +15,6 @@ describe("sitemap", () => {
     expect(new Set(urls).size).toBe(urls.length);
     expect(urls).toContain(`${SITE_URL}/features`);
     expect(urls).toContain(`${SITE_URL}/privacy`);
+    expect(urls).toContain(`${SITE_URL}/investors`);
   });
 });

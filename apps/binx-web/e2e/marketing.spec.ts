@@ -24,6 +24,7 @@ test.describe("marketing site", () => {
     { path: "/pricing", heading: "Plans that grow with the agency" },
     { path: "/about", heading: "Built for the agencies" },
     { path: "/contact", heading: "Talk to a human" },
+    { path: "/investors", heading: "one place to run from" },
     // SEO landing pages (alternatives / comparison / use-case / free-portal) —
     // not in the primary nav, but still real pages that need to load.
     { path: "/alternatives/dubsado", heading: "Dubsado alternative" },

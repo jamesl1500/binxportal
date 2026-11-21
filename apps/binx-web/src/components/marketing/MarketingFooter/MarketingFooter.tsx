@@ -17,6 +17,7 @@ import {
   STATUS_URL,
   USE_CASE_PAGES,
 } from "@/lib/site";
+import { INVESTORS_PATH } from "@/lib/investors";
 import BinxMark from "@/components/BinxMark/BinxMark";
 import { CookieSettingsButton } from "@/components/marketing/CookieConsent/CookieConsent";
 import { gtmContainerId } from "@/components/marketing/GoogleTagManager/GoogleTagManager";
@@ -53,6 +54,7 @@ const COLUMNS: { heading: string; links: { href: string; label: string }[] }[] =
       links: [
         { href: "/about", label: "About" },
         { href: "/contact", label: "Contact" },
+        { href: INVESTORS_PATH, label: "Investors" },
         { href: STATUS_URL, label: "Status" },
       ],
     },
