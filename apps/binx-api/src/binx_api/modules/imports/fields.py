@@ -81,7 +81,103 @@ TEAM_FIELDS: tuple[ImportField, ...] = (
     ImportField("role", "Role", False, ("role", "accessrole", "access", "permission", "permissions", "agencyrole")),
 )
 
-FIELDS_BY_KIND: dict[str, tuple[ImportField, ...]] = {"clients": CLIENT_FIELDS, "team": TEAM_FIELDS}
+_NOTES_ALIASES = ("notes", "note", "comments", "comment", "details")
+
+LEAD_FIELDS: tuple[ImportField, ...] = (
+    ImportField(
+        "name",
+        "Lead name",
+        True,
+        (
+            "name",
+            "lead",
+            "leadname",
+            "company",
+            "companyname",
+            "business",
+            "businessname",
+            "organization",
+            "organisation",
+            "account",
+            "accountname",
+            "prospect",
+            "prospectname",
+        ),
+    ),
+    ImportField(
+        "contact_name",
+        "Contact name",
+        False,
+        ("contact", "contactname", "primarycontact", "contactperson", "fullname", "person"),
+    ),
+    ImportField("contact_email", "Contact email", False, ("email", "emailaddress", "contactemail", "mail", "email1")),
+    ImportField(
+        "contact_phone",
+        "Contact phone",
+        False,
+        ("phone", "phonenumber", "telephone", "tel", "mobile", "cell", "contactphone"),
+    ),
+    ImportField("website", "Website", False, ("website", "url", "site", "web", "domain", "homepage", "websiteurl")),
+    ImportField(
+        "estimated_value",
+        "Estimated value",
+        False,
+        ("value", "dealvalue", "amount", "estimatedvalue", "budget", "dealsize", "dealamount", "opportunityvalue"),
+    ),
+    ImportField("status", "Status", False, ("status", "stage", "pipelinestage", "leadstatus", "dealstage")),
+    ImportField("notes", "Notes", False, (*_NOTES_ALIASES, "description")),
+)
+
+PROJECT_FIELDS: tuple[ImportField, ...] = (
+    ImportField("name", "Project name", True, ("project", "projectname", "name", "title", "projecttitle")),
+    ImportField("client", "Client", True, ("client", "clientname", "customer", "customername", "company", "account")),
+    ImportField("status", "Status", False, ("status", "projectstatus", "stage", "state")),
+    ImportField("description", "Description", False, ("description", "summary", "details", "brief", "scope")),
+    ImportField("start_date", "Start date", False, ("start", "startdate", "kickoff", "kickoffdate", "begin")),
+    ImportField("due_date", "Due date", False, ("due", "duedate", "deadline", "enddate", "end", "launchdate")),
+    ImportField("hourly_rate", "Hourly rate", False, ("rate", "hourlyrate", "billingrate", "defaultrate")),
+)
+
+TASK_FIELDS: tuple[ImportField, ...] = (
+    ImportField("project", "Project", True, ("project", "projectname", "board", "boardname")),
+    ImportField("title", "Task", True, ("task", "title", "taskname", "tasktitle", "name", "card", "cardname")),
+    ImportField("column", "Column", False, ("column", "list", "listname", "stage", "status", "tasklist", "lane")),
+    ImportField("description", "Description", False, ("description", "details", "notes", "note", "body")),
+    ImportField("due_date", "Due date", False, ("due", "duedate", "deadline", "dueon")),
+    ImportField(
+        "assignee",
+        "Assignee email",
+        False,
+        ("assignee", "assigneeemail", "assignedto", "assigned", "owner", "owneremail", "email"),
+    ),
+)
+
+TIME_ENTRY_FIELDS: tuple[ImportField, ...] = (
+    ImportField("date", "Date", True, ("date", "day", "workdate", "entrydate", "startdate", "loggedon")),
+    ImportField(
+        "hours", "Hours", True, ("hours", "duration", "time", "timespent", "hoursworked", "durationhours", "spent")
+    ),
+    ImportField("project", "Project", True, ("project", "projectname")),
+    ImportField("task", "Task", False, ("task", "taskname", "tasktitle")),
+    ImportField(
+        "member",
+        "Team member email",
+        False,
+        ("member", "memberemail", "email", "user", "useremail", "person", "teammember", "staff", "employee"),
+    ),
+    ImportField("description", "Description", False, ("description", *_NOTES_ALIASES, "activity", "work")),
+    ImportField("billable", "Billable", False, ("billable", "isbillable", "billed")),
+    ImportField("hourly_rate", "Hourly rate", False, ("rate", "hourlyrate", "billingrate")),
+)
+
+FIELDS_BY_KIND: dict[str, tuple[ImportField, ...]] = {
+    "clients": CLIENT_FIELDS,
+    "team": TEAM_FIELDS,
+    "leads": LEAD_FIELDS,
+    "projects": PROJECT_FIELDS,
+    "tasks": TASK_FIELDS,
+    "time_entries": TIME_ENTRY_FIELDS,
+}
 
 _NON_ALNUM = re.compile(r"[^a-z0-9]+")
 

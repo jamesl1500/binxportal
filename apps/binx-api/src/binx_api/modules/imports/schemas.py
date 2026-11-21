@@ -2,12 +2,27 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-ImportKind = Literal["clients", "team"]
+ImportKind = Literal["clients", "team", "leads", "projects", "tasks", "time_entries"]
 
 # Per-file row caps. Kept modest so an import is one ordinary request — no
 # background job, no stored upload.
 MAX_CLIENT_ROWS = 500
 MAX_TEAM_ROWS = 100
+MAX_LEAD_ROWS = 500
+# Each project is created through the normal path (slug, default columns,
+# creator membership), one commit per row, so this cap is lower.
+MAX_PROJECT_ROWS = 200
+MAX_TASK_ROWS = 1000
+MAX_TIME_ENTRY_ROWS = 2000
+
+MAX_ROWS_BY_KIND: dict[str, int] = {
+    "clients": MAX_CLIENT_ROWS,
+    "team": MAX_TEAM_ROWS,
+    "leads": MAX_LEAD_ROWS,
+    "projects": MAX_PROJECT_ROWS,
+    "tasks": MAX_TASK_ROWS,
+    "time_entries": MAX_TIME_ENTRY_ROWS,
+}
 
 # Loose bound on any single raw value; the real per-field limits are applied
 # by the same schemas the single-item forms use (see service.py).
@@ -62,6 +77,75 @@ class TeamImportRow(BaseModel):
 
 class TeamImportRequest(BaseModel):
     rows: list[TeamImportRow] = Field(min_length=1, max_length=MAX_TEAM_ROWS)
+    dry_run: bool = True
+
+
+def _raw() -> RawValue:
+    return Field(default=None, max_length=10_000)
+
+
+class LeadImportRow(BaseModel):
+    row: int = Field(ge=1)
+    name: RawValue = _raw()
+    contact_name: RawValue = _raw()
+    contact_email: RawValue = _raw()
+    contact_phone: RawValue = _raw()
+    website: RawValue = _raw()
+    estimated_value: RawValue = _raw()
+    status: RawValue = _raw()
+    notes: RawValue = _raw()
+
+
+class LeadImportRequest(BaseModel):
+    rows: list[LeadImportRow] = Field(min_length=1, max_length=MAX_LEAD_ROWS)
+    dry_run: bool = True
+
+
+class ProjectImportRow(BaseModel):
+    row: int = Field(ge=1)
+    name: RawValue = _raw()
+    client: RawValue = _raw()
+    status: RawValue = _raw()
+    description: RawValue = _raw()
+    start_date: RawValue = _raw()
+    due_date: RawValue = _raw()
+    hourly_rate: RawValue = _raw()
+
+
+class ProjectImportRequest(BaseModel):
+    rows: list[ProjectImportRow] = Field(min_length=1, max_length=MAX_PROJECT_ROWS)
+    dry_run: bool = True
+
+
+class TaskImportRow(BaseModel):
+    row: int = Field(ge=1)
+    project: RawValue = _raw()
+    title: RawValue = _raw()
+    column: RawValue = _raw()
+    description: RawValue = _raw()
+    due_date: RawValue = _raw()
+    assignee: RawValue = _raw()
+
+
+class TaskImportRequest(BaseModel):
+    rows: list[TaskImportRow] = Field(min_length=1, max_length=MAX_TASK_ROWS)
+    dry_run: bool = True
+
+
+class TimeEntryImportRow(BaseModel):
+    row: int = Field(ge=1)
+    date: RawValue = _raw()
+    hours: RawValue = _raw()
+    project: RawValue = _raw()
+    task: RawValue = _raw()
+    member: RawValue = _raw()
+    description: RawValue = _raw()
+    billable: RawValue = _raw()
+    hourly_rate: RawValue = _raw()
+
+
+class TimeEntryImportRequest(BaseModel):
+    rows: list[TimeEntryImportRow] = Field(min_length=1, max_length=MAX_TIME_ENTRY_ROWS)
     dry_run: bool = True
 
 

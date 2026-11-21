@@ -1,0 +1,69 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.wrap {
+  position: relative;
+}
+
+.textarea {
+  @include m.input-base;
+  display: block;
+  min-height: 3rem;
+  max-height: 20rem;
+  resize: none;
+  font: inherit;
+  font-size: t.$font-size-sm;
+  line-height: 1.5;
+
+  @media (max-width: 640px) {
+    font-size: 1rem;
+  }
+}
+
+.menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 20;
+  width: min(20rem, 100%);
+  margin: t.$space-1 0 0;
+  padding: t.$space-1;
+  list-style: none;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  box-shadow: 0 12px 32px rgba(10, 10, 11, 0.16);
+
+  &[data-placement="above"] {
+    top: auto;
+    bottom: 100%;
+    margin: 0 0 t.$space-1;
+  }
+}
+
+.option {
+  display: flex;
+  align-items: baseline;
+  gap: t.$space-2;
+  width: 100%;
+  padding: t.$space-2 t.$space-3;
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  &[data-active="true"] {
+    background: t.$color-paper;
+  }
+}
+
+.name {
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+}
+
+.handle {
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+}

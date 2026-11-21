@@ -18,6 +18,7 @@ import {
   FileSignature,
   LayoutDashboard,
   LayoutGrid,
+  Newspaper,
   PanelsTopLeft,
   Radar,
   Receipt,
@@ -90,6 +91,11 @@ const NEW_FEATURES = [
     title: "A dashboard you arrange",
     text: "Drag, reorder and hide widgets until the home screen shows what you care about, including your tasks and one-click quick actions.",
   },
+  {
+    icon: Newspaper,
+    title: "A team timeline",
+    text: "One shared feed on the dashboard where the team posts updates, comments, reacts and @mentions each other. Owners pin announcements that notify everyone, and the side rail flags this week's wins, meetings and work anniversaries.",
+  },
 ];
 
 const CAPABILITIES = [
@@ -135,6 +141,7 @@ const FEATURE_LIST = [
   "Project boards and file versioning",
   "Invoicing with pay-from-portal",
   "Customizable drag-and-drop dashboard",
+  "Team timeline with comments, reactions, @mentions and announcements",
 ];
 
 // The headline, word by word, for the staggered entrance; "calm" and
@@ -427,12 +434,14 @@ const HomePage = () => {
               <p className={styles.cardText}>
                 Drag widgets into the order you want, hide the ones you
                 don&apos;t, and keep your own tasks and quick actions a click
-                away. Each teammate&apos;s layout is their own.
+                away. Each teammate&apos;s layout is their own, and the
+                Timeline tab keeps the whole team in the loop.
               </p>
               <ul className={styles.splitList}>
                 <li>Drag-and-drop, hideable widgets</li>
                 <li>My tasks and quick actions at a glance</li>
                 <li>Saved per person, not per agency</li>
+                <li>A team timeline for updates, comments and announcements</li>
               </ul>
             </div>
             <div className={styles.splitMedia}>

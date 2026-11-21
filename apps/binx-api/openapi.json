@@ -8488,24 +8488,6 @@
         "title": "LeadGenerateResponse",
         "type": "object"
       },
-      "LeadImportRequest": {
-        "properties": {
-          "candidates": {
-            "items": {
-              "$ref": "#/components/schemas/ProspectRead"
-            },
-            "maxItems": 25,
-            "minItems": 1,
-            "title": "Candidates",
-            "type": "array"
-          }
-        },
-        "required": [
-          "candidates"
-        ],
-        "title": "LeadImportRequest",
-        "type": "object"
-      },
       "LeadImportResponse": {
         "properties": {
           "imported": {
@@ -8529,6 +8511,116 @@
           "skipped"
         ],
         "title": "LeadImportResponse",
+        "type": "object"
+      },
+      "LeadImportRow": {
+        "properties": {
+          "contact_email": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Email"
+          },
+          "contact_name": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Name"
+          },
+          "contact_phone": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Phone"
+          },
+          "estimated_value": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimated Value"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "row": {
+            "minimum": 1.0,
+            "title": "Row",
+            "type": "integer"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "website": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Website"
+          }
+        },
+        "required": [
+          "row"
+        ],
+        "title": "LeadImportRow",
         "type": "object"
       },
       "LeadListRead": {
@@ -10358,6 +10450,10 @@
           "inapp_team": {
             "title": "Inapp Team",
             "type": "boolean"
+          },
+          "inapp_timeline": {
+            "title": "Inapp Timeline",
+            "type": "boolean"
           }
         },
         "required": [
@@ -10370,7 +10466,8 @@
           "inapp_invoicing",
           "inapp_projects",
           "inapp_messages",
-          "inapp_meetings"
+          "inapp_meetings",
+          "inapp_timeline"
         ],
         "title": "NotificationSettingsRead",
         "type": "object"
@@ -10415,6 +10512,11 @@
           },
           "inapp_team": {
             "title": "Inapp Team",
+            "type": "boolean"
+          },
+          "inapp_timeline": {
+            "default": true,
+            "title": "Inapp Timeline",
             "type": "boolean"
           }
         },
@@ -11995,6 +12097,127 @@
           "created_at"
         ],
         "title": "ProjectFileRead",
+        "type": "object"
+      },
+      "ProjectImportRequest": {
+        "properties": {
+          "dry_run": {
+            "default": true,
+            "title": "Dry Run",
+            "type": "boolean"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ProjectImportRow"
+            },
+            "maxItems": 200,
+            "minItems": 1,
+            "title": "Rows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "title": "ProjectImportRequest",
+        "type": "object"
+      },
+      "ProjectImportRow": {
+        "properties": {
+          "client": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          },
+          "hourly_rate": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hourly Rate"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "row": {
+            "minimum": 1.0,
+            "title": "Row",
+            "type": "integer"
+          },
+          "start_date": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Date"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "required": [
+          "row"
+        ],
+        "title": "ProjectImportRow",
         "type": "object"
       },
       "ProjectLabelSeed": {
@@ -14603,6 +14826,115 @@
         "title": "TaskFileRead",
         "type": "object"
       },
+      "TaskImportRequest": {
+        "properties": {
+          "dry_run": {
+            "default": true,
+            "title": "Dry Run",
+            "type": "boolean"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/TaskImportRow"
+            },
+            "maxItems": 1000,
+            "minItems": 1,
+            "title": "Rows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "title": "TaskImportRequest",
+        "type": "object"
+      },
+      "TaskImportRow": {
+        "properties": {
+          "assignee": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assignee"
+          },
+          "column": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Column"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          },
+          "project": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project"
+          },
+          "row": {
+            "minimum": 1.0,
+            "title": "Row",
+            "type": "integer"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "required": [
+          "row"
+        ],
+        "title": "TaskImportRow",
+        "type": "object"
+      },
       "TaskListCreate": {
         "properties": {
           "name": {
@@ -14978,6 +15310,139 @@
         "title": "TeamImportRow",
         "type": "object"
       },
+      "TimeEntryImportRequest": {
+        "properties": {
+          "dry_run": {
+            "default": true,
+            "title": "Dry Run",
+            "type": "boolean"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/TimeEntryImportRow"
+            },
+            "maxItems": 2000,
+            "minItems": 1,
+            "title": "Rows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "title": "TimeEntryImportRequest",
+        "type": "object"
+      },
+      "TimeEntryImportRow": {
+        "properties": {
+          "billable": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Billable"
+          },
+          "date": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "hourly_rate": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hourly Rate"
+          },
+          "hours": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hours"
+          },
+          "member": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Member"
+          },
+          "project": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project"
+          },
+          "row": {
+            "minimum": 1.0,
+            "title": "Row",
+            "type": "integer"
+          },
+          "task": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task"
+          }
+        },
+        "required": [
+          "row"
+        ],
+        "title": "TimeEntryImportRow",
+        "type": "object"
+      },
       "TimeEntryRead": {
         "properties": {
           "amount_cents": {
@@ -15202,6 +15667,599 @@
           "value"
         ],
         "title": "TimePoint",
+        "type": "object"
+      },
+      "TimelineAuthor": {
+        "properties": {
+          "avatar_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Version"
+          },
+          "has_avatar": {
+            "title": "Has Avatar",
+            "type": "boolean"
+          },
+          "member_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Member Id"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "user_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id"
+          }
+        },
+        "required": [
+          "user_id",
+          "name",
+          "member_id",
+          "has_avatar",
+          "avatar_version",
+          "role"
+        ],
+        "title": "TimelineAuthor",
+        "type": "object"
+      },
+      "TimelineCelebration": {
+        "properties": {
+          "day": {
+            "format": "date",
+            "title": "Day",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "joined",
+              "anniversary"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "person": {
+            "$ref": "#/components/schemas/TimelineAuthor"
+          },
+          "user_name": {
+            "title": "User Name",
+            "type": "string"
+          },
+          "years": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Years"
+          }
+        },
+        "required": [
+          "kind",
+          "person",
+          "user_name",
+          "day",
+          "years"
+        ],
+        "title": "TimelineCelebration",
+        "type": "object"
+      },
+      "TimelineCommentCreate": {
+        "properties": {
+          "body": {
+            "maxLength": 2000,
+            "title": "Body",
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "title": "TimelineCommentCreate",
+        "type": "object"
+      },
+      "TimelineCommentRead": {
+        "properties": {
+          "author": {
+            "$ref": "#/components/schemas/TimelineAuthor"
+          },
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "can_delete": {
+            "title": "Can Delete",
+            "type": "boolean"
+          },
+          "can_edit": {
+            "title": "Can Edit",
+            "type": "boolean"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "edited_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Edited At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "post_id": {
+            "format": "uuid",
+            "title": "Post Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "post_id",
+          "author",
+          "body",
+          "created_at",
+          "edited_at",
+          "can_edit",
+          "can_delete"
+        ],
+        "title": "TimelineCommentRead",
+        "type": "object"
+      },
+      "TimelineCommentUpdate": {
+        "properties": {
+          "body": {
+            "maxLength": 2000,
+            "title": "Body",
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "title": "TimelineCommentUpdate",
+        "type": "object"
+      },
+      "TimelineContributor": {
+        "properties": {
+          "comments": {
+            "title": "Comments",
+            "type": "integer"
+          },
+          "person": {
+            "$ref": "#/components/schemas/TimelineAuthor"
+          },
+          "posts": {
+            "title": "Posts",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "person",
+          "posts",
+          "comments"
+        ],
+        "title": "TimelineContributor",
+        "type": "object"
+      },
+      "TimelineFeedRead": {
+        "properties": {
+          "can_moderate": {
+            "title": "Can Moderate",
+            "type": "boolean"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "pinned": {
+            "items": {
+              "$ref": "#/components/schemas/TimelinePostRead"
+            },
+            "title": "Pinned",
+            "type": "array"
+          },
+          "posts": {
+            "items": {
+              "$ref": "#/components/schemas/TimelinePostRead"
+            },
+            "title": "Posts",
+            "type": "array"
+          }
+        },
+        "required": [
+          "pinned",
+          "posts",
+          "next_cursor",
+          "can_moderate"
+        ],
+        "title": "TimelineFeedRead",
+        "type": "object"
+      },
+      "TimelineHighlightsRead": {
+        "description": "Everything the timeline's side rail shows, in one request.",
+        "properties": {
+          "celebrations": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineCelebration"
+            },
+            "title": "Celebrations",
+            "type": "array"
+          },
+          "this_week": {
+            "$ref": "#/components/schemas/TimelineWeekStats"
+          },
+          "upcoming_meetings": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineUpcomingMeeting"
+            },
+            "title": "Upcoming Meetings",
+            "type": "array"
+          },
+          "wins": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineWin"
+            },
+            "title": "Wins",
+            "type": "array"
+          }
+        },
+        "required": [
+          "upcoming_meetings",
+          "celebrations",
+          "wins",
+          "this_week"
+        ],
+        "title": "TimelineHighlightsRead",
+        "type": "object"
+      },
+      "TimelinePinUpdate": {
+        "properties": {
+          "pinned": {
+            "title": "Pinned",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "pinned"
+        ],
+        "title": "TimelinePinUpdate",
+        "type": "object"
+      },
+      "TimelinePostCreate": {
+        "properties": {
+          "body": {
+            "maxLength": 5000,
+            "title": "Body",
+            "type": "string"
+          },
+          "is_announcement": {
+            "default": false,
+            "title": "Is Announcement",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "title": "TimelinePostCreate",
+        "type": "object"
+      },
+      "TimelinePostRead": {
+        "properties": {
+          "author": {
+            "$ref": "#/components/schemas/TimelineAuthor"
+          },
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "can_delete": {
+            "title": "Can Delete",
+            "type": "boolean"
+          },
+          "can_edit": {
+            "title": "Can Edit",
+            "type": "boolean"
+          },
+          "can_pin": {
+            "title": "Can Pin",
+            "type": "boolean"
+          },
+          "comment_count": {
+            "title": "Comment Count",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "edited_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Edited At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "is_announcement": {
+            "title": "Is Announcement",
+            "type": "boolean"
+          },
+          "pinned": {
+            "title": "Pinned",
+            "type": "boolean"
+          },
+          "reactions": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineReactionSummary"
+            },
+            "title": "Reactions",
+            "type": "array"
+          },
+          "recent_comments": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineCommentRead"
+            },
+            "title": "Recent Comments",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "author",
+          "body",
+          "is_announcement",
+          "pinned",
+          "created_at",
+          "edited_at",
+          "reactions",
+          "comment_count",
+          "recent_comments",
+          "can_edit",
+          "can_delete",
+          "can_pin"
+        ],
+        "title": "TimelinePostRead",
+        "type": "object"
+      },
+      "TimelinePostUpdate": {
+        "properties": {
+          "body": {
+            "maxLength": 5000,
+            "title": "Body",
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "title": "TimelinePostUpdate",
+        "type": "object"
+      },
+      "TimelineReactionSummary": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "names": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Names",
+            "type": "array"
+          },
+          "reacted": {
+            "title": "Reacted",
+            "type": "boolean"
+          },
+          "reaction": {
+            "enum": [
+              "like",
+              "love",
+              "celebrate",
+              "laugh",
+              "wow",
+              "thanks"
+            ],
+            "title": "Reaction",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reaction",
+          "count",
+          "reacted",
+          "names"
+        ],
+        "title": "TimelineReactionSummary",
+        "type": "object"
+      },
+      "TimelineUpcomingMeeting": {
+        "properties": {
+          "client_name": {
+            "title": "Client Name",
+            "type": "string"
+          },
+          "ends_at": {
+            "format": "date-time",
+            "title": "Ends At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "starts_at": {
+            "format": "date-time",
+            "title": "Starts At",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "starts_at",
+          "ends_at",
+          "client_name"
+        ],
+        "title": "TimelineUpcomingMeeting",
+        "type": "object"
+      },
+      "TimelineWeekStats": {
+        "properties": {
+          "comments": {
+            "title": "Comments",
+            "type": "integer"
+          },
+          "posts": {
+            "title": "Posts",
+            "type": "integer"
+          },
+          "reactions": {
+            "title": "Reactions",
+            "type": "integer"
+          },
+          "top_contributors": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineContributor"
+            },
+            "title": "Top Contributors",
+            "type": "array"
+          }
+        },
+        "required": [
+          "posts",
+          "comments",
+          "reactions",
+          "top_contributors"
+        ],
+        "title": "TimelineWeekStats",
+        "type": "object"
+      },
+      "TimelineWin": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "target_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Id"
+          },
+          "target_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Type"
+          }
+        },
+        "required": [
+          "id",
+          "event_type",
+          "summary",
+          "target_type",
+          "target_id",
+          "created_at"
+        ],
+        "title": "TimelineWin",
         "type": "object"
       },
       "TimerStart": {
@@ -15738,6 +16796,47 @@
           "ticket"
         ],
         "title": "WsTicketResponse",
+        "type": "object"
+      },
+      "binx_api__modules__imports__schemas__LeadImportRequest": {
+        "properties": {
+          "dry_run": {
+            "default": true,
+            "title": "Dry Run",
+            "type": "boolean"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/LeadImportRow"
+            },
+            "maxItems": 500,
+            "minItems": 1,
+            "title": "Rows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "title": "LeadImportRequest",
+        "type": "object"
+      },
+      "binx_api__modules__leads__schemas__LeadImportRequest": {
+        "properties": {
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/ProspectRead"
+            },
+            "maxItems": 25,
+            "minItems": 1,
+            "title": "Candidates",
+            "type": "array"
+          }
+        },
+        "required": [
+          "candidates"
+        ],
+        "title": "LeadImportRequest",
         "type": "object"
       }
     },
@@ -20891,6 +21990,85 @@
         ]
       }
     },
+    "/agencies/{agency_id}/exports/{kind}": {
+      "get": {
+        "operationId": "export_data_agencies__agency_id__exports__kind__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "enum": [
+                "clients",
+                "team",
+                "leads",
+                "projects",
+                "tasks",
+                "time_entries",
+                "invoices",
+                "proposals"
+              ],
+              "title": "Kind",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "schema": {
+              "default": "csv",
+              "enum": [
+                "csv",
+                "xlsx"
+              ],
+              "title": "Format",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Export Data",
+        "tags": [
+          "exports"
+        ]
+      }
+    },
     "/agencies/{agency_id}/imports/clients": {
       "post": {
         "operationId": "import_clients_agencies__agency_id__imports_clients_post",
@@ -20944,6 +22122,180 @@
           }
         ],
         "summary": "Import Clients",
+        "tags": [
+          "imports"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/imports/leads": {
+      "post": {
+        "operationId": "import_leads_agencies__agency_id__imports_leads_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/binx_api__modules__imports__schemas__LeadImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResultRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Import Leads",
+        "tags": [
+          "imports"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/imports/projects": {
+      "post": {
+        "operationId": "import_projects_agencies__agency_id__imports_projects_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResultRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Import Projects",
+        "tags": [
+          "imports"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/imports/tasks": {
+      "post": {
+        "operationId": "import_tasks_agencies__agency_id__imports_tasks_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResultRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Import Tasks",
         "tags": [
           "imports"
         ]
@@ -21007,6 +22359,64 @@
         ]
       }
     },
+    "/agencies/{agency_id}/imports/time_entries": {
+      "post": {
+        "operationId": "import_time_entries_agencies__agency_id__imports_time_entries_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TimeEntryImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResultRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Import Time Entries",
+        "tags": [
+          "imports"
+        ]
+      }
+    },
     "/agencies/{agency_id}/imports/{kind}/parse": {
       "post": {
         "operationId": "parse_import_file_agencies__agency_id__imports__kind__parse_post",
@@ -21018,7 +22428,11 @@
             "schema": {
               "enum": [
                 "clients",
-                "team"
+                "team",
+                "leads",
+                "projects",
+                "tasks",
+                "time_entries"
               ],
               "title": "Kind",
               "type": "string"
@@ -21075,6 +22489,83 @@
         "summary": "Parse Import File",
         "tags": [
           "imports"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/imports/{kind}/template": {
+      "get": {
+        "operationId": "import_template_agencies__agency_id__imports__kind__template_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "enum": [
+                "clients",
+                "team",
+                "leads",
+                "projects",
+                "tasks",
+                "time_entries"
+              ],
+              "title": "Kind",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "schema": {
+              "default": "csv",
+              "enum": [
+                "csv",
+                "xlsx"
+              ],
+              "title": "Format",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Import Template",
+        "tags": [
+          "exports"
         ]
       }
     },
@@ -22703,7 +24194,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/LeadImportRequest"
+                "$ref": "#/components/schemas/binx_api__modules__leads__schemas__LeadImportRequest"
               }
             }
           },
@@ -31190,6 +32681,824 @@
         "summary": "Stop Timer",
         "tags": [
           "time-tracking"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/timeline": {
+      "get": {
+        "operationId": "read_feed_agencies__agency_id__timeline_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 100,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimelineFeedRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Read Feed",
+        "tags": [
+          "timeline"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/timeline/comments/{comment_id}": {
+      "delete": {
+        "operationId": "delete_comment_agencies__agency_id__timeline_comments__comment_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "comment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Comment Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Comment",
+        "tags": [
+          "timeline"
+        ]
+      },
+      "patch": {
+        "operationId": "update_comment_agencies__agency_id__timeline_comments__comment_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "comment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Comment Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TimelineCommentUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimelineCommentRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Comment",
+        "tags": [
+          "timeline"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/timeline/highlights": {
+      "get": {
+        "description": "The side rail next to the feed: upcoming meetings, people to\ncelebrate, recent wins and this week's timeline activity.",
+        "operationId": "read_highlights_agencies__agency_id__timeline_highlights_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimelineHighlightsRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Read Highlights",
+        "tags": [
+          "timeline"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/timeline/posts": {
+      "post": {
+        "operationId": "create_post_agencies__agency_id__timeline_posts_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TimelinePostCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimelinePostRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Post",
+        "tags": [
+          "timeline"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/timeline/posts/{post_id}": {
+      "delete": {
+        "operationId": "delete_post_agencies__agency_id__timeline_posts__post_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "post_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Post Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Post",
+        "tags": [
+          "timeline"
+        ]
+      },
+      "get": {
+        "operationId": "read_post_agencies__agency_id__timeline_posts__post_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "post_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Post Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimelinePostRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Read Post",
+        "tags": [
+          "timeline"
+        ]
+      },
+      "patch": {
+        "operationId": "update_post_agencies__agency_id__timeline_posts__post_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "post_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Post Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TimelinePostUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimelinePostRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Post",
+        "tags": [
+          "timeline"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/timeline/posts/{post_id}/comments": {
+      "get": {
+        "operationId": "list_comments_agencies__agency_id__timeline_posts__post_id__comments_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "post_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Post Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TimelineCommentRead"
+                  },
+                  "title": "Response List Comments Agencies  Agency Id  Timeline Posts  Post Id  Comments Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Comments",
+        "tags": [
+          "timeline"
+        ]
+      },
+      "post": {
+        "operationId": "create_comment_agencies__agency_id__timeline_posts__post_id__comments_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "post_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Post Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TimelineCommentCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimelineCommentRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Comment",
+        "tags": [
+          "timeline"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/timeline/posts/{post_id}/pin": {
+      "put": {
+        "operationId": "set_pinned_agencies__agency_id__timeline_posts__post_id__pin_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "post_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Post Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TimelinePinUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimelinePostRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Set Pinned",
+        "tags": [
+          "timeline"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/timeline/posts/{post_id}/reactions/{reaction}": {
+      "delete": {
+        "operationId": "remove_reaction_agencies__agency_id__timeline_posts__post_id__reactions__reaction__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "post_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Post Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "reaction",
+            "required": true,
+            "schema": {
+              "enum": [
+                "like",
+                "love",
+                "celebrate",
+                "laugh",
+                "wow",
+                "thanks"
+              ],
+              "title": "Reaction",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimelinePostRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Remove Reaction",
+        "tags": [
+          "timeline"
+        ]
+      },
+      "put": {
+        "operationId": "add_reaction_agencies__agency_id__timeline_posts__post_id__reactions__reaction__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "post_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Post Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "reaction",
+            "required": true,
+            "schema": {
+              "enum": [
+                "like",
+                "love",
+                "celebrate",
+                "laugh",
+                "wow",
+                "thanks"
+              ],
+              "title": "Reaction",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimelinePostRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Add Reaction",
+        "tags": [
+          "timeline"
         ]
       }
     },

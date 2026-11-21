@@ -15,6 +15,10 @@ CATEGORY_INVOICING = "invoicing"
 CATEGORY_PROJECTS = "projects"
 CATEGORY_MESSAGES = "messages"
 CATEGORY_MEETINGS = "meetings"
+# Comments and reactions on your own team-timeline posts (modules/timeline).
+# Timeline @mentions use CATEGORY_MESSAGES and announcements CATEGORY_TEAM,
+# so muting this one only quiets the chatter.
+CATEGORY_TIMELINE = "timeline"
 # Replies and status changes on product feedback (modules/feedback). No mute
 # toggle on purpose: it only fires when someone asked us something and we
 # answered, or (for platform admins) when new feedback arrives.
@@ -26,6 +30,7 @@ notification_categories: list[str] = [
     CATEGORY_PROJECTS,
     CATEGORY_MESSAGES,
     CATEGORY_MEETINGS,
+    CATEGORY_TIMELINE,
     CATEGORY_PRODUCT,
 ]
 

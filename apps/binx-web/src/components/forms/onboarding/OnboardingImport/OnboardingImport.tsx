@@ -19,6 +19,9 @@ import { Building2, Check, Users } from "lucide-react";
 import BulkImportWizard from "@/components/imports/BulkImportWizard/BulkImportWizard";
 import type { ImportKind } from "@/lib/imports-client";
 
+/** Onboarding offers just the two imports a new agency needs first. */
+type OnboardingImportKind = Extract<ImportKind, "clients" | "team">;
+
 import styles from "./OnboardingImport.module.scss";
 
 interface OnboardingImportProps {
@@ -28,7 +31,7 @@ interface OnboardingImportProps {
 }
 
 const TABS: {
-  kind: ImportKind;
+  kind: OnboardingImportKind;
   label: string;
   icon: typeof Users;
   blurb: string;
@@ -51,8 +54,8 @@ const TABS: {
 
 const OnboardingImport = ({ agencyId, canInvite }: OnboardingImportProps) => {
   const tabs = canInvite ? TABS : TABS.filter((tab) => tab.kind !== "team");
-  const [active, setActive] = useState<ImportKind>("clients");
-  const [imported, setImported] = useState<Record<ImportKind, number>>({
+  const [active, setActive] = useState<OnboardingImportKind>("clients");
+  const [imported, setImported] = useState<Record<OnboardingImportKind, number>>({
     clients: 0,
     team: 0,
   });

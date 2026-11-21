@@ -1,0 +1,368 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+  padding: t.$space-5;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  scroll-margin-top: t.$space-16;
+  transition: box-shadow t.$duration-fast t.$ease-standard;
+
+  &[data-announcement="true"] {
+    border-left: 3px solid t.$color-accent;
+  }
+
+  // Reached from a notification (#post-<id>): briefly called out.
+  &[data-highlighted="true"] {
+    box-shadow: 0 0 0 2px t.$color-focus;
+  }
+
+  &[aria-busy="true"] {
+    cursor: progress;
+  }
+
+  @media (max-width: 640px) {
+    padding: t.$space-4;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: t.$space-3;
+}
+
+.headerText {
+  flex: 1;
+  min-width: 0;
+}
+
+.authorLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: t.$space-2;
+}
+
+.authorName {
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  color: t.$color-ink;
+}
+
+.role {
+  @include m.mono-label;
+  color: t.$color-ink-soft;
+}
+
+.meta {
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-2;
+  margin-top: t.$space-1;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-1;
+  padding: 2px t.$space-2;
+  font-family: var(--font-mono);
+  font-size: t.$font-size-xs;
+  letter-spacing: t.$tracking-widest;
+  text-transform: uppercase;
+  color: t.$color-ink-soft;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+
+  &[data-kind="announcement"] {
+    color: t.$color-accent-foreground;
+    background: t.$color-accent;
+    border-color: t.$color-accent;
+  }
+
+  svg {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+}
+
+.tools,
+.commentTools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-3;
+}
+
+.textButton {
+  padding: 0;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+  background: none;
+  border: none;
+  cursor: pointer;
+  @include m.touch-target;
+
+  &:hover:not(:disabled) {
+    color: t.$color-ink;
+    text-decoration: underline;
+  }
+
+  &[data-tone="danger"]:hover:not(:disabled) {
+    color: t.$color-danger;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
+.body {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  line-height: 1.6;
+  color: t.$color-ink;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.mention {
+  font-weight: 600;
+  color: t.$color-focus;
+}
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+}
+
+.editorActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: t.$space-2;
+}
+
+%button {
+  @include m.button-base;
+  min-height: 2.25rem;
+  padding: 0 t.$space-4;
+}
+
+.primary {
+  @extend %button;
+  color: t.$color-accent-foreground;
+  background: t.$color-accent;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+}
+
+.secondary {
+  @extend %button;
+  color: t.$color-ink;
+  background: t.$color-surface;
+  border-color: t.$color-border-strong;
+
+  &:hover:not(:disabled) {
+    background: t.$color-paper;
+  }
+}
+
+.reactionSummary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-2;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reactionChip {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-1;
+  min-height: 2rem;
+  padding: 0 t.$space-3;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  border-radius: 999px;
+  cursor: pointer;
+
+  &[aria-pressed="true"] {
+    border-color: t.$color-focus;
+    background: color-mix(in srgb, t.$color-focus 8%, t.$color-surface);
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.actionBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-1;
+  padding-top: t.$space-2;
+  border-top: 1px solid t.$color-border;
+}
+
+.action {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-2;
+  min-height: 2.25rem;
+  padding: 0 t.$space-3;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+  background: none;
+  border: none;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  &:hover:not(:disabled) {
+    color: t.$color-ink;
+    background: t.$color-paper;
+  }
+
+  &[aria-pressed="true"] {
+    color: t.$color-focus;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.count {
+  font-family: var(--font-mono);
+  font-size: t.$font-size-xs;
+}
+
+.pickerWrap {
+  position: relative;
+}
+
+.picker {
+  position: absolute;
+  bottom: calc(100% + #{t.$space-1});
+  left: 0;
+  z-index: 10;
+  display: flex;
+  gap: t.$space-1;
+  padding: t.$space-1;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: 999px;
+  box-shadow: 0 12px 32px rgba(10, 10, 11, 0.16);
+}
+
+.pickerOption {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: 1.25rem;
+  background: none;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform t.$duration-fast t.$ease-standard;
+
+  &:hover {
+    transform: scale(1.15);
+  }
+
+  &[aria-pressed="true"] {
+    background: color-mix(in srgb, t.$color-focus 12%, t.$color-surface);
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    &:hover {
+      transform: none;
+    }
+  }
+}
+
+.comments {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+}
+
+.commentList {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.comment {
+  display: flex;
+  align-items: flex-start;
+  gap: t.$space-2;
+}
+
+.commentBubble {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-1;
+  padding: t.$space-2 t.$space-3;
+  background: t.$color-paper;
+  border-radius: t.$radius-md;
+}
+
+.commentComposer {
+  display: flex;
+  align-items: flex-end;
+  gap: t.$space-2;
+
+  > :first-child {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

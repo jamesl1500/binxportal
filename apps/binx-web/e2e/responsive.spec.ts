@@ -79,7 +79,16 @@ test.describe("authenticated pages @ phone width", () => {
   // dozen parallel sessions don't stampede the API's refresh-token rotation.
   test.describe.configure({ mode: "serial" });
 
-  const authedPages = ["/dashboard", "/clients", "/projects", "/invoices", "/leads", "/messages"];
+  const authedPages = [
+    "/dashboard",
+    "/dashboard/timeline",
+    "/data",
+    "/clients",
+    "/projects",
+    "/invoices",
+    "/leads",
+    "/messages",
+  ];
 
   for (const p of authedPages) {
     test(`staff ${p} has no horizontal scroll`, async ({ browser }) => {

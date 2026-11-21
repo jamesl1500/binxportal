@@ -113,6 +113,10 @@ def _display_status(invoice: Invoice, today: date | None = None) -> str:
     return STATUS_SENT
 
 
+# Public name for other modules (exports) that show the same label.
+display_status = _display_status
+
+
 # ---- Billing settings ------------------------------------------------
 
 

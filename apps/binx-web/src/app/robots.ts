@@ -32,6 +32,8 @@ export const APP_SEGMENTS = [
   "billing",
   "clients",
   "dashboard",
+  // Import & export (/data, /data/import/[kind]).
+  "data",
   "feedback",
   // Server actions only (no page) today — listed so robots.test.ts stays
   // happy and a future /imports page is covered without anyone remembering.

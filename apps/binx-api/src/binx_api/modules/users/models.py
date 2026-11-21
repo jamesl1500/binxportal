@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String, Text, Uuid, text
+from sqlalchemy import DateTime, ForeignKey, String, Text, Uuid, text, true
 from sqlalchemy.orm import Mapped, mapped_column
 
 from binx_api.core.database import Base
@@ -85,6 +85,7 @@ class UserNotificationSettings(Base):
     inapp_projects: Mapped[bool] = mapped_column(default=True)
     inapp_messages: Mapped[bool] = mapped_column(default=True)
     inapp_meetings: Mapped[bool] = mapped_column(default=True)
+    inapp_timeline: Mapped[bool] = mapped_column(default=True, server_default=true())
 
 
 # A user's privacy preferences, scoped to what their agency teammates can see.
