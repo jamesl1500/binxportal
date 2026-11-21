@@ -5,7 +5,7 @@
  * (matches the current codebase: Stripe for billing, AWS SES for outbound
  * email, Anthropic Claude for the AI features, Google Places for the AI
  * lead prospector, Sentry for error monitoring, the client portal, auth
- * cookies). Retention windows are a business decision James confirmed
+ * cookies, Google Analytics via Tag Manager on the marketing pages only). Retention windows are a business decision James confirmed
  * 2026-10-21 (keep as-is) — still worth a qualified-counsel pass before
  * relying on this as final.
  *
@@ -21,7 +21,7 @@ import styles from "../marketing.module.scss";
 
 const TITLE = "Privacy Policy";
 const DESCRIPTION = `How ${SITE.name} collects, uses, and protects your information, and your agency's and clients' data.`;
-const LAST_UPDATED = "Effective October 21, 2026";
+const LAST_UPDATED = "Effective November 20, 2026";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -106,6 +106,20 @@ const PrivacyPage = () => {
               third-party advertising or cross-site tracking cookies on the
               application itself.
             </p>
+            <p>
+              This marketing site (the public pages, not the signed-in app or
+              the client portal) uses Google Analytics, loaded through Google
+              Tag Manager, to count visits and see which pages are useful. It
+              sets first-party analytics cookies and sends Google details like
+              the pages viewed, the referring site, and approximate location
+              and device type. Advertising storage and ad personalization are
+              turned off. You can block these cookies in your browser, or opt
+              out with Google&apos;s{" "}
+              <a href="https://tools.google.com/dlpage/gaoptout" rel="noopener noreferrer" target="_blank">
+                Analytics opt-out add-on
+              </a>
+              , without affecting the rest of the site.
+            </p>
 
             <h2>AI features</h2>
             <p>
@@ -161,6 +175,11 @@ const PrivacyPage = () => {
                 <strong>Sentry</strong> — error monitoring and crash reporting,
                 so we can diagnose and fix bugs; it can capture technical
                 details about the request when an error occurs.
+              </li>
+              <li>
+                <strong>Google Analytics</strong> (via Google Tag Manager) —
+                visit statistics for this marketing site only; it never runs in
+                the signed-in app or the client portal.
               </li>
             </ul>
             <p>
