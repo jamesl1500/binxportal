@@ -3,7 +3,8 @@
  *
  * Public site shell: the header, the page, the footer, plus site-wide
  * Organization + WebSite JSON-LD for rich results. These routes are the only
- * part of the app search engines should index.
+ * part of the app search engines should index, and the only part that loads
+ * Google Tag Manager (see GoogleTagManager.tsx for why).
  *
  * @module apps/binx-web/src/app/(marketing)/layout.tsx
  * @author Binx Portal
@@ -11,6 +12,7 @@
 import { SITE, SITE_URL } from "@/lib/site";
 import MarketingHeader from "@/components/marketing/MarketingHeader/MarketingHeader";
 import MarketingFooter from "@/components/marketing/MarketingFooter/MarketingFooter";
+import GoogleTagManager from "@/components/marketing/GoogleTagManager/GoogleTagManager";
 
 import styles from "./marketing.module.scss";
 
@@ -49,6 +51,7 @@ const MarketingLayout = ({ children }: { children: React.ReactNode }) => {
       <MarketingHeader />
       <main className={styles.main}>{children}</main>
       <MarketingFooter />
+      <GoogleTagManager />
     </div>
   );
 };

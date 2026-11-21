@@ -44,10 +44,14 @@ ARG NEXT_PUBLIC_SITE_URL
 # above. Unset means instrumentation.ts/instrumentation-client.ts both no-op.
 ARG NEXT_PUBLIC_SENTRY_DSN
 ARG NEXT_PUBLIC_SENTRY_ENVIRONMENT
+# Google Tag Manager container id (public, like the DSN). Only the production
+# build passes one; unset means the marketing site loads no tag manager.
+ARG NEXT_PUBLIC_GTM_ID
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
     NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL \
     NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN \
     NEXT_PUBLIC_SENTRY_ENVIRONMENT=$NEXT_PUBLIC_SENTRY_ENVIRONMENT \
+    NEXT_PUBLIC_GTM_ID=$NEXT_PUBLIC_GTM_ID \
     NEXT_TELEMETRY_DISABLED=1
 
 WORKDIR /repo/apps/binx-web
