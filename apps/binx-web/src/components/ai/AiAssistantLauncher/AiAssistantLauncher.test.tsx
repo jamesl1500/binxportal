@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/app/(app)/ai/actions", () => ({
   createAiConversationAction: vi.fn(),
@@ -14,6 +14,14 @@ vi.mock("@/app/(app)/ai/actions", () => ({
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 
 import AiAssistantLauncher from "./AiAssistantLauncher";
+
+// The launcher loads AiModal lazily (next/dynamic). Its first, cold
+// import could take longer than findByRole's 1s default under a full
+// parallel run, so warm the module once up front; the click then only waits
+// on React, not on a module graph.
+beforeAll(async () => {
+  await import("@/components/ai/AiModal/AiModal");
+});
 
 beforeEach(() => {
   vi.clearAllMocks();
