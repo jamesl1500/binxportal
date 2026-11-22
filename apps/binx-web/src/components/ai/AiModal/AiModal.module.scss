@@ -54,6 +54,7 @@
 
 .newChat {
   @include m.button-base;
+  @include m.button-sheen;
   justify-content: flex-start;
   gap: t.$space-2;
   margin-bottom: t.$space-3;
@@ -377,6 +378,7 @@
 
 .composerSubmit {
   @include m.button-base;
+  @include m.button-sheen;
   background: t.$color-accent;
   color: t.$color-accent-foreground;
 

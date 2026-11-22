@@ -40,7 +40,7 @@
     color: t.$color-ink;
     // Falls back to the app's own ink color when no client/agency brand
     // color is set — see --portal-primary in (portal)/layout.tsx.
-    border-bottom-color: var(--portal-primary, #{t.$color-ink});
+    border-bottom-color: var(--portal-primary, #{t.$color-brand});
   }
 
   &:focus-visible {

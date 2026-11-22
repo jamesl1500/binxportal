@@ -33,6 +33,7 @@
 
 .generate {
   @include m.button-base;
+  @include m.button-sheen;
   padding: t.$space-2 t.$space-4;
   background: t.$color-accent;
   color: t.$color-accent-foreground;

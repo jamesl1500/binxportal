@@ -32,6 +32,7 @@
 .title {
   margin: 0 0 t.$space-3;
   font-family: var(--font-heading);
+  letter-spacing: -0.015em;
   font-size: t.$font-size-2xl;
   color: t.$color-ink;
 }
@@ -54,6 +55,7 @@
 
 .action {
   @include m.button-base;
+  @include m.button-sheen;
   text-decoration: none;
   background: t.$color-accent;
   color: t.$color-accent-foreground;

@@ -11,17 +11,12 @@ $brand: var(--portal-primary, #{t.$color-ink});
   height: 100%;
   padding: t.$space-5;
   text-decoration: none;
-  transition:
-    border-color t.$duration-fast t.$ease-standard,
-    box-shadow t.$duration-fast t.$ease-standard,
-    transform t.$duration-fast t.$ease-standard;
+  @include m.card-interactive;
 
   &:hover {
     // Falls back to the app's own default when no client/agency accent
     // color is set — see --portal-accent in (portal)/layout.tsx.
     border-color: var(--portal-accent, #{t.$color-border-strong});
-    box-shadow: 0 8px 20px rgba(10, 10, 11, 0.07);
-    transform: translateY(-1px);
   }
 
   &:focus-visible {

@@ -130,6 +130,7 @@
 .readonlyTitle {
   margin: 0;
   font-family: var(--font-heading);
+  letter-spacing: -0.015em;
   font-size: t.$font-size-xl;
   color: t.$color-ink;
 }
@@ -218,6 +219,7 @@
 .titleInput {
   padding: t.$space-2 0;
   font-family: var(--font-heading);
+  letter-spacing: -0.015em;
   font-size: t.$font-size-xl;
   color: t.$color-ink;
   background: none;
@@ -279,6 +281,7 @@
 
 .saveButton {
   @include m.button-base;
+  @include m.button-sheen;
   background: t.$color-accent;
   color: t.$color-accent-foreground;
 
@@ -742,6 +745,7 @@
 
 .commentSubmit {
   @include m.button-base;
+  @include m.button-sheen;
   margin-left: auto;
   background: t.$color-accent;
   color: t.$color-accent-foreground;

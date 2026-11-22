@@ -13,6 +13,7 @@
 .title {
   margin: 0 0 t.$space-2;
   font-family: var(--font-heading);
+  letter-spacing: -0.015em;
   font-size: t.$font-size-2xl;
   color: t.$color-ink;
 }
@@ -55,7 +56,7 @@
   padding: t.$space-5 t.$space-6;
   background: t.$color-surface;
   border: 1px solid t.$color-border;
-  border-radius: t.$radius-lg;
+  border-radius: t.$radius-md;
 }
 
 .message {

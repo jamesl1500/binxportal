@@ -19,6 +19,7 @@ import { getMeetings } from "@/lib/meetings";
 import { getAgencyProjects } from "@/lib/projects";
 import ScheduleMeetingDialog from "@/components/forms/meetings/ScheduleMeetingDialog/ScheduleMeetingDialog";
 import MeetingsTable from "@/components/meetings/MeetingsTable/MeetingsTable";
+import PageEnter from "@/components/ui/PageEnter/PageEnter";
 
 import styles from "./page.module.scss";
 
@@ -48,46 +49,48 @@ const MeetingsPage = async () => {
   }));
 
   return (
-    <div>
-      <div className={styles.header}>
-        <div>
-          <span className={styles.eyebrow}>Meetings</span>
-          <h1 className={styles.title}>Meetings</h1>
-          <p className={styles.subtitle}>
-            Every meeting scheduled with a client, staff- or client-booked.
-          </p>
+    <PageEnter>
+      <div>
+        <div className={styles.header}>
+          <div>
+            <span className={styles.eyebrow}>Meetings</span>
+            <h1 className={styles.title}>Meetings</h1>
+            <p className={styles.subtitle}>
+              Every meeting scheduled with a client, staff- or client-booked.
+            </p>
+          </div>
+
+          <div className={styles.actions}>
+            <Link href="/settings/meetings" className={styles.settingsLink}>
+              Meeting settings
+            </Link>
+            {clients.length > 0 && (
+              <ScheduleMeetingDialog
+                agencyId={currentAgency.id}
+                clients={clientOptions}
+                projects={projectOptions}
+              />
+            )}
+          </div>
         </div>
 
-        <div className={styles.actions}>
-          <Link href="/settings/meetings" className={styles.settingsLink}>
-            Meeting settings
-          </Link>
-          {clients.length > 0 && (
-            <ScheduleMeetingDialog
+        {clients.length === 0 ? (
+          <p className={styles.notice}>
+            Add a client from the Clients page before scheduling a meeting.
+          </p>
+        ) : (
+          <div className={styles.tableWrapper}>
+            <MeetingsTable
               agencyId={currentAgency.id}
+              meetings={meetings}
               clients={clientOptions}
               projects={projectOptions}
+              showClient
             />
-          )}
-        </div>
+          </div>
+        )}
       </div>
-
-      {clients.length === 0 ? (
-        <p className={styles.notice}>
-          Add a client from the Clients page before scheduling a meeting.
-        </p>
-      ) : (
-        <div className={styles.tableWrapper}>
-          <MeetingsTable
-            agencyId={currentAgency.id}
-            meetings={meetings}
-            clients={clientOptions}
-            projects={projectOptions}
-            showClient
-          />
-        </div>
-      )}
-    </div>
+    </PageEnter>
   );
 };
 

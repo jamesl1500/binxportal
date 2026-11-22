@@ -16,6 +16,7 @@ import { redirect } from "next/navigation";
 import { getCurrentAgencyContext } from "@/lib/agencies";
 import { getProposals } from "@/lib/proposals";
 import ProposalsTable from "@/components/proposals/ProposalsTable/ProposalsTable";
+import PageEnter from "@/components/ui/PageEnter/PageEnter";
 
 import styles from "./page.module.scss";
 
@@ -34,29 +35,31 @@ const ProposalsPage = async () => {
   ).length;
 
   return (
-    <div>
-      <div className={styles.header}>
-        <div>
-          <span className={styles.eyebrow}>Proposals</span>
-          <h1 className={styles.title}>Proposals</h1>
-          <p className={styles.subtitle}>
-            {proposals.length} total · {draftCount} draft
-            {draftCount === 1 ? "" : "s"}
-          </p>
+    <PageEnter>
+      <div>
+        <div className={styles.header}>
+          <div>
+            <span className={styles.eyebrow}>Proposals</span>
+            <h1 className={styles.title}>Proposals</h1>
+            <p className={styles.subtitle}>
+              {proposals.length} total · {draftCount} draft
+              {draftCount === 1 ? "" : "s"}
+            </p>
+          </div>
+
+          <div className={styles.actions}>
+            <Link href="/proposals/new" className={styles.newButton}>
+              <Plus aria-hidden="true" />
+              New proposal
+            </Link>
+          </div>
         </div>
 
-        <div className={styles.actions}>
-          <Link href="/proposals/new" className={styles.newButton}>
-            <Plus aria-hidden="true" />
-            New proposal
-          </Link>
+        <div className={styles.tableWrapper}>
+          <ProposalsTable proposals={proposals} />
         </div>
       </div>
-
-      <div className={styles.tableWrapper}>
-        <ProposalsTable proposals={proposals} />
-      </div>
-    </div>
+    </PageEnter>
   );
 };
 

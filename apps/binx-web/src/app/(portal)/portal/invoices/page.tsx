@@ -19,6 +19,7 @@ import PortalPageHeader from "@/components/portal/PortalPageHeader/PortalPageHea
 import PortalStatTiles, {
   type PortalStat,
 } from "@/components/portal/PortalStatTiles/PortalStatTiles";
+import PageEnter from "@/components/ui/PageEnter/PageEnter";
 
 import styles from "../page.module.scss";
 
@@ -68,26 +69,28 @@ const PortalInvoicesPage = async () => {
   ];
 
   return (
-    <div className={styles.page}>
-      <PortalPageHeader
-        eyebrow="Billing"
-        title="Invoices"
-        subtitle={
-          unpaid.length > 0
-            ? `${formatMoneyCents(outstanding, currency)} outstanding across ${unpaid.length} ${unpaid.length === 1 ? "invoice" : "invoices"}. Open one to pay securely by card.`
-            : "You're all paid up — thank you!"
-        }
-      />
+    <PageEnter>
+      <div className={styles.page}>
+        <PortalPageHeader
+          eyebrow="Billing"
+          title="Invoices"
+          subtitle={
+            unpaid.length > 0
+              ? `${formatMoneyCents(outstanding, currency)} outstanding across ${unpaid.length} ${unpaid.length === 1 ? "invoice" : "invoices"}. Open one to pay securely by card.`
+              : "You're all paid up — thank you!"
+          }
+        />
 
-      {invoices.length === 0 ? (
-        <p className={styles.empty}>No invoices yet.</p>
-      ) : (
-        <>
-          <PortalStatTiles stats={stats} />
-          <PortalInvoiceList invoices={invoices} />
-        </>
-      )}
-    </div>
+        {invoices.length === 0 ? (
+          <p className={styles.empty}>No invoices yet.</p>
+        ) : (
+          <>
+            <PortalStatTiles stats={stats} />
+            <PortalInvoiceList invoices={invoices} />
+          </>
+        )}
+      </div>
+    </PageEnter>
   );
 };
 

@@ -32,7 +32,7 @@ $brand: var(--portal-primary, #{t.$color-ink});
   overflow: auto;
   background: t.$color-surface;
   border: 1px solid t.$color-border;
-  border-radius: t.$radius-lg;
+  border-radius: t.$radius-md;
   box-shadow: 0 32px 64px rgba(10, 10, 11, 0.24);
   outline: none;
   transform: translate(-50%, -50%);
@@ -99,6 +99,7 @@ $brand: var(--portal-primary, #{t.$color-ink});
 .title {
   margin: 0;
   font-family: var(--font-heading);
+  letter-spacing: -0.015em;
   font-size: t.$font-size-xl;
   line-height: 1.2;
   color: t.$color-ink;

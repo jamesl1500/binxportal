@@ -17,6 +17,7 @@ import { getAgencyClients } from "@/lib/clients";
 import { getAgencyProjects } from "@/lib/projects";
 import ProjectsTable from "@/components/forms/projects/ProjectsTable/ProjectsTable";
 import NewProjectButton from "@/components/forms/projects/NewProjectButton/NewProjectButton";
+import PageEnter from "@/components/ui/PageEnter/PageEnter";
 
 import styles from "./page.module.scss";
 
@@ -38,31 +39,33 @@ const ProjectsPage = async () => {
   ).length;
 
   return (
-    <div>
-      <div className={styles.header}>
-        <div>
-          <span className={styles.eyebrow}>Projects</span>
-          <h1 className={styles.title}>Your projects</h1>
-          <p className={styles.subtitle}>
-            {activeCount} active {activeCount === 1 ? "project" : "projects"} at{" "}
-            {currentAgency.name}.
-          </p>
+    <PageEnter>
+      <div>
+        <div className={styles.header}>
+          <div>
+            <span className={styles.eyebrow}>Projects</span>
+            <h1 className={styles.title}>Your projects</h1>
+            <p className={styles.subtitle}>
+              {activeCount} active {activeCount === 1 ? "project" : "projects"} at{" "}
+              {currentAgency.name}.
+            </p>
+          </div>
+
+          <NewProjectButton />
         </div>
 
-        <NewProjectButton />
-      </div>
+        {clients.length === 0 && (
+          <p className={styles.notice}>
+            You&apos;ll need a client before you can start a project — add one
+            from the Clients page first.
+          </p>
+        )}
 
-      {clients.length === 0 && (
-        <p className={styles.notice}>
-          You&apos;ll need a client before you can start a project — add one
-          from the Clients page first.
-        </p>
-      )}
-
-      <div className={styles.tableWrapper}>
-        <ProjectsTable projects={projects} />
+        <div className={styles.tableWrapper}>
+          <ProjectsTable projects={projects} />
+        </div>
       </div>
-    </div>
+    </PageEnter>
   );
 };
 

@@ -3,6 +3,7 @@
 
 .newButton {
   @include m.button-base;
+  @include m.button-sheen;
   gap: t.$space-2;
   background: t.$color-accent;
   color: t.$color-accent-foreground;

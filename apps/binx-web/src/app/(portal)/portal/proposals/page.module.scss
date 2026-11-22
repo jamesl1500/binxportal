@@ -32,7 +32,7 @@ $brand: var(--portal-primary, #{t.$color-ink});
   color: t.$color-ink-soft;
   background: t.$color-surface;
   border: 1px dashed t.$color-border-strong;
-  border-radius: t.$radius-lg;
+  border-radius: t.$radius-md;
 }
 
 .list {
@@ -94,7 +94,7 @@ $brand: var(--portal-primary, #{t.$color-ink});
   height: 2.25rem;
   color: $brand;
   background: color-mix(in srgb, #{$brand} 7%, white);
-  border-radius: t.$radius-lg;
+  border-radius: t.$radius-md;
 
   svg {
     width: 1rem;

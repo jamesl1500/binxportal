@@ -24,7 +24,7 @@ $brand: var(--portal-primary, #{t.$color-ink});
     radial-gradient(circle at 100% 100%, color-mix(in srgb, #{$brand} 10%, transparent), transparent 50%),
     t.$color-surface;
   border: 1px solid t.$color-border;
-  border-radius: 12px;
+  border-radius: t.$radius-md;
 
   @media (min-width: 640px) {
     padding: t.$space-8;
@@ -53,6 +53,7 @@ $brand: var(--portal-primary, #{t.$color-ink});
 .greeting {
   margin: 0;
   font-family: var(--font-heading);
+  letter-spacing: -0.015em;
   font-size: t.$font-size-2xl;
   line-height: 1.1;
   color: t.$color-ink;
@@ -102,7 +103,7 @@ $brand: var(--portal-primary, #{t.$color-ink});
   padding: t.$space-5 t.$space-6;
   background: rgba(255, 255, 255, 0.75);
   border: 1px solid t.$color-border;
-  border-radius: t.$radius-lg;
+  border-radius: t.$radius-md;
   backdrop-filter: blur(4px);
 }
 
@@ -236,7 +237,7 @@ $brand: var(--portal-primary, #{t.$color-ink});
   color: t.$color-ink-soft;
   background: t.$color-surface;
   border: 1px dashed t.$color-border-strong;
-  border-radius: t.$radius-lg;
+  border-radius: t.$radius-md;
 }
 
 // ---- Side panels ----
@@ -288,7 +289,7 @@ $brand: var(--portal-primary, #{t.$color-ink});
   flex-shrink: 0;
   color: $brand;
   background: color-mix(in srgb, #{$brand} 8%, white);
-  border-radius: t.$radius-lg;
+  border-radius: t.$radius-md;
 
   svg {
     width: 0.95rem;

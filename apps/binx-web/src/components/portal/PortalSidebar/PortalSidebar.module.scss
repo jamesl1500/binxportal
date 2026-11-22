@@ -4,6 +4,9 @@
 // Brand color, falling back to the app's ink when neither the client nor the
 // agency has set one — see --portal-primary in (portal)/layout.tsx.
 $brand: var(--portal-primary, #{t.$color-ink});
+// Active-item marker: the agency's colour, or the brand indigo by default
+// (fills such as the logo tile stay ink unless the agency picks a colour).
+$indicator: var(--portal-primary, #{t.$color-brand});
 $desktop: 900px;
 $width: 16.5rem;
 
@@ -167,7 +170,7 @@ $width: 16.5rem;
   font-size: t.$font-size-lg;
   color: t.$color-accent-foreground;
   background: $brand;
-  border-radius: t.$radius-lg;
+  border-radius: t.$radius-md;
 }
 
 .brandText {
@@ -249,7 +252,7 @@ $width: 16.5rem;
   &[data-active="true"] {
     font-weight: 600;
     color: t.$color-ink;
-    background: color-mix(in srgb, #{$brand} 9%, #{t.$color-surface});
+    background: color-mix(in srgb, #{$indicator} 9%, #{t.$color-surface});
 
     &::before {
       content: "";
@@ -258,12 +261,12 @@ $width: 16.5rem;
       bottom: 0.45rem;
       left: -#{t.$space-3};
       width: 3px;
-      background: $brand;
+      background: $indicator;
       border-radius: 0 3px 3px 0;
     }
 
     .itemIcon {
-      color: $brand;
+      color: $indicator;
     }
   }
 
@@ -326,7 +329,7 @@ $width: 16.5rem;
   padding: t.$space-4;
   background: color-mix(in srgb, #{$brand} 5%, #{t.$color-paper});
   border: 1px solid t.$color-border;
-  border-radius: t.$radius-lg;
+  border-radius: t.$radius-md;
 }
 
 .helpIcon {
