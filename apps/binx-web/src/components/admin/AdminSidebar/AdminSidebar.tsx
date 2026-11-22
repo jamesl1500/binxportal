@@ -2,8 +2,9 @@
  * AdminSidebar component
  *
  * Navigation for the Binx team's console: Overview, the Agencies and Users
- * support tools, the Feedback inbox (badged with how much is still open) and
- * the Audit log, plus a way back to the agency app.
+ * support tools, the Feedback inbox (badged with how much is still open),
+ * Errors (badged with the unresolved issues seen in the last day) and the
+ * Audit log, plus a way back to the agency app.
  * A sticky column on desktop; below 900px it becomes a horizontally
  * scrolling row of links above the page so it never pushes content down.
  *
@@ -20,6 +21,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   ArrowLeft,
+  Bug,
   Building2,
   LayoutDashboard,
   MessageSquareHeart,
@@ -43,6 +45,8 @@ interface AdminNavItem {
 interface AdminSidebarProps {
   /** Open (new + in review + planned) feedback, for the inbox badge. */
   openFeedback?: number;
+  /** Unresolved error issues seen in the last 24 hours. */
+  openErrors?: number;
 }
 
 export function isActive(
@@ -53,7 +57,10 @@ export function isActive(
   return pathname === item.href || pathname.startsWith(`${item.href}/`);
 }
 
-const AdminSidebar = ({ openFeedback = 0 }: AdminSidebarProps) => {
+const AdminSidebar = ({
+  openFeedback = 0,
+  openErrors = 0,
+}: AdminSidebarProps) => {
   const pathname = usePathname();
 
   const items: AdminNavItem[] = [
@@ -66,6 +73,13 @@ const AdminSidebar = ({ openFeedback = 0 }: AdminSidebarProps) => {
       icon: MessageSquareHeart,
       badge: openFeedback,
       badgeLabel: `${openFeedback} open`,
+    },
+    {
+      href: "/admin/errors",
+      label: "Errors",
+      icon: Bug,
+      badge: openErrors,
+      badgeLabel: `${openErrors} open ${openErrors === 1 ? "issue" : "issues"}`,
     },
     { href: "/admin/audit", label: "Audit log", icon: ScrollText },
   ];

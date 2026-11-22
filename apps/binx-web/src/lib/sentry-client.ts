@@ -14,21 +14,11 @@
  * @module apps/binx-web/src/lib/sentry-client.ts
  * @author Binx Portal
  */
+import { ENVIRONMENT, RELEASE, VIEW_TRANSITION_NOISE } from "@/lib/errors";
+
 type SentryModule = typeof import("@/lib/sentry-sdk-client");
 
 const DSN = process.env.NEXT_PUBLIC_SENTRY_DSN;
-
-/**
- * The browser abandoning a page-enter view transition (components/ui/PageEnter)
- * — the tab was hidden when it started, or a newer navigation replaced it.
- * React leaves the rejected transition promise unhandled, but the page still
- * renders; only the animation is skipped. Filtered here so it covers the
- * replayed early errors too.
- */
-const VIEW_TRANSITION_NOISE = [
-  /Transition was aborted because of invalid state/,
-  /Transition was skipped/,
-];
 
 let sentry: SentryModule | undefined;
 let loading: Promise<SentryModule> | undefined;
@@ -39,8 +29,11 @@ export function loadSentry(): Promise<SentryModule> | null {
   loading ??= import("@/lib/sentry-sdk-client").then((mod) => {
     mod.init({
       dsn: DSN,
-      environment: process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT ?? "development",
+      environment: ENVIRONMENT,
+      release: RELEASE,
       tracesSampleRate: 0.1,
+      // The browser abandoning a page-enter view transition — see isNoise in
+      // lib/errors.ts. Filtered here so it covers the replayed early errors.
       ignoreErrors: VIEW_TRANSITION_NOISE,
     });
     sentry = mod;
@@ -49,9 +42,20 @@ export function loadSentry(): Promise<SentryModule> | null {
   return loading;
 }
 
-/** Reports an error, loading the SDK right away if it isn't here yet. */
-export function reportError(error: unknown): void {
-  void loadSentry()?.then((mod) => mod.captureException(error));
+/**
+ * Reports an error to Sentry, loading the SDK right away if it isn't here
+ * yet. Resolves to Sentry's event id (undefined when Sentry is off), which
+ * the Binx error log stores so the admin console can link to the event.
+ * Most code wants `reportClientError` in lib/error-reporting.ts instead,
+ * which sends the error to both places.
+ */
+export async function reportError(
+  error: unknown,
+  tags?: Record<string, string>,
+): Promise<string | undefined> {
+  const mod = await loadSentry();
+  if (!mod) return undefined;
+  return mod.captureException(error, tags ? { tags } : undefined);
 }
 
 /** Next's `onRouterTransitionStart` hook — a no-op until the SDK has loaded. */

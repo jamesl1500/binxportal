@@ -1,0 +1,58 @@
+@use "../../../../../styles/tokens" as t;
+
+.title {
+  overflow-wrap: anywhere;
+}
+
+.message {
+  max-width: none;
+  overflow-wrap: anywhere;
+}
+
+.subheading {
+  margin: t.$space-5 0 t.$space-2;
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  color: t.$color-ink-soft;
+}
+
+// Stack traces are wide and long: scroll inside the card, never widen the
+// page (the console is used on phones too).
+.pre {
+  max-height: 28rem;
+  margin: 0;
+  padding: t.$space-3;
+  overflow: auto;
+  font-family: var(--font-mono);
+  font-size: t.$font-size-xs;
+  line-height: 1.55;
+  white-space: pre;
+  color: t.$color-ink;
+  background: color-mix(in srgb, t.$color-ink 4%, transparent);
+  border: 1px solid t.$color-border;
+  border-radius: 8px;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: t.$font-size-xs;
+}
+
+.current td {
+  background: color-mix(in srgb, t.$color-ink 4%, transparent);
+}
+
+.icon {
+  width: 0.8rem;
+  height: 0.8rem;
+  vertical-align: -0.1em;
+}
+
+.external {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-1;
+  font-size: t.$font-size-xs;
+  white-space: nowrap;
+  color: t.$color-ink;
+}
