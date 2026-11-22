@@ -177,6 +177,65 @@
   }
 }
 
+// What the agency keeps if the client pays online — sits under the totals.
+.payout {
+  margin-top: t.$space-3;
+  padding: t.$space-4;
+  border: 1px dashed t.$color-border-strong;
+  border-radius: t.$radius-md;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+}
+
+.payoutTitle {
+  margin: 0;
+  @include m.mono-label;
+  color: t.$color-ink-faint;
+}
+
+.payoutRows {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+
+  div {
+    display: flex;
+    justify-content: space-between;
+    gap: t.$space-3;
+    font-size: t.$font-size-sm;
+    color: t.$color-ink-soft;
+  }
+
+  dt,
+  dd {
+    margin: 0;
+  }
+
+  dd {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+}
+
+.payoutNet {
+  padding-top: t.$space-2;
+  border-top: 1px solid t.$color-border;
+
+  dt,
+  dd {
+    font-weight: 700;
+    color: t.$color-ink;
+  }
+}
+
+.payoutHint {
+  margin: 0;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+}
+
 .actions {
   display: flex;
   justify-content: flex-end;

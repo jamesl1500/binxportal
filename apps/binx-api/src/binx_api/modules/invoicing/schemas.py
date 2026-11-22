@@ -139,6 +139,37 @@ class PaymentRead(BaseModel):
     reference: str | None
     recorded_by_name: str | None
     created_at: datetime
+    # Staff only, and only on method="stripe" payments; always null in the
+    # client portal. See invoicing/fees.py.
+    platform_fee_cents: int | None = None
+    stripe_fee_cents: int | None = None
+    # True when stripe_fee_cents is an estimate (Stripe's fee couldn't be read).
+    stripe_fee_estimated: bool = False
+    net_cents: int | None = None
+
+
+class FeeBreakdownRead(BaseModel):
+    gross_cents: int
+    stripe_fee_cents: int
+    platform_fee_cents: int
+    net_cents: int
+    stripe_fee_estimated: bool
+
+
+class InvoiceFeesRead(BaseModel):
+    """What online payment costs the agency on this invoice, and what it
+    keeps. Staff only — the client portal never gets this block."""
+
+    platform_fee_bps: int
+    stripe_estimate_bps: int
+    stripe_estimate_fixed_cents: int
+    # Whether the client can pay this agency online at all yet.
+    online_payments_enabled: bool
+    # The amount still due, if the client pays it online. Null once nothing
+    # is due, or on a void invoice.
+    if_paid_online: FeeBreakdownRead | None
+    # Every online payment so far, added up. Null when there are none.
+    collected_online: FeeBreakdownRead | None
 
 
 class InvoiceDetailRead(InvoiceRead):
@@ -157,6 +188,8 @@ class InvoiceDetailRead(InvoiceRead):
     bill_to: InvoiceParty
     line_items: list[LineItemRead]
     payments: list[PaymentRead]
+    # Staff only; always null in the client portal.
+    fees: InvoiceFeesRead | None = None
 
     model_config = {"populate_by_name": True}
 

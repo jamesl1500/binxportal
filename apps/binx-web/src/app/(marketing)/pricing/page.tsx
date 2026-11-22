@@ -1,7 +1,8 @@
 /**
  * page.tsx - Pricing
  *
- * The four plans, what separates them, and the questions people ask before
+ * The four plans, what separates them, the fee on invoices clients pay
+ * online (with a worked example), and the questions people ask before
  * signing up. FAQ content is mirrored into FAQPage JSON-LD for rich results.
  *
  * @module apps/binx-web/src/app/(marketing)/pricing/page.tsx
@@ -19,6 +20,12 @@ import {
   marketingOpenGraph,
   softwareApplicationJsonLd,
 } from "@/lib/site";
+import { formatMoneyCents } from "@/lib/money";
+import {
+  PLATFORM_FEE_LABEL,
+  STRIPE_ESTIMATE_LABEL,
+  estimateOnlinePayment,
+} from "@/lib/payment-fees";
 import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 
 import styles from "../marketing.module.scss";
@@ -28,7 +35,11 @@ const TITLE = "Pricing";
 // short breadcrumb name). Kept to 60 characters with the " · Binx Portal" suffix.
 const SEO_TITLE = "Agency software pricing, free plan included";
 const DESCRIPTION =
-  "Flat plans for agencies: start free, then Starter, Pro or Scale with a 14-day free trial, no card needed. Proposals, portal, invoicing and AI on every plan.";
+  "Start free, then Starter, Pro or Scale with a 14-day free trial, no card needed. Plus 1.25% on invoices clients pay online. Portal, invoicing and AI included.";
+
+// The worked example under the plans: a typical project invoice.
+const EXAMPLE_INVOICE_CENTS = 250_000;
+const example = estimateOnlinePayment(EXAMPLE_INVOICE_CENTS);
 
 export const metadata: Metadata = {
   title: SEO_TITLE,
@@ -47,6 +58,10 @@ const FAQ = [
     a: LAUNCH_DISCOUNT_ENABLED
       ? `Yes. Every paid plan starts with a ${TRIAL_DAYS}-day free trial — no card required. Upgrade during the trial, or within two weeks after it ends, and you'll get ${TRIAL_DISCOUNT_PERCENT_OFF}% off your first 3 months.`
       : `Yes. Every paid plan starts with a ${TRIAL_DAYS}-day free trial — no card required. Upgrade whenever you're ready.`,
+  },
+  {
+    q: "Are there fees on invoice payments?",
+    a: `Only when a client pays an invoice online through the portal. Binx keeps ${PLATFORM_FEE_LABEL} of the payment, and Stripe takes its standard processing fee (${STRIPE_ESTIMATE_LABEL} for US cards). Both come out of the payment, so your client pays exactly the invoice amount. Invoices paid by bank transfer, check or cash and recorded by hand have no fee, and every invoice shows you what you'll keep before you send it.`,
   },
   {
     q: "Do you charge per seat?",
@@ -132,6 +147,9 @@ const PricingPage = () => {
                 <p className={styles.pricePer}>
                   {plan.price === 0 ? "forever" : "per month"}
                 </p>
+                <p className={styles.priceFee}>
+                  + {PLATFORM_FEE_LABEL} per invoice paid online
+                </p>
                 <p className={styles.priceBlurb}>{plan.blurb}</p>
                 {plan.price > 0 && (
                   <p className={styles.priceBlurb}>
@@ -152,6 +170,42 @@ const PricingPage = () => {
                 </Link>
               </div>
             ))}
+          </div>
+
+          <div className={styles.feeNote}>
+            <div className={styles.feeNoteBody}>
+              <h2 className={styles.h3}>
+                Plus {PLATFORM_FEE_LABEL} when clients pay online.
+              </h2>
+              <p className={styles.cardText}>
+                When a client pays an invoice from their portal, Binx keeps{" "}
+                {PLATFORM_FEE_LABEL} and Stripe takes its processing fee. Both
+                come out of the payment, so your client pays the invoice
+                amount and nothing more. Bank transfers, checks and cash you
+                record by hand are free.
+              </p>
+            </div>
+            <dl
+              className={styles.feeExample}
+              aria-label={`Example: a ${formatMoneyCents(EXAMPLE_INVOICE_CENTS)} invoice paid online`}
+            >
+              <div>
+                <dt>Invoice paid online</dt>
+                <dd>{formatMoneyCents(example.grossCents)}</dd>
+              </div>
+              <div>
+                <dt>Stripe processing ({STRIPE_ESTIMATE_LABEL})</dt>
+                <dd>−{formatMoneyCents(example.stripeFeeCents)}</dd>
+              </div>
+              <div>
+                <dt>Binx ({PLATFORM_FEE_LABEL})</dt>
+                <dd>−{formatMoneyCents(example.platformFeeCents)}</dd>
+              </div>
+              <div className={styles.feeExampleNet}>
+                <dt>You keep</dt>
+                <dd>{formatMoneyCents(example.netCents)}</dd>
+              </div>
+            </dl>
           </div>
         </div>
       </section>

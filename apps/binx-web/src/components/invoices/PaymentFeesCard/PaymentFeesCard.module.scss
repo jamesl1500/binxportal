@@ -1,0 +1,99 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.card {
+  @include m.card-base;
+  padding: t.$space-5;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+  margin-bottom: t.$space-6;
+
+  // Internal numbers: never part of the invoice a client gets.
+  @media print {
+    display: none;
+  }
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-2;
+  margin: 0;
+  @include m.mono-label;
+  color: t.$color-ink-soft;
+}
+
+.eyebrowIcon {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: t.$color-accent;
+}
+
+.columns {
+  display: grid;
+  gap: t.$space-4;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+}
+
+.breakdown {
+  padding: t.$space-4;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+}
+
+.title {
+  margin: 0 0 t.$space-3;
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  color: t.$color-ink;
+}
+
+.rows {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+
+  div {
+    display: flex;
+    justify-content: space-between;
+    gap: t.$space-3;
+    font-size: t.$font-size-sm;
+    color: t.$color-ink-soft;
+  }
+
+  dt,
+  dd {
+    margin: 0;
+  }
+
+  dd {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+}
+
+.net {
+  margin-top: t.$space-1;
+  padding-top: t.$space-2;
+  border-top: 1px solid t.$color-border;
+
+  dt,
+  dd {
+    font-weight: 700;
+    font-size: t.$font-size-base;
+    color: t.$color-ink;
+  }
+}
+
+.hint {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-faint;
+
+  a {
+    color: t.$color-ink;
+  }
+}

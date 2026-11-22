@@ -65,6 +65,22 @@ describe("InvoiceForm", () => {
     expect(screen.getByText("$1,350.00")).toBeInTheDocument();
   });
 
+  it("previews what the agency keeps if the client pays online", async () => {
+    const user = userEvent.setup();
+    render(<InvoiceForm agencyId="a1" clients={clients} projects={[]} billingSettings={settings} />);
+    // Nothing to preview on an empty invoice.
+    expect(screen.queryByLabelText("If your client pays online")).not.toBeInTheDocument();
+
+    await user.type(screen.getByLabelText("Line 1 description"), "Brand identity");
+    await user.type(screen.getByLabelText("Line 1 unit price"), "2500");
+
+    const payout = screen.getByLabelText("If your client pays online");
+    // $2,500: Stripe ~ 2.9% + 30c = $72.80, Binx 1.25% = $31.25.
+    expect(payout).toHaveTextContent("Stripe processing (estimated)−≈ $72.80");
+    expect(payout).toHaveTextContent("Binx fee (1.25%)−$31.25");
+    expect(payout).toHaveTextContent("You keep≈ $2,395.95");
+  });
+
   it("submits the line items and totals inputs", async () => {
     mockedCreate.mockResolvedValueOnce({ invoice: { id: "inv-1" } as never });
     const user = userEvent.setup();

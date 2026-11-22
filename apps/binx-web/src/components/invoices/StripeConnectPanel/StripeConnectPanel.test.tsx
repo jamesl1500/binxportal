@@ -47,6 +47,15 @@ describe("StripeConnectPanel", () => {
     expect(screen.queryByRole("button")).toBeNull();
   });
 
+  it.each([
+    ["not connected", notConnected],
+    ["pending", pending],
+    ["active", active],
+  ])("states the online payment fee when %s", (_label, status) => {
+    render(<StripeConnectPanel agencyId="a1" status={status as never} canManage />);
+    expect(screen.getByText(/1\.25% per paid invoice for Binx, plus Stripe's processing fee/)).toBeInTheDocument();
+  });
+
   it("hides the button and shows a note for a non-manager", () => {
     render(<StripeConnectPanel agencyId="a1" status={notConnected as never} canManage={false} />);
     expect(screen.queryByRole("button")).toBeNull();

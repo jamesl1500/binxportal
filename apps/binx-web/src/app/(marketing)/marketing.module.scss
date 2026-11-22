@@ -867,6 +867,78 @@ $header-height: 4.5rem;
   color: t.$color-ink-faint;
 }
 
+.priceFee {
+  margin: t.$space-1 0 0;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+}
+
+// "Plus 1.25% when clients pay online", with a worked example, under the plans.
+.feeNote {
+  display: grid;
+  gap: t.$space-6;
+  margin-top: t.$space-8;
+  padding: t.$space-6;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+
+  @media (min-width: 860px) {
+    grid-template-columns: 1.2fr 1fr;
+    align-items: center;
+  }
+}
+
+.feeNoteBody {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+
+  .h3 {
+    margin: 0;
+  }
+}
+
+.feeExample {
+  margin: 0;
+  padding: t.$space-4;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+
+  div {
+    display: flex;
+    justify-content: space-between;
+    gap: t.$space-3;
+    font-size: t.$font-size-sm;
+    color: t.$color-ink-soft;
+  }
+
+  dt,
+  dd {
+    margin: 0;
+  }
+
+  dd {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+}
+
+.feeExampleNet {
+  padding-top: t.$space-2;
+  border-top: 1px solid t.$color-border;
+
+  dt,
+  dd {
+    font-weight: 700;
+    color: t.$color-ink;
+  }
+}
+
 .priceBlurb {
   margin: t.$space-3 0 t.$space-5;
   font-size: t.$font-size-sm;

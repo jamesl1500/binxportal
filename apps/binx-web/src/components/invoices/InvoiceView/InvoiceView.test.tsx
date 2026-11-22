@@ -68,6 +68,7 @@ describe("InvoiceView", () => {
               paid_on: "2026-01-10",
               method: "bank_transfer",
               reference: "REF9",
+              stripe_fee_estimated: false,
               amount_cents: 10000,
               recorded_by_name: "Morgan",
               created_at: "2026-01-10T00:00:00Z",

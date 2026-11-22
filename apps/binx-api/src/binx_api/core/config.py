@@ -144,10 +144,6 @@ class Settings(BaseSettings):
     # cleanly off" pattern as the price ids above: no coupon configured just
     # means Checkout proceeds at full price.
     stripe_launch_discount_coupon_id: str | None = None
-    # Basis points of a client-invoice payment Binx keeps as a platform fee on
-    # Connect "direct charge" payments. 0 = no fee today; see
-    # invoicing/service.py::start_invoice_checkout.
-    stripe_application_fee_bps: int = 0
 
     # --- Email (Amazon SES) --------------------------------------------------
     # Unset (the default — every dev/test environment) means email is cleanly

@@ -1,8 +1,8 @@
 /**
  * page.tsx - Invoice Detail
  *
- * A single invoice: the status-aware action bar and the print-ready view. A
- * bad :invoiceId 404s.
+ * A single invoice: the status-aware action bar, the staff-only fees and
+ * take-home card, and the print-ready view. A bad :invoiceId 404s.
  *
  * @module apps/binx-web/src/app/(app)/invoices/[invoiceId]/page.tsx
  * @author Binx Portal
@@ -17,6 +17,7 @@ import { getInvoice } from "@/lib/invoicing";
 import AiReminderCard from "@/components/invoices/AiReminderCard/AiReminderCard";
 import InvoiceActions from "@/components/invoices/InvoiceActions/InvoiceActions";
 import InvoiceView from "@/components/invoices/InvoiceView/InvoiceView";
+import PaymentFeesCard from "@/components/invoices/PaymentFeesCard/PaymentFeesCard";
 
 import styles from "../page.module.scss";
 
@@ -73,6 +74,8 @@ const InvoicePage = async ({ params }: InvoicePageProps) => {
       />
 
       <AiReminderCard agencyId={currentAgency.id} invoice={invoice} />
+
+      <PaymentFeesCard invoice={invoice} />
 
       <InvoiceView invoice={invoice} />
     </div>

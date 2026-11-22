@@ -5950,6 +5950,39 @@
         "title": "ExperienceEntry",
         "type": "object"
       },
+      "FeeBreakdownRead": {
+        "properties": {
+          "gross_cents": {
+            "title": "Gross Cents",
+            "type": "integer"
+          },
+          "net_cents": {
+            "title": "Net Cents",
+            "type": "integer"
+          },
+          "platform_fee_cents": {
+            "title": "Platform Fee Cents",
+            "type": "integer"
+          },
+          "stripe_fee_cents": {
+            "title": "Stripe Fee Cents",
+            "type": "integer"
+          },
+          "stripe_fee_estimated": {
+            "title": "Stripe Fee Estimated",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "gross_cents",
+          "stripe_fee_cents",
+          "platform_fee_cents",
+          "net_cents",
+          "stripe_fee_estimated"
+        ],
+        "title": "FeeBreakdownRead",
+        "type": "object"
+      },
       "FeedbackAdminList": {
         "properties": {
           "items": {
@@ -7044,6 +7077,16 @@
             "title": "Due Date",
             "type": "string"
           },
+          "fees": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InvoiceFeesRead"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "from": {
             "$ref": "#/components/schemas/InvoiceParty"
           },
@@ -7198,6 +7241,57 @@
           "payments"
         ],
         "title": "InvoiceDetailRead",
+        "type": "object"
+      },
+      "InvoiceFeesRead": {
+        "description": "What online payment costs the agency on this invoice, and what it\nkeeps. Staff only \u2014 the client portal never gets this block.",
+        "properties": {
+          "collected_online": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FeeBreakdownRead"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "if_paid_online": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FeeBreakdownRead"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "online_payments_enabled": {
+            "title": "Online Payments Enabled",
+            "type": "boolean"
+          },
+          "platform_fee_bps": {
+            "title": "Platform Fee Bps",
+            "type": "integer"
+          },
+          "stripe_estimate_bps": {
+            "title": "Stripe Estimate Bps",
+            "type": "integer"
+          },
+          "stripe_estimate_fixed_cents": {
+            "title": "Stripe Estimate Fixed Cents",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "platform_fee_bps",
+          "stripe_estimate_bps",
+          "stripe_estimate_fixed_cents",
+          "online_payments_enabled",
+          "if_paid_online",
+          "collected_online"
+        ],
+        "title": "InvoiceFeesRead",
         "type": "object"
       },
       "InvoiceFromTimeEntriesCreate": {
@@ -10704,10 +10798,32 @@
             "title": "Method",
             "type": "string"
           },
+          "net_cents": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Cents"
+          },
           "paid_on": {
             "format": "date",
             "title": "Paid On",
             "type": "string"
+          },
+          "platform_fee_cents": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Platform Fee Cents"
           },
           "recorded_by_name": {
             "anyOf": [
@@ -10730,6 +10846,22 @@
               }
             ],
             "title": "Reference"
+          },
+          "stripe_fee_cents": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stripe Fee Cents"
+          },
+          "stripe_fee_estimated": {
+            "default": false,
+            "title": "Stripe Fee Estimated",
+            "type": "boolean"
           }
         },
         "required": [

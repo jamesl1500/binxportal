@@ -6801,6 +6801,19 @@ export interface components {
             /** Title */
             title: string;
         };
+        /** FeeBreakdownRead */
+        FeeBreakdownRead: {
+            /** Gross Cents */
+            gross_cents: number;
+            /** Net Cents */
+            net_cents: number;
+            /** Platform Fee Cents */
+            platform_fee_cents: number;
+            /** Stripe Fee Cents */
+            stripe_fee_cents: number;
+            /** Stripe Fee Estimated */
+            stripe_fee_estimated: boolean;
+        };
         /** FeedbackAdminList */
         FeedbackAdminList: {
             /** Items */
@@ -7140,6 +7153,7 @@ export interface components {
              * Format: date
              */
             due_date: string;
+            fees?: components["schemas"]["InvoiceFeesRead"] | null;
             from: components["schemas"]["InvoiceParty"];
             /**
              * Id
@@ -7179,6 +7193,23 @@ export interface components {
             total_cents: number;
             /** Voided At */
             voided_at: string | null;
+        };
+        /**
+         * InvoiceFeesRead
+         * @description What online payment costs the agency on this invoice, and what it
+         *     keeps. Staff only — the client portal never gets this block.
+         */
+        InvoiceFeesRead: {
+            collected_online: components["schemas"]["FeeBreakdownRead"] | null;
+            if_paid_online: components["schemas"]["FeeBreakdownRead"] | null;
+            /** Online Payments Enabled */
+            online_payments_enabled: boolean;
+            /** Platform Fee Bps */
+            platform_fee_bps: number;
+            /** Stripe Estimate Bps */
+            stripe_estimate_bps: number;
+            /** Stripe Estimate Fixed Cents */
+            stripe_estimate_fixed_cents: number;
         };
         /** InvoiceFromTimeEntriesCreate */
         InvoiceFromTimeEntriesCreate: {
@@ -8374,15 +8405,26 @@ export interface components {
             invoice_id: string;
             /** Method */
             method: string;
+            /** Net Cents */
+            net_cents?: number | null;
             /**
              * Paid On
              * Format: date
              */
             paid_on: string;
+            /** Platform Fee Cents */
+            platform_fee_cents?: number | null;
             /** Recorded By Name */
             recorded_by_name: string | null;
             /** Reference */
             reference: string | null;
+            /** Stripe Fee Cents */
+            stripe_fee_cents?: number | null;
+            /**
+             * Stripe Fee Estimated
+             * @default false
+             */
+            stripe_fee_estimated: boolean;
         };
         /** PlanCheckoutRequest */
         PlanCheckoutRequest: {

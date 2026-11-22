@@ -34,6 +34,7 @@ import {
   TRACTION,
   USE_OF_FUNDS,
 } from "@/lib/investors";
+import { PLATFORM_FEE_LABEL } from "@/lib/payment-fees";
 import {
   breadcrumbJsonLd,
   marketingOpenGraph,
@@ -66,7 +67,7 @@ const SNAPSHOT = [
   ...(ROUND.amount ? [{ label: "Raising", value: ROUND.amount }] : []),
   { label: "Product", value: "Live and self-serve" },
   { label: "Pricing", value: `Free, then $${lowestPaid}–$${highest}/mo` },
-  { label: "Payments", value: "Built on Stripe Connect" },
+  { label: "Payments", value: `${PLATFORM_FEE_LABEL} of invoices paid online` },
 ];
 
 const PROBLEMS = [
@@ -289,7 +290,8 @@ const InvestorsPage = () => {
             <h2 className={styles.h2}>Revenue that grows with the agency.</h2>
             <p className={`${styles.lead} ${styles.leadOnDark}`}>
               The free plan brings agencies in. They upgrade as they add
-              clients, projects and team members.
+              clients, projects and team members, and every invoice their
+              clients pay online earns a fee.
             </p>
           </div>
 
@@ -320,12 +322,12 @@ const InvestorsPage = () => {
               </p>
             </div>
             <div>
-              <h3 className={styles.stepTitle}>Payments next</h3>
+              <h3 className={styles.stepTitle}>Plus a share of payments</h3>
               <p className={styles.stepText}>
-                Clients already pay their invoices in the portal through Stripe
-                Connect, so agency revenue moves through {SITE.name}. A small
-                platform fee on that volume would be a second revenue line, and
-                we haven&apos;t switched it on yet.
+                Clients pay their invoices in the portal through Stripe
+                Connect, and {SITE.name} keeps {PLATFORM_FEE_LABEL} of every
+                invoice paid that way. Revenue grows with the money agencies
+                bill, not just with seats.
               </p>
             </div>
           </div>

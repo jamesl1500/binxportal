@@ -13,13 +13,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { PLATFORM_FEE_LABEL } from "@/lib/payment-fees";
 import { marketingOpenGraph, SITE } from "@/lib/site";
 
 import styles from "../marketing.module.scss";
 
 const TITLE = "Terms of Service";
 const DESCRIPTION = `The terms that govern using ${SITE.name} — accounts, plans and billing, the client portal, and what each side is responsible for.`;
-const LAST_UPDATED = "Effective October 21, 2026";
+const LAST_UPDATED = "Effective November 21, 2026";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -81,6 +82,21 @@ const TermsPage = () => {
               effect immediately with a prorated charge for the rest of the
               current period, and a downgrade takes effect at the start of the
               next billing period.
+            </p>
+
+            <h2>Online invoice payments</h2>
+            <p>
+              If you connect a Stripe account, your clients can pay your
+              invoices online through the portal. You are the merchant for
+              those payments: the money settles into your own Stripe account,
+              under Stripe&apos;s terms. For each invoice payment made this
+              way, {SITE.name} keeps a platform fee of {PLATFORM_FEE_LABEL} of
+              the amount paid, and Stripe separately charges its own
+              processing fees to your Stripe account. Both are deducted from
+              the payment, not added to what your client pays. Payments you
+              record by hand, such as a bank transfer, check or cash, carry no
+              platform fee. If you refund a payment, the platform fee on it is
+              not refunded unless we agree otherwise.
             </p>
 
             <h2>Your data and content</h2>

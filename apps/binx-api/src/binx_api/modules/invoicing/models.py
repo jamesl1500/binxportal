@@ -150,6 +150,13 @@ class InvoicePayment(Base):
     stripe_payment_intent_id: Mapped[str | None] = mapped_column(String(255), default=None, unique=True, index=True)
     stripe_checkout_session_id: Mapped[str | None] = mapped_column(String(255), default=None, index=True)
 
+    # Fees taken from a method="stripe" payment (see invoicing/fees.py). NULL
+    # on manual payments. platform_fee_cents is NULL on online payments made
+    # before Binx charged a fee; stripe_fee_cents is NULL when the charge's
+    # balance transaction couldn't be read, and the UI estimates it instead.
+    platform_fee_cents: Mapped[int | None] = mapped_column(Integer, default=None)
+    stripe_fee_cents: Mapped[int | None] = mapped_column(Integer, default=None)
+
 
 # ---- Recurring invoices (retainers) --------------------------------------
 # A template that stamps out a fresh draft (or auto-issued) Invoice on a
