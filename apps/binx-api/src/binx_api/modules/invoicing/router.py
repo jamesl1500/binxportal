@@ -9,13 +9,15 @@ from binx_api.modules.agencies.dependencies import require_agency_role
 from binx_api.modules.agencies.models import ROLE_ADMIN, ROLE_MEMBER, ROLE_OWNER, Agency, AgencyClient
 from binx_api.modules.ai import service as ai_service
 from binx_api.modules.ai.schemas import AiDraftRead
-from binx_api.modules.invoicing import service
-from binx_api.modules.invoicing.models import Invoice, InvoiceLineItem, InvoicePayment
+from binx_api.modules.invoicing import fees, service
+from binx_api.modules.invoicing.models import STATUS_VOID, Invoice, InvoiceLineItem, InvoicePayment
 from binx_api.modules.invoicing.schemas import (
     BillingSettingsRead,
     BillingSettingsUpdate,
+    FeeBreakdownRead,
     InvoiceCreate,
     InvoiceDetailRead,
+    InvoiceFeesRead,
     InvoiceFromTimeEntriesCreate,
     InvoiceParty,
     InvoiceRead,
@@ -75,8 +77,26 @@ def _line_item_read(item: InvoiceLineItem) -> LineItemRead:
     )
 
 
-def _payment_read(payment: InvoicePayment, recorded_by_name: str | None) -> PaymentRead:
-    return PaymentRead(
+def _online_breakdown(payment: InvoicePayment) -> fees.FeeBreakdown:
+    return fees.recorded(
+        payment.amount_cents,
+        stripe_fee_cents=payment.stripe_fee_cents,
+        platform_fee_cents=payment.platform_fee_cents,
+    )
+
+
+def _breakdown_read(breakdown: fees.FeeBreakdown) -> FeeBreakdownRead:
+    return FeeBreakdownRead(
+        gross_cents=breakdown.gross_cents,
+        stripe_fee_cents=breakdown.stripe_fee_cents,
+        platform_fee_cents=breakdown.platform_fee_cents,
+        net_cents=breakdown.net_cents,
+        stripe_fee_estimated=breakdown.stripe_fee_estimated,
+    )
+
+
+def _payment_read(payment: InvoicePayment, recorded_by_name: str | None, *, include_fees: bool = False) -> PaymentRead:
+    read = PaymentRead(
         id=payment.id,
         invoice_id=payment.invoice_id,
         amount_cents=payment.amount_cents,
@@ -85,6 +105,28 @@ def _payment_read(payment: InvoicePayment, recorded_by_name: str | None) -> Paym
         reference=payment.reference,
         recorded_by_name=recorded_by_name,
         created_at=payment.created_at,
+    )
+    if include_fees and payment.method == "stripe":
+        breakdown = _online_breakdown(payment)
+        read.platform_fee_cents = breakdown.platform_fee_cents
+        read.stripe_fee_cents = breakdown.stripe_fee_cents
+        read.stripe_fee_estimated = breakdown.stripe_fee_estimated
+        read.net_cents = breakdown.net_cents
+    return read
+
+
+def _fees_read(invoice: Invoice, settings, payments: list[tuple[InvoicePayment, str | None]]) -> InvoiceFeesRead:
+    amount_due = invoice.total_cents - invoice.amount_paid_cents
+    online = [_online_breakdown(payment) for payment, _name in payments if payment.method == "stripe"]
+    return InvoiceFeesRead(
+        platform_fee_bps=fees.PLATFORM_FEE_BPS,
+        stripe_estimate_bps=fees.STRIPE_ESTIMATE_BPS,
+        stripe_estimate_fixed_cents=fees.STRIPE_ESTIMATE_FIXED_CENTS,
+        online_payments_enabled=bool(settings.stripe_connect_charges_enabled),
+        if_paid_online=(
+            _breakdown_read(fees.estimate(amount_due)) if amount_due > 0 and invoice.status != STATUS_VOID else None
+        ),
+        collected_online=_breakdown_read(sum(online[1:], online[0])) if online else None,
     )
 
 
@@ -96,7 +138,11 @@ def _detail_read(
     settings,
     line_items: list[InvoiceLineItem],
     payments: list[tuple[InvoicePayment, str | None]],
+    *,
+    include_fees: bool = False,
 ) -> InvoiceDetailRead:
+    """``include_fees`` is for staff routes only. The client portal shares
+    this function and must never see what the agency pays in fees."""
     base = _invoice_read(invoice, client.name, project_name)
     return InvoiceDetailRead(
         **base.model_dump(),
@@ -120,7 +166,8 @@ def _detail_read(
             email=client.billing_email or client.primary_contact_email,
         ),
         line_items=[_line_item_read(item) for item in line_items],
-        payments=[_payment_read(payment, name) for payment, name in payments],
+        payments=[_payment_read(payment, name, include_fees=include_fees) for payment, name in payments],
+        fees=_fees_read(invoice, settings, payments) if include_fees else None,
     )
 
 
@@ -218,7 +265,7 @@ async def create_invoice(
         payment_instructions=data.payment_instructions,
         line_items=data.line_items,
     )
-    return _detail_read(invoice, *(await service.get_invoice_context(db, invoice)))
+    return _detail_read(invoice, *(await service.get_invoice_context(db, invoice)), include_fees=True)
 
 
 @router.post("/invoices/from-time-entries", response_model=InvoiceDetailRead, status_code=status.HTTP_201_CREATED)
@@ -234,14 +281,14 @@ async def create_invoice_from_time_entries(
         project_id=data.project_id,
         entry_ids=data.entry_ids,
     )
-    return _detail_read(invoice, *(await service.get_invoice_context(db, invoice)))
+    return _detail_read(invoice, *(await service.get_invoice_context(db, invoice)), include_fees=True)
 
 
 @router.get("/invoices/{invoice_id}", response_model=InvoiceDetailRead)
 async def read_invoice(db: DbSession, agency_and_role: AnyMember, invoice_id: uuid.UUID) -> InvoiceDetailRead:
     agency, _role = agency_and_role
     invoice = await service.get_invoice_or_404(db, agency.id, invoice_id)
-    return _detail_read(invoice, *(await service.get_invoice_context(db, invoice)))
+    return _detail_read(invoice, *(await service.get_invoice_context(db, invoice)), include_fees=True)
 
 
 @router.patch("/invoices/{invoice_id}", response_model=InvoiceDetailRead)
@@ -264,7 +311,7 @@ async def update_invoice(
         payment_instructions=data.payment_instructions,
         line_items=data.line_items,
     )
-    return _detail_read(invoice, *(await service.get_invoice_context(db, invoice)))
+    return _detail_read(invoice, *(await service.get_invoice_context(db, invoice)), include_fees=True)
 
 
 @router.post("/invoices/{invoice_id}/issue", response_model=InvoiceDetailRead)
@@ -291,7 +338,7 @@ async def issue_invoice(
                 amount_due=_money(invoice.total_cents - invoice.amount_paid_cents, invoice.currency),
                 due_date=invoice.due_date.isoformat(),
             )
-    return _detail_read(invoice, *(await service.get_invoice_context(db, invoice)))
+    return _detail_read(invoice, *(await service.get_invoice_context(db, invoice)), include_fees=True)
 
 
 @router.post("/invoices/{invoice_id}/void", response_model=InvoiceDetailRead)
@@ -301,7 +348,7 @@ async def void_invoice(
     agency, _role = agency_and_role
     invoice = await service.get_invoice_or_404(db, agency.id, invoice_id)
     invoice = await service.void_invoice(db, invoice, voided_by=current_user)
-    return _detail_read(invoice, *(await service.get_invoice_context(db, invoice)))
+    return _detail_read(invoice, *(await service.get_invoice_context(db, invoice)), include_fees=True)
 
 
 @router.delete("/invoices/{invoice_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -331,7 +378,7 @@ async def list_payments(db: DbSession, agency_and_role: AnyMember, invoice_id: u
     agency, _role = agency_and_role
     await service.get_invoice_or_404(db, agency.id, invoice_id)
     rows = await service.list_payments(db, invoice_id)
-    return [_payment_read(payment, name) for payment, name in rows]
+    return [_payment_read(payment, name, include_fees=True) for payment, name in rows]
 
 
 @router.post("/invoices/{invoice_id}/payments", response_model=InvoiceDetailRead, status_code=status.HTTP_201_CREATED)
@@ -354,7 +401,7 @@ async def add_payment(
         reference=data.reference,
     )
     await db.refresh(invoice)
-    return _detail_read(invoice, *(await service.get_invoice_context(db, invoice)))
+    return _detail_read(invoice, *(await service.get_invoice_context(db, invoice)), include_fees=True)
 
 
 @router.delete("/invoices/{invoice_id}/payments/{payment_id}", response_model=InvoiceDetailRead)
@@ -370,4 +417,4 @@ async def delete_payment(
     payment = await service.get_payment_or_404(db, invoice_id, payment_id)
     await service.delete_payment(db, invoice, payment, actor=current_user)
     await db.refresh(invoice)
-    return _detail_read(invoice, *(await service.get_invoice_context(db, invoice)))
+    return _detail_read(invoice, *(await service.get_invoice_context(db, invoice)), include_fees=True)

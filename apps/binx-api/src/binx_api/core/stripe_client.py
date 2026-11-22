@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     # The SDK's own TypedDicts for each call: a misspelled or mistyped Stripe
     # field at any call site is a type error instead of a runtime 400.
     from stripe import RequestOptions
-    from stripe.params import CustomerCreateParams
+    from stripe.params import CustomerCreateParams, PaymentIntentRetrieveParams
     from stripe.params.billing_portal import SessionCreateParams as PortalSessionCreateParams
     from stripe.params.checkout import SessionCreateParams as CheckoutSessionCreateParams
     from stripe.params.v2.core import AccountCreateParams, AccountLinkCreateParams, AccountRetrieveParams
@@ -90,6 +90,14 @@ async def retrieve_checkout_session(session_id: str, *, stripe_account: str | No
     client-invoice session lives on the agency's connected account, so it has
     to be fetched from there too."""
     return await _get_client().v1.checkout.sessions.retrieve_async(session_id, None, _account_options(stripe_account))
+
+
+async def retrieve_payment_intent(
+    intent_id: str, params: PaymentIntentRetrieveParams | None = None, *, stripe_account: str | None = None
+) -> stripe.PaymentIntent:
+    """A client-invoice PaymentIntent lives on the agency's connected account,
+    like its Checkout Session — pass ``stripe_account`` to read it there."""
+    return await _get_client().v1.payment_intents.retrieve_async(intent_id, params, _account_options(stripe_account))
 
 
 async def create_billing_portal_session(params: PortalSessionCreateParams) -> stripe.billing_portal.Session:

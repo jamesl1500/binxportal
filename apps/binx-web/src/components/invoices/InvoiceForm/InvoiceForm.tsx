@@ -4,7 +4,8 @@
  * The draft-invoice editor: client + optional project, issue / due dates, a
  * repeatable line-item table, an invoice-level discount (flat or %) and tax
  * rate, and notes. Totals update live and mirror binx-api's `_recalculate`
- * math exactly. Used for both creating a new draft and editing an existing
+ * math exactly. Under the totals, a preview of what the agency keeps if the
+ * client pays online, after Stripe's fee and Binx's platform fee. Used for both creating a new draft and editing an existing
  * one (issued invoices are never editable — the page redirects away).
  *
  * @module apps/binx-web/src/components/invoices/InvoiceForm/InvoiceForm.tsx
@@ -23,6 +24,11 @@ import type {
   InvoiceInput,
 } from "@/lib/invoicing";
 import { formatMoneyCents } from "@/lib/money";
+import {
+  PLATFORM_FEE_LABEL,
+  STRIPE_ESTIMATE_LABEL,
+  estimateOnlinePayment,
+} from "@/lib/payment-fees";
 import {
   createInvoiceAction,
   updateInvoiceAction,
@@ -442,6 +448,10 @@ const InvoiceForm = ({
             <dd>{formatMoneyCents(totals.total, currency)}</dd>
           </div>
         </dl>
+
+        {totals.total > 0 && (
+          <OnlinePayout totalCents={totals.total} currency={currency} />
+        )}
       </div>
 
       <div className={styles.actions}>
@@ -461,6 +471,41 @@ const InvoiceForm = ({
         </button>
       </div>
     </form>
+  );
+};
+
+/** What the agency keeps if the client pays the whole total online. */
+const OnlinePayout = ({
+  totalCents,
+  currency,
+}: {
+  totalCents: number;
+  currency: string;
+}) => {
+  const payout = estimateOnlinePayment(totalCents);
+  return (
+    <div className={styles.payout} aria-label="If your client pays online">
+      <p className={styles.payoutTitle}>If your client pays online</p>
+      <dl className={styles.payoutRows}>
+        <div>
+          <dt>Stripe processing (estimated)</dt>
+          <dd>−≈ {formatMoneyCents(payout.stripeFeeCents, currency)}</dd>
+        </div>
+        <div>
+          <dt>Binx fee ({PLATFORM_FEE_LABEL})</dt>
+          <dd>−{formatMoneyCents(payout.platformFeeCents, currency)}</dd>
+        </div>
+        <div className={styles.payoutNet}>
+          <dt>You keep</dt>
+          <dd>≈ {formatMoneyCents(payout.netCents, currency)}</dd>
+        </div>
+      </dl>
+      <p className={styles.payoutHint}>
+        Your client pays the invoice total. Stripe&apos;s fee is estimated at
+        its standard US card rate ({STRIPE_ESTIMATE_LABEL}). Payments you
+        record by hand have no fees.
+      </p>
+    </div>
   );
 };
 

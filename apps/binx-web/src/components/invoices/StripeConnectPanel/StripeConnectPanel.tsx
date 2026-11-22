@@ -18,6 +18,7 @@ import { toast } from "sonner";
 
 import { startStripeConnectOnboardingAction } from "@/app/(app)/invoices/actions";
 import type { StripeConnectStatus } from "@/lib/invoicing";
+import { PLATFORM_FEE_LABEL } from "@/lib/payment-fees";
 
 import styles from "./StripeConnectPanel.module.scss";
 
@@ -26,6 +27,15 @@ interface StripeConnectPanelProps {
   status: StripeConnectStatus;
   canManage: boolean;
 }
+
+/** The same line in every state, so the cost is clear before connecting. */
+const FeeNote = () => (
+  <p className={styles.detail}>
+    Online payments cost {PLATFORM_FEE_LABEL} per paid invoice for Binx, plus
+    Stripe&apos;s processing fee, both taken from the payment. Your client
+    pays the invoice amount, and payments you record by hand are free.
+  </p>
+);
 
 const StripeConnectPanel = ({
   agencyId,
@@ -58,6 +68,7 @@ const StripeConnectPanel = ({
             .
           </p>
         )}
+        <FeeNote />
       </div>
     );
   }
@@ -92,6 +103,7 @@ const StripeConnectPanel = ({
           online.
         </p>
       )}
+      <FeeNote />
     </div>
   );
 };

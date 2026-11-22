@@ -29,6 +29,7 @@ from binx_api.modules.activity.models import CATEGORY_SETTINGS as ACTIVITY_CATEG
 from binx_api.modules.activity.models import VISIBILITY_ADMIN
 from binx_api.modules.agencies import service as agencies_service
 from binx_api.modules.agencies.models import Agency, AgencyClient, AgencyMember
+from binx_api.modules.invoicing import fees
 from binx_api.modules.invoicing.models import (
     STATUS_DRAFT,
     STATUS_PAID,
@@ -276,9 +277,13 @@ async def start_invoice_checkout(
     partial-payment concept exists anywhere in this system. ``paid_by`` is
     threaded through as metadata so the webhook can attribute the resulting
     ``InvoicePayment`` to the contact who actually paid, the same way the
-    (now-removed) synchronous stub did."""
+    (now-removed) synchronous stub did.
+
+    Binx's platform fee rides along as the PaymentIntent's
+    ``application_fee_amount`` — it comes out of the agency's side, so the
+    client pays exactly the invoice balance. See invoicing/fees.py."""
     balance = invoice.total_cents - invoice.amount_paid_cents
-    fee_cents = round(balance * settings.stripe_application_fee_bps / 10_000)
+    fee_cents = fees.platform_fee_cents(balance)
 
     params: CheckoutSessionCreateParams = {
         "mode": "payment",
@@ -296,6 +301,9 @@ async def start_invoice_checkout(
             "invoice_id": str(invoice.id),
             "agency_id": str(agency.id),
             "paid_by_user_id": str(paid_by.id),
+            # The fee as charged, so a recorded payment can fall back to it
+            # if the charge's balance transaction can't be read.
+            "platform_fee_cents": str(fee_cents),
         },
         # {CHECKOUT_SESSION_ID} is a Stripe template variable, filled in on
         # redirect — the return page hands it to confirm_checkout_session so
@@ -319,6 +327,56 @@ async def start_invoice_checkout(
 # is still settling — Stripe follows up with
 # checkout.session.async_payment_succeeded (or _failed) later.
 _SETTLED_PAYMENT_STATUSES = ("paid", "no_payment_required")
+
+
+def _metadata_int(metadata: dict, key: str) -> int | None:
+    value = metadata.get(key)
+    try:
+        return int(value) if value is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+async def _charged_fees(
+    db: AsyncSession, agency_id: uuid.UUID, payment_intent_id: str
+) -> tuple[int | None, int | None]:
+    """``(stripe_fee_cents, platform_fee_cents)`` as Stripe actually charged
+    them, read from the charge's balance transaction on the agency's
+    connected account. For a direct charge, that balance transaction's
+    ``fee_details`` splits Stripe's processing fee (``stripe_fee``) from the
+    platform's ``application_fee``.
+
+    Best effort: either value is ``None`` when it can't be read (Stripe
+    isn't configured, the call fails, or an async payment method hasn't
+    produced a balance transaction yet). Recording the payment must never
+    fail on this."""
+    if not settings.stripe_secret_key:
+        return None, None
+    account_id = (
+        await db.execute(
+            select(AgencyBillingSettings.stripe_connect_account_id).where(AgencyBillingSettings.agency_id == agency_id)
+        )
+    ).scalar_one_or_none()
+    if account_id is None:
+        return None, None
+    try:
+        intent = await stripe_client.retrieve_payment_intent(
+            payment_intent_id, {"expand": ["latest_charge.balance_transaction"]}, stripe_account=account_id
+        )
+    except stripe.StripeError:
+        logger.warning("Couldn't read the fees for payment intent %s", payment_intent_id, exc_info=True)
+        return None, None
+
+    # Both levels are expandable: a bare id string means the expand didn't
+    # reach it, which reads the same as "not available yet".
+    charge = intent.latest_charge
+    balance_transaction = None if isinstance(charge, str) else getattr(charge, "balance_transaction", None)
+    fee_details = None if isinstance(balance_transaction, str) else getattr(balance_transaction, "fee_details", None)
+    if not fee_details:
+        return None, None
+    stripe_fee = sum(detail.amount for detail in fee_details if detail.type == "stripe_fee")
+    application_fees = [detail.amount for detail in fee_details if detail.type == "application_fee"]
+    return stripe_fee, (sum(application_fees) if application_fees else None)
 
 
 async def record_checkout_payment(db: AsyncSession, session: stripe.checkout.Session) -> Invoice | None:
@@ -364,6 +422,12 @@ async def record_checkout_payment(db: AsyncSession, session: stripe.checkout.Ses
 
     paid_by_user_id = metadata.get("paid_by_user_id")
     recorded_by = await db.get(User, uuid.UUID(paid_by_user_id)) if paid_by_user_id else None
+
+    stripe_fee, platform_fee = await _charged_fees(db, invoice.agency_id, payment_intent_id)
+    if platform_fee is None:
+        # What the session was created with; a session from before the
+        # platform fee carries none, and the fee was zero then.
+        platform_fee = _metadata_int(metadata, "platform_fee_cents") or 0
     try:
         await add_payment(
             db,
@@ -375,6 +439,8 @@ async def record_checkout_payment(db: AsyncSession, session: stripe.checkout.Ses
             reference=None,
             stripe_payment_intent_id=payment_intent_id,
             stripe_checkout_session_id=session.id,
+            platform_fee_cents=platform_fee,
+            stripe_fee_cents=stripe_fee,
         )
     except IntegrityError:
         # Lost a race with the other path on the unique PaymentIntent id —
@@ -818,6 +884,8 @@ async def add_payment(
     reference: str | None,
     stripe_payment_intent_id: str | None = None,
     stripe_checkout_session_id: str | None = None,
+    platform_fee_cents: int | None = None,
+    stripe_fee_cents: int | None = None,
 ) -> InvoicePayment:
     """``recorded_by`` is only ``None`` for a Stripe-webhook-driven payment
     where the paying user couldn't be resolved from the Checkout session's
@@ -835,6 +903,8 @@ async def add_payment(
         reference=reference,
         stripe_payment_intent_id=stripe_payment_intent_id,
         stripe_checkout_session_id=stripe_checkout_session_id,
+        platform_fee_cents=platform_fee_cents,
+        stripe_fee_cents=stripe_fee_cents,
     )
     db.add(payment)
     await db.flush()
