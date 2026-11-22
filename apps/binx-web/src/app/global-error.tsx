@@ -15,6 +15,7 @@
 import { useEffect } from "react";
 
 import { reportClientError } from "@/lib/error-reporting";
+import { SITE } from "@/lib/site";
 
 export default function GlobalError({ error }: { error: Error & { digest?: string } }) {
   useEffect(() => {
@@ -23,6 +24,11 @@ export default function GlobalError({ error }: { error: Error & { digest?: strin
 
   return (
     <html lang="en">
+      {/* Replaces the root layout, so its metadata is gone too. */}
+      <head>
+        <title>{`Something went wrong · ${SITE.name}`}</title>
+        <meta name="robots" content="noindex" />
+      </head>
       <body>
         <div style={{ display: "flex", minHeight: "100dvh", alignItems: "center", justifyContent: "center" }}>
           <div style={{ textAlign: "center" }}>

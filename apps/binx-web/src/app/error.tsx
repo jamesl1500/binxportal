@@ -40,6 +40,10 @@ const ErrorPage = ({ error, retry }: ErrorPageProps) => {
 
   return (
     <div className={styles.root}>
+      {/* A page that fails after streaming has started is already sent with
+          a 200, so keep crawlers from indexing this in its place. React
+          hoists the tag into <head>; the strictest robots value wins. */}
+      <meta name="robots" content="noindex" />
       <div className={styles.content}>
         <p className={styles.code}>500</p>
         <h1 className={styles.title}>Something went wrong</h1>

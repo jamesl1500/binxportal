@@ -12,6 +12,7 @@ from sqlalchemy import select
 from binx_api.core.errors import new_reference
 from binx_api.modules.errors import store
 from binx_api.modules.errors.models import ErrorEvent, ErrorIssue
+from binx_api.modules.errors.store import _maybe_prune as real_maybe_prune
 from tests.conftest import auth_headers
 from tests.factories import make_user
 
@@ -261,3 +262,38 @@ class TestWebIngest:
             await client.post("/errors/report", json={"runtime": "browser", "message": "x" * 2001})
         ).status_code == 422
         assert (await client.post("/errors/report", json={"runtime": "toaster", "message": "x"})).status_code == 422
+
+
+class TestRetention:
+    async def test_prune_drops_old_occurrences_in_batches_and_keeps_the_issue(
+        self, db_session, now, monkeypatch
+    ) -> None:
+        monkeypatch.setattr(store, "PRUNE_BATCH", 2)
+        for days_ago in (40, 35, 31, 31, 31):
+            await _seed(at=now - timedelta(days=days_ago))
+        recent = await _seed(at=now - timedelta(days=1))
+
+        deleted = await store.prune(now - timedelta(days=30))
+
+        assert deleted == 5  # three batches of at most two
+        left = (await db_session.execute(select(ErrorEvent.id))).scalars().all()
+        assert left == [recent]
+        issue = (await db_session.execute(select(ErrorIssue))).scalar_one()
+        assert issue.event_count == 6  # the lifetime count stays
+
+    async def test_writes_dont_wait_for_a_prune(self, db_session, now, monkeypatch) -> None:
+        started: list[datetime] = []
+
+        async def fake_prune(cutoff: datetime) -> int:
+            started.append(cutoff)
+            return 0
+
+        # conftest stubs the scheduler out; put the real one back.
+        monkeypatch.setattr(store, "_maybe_prune", real_maybe_prune)
+        monkeypatch.setattr(store, "prune", fake_prune)
+        monkeypatch.setattr(store, "_last_pruned", None)
+        await _seed(at=now)
+        await _seed(at=now)  # within the hour: not started again
+        for task in list(store._pruning):
+            await task
+        assert len(started) == 1

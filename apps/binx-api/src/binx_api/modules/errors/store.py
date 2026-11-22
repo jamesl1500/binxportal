@@ -26,7 +26,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from sqlalchemy import case, delete, func
+from sqlalchemy import case, delete, func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.exceptions import HTTPException
@@ -53,11 +53,14 @@ session_factory: Callable[[], AsyncSession] = async_session_factory
 
 WRITE_TIMEOUT_SECONDS = 3.0
 PRUNE_EVERY_SECONDS = 3600
+PRUNE_BATCH = 5000
 MAX_MESSAGE = 2000
 MAX_STACK = 20_000
 MAX_TITLE = 500
 
 _last_pruned: float | None = None
+# Strong references to running prunes (the loop only keeps weak ones).
+_pruning: set[asyncio.Task] = set()
 
 
 # --- Fingerprinting ------------------------------------------------------------
@@ -299,7 +302,7 @@ async def _write(occurrence: Occurrence, now: datetime) -> None:
             )
         )
         await db.commit()
-        await _maybe_prune(db, now)
+    _maybe_prune(now)
 
 
 async def _upsert_issue(db: AsyncSession, occurrence: Occurrence, now: datetime) -> uuid.UUID:
@@ -345,15 +348,39 @@ async def _upsert_issue(db: AsyncSession, occurrence: Occurrence, now: datetime)
     return (await db.execute(upsert)).scalar_one()
 
 
-async def _maybe_prune(db: AsyncSession, now: datetime) -> None:
-    """Drops occurrences past the retention window, at most hourly per
-    process. There's no scheduler in this app, so this runs from the write
-    path, much like recurring invoices catch up on page load."""
+def _maybe_prune(now: datetime) -> None:
+    """Starts a prune of occurrences past the retention window, at most
+    hourly per process. There's no scheduler in this app, so it's kicked off
+    from the write path, much like recurring invoices catch up on page load.
+    It runs as its own task: the request whose error triggered it doesn't
+    wait for it, and it isn't bound by the write timeout. Replaced with a
+    no-op in tests (conftest), which call ``prune`` directly."""
     global _last_pruned
     tick = time.monotonic()
     if _last_pruned is not None and tick - _last_pruned < PRUNE_EVERY_SECONDS:
         return
     _last_pruned = tick
-    cutoff = now - timedelta(days=settings.error_retention_days)
-    await db.execute(delete(ErrorEvent).where(ErrorEvent.created_at < cutoff))
-    await db.commit()
+    task = asyncio.get_running_loop().create_task(prune(now - timedelta(days=settings.error_retention_days)))
+    _pruning.add(task)
+    task.add_done_callback(_pruning.discard)
+
+
+async def prune(cutoff: datetime) -> int:
+    """Deletes occurrences older than ``cutoff`` in batches, each in its own
+    short transaction, so a big backlog (retention lowered, say) never holds
+    one long lock and always makes progress. The grouped issues stay, with
+    their lifetime counts. Never raises. Returns how many were deleted."""
+    deleted = 0
+    try:
+        while True:
+            async with session_factory() as db:
+                batch = select(ErrorEvent.id).where(ErrorEvent.created_at < cutoff).limit(PRUNE_BATCH)
+                result = await db.execute(delete(ErrorEvent).where(ErrorEvent.id.in_(batch.scalar_subquery())))
+                await db.commit()
+            removed = result.rowcount or 0
+            deleted += removed
+            if removed < PRUNE_BATCH:
+                return deleted
+    except Exception:  # noqa: BLE001 - see the module docstring
+        log.warning("Couldn't prune the error log (deleted %d so far)", deleted, exc_info=True)
+        return deleted

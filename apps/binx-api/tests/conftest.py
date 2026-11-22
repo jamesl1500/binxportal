@@ -198,7 +198,10 @@ async def db_session(engine, _schema) -> AsyncGenerator[AsyncSession]:
 def _error_log_needs_a_database(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> None:
     """A test without ``db_session`` has no rolled-back connection for the
     error log to write to (see db_session above), so the log is off there
-    rather than writing through the app's real engine."""
+    rather than writing through the app's real engine. Background pruning
+    is always off: it would share the test's connection from another task.
+    Tests call ``store.prune`` directly instead."""
+    monkeypatch.setattr(_error_store, "_maybe_prune", lambda now: None)
     if "db_session" not in request.fixturenames:
         monkeypatch.setattr(_error_store.settings, "error_store_enabled", False)
 

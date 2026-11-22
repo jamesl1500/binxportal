@@ -25,7 +25,8 @@ import { SITE_URL } from "@/lib/site";
 export const APP_SEGMENTS = [
   "account",
   "activity",
-  // The Binx team's feedback inbox (/admin/feedback) — platform admins only.
+  // The Binx team's admin console (/admin/*: overview, errors, feedback,
+  // support tools) — platform admins only.
   "admin",
   "agencies",
   "ai",

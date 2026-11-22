@@ -104,14 +104,16 @@ async def summary(db: AsyncSession, *, now: datetime | None = None) -> dict:
         key: {"events": row[f"events_{key}"], "issues": row[f"issues_{key}"], "users": row[f"users_{key}"]}
         for key in WINDOWS
     }
-    open_issues = await db.scalar(
-        select(func.count())
-        .select_from(ErrorIssue)
-        .where(ErrorIssue.status == STATUS_UNRESOLVED, ErrorIssue.last_seen_at >= since["24h"])
-    )
-    new_issues = await db.scalar(
-        select(func.count()).select_from(ErrorIssue).where(ErrorIssue.first_seen_at >= since["24h"])
-    )
+    # Both counts in one pass. Every issue first seen in the last day was
+    # also last seen in it, so the WHERE covers both.
+    open_issues, new_issues = (
+        await db.execute(
+            select(
+                func.count().filter(ErrorIssue.status == STATUS_UNRESOLVED),
+                func.count().filter(ErrorIssue.first_seen_at >= since["24h"]),
+            ).where(ErrorIssue.last_seen_at >= since["24h"])
+        )
+    ).one()
     return {
         "generated_at": now,
         "windows": windows,

@@ -39,6 +39,7 @@ from binx_api.core.errors import (
 )
 
 REQUEST_ID_HEADER = "x-request-id"
+_REQUEST_ID_HEADER_BYTES = REQUEST_ID_HEADER.encode()
 # A caller-supplied id is only trusted if it looks like one, so it can't
 # smuggle anything odd into logs or the response header.
 _VALID_REQUEST_ID = re.compile(r"[A-Za-z0-9._-]{8,64}")
@@ -126,7 +127,7 @@ class RequestContextMiddleware:
 
         incoming = ""
         for name, value in scope.get("headers", []):
-            if name == REQUEST_ID_HEADER.encode():
+            if name == _REQUEST_ID_HEADER_BYTES:
                 incoming = value.decode("latin-1").strip()
                 break
         request_id = incoming if _VALID_REQUEST_ID.fullmatch(incoming) else new_request_id()
