@@ -2,11 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import {
   apiPath,
+  DAILY_CACHE,
   FILE_RESPONSE_CSP,
   fileResponseHeaders,
   hasDotSegment,
+  IMMUTABLE_CACHE,
   mediaType,
   upstreamErrorBody,
+  versionedImageCache,
 } from "./file-proxy";
 
 describe("apiPath", () => {
@@ -178,5 +181,14 @@ describe("upstreamErrorBody", () => {
 
   it("passes already-parsed data through", () => {
     expect(upstreamErrorBody({ detail: "x" })).toEqual({ detail: "x" });
+  });
+});
+
+describe("versionedImageCache", () => {
+  it("caches a versioned image URL for good, an unversioned one for a day", () => {
+    expect(versionedImageCache("http://localhost/api/portal/logo?v=abc123")).toBe(IMMUTABLE_CACHE);
+    expect(versionedImageCache("http://localhost/api/portal/logo")).toBe(DAILY_CACHE);
+    expect(versionedImageCache("http://localhost/api/portal/logo?v=")).toBe(DAILY_CACHE);
+    expect(IMMUTABLE_CACHE).toMatch(/^private,/);
   });
 });

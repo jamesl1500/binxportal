@@ -1,6 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
 vi.mock("@/app/(portal)/portal/messages/actions", () => ({
@@ -9,10 +9,16 @@ vi.mock("@/app/(portal)/portal/messages/actions", () => ({
   sendPortalMessageAction: vi.fn(),
 }));
 
-import { sendPortalMessageAction } from "@/app/(portal)/portal/messages/actions";
-import PortalMessages from "./PortalMessages";
+import {
+  getPortalThreadAction,
+  markPortalReadAction,
+  sendPortalMessageAction,
+} from "@/app/(portal)/portal/messages/actions";
+import PortalMessages, { POLL_MS } from "./PortalMessages";
 
 const send = vi.mocked(sendPortalMessageAction);
+const poll = vi.mocked(getPortalThreadAction);
+const markRead = vi.mocked(markPortalReadAction);
 
 const conversations = [
   {
@@ -114,5 +120,87 @@ describe("PortalMessages", () => {
     await userEvent.click(screen.getByRole("button", { name: "Send" }));
     expect(send).toHaveBeenCalledWith("c1", "Looks good");
     expect(await screen.findByText("Looks good")).toBeInTheDocument();
+  });
+});
+
+describe("PortalMessages polling", () => {
+  let visibility: DocumentVisibilityState = "visible";
+  beforeEach(() => {
+    vi.useFakeTimers();
+    visibility = "visible";
+    vi.spyOn(document, "visibilityState", "get").mockImplementation(() => visibility);
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  const reply = {
+    id: "m2",
+    sender_id: "staff-1",
+    sender_name: "Morgan",
+    sender_kind: "agency",
+    body: "Round two is up.",
+    created_at: "2026-01-01T00:05:00Z",
+    deleted_at: null,
+  };
+
+  const open = (activeId = "c1", list = conversations) =>
+    render(
+      <PortalMessages
+        conversations={list}
+        activeId={activeId}
+        activeTitle="Thread"
+        initialMessages={messages}
+        currentUserId="me"
+      />,
+    );
+
+  it("shows new replies and marks them read, since they were seen arriving", async () => {
+    poll.mockResolvedValue({ messages: [...(messages as never[]), reply] } as never);
+    open();
+    expect(markRead).toHaveBeenCalledWith("c1", { refresh: false });
+    await act(() => vi.advanceTimersByTimeAsync(POLL_MS));
+    expect(screen.getByText("Round two is up.")).toBeInTheDocument();
+    expect(markRead).toHaveBeenLastCalledWith("c1");
+  });
+
+  it("doesn't poll a hidden tab, and catches up when it's shown again", async () => {
+    poll.mockResolvedValue({ messages: [...(messages as never[]), reply] } as never);
+    open();
+    visibility = "hidden";
+    await act(() => vi.advanceTimersByTimeAsync(POLL_MS * 4));
+    expect(poll).not.toHaveBeenCalled();
+
+    visibility = "visible";
+    await act(async () => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    expect(poll).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("Round two is up.")).toBeInTheDocument();
+  });
+
+  it("drops a reply for a thread the client has already left", async () => {
+    let resolve: (value: unknown) => void = () => {};
+    poll.mockReturnValueOnce(new Promise((r) => (resolve = r)) as never);
+    const view = open("c1");
+    await act(() => vi.advanceTimersByTimeAsync(POLL_MS));
+    view.rerender(
+      <PortalMessages
+        conversations={conversations}
+        activeId="c2"
+        activeTitle="Other thread"
+        initialMessages={[]}
+        currentUserId="me"
+      />,
+    );
+    await act(async () => resolve({ messages: [reply] }));
+    expect(screen.queryByText("Round two is up.")).not.toBeInTheDocument();
+  });
+
+  it("refreshes the page when the thread opened had unread messages", () => {
+    const [first] = conversations as unknown as Record<string, unknown>[];
+    open("c1", [{ ...first, unread_count: 2 }] as never);
+    expect(markRead).toHaveBeenCalledWith("c1", { refresh: true });
   });
 });

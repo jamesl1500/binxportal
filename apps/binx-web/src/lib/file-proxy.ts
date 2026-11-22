@@ -125,6 +125,21 @@ export function fileResponseHeaders(
   return headers;
 }
 
+/** For bytes that never change at their URL: a file id, or a `?v=` version. */
+export const IMMUTABLE_CACHE = "private, max-age=31536000, immutable";
+/** For an image URL without a version: a day, then fetched again. */
+export const DAILY_CACHE = "private, max-age=86400";
+
+/**
+ * Cache-Control for a version-busted image URL (`?v=<version>`, which
+ * changes whenever the image does): cache it for good when it carries a
+ * version, else for a day. "private" keeps shared caches out of it either
+ * way, since these proxies sit behind the viewer's own session.
+ */
+export function versionedImageCache(url: string | URL): string {
+  return new URL(url).searchParams.get("v") ? IMMUTABLE_CACHE : DAILY_CACHE;
+}
+
 /** Decode an axios `arraybuffer` error body to JSON when possible, never throwing. */
 export function upstreamErrorBody(data: unknown): unknown {
   // Tag check rather than `instanceof`: realm-safe (jsdom, workers, vm).

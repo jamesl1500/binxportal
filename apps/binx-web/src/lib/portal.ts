@@ -188,9 +188,10 @@ export const getPortalInvoices = cache(async (): Promise<PortalInvoice[]> => {
   }
 });
 
-export async function getPortalInvoice(
+// cache(): the page and its generateMetadata (the tab title) both read it.
+export const getPortalInvoice = cache(async (
   invoiceId: string,
-): Promise<PortalInvoiceDetail> {
+): Promise<PortalInvoiceDetail> => {
   const headers = await authHeader();
   try {
     const { data } = await api.get<PortalInvoiceDetail>(
@@ -201,7 +202,7 @@ export async function getPortalInvoice(
   } catch (error) {
     rethrow(error, "Unable to load this invoice");
   }
-}
+});
 
 /**
  * startPortalInvoiceCheckout
@@ -273,9 +274,10 @@ export const getPortalProposals = cache(async (): Promise<PortalProposal[]> => {
   }
 });
 
-export async function getPortalProposal(
+// cache(): the page and its generateMetadata (the tab title) both read it.
+export const getPortalProposal = cache(async (
   proposalId: string,
-): Promise<PortalProposalDetail> {
+): Promise<PortalProposalDetail> => {
   const headers = await authHeader();
   try {
     const { data } = await api.get<PortalProposalDetail>(
@@ -286,7 +288,7 @@ export async function getPortalProposal(
   } catch (error) {
     rethrow(error, "Unable to load this proposal");
   }
-}
+});
 
 /**
  * signPortalProposal

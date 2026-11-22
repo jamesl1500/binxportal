@@ -9,13 +9,13 @@
  * @route GET /api/portal/logo
  */
 import axios from "axios";
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
 import { api } from "@/lib/api";
 import { getAccessToken } from "@/lib/auth";
-import { fileResponseHeaders } from "@/lib/file-proxy";
+import { fileResponseHeaders, versionedImageCache } from "@/lib/file-proxy";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const accessToken = await getAccessToken();
   if (!accessToken) {
     return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
@@ -29,9 +29,10 @@ export async function GET() {
 
     return new NextResponse(upstream.data, {
       status: 200,
-      // The URL is cache-busted with ?v=<version> by the caller, so the
-      // bytes for a given URL never change — safe to cache hard.
-      headers: fileResponseHeaders(upstream.headers, { fallbackType: "image/png", defaultDisposition: "inline", cacheControl: "private, max-age=86400" }),
+      // The layout busts the URL with ?v=<version>, so the bytes at a
+      // versioned URL never change: cached for good, not re-fetched daily
+      // on every page of the portal.
+      headers: fileResponseHeaders(upstream.headers, { fallbackType: "image/png", defaultDisposition: "inline", cacheControl: versionedImageCache(req.url) }),
     });
   } catch (error) {
     const statusCode = axios.isAxiosError(error) && error.response ? error.response.status : 500;

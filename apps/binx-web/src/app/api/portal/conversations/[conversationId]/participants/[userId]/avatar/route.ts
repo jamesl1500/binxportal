@@ -16,13 +16,13 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { api } from "@/lib/api";
 import { getAccessToken } from "@/lib/auth";
-import { apiPath, fileResponseHeaders } from "@/lib/file-proxy";
+import { apiPath, fileResponseHeaders, versionedImageCache } from "@/lib/file-proxy";
 
 interface RouteParams {
   params: Promise<{ conversationId: string; userId: string }>;
 }
 
-export async function GET(_req: NextRequest, { params }: RouteParams) {
+export async function GET(req: NextRequest, { params }: RouteParams) {
   const { conversationId, userId } = await params;
 
   const accessToken = await getAccessToken();
@@ -43,7 +43,7 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
       status: 200,
       // The URL is cache-busted with ?v=<version> by the caller, so the
       // bytes for a given URL never change — safe to cache hard.
-      headers: fileResponseHeaders(upstream.headers, { fallbackType: "image/png", defaultDisposition: "inline", cacheControl: "private, max-age=86400" }),
+      headers: fileResponseHeaders(upstream.headers, { fallbackType: "image/png", defaultDisposition: "inline", cacheControl: versionedImageCache(req.url) }),
     });
   } catch (error) {
     const statusCode = axios.isAxiosError(error) && error.response ? error.response.status : 500;

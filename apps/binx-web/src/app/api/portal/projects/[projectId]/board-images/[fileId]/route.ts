@@ -15,7 +15,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { api } from "@/lib/api";
 import { AuthApiError, extractDetailMessage, getAccessToken } from "@/lib/auth";
-import { apiPath, fileResponseHeaders, upstreamErrorBody } from "@/lib/file-proxy";
+import { apiPath, fileResponseHeaders, IMMUTABLE_CACHE, upstreamErrorBody } from "@/lib/file-proxy";
 
 interface RouteParams {
   params: Promise<{ projectId: string; fileId: string }>;
@@ -37,7 +37,9 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
 
     return new NextResponse(upstream.data, {
       status: 200,
-      headers: fileResponseHeaders(upstream.headers, { fallbackType: "application/octet-stream", defaultDisposition: "inline" }),
+      // A file id's bytes never change (a new upload is a new file), so
+      // the canvas doesn't re-download every image on every visit.
+      headers: fileResponseHeaders(upstream.headers, { fallbackType: "application/octet-stream", defaultDisposition: "inline", cacheControl: IMMUTABLE_CACHE }),
     });
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {

@@ -14,6 +14,7 @@
  * @module apps/binx-web/src/app/(portal)/portal/page.tsx
  * @author Binx Portal
  */
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import {
@@ -59,6 +60,10 @@ import PortalStatTiles, {
 import SummarizeClientPortalDashboard from "@/components/portal/SummarizeClientPortalDashboard/SummarizeClientPortalDashboard";
 
 import styles from "./home.module.scss";
+
+// "Home · Northlight Studio", like every other portal tab. Without its own
+// title the layout's default gets the site-wide template appended too.
+export const metadata: Metadata = { title: "Home" };
 
 /** Projects the client cares about most first: in flight, then planned, then the rest. */
 const STATUS_ORDER: Record<string, number> = {

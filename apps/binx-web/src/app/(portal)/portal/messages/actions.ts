@@ -61,11 +61,18 @@ export async function getPortalThreadAction(
   }
 }
 
+/**
+ * Marks a thread read. With `refresh`, also re-renders the route so the
+ * server-rendered unread dot and sidebar badge clear. Only asked for when
+ * the thread actually had unread messages, as it re-runs the layout's reads.
+ */
 export async function markPortalReadAction(
   conversationId: string,
+  { refresh: refreshAfter = false }: { refresh?: boolean } = {},
 ): Promise<void> {
   try {
     await markPortalConversationRead(conversationId);
+    if (refreshAfter) refresh();
   } catch {
     // Best-effort — a missed read receipt isn't worth surfacing.
   }
