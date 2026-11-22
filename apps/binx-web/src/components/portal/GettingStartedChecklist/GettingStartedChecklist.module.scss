@@ -70,7 +70,8 @@ $brand: var(--portal-primary, #{t.$color-ink});
 .meterBar {
   display: block;
   height: 100%;
-  background: $brand;
+  // The agency's colour, or the brand gradient when it hasn't set one.
+  background: var(--portal-primary, #{t.$gradient-brand});
   border-radius: 999px;
   transition: width 400ms t.$ease-standard;
 }

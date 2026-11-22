@@ -11,11 +11,16 @@
   color: t.$color-ink-soft;
 }
 
+// The greeting is the app's front door, so it gets the marketing hero's
+// glow and a slightly larger title than other pages.
+.hero {
+  @include m.hero-glow;
+}
+
 .title {
   margin: 0 0 t.$space-2;
-  font-family: var(--font-heading);
-  font-size: t.$font-size-2xl;
-  color: t.$color-ink;
+  @include m.display-heading;
+  font-size: clamp(t.$font-size-2xl, 3.5vw, 2.5rem);
 }
 
 .subtitle {

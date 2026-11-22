@@ -114,6 +114,7 @@
 
 .submit {
   @include m.button-base;
+  @include m.button-sheen;
   align-self: flex-start;
   background: t.$color-accent;
   color: t.$color-accent-foreground;

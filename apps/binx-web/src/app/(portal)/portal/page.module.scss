@@ -35,7 +35,7 @@ $brand: var(--portal-primary, #{t.$color-ink});
   color: t.$color-ink-soft;
   background: t.$color-surface;
   border: 1px dashed t.$color-border-strong;
-  border-radius: t.$radius-lg;
+  border-radius: t.$radius-md;
 }
 
 .card {
@@ -218,13 +218,10 @@ $brand: var(--portal-primary, #{t.$color-ink});
   gap: t.$space-1;
   padding: t.$space-4 t.$space-5;
   text-decoration: none;
-  transition:
-    border-color t.$duration-fast t.$ease-standard,
-    transform t.$duration-fast t.$ease-standard;
+  @include m.card-interactive;
 
   &:hover {
     border-color: var(--portal-accent, #{t.$color-border-strong});
-    transform: translateY(-1px);
 
     .shortcutTitle svg {
       transform: translateX(2px);
@@ -245,7 +242,7 @@ $brand: var(--portal-primary, #{t.$color-ink});
   margin-bottom: t.$space-2;
   color: $brand;
   background: color-mix(in srgb, #{$brand} 8%, white);
-  border-radius: t.$radius-lg;
+  border-radius: t.$radius-md;
 
   svg {
     width: 1rem;

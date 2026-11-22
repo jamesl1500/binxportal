@@ -22,6 +22,7 @@
 
 .generate {
   @include m.button-base;
+  @include m.button-sheen;
   background: t.$color-accent;
   color: t.$color-accent-foreground;
 }
@@ -253,6 +254,7 @@
 
 .primary {
   @include m.button-base;
+  @include m.button-sheen;
   background: t.$color-accent;
   color: t.$color-accent-foreground;
 }

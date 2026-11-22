@@ -33,7 +33,7 @@
   text-align: center;
   background: t.$color-paper;
   border: 2px dashed t.$color-border-strong;
-  border-radius: t.$radius-lg;
+  border-radius: t.$radius-md;
   cursor: pointer;
   transition:
     border-color t.$duration-fast t.$ease-standard,
@@ -379,6 +379,7 @@
 
 .primary {
   @include m.button-base;
+  @include m.button-sheen;
   color: t.$color-accent-foreground;
   background: t.$color-accent;
   text-decoration: none;

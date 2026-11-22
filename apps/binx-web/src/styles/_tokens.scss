@@ -18,6 +18,17 @@ $color-panel-muted: rgba(245, 245, 246, 0.6);
 $color-accent: #0a0a0b;
 $color-accent-foreground: #ffffff;
 $color-danger: #dc2626;
+
+// The marketing site's colour: the indigo → violet → amber of the hero's
+// underline flourish and the indigo of its glow. Used sparingly, and only
+// for indicators (active tabs and links, progress, the hero glow), never
+// for fills, buttons or body text. It's the default only: a staff member's
+// own accent (--app-accent) or an agency's portal colour (--portal-primary)
+// replaces it, so read it as `var(--app-accent, #{t.$color-brand})`.
+$color-brand: #6366f1;
+$color-brand-violet: #a855f7;
+$color-brand-amber: #f59e0b;
+$gradient-brand: linear-gradient(90deg, #{$color-brand}, #{$color-brand-violet} 55%, #{$color-brand-amber});
 $color-focus: #3b82f6;
 
 $space-1: 0.25rem;

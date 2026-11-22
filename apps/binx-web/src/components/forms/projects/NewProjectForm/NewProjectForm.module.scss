@@ -156,6 +156,7 @@
 
 .next {
   @include m.button-base;
+  @include m.button-sheen;
   background: t.$color-accent;
   color: t.$color-accent-foreground;
 

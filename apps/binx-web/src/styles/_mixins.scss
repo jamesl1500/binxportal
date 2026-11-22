@@ -69,11 +69,50 @@
   overscroll-behavior-x: contain;
 }
 
+// ---- The shared design system ---------------------------------------
+// Cards, buttons and display headings match the marketing site
+// (app/(marketing)/marketing.module.scss): hairline borders, near-square
+// 4px corners, sentence-case buttons, Playfair headings with tight
+// tracking, and small, compositor-only hover motion that switches off for
+// reduced-motion users. Staff and portal pages get the same look by using
+// these mixins; don't restyle them per page.
+
+$ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+
 @mixin card-base {
   background: t.$color-surface;
   border: 1px solid t.$color-border;
-  border-radius: t.$radius-lg;
-  box-shadow: 0 1px 2px rgba(10, 10, 11, 0.04);
+  border-radius: t.$radius-md;
+}
+
+// A card that is itself a link or button: it lifts and casts a soft
+// shadow on hover, like the marketing feature cards.
+@mixin card-interactive {
+  transition:
+    border-color 0.3s $ease-out-soft,
+    transform 0.45s $ease-out-soft,
+    box-shadow 0.45s $ease-out-soft;
+
+  &:hover {
+    border-color: t.$color-border-strong;
+    box-shadow: 0 18px 40px -22px rgba(10, 10, 11, 0.3);
+
+    @media (prefers-reduced-motion: no-preference) {
+      transform: translateY(-3px);
+    }
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+// Page titles and other large headings in the heading face.
+@mixin display-heading {
+  font-family: var(--font-heading);
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+  color: t.$color-ink;
 }
 
 @mixin button-base {
@@ -82,17 +121,29 @@
   justify-content: center;
   gap: t.$space-2;
   padding: t.$space-3 t.$space-6;
-  font-size: t.$font-size-xs;
+  font-size: t.$font-size-sm;
   font-weight: 600;
-  letter-spacing: t.$tracking-widest;
-  text-transform: uppercase;
+  line-height: 1.2;
   border-radius: t.$radius-sm;
   border: 1px solid transparent;
   cursor: pointer;
+  text-decoration: none;
   transition:
     background-color t.$duration-fast t.$ease-standard,
-    transform t.$duration-fast t.$ease-standard,
+    border-color t.$duration-fast t.$ease-standard,
+    transform 0.3s $ease-out-soft,
+    box-shadow 0.3s $ease-out-soft,
     opacity t.$duration-fast t.$ease-standard;
+
+  svg {
+    transition: transform 0.35s $ease-out-soft;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    &:hover:not(:disabled) {
+      transform: translateY(-1px);
+    }
+  }
 
   &:active:not(:disabled) {
     transform: translateY(1px);
@@ -105,5 +156,83 @@
 
   &:focus-visible {
     @include focus-ring;
+  }
+}
+
+// A filled primary button: the marketing site's light sweep and lifted
+// shadow on hover. Add after `button-base` on buttons with a dark fill.
+// The keyframes are emitted here because CSS modules scope keyframe names
+// per file (Sass hoists the block to the top level).
+@mixin button-sheen {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    z-index: -1;
+    width: 40%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.28), transparent);
+    transform: translateX(-120%) skewX(-18deg);
+    pointer-events: none;
+  }
+
+  &:hover:not(:disabled) {
+    box-shadow: 0 12px 26px -12px rgba(10, 10, 11, 0.55);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    &:hover:not(:disabled)::after {
+      animation: button-sheen 0.9s $ease-out-soft;
+    }
+  }
+
+  @keyframes button-sheen {
+    from {
+      transform: translateX(-120%) skewX(-18deg);
+    }
+
+    to {
+      transform: translateX(320%) skewX(-18deg);
+    }
+  }
+}
+
+// The marketing hero's soft indigo glow, behind a page's opening header.
+// Purely decorative: a pseudo-element, so it never affects layout, and it
+// only drifts for people who haven't asked for reduced motion.
+@mixin hero-glow {
+  position: relative;
+  isolation: isolate;
+
+  &::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    // Kept inside the header's width so it can't add a sideways scroll.
+    inset: -6rem 0 auto 35%;
+    height: 22rem;
+    pointer-events: none;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.12), transparent 70%);
+    filter: blur(12px);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    &::before {
+      animation: hero-glow-drift 22s cubic-bezier(0.37, 0, 0.63, 1) infinite;
+    }
+  }
+
+  @keyframes hero-glow-drift {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+
+    50% {
+      transform: translate3d(-6%, 5%, 0) scale(1.06);
+    }
   }
 }

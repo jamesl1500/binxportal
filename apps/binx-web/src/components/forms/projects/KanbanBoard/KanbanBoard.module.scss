@@ -313,6 +313,7 @@
 
 .addTaskSubmit {
   @include m.button-base;
+  @include m.button-sheen;
   padding: t.$space-1 t.$space-3;
   background: t.$color-accent;
   color: t.$color-accent-foreground;
@@ -390,6 +391,7 @@
 
 .editSave {
   @include m.button-base;
+  @include m.button-sheen;
   padding: t.$space-1 t.$space-3;
   background: t.$color-accent;
   color: t.$color-accent-foreground;

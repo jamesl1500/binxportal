@@ -22,7 +22,7 @@
   height: 100%;
   // Falls back to the app's own ink color when no client/agency brand color
   // is set — see the --portal-primary custom property set in (portal)/layout.tsx.
-  background: var(--portal-primary, #{t.$color-ink});
+  background: var(--portal-primary, #{t.$gradient-brand});
   transition: width t.$duration-base t.$ease-standard;
 }
 

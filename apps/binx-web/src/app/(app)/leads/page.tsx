@@ -23,6 +23,7 @@ import AnalyzeAllButton from "@/components/leads/AnalyzeAllButton/AnalyzeAllButt
 import FindLeadsDialog from "@/components/leads/FindLeadsDialog/FindLeadsDialog";
 import NewLeadButton from "@/components/leads/NewLeadButton/NewLeadButton";
 import LeadsTable from "@/components/leads/LeadsTable/LeadsTable";
+import PageEnter from "@/components/ui/PageEnter/PageEnter";
 
 import styles from "./page.module.scss";
 
@@ -73,29 +74,31 @@ const LeadsPage = async () => {
   ];
 
   return (
-    <div>
-      <div className={styles.header}>
-        <div>
-          <span className={styles.eyebrow}>Leads</span>
-          <h1 className={styles.title}>Your pipeline</h1>
-          <p className={styles.subtitle}>
-            {open.length} open {open.length === 1 ? "lead" : "leads"} at{" "}
-            {currentAgency.name}.
-          </p>
+    <PageEnter>
+      <div>
+        <div className={styles.header}>
+          <div>
+            <span className={styles.eyebrow}>Leads</span>
+            <h1 className={styles.title}>Your pipeline</h1>
+            <p className={styles.subtitle}>
+              {open.length} open {open.length === 1 ? "lead" : "leads"} at{" "}
+              {currentAgency.name}.
+            </p>
+          </div>
+          <div className={styles.headerActions}>
+            <AnalyzeAllButton agencyId={currentAgency.id} />
+            <FindLeadsDialog agencyId={currentAgency.id} />
+            <NewLeadButton />
+          </div>
         </div>
-        <div className={styles.headerActions}>
-          <AnalyzeAllButton agencyId={currentAgency.id} />
-          <FindLeadsDialog agencyId={currentAgency.id} />
-          <NewLeadButton />
+
+        <div className={styles.stats}>
+          <ClientStatGrid stats={stats} />
         </div>
-      </div>
 
-      <div className={styles.stats}>
-        <ClientStatGrid stats={stats} />
+        <LeadsTable agencyId={currentAgency.id} leads={leads} />
       </div>
-
-      <LeadsTable agencyId={currentAgency.id} leads={leads} />
-    </div>
+    </PageEnter>
   );
 };
 

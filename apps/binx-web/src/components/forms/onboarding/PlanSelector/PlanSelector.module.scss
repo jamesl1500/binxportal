@@ -79,6 +79,7 @@
 
 .freeButton {
   @include m.button-base;
+  @include m.button-sheen;
   margin-top: t.$space-1;
   background: t.$color-accent;
   color: t.$color-accent-foreground;

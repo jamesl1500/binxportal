@@ -119,6 +119,7 @@
 
 .finish {
   @include m.button-base;
+  @include m.button-sheen;
   color: t.$color-accent-foreground;
   text-decoration: none;
   background: t.$color-accent;

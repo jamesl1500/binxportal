@@ -12,6 +12,7 @@ import type { Metadata } from "next";
 import { getPortalContext, getPortalProjects } from "@/lib/portal";
 import PortalPageHeader from "@/components/portal/PortalPageHeader/PortalPageHeader";
 import PortalProjectList from "@/components/portal/PortalProjectList/PortalProjectList";
+import PageEnter from "@/components/ui/PageEnter/PageEnter";
 
 import styles from "../page.module.scss";
 
@@ -28,23 +29,25 @@ const PortalProjectsPage = async () => {
   const agencyName = context?.agency.name ?? "your agency";
 
   return (
-    <div className={styles.page}>
-      <PortalPageHeader
-        eyebrow="Projects"
-        title="Your projects"
-        subtitle={
-          projects.length === 0
-            ? `Projects ${agencyName} runs for you will show up here.`
-            : `${active} in progress · ${projects.length} in total. Open one for its timeline, task board and shared canvas.`
-        }
-      />
+    <PageEnter>
+      <div className={styles.page}>
+        <PortalPageHeader
+          eyebrow="Projects"
+          title="Your projects"
+          subtitle={
+            projects.length === 0
+              ? `Projects ${agencyName} runs for you will show up here.`
+              : `${active} in progress · ${projects.length} in total. Open one for its timeline, task board and shared canvas.`
+          }
+        />
 
-      {projects.length === 0 ? (
-        <p className={styles.empty}>No projects yet.</p>
-      ) : (
-        <PortalProjectList projects={projects} />
-      )}
-    </div>
+        {projects.length === 0 ? (
+          <p className={styles.empty}>No projects yet.</p>
+        ) : (
+          <PortalProjectList projects={projects} />
+        )}
+      </div>
+    </PageEnter>
   );
 };
 

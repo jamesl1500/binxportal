@@ -61,7 +61,7 @@ $brand: var(--portal-primary, #{t.$color-ink});
   flex-shrink: 0;
   color: var(--tone);
   background: var(--tone-bg);
-  border-radius: t.$radius-lg;
+  border-radius: t.$radius-md;
 
   svg {
     width: 1.05rem;

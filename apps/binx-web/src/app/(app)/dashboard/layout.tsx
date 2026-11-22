@@ -36,13 +36,15 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div>
-      <span className={styles.eyebrow}>Dashboard</span>
-      <h1 className={styles.title}>
-        {greeting}, {firstName}.
-      </h1>
-      <p className={styles.subtitle}>
-        What&apos;s happening across {currentAgency.name}.
-      </p>
+      <header className={styles.hero}>
+        <span className={styles.eyebrow}>Dashboard</span>
+        <h1 className={styles.title}>
+          {greeting}, {firstName}.
+        </h1>
+        <p className={styles.subtitle}>
+          What&apos;s happening across {currentAgency.name}.
+        </p>
+      </header>
 
       <div className={styles.tabsWrap}>
         <DashboardTabs myWorkCount={myWork?.total_open ?? 0} />

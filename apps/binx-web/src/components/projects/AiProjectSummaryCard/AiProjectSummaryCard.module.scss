@@ -18,6 +18,7 @@
 
 .generate {
   @include m.button-base;
+  @include m.button-sheen;
   flex-shrink: 0;
   padding: t.$space-2 t.$space-4;
 

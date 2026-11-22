@@ -118,6 +118,7 @@ $z-confirm: 90;
 
 .confirm {
   @include m.button-base;
+  @include m.button-sheen;
   color: t.$color-accent-foreground;
   background: t.$color-accent;
 

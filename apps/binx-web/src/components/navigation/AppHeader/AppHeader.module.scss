@@ -1,5 +1,10 @@
 @use "../../../styles/tokens" as t;
 @use "../../../styles/mixins" as m;
+@use "../../../styles/motion" as mo;
+
+// Hover styles match the marketing header
+// (components/marketing/MarketingHeader): a sliding highlight pill behind
+// the nav links, soft-ink links that darken, and the brand mark's tilt.
 
 .header {
   position: relative;
@@ -52,6 +57,13 @@
   width: 1.5rem;
   height: 1.5rem;
   flex-shrink: 0;
+  transition: transform 0.6s mo.$ease-out-expo;
+
+  @include mo.motion-ok {
+    .brand:hover & {
+      transform: rotate(-12deg) scale(1.1);
+    }
+  }
 }
 
 .brandText {
@@ -68,6 +80,7 @@
 }
 
 .nav {
+  position: relative;
   display: none;
   align-items: center;
   gap: t.$space-1;
@@ -77,7 +90,51 @@
   }
 }
 
+// The highlight that slides to whichever nav item is hovered or focused,
+// and rests on the current page's. Positioned from AppHeader.tsx.
+.pill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, t.$color-ink 6%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s mo.$ease-out-soft;
+
+  @include mo.motion-ok {
+    transition:
+      transform 0.45s mo.$ease-out-expo,
+      width 0.45s mo.$ease-out-expo,
+      opacity 0.25s mo.$ease-out-soft;
+  }
+
+  &[data-visible="true"] {
+    opacity: 1;
+  }
+}
+
+// The active item's mark: a short stroke of the marketing headline's
+// gradient (or the staff member's own accent) under its label.
+@mixin active-mark {
+  &::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: 3px;
+    width: 1rem;
+    height: 2px;
+    margin-left: -0.5rem;
+    border-radius: 999px;
+    background: var(--app-accent, #{t.$gradient-brand});
+  }
+}
+
 .navLink {
+  position: relative;
+  z-index: 1;
   display: inline-flex;
   align-items: center;
   gap: t.$space-2;
@@ -85,19 +142,21 @@
   font-size: t.$font-size-sm;
   color: t.$color-ink-soft;
   text-decoration: none;
-  border-radius: t.$radius-sm;
-  transition: color t.$duration-fast t.$ease-standard, background-color t.$duration-fast t.$ease-standard;
-  border: 1px solid transparent;
+  border-radius: 999px;
+  transition: color 0.25s mo.$ease-out-soft;
 
   &:hover {
     color: t.$color-ink;
-    background: rgba(10, 10, 11, 0.04);
-    border: 1px solid rgba(10, 10, 11, 0.08);
   }
 
-  &[data-active] {
+  &[data-active="true"] {
     color: t.$color-ink;
     font-weight: 600;
+    @include active-mark;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
   }
 }
 
@@ -116,6 +175,8 @@
 }
 
 .navTrigger {
+  position: relative;
+  z-index: 1;
   display: inline-flex;
   align-items: center;
   gap: t.$space-1;
@@ -125,18 +186,20 @@
   color: t.$color-ink-soft;
   background: none;
   border: none;
-  border-radius: t.$radius-sm;
+  border-radius: 999px;
   cursor: pointer;
-  transition: color t.$duration-fast t.$ease-standard, background-color t.$duration-fast t.$ease-standard;
+  transition: color 0.25s mo.$ease-out-soft;
 
-  &:hover {
-    color: t.$color-ink;
-    background: rgba(10, 10, 11, 0.04);
-  }
-
+  &:hover,
   &[data-open] {
     color: t.$color-ink;
-    background: rgba(10, 10, 11, 0.04);
+  }
+
+  // On a page that lives in the Manage menu (Invoices, Team, …).
+  &[data-active="true"] {
+    color: t.$color-ink;
+    font-weight: 600;
+    @include active-mark;
   }
 
   &:focus-visible {
@@ -238,13 +301,13 @@
   color: t.$color-ink;
   background: none;
   border: none;
-  border-radius: t.$radius-sm;
+  border-radius: 999px;
   cursor: pointer;
-  transition: background-color t.$duration-fast t.$ease-standard;
+  transition: background-color 0.25s mo.$ease-out-soft;
 
   &:hover,
   &[data-open] {
-    background: rgba(10, 10, 11, 0.04);
+    background: color-mix(in srgb, t.$color-ink 6%, transparent);
   }
 
   &:focus-visible {
@@ -276,38 +339,66 @@
   }
 }
 
+// ---- Dropdowns (Manage, account) ------------------------------------------
+// They grow out of their trigger (Base UI's --transform-origin), items
+// arrive in a short stagger, and the highlighted item answers the pointer
+// or arrow keys the way the marketing cards answer hover.
+
 .positioner {
   z-index: 50;
   outline: none;
 }
 
 .popup {
-  min-width: 12rem;
+  min-width: 13rem;
   padding: t.$space-2;
   background: t.$color-surface;
   border: 1px solid t.$color-border;
   border-radius: t.$radius-md;
-  box-shadow: 0 8px 24px rgba(10, 10, 11, 0.12);
+  box-shadow:
+    0 1px 2px rgba(10, 10, 11, 0.04),
+    0 24px 48px -24px rgba(10, 10, 11, 0.35);
   outline: none;
+  transform-origin: var(--transform-origin);
+  transition:
+    opacity 0.2s mo.$ease-out-soft,
+    transform 0.35s mo.$ease-out-expo;
 
   &[data-starting-style],
   &[data-ending-style] {
     opacity: 0;
-    transform: translateY(-4px) scale(0.98);
+    transform: translateY(-4px) scale(0.97);
   }
 
-  transition: opacity t.$duration-fast t.$ease-standard, transform t.$duration-fast t.$ease-standard;
+  @media (prefers-reduced-motion: reduce) {
+    transition: opacity 0.15s linear;
+
+    &[data-starting-style],
+    &[data-ending-style] {
+      transform: none;
+    }
+  }
 }
 
-.groupLabel {
-  @include m.mono-label;
-  padding: t.$space-2 t.$space-3 t.$space-1;
-  color: t.$color-ink-faint;
+// Manage: two columns of icon cards on a wide screen, one on a narrow one.
+.managePopup {
+  display: grid;
+  gap: 2px;
+  width: min(32rem, calc(100vw - 2rem));
+
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.accountPopup {
+  min-width: 16rem;
 }
 
 .menuItem {
   display: flex;
   align-items: center;
+  gap: t.$space-3;
   padding: t.$space-2 t.$space-3;
   font-size: t.$font-size-sm;
   color: t.$color-ink;
@@ -315,22 +406,188 @@
   border-radius: t.$radius-sm;
   cursor: pointer;
   outline: none;
+  transition: background-color 0.2s mo.$ease-out-soft;
 
   &[data-highlighted] {
-    background: rgba(10, 10, 11, 0.06);
+    background: color-mix(in srgb, t.$color-ink 5%, transparent);
   }
 
   &[data-disabled] {
     color: t.$color-ink-faint;
     cursor: not-allowed;
   }
+
+  // Items rise in one after another as the menu opens (`--i` is set per
+  // item in AppHeader.tsx).
+  @include mo.motion-ok {
+    .popup[data-open] & {
+      animation: menu-item-in 0.4s mo.$ease-out-expo both;
+      animation-delay: calc(40ms + var(--i, 0) * 28ms);
+    }
+  }
+}
+
+@keyframes menu-item-in {
+  from {
+    opacity: 0;
+    translate: 0 4px;
+  }
+
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+// A plain item's leading icon (account menu).
+.itemIcon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  color: t.$color-ink-soft;
+  transition:
+    color 0.2s mo.$ease-out-soft,
+    transform 0.35s mo.$ease-out-soft;
+
+  [data-highlighted] > & {
+    color: t.$color-ink;
+
+    @include mo.motion-ok {
+      transform: translateX(1px) scale(1.08);
+    }
+  }
+}
+
+// ---- Manage cards ----
+
+.menuCard {
+  align-items: flex-start;
+  padding: t.$space-3;
+
+  &[data-active="true"] .menuLabel::after {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-left: t.$space-2;
+    vertical-align: middle;
+    border-radius: 999px;
+    background: var(--app-accent, #{t.$color-brand});
+  }
+}
+
+.menuIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  color: t.$color-ink;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+  transition:
+    color 0.3s mo.$ease-out-soft,
+    background-color 0.3s mo.$ease-out-soft,
+    border-color 0.3s mo.$ease-out-soft,
+    transform 0.45s mo.$ease-out-soft;
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  // The marketing feature cards' hover: the tile inverts and tilts.
+  [data-highlighted] > & {
+    color: t.$color-paper;
+    background: t.$color-ink;
+    border-color: t.$color-ink;
+
+    @include mo.motion-ok {
+      transform: rotate(-8deg) scale(1.06);
+    }
+  }
+}
+
+.menuText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.menuLabel {
+  font-weight: 600;
+  color: t.$color-ink;
+}
+
+.menuHint {
+  font-size: t.$font-size-xs;
+  line-height: 1.4;
+  color: t.$color-ink-soft;
+}
+
+.menuArrow {
+  align-self: center;
+  width: 0.9rem;
+  height: 0.9rem;
+  flex-shrink: 0;
+  color: t.$color-ink-soft;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition:
+    opacity 0.2s mo.$ease-out-soft,
+    transform 0.35s mo.$ease-out-soft;
+
+  [data-highlighted] > & {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+// ---- Account menu header and sign-out ----
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: t.$space-3;
+  margin-bottom: t.$space-1;
+  padding: t.$space-2 t.$space-3 t.$space-3;
+  border-bottom: 1px solid t.$color-border;
+}
+
+.identityText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.identityName {
+  font-family: var(--font-heading);
+  font-size: t.$font-size-base;
+  color: t.$color-ink;
+}
+
+.identityEmail {
+  overflow: hidden;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .signOut {
   margin-top: t.$space-1;
   padding-top: t.$space-3;
   border-top: 1px solid t.$color-border;
+  border-radius: 0 0 t.$radius-sm t.$radius-sm;
   color: t.$color-danger;
+
+  .itemIcon {
+    color: currentColor;
+  }
 
   &[data-highlighted] {
     background: rgba(220, 38, 38, 0.08);

@@ -16,6 +16,7 @@ import { getCurrentAgencyContext } from "@/lib/agencies";
 import { getAgencyClients } from "@/lib/clients";
 import ClientsTable from "@/components/forms/clients/ClientsTable/ClientsTable";
 import NewClientButton from "@/components/forms/clients/NewClientButton/NewClientButton";
+import PageEnter from "@/components/ui/PageEnter/PageEnter";
 
 import styles from "./page.module.scss";
 
@@ -32,24 +33,26 @@ const ClientsPage = async () => {
   const activeCount = clients.filter((client) => client.is_active).length;
 
   return (
-    <div>
-      <div className={styles.header}>
-        <div>
-          <span className={styles.eyebrow}>Clients</span>
-          <h1 className={styles.title}>Your clients</h1>
-          <p className={styles.subtitle}>
-            {activeCount} active {activeCount === 1 ? "client" : "clients"} at{" "}
-            {currentAgency.name}.
-          </p>
+    <PageEnter>
+      <div>
+        <div className={styles.header}>
+          <div>
+            <span className={styles.eyebrow}>Clients</span>
+            <h1 className={styles.title}>Your clients</h1>
+            <p className={styles.subtitle}>
+              {activeCount} active {activeCount === 1 ? "client" : "clients"} at{" "}
+              {currentAgency.name}.
+            </p>
+          </div>
+
+          <NewClientButton />
         </div>
 
-        <NewClientButton />
+        <div className={styles.tableWrapper}>
+          <ClientsTable agencyId={currentAgency.id} clients={clients} />
+        </div>
       </div>
-
-      <div className={styles.tableWrapper}>
-        <ClientsTable agencyId={currentAgency.id} clients={clients} />
-      </div>
-    </div>
+    </PageEnter>
   );
 };
 

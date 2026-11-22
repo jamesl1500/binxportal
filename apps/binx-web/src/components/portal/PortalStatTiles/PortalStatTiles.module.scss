@@ -18,15 +18,13 @@
   height: 100%;
   padding: t.$space-4 t.$space-5;
   text-decoration: none;
-  transition:
-    border-color t.$duration-fast t.$ease-standard,
-    transform t.$duration-fast t.$ease-standard,
-    box-shadow t.$duration-fast t.$ease-standard;
 
-  &[data-link="true"]:hover {
-    border-color: var(--portal-accent, #{t.$color-border-strong});
-    box-shadow: 0 6px 16px rgba(10, 10, 11, 0.06);
-    transform: translateY(-1px);
+  &[data-link="true"] {
+    @include m.card-interactive;
+
+    &:hover {
+      border-color: var(--portal-accent, #{t.$color-border-strong});
+    }
   }
 
   &:focus-visible {
@@ -56,6 +54,7 @@
 
 .value {
   font-family: var(--font-heading);
+  letter-spacing: -0.015em;
   font-size: t.$font-size-xl;
   line-height: 1.2;
   color: t.$color-ink;

@@ -95,7 +95,7 @@
 .progressFill {
   display: block;
   height: 100%;
-  background: t.$color-accent;
+  background: var(--app-accent, #{t.$gradient-brand});
   border-radius: inherit;
 }
 

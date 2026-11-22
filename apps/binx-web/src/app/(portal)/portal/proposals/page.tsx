@@ -17,6 +17,7 @@ import { getPortalProposals, type PortalProposal } from "@/lib/portal";
 import { formatDay, isAwaitingDecision } from "@/lib/portal-insights";
 import { proposalStatusLabel } from "@/lib/proposals-client";
 import PortalPageHeader from "@/components/portal/PortalPageHeader/PortalPageHeader";
+import PageEnter from "@/components/ui/PageEnter/PageEnter";
 
 import styles from "./page.module.scss";
 
@@ -53,53 +54,55 @@ const PortalProposalsPage = async () => {
   const decided = proposals.filter((proposal) => !isAwaitingDecision(proposal));
 
   return (
-    <div className={styles.page}>
-      <PortalPageHeader
-        eyebrow="Agreements"
-        title="Proposals"
-        subtitle={
-          awaiting.length > 0
-            ? `${awaiting.length} awaiting your decision — review the scope and sign in one click.`
-            : proposals.length > 0
-              ? `${proposals.length} ${proposals.length === 1 ? "proposal" : "proposals"}, all decided.`
-              : "Proposals sent to you for review and signature will show up here."
-        }
-      />
+    <PageEnter>
+      <div className={styles.page}>
+        <PortalPageHeader
+          eyebrow="Agreements"
+          title="Proposals"
+          subtitle={
+            awaiting.length > 0
+              ? `${awaiting.length} awaiting your decision — review the scope and sign in one click.`
+              : proposals.length > 0
+                ? `${proposals.length} ${proposals.length === 1 ? "proposal" : "proposals"}, all decided.`
+                : "Proposals sent to you for review and signature will show up here."
+          }
+        />
 
-      {proposals.length === 0 ? (
-        <p className={styles.empty}>No proposals yet.</p>
-      ) : (
-        <>
-          {awaiting.length > 0 && (
-            <section
-              className={styles.section}
-              aria-labelledby="awaiting-title"
-            >
-              <h2 id="awaiting-title" className={styles.sectionTitle}>
-                Awaiting your decision
-              </h2>
-              <ul className={styles.list} data-highlight="true">
-                {awaiting.map((proposal) => (
-                  <ProposalRow key={proposal.id} proposal={proposal} />
-                ))}
-              </ul>
-            </section>
-          )}
-          {decided.length > 0 && (
-            <section className={styles.section} aria-labelledby="history-title">
-              <h2 id="history-title" className={styles.sectionTitle}>
-                {awaiting.length > 0 ? "History" : "All proposals"}
-              </h2>
-              <ul className={styles.list}>
-                {decided.map((proposal) => (
-                  <ProposalRow key={proposal.id} proposal={proposal} />
-                ))}
-              </ul>
-            </section>
-          )}
-        </>
-      )}
-    </div>
+        {proposals.length === 0 ? (
+          <p className={styles.empty}>No proposals yet.</p>
+        ) : (
+          <>
+            {awaiting.length > 0 && (
+              <section
+                className={styles.section}
+                aria-labelledby="awaiting-title"
+              >
+                <h2 id="awaiting-title" className={styles.sectionTitle}>
+                  Awaiting your decision
+                </h2>
+                <ul className={styles.list} data-highlight="true">
+                  {awaiting.map((proposal) => (
+                    <ProposalRow key={proposal.id} proposal={proposal} />
+                  ))}
+                </ul>
+              </section>
+            )}
+            {decided.length > 0 && (
+              <section className={styles.section} aria-labelledby="history-title">
+                <h2 id="history-title" className={styles.sectionTitle}>
+                  {awaiting.length > 0 ? "History" : "All proposals"}
+                </h2>
+                <ul className={styles.list}>
+                  {decided.map((proposal) => (
+                    <ProposalRow key={proposal.id} proposal={proposal} />
+                  ))}
+                </ul>
+              </section>
+            )}
+          </>
+        )}
+      </div>
+    </PageEnter>
   );
 };
 

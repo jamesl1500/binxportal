@@ -19,8 +19,10 @@ vi.mock("@/app/(app)/actions", () => ({
   switchAgencyAction: vi.fn(async () => ({})),
 }));
 
+const nav = vi.hoisted(() => ({ pathname: "/dashboard" }));
+
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/dashboard",
+  usePathname: () => nav.pathname,
   useRouter: () => ({ refresh: vi.fn() }),
 }));
 
@@ -69,6 +71,7 @@ const testAgencies: AgencyRead[] = [
 
 beforeEach(() => {
   vi.clearAllMocks();
+  nav.pathname = "/dashboard";
 });
 
 // The primary nav (links + Manage trigger) is only shown from the `md`
@@ -80,6 +83,54 @@ beforeEach(() => {
 const NAV_QUERY = { hidden: true } as const;
 
 describe("AppHeader", () => {
+  const renderHeader = () =>
+    render(
+      <AppHeader
+        user={testUser}
+        agencies={testAgencies}
+        currentAgency={testAgencies[0]}
+      />,
+    );
+  const pill = (container: HTMLElement) =>
+    container.querySelector('nav[aria-label="Primary"] > span[aria-hidden="true"]');
+
+  it("marks only the current page's link as active, with the pill resting on it", () => {
+    const { container } = renderHeader();
+    const dashboard = screen.getByRole("link", { name: "Dashboard", ...NAV_QUERY });
+    const clients = screen.getByRole("link", { name: "Clients", ...NAV_QUERY });
+    expect(dashboard).toHaveAttribute("data-active", "true");
+    expect(dashboard).toHaveAttribute("aria-current", "page");
+    expect(clients).toHaveAttribute("data-active", "false");
+    expect(clients).not.toHaveAttribute("aria-current");
+    expect(pill(container)).toHaveAttribute("data-visible", "true");
+  });
+
+  it("rests on Manage for a page that lives in that menu", () => {
+    nav.pathname = "/invoices/inv-1";
+    const { container } = renderHeader();
+    expect(screen.getByRole("button", { name: /manage/i, ...NAV_QUERY })).toHaveAttribute(
+      "data-active",
+      "true",
+    );
+    expect(
+      screen.getByRole("link", { name: "Dashboard", ...NAV_QUERY }),
+    ).toHaveAttribute("data-active", "false");
+    expect(pill(container)).toHaveAttribute("data-visible", "true");
+  });
+
+  it("hides the pill when nothing in the bar matches, and shows it on hover", async () => {
+    nav.pathname = "/profile";
+    const { container } = renderHeader();
+    expect(pill(container)).toHaveAttribute("data-visible", "false");
+
+    const user = userEvent.setup();
+    await user.hover(screen.getByRole("link", { name: "Leads", ...NAV_QUERY }));
+    expect(pill(container)).toHaveAttribute("data-visible", "true");
+
+    await user.unhover(container.querySelector('nav[aria-label="Primary"]')!);
+    expect(pill(container)).toHaveAttribute("data-visible", "false");
+  });
+
   it("renders the primary nav links", () => {
     render(
       <AppHeader
@@ -139,6 +190,41 @@ describe("AppHeader", () => {
       "href",
       "/proposals",
     );
+  });
+
+  it("shows each Manage destination with a hint and marks the current one", async () => {
+    nav.pathname = "/invoices";
+    const user = userEvent.setup();
+    render(
+      <AppHeader
+        user={testUser}
+        agencies={testAgencies}
+        currentAgency={testAgencies[0]}
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: /manage/i, ...NAV_QUERY }));
+
+    // The hint is visible but kept out of the accessible name.
+    const invoices = await screen.findByRole("menuitem", { name: "Invoices" });
+    expect(invoices).toHaveTextContent("Bill clients, track payments");
+    expect(invoices).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("menuitem", { name: "Team" })).not.toHaveAttribute("aria-current");
+    expect(screen.getByRole("menuitem", { name: "Import & export" })).toHaveAttribute("href", "/data");
+  });
+
+  it("heads the account menu with who's signed in", async () => {
+    const user = userEvent.setup();
+    render(
+      <AppHeader
+        user={testUser}
+        agencies={testAgencies}
+        currentAgency={testAgencies[0]}
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: `${testUser.full_name} account menu` }));
+    const menu = await screen.findByRole("menu");
+    expect(within(menu).getByText(testUser.full_name)).toBeInTheDocument();
+    expect(within(menu).getByText(testUser.email)).toBeInTheDocument();
   });
 
   // Regression test for: "Base UI: MenuGroupContext is missing. Menu group

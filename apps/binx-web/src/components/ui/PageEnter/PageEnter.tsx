@@ -12,6 +12,11 @@
  * itself is in globals.css (`.page-enter`). Browsers without view
  * transitions, and reduced-motion users, just get the instant swap.
  *
+ * Not on the client portal home (app/(portal)/portal/page.tsx): wrapping
+ * that page crashed WebKit's page process on load (seen Nov 2026 in
+ * Playwright's mobile-safari project, with JS on and CSS off alike). The
+ * other portal pages are fine.
+ *
  * @module apps/binx-web/src/components/ui/PageEnter/PageEnter.tsx
  * @author Binx Portal
  */
