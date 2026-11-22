@@ -29,6 +29,7 @@ from fastapi.responses import FileResponse, Response, StreamingResponse
 from starlette.background import BackgroundTask
 
 from binx_api.core.config import get_settings
+from binx_api.core.errors import capture_error
 
 logger = logging.getLogger("binx_api.storage")
 settings = get_settings()
@@ -87,8 +88,10 @@ async def delete(storage_path: str) -> None:
         bucket, key = _split_s3(storage_path)
         try:
             await asyncio.to_thread(_get_s3_client().delete_object, Bucket=bucket, Key=key)
-        except (BotoCoreError, ClientError):
-            logger.exception("Couldn't delete %s", storage_path)
+        except (BotoCoreError, ClientError) as exc:
+            # Best effort: the row is gone either way, this just leaves an
+            # orphaned object behind.
+            await capture_error(exc, level="warning", tags={"upstream": "s3"}, context={"path": storage_path})
         return
     try:
         Path(storage_path).unlink(missing_ok=True)
@@ -105,8 +108,8 @@ async def delete_prefix(area: str, prefix: str) -> None:
         return
     try:
         await asyncio.to_thread(_delete_s3_prefix, settings.upload_bucket, f"{area}/{prefix}/")
-    except (BotoCoreError, ClientError):
-        logger.exception("Couldn't delete s3://%s/%s/%s/", settings.upload_bucket, area, prefix)
+    except (BotoCoreError, ClientError) as exc:
+        await capture_error(exc, level="warning", tags={"upstream": "s3"}, context={"prefix": f"{area}/{prefix}/"})
 
 
 def _delete_s3_prefix(bucket: str, prefix: str) -> None:

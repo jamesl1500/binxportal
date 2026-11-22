@@ -123,6 +123,92 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/errors/badge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Error Badge */
+        get: operations["error_badge_admin_errors_badge_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/errors/issues": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Issues */
+        get: operations["list_issues_admin_errors_issues_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/errors/issues/{issue_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Issue */
+        get: operations["get_issue_admin_errors_issues__issue_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Issue Status */
+        patch: operations["update_issue_status_admin_errors_issues__issue_id__patch"];
+        trace?: never;
+    };
+    "/admin/errors/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lookup Reference */
+        get: operations["lookup_reference_admin_errors_lookup_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/errors/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Error Summary */
+        get: operations["error_summary_admin_errors_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/feedback": {
         parameters: {
             query?: never;
@@ -3508,6 +3594,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/errors/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Report Web Error */
+        post: operations["report_web_error_errors_report_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/feedback": {
         parameters: {
             query?: never;
@@ -6786,6 +6889,232 @@ export interface components {
              */
             new_email: string;
         };
+        /** ErrorBadge */
+        ErrorBadge: {
+            /** Open Issues 24H */
+            open_issues_24h: number;
+        };
+        /** ErrorEventFull */
+        ErrorEventFull: {
+            /** Agency Id */
+            agency_id: string | null;
+            /** Context */
+            context: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Environment */
+            environment: string | null;
+            /** Error Type */
+            error_type: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Level */
+            level: string;
+            /** Message */
+            message: string;
+            /** Method */
+            method: string | null;
+            /** Path */
+            path: string | null;
+            /** Reference */
+            reference: string;
+            /** Release */
+            release: string | null;
+            /** Request Id */
+            request_id: string | null;
+            /** Route */
+            route: string | null;
+            /** Sentry Url */
+            sentry_url: string | null;
+            /** Source */
+            source: string;
+            /** Stacktrace */
+            stacktrace: string | null;
+            /** Status Code */
+            status_code: number | null;
+            /** User Email */
+            user_email?: string | null;
+            /** User Id */
+            user_id: string | null;
+            /** User Name */
+            user_name?: string | null;
+        };
+        /** ErrorEventRow */
+        ErrorEventRow: {
+            /** Agency Id */
+            agency_id: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Environment */
+            environment: string | null;
+            /** Error Type */
+            error_type: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Level */
+            level: string;
+            /** Message */
+            message: string;
+            /** Method */
+            method: string | null;
+            /** Path */
+            path: string | null;
+            /** Reference */
+            reference: string;
+            /** Release */
+            release: string | null;
+            /** Request Id */
+            request_id: string | null;
+            /** Route */
+            route: string | null;
+            /** Sentry Url */
+            sentry_url: string | null;
+            /** Source */
+            source: string;
+            /** Status Code */
+            status_code: number | null;
+            /** User Email */
+            user_email?: string | null;
+            /** User Id */
+            user_id: string | null;
+            /** User Name */
+            user_name?: string | null;
+        };
+        /** ErrorIssueDetail */
+        ErrorIssueDetail: {
+            event: components["schemas"]["ErrorEventFull"] | null;
+            /** Hourly */
+            hourly: components["schemas"]["HourBucket"][];
+            issue: components["schemas"]["ErrorIssueRow"];
+            /** Recent Events */
+            recent_events: components["schemas"]["ErrorEventRow"][];
+            /** Resolved At */
+            resolved_at: string | null;
+            /** Status Changed By Name */
+            status_changed_by_name: string | null;
+        };
+        /** ErrorIssuePage */
+        ErrorIssuePage: {
+            /** Items */
+            items: components["schemas"]["ErrorIssueRow"][];
+            /** Total */
+            total: number;
+        };
+        /** ErrorIssueRow */
+        ErrorIssueRow: {
+            /** Culprit */
+            culprit: string | null;
+            /** Error Type */
+            error_type: string;
+            /** Event Count */
+            event_count: number;
+            /** Events In Period */
+            events_in_period: number;
+            /**
+             * First Seen At
+             * Format: date-time
+             */
+            first_seen_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Last Release */
+            last_release: string | null;
+            /**
+             * Last Seen At
+             * Format: date-time
+             */
+            last_seen_at: string;
+            /** Level */
+            level: string;
+            /** Regressed At */
+            regressed_at: string | null;
+            /** Sentry Url */
+            sentry_url: string | null;
+            /** Source */
+            source: string;
+            /** Status */
+            status: string;
+            /** Title */
+            title: string;
+            /** Users In Period */
+            users_in_period: number;
+        };
+        /** ErrorIssueStatusRead */
+        ErrorIssueStatusRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Resolved At */
+            resolved_at: string | null;
+            /** Status */
+            status: string;
+            /** Status Changed By Name */
+            status_changed_by_name: string | null;
+        };
+        /** ErrorIssueStatusUpdate */
+        ErrorIssueStatusUpdate: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "unresolved" | "resolved" | "ignored";
+        };
+        /** ErrorLookup */
+        ErrorLookup: {
+            /**
+             * Event Id
+             * Format: uuid
+             */
+            event_id: string;
+            /**
+             * Issue Id
+             * Format: uuid
+             */
+            issue_id: string;
+        };
+        /** ErrorSummary */
+        ErrorSummary: {
+            /** By Source 24H */
+            by_source_24h: {
+                [key: string]: number;
+            };
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /** Hourly */
+            hourly: components["schemas"]["HourBucket"][];
+            /** New Issues 24H */
+            new_issues_24h: number;
+            /** Open Issues 24H */
+            open_issues_24h: number;
+            /** Previous 24H */
+            previous_24h: number;
+            /** Windows */
+            windows: {
+                [key: string]: components["schemas"]["WindowCounts"];
+            };
+        };
         /** ExperienceEntry */
         ExperienceEntry: {
             /** Description */
@@ -7016,6 +7345,20 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** HourBucket */
+        HourBucket: {
+            /** Api */
+            api: number;
+            /**
+             * Hour Start
+             * Format: date-time
+             */
+            hour_start: string;
+            /** Total */
+            total: number;
+            /** Web */
+            web: number;
         };
         /** ImportFieldRead */
         ImportFieldRead: {
@@ -10569,6 +10912,60 @@ export interface components {
              */
             email: string;
         };
+        /** WebErrorReceipt */
+        WebErrorReceipt: {
+            /** Reference */
+            reference: string | null;
+        };
+        /**
+         * WebErrorReport
+         * @description An error from binx-web: the browser (via binx-web's /api/errors
+         *     route) or the Next server (instrumentation.ts's onRequestError).
+         *     Every field is capped. Anyone can post here, so it's treated as
+         *     untrusted text and only ever shown back as text.
+         */
+        WebErrorReport: {
+            /** Digest */
+            digest?: string | null;
+            /** Environment */
+            environment?: string | null;
+            /**
+             * Error Type
+             * @default Error
+             */
+            error_type: string;
+            /**
+             * Level
+             * @default error
+             * @enum {string}
+             */
+            level: "warning" | "error" | "fatal";
+            /** Message */
+            message: string;
+            /** Method */
+            method?: string | null;
+            /** Path */
+            path?: string | null;
+            /** Release */
+            release?: string | null;
+            /** Request Id */
+            request_id?: string | null;
+            /** Route */
+            route?: string | null;
+            /** Route Type */
+            route_type?: string | null;
+            /**
+             * Runtime
+             * @enum {string}
+             */
+            runtime: "browser" | "server";
+            /** Sentry Event Id */
+            sentry_event_id?: string | null;
+            /** Stack */
+            stack?: string | null;
+            /** User Agent */
+            user_agent?: string | null;
+        };
         /** WeeklySignups */
         WeeklySignups: {
             /** Agencies */
@@ -10580,6 +10977,15 @@ export interface components {
              * Format: date
              */
             week_start: string;
+        };
+        /** WindowCounts */
+        WindowCounts: {
+            /** Events */
+            events: number;
+            /** Issues */
+            issues: number;
+            /** Users */
+            users: number;
         };
         /**
          * WsTicketResponse
@@ -10843,6 +11249,182 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    error_badge_admin_errors_badge_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBadge"];
+                };
+            };
+        };
+    };
+    list_issues_admin_errors_issues_get: {
+        parameters: {
+            query?: {
+                status?: string | null;
+                source?: string | null;
+                period?: string;
+                sort?: string;
+                q?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorIssuePage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_issue_admin_errors_issues__issue_id__get: {
+        parameters: {
+            query?: {
+                event_id?: string | null;
+            };
+            header?: never;
+            path: {
+                issue_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorIssueDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_issue_status_admin_errors_issues__issue_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                issue_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ErrorIssueStatusUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorIssueStatusRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    lookup_reference_admin_errors_lookup_get: {
+        parameters: {
+            query: {
+                ref: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorLookup"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    error_summary_admin_errors_summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorSummary"];
                 };
             };
         };
@@ -19839,6 +20421,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WsTicketResponse"];
+                };
+            };
+        };
+    };
+    report_web_error_errors_report_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WebErrorReport"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebErrorReceipt"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

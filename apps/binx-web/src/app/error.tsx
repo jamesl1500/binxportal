@@ -10,10 +10,10 @@
  */
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
-import { reportError } from "@/lib/sentry-client";
+import { reportClientError } from "@/lib/error-reporting";
 
 import styles from "./error.module.scss";
 
@@ -23,13 +23,27 @@ interface ErrorPageProps {
 }
 
 const ErrorPage = ({ error, retry }: ErrorPageProps) => {
+  // The Binx error-log reference ("7F3A9C21"), once the report is stored:
+  // what support asks for and looks up in /admin/errors.
+  const [reference, setReference] = useState<string>();
+
   useEffect(() => {
     console.error(error);
-    reportError(error);
+    let current = true;
+    void reportClientError(error, { source: "error-boundary" }).then((ref) => {
+      if (current) setReference(ref);
+    });
+    return () => {
+      current = false;
+    };
   }, [error]);
 
   return (
     <div className={styles.root}>
+      {/* A page that fails after streaming has started is already sent with
+          a 200, so keep crawlers from indexing this in its place. React
+          hoists the tag into <head>; the strictest robots value wins. */}
+      <meta name="robots" content="noindex" />
       <div className={styles.content}>
         <p className={styles.code}>500</p>
         <h1 className={styles.title}>Something went wrong</h1>
@@ -50,8 +64,10 @@ const ErrorPage = ({ error, retry }: ErrorPageProps) => {
           </Link>
         </div>
 
-        {error.digest && (
-          <p className={styles.digest}>Reference: {error.digest}</p>
+        {(reference || error.digest) && (
+          <p className={styles.digest}>
+            Reference: {reference ?? error.digest}
+          </p>
         )}
       </div>
     </div>

@@ -48,9 +48,11 @@ vi.mock("@/lib/api", () => ({
 
 import { api } from "@/lib/api";
 import {
+  apiErrorFrom,
   AuthApiError,
   clearAuthCookies,
   confirmEmailChange,
+  extractDetailMessage,
   forwardSetCookies,
   getCurrentUser,
   getEmailChangeTarget,
@@ -417,3 +419,43 @@ describe("email verification", () => {
   });
 });
 
+
+describe("binx-api error bodies", () => {
+  it("appends the reference binx-api gives a reported error", () => {
+    expect(
+      extractDetailMessage(
+        { detail: "Something went wrong on our end.", code: "internal_error", reference: "7F3A9C21" },
+        "Unable to save",
+      ),
+    ).toBe("Something went wrong on our end. Reference: 7F3A9C21");
+    // Also onto the fallback, when there's no usable detail.
+    expect(extractDetailMessage({ reference: "7F3A9C21" }, "Unable to save")).toBe(
+      "Unable to save. Reference: 7F3A9C21",
+    );
+    expect(extractDetailMessage({ detail: "Not found", code: "not_found" }, "x")).toBe("Not found");
+  });
+
+  it("apiErrorFrom carries the status, code and reference", () => {
+    const error = apiErrorFrom(
+      {
+        isAxiosError: true,
+        response: {
+          status: 502,
+          data: { detail: "Stripe didn't answer", code: "upstream_error", request_id: "r1", reference: "ABCDEF12" },
+        },
+      },
+      "Unable to pay",
+    );
+    expect(error).toBeInstanceOf(AuthApiError);
+    expect(error).toMatchObject({
+      message: "Stripe didn't answer. Reference: ABCDEF12",
+      status: 502,
+      code: "upstream_error",
+      requestId: "r1",
+      reference: "ABCDEF12",
+    });
+
+    const network = new Error("ECONNREFUSED");
+    expect(apiErrorFrom(network, "x")).toBe(network);
+  });
+});

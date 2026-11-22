@@ -1,11 +1,11 @@
 import logging
 
-import sentry_sdk
 from fastapi import FastAPI, Request, Response
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from binx_api.core.config import get_settings
+from binx_api.core.error_handling import init_sentry, install_error_handling
 from binx_api.core.rate_limit import limiter
 from binx_api.modules.activity.router import router as activity_router
 from binx_api.modules.admin.router import router as admin_router
@@ -17,6 +17,8 @@ from binx_api.modules.billing.webhooks_router import router as billing_webhooks_
 from binx_api.modules.boards.router import router as boards_router
 from binx_api.modules.client_portal.router import router as client_portal_router
 from binx_api.modules.dashboard.router import router as dashboard_router
+from binx_api.modules.errors.router import admin_router as errors_admin_router
+from binx_api.modules.errors.router import router as errors_router
 from binx_api.modules.exports.router import router as exports_router
 from binx_api.modules.feedback.router import admin_router as feedback_admin_router
 from binx_api.modules.feedback.router import router as feedback_router
@@ -56,15 +58,9 @@ def _on_rate_limited(request: Request, exc: Exception) -> Response:
 def create_app() -> FastAPI:
     settings = get_settings()
 
-    # Cleanly off when unset (dev, CI, test) — see core/config.py. The
-    # FastAPI/Starlette integrations auto-enable since both packages are
-    # installed; no explicit integrations= list needed.
-    if settings.sentry_dsn:
-        sentry_sdk.init(
-            dsn=settings.sentry_dsn,
-            environment=settings.sentry_environment,
-            traces_sample_rate=settings.sentry_traces_sample_rate,
-        )
+    # Cleanly off when SENTRY_DSN is unset (dev, CI, test). See
+    # core/error_handling.py for what's configured and why.
+    init_sentry(settings)
 
     docs = settings.api_docs_enabled
     app = FastAPI(
@@ -78,6 +74,11 @@ def create_app() -> FastAPI:
     # need the limiter on app.state, and a handler to turn a breach into 429.
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _on_rate_limited)
+
+    # One error shape for every response, a request id on every request, and
+    # each unexpected error reported once to Sentry and the admin error log
+    # (/admin/errors). See core/errors.py.
+    install_error_handling(app)
 
     # API Ops
     app.include_router(ops_router)
@@ -115,6 +116,8 @@ def create_app() -> FastAPI:
     app.include_router(feedback_router)
     app.include_router(feedback_admin_router)
     app.include_router(admin_router)
+    app.include_router(errors_router)
+    app.include_router(errors_admin_router)
 
     return app
 

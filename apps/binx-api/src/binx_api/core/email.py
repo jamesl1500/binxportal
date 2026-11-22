@@ -6,6 +6,7 @@ from botocore.exceptions import ClientError
 
 from binx_api.core.config import get_settings
 from binx_api.core.email_templates import render_html
+from binx_api.core.errors import capture_error
 
 logger = logging.getLogger("binx_api.email")
 settings = get_settings()
@@ -76,8 +77,13 @@ async def send_email(*, to: str, subject: str, body: str, html: str | None = Non
         kwargs["ReplyToAddresses"] = [settings.ses_reply_to]
     try:
         await asyncio.to_thread(_get_ses_client().send_email, **kwargs)
-    except ClientError:
-        logger.exception("Failed to send email to=%s subject=%s", to, subject)
+    except ClientError as exc:
+        # A warning, not an error: capture_error has already reported it, and
+        # an ERROR line would become a second Sentry event.
+        logger.warning("Failed to send email to=%s subject=%s", to, subject)
+        # The subject, not the recipient: an address is personal data and
+        # Sentry/the error log don't need it to show the failure.
+        await capture_error(exc, tags={"upstream": "ses"}, context={"subject": subject})
 
 
 async def send_verification_email(*, to: str, token: str, portal_invite_token: str | None = None) -> None:

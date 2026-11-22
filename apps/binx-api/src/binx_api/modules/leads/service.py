@@ -21,6 +21,7 @@ from fastapi import HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from binx_api.core.errors import capture_error, is_reportable
 from binx_api.modules.activity import service as activity_service
 from binx_api.modules.activity.models import CATEGORY_CLIENTS
 from binx_api.modules.agencies import service as agencies_service
@@ -362,7 +363,11 @@ async def _run_analysis(
         return _heuristic_analysis(lead)
     try:
         return await ai_service.analyze_lead_website(db, lead, agency, actor=actor, lock=lock)
-    except Exception:
+    except Exception as exc:
+        # AI off, over budget, or the site unreachable are expected and
+        # just fall back. Anything else is a bug worth seeing.
+        if is_reportable(exc):
+            await capture_error(exc, level="warning", context={"lead_id": str(lead.id)})
         return _heuristic_analysis(lead)
 
 

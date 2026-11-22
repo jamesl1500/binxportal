@@ -59,6 +59,15 @@ describe("AdminSidebar", () => {
     expect(screen.queryByLabelText("0 open")).not.toBeInTheDocument();
   });
 
+  it("links to errors, badged with the open issues", () => {
+    mockedPathname.mockReturnValue("/admin/errors/abc");
+    render(<AdminSidebar openErrors={4} />);
+    const link = screen.getByRole("link", { name: /errors/i });
+    expect(link).toHaveAttribute("href", "/admin/errors");
+    expect(link).toHaveAttribute("aria-current", "page");
+    expect(screen.getByLabelText("4 open issues")).toHaveTextContent("4");
+  });
+
   it("links back to the agency app", () => {
     render(<AdminSidebar />);
     expect(

@@ -9,6 +9,7 @@ from sqlalchemy import func, select
 
 from binx_api.core.config import get_settings
 from binx_api.core.dependencies import CurrentUser, DbSession
+from binx_api.core.errors import capture_error, is_reportable
 from binx_api.modules.agencies.dependencies import require_agency_role
 from binx_api.modules.agencies.models import ROLE_ADMIN, ROLE_MEMBER, ROLE_OWNER, Agency
 from binx_api.modules.ai import client as ai_client
@@ -264,6 +265,11 @@ async def stream_conversation_message(
         except Exception as exc:  # must never crash the stream silently — always tell the client
             detail = getattr(exc, "detail", None)  # HTTPException and friends carry a user-safe message
             message = detail if detail is not None else "Something went wrong generating that reply."
+            # The response has already started, so no exception handler will
+            # see this one. Report it here, and give the reference to the user.
+            if is_reportable(exc):
+                captured = await capture_error(exc)
+                message = f"{message} Reference: {captured.reference}"
             yield _sse({"type": "error", "message": str(message)})
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")

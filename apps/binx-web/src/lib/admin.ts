@@ -8,10 +8,9 @@
  * @module apps/binx-web/src/lib/admin.ts
  * @author Binx Portal
  */
-import axios from "axios";
 
 import { api } from "@/lib/api";
-import { AuthApiError, extractDetailMessage, getAccessToken } from "@/lib/auth";
+import { apiErrorFrom, AuthApiError, getAccessToken } from "@/lib/auth";
 import type {
   AdminAgencyRow,
   AdminUserRow,
@@ -82,16 +81,7 @@ export async function getPlatformOverview(): Promise<PlatformOverview> {
     });
     return data;
   } catch (error) {
-    if (axios.isAxiosError(error) && error.response) {
-      throw new AuthApiError(
-        extractDetailMessage(
-          error.response.data,
-          "Unable to load the overview",
-        ),
-        error.response.status,
-      );
-    }
-    throw error;
+    throw apiErrorFrom(error, "Unable to load the overview");
   }
 }
 
@@ -203,13 +193,7 @@ async function adminHeaders(): Promise<{ Authorization: string }> {
 }
 
 function rethrowAdmin(error: unknown, fallback: string): never {
-  if (axios.isAxiosError(error) && error.response) {
-    throw new AuthApiError(
-      extractDetailMessage(error.response.data, fallback),
-      error.response.status,
-    );
-  }
-  throw error;
+  throw apiErrorFrom(error, fallback);
 }
 
 async function adminGet<T>(

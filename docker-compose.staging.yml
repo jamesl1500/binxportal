@@ -91,6 +91,8 @@ services:
       AWS_REGION: us-east-2
       SENTRY_DSN: ${SENTRY_DSN:-}
       SENTRY_ENVIRONMENT: staging
+      # Optional: deep links from /admin/errors to the same event in Sentry.
+      SENTRY_ORG_URL: ${SENTRY_ORG_URL:-}
       # Staging's own bucket — see the same line in docker-compose.prod.yml.
       UPLOAD_BUCKET: binxportal-uploads-staging-574247905173-us-east-2-an
     healthcheck:

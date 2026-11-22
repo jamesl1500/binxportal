@@ -169,6 +169,8 @@ jobs:
             NEXT_PUBLIC_SITE_URL=${{ matrix.site-url }}
             NEXT_PUBLIC_SENTRY_DSN=${{ steps.secrets.outputs.sentry-dsn }}
             NEXT_PUBLIC_SENTRY_ENVIRONMENT=${{ matrix.sentry-environment }}
+            NEXT_PUBLIC_SENTRY_RELEASE=${{ github.sha }}
+            SENTRY_RELEASE=${{ github.sha }}
             NEXT_PUBLIC_GTM_ID=${{ matrix.gtm-id }}
           # Same key on every build so an in-flight form submit against the
           # outgoing container doesn't fail post-deploy — see the Dockerfile.

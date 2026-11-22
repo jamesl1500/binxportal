@@ -1,0 +1,177 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+// Mirrors AdminOverview's tiles and cards so the two dashboards read as one.
+
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-4;
+  min-width: 0;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: t.$space-3;
+  margin: 0;
+}
+
+.tile {
+  @include m.card-base;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-1;
+  padding: t.$space-4 t.$space-5;
+
+  dt {
+    @include m.mono-label;
+    color: t.$color-ink-soft;
+  }
+
+  dd {
+    margin: 0;
+    font-family: var(--font-heading);
+    letter-spacing: -0.015em;
+    font-size: t.$font-size-2xl;
+    color: t.$color-ink;
+    font-variant-numeric: tabular-nums;
+  }
+
+  // Errors in the last hour: the one number that means "look now".
+  &[data-hot] dd {
+    color: t.$color-danger;
+  }
+}
+
+.hint {
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: t.$space-4;
+  align-items: start;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.card {
+  @include m.card-base;
+  min-width: 0;
+  padding: t.$space-5;
+}
+
+.cardHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: t.$space-2 t.$space-4;
+  margin-bottom: t.$space-4;
+}
+
+.cardTitle {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  font-weight: 400;
+  color: t.$color-ink;
+}
+
+.cardMeta {
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+}
+
+.empty {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+}
+
+.tableView {
+  margin-top: t.$space-3;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+
+  summary {
+    cursor: pointer;
+    width: fit-content;
+  }
+}
+
+.table {
+  width: 100%;
+  margin-top: t.$space-3;
+  border-collapse: collapse;
+  font-size: t.$font-size-sm;
+  font-variant-numeric: tabular-nums;
+
+  th {
+    padding: 0 t.$space-3 t.$space-2 0;
+    font-size: t.$font-size-xs;
+    font-weight: 600;
+    text-align: left;
+    color: t.$color-ink-soft;
+    border-bottom: 1px solid t.$color-border;
+  }
+
+  td {
+    padding: t.$space-1 t.$space-3 t.$space-1 0;
+    color: t.$color-ink;
+    border-bottom: 1px solid t.$color-border;
+  }
+}
+
+// ---- By source -------------------------------------------------------------
+
+.sources {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.source {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: t.$space-1 t.$space-3;
+  font-size: t.$font-size-sm;
+}
+
+.sourceName {
+  color: t.$color-ink;
+}
+
+.sourceCount {
+  color: t.$color-ink-soft;
+  font-variant-numeric: tabular-nums;
+}
+
+.track {
+  grid-column: 1 / -1;
+  height: 6px;
+  background: t.$color-border;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  background: t.$color-ink;
+  border-radius: 999px;
+}
+
+.note {
+  margin: t.$space-4 0 0;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+}

@@ -13,6 +13,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { getCurrentUser } from "@/lib/auth";
+import { getOpenErrorCount } from "@/lib/admin-errors";
 import { getFeedbackSummary } from "@/lib/feedback";
 
 import AdminSidebar from "@/components/admin/AdminSidebar/AdminSidebar";
@@ -28,14 +29,17 @@ const AdminLayout = async ({ children }: { children: React.ReactNode }) => {
     notFound();
   }
 
-  // Only for the sidebar badge — a hiccup here shouldn't take the page down.
-  const openFeedback = await getFeedbackSummary()
-    .then((summary) => summary.open_total)
-    .catch(() => 0);
+  // Only for the sidebar badges — a hiccup here shouldn't take the page down.
+  const [openFeedback, openErrors] = await Promise.all([
+    getFeedbackSummary()
+      .then((summary) => summary.open_total)
+      .catch(() => 0),
+    getOpenErrorCount().catch(() => 0),
+  ]);
 
   return (
     <div className={styles.layout}>
-      <AdminSidebar openFeedback={openFeedback} />
+      <AdminSidebar openFeedback={openFeedback} openErrors={openErrors} />
       <div className={styles.main}>
         <AdminTopBar userName={user.full_name} />
         <div className={styles.body}>{children}</div>

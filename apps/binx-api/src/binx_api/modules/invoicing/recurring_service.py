@@ -25,6 +25,7 @@ from fastapi import HTTPException, status
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from binx_api.core.errors import capture_error
 from binx_api.modules.agencies import service as agencies_service
 from binx_api.modules.agencies.models import Agency, AgencyClient
 from binx_api.modules.invoicing import service as invoicing_service
@@ -327,7 +328,9 @@ async def catch_up_due_schedules(db: AsyncSession, agency_id: uuid.UUID, *, as_o
     for schedule in due:
         try:
             generated.append(await _generate_one(db, schedule))
-        except Exception:
-            logger.exception("Failed to auto-generate invoice for recurring schedule %s", schedule.id)
+        except Exception as exc:
+            # Rolled back first: the error log mustn't share a transaction
+            # the failure may have poisoned.
             await db.rollback()
+            await capture_error(exc, context={"recurring_schedule_id": str(schedule.id), "agency_id": str(agency_id)})
     return generated

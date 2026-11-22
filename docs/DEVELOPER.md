@@ -99,6 +99,45 @@ pnpm exec tsc --noEmit
 cd infra && npx tsc --noEmit && npx cdk synth
 ```
 
+## Errors
+
+Every unexpected error goes to **Sentry** (when `SENTRY_DSN` /
+`NEXT_PUBLIC_SENTRY_DSN` are set) **and** to the **admin error log** in
+Postgres, which the Binx team reads at `/admin/errors`. The log works with
+Sentry off, so it's live in local dev too.
+
+**API** (`binx_api/core/errors.py`, wired up in `core/error_handling.py`):
+
+- Raise an `AppError` subclass (`NotFound`, `Conflict`, `Forbidden`,
+  `UpstreamError(service="stripe")`, …) for a machine-readable `code`. A plain
+  `HTTPException` still works and gets a `code` from its status.
+- Every error response is `{detail, code, request_id}`. Unexpected ones (5xx,
+  or anything not raised on purpose) add a `reference` ("7F3A9C21"), which
+  binx-web shows after the message ("… Reference: 7F3A9C21"). Support pastes
+  that into `/admin/errors` to find the exact occurrence.
+- 4xx errors are the API working as designed and are never reported.
+- If you catch an exception and carry on, call `await capture_error(exc,
+  context={...})` so it isn't lost (`report_error` from sync code). Use
+  `is_reportable(exc)` to skip expected 4xx-style failures. Don't capture
+  something you re-raise: the exception handlers already report it.
+- Every response carries `X-Request-ID`. A caller-supplied one is kept.
+
+**Web** (`src/lib/errors.ts`, `error-reporting.ts`, `error-reporting-server.ts`):
+
+- Server errors are reported from `instrumentation.ts`'s `onRequestError`.
+  Uncaught browser errors and error boundaries go through `/api/errors`, which
+  relays to binx-api. A server error whose message already carries a binx-api
+  reference is skipped, so one failure is counted once.
+- In a `catch` around a binx-api call, `throw apiErrorFrom(error, "Unable to …")`
+  (from `lib/auth.ts`) gives an `AuthApiError` with the status, `code` and
+  `reference`.
+- `reportClientError(error)` reports a caught browser error and resolves to the
+  reference to show.
+
+Occurrences are pruned after `ERROR_RETENTION_DAYS` (30). Issues and their
+lifetime counts stay. Set `SENTRY_ORG_URL` to get "Open in Sentry" links on
+the admin pages.
+
 ## Git workflow
 
 **`master` is always deployable — merging to it ships to staging

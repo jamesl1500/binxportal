@@ -34,6 +34,12 @@ ENV PATH="/app/.venv/bin:$PATH" \
 COPY --chown=appuser:appuser apps/binx-api/deploy/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
+# The commit this image was built from (CI passes the git SHA). Tags Sentry
+# events and every row of the admin error log with the release. Last, so a
+# new SHA only rebuilds this layer.
+ARG SENTRY_RELEASE
+ENV SENTRY_RELEASE=$SENTRY_RELEASE
+
 USER appuser
 EXPOSE 8000
 

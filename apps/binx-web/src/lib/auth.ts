@@ -14,6 +14,12 @@ import { NextResponse } from "next/server";
 import { cache } from "react";
 import { api } from "@/lib/api";
 import type { Schemas } from "@/lib/api-types";
+import {
+  type ApiErrorCode,
+  type ApiErrorMeta,
+  readApiError,
+  withReference,
+} from "@/lib/errors";
 
 /**
  * TokenPair
@@ -29,22 +35,42 @@ export interface TokenPair {
   refresh_token: string;
 }
 
-/** Error carrying the upstream binx-api HTTP status, so route handlers can propagate it. */
+/**
+ * Error carrying the upstream binx-api HTTP status, so route handlers can
+ * propagate it. `code`, `requestId` and `reference` come from binx-api's
+ * error body (see lib/errors.ts) when the caller passed them along with
+ * {@link apiErrorFrom}.
+ */
 export class AuthApiError extends Error {
+  code?: ApiErrorCode;
+  requestId?: string;
+  reference?: string;
+
   constructor(
     message: string,
     public status: number,
+    meta: ApiErrorMeta = {},
   ) {
     super(message);
     this.name = "AuthApiError";
+    this.code = meta.code;
+    this.requestId = meta.requestId;
+    this.reference = meta.reference;
   }
 }
 
-/** FastAPI's `detail` is either a plain string (HTTPException) or a list of pydantic validation errors (422). */
+/**
+ * The message to show for a binx-api error body. FastAPI's `detail` is
+ * either a plain string (HTTPException) or a list of pydantic validation
+ * errors (422). When binx-api reported the error (a 5xx), its reference is
+ * appended ("… Reference: 7F3A9C21"), so every form and toast in the app
+ * shows support something to look up in the admin console.
+ */
 export function extractDetailMessage(data: unknown, fallback: string): string {
   const detail = (data as { detail?: unknown } | undefined)?.detail;
+  const { reference } = readApiError(data);
 
-  if (typeof detail === "string") return detail;
+  if (typeof detail === "string") return withReference(detail, reference);
 
   if (Array.isArray(detail)) {
     const messages = detail
@@ -57,7 +83,29 @@ export function extractDetailMessage(data: unknown, fallback: string): string {
     if (messages.length > 0) return messages.join(" ");
   }
 
-  return fallback;
+  return withReference(fallback, reference);
+}
+
+/**
+ * The usual `catch` block for a binx-api call, in one line: an HTTP error
+ * becomes an {@link AuthApiError} with the message, status, code and
+ * reference; anything else (a network failure, a bug) is returned as-is
+ * for the caller to rethrow.
+ *
+ * @example
+ * } catch (error) {
+ *   throw apiErrorFrom(error, "Unable to load the overview");
+ * }
+ */
+export function apiErrorFrom(error: unknown, fallback: string): unknown {
+  if (axios.isAxiosError(error) && error.response) {
+    return new AuthApiError(
+      extractDetailMessage(error.response.data, fallback),
+      error.response.status,
+      readApiError(error.response.data),
+    );
+  }
+  return error;
 }
 
 /**
