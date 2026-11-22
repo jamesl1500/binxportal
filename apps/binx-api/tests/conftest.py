@@ -98,6 +98,8 @@ from binx_api.modules.auth import models as _auth_models  # noqa: E402,F401
 from binx_api.modules.billing import models as _billing_models  # noqa: E402,F401
 from binx_api.modules.boards import models as _boards_models  # noqa: E402,F401
 from binx_api.modules.client_portal import models as _client_portal_models  # noqa: E402,F401
+from binx_api.modules.errors import models as _errors_models  # noqa: E402,F401
+from binx_api.modules.errors import store as _error_store  # noqa: E402
 from binx_api.modules.feedback import models as _feedback_models  # noqa: E402,F401
 from binx_api.modules.files import models as _file_models  # noqa: E402,F401
 from binx_api.modules.invoicing import models as _invoicing_models  # noqa: E402,F401
@@ -176,12 +178,29 @@ async def db_session(engine, _schema) -> AsyncGenerator[AsyncSession]:
         expire_on_commit=False,
         join_transaction_mode="create_savepoint",
     )
+    # The error log writes in a session of its own (the failing request's
+    # may be broken). Bind that to this same connection so what it records
+    # is visible to the test and is rolled back with everything else.
+    default_error_sessions = _error_store.session_factory
+    _error_store.session_factory = lambda: AsyncSession(
+        bind=connection, expire_on_commit=False, join_transaction_mode="create_savepoint"
+    )
     try:
         yield session
     finally:
+        _error_store.session_factory = default_error_sessions
         await session.close()
         await transaction.rollback()
         await connection.close()
+
+
+@pytest.fixture(autouse=True)
+def _error_log_needs_a_database(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> None:
+    """A test without ``db_session`` has no rolled-back connection for the
+    error log to write to (see db_session above), so the log is off there
+    rather than writing through the app's real engine."""
+    if "db_session" not in request.fixturenames:
+        monkeypatch.setattr(_error_store.settings, "error_store_enabled", False)
 
 
 # ---------------------------------------------------------------------------

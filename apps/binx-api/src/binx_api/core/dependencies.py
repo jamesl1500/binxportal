@@ -6,6 +6,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from binx_api.core.database import get_db
+from binx_api.core.errors import bind_user
 from binx_api.core.security import decode_access_token
 from binx_api.modules.users.models import User
 from binx_api.modules.users.service import get_user_by_id
@@ -39,6 +40,9 @@ async def get_current_user(
     user = await get_user_by_id(db, user_id)
     if user is None or not user.is_active:
         raise credentials_error
+    # Any error from here on in the request is attributed to this user, in
+    # Sentry (by id) and in the admin error log.
+    bind_user(user.id, role=user.role)
     return user
 
 

@@ -181,7 +181,14 @@ class TestSendEmail:
         fake_client = SimpleNamespace(send_email=MagicMock(side_effect=error))
         monkeypatch.setattr(email, "_get_ses_client", lambda: fake_client)
 
-        with caplog.at_level(logging.ERROR, logger="binx_api.email"):
+        captured: list[BaseException] = []
+
+        async def _capture(exc, **kwargs):
+            captured.append(exc)
+
+        monkeypatch.setattr(email, "capture_error", _capture)
+        with caplog.at_level(logging.WARNING, logger="binx_api.email"):
             await email.send_email(to="x@example.com", subject="Hi", body="Body")  # must not raise
 
         assert "Failed to send email" in caplog.text
+        assert captured == [error]  # reported to Sentry + the admin error log

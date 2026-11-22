@@ -93,6 +93,8 @@ services:
       # the binxportal/app Secrets Manager secret to turn it on.
       SENTRY_DSN: ${SENTRY_DSN:-}
       SENTRY_ENVIRONMENT: production
+      # Optional: deep links from /admin/errors to the same event in Sentry.
+      SENTRY_ORG_URL: ${SENTRY_ORG_URL:-}
       # Every upload goes to S3 (binx_api/core/storage.py) — not a secret,
       # so a literal. boto3 authenticates via the instance's own IAM role,
       # granted on this bucket by infra/lib/uploads-stack.ts.

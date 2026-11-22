@@ -32,6 +32,7 @@ from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from binx_api.core.errors import capture_error, is_reportable
 from binx_api.modules.activity import service as activity_service
 from binx_api.modules.agencies import service as agencies_service
 from binx_api.modules.agencies.models import Agency, AgencyClient, AgencyMember
@@ -1191,6 +1192,8 @@ async def _apply(action: AiAction, planned: _PlannedAction) -> None:
         action.result = (await planned.apply())[:1024]
         action.status = ACTION_APPLIED
     except Exception as exc:  # recorded on the card rather than raised — the turn goes on
+        if is_reportable(exc):
+            await capture_error(exc, level="warning", context={"ai_action": action.tool})
         action.result = _error_text(exc)[:1024]
         action.status = ACTION_FAILED
 
@@ -1311,6 +1314,8 @@ async def approve_action(db: AsyncSession, action: AiAction, agency: Agency, *, 
     try:
         planned = await _plan_action(db, agency, actor, action.tool, json.loads(action.input))
     except Exception as exc:
+        if is_reportable(exc):
+            await capture_error(exc, level="warning", context={"ai_action": action.tool})
         action.status, action.result = ACTION_FAILED, _error_text(exc)[:1024]
     else:
         await _apply(action, planned)
@@ -1468,6 +1473,8 @@ async def _execute_tool_calls(turn: _AssistantTurn, message) -> list[dict]:
                 output = await _run_tool(turn.db, turn.agency.id, block.name, block.input or {})
             tool_results.append({"type": "tool_result", "tool_use_id": block.id, "content": json.dumps(output)})
         except Exception as exc:  # a bad tool call shouldn't kill the whole turn
+            if is_reportable(exc):
+                await capture_error(exc, level="warning", context={"ai_tool": block.name})
             tool_results.append(
                 {"type": "tool_result", "tool_use_id": block.id, "content": _error_text(exc), "is_error": True}
             )

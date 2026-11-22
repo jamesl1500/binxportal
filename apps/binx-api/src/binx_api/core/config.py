@@ -184,6 +184,20 @@ class Settings(BaseSettings):
     # billed the same as an error event. Bounded because the Sentry SDK
     # silently drops traces for an out-of-range value rather than erroring.
     sentry_traces_sample_rate: float = Field(default=0.1, ge=0.0, le=1.0)
+    # The deployed build (the git SHA in CI — see .github/workflows/deploy.yml),
+    # so Sentry can say which release introduced or fixed an issue. Also
+    # stamped on every row the admin error log records.
+    sentry_release: str | None = None
+    # e.g. "https://binx.sentry.io". Only used to deep-link an error in the
+    # admin console to the same event in Sentry; unset hides those links.
+    sentry_org_url: str | None = None
+
+    # --- Error log (modules/errors) -------------------------------------------
+    # Unexpected errors are also kept in Postgres for the Binx admin console
+    # (/admin/errors), whether or not Sentry is on. Occurrences older than
+    # this are pruned; the grouped issues (and their lifetime counts) stay.
+    error_store_enabled: bool = True
+    error_retention_days: int = Field(default=30, ge=1, le=365)
 
     @model_validator(mode="after")
     def _assemble_database_url(self) -> Self:

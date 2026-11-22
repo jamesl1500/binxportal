@@ -30,6 +30,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from binx_api.core.config import get_settings
+from binx_api.core.errors import capture_error
 from binx_api.modules.ai.models import STATUS_BLOCKED, STATUS_ERROR, STATUS_OK, AgencyAiSettings, AiUsageEvent
 
 settings = get_settings()
@@ -213,7 +214,8 @@ async def _plan_ai_ceilings(db: AsyncSession, agency_id: uuid.UUID) -> tuple[int
 
         limits = await billing_service.get_plan_limits(db, agency_id)
         return limits.ai_monthly_budget_cents, limits.ai_daily_user_cap
-    except Exception:
+    except Exception as exc:
+        await capture_error(exc, level="warning", context={"agency_id": str(agency_id)})
         return settings.ai_default_monthly_budget_cents, settings.ai_default_daily_user_cap
 
 
