@@ -5889,6 +5889,757 @@
         "title": "EmailChangeTokenInfo",
         "type": "object"
       },
+      "ErrorBadge": {
+        "properties": {
+          "open_issues_24h": {
+            "title": "Open Issues 24H",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "open_issues_24h"
+        ],
+        "title": "ErrorBadge",
+        "type": "object"
+      },
+      "ErrorEventFull": {
+        "properties": {
+          "agency_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agency Id"
+          },
+          "context": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "environment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Environment"
+          },
+          "error_type": {
+            "title": "Error Type",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "level": {
+            "title": "Level",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Method"
+          },
+          "path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Path"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "release": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Release"
+          },
+          "request_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id"
+          },
+          "route": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route"
+          },
+          "sentry_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sentry Url"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "stacktrace": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stacktrace"
+          },
+          "status_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status Code"
+          },
+          "user_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Email"
+          },
+          "user_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id"
+          },
+          "user_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Name"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "created_at",
+          "source",
+          "level",
+          "error_type",
+          "message",
+          "request_id",
+          "method",
+          "path",
+          "route",
+          "status_code",
+          "user_id",
+          "agency_id",
+          "release",
+          "environment",
+          "sentry_url",
+          "stacktrace",
+          "context"
+        ],
+        "title": "ErrorEventFull",
+        "type": "object"
+      },
+      "ErrorEventRow": {
+        "properties": {
+          "agency_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agency Id"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "environment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Environment"
+          },
+          "error_type": {
+            "title": "Error Type",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "level": {
+            "title": "Level",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Method"
+          },
+          "path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Path"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "release": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Release"
+          },
+          "request_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id"
+          },
+          "route": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route"
+          },
+          "sentry_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sentry Url"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "status_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status Code"
+          },
+          "user_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Email"
+          },
+          "user_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id"
+          },
+          "user_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Name"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "created_at",
+          "source",
+          "level",
+          "error_type",
+          "message",
+          "request_id",
+          "method",
+          "path",
+          "route",
+          "status_code",
+          "user_id",
+          "agency_id",
+          "release",
+          "environment",
+          "sentry_url"
+        ],
+        "title": "ErrorEventRow",
+        "type": "object"
+      },
+      "ErrorIssueDetail": {
+        "properties": {
+          "event": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorEventFull"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "hourly": {
+            "items": {
+              "$ref": "#/components/schemas/HourBucket"
+            },
+            "title": "Hourly",
+            "type": "array"
+          },
+          "issue": {
+            "$ref": "#/components/schemas/ErrorIssueRow"
+          },
+          "recent_events": {
+            "items": {
+              "$ref": "#/components/schemas/ErrorEventRow"
+            },
+            "title": "Recent Events",
+            "type": "array"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          },
+          "status_changed_by_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status Changed By Name"
+          }
+        },
+        "required": [
+          "issue",
+          "status_changed_by_name",
+          "resolved_at",
+          "hourly",
+          "recent_events",
+          "event"
+        ],
+        "title": "ErrorIssueDetail",
+        "type": "object"
+      },
+      "ErrorIssuePage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ErrorIssueRow"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "ErrorIssuePage",
+        "type": "object"
+      },
+      "ErrorIssueRow": {
+        "properties": {
+          "culprit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Culprit"
+          },
+          "error_type": {
+            "title": "Error Type",
+            "type": "string"
+          },
+          "event_count": {
+            "title": "Event Count",
+            "type": "integer"
+          },
+          "events_in_period": {
+            "title": "Events In Period",
+            "type": "integer"
+          },
+          "first_seen_at": {
+            "format": "date-time",
+            "title": "First Seen At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "last_release": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Release"
+          },
+          "last_seen_at": {
+            "format": "date-time",
+            "title": "Last Seen At",
+            "type": "string"
+          },
+          "level": {
+            "title": "Level",
+            "type": "string"
+          },
+          "regressed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Regressed At"
+          },
+          "sentry_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sentry Url"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "users_in_period": {
+            "title": "Users In Period",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "source",
+          "level",
+          "error_type",
+          "title",
+          "culprit",
+          "status",
+          "first_seen_at",
+          "last_seen_at",
+          "event_count",
+          "events_in_period",
+          "users_in_period",
+          "last_release",
+          "regressed_at",
+          "sentry_url"
+        ],
+        "title": "ErrorIssueRow",
+        "type": "object"
+      },
+      "ErrorIssueStatusRead": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "status_changed_by_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status Changed By Name"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "resolved_at",
+          "status_changed_by_name"
+        ],
+        "title": "ErrorIssueStatusRead",
+        "type": "object"
+      },
+      "ErrorIssueStatusUpdate": {
+        "properties": {
+          "status": {
+            "enum": [
+              "unresolved",
+              "resolved",
+              "ignored"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "ErrorIssueStatusUpdate",
+        "type": "object"
+      },
+      "ErrorLookup": {
+        "properties": {
+          "event_id": {
+            "format": "uuid",
+            "title": "Event Id",
+            "type": "string"
+          },
+          "issue_id": {
+            "format": "uuid",
+            "title": "Issue Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "issue_id",
+          "event_id"
+        ],
+        "title": "ErrorLookup",
+        "type": "object"
+      },
+      "ErrorSummary": {
+        "properties": {
+          "by_source_24h": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "By Source 24H",
+            "type": "object"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "hourly": {
+            "items": {
+              "$ref": "#/components/schemas/HourBucket"
+            },
+            "title": "Hourly",
+            "type": "array"
+          },
+          "new_issues_24h": {
+            "title": "New Issues 24H",
+            "type": "integer"
+          },
+          "open_issues_24h": {
+            "title": "Open Issues 24H",
+            "type": "integer"
+          },
+          "previous_24h": {
+            "title": "Previous 24H",
+            "type": "integer"
+          },
+          "windows": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/WindowCounts"
+            },
+            "title": "Windows",
+            "type": "object"
+          }
+        },
+        "required": [
+          "generated_at",
+          "windows",
+          "previous_24h",
+          "by_source_24h",
+          "open_issues_24h",
+          "new_issues_24h",
+          "hourly"
+        ],
+        "title": "ErrorSummary",
+        "type": "object"
+      },
       "ExperienceEntry": {
         "properties": {
           "description": {
@@ -6679,6 +7430,35 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HourBucket": {
+        "properties": {
+          "api": {
+            "title": "Api",
+            "type": "integer"
+          },
+          "hour_start": {
+            "format": "date-time",
+            "title": "Hour Start",
+            "type": "string"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "web": {
+            "title": "Web",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "hour_start",
+          "api",
+          "web",
+          "total"
+        ],
+        "title": "HourBucket",
         "type": "object"
       },
       "ImportFieldRead": {
@@ -16892,6 +17672,199 @@
         "title": "VerifyEmailTokenInfo",
         "type": "object"
       },
+      "WebErrorReceipt": {
+        "properties": {
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference"
+          }
+        },
+        "required": [
+          "reference"
+        ],
+        "title": "WebErrorReceipt",
+        "type": "object"
+      },
+      "WebErrorReport": {
+        "description": "An error from binx-web: the browser (via binx-web's /api/errors\nroute) or the Next server (instrumentation.ts's onRequestError).\nEvery field is capped. Anyone can post here, so it's treated as\nuntrusted text and only ever shown back as text.",
+        "properties": {
+          "digest": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Digest"
+          },
+          "environment": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Environment"
+          },
+          "error_type": {
+            "default": "Error",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Error Type",
+            "type": "string"
+          },
+          "level": {
+            "default": "error",
+            "enum": [
+              "warning",
+              "error",
+              "fatal"
+            ],
+            "title": "Level",
+            "type": "string"
+          },
+          "message": {
+            "maxLength": 2000,
+            "title": "Message",
+            "type": "string"
+          },
+          "method": {
+            "anyOf": [
+              {
+                "maxLength": 10,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Method"
+          },
+          "path": {
+            "anyOf": [
+              {
+                "maxLength": 512,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Path"
+          },
+          "release": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Release"
+          },
+          "request_id": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id"
+          },
+          "route": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route"
+          },
+          "route_type": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route Type"
+          },
+          "runtime": {
+            "enum": [
+              "browser",
+              "server"
+            ],
+            "title": "Runtime",
+            "type": "string"
+          },
+          "sentry_event_id": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sentry Event Id"
+          },
+          "stack": {
+            "anyOf": [
+              {
+                "maxLength": 20000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stack"
+          },
+          "user_agent": {
+            "anyOf": [
+              {
+                "maxLength": 512,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Agent"
+          }
+        },
+        "required": [
+          "runtime",
+          "message"
+        ],
+        "title": "WebErrorReport",
+        "type": "object"
+      },
       "WeeklySignups": {
         "properties": {
           "agencies": {
@@ -16914,6 +17887,29 @@
           "users"
         ],
         "title": "WeeklySignups",
+        "type": "object"
+      },
+      "WindowCounts": {
+        "properties": {
+          "events": {
+            "title": "Events",
+            "type": "integer"
+          },
+          "issues": {
+            "title": "Issues",
+            "type": "integer"
+          },
+          "users": {
+            "title": "Users",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "events",
+          "issues",
+          "users"
+        ],
+        "title": "WindowCounts",
         "type": "object"
       },
       "WsTicketResponse": {
@@ -17461,6 +18457,362 @@
         "summary": "List Audit",
         "tags": [
           "admin"
+        ]
+      }
+    },
+    "/admin/errors/badge": {
+      "get": {
+        "operationId": "error_badge_admin_errors_badge_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBadge"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Error Badge",
+        "tags": [
+          "errors-admin"
+        ]
+      }
+    },
+    "/admin/errors/issues": {
+      "get": {
+        "operationId": "list_issues_admin_errors_issues_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^(unresolved|resolved|ignored)$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^(api|web)$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source"
+            }
+          },
+          {
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "default": "24h",
+              "pattern": "^(1h|12h|24h|7d|30d)$",
+              "title": "Period",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "default": "frequent",
+              "pattern": "^(frequent|recent|new)$",
+              "title": "Sort",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorIssuePage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Issues",
+        "tags": [
+          "errors-admin"
+        ]
+      }
+    },
+    "/admin/errors/issues/{issue_id}": {
+      "get": {
+        "operationId": "get_issue_admin_errors_issues__issue_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "issue_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Issue Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "event_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Event Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorIssueDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Issue",
+        "tags": [
+          "errors-admin"
+        ]
+      },
+      "patch": {
+        "operationId": "update_issue_status_admin_errors_issues__issue_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "issue_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Issue Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorIssueStatusUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorIssueStatusRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Issue Status",
+        "tags": [
+          "errors-admin"
+        ]
+      }
+    },
+    "/admin/errors/lookup": {
+      "get": {
+        "operationId": "lookup_reference_admin_errors_lookup_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "ref",
+            "required": true,
+            "schema": {
+              "maxLength": 64,
+              "minLength": 1,
+              "title": "Ref",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorLookup"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Lookup Reference",
+        "tags": [
+          "errors-admin"
+        ]
+      }
+    },
+    "/admin/errors/summary": {
+      "get": {
+        "operationId": "error_summary_admin_errors_summary_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Error Summary",
+        "tags": [
+          "errors-admin"
         ]
       }
     },
@@ -34112,6 +35464,52 @@
         "summary": "Issue Ws Ticket",
         "tags": [
           "auth"
+        ]
+      }
+    },
+    "/errors/report": {
+      "post": {
+        "operationId": "report_web_error_errors_report_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebErrorReport"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebErrorReceipt"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Report Web Error",
+        "tags": [
+          "errors"
         ]
       }
     },
