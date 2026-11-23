@@ -194,7 +194,7 @@ async def get_agency_by_subdomain(db: AsyncSession, subdomain: str) -> Agency | 
     candidate = subdomain.strip().lower()
     result = await db.execute(select(Agency).where(Agency.subdomain == candidate))
     agency = result.scalar_one_or_none()
-    if agency is None:
+    if agency is None or agency.deletion_scheduled_for is not None:
         return None
     if not await billing_service.agency_plan_at_least(db, agency.id, SUBDOMAIN_MIN_PLAN):
         return None
@@ -213,7 +213,12 @@ async def _check_can_create_agency(db: AsyncSession, owner: User) -> None:
     owned = await db.execute(
         select(func.count())
         .select_from(AgencyMember)
-        .where(AgencyMember.user_id == owner.id, AgencyMember.role == ROLE_OWNER)
+        .join(Agency, Agency.id == AgencyMember.agency_id)
+        .where(
+            AgencyMember.user_id == owner.id,
+            AgencyMember.role == ROLE_OWNER,
+            Agency.deletion_scheduled_for.is_(None),
+        )
     )
     if int(owned.scalar_one()) >= limit:
         raise HTTPException(
@@ -274,7 +279,7 @@ async def get_agencies_for_user(db: AsyncSession, user: User) -> list[tuple[Agen
         select(Agency, AgencyMember.role, AgencyProfile.logo_storage_path)
         .join(AgencyMember, AgencyMember.agency_id == Agency.id)
         .outerjoin(AgencyProfile, AgencyProfile.agency_id == Agency.id)
-        .where(AgencyMember.user_id == user.id)
+        .where(AgencyMember.user_id == user.id, Agency.deletion_scheduled_for.is_(None))
         .order_by(AgencyMember.created_at)
     )
     return [(agency, role, logo_path) for agency, role, logo_path in result.all()]
@@ -302,16 +307,6 @@ async def update_agency(db: AsyncSession, agency: Agency, *, name: str, actor: U
             actor=actor,
         )
     return agency
-
-
-# Permanently deletes an agency. Related rows (memberships, clients, the
-# profile) are removed via each table's ON DELETE CASCADE; the only thing the
-# DB can't do is clear the agency's uploaded images out of storage.
-async def delete_agency(db: AsyncSession, agency: Agency) -> None:
-    agency_id = agency.id
-    await db.delete(agency)
-    await db.commit()
-    await storage.delete_prefix("agencies", str(agency_id))
 
 
 # ---- Profile (branding / about / policies) --------------------------------
@@ -734,6 +729,9 @@ async def _get_valid_invitation(db: AsyncSession, raw_token: str) -> AgencyInvit
     result = await db.execute(select(AgencyInvitation).where(AgencyInvitation.token_hash == hash_token(raw_token)))
     invitation = result.scalar_one_or_none()
     if invitation is None or invitation.status != INVITATION_PENDING or invitation.expires_at < datetime.now(UTC):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "This invitation link is invalid or has expired")
+    agency = await db.get(Agency, invitation.agency_id)
+    if agency is None or agency.deletion_scheduled_for is not None:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "This invitation link is invalid or has expired")
     return invitation
 

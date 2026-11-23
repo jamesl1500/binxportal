@@ -11,12 +11,12 @@ vi.mock("@/components/imports/BulkImportWizard/BulkImportWizard", () => ({
 import OnboardingImport from "./OnboardingImport";
 
 describe("OnboardingImport", () => {
-  it("is skippable, and turns into Finish once something is imported", async () => {
+  it("is skippable, and turns into Continue once something is imported", async () => {
     render(<OnboardingImport agencyId="a1" canInvite />);
-    expect(screen.getByRole("link", { name: "Skip for now" })).toHaveAttribute("href", "/dashboard");
+    expect(screen.getByRole("link", { name: "Skip for now" })).toHaveAttribute("href", "/onboarding/five");
 
     await userEvent.click(screen.getByRole("button", { name: "fake-import-clients" }));
-    expect(screen.getByRole("link", { name: "Finish setup" })).toHaveAttribute("href", "/dashboard");
+    expect(screen.getByRole("link", { name: "Continue" })).toHaveAttribute("href", "/onboarding/five");
     expect(screen.getByRole("tab", { name: /Clients/ })).toHaveTextContent("12");
   });
 

@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 
 import stripe
 from fastapi import HTTPException, status
-from sqlalchemy import func, select, update
+from sqlalchemy import func, or_, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -188,14 +188,22 @@ def assert_within_limit(count: int, limit: int | None, *, resource: str, plan_na
         )
 
 
-async def max_owned_agencies_for(db: AsyncSession, owner: User) -> int | None:
+async def max_owned_agencies_for(db: AsyncSession, owner: User, *, including: uuid.UUID | None = None) -> int | None:
     """The owned-agency cap for ``owner`` — the most generous
     ``max_owned_agencies`` across the plans of the agencies they already own.
-    Falls back to the Free plan's cap when they own none (their first agency)."""
+    Falls back to the Free plan's cap when they own none (their first agency).
+    An agency on its deletion hold doesn't count, unless it's ``including``:
+    the one being restored, whose own plan applies once it's back."""
+    active = Agency.deletion_scheduled_for.is_(None)
     result = await db.execute(
         select(AgencySubscription.plan)
         .join(AgencyMember, AgencyMember.agency_id == AgencySubscription.agency_id)
-        .where(AgencyMember.user_id == owner.id, AgencyMember.role == ROLE_OWNER)
+        .join(Agency, Agency.id == AgencySubscription.agency_id)
+        .where(
+            AgencyMember.user_id == owner.id,
+            AgencyMember.role == ROLE_OWNER,
+            or_(active, Agency.id == including) if including is not None else active,
+        )
     )
     owned_plans = [plan_limits(plan) for (plan,) in result.all()]
     if not owned_plans:

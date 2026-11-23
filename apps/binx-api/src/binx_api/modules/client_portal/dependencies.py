@@ -19,6 +19,7 @@ async def require_client_contact(db: DbSession, current_user: CurrentUser) -> Po
     unlike a specific agency's."""
     memberships = await service.get_portal_memberships(db, current_user)
     if not memberships:
+        await service.raise_if_portal_is_on_hold(db, current_user)
         raise HTTPException(status.HTTP_403_FORBIDDEN, "This account has no client portal access")
     return memberships[0]
 

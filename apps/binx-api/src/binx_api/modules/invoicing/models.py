@@ -56,12 +56,21 @@ class AgencyBillingSettings(Base):
     # Stripe Connect — lets clients pay invoices through the portal directly
     # into this agency's own Stripe account (see
     # invoicing/service.py::start_connect_onboarding / sync_connect_status).
-    # Null/false until the agency completes onboarding.
+    # Null/false until the agency completes onboarding. One account per agency
+    # (agency_id and the account id are both unique), so someone who owns
+    # several agencies connects each one separately.
     stripe_connect_account_id: Mapped[str | None] = mapped_column(String(255), default=None, unique=True, index=True)
     stripe_connect_charges_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     stripe_connect_details_submitted: Mapped[bool] = mapped_column(Boolean, default=False)
     stripe_connect_payouts_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     stripe_connect_onboarded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    # The person who created the account. Null for accounts made before this
+    # was recorded, or if that user has since been deleted. The same ids are
+    # also on the Stripe account's metadata.
+    stripe_connect_created_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), default=None, index=True
+    )
+    stripe_connect_created_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
 
 
 # A bill to one client, within one agency. client_id has no ondelete: a client

@@ -1,0 +1,32 @@
+@use "../../../../styles/tokens" as t;
+@use "../../../../styles/mixins" as m;
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: t.$space-2;
+  max-width: 100%;
+}
+
+.button {
+  @include m.button-base;
+  min-height: 2.75rem;
+  padding: 0 t.$space-5;
+  border: 0;
+  background: t.$color-ink;
+  color: t.$color-paper;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.error {
+  max-width: 20rem;
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-danger;
+}

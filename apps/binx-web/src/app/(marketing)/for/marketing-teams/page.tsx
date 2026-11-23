@@ -31,7 +31,7 @@ export const metadata: Metadata = {
 const CAPABILITIES = [
   {
     icon: CalendarCheck,
-    title: "A pipeline that fills itself",
+    title: "A pipeline you can keep full",
     text: "Let the AI prospector find businesses that match your ideal client, save the search, then track each lead by stage and owner and send a signable proposal when it's warm.",
   },
   {
@@ -150,10 +150,9 @@ const MarketingTeamsPage = () => {
                 Every retainer, one place to check on.
               </h2>
               <p className={styles.leadOnDark}>
-                Switch between agencies — sorry, clients — without switching
-                tools. Leads, active campaigns and overdue invoices all show up
-                on one dashboard, so nothing slips because it was in a different
-                tab.
+                Keep every client in one workspace. Leads, active campaigns and
+                overdue invoices all show up on one dashboard, so nothing slips
+                because it was in a different tab.
               </p>
             </div>
           </div>

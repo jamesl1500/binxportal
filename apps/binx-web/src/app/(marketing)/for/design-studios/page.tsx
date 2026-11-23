@@ -2,7 +2,7 @@
  * page.tsx - Binx for design studios
  *
  * Use-case landing page for the "design studios" segment already named on
- * the homepage trust bar. Leans on the canvas and file versioning — the
+ * the homepage trust bar. Leans on the canvas and client approvals — the
  * parts of Binx a visual studio actually lives in day to day.
  *
  * @module apps/binx-web/src/app/(marketing)/for/design-studios/page.tsx
@@ -19,7 +19,7 @@ import styles from "../../marketing.module.scss";
 
 const TITLE = "For design studios";
 const DESCRIPTION =
-  "Binx for design studios: review concepts with clients on a shared canvas, collect approvals on each card, and keep versioned files on every project.";
+  "Binx for design studios: review concepts with clients on a shared canvas, collect approvals on each card, and keep every file on its project.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -37,7 +37,7 @@ const CAPABILITIES = [
   {
     icon: FileStack,
     title: "Files that stay attached to the work",
-    text: "Every asset lives on the project it belongs to. Clients see exactly the files you choose, in the same place as everything else about that project.",
+    text: "Every asset lives on the project it belongs to. Add one to the canvas and your client sees it alongside everything else about that project.",
   },
   {
     icon: LayoutGrid,
@@ -54,7 +54,7 @@ const CAPABILITIES = [
 const FAQ = [
   {
     q: "Does this replace our review/markup tool?",
-    a: "For most studios, yes — the canvas is where concepts get pinned and commented on directly by the client, so a separate markup tool or screenshot-and-email thread isn't needed to get to sign-off.",
+    a: "It can. Clients comment on a card or drop a pin anywhere on the board, then approve right there. If you rely on detailed markup drawn on an image, keep your markup tool for that step.",
   },
   {
     q: "Can a client comment on a specific concept, not just the project as a whole?",

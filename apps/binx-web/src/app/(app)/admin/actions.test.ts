@@ -4,6 +4,7 @@ vi.mock("next/cache", () => ({ refresh: vi.fn() }));
 vi.mock("@/lib/admin", () => ({
   grantTrial: vi.fn(),
   endTrial: vi.fn(),
+  restoreDeletedAgency: vi.fn(),
   runUserAction: vi.fn(),
   addAdminNote: vi.fn(),
 }));

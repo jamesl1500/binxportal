@@ -294,6 +294,18 @@ export function grantTrial(
   );
 }
 
+export function restoreDeletedAgency(
+  agencyId: string,
+  ownerEmail: string | null,
+): Promise<ActionResult> {
+  return adminWrite(
+    "post",
+    `/admin/agencies/${id(agencyId)}/restore`,
+    { owner_email: ownerEmail },
+    "Unable to restore the agency",
+  );
+}
+
 export function endTrial(agencyId: string): Promise<ActionResult> {
   return adminWrite(
     "post",

@@ -1036,4 +1036,12 @@ async def typing_participants(db: AsyncSession, conversation_id: uuid.UUID, user
     ids = await _active_participant_user_ids(db, conversation_id)
     if user.id not in ids:
         return None
+    # A socket opened before a deletion hold stays connected, so check here.
+    held = await db.scalar(
+        select(Agency.deletion_scheduled_for)
+        .join(Conversation, Conversation.agency_id == Agency.id)
+        .where(Conversation.id == conversation_id)
+    )
+    if held is not None:
+        return None
     return [uid for uid in ids if uid != user.id]

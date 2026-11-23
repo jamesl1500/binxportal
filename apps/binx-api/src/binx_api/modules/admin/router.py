@@ -14,6 +14,7 @@ from binx_api.modules.admin.schemas import (
     AdminSearchResult,
     AdminUserDetail,
     AdminUserPage,
+    AgencyRestoreRequest,
     AuditEntryRead,
     AuditPage,
     DeactivateRequest,
@@ -92,6 +93,11 @@ async def grant_trial(agency_id: uuid.UUID, db: DbSession, admin: PlatformAdmin,
 @router.post("/agencies/{agency_id}/trial/end", response_model=AdminActionResult)
 async def end_trial(agency_id: uuid.UUID, db: DbSession, admin: PlatformAdmin) -> dict:
     return {"message": await support.end_trial(db, agency_id, actor=admin)}
+
+
+@router.post("/agencies/{agency_id}/restore", response_model=AdminActionResult)
+async def restore_agency(agency_id: uuid.UUID, db: DbSession, admin: PlatformAdmin, data: AgencyRestoreRequest) -> dict:
+    return {"message": await support.restore_agency(db, agency_id, owner_email=data.owner_email, actor=admin)}
 
 
 @router.post("/agencies/{agency_id}/notes", response_model=AuditEntryRead, status_code=status.HTTP_201_CREATED)

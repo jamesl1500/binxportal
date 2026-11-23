@@ -51,8 +51,9 @@ const SettingsInvoicingPage = async ({
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Online payment</h2>
         <p className={styles.sectionSubtitle}>
-          Connect Stripe so clients can pay invoices directly from their portal
-          — money settles into {currentAgency.name}&apos;s own Stripe account.
+          Connect Stripe so clients can pay invoices directly from their portal.
+          Money goes to {currentAgency.name}&apos;s own Stripe account, and any
+          other agency you run connects its own.
         </p>
         <StripeConnectPanel
           agencyId={currentAgency.id}

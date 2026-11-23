@@ -8,9 +8,13 @@
  * @author Binx Portal
  */
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { getCurrentAgencyContext } from "@/lib/agencies";
+import {
+  getCurrentAgencyContext,
+  getPendingDeletionAgencies,
+} from "@/lib/agencies";
 import { getSubscription } from "@/lib/billing";
 import AgencyGeneralForm from "@/components/forms/agency/AgencyGeneralForm/AgencyGeneralForm";
 import AgencySubdomainForm from "@/components/forms/agency/AgencySubdomainForm/AgencySubdomainForm";
@@ -38,6 +42,7 @@ const SettingsGeneralPage = async () => {
   const subscription = await getSubscription(currentAgency.id).catch(
     () => null,
   );
+  const onHold = await getPendingDeletionAgencies().catch(() => []);
   const planOrder = subscription?.plan_order ?? [];
   const canUseSubdomain = subscription
     ? planOrder.indexOf(subscription.limits.key) >=
@@ -89,12 +94,25 @@ const SettingsGeneralPage = async () => {
         </section>
       )}
 
+      {onHold.length > 0 && (
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Scheduled for deletion</h2>
+          <p className={styles.sectionSubtitle}>
+            {onHold.length === 1
+              ? `${onHold[0].name} is on hold and can still be restored.`
+              : `${onHold.length} of your agencies are on hold and can still be restored.`}{" "}
+            <Link href="/deleted-agencies">Review and restore</Link>
+          </p>
+        </section>
+      )}
+
       {isOwner && (
         <section className={`${styles.section} ${styles.dangerZone}`}>
           <h2 className={styles.dangerZoneTitle}>Danger zone</h2>
           <p className={styles.sectionSubtitle}>
-            Permanently delete {currentAgency.name} and remove access for
-            everyone in it. This can&apos;t be undone.
+            Delete {currentAgency.name} and remove access for everyone in it,
+            including its clients. You&apos;ll have 30 days to restore it or
+            download its data. After that it&apos;s permanently erased.
           </p>
           <DeleteAgencyForm
             agencyId={currentAgency.id}

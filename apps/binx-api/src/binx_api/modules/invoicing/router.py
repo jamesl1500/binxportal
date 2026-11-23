@@ -209,13 +209,22 @@ async def read_stripe_connect_status(
         details_submitted=settings_row.stripe_connect_details_submitted,
         payouts_enabled=settings_row.stripe_connect_payouts_enabled,
         onboarded_at=settings_row.stripe_connect_onboarded_at,
+        created_by_name=await service.connect_created_by_name(db, settings_row),
+        created_at=settings_row.stripe_connect_created_at,
     )
 
 
 @router.post("/billing-settings/stripe/connect", response_model=StripeOnboardingLinkRead)
-async def start_stripe_connect_onboarding(db: DbSession, agency_and_role: AgencyAndRole) -> StripeOnboardingLinkRead:
+async def start_stripe_connect_onboarding(
+    db: DbSession,
+    current_user: CurrentUser,
+    agency_and_role: AgencyAndRole,
+    return_to: service.ConnectReturnTo = Query(default="settings"),
+) -> StripeOnboardingLinkRead:
+    """Starts or continues onboarding for this agency's own Stripe account.
+    ``return_to`` picks which page Stripe sends the browser back to."""
     agency, _role = agency_and_role
-    url = await service.start_connect_onboarding(db, agency)
+    url = await service.start_connect_onboarding(db, agency, created_by=current_user, return_to=return_to)
     return StripeOnboardingLinkRead(onboarding_url=url)
 
 

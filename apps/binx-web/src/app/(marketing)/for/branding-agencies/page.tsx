@@ -37,7 +37,7 @@ const CAPABILITIES = [
   {
     icon: FileStack,
     title: "A proper final delivery",
-    text: "Guidelines, logo files and brand assets live on the project and in the client's portal — organised, versioned, and still there a year later when they need the file again.",
+    text: "Guidelines, logo files and brand assets live on the project's canvas and in the client's portal — organised, and still there a year later when they need the file again.",
   },
   {
     icon: Users,
@@ -54,7 +54,7 @@ const CAPABILITIES = [
 const FAQ = [
   {
     q: "Can we put our own branding on the client portal?",
-    a: "Yes — the portal carries your agency's name and look, not Binx's. For a brand engagement, that matters as much as the work itself.",
+    a: "Yes — the portal carries your agency's name and look, not Binx's. For a brand engagement, that matters as much as the work itself. A custom portal subdomain starts on the Starter plan.",
   },
   {
     q: "Does the canvas work for moodboards and logo directions, not just tasks?",
@@ -178,7 +178,7 @@ const BrandingAgenciesPage = () => {
             See how <Link href="/client-approvals">client approvals</Link> work.
             Comparing client-portal tools? See the{" "}
             <Link href="/alternatives/copilot-assembly">
-              Copilot &amp; Assembly alternative
+              Assembly (Copilot) alternative
             </Link>{" "}
             page, or <Link href="/pricing">check the plans</Link>.
           </p>

@@ -62,6 +62,8 @@ function apiError(error: unknown, fallback: string): AuthApiError | unknown {
 
 export type BillingSettings = Schemas["BillingSettingsRead"];
 export type StripeConnectStatus = Schemas["StripeConnectStatusRead"];
+/** The page Stripe's onboarding sends the browser back to. */
+export type StripeConnectReturnTo = "settings" | "onboarding" | "new_agency";
 
 export interface BillingSettingsInput {
   legalName: string | null;
@@ -236,23 +238,27 @@ export async function getStripeConnectStatus(
 /**
  * startStripeConnectOnboarding
  *
- * Starts (or continues) Stripe Express onboarding via
+ * Starts (or continues) Stripe onboarding for this agency's own account via
  * `POST /agencies/{agencyId}/billing-settings/stripe/connect`. Returns the
  * onboarding URL to redirect the browser to — always freshly minted, since
- * Stripe's Account Links expire in minutes.
+ * Stripe's Account Links expire in minutes. `returnTo` picks the page Stripe
+ * comes back to (see app/api/stripe/connect/return/route.ts).
  *
  * @function startStripeConnectOnboarding
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller lacks permission.
  */
 export async function startStripeConnectOnboarding(
   agencyId: string,
+  returnTo: StripeConnectReturnTo = "settings",
 ): Promise<string> {
   const headers = await authHeader();
   try {
     const { data } = await api.post<{ onboarding_url: string }>(
       `/agencies/${agencyId}/billing-settings/stripe/connect`,
       undefined,
-      { headers },
+      returnTo === "settings"
+        ? { headers }
+        : { headers, params: { return_to: returnTo } },
     );
     return data.onboarding_url;
   } catch (error) {

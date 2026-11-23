@@ -246,6 +246,18 @@
             ],
             "title": "Created At"
           },
+          "deletion_scheduled_for": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deletion Scheduled For"
+          },
           "id": {
             "format": "uuid",
             "title": "Id",
@@ -465,6 +477,18 @@
               }
             ],
             "title": "Created At"
+          },
+          "deletion_scheduled_for": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deletion Scheduled For"
           },
           "id": {
             "format": "uuid",
@@ -1413,6 +1437,38 @@
         "title": "AgencyCreate",
         "type": "object"
       },
+      "AgencyDeletionRead": {
+        "description": "An agency on its 30-day deletion hold, as its owner sees it.",
+        "properties": {
+          "deletion_requested_at": {
+            "format": "date-time",
+            "title": "Deletion Requested At",
+            "type": "string"
+          },
+          "deletion_scheduled_for": {
+            "format": "date-time",
+            "title": "Deletion Scheduled For",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "deletion_requested_at",
+          "deletion_scheduled_for"
+        ],
+        "title": "AgencyDeletionRead",
+        "type": "object"
+      },
       "AgencyInvitationAccept": {
         "properties": {
           "token": {
@@ -2356,6 +2412,25 @@
           "role"
         ],
         "title": "AgencyRead",
+        "type": "object"
+      },
+      "AgencyRestoreRequest": {
+        "description": "``owner_email`` is only needed when the agency has no owner left.",
+        "properties": {
+          "owner_email": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner Email"
+          }
+        },
+        "title": "AgencyRestoreRequest",
         "type": "object"
       },
       "AgencySubdomainUpdate": {
@@ -15416,6 +15491,29 @@
             "title": "Connected",
             "type": "boolean"
           },
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "created_by_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By Name"
+          },
           "details_submitted": {
             "title": "Details Submitted",
             "type": "boolean"
@@ -18259,6 +18357,64 @@
         ]
       }
     },
+    "/admin/agencies/{agency_id}/restore": {
+      "post": {
+        "operationId": "restore_agency_admin_agencies__agency_id__restore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgencyRestoreRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminActionResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Restore Agency",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
     "/admin/agencies/{agency_id}/trial": {
       "post": {
         "operationId": "grant_trial_admin_agencies__agency_id__trial_post",
@@ -19914,8 +20070,40 @@
         ]
       }
     },
+    "/agencies/pending-deletion": {
+      "get": {
+        "description": "The caller's own agencies on their 30-day hold, soonest first.",
+        "operationId": "list_pending_deletion_agencies_pending_deletion_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AgencyDeletionRead"
+                  },
+                  "title": "Response List Pending Deletion Agencies Pending Deletion Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Pending Deletion",
+        "tags": [
+          "agencies"
+        ]
+      }
+    },
     "/agencies/{agency_id}": {
       "delete": {
+        "description": "Starts the 30-day hold. The agency is erased when it ends, unless an\nowner restores it first (see agencies/deletion.py).",
         "operationId": "delete_agency_endpoint_agencies__agency_id__delete",
         "parameters": [
           {
@@ -21119,6 +21307,7 @@
     },
     "/agencies/{agency_id}/billing-settings/stripe/connect": {
       "post": {
+        "description": "Starts or continues onboarding for this agency's own Stripe account.\n``return_to`` picks which page Stripe sends the browser back to.",
         "operationId": "start_stripe_connect_onboarding_agencies__agency_id__billing_settings_stripe_connect_post",
         "parameters": [
           {
@@ -21128,6 +21317,21 @@
             "schema": {
               "format": "uuid",
               "title": "Agency Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "return_to",
+            "required": false,
+            "schema": {
+              "default": "settings",
+              "enum": [
+                "settings",
+                "onboarding",
+                "new_agency"
+              ],
+              "title": "Return To",
               "type": "string"
             }
           }
@@ -33575,6 +33779,54 @@
         "summary": "Run Schedule Now",
         "tags": [
           "invoicing"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/restore": {
+      "post": {
+        "operationId": "restore_agency_endpoint_agencies__agency_id__restore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgencyRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Restore Agency Endpoint",
+        "tags": [
+          "agencies"
         ]
       }
     },

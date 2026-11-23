@@ -81,8 +81,8 @@ const ContactPage = () => {
               <div className={styles.contactRow}>
                 <span className={styles.contactLabel}>Already a customer?</span>
                 <span className={styles.contactValue}>
-                  Use the in-app assistant or reply to any {SITE.name} email for
-                  the fastest route.
+                  Use Share feedback inside {SITE.name}, or email us at the
+                  address above.
                 </span>
               </div>
             </div>

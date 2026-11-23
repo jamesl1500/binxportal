@@ -63,7 +63,7 @@ const FAQ = [
   },
   {
     q: "Can I put my own branding on it?",
-    a: "Yes — the portal carries your agency's name and look, not Binx's. To the client, it's your workspace.",
+    a: "Yes — the portal carries your agency's name and look, not Binx's. To the client, it's your workspace. A custom portal subdomain starts on the Starter plan.",
   },
 ];
 

@@ -31,6 +31,7 @@ import {
   updateInvoice,
   voidInvoice,
 } from "@/lib/invoicing";
+import type { StripeConnectReturnTo } from "@/lib/invoicing";
 
 function errorResult(error: unknown, fallback: string): { error: string } {
   if (error instanceof AuthApiError) {
@@ -64,9 +65,12 @@ export interface RedirectActionResult {
 
 export async function startStripeConnectOnboardingAction(
   agencyId: string,
+  returnTo: StripeConnectReturnTo = "settings",
 ): Promise<RedirectActionResult> {
   try {
-    return { redirectUrl: await startStripeConnectOnboarding(agencyId) };
+    return {
+      redirectUrl: await startStripeConnectOnboarding(agencyId, returnTo),
+    };
   } catch (error) {
     return errorResult(error, "Unable to start Stripe onboarding");
   }

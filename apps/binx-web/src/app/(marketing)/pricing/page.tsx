@@ -61,7 +61,7 @@ const FAQ = [
   },
   {
     q: "Are there fees on invoice payments?",
-    a: `Only when a client pays an invoice online through the portal. Binx keeps ${PLATFORM_FEE_LABEL} of the payment, and Stripe takes its standard processing fee (${STRIPE_ESTIMATE_LABEL} for US cards). Both come out of the payment, so your client pays exactly the invoice amount. Invoices paid by bank transfer, check or cash and recorded by hand have no fee, and every invoice shows you what you'll keep before you send it.`,
+    a: `Only when a client pays an invoice online through the portal, into the Stripe account you connect for your agency. Binx keeps ${PLATFORM_FEE_LABEL} of the payment, and Stripe takes its standard processing fee (${STRIPE_ESTIMATE_LABEL} for US cards). Both come out of the payment, so your client pays exactly the invoice amount. Invoices paid by bank transfer, check or cash and recorded by hand have no fee, and every invoice shows you what you'll keep before you send it.`,
   },
   {
     q: "Do you charge per seat?",
@@ -81,11 +81,15 @@ const FAQ = [
   },
   {
     q: "Can I change plans later?",
-    a: "Any time, in both directions, through Stripe's billing portal. Upgrades apply right away; if a downgrade would put you over a limit we'll tell you what to trim first.",
+    a: "Any time, in both directions, through Stripe's billing portal. Upgrades apply right away. If a downgrade puts you over a limit, nothing is deleted: you just can't add more of that item until you're back under it.",
   },
   {
     q: "Where does my data live?",
-    a: "In your workspace, exported whenever you want it. We don't sell it and we don't train models on it.",
+    a: "On Amazon Web Services in the United States, and you can export it whenever you want. We don't sell it and we don't train models on it.",
+  },
+  {
+    q: "Can I run more than one agency?",
+    a: "Yes. You can own 1 agency on Free, 2 on Starter, 5 on Pro and as many as you like on Scale, based on the highest plan among the agencies you own. Each agency has its own clients, team, plan and Stripe account, so nothing mixes.",
   },
 ];
 

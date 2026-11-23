@@ -7,7 +7,7 @@ from binx_api.core.dependencies import CurrentUser, DbSession
 from binx_api.modules.agencies.models import Agency, AgencyMember
 
 
-def require_agency_role(*roles: str):
+def require_agency_role(*roles: str, during_hold: tuple[str, ...] = ()):
     """Dependency factory: use as Depends(require_agency_role(ROLE_OWNER)) on an
     endpoint with an `agency_id` path parameter. Gates by the caller's role within
     THAT specific agency — distinct from their global User.role (core/dependencies.py).
@@ -15,6 +15,9 @@ def require_agency_role(*roles: str):
     Returns (agency, role) so handlers don't need a second query to get either.
     A caller with no membership row gets 404 rather than 403, so an agency's mere
     existence isn't revealed to someone who isn't part of it.
+
+    An agency on its deletion hold (agencies/deletion.py) is a 404 too, except
+    for the roles in ``during_hold``, on the few routes that pass it.
     """
 
     async def dependency(agency_id: uuid.UUID, db: DbSession, current_user: CurrentUser) -> tuple[Agency, str]:
@@ -28,6 +31,8 @@ def require_agency_role(*roles: str):
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Agency not found")
 
         agency, role = row
+        if agency.deletion_scheduled_for is not None and role not in during_hold:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Agency not found")
         if role not in roles:
             raise HTTPException(status.HTTP_403_FORBIDDEN, "Insufficient permissions for this agency")
         return agency, role

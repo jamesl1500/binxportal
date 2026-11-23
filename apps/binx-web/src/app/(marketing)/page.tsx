@@ -59,7 +59,7 @@ const FLOW = [
   {
     index: "04",
     title: "Get paid",
-    text: "Invoice from the project with the client's details already filled in. They pay straight from the portal.",
+    text: "Invoice from the project with the client's details already filled in. Connect your agency's own Stripe account and they can pay straight from the portal.",
   },
 ];
 
@@ -67,7 +67,7 @@ const NEW_FEATURES = [
   {
     icon: Radar,
     title: "AI lead prospector",
-    text: "Describe your ideal client and Binx finds matching businesses, backed by Google Places data when you connect it. Save searches and rerun them whenever the pipeline runs low.",
+    text: "Describe your ideal client and Binx searches for real businesses that match. Save searches and rerun them whenever the pipeline runs low.",
   },
   {
     icon: FileSignature,
@@ -94,7 +94,7 @@ const NEW_FEATURES = [
   {
     icon: Newspaper,
     title: "A team timeline",
-    text: "One shared feed on the dashboard where the team posts updates, comments, reacts and @mentions each other. Owners pin announcements that notify everyone, and the side rail flags this week's wins, meetings and work anniversaries.",
+    text: "One shared feed on the dashboard where the team posts updates, comments, reacts and @mentions each other. Owners and admins pin announcements that notify everyone, and the side rail flags this week's wins, meetings and work anniversaries.",
   },
 ];
 
@@ -117,12 +117,12 @@ const CAPABILITIES = [
   {
     icon: LayoutGrid,
     title: "Projects & canvas",
-    text: "Kanban boards, versioned files and a visual canvas where to-do lists are real tasks and clients approve work in place.",
+    text: "Kanban boards, project files and a visual canvas where to-do lists are real tasks and clients approve work in place.",
   },
   {
     icon: Receipt,
     title: "Invoicing",
-    text: "Draft, send and track invoices with your numbering and terms. Clients pay from the portal.",
+    text: "Draft, send and track invoices with your numbering and terms. Connect Stripe and clients pay from the portal.",
   },
   {
     icon: LayoutDashboard,
@@ -138,7 +138,7 @@ const FEATURE_LIST = [
   "Visual project canvas with columns, nested boards, links and files",
   "To-do lists on the canvas synced with project tasks",
   "Client approvals on cards or whole columns, with version history",
-  "Project boards and file versioning",
+  "Project boards and shared files",
   "Invoicing with pay-from-portal",
   "Customizable drag-and-drop dashboard",
   "Team timeline with comments, reactions, @mentions and announcements",
@@ -262,14 +262,14 @@ const HomePage = () => {
       <section className={styles.section}>
         <div className={styles.container}>
           <div className={styles.sectionHead}>
-            <span className={styles.eyebrow}>New in {SITE.name}</span>
+            <span className={styles.eyebrow}>What&apos;s inside</span>
             <h2 className={styles.h2}>
               Win more work, and close the loop with clients.
             </h2>
             <p className={styles.lead}>
-              The latest additions cover the parts of agency life that used to
-              happen in other tools: finding clients, pitching them, and getting
-              a clear yes on the work.
+              {SITE.name} covers the parts of agency life that usually happen in
+              other tools: finding clients, pitching them, and getting a clear
+              yes on the work.
             </p>
           </div>
 
@@ -279,9 +279,7 @@ const HomePage = () => {
                 <span className={styles.cardIcon}>
                   <Icon aria-hidden="true" />
                 </span>
-                <h3 className={styles.cardTitle}>
-                  {title} <span className={styles.newTag}>New</span>
-                </h3>
+                <h3 className={styles.cardTitle}>{title}</h3>
                 <p className={styles.cardText}>{text}</p>
                 {href && (
                   <Link href={href} className={styles.cardLinkArrow}>
@@ -467,7 +465,7 @@ const HomePage = () => {
               <ul className={styles.splitList}>
                 <li>Recipient details auto-filled from the client</li>
                 <li>Partial payments and overdue tracking</li>
-                <li>Clients pay straight from the portal</li>
+                <li>Clients pay from the portal, into your own Stripe account</li>
               </ul>
             </div>
             <div className={styles.splitMedia}>

@@ -21,7 +21,7 @@ const mockedCreate = vi.mocked(createAgencyAction);
 beforeEach(() => vi.clearAllMocks());
 
 describe("NewAgencyForm", () => {
-  it("creates an agency and navigates to the dashboard", async () => {
+  it("creates an agency and moves on to connecting its Stripe", async () => {
     mockedCreate.mockResolvedValueOnce({
       agency: { id: "cccccccc-3333-3333-3333-333333333333", name: "New Co", slug: "new-co", role: "owner", has_logo: false },
     });
@@ -32,7 +32,7 @@ describe("NewAgencyForm", () => {
     await user.click(screen.getByRole("button", { name: /^create agency$/i }));
 
     expect(mockedCreate).toHaveBeenCalledWith("New Co");
-    expect(mockPush).toHaveBeenCalledWith("/dashboard");
+    expect(mockPush).toHaveBeenCalledWith("/agencies/new/payments");
   });
 
   it("goes back on cancel without creating anything", async () => {

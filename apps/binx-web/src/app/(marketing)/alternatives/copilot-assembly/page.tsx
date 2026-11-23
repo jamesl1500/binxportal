@@ -18,9 +18,9 @@ import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 
 import styles from "../../marketing.module.scss";
 
-const TITLE = "Copilot & Assembly alternative";
+const TITLE = "Assembly (formerly Copilot) alternative";
 const DESCRIPTION =
-  "Comparing Copilot or Assembly? Binx gives you the same client portal, plus the leads, proposals, project boards and invoicing that run behind it.";
+  "Comparing Assembly, formerly Copilot? Binx pairs a branded client portal with the leads, proposals, project boards and canvas that run behind it.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -32,29 +32,29 @@ export const metadata: Metadata = {
 const GAPS = [
   {
     icon: LayoutGrid,
-    title: "The portal, without the project behind it",
-    text: "Portal-first tools give clients a clean space to see files and updates — but the team still needs somewhere else to actually plan and run the project day to day.",
+    title: "The project behind the portal",
+    text: "Assembly is built around a polished client portal. Binx adds the place your team plans the work: Kanban boards, a visual canvas and time tracking on every project.",
   },
   {
     icon: Users,
-    title: "A second system for everything else",
-    text: "Leads, the client record, and invoicing usually live in whatever tool you had before. That's one more login and one more place for details to drift out of sync.",
+    title: "Leads before they're clients",
+    text: "AI prospecting and a lead pipeline sit in the same workspace, so a won lead becomes a client, a project and an invoice without re-typing anything.",
   },
   {
     icon: Receipt,
-    title: "Billing bolted on, not built in",
-    text: "Payments through a portal are one thing; a real invoice with your numbering, line items, and terms — tied to the same client record as the project — is another.",
+    title: "Billing tied to the project",
+    text: "Invoices carry your numbering, line items and terms, can be built from tracked time, and sit on the same client record as the project.",
   },
 ];
 
 const FAQ = [
   {
     q: "Does Binx's client portal do what a portal-only tool does?",
-    a: "Yes — a branded space per client with live project progress, shared files, invoices they can pay, and threaded messages. It's just backed by the same project boards, leads, and invoicing your team already uses.",
+    a: "It covers the core: a branded space per client with live project progress, shared files, invoices they can pay, and threaded messages. It's backed by the same project boards, leads and invoicing your team uses.",
   },
   {
     q: "Can I use just the portal and not the project management side?",
-    a: "You can, but most agencies end up using both once they see the client record, project, and invoice all stay in sync automatically — that's the part a standalone portal tool can't do.",
+    a: "You can. The advantage of using both is that the client record, project and invoice stay in sync automatically.",
   },
   {
     q: "Is there a free plan?",
@@ -90,16 +90,16 @@ const CopilotAssemblyAlternativePage = () => {
         <div className={styles.container}>
           <div className={styles.heroInner}>
             <span className={styles.eyebrow}>
-              Copilot & Assembly alternative
+              Assembly (formerly Copilot) alternative
             </span>
             <h1 className={styles.h1}>
               The client portal, plus everything that runs behind it.
             </h1>
             <p className={styles.lead}>
-              Tools like Copilot and Assembly are built around the client-facing
-              portal. {SITE.name} gives you that same portal — live progress,
-              files, invoices — connected directly to the leads, project boards,
-              and invoicing your team actually runs the work with.
+              Assembly, formerly Copilot, is built around the client-facing
+              portal. {SITE.name} gives you a branded portal too, with live
+              progress, files and invoices, connected directly to the leads,
+              project boards and canvas your team runs the work with.
             </p>
             <div className={`${styles.btnRow} ${styles.heroActions}`}>
               <Link href="/auth/signup" className={styles.btnPrimary}>
@@ -119,9 +119,9 @@ const CopilotAssemblyAlternativePage = () => {
       <section className={styles.section}>
         <div className={styles.container}>
           <div className={styles.sectionHead}>
-            <span className={styles.eyebrow}>Where it gets tight</span>
+            <span className={styles.eyebrow}>How Binx differs</span>
             <h2 className={styles.h2}>
-              A great portal is only half the workspace.
+              A portal, with the whole project behind it.
             </h2>
           </div>
           <div className={styles.grid}>

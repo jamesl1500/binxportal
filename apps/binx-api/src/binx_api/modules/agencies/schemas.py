@@ -6,6 +6,15 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from binx_api.modules.users.schemas import EducationEntry, ExperienceEntry
 
 
+class AgencyDeletionRead(BaseModel):
+    """An agency on its 30-day deletion hold, as its owner sees it."""
+
+    id: uuid.UUID
+    name: str
+    deletion_requested_at: datetime
+    deletion_scheduled_for: datetime
+
+
 class AgencyRead(BaseModel):
     id: uuid.UUID
     name: str

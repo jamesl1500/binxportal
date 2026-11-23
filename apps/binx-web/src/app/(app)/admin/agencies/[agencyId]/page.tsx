@@ -16,6 +16,7 @@ import { notFound } from "next/navigation";
 import { type AdminAgencyDetail, getAdminAgency } from "@/lib/admin";
 import { AuthApiError } from "@/lib/auth";
 import AdminNoteForm from "@/components/admin/AdminNoteForm/AdminNoteForm";
+import AgencyRestorePanel from "@/components/admin/AgencyRestorePanel/AgencyRestorePanel";
 import AgencyTrialPanel from "@/components/admin/AgencyTrialPanel/AgencyTrialPanel";
 import AuditTimeline from "@/components/admin/AuditTimeline/AuditTimeline";
 import { AgencyPills } from "@/components/admin/StatusPills/StatusPills";
@@ -289,6 +290,22 @@ const AdminAgencyPage = async ({ params }: AgencyPageProps) => {
         </div>
 
         <div className={ui.stack}>
+          {agency.deletion_scheduled_for && (
+            <section className={ui.card} aria-labelledby="deletion-hold">
+              <div className={ui.cardHeader}>
+                <h2 id="deletion-hold" className={ui.cardTitle}>
+                  Deletion hold
+                </h2>
+              </div>
+              <AgencyRestorePanel
+                agencyId={agency.id}
+                agencyName={agency.name}
+                scheduledFor={agency.deletion_scheduled_for}
+                hasOwner={agency.owner_email !== null}
+              />
+            </section>
+          )}
+
           <section className={ui.card} aria-labelledby="trial">
             <div className={ui.cardHeader}>
               <h2 id="trial" className={ui.cardTitle}>

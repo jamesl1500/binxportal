@@ -249,6 +249,9 @@ class StripeConnectStatusRead(BaseModel):
     details_submitted: bool
     payouts_enabled: bool
     onboarded_at: datetime | None
+    # Who started this agency's Stripe account. Null for older accounts.
+    created_by_name: str | None = None
+    created_at: datetime | None = None
 
 
 class StripeOnboardingLinkRead(BaseModel):

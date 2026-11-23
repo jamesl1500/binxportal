@@ -9,7 +9,10 @@ vi.mock("@/lib/auth", async (importOriginal) => {
   return { ...actual, getAccessToken: vi.fn() };
 });
 
-vi.mock("@/lib/agencies", () => ({ getMyAgencies: vi.fn() }));
+vi.mock("@/lib/agencies", () => ({
+  getMyAgencies: vi.fn(),
+  getPendingDeletionAgencies: vi.fn().mockResolvedValue([]),
+}));
 
 import { api } from "@/lib/api";
 import { getMyAgencies } from "@/lib/agencies";

@@ -33,29 +33,29 @@ export const metadata: Metadata = {
 const GAPS = [
   {
     icon: LayoutGrid,
-    title: "No real project workspace",
-    text: "Dubsado is built around forms, contracts, and a pipeline — strong for booking the work, thinner once a project has tasks, assignees, and a team moving through them together.",
+    title: "The project at the center",
+    text: "Dubsado is known for forms, contracts and client workflows, and it has task boards too. Binx centers the day-to-day on Kanban boards and a visual canvas, where to-do rows are the project's real tasks.",
   },
   {
     icon: Users,
-    title: "Built for one operator",
-    text: "It shows in the workflows and permissions: great for a solo consultant, more work to stretch across a growing team with different roles per client.",
+    title: "One view for the whole team",
+    text: "Owners, admins and members share one client record, with assignees, a My work view and a team timeline on the dashboard.",
   },
   {
     icon: PanelsTopLeft,
-    title: "Client view is a form, not a workspace",
-    text: "Clients get portals for forms, invoices, and files — not a live view of where their project actually stands, or a shared canvas to collaborate on.",
+    title: "Clients work with you on the canvas",
+    text: "In the Binx portal, clients follow project progress, add to a shared canvas, and approve work card by card, with every sign-off pinned to a version.",
   },
 ];
 
 const FAQ = [
   {
     q: "Can I move my clients and invoices over from Dubsado?",
-    a: "You can add clients directly and start invoicing in Binx right away. There's no automated Dubsado importer today — for most agencies switching, re-entering active clients is a short one-time task.",
+    a: "Clients, yes: import them from a spreadsheet and start invoicing in Binx right away. There's no direct Dubsado connection, and past invoices don't import, so keep those records where they are.",
   },
   {
     q: "Does Binx do contracts and forms like Dubsado?",
-    a: "Partly. Binx has proposals with online e-signature, so a client can review your scope and pricing and sign from a link. It doesn't have Dubsado-style intake forms or contract templates yet, so some agencies keep a separate tool for those.",
+    a: "Partly. Binx has proposals with online e-signature, so a client can review your scope and pricing and sign from a link. It also has kickoff questionnaires for clients. It doesn't have contract templates or a general form builder yet, so you may want to keep a separate tool for those.",
   },
   {
     q: "Is there a free plan to try it?",
@@ -92,13 +92,13 @@ const DubsadoAlternativePage = () => {
           <div className={styles.heroInner}>
             <span className={styles.eyebrow}>Dubsado alternative</span>
             <h1 className={styles.h1}>
-              A Dubsado alternative built for a whole agency, not one operator.
+              A Dubsado alternative built around the project.
             </h1>
             <p className={styles.lead}>
-              Dubsado is a solid CRM and invoicing tool for a solo practice.{" "}
-              {SITE.name} is built for the point past that — a team running
-              several client projects at once, with a client portal that shows
-              real progress, not just a form.
+              Dubsado is a well-established tool for forms, contracts and client
+              workflows. {SITE.name} puts the project at the center: a team
+              running several client projects at once, with a shared canvas and
+              a client portal that shows real progress.
             </p>
             <div className={`${styles.btnRow} ${styles.heroActions}`}>
               <Link href="/auth/signup" className={styles.btnPrimary}>
@@ -118,9 +118,9 @@ const DubsadoAlternativePage = () => {
       <section className={styles.section}>
         <div className={styles.container}>
           <div className={styles.sectionHead}>
-            <span className={styles.eyebrow}>Where it gets tight</span>
+            <span className={styles.eyebrow}>How Binx differs</span>
             <h2 className={styles.h2}>
-              Great for booking the work. Thinner once you&apos;re running it.
+              Strong at booking the work. Binx focuses on running it.
             </h2>
           </div>
           <div className={styles.grid}>
@@ -152,8 +152,7 @@ const DubsadoAlternativePage = () => {
               <h3 className={styles.h3}>The client side</h3>
               <ul className={styles.splitList}>
                 <li>
-                  A branded portal showing live project progress, not just
-                  paperwork
+                  A branded portal showing live project progress
                 </li>
                 <li>Invoices they can pay directly from the portal</li>
                 <li>

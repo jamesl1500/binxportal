@@ -38,7 +38,11 @@ from binx_api.modules.imports.schemas import ImportKind
 
 router = APIRouter(prefix="/agencies/{agency_id}", tags=["exports"])
 
-AnyMember = Annotated[tuple[Agency, str], Depends(require_agency_role(ROLE_OWNER, ROLE_ADMIN, ROLE_MEMBER))]
+# During a deletion hold only the owner can still export (the Terms promise it).
+AnyMember = Annotated[
+    tuple[Agency, str],
+    Depends(require_agency_role(ROLE_OWNER, ROLE_ADMIN, ROLE_MEMBER, during_hold=(ROLE_OWNER,))),
+]
 
 ExportKind = Literal["clients", "team", "leads", "projects", "tasks", "time_entries", "invoices", "proposals"]
 FileFormat = Literal["csv", "xlsx"]

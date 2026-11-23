@@ -30,6 +30,8 @@ import {
   clearCurrentAgencyId,
   deleteAgency,
   deleteAgencyImage,
+  restoreAgency,
+  setCurrentAgencyId,
   updateAgency,
   updateAgencyProfile,
   updateAgencySubdomain,
@@ -93,8 +95,21 @@ export async function deleteAgencyAction(
   }
 
   // Settings always acts on the CURRENT agency, so a successful delete here
-  // always means the cookie now points at something that no longer exists.
+  // always means the cookie now points at an agency that's on hold.
   await clearCurrentAgencyId();
+  redirect("/deleted-agencies");
+}
+
+export async function restoreAgencyAction(
+  agencyId: string,
+): Promise<DeleteAgencyActionResult> {
+  try {
+    await restoreAgency(agencyId);
+  } catch (error) {
+    return errorResult(error, "Unable to restore agency");
+  }
+
+  await setCurrentAgencyId(agencyId);
   redirect("/dashboard");
 }
 

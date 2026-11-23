@@ -13,6 +13,7 @@
 import React from "react";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { Toaster } from "sonner";
 
 import { getCurrentUser } from "@/lib/auth";
 import { getPortalContext } from "@/lib/portal";
@@ -46,7 +47,8 @@ const OnboardingLayout = async ({
   }
 
   return (
-    <div className={styles.root}>
+    <>
+      <div className={styles.root}>
       <aside className={styles.panel}>
         <div className={styles.panelGlow} aria-hidden="true" />
 
@@ -69,7 +71,12 @@ const OnboardingLayout = async ({
       <div className={styles.content}>
         <div className={styles.card}>{children}</div>
       </div>
-    </div>
+      </div>
+
+      {/* The plan and Stripe steps report failures as toasts. Kept outside
+          the grid, where it would otherwise take up a row of its own. */}
+      <Toaster position="bottom-right" richColors />
+    </>
   );
 };
 

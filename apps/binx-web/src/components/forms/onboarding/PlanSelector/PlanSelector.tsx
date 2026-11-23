@@ -167,7 +167,17 @@ const PlanSelector = ({
               <p className={styles.trialNote}>14 days free, no card needed</p>
             )}
             {isCurrent ? (
-              <p className={styles.trialNote}>Your current plan</p>
+              <>
+                <p className={styles.trialNote}>Your current plan</p>
+                <button
+                  type="button"
+                  className={styles.switch}
+                  onClick={() => router.push(ONBOARDING_NEXT_STEP)}
+                  disabled={isPending}
+                >
+                  Continue with {plan.name}
+                </button>
+              </>
             ) : (
               <button
                 type="button"
@@ -178,7 +188,9 @@ const PlanSelector = ({
                 {isPendingThis
                   ? "Setting up…"
                   : isFree
-                    ? "Continue with Free"
+                    ? currentPlan === "free"
+                      ? "Continue with Free"
+                      : "Switch to Free"
                     : paidLabel}
               </button>
             )}

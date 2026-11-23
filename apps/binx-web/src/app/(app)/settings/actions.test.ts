@@ -89,14 +89,14 @@ describe("updateAgencyAction", () => {
 });
 
 describe("deleteAgencyAction", () => {
-  it("clears the current-agency cookie and redirects to /dashboard on success", async () => {
+  it("clears the current-agency cookie and shows the hold page on success", async () => {
     mockedDeleteAgency.mockResolvedValueOnce(undefined);
 
-    await expect(deleteAgencyAction(agencyId)).rejects.toThrow("REDIRECT:/dashboard");
+    await expect(deleteAgencyAction(agencyId)).rejects.toThrow("REDIRECT:/deleted-agencies");
 
     expect(mockedDeleteAgency).toHaveBeenCalledWith(agencyId);
     expect(mockedClearCurrentAgencyId).toHaveBeenCalledOnce();
-    expect(mockedRedirect).toHaveBeenCalledWith("/dashboard");
+    expect(mockedRedirect).toHaveBeenCalledWith("/deleted-agencies");
   });
 
   it("returns the upstream error message without clearing the cookie or redirecting", async () => {

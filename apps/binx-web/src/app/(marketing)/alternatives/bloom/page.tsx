@@ -24,7 +24,7 @@ import styles from "../../marketing.module.scss";
 
 const TITLE = "Bloom.io alternative for agencies";
 const DESCRIPTION =
-  "Bloom is built around one creative freelancer's workflow. Binx is the Bloom.io alternative for a team: several people, several clients, one shared workspace.";
+  "Comparing Bloom? Binx is the alternative for creative agencies: several people, several clients, Kanban boards and a shared canvas in one workspace.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -42,18 +42,18 @@ const RELATED_USE_CASES = USE_CASE_PAGES.filter(
 const GAPS = [
   {
     icon: Users,
-    title: "Built around one freelancer's workflow",
-    text: "Bloom fits a solo creative running their own bookings well. A growing team needs shared ownership of clients and projects, not one person's personal pipeline.",
+    title: "Shaped for agencies",
+    text: "Bloom is popular with photographers and creative service businesses. Binx is shaped around an agency team sharing clients, projects and a pipeline.",
   },
   {
     icon: LayoutGrid,
-    title: "Lighter on team project structure",
-    text: "Booking, contracts, and invoicing are the strong points. Assigning tasks across a team, tracking who owns what, and seeing project status at a glance need more room to grow.",
+    title: "Task-level project work",
+    text: "Assign tasks across the team on Kanban boards, see who owns what in My work, and check project status at a glance.",
   },
   {
     icon: PanelsTopLeft,
-    title: "One kind of client relationship",
-    text: "Great for the typical session-and-gallery workflow. An agency juggling ongoing retainers, multi-month projects, and one-off engagements needs a more general shape.",
+    title: "Any kind of engagement",
+    text: "Retainers, multi-month projects and one-off work all fit the same structure, with recurring invoice schedules for regular billing.",
   },
 ];
 
@@ -101,13 +101,13 @@ const BloomAlternativePage = () => {
           <div className={styles.heroInner}>
             <span className={styles.eyebrow}>Bloom.io alternative</span>
             <h1 className={styles.h1}>
-              A Bloom alternative built for a team, not one calendar.
+              A Bloom alternative built for agency teams.
             </h1>
             <p className={styles.lead}>
-              Bloom is built around a single creative freelancer&apos;s bookings
-              and pipeline. {SITE.name} is built for a team — several people
-              sharing clients and projects, with a portal and invoicing that
-              scale past one person&apos;s calendar.
+              Bloom is a popular CRM for photographers and creative businesses.
+              {SITE.name} is built for an agency team: several people sharing
+              clients and projects, with a canvas, client approvals and
+              invoicing in one place.
             </p>
             <div className={`${styles.btnRow} ${styles.heroActions}`}>
               <Link href="/auth/signup" className={styles.btnPrimary}>
@@ -127,9 +127,9 @@ const BloomAlternativePage = () => {
       <section className={styles.section}>
         <div className={styles.container}>
           <div className={styles.sectionHead}>
-            <span className={styles.eyebrow}>Where it gets tight</span>
+            <span className={styles.eyebrow}>How Binx differs</span>
             <h2 className={styles.h2}>
-              Great for one calendar. Thinner for a team.
+              Great for creative bookings. Binx is built for agency teams.
             </h2>
           </div>
           <div className={styles.grid}>

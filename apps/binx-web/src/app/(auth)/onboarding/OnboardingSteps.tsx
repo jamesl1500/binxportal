@@ -40,6 +40,12 @@ const STEPS = [
     title: "Bring your clients & team",
     text: "Optional: import them from a spreadsheet.",
   },
+  {
+    href: "/onboarding/five",
+    index: "05",
+    title: "Get paid online",
+    text: "Optional: connect a Stripe account for this agency.",
+  },
 ];
 
 const OnboardingSteps = () => {

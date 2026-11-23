@@ -1,7 +1,8 @@
 /**
  * DeleteAgencyForm.tsx
  *
- * Client-side form for permanently deleting the current agency: typing its
+ * Client-side form for deleting the current agency (a 30-day hold, then
+ * permanent erasure; see agencies/deletion.py in binx-api): typing its
  * exact name to confirm (rather than a generic word), since a user could
  * belong to several agencies and typing the specific name guards against
  * deleting the wrong one. Submits via the `deleteAgencyAction` server
