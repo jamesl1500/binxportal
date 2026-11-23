@@ -1,8 +1,8 @@
 /**
  * page.tsx - Onboarding Step Four
  *
- * Optional last step: import existing clients and teammates from
- * spreadsheets (see OnboardingImport), then on to the dashboard. It comes
+ * Optional step: import existing clients and teammates from spreadsheets
+ * (see OnboardingImport), then on to connecting Stripe. It comes
  * after choosing a plan so imports are checked against that plan's limits.
  * Paid plans arrive here back from Stripe Checkout (`?checkout=success|cancel`).
  *
@@ -44,7 +44,7 @@ const OnboardingStepFourPage = async ({
       </Link>
 
       <header className={styles.header}>
-        <span className={styles.eyebrow}>Step 4 of 4 · Optional</span>
+        <span className={styles.eyebrow}>Step 4 of 5 · Optional</span>
         <h1 className={styles.title}>Bring your clients &amp; team</h1>
         <p className={styles.subtitle}>
           Have them in a spreadsheet already? Import them now so{" "}

@@ -20,7 +20,7 @@ import styles from "../marketing.module.scss";
 
 const TITLE = "Terms of Service";
 const DESCRIPTION = `The terms that govern using ${SITE.name} — accounts, plans and billing, the client portal, and what each side is responsible for.`;
-const LAST_UPDATED = "Effective November 21, 2026";
+const LAST_UPDATED = "Effective November 23, 2026";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -86,10 +86,10 @@ const TermsPage = () => {
 
             <h2>Online invoice payments</h2>
             <p>
-              If you connect a Stripe account, your clients can pay your
-              invoices online through the portal. You are the merchant for
-              those payments: the money settles into your own Stripe account,
-              under Stripe&apos;s terms. For each invoice payment made this
+              Each agency connects its own Stripe account. Once an agency has
+              connected one, its clients can pay invoices online through the
+              portal. You are the merchant for those payments: the money settles
+              into that agency&apos;s Stripe account, under Stripe&apos;s terms. For each invoice payment made this
               way, {SITE.name} keeps a platform fee of {PLATFORM_FEE_LABEL} of
               the amount paid, and Stripe separately charges its own
               processing fees to your Stripe account. Both are deducted from
@@ -129,9 +129,10 @@ const TermsPage = () => {
               as a substitute for your own judgment. They can be wrong.
               You&apos;re responsible for reviewing AI-generated content — a
               drafted message, a lead score, a prospect suggestion, a summary —
-              before relying on or sending it. The AI lead prospector, when you
-              enable it, sends the search criteria you enter to Google Places to
-              find matching businesses; you&apos;re responsible for having the
+              before relying on or sending it. When you run the AI lead
+              prospector, the search criteria you enter are used to find
+              matching businesses through web search and, where available,
+              Google Places; you&apos;re responsible for having the
               right to search for and contact any business it surfaces. Each
               agency can monitor and cap its own AI usage in Settings.
             </p>
@@ -160,10 +161,12 @@ const TermsPage = () => {
             <p>
               You can delete your account at any time from Account settings. We
               may suspend or terminate an account that violates these Terms,
-              with notice where practical. After termination, your workspace
-              data is available for you to export for 30 days, and is then
-              permanently deleted, including from backups, within 90 days — the
-              same schedule described in our{" "}
+              with notice where practical. A deleted agency is held for 30
+              days, during which its owner can restore it or export its data. If
+              you delete your account or we terminate it, contact us during that
+              time for access to an agency you own. The data is then permanently
+              deleted, including from backups, within 90 days — the same
+              schedule described in our{" "}
               <Link href="/privacy">Privacy Policy</Link>.
             </p>
 

@@ -12,7 +12,8 @@ import logging
 import uuid
 from datetime import UTC, date, datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
+from urllib.parse import urlencode
 
 import stripe
 from fastapi import HTTPException, status
@@ -151,13 +152,106 @@ async def update_billing_settings(
 # charge" pattern) rather than pooling in Binx's — see
 # client_portal/router.py::pay_invoice and invoicing/webhooks_router.py.
 
+# Which page Stripe's onboarding should come back to. A fixed list, so the
+# return URL can never be pointed somewhere else.
+ConnectReturnTo = Literal["settings", "onboarding", "new_agency"]
 
-async def start_connect_onboarding(db: AsyncSession, agency: Agency, *, country: str = "US") -> str:
-    """Get-or-create the agency's v2 Core Account (Merchant configuration —
-    direct charges, the agency is merchant of record for its own client
+# Stripe doesn't publish a limit for this field. The full name is in metadata.
+CONNECT_DISPLAY_NAME_MAX = 100
+
+
+def _connect_return_url(agency_id: uuid.UUID, state: str, return_to: ConnectReturnTo) -> str:
+    """Where Stripe sends the browser back to. It names the agency because
+    the web app's "current agency" is a cookie: someone who switched agencies
+    while on Stripe would otherwise land on a different agency's settings."""
+    query = urlencode({"agency": str(agency_id), "stripe": state, "to": return_to})
+    return f"{settings.frontend_url}/api/stripe/connect/return?{query}"
+
+
+async def _create_connect_account(
+    db: AsyncSession, agency: Agency, billing_settings: AgencyBillingSettings, *, created_by: User, country: str
+) -> AgencyBillingSettings:
+    """Creates this agency's Stripe account, unless a concurrent request just
+    did. The row lock is held across the Stripe call so a double click can't
+    create two accounts and orphan one of them."""
+    locked = await db.execute(
+        select(AgencyBillingSettings)
+        .where(AgencyBillingSettings.id == billing_settings.id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
+    billing_settings = locked.scalar_one()
+    if billing_settings.stripe_connect_account_id is not None:
+        await db.commit()  # releases the lock
+        return billing_settings
+
+    account_params: AccountCreateParams = {
+        "dashboard": "full",
+        "display_name": agency.name[:CONNECT_DISPLAY_NAME_MAX],
+        "identity": {"country": country},
+        "configuration": {
+            "merchant": {
+                "capabilities": {
+                    "card_payments": {"requested": True},
+                },
+            },
+        },
+        "defaults": {
+            "responsibilities": {
+                "fees_collector": "stripe",
+                "losses_collector": "stripe",
+            },
+        },
+        # Ties the account to its agency and creator from the Stripe side too,
+        # so it stays traceable even if the agency is later deleted here.
+        "metadata": {
+            "binx_agency_id": str(agency.id),
+            "binx_agency_name": agency.name,
+            "binx_created_by_user_id": str(created_by.id),
+        },
+    }
+    if billing_settings.contact_email:
+        account_params["contact_email"] = billing_settings.contact_email
+    try:
+        account = await stripe_client.create_connect_account(account_params)
+    except Exception:
+        await db.rollback()  # releases the lock
+        raise
+
+    billing_settings.stripe_connect_account_id = account.id
+    billing_settings.stripe_connect_created_by_user_id = created_by.id
+    billing_settings.stripe_connect_created_at = datetime.now(UTC)
+    await db.commit()
+    await db.refresh(billing_settings)
+
+    await activity_service.log_agency_activity(
+        db,
+        agency.id,
+        category=ACTIVITY_CATEGORY_SETTINGS,
+        event_type="stripe_connect_account_created",
+        visibility=VISIBILITY_ADMIN,
+        summary=f"{created_by.full_name} started a Stripe account for {agency.name}",
+        actor=created_by,
+    )
+    return billing_settings
+
+
+async def start_connect_onboarding(
+    db: AsyncSession,
+    agency: Agency,
+    *,
+    created_by: User,
+    return_to: ConnectReturnTo = "settings",
+    country: str = "US",
+) -> str:
+    """Get-or-create this agency's own v2 Core Account (Merchant configuration
+    — direct charges, the agency is merchant of record for its own client
     invoices, same "direct charge" pattern noted above), then always mint a
     fresh Account Link — they expire in minutes, so a stored URL is never
     reusable and "Continue onboarding" must call this again.
+
+    ``created_by`` is recorded only when this call creates the account; a
+    teammate continuing someone else's onboarding doesn't become its creator.
 
     ``dashboard: "full"`` + ``fees_collector``/``losses_collector: "stripe"``
     is Stripe's own recommended SaaS/direct-charge configuration (see
@@ -168,29 +262,9 @@ async def start_connect_onboarding(db: AsyncSession, agency: Agency, *, country:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Stripe isn't configured")
     billing_settings = await get_or_create_billing_settings(db, agency)
     if billing_settings.stripe_connect_account_id is None:
-        account_params: AccountCreateParams = {
-            "dashboard": "full",
-            "identity": {"country": country},
-            "configuration": {
-                "merchant": {
-                    "capabilities": {
-                        "card_payments": {"requested": True},
-                    },
-                },
-            },
-            "defaults": {
-                "responsibilities": {
-                    "fees_collector": "stripe",
-                    "losses_collector": "stripe",
-                },
-            },
-        }
-        if billing_settings.contact_email:
-            account_params["contact_email"] = billing_settings.contact_email
-        account = await stripe_client.create_connect_account(account_params)
-        billing_settings.stripe_connect_account_id = account.id
-        await db.commit()
-        await db.refresh(billing_settings)
+        billing_settings = await _create_connect_account(
+            db, agency, billing_settings, created_by=created_by, country=country
+        )
 
     account_id = billing_settings.stripe_connect_account_id
     if account_id is None:  # set just above; narrows the type
@@ -204,13 +278,23 @@ async def start_connect_onboarding(db: AsyncSession, agency: Agency, *, country:
             "use_case": {
                 "type": "account_onboarding",
                 "account_onboarding": {
-                    "refresh_url": f"{settings.frontend_url}/settings/invoicing?stripe=refresh",
-                    "return_url": f"{settings.frontend_url}/settings/invoicing?stripe=return",
+                    "refresh_url": _connect_return_url(agency.id, "refresh", return_to),
+                    "return_url": _connect_return_url(agency.id, "return", return_to),
                 },
             },
         }
     )
     return stripe_client.require_url(link.url)
+
+
+async def connect_created_by_name(db: AsyncSession, billing_settings: AgencyBillingSettings) -> str | None:
+    """Who started this agency's Stripe account, for the settings panel."""
+    if billing_settings.stripe_connect_created_by_user_id is None:
+        return None
+    result = await db.execute(
+        select(User.full_name).where(User.id == billing_settings.stripe_connect_created_by_user_id)
+    )
+    return result.scalar_one_or_none()
 
 
 async def sync_connect_status(db: AsyncSession, account: stripe.v2.core.Account) -> AgencyBillingSettings | None:
@@ -260,9 +344,15 @@ async def get_connect_status(db: AsyncSession, agency: Agency, *, refresh: bool 
     redirect landing back and the ``account.updated`` webhook arriving."""
     billing_settings = await get_or_create_billing_settings(db, agency)
     if refresh and billing_settings.stripe_connect_account_id and not billing_settings.stripe_connect_charges_enabled:
-        account = await stripe_client.retrieve_connect_account(
-            billing_settings.stripe_connect_account_id, {"include": ["configuration.merchant"]}
-        )
+        try:
+            account = await stripe_client.retrieve_connect_account(
+                billing_settings.stripe_connect_account_id, {"include": ["configuration.merchant"]}
+            )
+        except stripe.StripeError:
+            # The person just came back from Stripe: show the page with what
+            # we know. The account.updated webhook will catch it up.
+            logger.warning("Couldn't refresh Connect status for agency %s", agency.id, exc_info=True)
+            return billing_settings
         updated = await sync_connect_status(db, account)
         if updated is not None:
             return updated

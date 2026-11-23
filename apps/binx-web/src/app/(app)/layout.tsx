@@ -20,7 +20,10 @@ import { redirect } from "next/navigation";
 import { Toaster } from "sonner";
 
 import { getCurrentUser } from "@/lib/auth";
-import { getCurrentAgencyContext } from "@/lib/agencies";
+import {
+  getCurrentAgencyContext,
+  getPendingDeletionAgencies,
+} from "@/lib/agencies";
 import { getDuePulse } from "@/lib/feedback";
 import { getUnreadMessageCount } from "@/lib/messaging";
 import { getNotifications } from "@/lib/notifications";
@@ -84,9 +87,12 @@ const AppLayout = async ({ children }: { children: React.ReactNode }) => {
 
   if (!currentAgency) {
     // A client contact (no agency membership) belongs in the portal, not
-    // onboarding. Anyone else with no agency goes on to create one.
+    // onboarding. An owner whose only agency is on its deletion hold gets the
+    // page to restore it. Anyone else with no agency goes on to create one.
     const portal = await getPortalContext();
-    redirect(portal ? "/portal" : "/onboarding/two");
+    if (portal) redirect("/portal");
+    const onHold = await getPendingDeletionAgencies().catch(() => []);
+    redirect(onHold.length > 0 ? "/deleted-agencies" : "/onboarding/two");
   }
 
   const [

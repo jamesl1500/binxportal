@@ -19,10 +19,11 @@ const OnboardingStepOnePage = () => {
   return (
     <div>
       <header className={styles.header}>
-        <span className={styles.eyebrow}>Step 1 of 4</span>
+        <span className={styles.eyebrow}>Step 1 of 5</span>
         <h1 className={styles.title}>Tell us about you</h1>
         <p className={styles.subtitle}>
-          A couple of quick details to personalize your workspace.
+          Welcome to Binx! Both of these are optional, so skip ahead if
+          you&apos;d like.
         </p>
       </header>
 

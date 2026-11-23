@@ -22,6 +22,7 @@ ACTION_REACTIVATED = "reactivated"
 ACTION_ROLE_CHANGED = "role_changed"
 ACTION_TRIAL_GRANTED = "trial_granted"
 ACTION_TRIAL_ENDED = "trial_ended"
+ACTION_AGENCY_RESTORED = "agency_restored"
 
 
 # Append-only record of everything the Binx team does through the admin

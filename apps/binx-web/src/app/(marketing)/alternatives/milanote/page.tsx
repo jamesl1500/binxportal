@@ -59,7 +59,7 @@ const FAQ = [
   },
   {
     q: "Can I import my Milanote boards?",
-    a: "There's no automated importer today. Most agencies start new projects in Binx and keep older boards where they are. You can drag images and files straight onto a Binx canvas, and pasting a link makes a link card.",
+    a: "There's no automated importer today, so the simplest path is to start new projects in Binx and keep older boards where they are. You can drag images and files straight onto a Binx canvas, and pasting a link makes a link card.",
   },
   {
     q: "When is Milanote the better fit?",

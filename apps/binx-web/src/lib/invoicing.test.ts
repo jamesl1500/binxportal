@@ -213,6 +213,13 @@ describe("invoicing.ts", () => {
     const url = await invoicing.startStripeConnectOnboarding(A);
     expect(url).toBe("https://connect.stripe.com/setup/abc");
     expect(mockedApi.post).toHaveBeenCalledWith(`/agencies/${A}/billing-settings/stripe/connect`, undefined, AUTH);
+
+    mockedApi.post.mockResolvedValueOnce({ data: { onboarding_url: "https://connect.stripe.com/setup/y" } });
+    await invoicing.startStripeConnectOnboarding(A, "onboarding");
+    expect(mockedApi.post).toHaveBeenLastCalledWith(`/agencies/${A}/billing-settings/stripe/connect`, undefined, {
+      ...AUTH,
+      params: { return_to: "onboarding" },
+    });
   });
 
   describe("error handling (shared)", () => {

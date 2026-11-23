@@ -72,6 +72,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/agencies/{agency_id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restore Agency */
+        post: operations["restore_agency_admin_agencies__agency_id__restore_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/agencies/{agency_id}/trial": {
         parameters: {
             query?: never;
@@ -556,6 +573,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agencies/pending-deletion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Pending Deletion
+         * @description The caller's own agencies on their 30-day hold, soonest first.
+         */
+        get: operations["list_pending_deletion_agencies_pending_deletion_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agencies/{agency_id}": {
         parameters: {
             query?: never;
@@ -566,7 +603,11 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /** Delete Agency Endpoint */
+        /**
+         * Delete Agency Endpoint
+         * @description Starts the 30-day hold. The agency is erased when it ends, unless an
+         *     owner restores it first (see agencies/deletion.py).
+         */
         delete: operations["delete_agency_endpoint_agencies__agency_id__delete"];
         options?: never;
         head?: never;
@@ -828,7 +869,11 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Start Stripe Connect Onboarding */
+        /**
+         * Start Stripe Connect Onboarding
+         * @description Starts or continues onboarding for this agency's own Stripe account.
+         *     ``return_to`` picks which page Stripe sends the browser back to.
+         */
         post: operations["start_stripe_connect_onboarding_agencies__agency_id__billing_settings_stripe_connect_post"];
         delete?: never;
         options?: never;
@@ -3151,6 +3196,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agencies/{agency_id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restore Agency Endpoint */
+        post: operations["restore_agency_endpoint_agencies__agency_id__restore_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agencies/{agency_id}/subdomain": {
         parameters: {
             query?: never;
@@ -5006,6 +5068,8 @@ export interface components {
             clients: number;
             /** Created At */
             created_at: string | null;
+            /** Deletion Scheduled For */
+            deletion_scheduled_for?: string | null;
             /**
              * Id
              * Format: uuid
@@ -5074,6 +5138,8 @@ export interface components {
             clients: number;
             /** Created At */
             created_at: string | null;
+            /** Deletion Scheduled For */
+            deletion_scheduled_for?: string | null;
             /**
              * Id
              * Format: uuid
@@ -5348,6 +5414,29 @@ export interface components {
         };
         /** AgencyCreate */
         AgencyCreate: {
+            /** Name */
+            name: string;
+        };
+        /**
+         * AgencyDeletionRead
+         * @description An agency on its 30-day deletion hold, as its owner sees it.
+         */
+        AgencyDeletionRead: {
+            /**
+             * Deletion Requested At
+             * Format: date-time
+             */
+            deletion_requested_at: string;
+            /**
+             * Deletion Scheduled For
+             * Format: date-time
+             */
+            deletion_scheduled_for: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
             /** Name */
             name: string;
         };
@@ -5631,6 +5720,14 @@ export interface components {
             slug: string;
             /** Subdomain */
             subdomain?: string | null;
+        };
+        /**
+         * AgencyRestoreRequest
+         * @description ``owner_email`` is only needed when the agency has no owner left.
+         */
+        AgencyRestoreRequest: {
+            /** Owner Email */
+            owner_email?: string | null;
         };
         /** AgencySubdomainUpdate */
         AgencySubdomainUpdate: {
@@ -10084,6 +10181,10 @@ export interface components {
             charges_enabled: boolean;
             /** Connected */
             connected: boolean;
+            /** Created At */
+            created_at?: string | null;
+            /** Created By Name */
+            created_by_name?: string | null;
             /** Details Submitted */
             details_submitted: boolean;
             /** Onboarded At */
@@ -11153,6 +11254,41 @@ export interface operations {
             };
         };
     };
+    restore_agency_admin_agencies__agency_id__restore_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AgencyRestoreRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminActionResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     grant_trial_admin_agencies__agency_id__trial_post: {
         parameters: {
             query?: never;
@@ -12075,6 +12211,26 @@ export interface operations {
             };
         };
     };
+    list_pending_deletion_agencies_pending_deletion_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgencyDeletionRead"][];
+                };
+            };
+        };
+    };
     delete_agency_endpoint_agencies__agency_id__delete: {
         parameters: {
             query?: never;
@@ -12767,7 +12923,9 @@ export interface operations {
     };
     start_stripe_connect_onboarding_agencies__agency_id__billing_settings_stripe_connect_post: {
         parameters: {
-            query?: never;
+            query?: {
+                return_to?: "settings" | "onboarding" | "new_agency";
+            };
             header?: never;
             path: {
                 agency_id: string;
@@ -19295,6 +19453,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InvoiceRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    restore_agency_endpoint_agencies__agency_id__restore_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgencyRead"];
                 };
             };
             /** @description Validation Error */

@@ -24,6 +24,7 @@ export interface AdminAgencyRow {
   members: number;
   clients: number;
   active_projects: number;
+  deletion_scheduled_for?: string | null;
 }
 
 export interface AdminUserRow {

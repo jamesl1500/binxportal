@@ -102,6 +102,8 @@ class AdminAgencyRow(BaseModel):
     members: int
     clients: int
     active_projects: int
+    # Set while the agency is on its 30-day deletion hold.
+    deletion_scheduled_for: datetime | None = None
 
 
 class AdminAgencyPage(BaseModel):
@@ -164,6 +166,12 @@ class TrialGrant(BaseModel):
     plan: str = Field(pattern=_PLAN_PATTERN)
     days: int = Field(ge=1, le=90)
     reason: str | None = Field(default=None, max_length=500)
+
+
+class AgencyRestoreRequest(BaseModel):
+    """``owner_email`` is only needed when the agency has no owner left."""
+
+    owner_email: str | None = Field(default=None, max_length=255)
 
 
 class AdminUserRow(BaseModel):

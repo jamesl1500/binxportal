@@ -62,8 +62,9 @@ const AccountSecurityPage = async () => {
       <section className={`${styles.section} ${styles.dangerZone}`}>
         <h2 className={styles.dangerZoneTitle}>Danger zone</h2>
         <p className={styles.sectionSubtitle}>
-          Permanently delete your account and everything tied to it. This
-          can&apos;t be undone.
+          Permanently delete your account. Any agency you&apos;re the only
+          owner of closes for its team and clients, and is erased after 30
+          days unless you contact us to restore it.
         </p>
         <DeleteAccountForm />
       </section>

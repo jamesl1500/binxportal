@@ -2,7 +2,7 @@
  * OnboardingImport.tsx
  *
  * Onboarding step four: optionally bring existing clients and teammates in
- * from spreadsheets before landing on the dashboard. Two tabs, each a
+ * from spreadsheets before the last step, connecting Stripe. Two tabs, each a
  * BulkImportWizard; both stay mounted (just hidden) so switching tabs never
  * throws away a half-finished import. Entirely skippable — the same
  * importers live on the Clients and Team pages for later.
@@ -120,10 +120,10 @@ const OnboardingImport = ({ agencyId, canInvite }: OnboardingImportProps) => {
             : "No spreadsheet handy? Skip this — you can import from the Clients and Team pages any time."}
         </p>
         <Link
-          href="/dashboard"
+          href="/onboarding/five"
           className={total > 0 ? styles.finish : styles.skip}
         >
-          {total > 0 ? "Finish setup" : "Skip for now"}
+          {total > 0 ? "Continue" : "Skip for now"}
         </Link>
       </div>
     </div>

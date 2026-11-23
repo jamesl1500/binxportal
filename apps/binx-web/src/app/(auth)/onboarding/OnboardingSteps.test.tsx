@@ -32,9 +32,16 @@ describe("OnboardingSteps", () => {
     expect(screen.getByText("Choose your plan").closest("li")).toHaveAttribute("data-active", "false");
   });
 
-  it("renders all four steps with their index labels", () => {
+  it("marks the optional payments step active on /onboarding/five", () => {
+    mockedPathname.mockReturnValue("/onboarding/five");
     render(<OnboardingSteps />);
-    for (const index of ["01", "02", "03", "04"]) {
+
+    expect(screen.getByText("Get paid online").closest("li")).toHaveAttribute("data-active", "true");
+  });
+
+  it("renders all five steps with their index labels", () => {
+    render(<OnboardingSteps />);
+    for (const index of ["01", "02", "03", "04", "05"]) {
       expect(screen.getByText(index)).toBeInTheDocument();
     }
   });

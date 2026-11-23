@@ -30,6 +30,7 @@ from binx_api.modules.activity.models import (
     ActivityLog,
 )
 from binx_api.modules.admin.models import (
+    ACTION_AGENCY_RESTORED,
     ACTION_DEACTIVATED,
     ACTION_MARKED_VERIFIED,
     ACTION_NOTE,
@@ -45,6 +46,7 @@ from binx_api.modules.admin.models import (
     AdminAuditLog,
 )
 from binx_api.modules.admin.service import ACTIVE_PROJECT_STATUSES
+from binx_api.modules.agencies import deletion as agency_deletion
 from binx_api.modules.agencies.models import ROLE_OWNER, Agency, AgencyClient, AgencyMember
 from binx_api.modules.auth import service as auth_service
 from binx_api.modules.auth.models import AuthToken, TokenPurpose
@@ -206,6 +208,7 @@ async def _agency_rows(db: AsyncSession, agencies: list[Agency]) -> list[dict]:
                 "members": members.get(agency.id, 0),
                 "clients": clients.get(agency.id, 0),
                 "active_projects": projects.get(agency.id, 0),
+                "deletion_scheduled_for": agency.deletion_scheduled_for,
             }
         )
     return rows
@@ -354,6 +357,46 @@ async def agency_detail(db: AsyncSession, agency_id: uuid.UUID) -> dict:
         "activity": [_activity_read(e) for e in activity],
         "audit": audit,
     }
+
+
+async def restore_agency(db: AsyncSession, agency_id: uuid.UUID, *, owner_email: str | None, actor: User) -> str:
+    """Restores an agency from its deletion hold. If its only owner deleted
+    their account, ``owner_email`` names an existing account to take over.
+    Skips the plan's agency limit: support is undoing a deletion."""
+    agency = await get_agency_or_404(db, agency_id)
+    if agency.deletion_scheduled_for is None:
+        raise HTTPException(status.HTTP_409_CONFLICT, f"{agency.name} isn't scheduled for deletion.")
+
+    has_owner = await db.scalar(
+        select(AgencyMember.id).where(AgencyMember.agency_id == agency.id, AgencyMember.role == ROLE_OWNER).limit(1)
+    )
+    new_owner: User | None = None
+    if has_owner is None:
+        email = (owner_email or "").strip().lower()
+        if not email:
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST, f"{agency.name} has no owner left. Enter the account that should own it."
+            )
+        new_owner = await db.scalar(select(User).where(func.lower(User.email) == email))
+        if new_owner is None:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "No account uses that email. Ask them to sign up first.")
+        if await db.scalar(select(ClientContact.id).where(ClientContact.user_id == new_owner.id).limit(1)):
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST, "That account is a client contact and can't own an agency."
+            )
+
+    await agency_deletion.restore_agency(db, agency.id, actor=actor, enforce_plan_limit=False, new_owner=new_owner)
+    detail = f"Restored from deletion hold, owned by {new_owner.email}" if new_owner else "Restored from deletion hold"
+    await record(
+        db,
+        actor=actor,
+        action=ACTION_AGENCY_RESTORED,
+        target_type=TARGET_AGENCY,
+        target_id=agency.id,
+        target_label=agency.name,
+        detail=detail,
+    )
+    return f"{agency.name} is restored."
 
 
 async def grant_trial(

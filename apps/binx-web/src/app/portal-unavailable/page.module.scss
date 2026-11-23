@@ -1,0 +1,58 @@
+@use "../../styles/tokens" as t;
+@use "../../styles/mixins" as m;
+
+.root {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: t.$space-4;
+  background: t.$color-paper;
+}
+
+.card {
+  @include m.card-base;
+  width: 100%;
+  max-width: 30rem;
+  padding: t.$space-8;
+}
+
+.title {
+  margin: 0 0 t.$space-3;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-xl;
+  color: t.$color-ink;
+}
+
+.text {
+  margin: 0 0 t.$space-6;
+  font-size: t.$font-size-sm;
+  line-height: 1.6;
+  color: t.$color-ink-soft;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-3;
+}
+
+.primary,
+.secondary {
+  @include m.button-base;
+  min-height: 2.75rem;
+  padding: 0 t.$space-5;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.primary {
+  border: 0;
+  background: t.$color-ink;
+  color: t.$color-paper;
+}
+
+.secondary {
+  border: 1px solid t.$color-border;
+  background: transparent;
+  color: t.$color-ink;
+}

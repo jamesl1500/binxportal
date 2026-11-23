@@ -14,10 +14,13 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import pytest
+import stripe
 from fastapi import HTTPException
+from sqlalchemy import select
 
 from binx_api.core import stripe_client, stripe_events
 from binx_api.modules.invoicing import service
+from binx_api.modules.invoicing.models import AgencyBillingSettings
 from tests.factories import make_agency, make_user
 from tests.stripe_helpers import make_v2_account, sign_stripe_payload
 
@@ -29,7 +32,7 @@ class TestStripeNotConfigured:
         owner = await make_user(db_session)
         agency = await make_agency(db_session, owner=owner)
         with pytest.raises(HTTPException) as exc:
-            await service.start_connect_onboarding(db_session, agency)
+            await service.start_connect_onboarding(db_session, agency, created_by=owner)
         assert exc.value.status_code == 503
 
 
@@ -56,7 +59,7 @@ class TestStartConnectOnboarding:
         monkeypatch.setattr(stripe_client, "create_connect_account", fake_create_connect_account)
         monkeypatch.setattr(stripe_client, "create_account_link", fake_create_account_link)
 
-        url1 = await service.start_connect_onboarding(db_session, agency)
+        url1 = await service.start_connect_onboarding(db_session, agency, created_by=owner)
         assert url1 == "https://connect.stripe.test/link-1"
         assert len(create_calls) == 1
         assert create_calls[0]["dashboard"] == "full"
@@ -71,7 +74,7 @@ class TestStartConnectOnboarding:
 
         # Second call: the account is reused, but a fresh link is minted —
         # Account Links expire in minutes, so a stored one is never reusable.
-        url2 = await service.start_connect_onboarding(db_session, agency)
+        url2 = await service.start_connect_onboarding(db_session, agency, created_by=owner)
         assert url2 == "https://connect.stripe.test/link-2"
         assert len(create_calls) == 1
         assert len(link_calls) == 2
@@ -80,6 +83,94 @@ class TestStartConnectOnboarding:
         # 2026-09-30.endive) and rejects unknown fields on v2 endpoints.
         assert "configurations" not in link_calls[1]["use_case"]["account_onboarding"]
         assert link_calls[1]["use_case"]["type"] == "account_onboarding"
+
+    async def test_each_agency_gets_its_own_account_tied_to_agency_and_creator(
+        self, db_session, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(stripe_client.settings, "stripe_secret_key", "sk_test_fake")
+        owner = await make_user(db_session)
+        first = await make_agency(db_session, owner=owner, name="First Studio")
+        second = await make_agency(db_session, owner=owner, name="Second Studio")
+        create_calls: list[dict] = []
+        link_calls: list[dict] = []
+
+        async def fake_create(params):
+            create_calls.append(params)
+            return SimpleNamespace(id=f"acct_{len(create_calls)}")
+
+        async def fake_link(params):
+            link_calls.append(params)
+            return SimpleNamespace(url="https://connect.stripe.test/link")
+
+        monkeypatch.setattr(stripe_client, "create_connect_account", fake_create)
+        monkeypatch.setattr(stripe_client, "create_account_link", fake_link)
+
+        await service.start_connect_onboarding(db_session, first, created_by=owner)
+        await service.start_connect_onboarding(db_session, second, created_by=owner, return_to="new_agency")
+
+        first_row = await service.get_or_create_billing_settings(db_session, first)
+        second_row = await service.get_or_create_billing_settings(db_session, second)
+        assert first_row.stripe_connect_account_id == "acct_1"
+        assert second_row.stripe_connect_account_id == "acct_2"
+        assert second_row.stripe_connect_created_by_user_id == owner.id
+        assert second_row.stripe_connect_created_at is not None
+        assert await service.connect_created_by_name(db_session, second_row) == owner.full_name
+
+        assert create_calls[1]["display_name"] == "Second Studio"
+        assert create_calls[1]["metadata"] == {
+            "binx_agency_id": str(second.id),
+            "binx_agency_name": "Second Studio",
+            "binx_created_by_user_id": str(owner.id),
+        }
+        # Stripe comes back through a route that re-selects *this* agency.
+        onboarding = link_calls[1]["use_case"]["account_onboarding"]
+        assert f"agency={second.id}" in onboarding["return_url"]
+        assert "stripe=return" in onboarding["return_url"]
+        assert "to=new_agency" in onboarding["return_url"]
+        assert f"agency={second.id}" in onboarding["refresh_url"]
+        assert "stripe=refresh" in onboarding["refresh_url"]
+
+    async def test_a_teammate_continuing_doesnt_become_the_creator(
+        self, db_session, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(stripe_client.settings, "stripe_secret_key", "sk_test_fake")
+        owner = await make_user(db_session)
+        admin = await make_user(db_session, user_name="admin2", email="admin2@example.com")
+        agency = await make_agency(db_session, owner=owner)
+
+        async def fake_create(_params):
+            return SimpleNamespace(id="acct_owner")
+
+        async def fake_link(_params):
+            return SimpleNamespace(url="https://connect.stripe.test/link")
+
+        monkeypatch.setattr(stripe_client, "create_connect_account", fake_create)
+        monkeypatch.setattr(stripe_client, "create_account_link", fake_link)
+
+        await service.start_connect_onboarding(db_session, agency, created_by=owner)
+        await service.start_connect_onboarding(db_session, agency, created_by=admin)
+
+        row = await service.get_or_create_billing_settings(db_session, agency)
+        assert row.stripe_connect_created_by_user_id == owner.id
+
+    async def test_a_failed_create_records_nothing(self, db_session, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(stripe_client.settings, "stripe_secret_key", "sk_test_fake")
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        agency_id = agency.id
+
+        async def fail(_params):
+            raise stripe.APIConnectionError("Stripe is unreachable")
+
+        monkeypatch.setattr(stripe_client, "create_connect_account", fail)
+        with pytest.raises(stripe.APIConnectionError):
+            await service.start_connect_onboarding(db_session, agency, created_by=owner)
+
+        row = (
+            await db_session.execute(select(AgencyBillingSettings).where(AgencyBillingSettings.agency_id == agency_id))
+        ).scalar_one()
+        assert row.stripe_connect_account_id is None
+        assert row.stripe_connect_created_by_user_id is None
 
 
 class TestSyncConnectStatus:
@@ -143,6 +234,24 @@ class TestGetConnectStatus:
 
         result = await service.get_connect_status(db_session, agency, refresh=True)
         assert result.stripe_connect_charges_enabled is True
+
+    async def test_a_stripe_outage_on_return_still_loads_the_page(
+        self, db_session, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        settings_row = await service.get_or_create_billing_settings(db_session, agency)
+        settings_row.stripe_connect_account_id = "acct_123"
+        await db_session.commit()
+
+        async def fail(account_id, params=None):
+            raise stripe.APIConnectionError("Stripe is unreachable")
+
+        monkeypatch.setattr(stripe_client, "retrieve_connect_account", fail)
+
+        result = await service.get_connect_status(db_session, agency, refresh=True)
+        assert result.stripe_connect_account_id == "acct_123"
+        assert result.stripe_connect_charges_enabled is False
 
     async def test_skips_the_live_call_once_already_enabled(self, db_session, monkeypatch: pytest.MonkeyPatch) -> None:
         owner = await make_user(db_session)

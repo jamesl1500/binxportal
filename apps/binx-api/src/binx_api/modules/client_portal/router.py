@@ -144,6 +144,7 @@ async def accept_invitation(
 async def _context(db: DbSession, user: CurrentUser) -> PortalContextRead:
     memberships = await service.get_portal_memberships(db, user)
     if not memberships:
+        await service.raise_if_portal_is_on_hold(db, user)
         raise HTTPException(status.HTTP_403_FORBIDDEN, "This account has no client portal access")
     agency, client, contact = memberships[0]
     # Each agency's and client's branding read once: the active membership

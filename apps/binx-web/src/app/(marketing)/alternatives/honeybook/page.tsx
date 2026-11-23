@@ -19,7 +19,7 @@ import styles from "../../marketing.module.scss";
 
 const TITLE = "HoneyBook alternative for agencies";
 const DESCRIPTION =
-  "HoneyBook suits one business booking one client at a time. Binx is the HoneyBook alternative for agencies running many projects and people at once.";
+  "Comparing HoneyBook? Binx is built for agencies running many projects at once, with Kanban boards, a shared canvas and client approvals.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -31,18 +31,18 @@ export const metadata: Metadata = {
 const GAPS = [
   {
     icon: Users,
-    title: "One business, one workspace",
-    text: "HoneyBook's model fits a single independent business well. An agency with a team working different projects at the same time needs project-level structure, not just a shared inbox.",
+    title: "Built for agency projects",
+    text: "HoneyBook is a popular clientflow tool for independent businesses and small teams. Binx is shaped around an agency running several projects at once, each with its own board, canvas and team.",
   },
   {
     icon: LayoutGrid,
-    title: "Proposals and payments, not project work",
-    text: "Strong at booking a client and taking payment. Once the project starts, there's no task board, no assignees, no view of what's actually in progress this week.",
+    title: "Kanban and canvas, side by side",
+    text: "Plan work on a Kanban board with assignees and due dates, or on a visual canvas. To-do rows on the canvas are the same tasks, so the two always agree.",
   },
   {
     icon: PanelsTopLeft,
-    title: "Client sees a booking, not a project",
-    text: "Clients get a polished proposal-and-payment experience up front — but nowhere to check progress, see files, or follow along once the work is underway.",
+    title: "Client approvals on the work",
+    text: "Clients review the actual work in their portal, approve a card or a whole column, and each decision stays pinned to the version they saw.",
   },
 ];
 
@@ -90,14 +90,13 @@ const HoneyBookAlternativePage = () => {
           <div className={styles.heroInner}>
             <span className={styles.eyebrow}>HoneyBook alternative</span>
             <h1 className={styles.h1}>
-              A HoneyBook alternative built for a team, not one booking at a
-              time.
+              A HoneyBook alternative built for agency project work.
             </h1>
             <p className={styles.lead}>
-              HoneyBook is built for an independent business managing one client
-              relationship at a time. {SITE.name} is built for an agency running
-              several projects and people at once — with a client portal that
-              follows the work, not just the booking.
+              HoneyBook is a popular way for independent businesses to book and
+              bill clients. {SITE.name} is built for an agency running several
+              projects and people at once, with a client portal that follows
+              the work from concept to sign-off.
             </p>
             <div className={`${styles.btnRow} ${styles.heroActions}`}>
               <Link href="/auth/signup" className={styles.btnPrimary}>
@@ -117,9 +116,9 @@ const HoneyBookAlternativePage = () => {
       <section className={styles.section}>
         <div className={styles.container}>
           <div className={styles.sectionHead}>
-            <span className={styles.eyebrow}>Where it gets tight</span>
+            <span className={styles.eyebrow}>How Binx differs</span>
             <h2 className={styles.h2}>
-              Great at booking a client. Thinner once the project starts.
+              Great at booking a client. Binx goes deep on the project.
             </h2>
           </div>
           <div className={styles.grid}>

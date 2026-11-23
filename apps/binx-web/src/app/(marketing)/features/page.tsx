@@ -12,9 +12,14 @@ import Link from "next/link";
 import {
   Bell,
   Bookmark,
+  Building2,
+  CalendarDays,
   CheckCheck,
+  ClipboardList,
+  CreditCard,
   FileSignature,
   FileStack,
+  FileUp,
   LayoutDashboard,
   LayoutGrid,
   ListChecks,
@@ -23,12 +28,15 @@ import {
   PanelsTopLeft,
   Radar,
   Receipt,
+  Repeat,
   Sparkles,
+  Timer,
   Users,
   Wand2,
   ArrowRight,
 } from "lucide-react";
 
+import { PLATFORM_FEE_LABEL } from "@/lib/payment-fees";
 import { breadcrumbJsonLd, marketingOpenGraph } from "@/lib/site";
 import MarketingCta from "@/components/marketing/MarketingCta/MarketingCta";
 
@@ -65,20 +73,17 @@ const GROUPS: { eyebrow: string; heading: string; items: Feature[] }[] = [
       {
         icon: Radar,
         title: "AI lead prospector",
-        text: "Describe the clients you want by industry, location and size. Binx finds real businesses that match, grounded in Google Places data when you connect it, and explains why each one fits.",
-        isNew: true,
+        text: "Describe the clients you want by industry, location and size. Binx searches for real businesses that match and explains why each one fits.",
       },
       {
         icon: Bookmark,
         title: "Saved searches",
         text: "Keep the prospecting criteria that work and rerun them in a click whenever the pipeline needs topping up.",
-        isNew: true,
       },
       {
         icon: FileSignature,
         title: "Proposals with e-sign",
         text: "Line items, tax, currency and a valid-until date. Send one link, see when it's opened, and let the client sign or decline online with a full record kept.",
-        isNew: true,
       },
       {
         icon: LayoutGrid,
@@ -94,7 +99,6 @@ const GROUPS: { eyebrow: string; heading: string; items: Feature[] }[] = [
         icon: Wand2,
         title: "Recipient auto-fill",
         text: "Choose a client on a proposal or invoice and their name and email fill themselves in. Override them when you need to.",
-        isNew: true,
       },
     ],
   },
@@ -116,6 +120,16 @@ const GROUPS: { eyebrow: string; heading: string; items: Feature[] }[] = [
         icon: MessagesSquare,
         title: "Threaded messaging",
         text: "Conversations tied to a client or project, so context never gets lost in someone's inbox.",
+      },
+      {
+        icon: ClipboardList,
+        title: "Kickoff questionnaires",
+        text: "Send a client your project questions before work starts. They answer in their portal, and it all stays on the project.",
+      },
+      {
+        icon: CalendarDays,
+        title: "Client meetings",
+        text: "Set your availability and let clients book a time from their portal, or schedule a meeting for them.",
       },
     ],
   },
@@ -139,7 +153,6 @@ const GROUPS: { eyebrow: string; heading: string; items: Feature[] }[] = [
         icon: ListChecks,
         title: "To-do lists that are real tasks",
         text: "Every row on a canvas to-do list is a project task. Tick it on the canvas and it moves to Done on the Kanban; move it on the Kanban and the canvas ticks it.",
-        isNew: true,
       },
       {
         icon: CheckCheck,
@@ -150,20 +163,33 @@ const GROUPS: { eyebrow: string; heading: string; items: Feature[] }[] = [
       },
       {
         icon: FileStack,
-        title: "Files & versions",
-        text: "Upload, organise and share assets against the project they belong to. Clients get exactly the ones you choose.",
+        title: "Project files",
+        text: "Upload and organise assets against the project they belong to. Add a file to the canvas to share it with your client.",
       },
       {
         icon: LayoutDashboard,
         title: "Customizable dashboard",
         text: "Drag, reorder and hide widgets, including My tasks and Quick actions. Every teammate keeps their own layout.",
-        isNew: true,
+      },
+      {
+        icon: Timer,
+        title: "Time tracking",
+        text: "Log time against a project, then turn those hours into an invoice.",
+      },
+      {
+        icon: FileUp,
+        title: "Import & export",
+        text: "Bring clients, teammates, leads, projects and tasks in from a spreadsheet. Export your data, invoices and proposals included, whenever you want.",
+      },
+      {
+        icon: Building2,
+        title: "More than one agency",
+        text: "Run separate agencies from one login on Starter and up. Each keeps its own clients, team, plan and Stripe account.",
       },
       {
         icon: Newspaper,
         title: "Team timeline",
         text: "A shared feed on the dashboard for team updates. Post, comment, react and @mention teammates; owners and admins pin announcements that notify everyone. A side rail shows your week, upcoming client meetings, recent wins and who to congratulate.",
-        isNew: true,
       },
     ],
   },
@@ -175,6 +201,16 @@ const GROUPS: { eyebrow: string; heading: string; items: Feature[] }[] = [
         icon: Receipt,
         title: "Invoicing",
         text: "Your prefix, padding, currency and terms. Draft from a project, send, track partial and overdue payments.",
+      },
+      {
+        icon: CreditCard,
+        title: "Online payments with Stripe",
+        text: `Each agency connects its own Stripe account, and clients pay from the portal. The money goes to you, less ${PLATFORM_FEE_LABEL} for Binx and Stripe's processing fee.`,
+      },
+      {
+        icon: Repeat,
+        title: "Recurring invoices",
+        text: "Save weekly or monthly schedules for retainers. Generate each invoice in a click, or when you open Recurring invoices once it's due.",
       },
       {
         icon: Sparkles,

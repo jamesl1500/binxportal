@@ -1,0 +1,66 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-5;
+}
+
+.notice {
+  margin: 0;
+  padding: t.$space-3 t.$space-4;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+}
+
+.note {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: t.$space-4;
+  padding-top: t.$space-5;
+  border-top: 1px solid t.$color-border;
+}
+
+.footerNote {
+  flex: 1 1 16rem;
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+}
+
+.skip,
+.finish {
+  @include m.button-base;
+  text-decoration: none;
+}
+
+.skip {
+  color: t.$color-ink;
+  background: none;
+  border-color: t.$color-border-strong;
+
+  &:hover {
+    background: rgba(10, 10, 11, 0.04);
+  }
+}
+
+.finish {
+  color: t.$color-accent-foreground;
+  background: t.$color-accent;
+
+  &:hover {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+}

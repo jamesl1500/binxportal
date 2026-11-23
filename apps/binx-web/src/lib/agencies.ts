@@ -31,6 +31,9 @@ export type AgencyRead = Omit<Schemas["AgencyRead"], "role"> & {
   role: AgencyRole;
 };
 
+/** An agency the signed-in user owns that's on its 30-day deletion hold. */
+export type AgencyPendingDeletion = Schemas["AgencyDeletionRead"];
+
 /** The general agency profile — branding, about/contact, socials, policies. */
 export type AgencyProfile = Schemas["AgencyProfileRead"];
 
@@ -206,10 +209,74 @@ export async function updateAgencySubdomain(
 }
 
 /**
+ * getPendingDeletionAgencies
+ *
+ * The caller's own agencies on their 30-day deletion hold, via
+ * `GET /agencies/pending-deletion`. `getMyAgencies` leaves these out.
+ *
+ * @function getPendingDeletionAgencies
+ * @throws {AuthApiError} - Thrown if not authenticated, or binx-api rejects the request.
+ */
+export const getPendingDeletionAgencies = cache(
+  async (): Promise<AgencyPendingDeletion[]> => {
+    const headers = await authHeader();
+    try {
+      const { data } = await api.get<AgencyPendingDeletion[]>(
+        "/agencies/pending-deletion",
+        { headers },
+      );
+      return data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        throw new AuthApiError(
+          extractDetailMessage(
+            error.response.data,
+            "Unable to load agencies scheduled for deletion",
+          ),
+          error.response.status,
+        );
+      }
+      throw error;
+    }
+  },
+);
+
+/**
+ * restoreAgency
+ *
+ * Takes an agency off its deletion hold via `POST /agencies/{agencyId}/restore`.
+ * binx-api requires the caller to be its owner, and refuses (402) if restoring
+ * it would go over their plan's agency limit.
+ *
+ * @function restoreAgency
+ * @throws {AuthApiError} - Thrown if not authenticated, or binx-api refuses.
+ */
+export async function restoreAgency(agencyId: string): Promise<AgencyRead> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.post<AgencyRead>(
+      `/agencies/${agencyId}/restore`,
+      null,
+      { headers },
+    );
+    return data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new AuthApiError(
+        extractDetailMessage(error.response.data, "Unable to restore agency"),
+        error.response.status,
+      );
+    }
+    throw error;
+  }
+}
+
+/**
  * deleteAgency
  *
- * Permanently deletes an agency via `DELETE /agencies/{agencyId}`. binx-api
- * requires the caller to be the OWNER of that specific agency.
+ * Schedules an agency for deletion via `DELETE /agencies/{agencyId}`, which
+ * starts its 30-day hold. binx-api requires the caller to be the OWNER of
+ * that specific agency.
  *
  * @function deleteAgency
  * @throws {AuthApiError} - Thrown if not authenticated, or the caller isn't the agency's owner.

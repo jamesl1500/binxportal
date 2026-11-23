@@ -21,7 +21,7 @@ import styles from "../marketing.module.scss";
 
 const TITLE = "Privacy Policy";
 const DESCRIPTION = `How ${SITE.name} collects, uses, and protects your information, and your agency's and clients' data.`;
-const LAST_UPDATED = "Effective November 20, 2026";
+const LAST_UPDATED = "Effective November 23, 2026";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -87,9 +87,13 @@ const PrivacyPage = () => {
             </p>
             <h3>Payment information</h3>
             <p>
-              Subscription payments are processed by Stripe. We do not store
-              full card numbers on our own servers — Stripe handles that, under
-              its own privacy policy.
+              Subscription payments, and invoice payments clients make through
+              the portal, are processed by Stripe. We do not store full card
+              numbers on our own servers — Stripe handles that, under its own
+              privacy policy. When an agency connects Stripe, it gets its own
+              Stripe account. We store that account&apos;s ID and who set it up,
+              and give Stripe the agency&apos;s name and our internal agency and
+              user IDs so the account can be traced to them.
             </p>
             <h3>Usage and log data</h3>
             <p>
@@ -142,15 +146,14 @@ const PrivacyPage = () => {
               manage how much AI usage its team is spending.
             </p>
             <p>
-              The AI lead prospector works differently: when an agency enables
-              it and describes the kind of client it&apos;s looking for, that
-              search criteria is sent to Google Places to find matching real
-              businesses, and the results are given to Claude to turn into a
-              ranked shortlist. Google Places only receives the search criteria
-              an agency enters (for example, an industry and a location) — never
-              an agency&apos;s own client, project, or invoice data. This lookup
-              only happens when a workspace has connected a Google Places API
-              key; it&apos;s off by default.
+              The AI lead prospector works differently: when someone on an
+              agency&apos;s team runs a search, the criteria they enter (for
+              example, an industry and a location) are used to find matching
+              real businesses through Claude&apos;s web search and, where we have
+              it enabled, Google Places. The results are given to Claude to turn
+              into a ranked shortlist. Google Places only receives those search
+              criteria — never an agency&apos;s own client, project, or invoice
+              data. These lookups only happen when someone runs a search.
             </p>
 
             <h2>Who we share information with</h2>
@@ -163,16 +166,17 @@ const PrivacyPage = () => {
             <ul>
               <li>
                 <strong>Stripe</strong> — payment processing for paid
-                subscription plans.
+                subscription plans and for invoices clients pay online.
               </li>
               <li>
                 <strong>Anthropic</strong> — powers the AI dashboard briefing,
-                drafting, lead scoring, and the &quot;Ask AI&quot; assistant.
+                drafting, lead scoring, lead prospecting (including its web
+                search), and the &quot;Ask AI&quot; assistant.
               </li>
               <li>
-                <strong>Google Places</strong> — powers the AI lead prospector,
-                and only receives the search criteria a workspace enters, when
-                that workspace has enabled it.
+                <strong>Google Places</strong> — helps the AI lead prospector
+                find businesses where we have it enabled, and only receives the
+                search criteria a team enters.
               </li>
               <li>
                 <strong>Amazon Web Services</strong> — hosting, file storage,
@@ -199,12 +203,13 @@ const PrivacyPage = () => {
             <h2>Data retention and deletion</h2>
             <p>
               We keep account and workspace data for as long as an account is
-              active. An agency owner can permanently delete their account from
-              Account settings, which removes their profile information.
-              Workspace and agency data is retained for 30 days after an account
-              or agency is deleted, in case deletion needs to be reversed, and
-              is then permanently removed, including from backups, within 90
-              days.
+              active. When an owner deletes an agency, it&apos;s held for 30
+              days: its team and clients lose access, and the owner can restore
+              it or export its data. Deleting your account from Account settings
+              removes your profile right away, and any agency you alone own is
+              held the same way; contact us during those 30 days to restore it.
+              After the hold, the agency&apos;s data and files are permanently
+              erased, and they leave our backups within 90 days of deletion.
             </p>
 
             <h2>Your rights</h2>

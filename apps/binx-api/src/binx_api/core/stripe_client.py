@@ -108,6 +108,14 @@ async def retrieve_subscription(subscription_id: str) -> stripe.Subscription:
     return await _get_client().v1.subscriptions.retrieve_async(subscription_id)
 
 
+async def set_subscription_cancel_at_period_end(subscription_id: str, *, cancel: bool) -> stripe.Subscription:
+    return await _get_client().v1.subscriptions.update_async(subscription_id, {"cancel_at_period_end": cancel})
+
+
+async def cancel_subscription(subscription_id: str) -> stripe.Subscription:
+    return await _get_client().v1.subscriptions.cancel_async(subscription_id)
+
+
 # Connect accounts use the v2 Core Accounts API (`/v2/core/accounts`), not
 # the legacy v1 `/v1/accounts` — new Stripe accounts reject v1 account
 # creation outright ("Stripe no longer recommends Accounts v1 for new

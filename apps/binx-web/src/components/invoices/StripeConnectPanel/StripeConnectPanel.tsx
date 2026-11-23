@@ -17,7 +17,10 @@ import { CheckCircle2, CircleAlert } from "lucide-react";
 import { toast } from "sonner";
 
 import { startStripeConnectOnboardingAction } from "@/app/(app)/invoices/actions";
-import type { StripeConnectStatus } from "@/lib/invoicing";
+import type {
+  StripeConnectReturnTo,
+  StripeConnectStatus,
+} from "@/lib/invoicing";
 import { PLATFORM_FEE_LABEL } from "@/lib/payment-fees";
 
 import styles from "./StripeConnectPanel.module.scss";
@@ -26,7 +29,21 @@ interface StripeConnectPanelProps {
   agencyId: string;
   status: StripeConnectStatus;
   canManage: boolean;
+  /** The page Stripe comes back to. Defaults to Settings → Invoicing. */
+  returnTo?: StripeConnectReturnTo;
 }
+
+/** Who started this agency's account. Older accounts didn't record it. */
+const StartedBy = ({ status }: { status: StripeConnectStatus }) =>
+  status.created_by_name ? (
+    <p className={styles.detail}>
+      Set up by {status.created_by_name}
+      {status.created_at
+        ? ` on ${new Date(status.created_at).toLocaleDateString()}`
+        : ""}
+      .
+    </p>
+  ) : null;
 
 /** The same line in every state, so the cost is clear before connecting. */
 const FeeNote = () => (
@@ -41,12 +58,16 @@ const StripeConnectPanel = ({
   agencyId,
   status,
   canManage,
+  returnTo = "settings",
 }: StripeConnectPanelProps) => {
   const [isPending, startTransition] = useTransition();
 
   const handleConnect = () => {
     startTransition(async () => {
-      const result = await startStripeConnectOnboardingAction(agencyId);
+      const result = await startStripeConnectOnboardingAction(
+        agencyId,
+        returnTo,
+      );
       if (result.error || !result.redirectUrl) {
         toast.error(result.error ?? "Unable to start Stripe onboarding");
         return;
@@ -68,6 +89,7 @@ const StripeConnectPanel = ({
             .
           </p>
         )}
+        <StartedBy status={status} />
         <FeeNote />
       </div>
     );
@@ -84,6 +106,7 @@ const StripeConnectPanel = ({
           ? "Onboarding incomplete — clients can't pay online yet."
           : "Not connected to Stripe."}
       </p>
+      <StartedBy status={status} />
       {canManage ? (
         <button
           type="button"

@@ -55,16 +55,6 @@ class TestUpdateAndDelete:
         assert agency.name == "Totally New Name"
         assert agency.slug == "old-name"
 
-    async def test_delete_cascades_to_memberships(self, db_session) -> None:
-        owner = await make_user(db_session)
-        agency = await make_agency(db_session, owner=owner)
-        agency_id = agency.id
-        await service.delete_agency(db_session, agency)
-        remaining = (
-            (await db_session.execute(select(AgencyMember).where(AgencyMember.agency_id == agency_id))).scalars().all()
-        )
-        assert remaining == []
-
 
 class TestMemberRoleGuards:
     async def _add_member(self, db_session, agency, *, role=ROLE_MEMBER) -> AgencyMember:

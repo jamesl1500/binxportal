@@ -1,7 +1,7 @@
 /**
  * page.tsx - Onboarding Step Three
  *
- * Final step of onboarding: pick a plan, or continue on Free. Every agency
+ * Onboarding step three: pick a plan, or continue on Free. Every agency
  * already lands on Free the moment anything first touches billing (see
  * billing/service.py::get_or_create_subscription) — this just makes that
  * choice visible and explicit up front instead of leaving it silent.
@@ -40,7 +40,7 @@ const OnboardingStepThreePage = async () => {
       </Link>
 
       <header className={styles.header}>
-        <span className={styles.eyebrow}>Step 3 of 4</span>
+        <span className={styles.eyebrow}>Step 3 of 5</span>
         <h1 className={styles.title}>Choose your plan</h1>
         <p className={styles.subtitle}>
           Free to start, no credit card required. Upgrade any time as your team

@@ -16,7 +16,7 @@ from binx_api.core.email import (
 from binx_api.core.images import image_version
 from binx_api.modules.activity import models as activity_models
 from binx_api.modules.activity import service as activity_service
-from binx_api.modules.agencies import service
+from binx_api.modules.agencies import deletion, service
 from binx_api.modules.agencies.dependencies import require_agency_role
 from binx_api.modules.agencies.models import ROLE_ADMIN, ROLE_MEMBER, ROLE_OWNER, Agency, AgencyProfile
 from binx_api.modules.agencies.schemas import (
@@ -25,6 +25,7 @@ from binx_api.modules.agencies.schemas import (
     AgencyClientStatusUpdate,
     AgencyClientUpdate,
     AgencyCreate,
+    AgencyDeletionRead,
     AgencyInvitationAccept,
     AgencyInvitationCreate,
     AgencyInvitationPreview,
@@ -57,6 +58,7 @@ router = APIRouter(prefix="/agencies", tags=["agencies"])
 AgencyAndRole = Annotated[tuple[Agency, str], Depends(require_agency_role(ROLE_OWNER, ROLE_ADMIN))]
 OwnedAgency = Annotated[tuple[Agency, str], Depends(require_agency_role(ROLE_OWNER))]
 AnyMember = Annotated[tuple[Agency, str], Depends(require_agency_role(ROLE_OWNER, ROLE_ADMIN, ROLE_MEMBER))]
+OwnerDuringHold = Annotated[tuple[Agency, str], Depends(require_agency_role(ROLE_OWNER, during_hold=(ROLE_OWNER,)))]
 
 
 def _agency_read(agency: Agency, role: str, *, logo_storage_path: str | None = None) -> AgencyRead:
@@ -177,6 +179,22 @@ async def list_my_agencies(db: DbSession, current_user: CurrentUser) -> list[Age
     return [_agency_read(agency, role, logo_storage_path=logo_path) for agency, role, logo_path in rows]
 
 
+@router.get("/pending-deletion", response_model=list[AgencyDeletionRead])
+async def list_pending_deletion(db: DbSession, current_user: CurrentUser) -> list[AgencyDeletionRead]:
+    """The caller's own agencies on their 30-day hold, soonest first."""
+    agencies = await deletion.list_held_agencies_for_owner(db, current_user)
+    return [
+        AgencyDeletionRead(
+            id=agency.id,
+            name=agency.name,
+            deletion_requested_at=agency.deletion_requested_at,
+            deletion_scheduled_for=agency.deletion_scheduled_for,
+        )
+        for agency in agencies
+        if agency.deletion_requested_at is not None and agency.deletion_scheduled_for is not None
+    ]
+
+
 # --- Invitation preview/accept: NOT agency-scoped in the URL (the token alone
 # identifies the agency), and preview doesn't require a session — an invitee
 # should see what they're accepting before being asked to log in. ---
@@ -230,9 +248,21 @@ async def update_agency_endpoint(
 
 
 @router.delete("/{agency_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_agency_endpoint(db: DbSession, agency_and_role: OwnedAgency) -> None:
+async def delete_agency_endpoint(db: DbSession, current_user: CurrentUser, agency_and_role: OwnedAgency) -> None:
+    """Starts the 30-day hold. The agency is erased when it ends, unless an
+    owner restores it first (see agencies/deletion.py)."""
     agency, _role = agency_and_role
-    await service.delete_agency(db, agency)
+    await deletion.schedule_agency_deletion(db, agency.id, requested_by=current_user)
+
+
+@router.post("/{agency_id}/restore", response_model=AgencyRead)
+async def restore_agency_endpoint(
+    db: DbSession, current_user: CurrentUser, agency_and_role: OwnerDuringHold
+) -> AgencyRead:
+    agency, role = agency_and_role
+    agency = await deletion.restore_agency(db, agency.id, actor=current_user)
+    profile = await service.get_or_create_agency_profile(db, agency)
+    return _agency_read(agency, role, logo_storage_path=profile.logo_storage_path)
 
 
 @router.patch("/{agency_id}/subdomain", response_model=AgencyRead)

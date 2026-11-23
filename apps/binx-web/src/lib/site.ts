@@ -72,7 +72,7 @@ export const SITE = {
  * `lastModified`. A per-request `new Date()` tells crawlers every page
  * changes on every fetch, which teaches them to ignore lastmod entirely.
  */
-export const MARKETING_LAST_UPDATED = new Date("2026-11-21");
+export const MARKETING_LAST_UPDATED = new Date("2026-11-23");
 
 /** Shared pricing tiers — rendered on /pricing and summarised in JSON-LD offers. */
 export const PLANS = [
@@ -97,6 +97,8 @@ export const PLANS = [
     blurb: "For a small studio finding its rhythm.",
     features: [
       "Everything in Free",
+      "2 agency workspaces",
+      "Custom portal subdomain",
       "15 clients & 25 active projects",
       "250 leads",
       "10 team members",
@@ -112,6 +114,7 @@ export const PLANS = [
     blurb: "For an agency running many clients at once.",
     features: [
       "Everything in Starter",
+      "5 agency workspaces",
       "60 clients & 150 active projects",
       "2,000 leads",
       "40 team members",
@@ -126,6 +129,7 @@ export const PLANS = [
     blurb: "For a large team with no room for limits.",
     features: [
       "Everything in Pro",
+      "Unlimited agency workspaces",
       "Unlimited clients, projects & leads",
       "150 team members",
       "$750/mo of AI usage",
@@ -212,7 +216,7 @@ export const SEO_LANDING_PAGES = [
   { href: "/alternatives/honeybook", label: "HoneyBook alternative" },
   {
     href: "/alternatives/copilot-assembly",
-    label: "Copilot & Assembly alternative",
+    label: "Assembly (Copilot) alternative",
   },
   { href: "/alternatives/bloom", label: "Bloom.io alternative" },
   { href: "/alternatives/milanote", label: "Milanote alternative" },

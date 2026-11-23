@@ -148,6 +148,17 @@ describe("PlanSelector", () => {
     expect(screen.queryByRole("button", { name: "Switch to Pro" })).toBeNull();
   });
 
+  it("lets someone back on this step keep their paid plan and move on", async () => {
+    const user = userEvent.setup();
+    render(<PlanSelector {...defaultProps} currentPlan="pro" hasUsedTrial />);
+
+    expect(screen.getByRole("button", { name: "Switch to Free" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Continue with Pro" }));
+
+    expect(push).toHaveBeenCalledWith("/onboarding/four");
+    expect(changePlan).not.toHaveBeenCalled();
+  });
+
   it("highlights the plan matching a stashed intent from the pricing page, and clears it", async () => {
     window.localStorage.setItem(PLAN_INTENT_STORAGE_KEY, "pro");
     render(<PlanSelector {...defaultProps} />);

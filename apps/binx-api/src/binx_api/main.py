@@ -1,4 +1,7 @@
+import asyncio
 import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, Response
 from slowapi import _rate_limit_exceeded_handler
@@ -9,6 +12,7 @@ from binx_api.core.error_handling import init_sentry, install_error_handling
 from binx_api.core.rate_limit import limiter
 from binx_api.modules.activity.router import router as activity_router
 from binx_api.modules.admin.router import router as admin_router
+from binx_api.modules.agencies.deletion import run_purge_loop
 from binx_api.modules.agencies.router import router as agencies_router
 from binx_api.modules.ai.router import router as ai_router
 from binx_api.modules.auth.router import router as auth_router
@@ -55,6 +59,19 @@ def _on_rate_limited(request: Request, exc: Exception) -> Response:
     return _rate_limit_exceeded_handler(request, exc)
 
 
+@asynccontextmanager
+async def _lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    """Runs the one background job: erasing agencies whose 30-day deletion
+    hold has ended. It has to run even if nobody visits, because the Privacy
+    Policy promises the data is gone on schedule."""
+    purge = asyncio.create_task(run_purge_loop())
+    try:
+        yield
+    finally:
+        purge.cancel()
+        await asyncio.gather(purge, return_exceptions=True)
+
+
 def create_app() -> FastAPI:
     settings = get_settings()
 
@@ -65,6 +82,7 @@ def create_app() -> FastAPI:
     docs = settings.api_docs_enabled
     app = FastAPI(
         title="Binx API",
+        lifespan=_lifespan,
         docs_url="/docs" if docs else None,
         redoc_url="/redoc" if docs else None,
         openapi_url="/openapi.json" if docs else None,

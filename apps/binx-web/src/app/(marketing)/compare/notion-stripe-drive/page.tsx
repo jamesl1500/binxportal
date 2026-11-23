@@ -38,8 +38,8 @@ const PROBLEMS = [
   },
   {
     icon: ShieldQuestion,
-    title: "Client access is all-or-nothing",
-    text: "Sharing a Notion page or a Drive folder with a client means trusting Notion/Drive permissions to keep them out of everything else — and hoping nobody forwards a link past who it was meant for.",
+    title: "Client access takes constant care",
+    text: "Sharing with a client means getting permissions right in each tool, on every page and folder, for every project.",
   },
   {
     icon: MessageSquareOff,
@@ -51,7 +51,7 @@ const PROBLEMS = [
 const FAQ = [
   {
     q: "Isn't a DIY stack cheaper?",
-    a: "Often not once you count the time: re-entering client details in three places, chasing Stripe for payment status, and rebuilding a Drive folder structure per client all cost real hours. Binx's Free plan is $0 and replaces all three for a first client.",
+    a: "Often not once you count the time: re-entering client details in three places, chasing Stripe for payment status, and rebuilding a Drive folder structure per client all cost real hours. Binx's Free plan is $0 and brings that work into one place for a first client. Online payments still run through your own Stripe account.",
   },
   {
     q: "Can I still use Notion or Drive alongside Binx?",
@@ -59,7 +59,7 @@ const FAQ = [
   },
   {
     q: "What does switching actually involve?",
-    a: "Add your clients and open a project for each — most agencies have their first real client fully set up in under an hour, since there's nothing to migrate from a payments API or a docs tool, just clients and projects to re-create.",
+    a: "Import your clients and projects from a spreadsheet, or add them by hand, then connect your Stripe account to take payments. Existing docs and files stay where they are until you choose to move them.",
   },
 ];
 
@@ -92,7 +92,7 @@ const ComparePage = () => {
           <div className={styles.heroInner}>
             <span className={styles.eyebrow}>Binx vs. the DIY stack</span>
             <h1 className={styles.h1}>
-              Your real competitor is Notion + Stripe + Drive.
+              Running client work on Notion, Stripe and Drive?
             </h1>
             <p className={styles.lead}>
               Most small agencies aren&apos;t choosing between agency software —
@@ -178,10 +178,10 @@ const ComparePage = () => {
             <article className={styles.card}>
               <h3 className={styles.cardTitle}>What Stripe was for</h3>
               <p className={styles.cardText}>
-                Taking payment. {SITE.name} issues the invoice itself — your
-                numbering, your terms — and the client pays straight from their
-                portal, with the payment reflected against that project
-                automatically.
+                Taking payment. {SITE.name} issues the invoice itself, with your
+                numbering and terms. Stripe still processes the payment, through
+                your own connected account, and it&apos;s recorded against the
+                invoice automatically.
               </p>
             </article>
             <article className={styles.card}>

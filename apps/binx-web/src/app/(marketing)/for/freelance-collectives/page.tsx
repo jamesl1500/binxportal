@@ -62,7 +62,7 @@ const FAQ = [
   },
   {
     q: "Is the Free plan really enough for a small collective?",
-    a: "For most: up to 3 team members, 3 clients and 3 active projects, no time limit and no card required — room to run a real client through it before deciding whether to upgrade.",
+    a: "For a small group, yes: up to 3 team members, 3 clients and 3 active projects, no time limit and no card required — room to run a real client through it before deciding whether to upgrade.",
   },
 ];
 

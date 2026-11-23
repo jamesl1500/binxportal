@@ -17,10 +17,15 @@ export const AgencyPills = ({
 }: {
   agency: Pick<
     AdminAgencyRow,
-    "plan_name" | "trialing" | "subscription_status"
+    "plan_name" | "trialing" | "subscription_status" | "deletion_scheduled_for"
   >;
 }) => (
   <>
+    {agency.deletion_scheduled_for && (
+      <span className={ui.pill} data-tone="bad">
+        Scheduled for deletion
+      </span>
+    )}
     <span
       className={ui.pill}
       data-tone={agency.plan_name === "Free" ? undefined : "accent"}

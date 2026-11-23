@@ -87,7 +87,12 @@ async def get_proposal_or_404(db: AsyncSession, agency_id: uuid.UUID, proposal_i
 
 
 async def get_proposal_by_token_or_404(db: AsyncSession, raw_token: str) -> Proposal:
-    result = await db.execute(select(Proposal).where(Proposal.share_token == raw_token))
+    # An agency on its deletion hold has no public links.
+    result = await db.execute(
+        select(Proposal)
+        .join(Agency, Agency.id == Proposal.agency_id)
+        .where(Proposal.share_token == raw_token, Agency.deletion_scheduled_for.is_(None))
+    )
     proposal = result.scalar_one_or_none()
     if proposal is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Proposal not found")

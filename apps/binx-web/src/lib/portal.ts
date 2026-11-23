@@ -10,10 +10,11 @@
  * @author Binx Portal
  */
 import axios from "axios";
+import { redirect } from "next/navigation";
 import { cache } from "react";
 
 import { api } from "@/lib/api";
-import { getMyAgencies } from "@/lib/agencies";
+import { getMyAgencies, getPendingDeletionAgencies } from "@/lib/agencies";
 import type { Schemas } from "@/lib/api-types";
 import { AuthApiError, extractDetailMessage, getAccessToken } from "@/lib/auth";
 import type {
@@ -116,6 +117,11 @@ export const getPortalContext = cache(
         [401, 403].includes(error.response.status)
       ) {
         return null;
+      }
+      // Their agency is on its deletion hold: still a client, so not someone
+      // to send to staff onboarding.
+      if (axios.isAxiosError(error) && error.response?.status === 423) {
+        redirect("/portal-unavailable");
       }
       rethrow(error, "Unable to load your portal");
     }
@@ -920,16 +926,19 @@ export async function acceptPortalInvitation(
  * resolveHome
  *
  * Where a signed-in user belongs: staff (an agency member) → `/dashboard`;
- * a client contact → `/portal`; neither → onboarding. Used by the login
+ * a client contact → `/portal`; an owner whose only agency is on its
+ * deletion hold → `/deleted-agencies`; anyone else → onboarding. Used by the login
  * redirect and the two layout guards so the split lives in one place.
  */
 export async function resolveHome(): Promise<
-  "/dashboard" | "/portal" | "/onboarding/one"
+  "/dashboard" | "/portal" | "/deleted-agencies" | "/onboarding/one"
 > {
   const agencies = await getMyAgencies().catch(() => []);
   if (agencies.length > 0) return "/dashboard";
   const portal = await getPortalContext();
   if (portal) return "/portal";
+  const onHold = await getPendingDeletionAgencies().catch(() => []);
+  if (onHold?.length > 0) return "/deleted-agencies";
   return "/onboarding/one";
 }
 

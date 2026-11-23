@@ -19,6 +19,7 @@ import {
   addAdminNote,
   endTrial,
   grantTrial,
+  restoreDeletedAgency,
   runUserAction,
 } from "@/lib/admin";
 import { AuthApiError } from "@/lib/auth";
@@ -57,6 +58,19 @@ export async function endTrialAction(
     return { message };
   } catch (error) {
     return fail(error, "Unable to end the trial");
+  }
+}
+
+export async function restoreAgencyAdminAction(
+  agencyId: string,
+  ownerEmail: string | null,
+): Promise<AdminActionState> {
+  try {
+    const { message } = await restoreDeletedAgency(agencyId, ownerEmail);
+    refresh();
+    return { message };
+  } catch (error) {
+    return fail(error, "Unable to restore the agency");
   }
 }
 

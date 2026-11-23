@@ -392,12 +392,28 @@ async def change_password(db: AsyncSession, user: User, *, current_password: str
 # password as proof of ownership. Related rows (agency memberships,
 # notification/privacy/profile/appearance settings, auth tokens) are removed
 # via each table's ON DELETE CASCADE — the only thing the DB can't do is
-# clear the user's uploaded images out of storage (same reasoning as
-# delete_agency in agencies/service.py).
+# clear the user's uploaded images out of storage. Any agency this leaves
+# with no owner starts its 30-day deletion hold (agencies/deletion.py).
 async def delete_account(db: AsyncSession, user: User, *, current_password: str) -> None:
     if not verify_password(current_password, user.hashed_password):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Incorrect password")
-    user_id = user.id
+    # Imported here because agencies/deletion.py reaches billing and the
+    # activity feed, which import this module's models.
+    from binx_api.modules.activity.models import CATEGORY_TEAM, VISIBILITY_ADMIN
+    from binx_api.modules.agencies import deletion as agency_deletion
+
+    held = await agency_deletion.hold_sole_owned_agencies(db, user)
+    user_id, user_name = user.id, user.full_name
     await db.delete(user)
     await db.commit()
     await storage.delete_prefix("agencies", f"users/{user_id}")
+    for agency in held:
+        await activity_service.log_agency_activity(
+            db,
+            agency.id,
+            category=CATEGORY_TEAM,
+            event_type="agency_deletion_scheduled",
+            summary=f"{user_name} deleted their account, so {agency.name} is scheduled for deletion",
+            visibility=VISIBILITY_ADMIN,
+            actor=None,
+        )

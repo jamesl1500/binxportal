@@ -66,8 +66,21 @@ describe("StripeConnectPanel", () => {
     startOnboarding.mockResolvedValueOnce({ redirectUrl: "https://connect.stripe.com/setup/x" });
     render(<StripeConnectPanel agencyId="a1" status={notConnected as never} canManage />);
     await userEvent.click(screen.getByRole("button", { name: "Connect Stripe" }));
-    expect(startOnboarding).toHaveBeenCalledWith("a1");
+    expect(startOnboarding).toHaveBeenCalledWith("a1", "settings");
     expect(window.location.href).toBe("https://connect.stripe.com/setup/x");
+  });
+
+  it("passes along which page Stripe should return to", async () => {
+    startOnboarding.mockResolvedValueOnce({ redirectUrl: "https://connect.stripe.com/setup/x" });
+    render(<StripeConnectPanel agencyId="a1" status={notConnected as never} canManage returnTo="onboarding" />);
+    await userEvent.click(screen.getByRole("button", { name: "Connect Stripe" }));
+    expect(startOnboarding).toHaveBeenCalledWith("a1", "onboarding");
+  });
+
+  it("shows who set up the account", () => {
+    const status = { ...pending, created_by_name: "Sam Rivera", created_at: "2026-01-10T12:00:00Z" };
+    render(<StripeConnectPanel agencyId="a1" status={status as never} canManage />);
+    expect(screen.getByText(/set up by sam rivera/i)).toBeInTheDocument();
   });
 
   it("toasts an error and does not redirect on failure", async () => {

@@ -80,15 +80,25 @@ async def list_client_contacts(db: AsyncSession, client_id: uuid.UUID) -> list[t
 
 
 async def get_portal_memberships(db: AsyncSession, user: User) -> list[tuple[Agency, AgencyClient, ClientContact]]:
-    """Every (agency, client) the signed-in user has portal access to."""
+    """Every (agency, client) the signed-in user has portal access to. An
+    agency on its deletion hold gives no access until it's restored."""
     result = await db.execute(
         select(Agency, AgencyClient, ClientContact)
         .join(ClientContact, ClientContact.agency_id == Agency.id)
         .join(AgencyClient, AgencyClient.id == ClientContact.client_id)
-        .where(ClientContact.user_id == user.id)
+        .where(ClientContact.user_id == user.id, Agency.deletion_scheduled_for.is_(None))
         .order_by(ClientContact.created_at)
     )
     return [(agency, client, contact) for agency, client, contact in result.all()]
+
+
+async def raise_if_portal_is_on_hold(db: AsyncSession, user: User) -> None:
+    """For someone with no active portal: 423 if that's only because their
+    agency is on its deletion hold. They're still a client contact, so the
+    web app shows them a notice instead of sending them to staff onboarding."""
+    held = await db.scalar(select(ClientContact.id).where(ClientContact.user_id == user.id).limit(1))
+    if held is not None:
+        raise HTTPException(status.HTTP_423_LOCKED, "This client portal is currently unavailable")
 
 
 async def get_contact_or_404(db: AsyncSession, client_id: uuid.UUID, contact_id: uuid.UUID) -> ClientContact:
@@ -229,6 +239,7 @@ async def reissue_active_invitations(
         .join(User, User.id == ClientInvitation.invited_by_id)
         .where(
             agency_filter,
+            Agency.deletion_scheduled_for.is_(None),
             func.lower(ClientInvitation.email) == email.lower(),
             ClientInvitation.status == CONTACT_INVITATION_PENDING,
             ClientInvitation.expires_at > now,
@@ -267,6 +278,9 @@ async def _get_valid_client_invitation(db: AsyncSession, raw_token: str) -> Clie
         or invitation.expires_at < datetime.now(UTC)
     ):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "This invitation link is invalid or has expired")
+    agency = await db.get(Agency, invitation.agency_id)
+    if agency is None or agency.deletion_scheduled_for is not None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "This invitation link is invalid or has expired")
     return invitation
 
 
@@ -290,7 +304,7 @@ async def search_agencies_by_name(db: AsyncSession, query: str) -> list[Agency]:
     prefix = f"{escaped.lower()}%"
     result = await db.scalars(
         select(Agency)
-        .where(name.like(f"%{escaped.lower()}%", escape="\\"))
+        .where(name.like(f"%{escaped.lower()}%", escape="\\"), Agency.deletion_scheduled_for.is_(None))
         .order_by(name.like(prefix, escape="\\").desc(), name, Agency.id)
         .limit(AGENCY_SEARCH_LIMIT)
     )
