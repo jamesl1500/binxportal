@@ -42,10 +42,20 @@ import PortalWelcomeTour from "@/components/portal/PortalWelcomeTour/PortalWelco
 
 import styles from "./layout.module.scss";
 
-export const metadata: Metadata = {
-  title: { default: "Client portal", template: "%s · Binx" },
-  robots: { index: false, follow: false },
-};
+/**
+ * Tab titles carry the agency's name ("Invoices · Foundry Frame"), like the
+ * rest of the portal's branding. getPortalContext is cache()-wrapped and the
+ * layout below reads it anyway, so this costs no extra request.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const context = await getPortalContext().catch(() => null);
+  const brand = context?.agency.name ?? "Binx";
+  return {
+    // Every portal page sets its own title; the default is only a fallback.
+    title: { default: "Client portal", template: `%s · ${brand}` },
+    robots: { index: false, follow: false },
+  };
+}
 
 const PortalLayout = async ({ children }: { children: React.ReactNode }) => {
   // None of the badge/tour data depends on the portal context, so it all

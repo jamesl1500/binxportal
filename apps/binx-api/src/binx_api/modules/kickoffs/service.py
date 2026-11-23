@@ -19,7 +19,7 @@ import uuid
 from datetime import UTC, datetime
 
 from fastapi import HTTPException, status
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from binx_api.core import email as email_service
@@ -225,11 +225,25 @@ async def list_pending_for_client(db: AsyncSession, client_id: uuid.UUID) -> lis
             .order_by(Kickoff.sent_at.asc().nulls_last(), Kickoff.created_at.asc())
         )
     ).all()
-    out: list[tuple[Kickoff, Project, int, int]] = []
-    for kickoff, project in rows:
-        questions = await list_questions(db, kickoff.id)
-        out.append((kickoff, project, len(questions), sum(1 for q in questions if q.required)))
-    return out
+    if not rows:
+        return []
+    # Question counts for all of them in one query: the portal layout reads
+    # this on every page, so it mustn't cost a query per kickoff.
+    counts = {
+        kickoff_id: (int(total), int(required))
+        for kickoff_id, total, required in (
+            await db.execute(
+                select(
+                    KickoffQuestion.kickoff_id,
+                    func.count(),
+                    func.count().filter(KickoffQuestion.required.is_(True)),
+                )
+                .where(KickoffQuestion.kickoff_id.in_([kickoff.id for kickoff, _project in rows]))
+                .group_by(KickoffQuestion.kickoff_id)
+            )
+        ).all()
+    }
+    return [(kickoff, project, *counts.get(kickoff.id, (0, 0))) for kickoff, project in rows]
 
 
 async def list_questions(db: AsyncSession, kickoff_id: uuid.UUID) -> list[KickoffQuestion]:

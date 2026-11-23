@@ -31,6 +31,8 @@ from binx_api.modules.client_portal.schemas import (
     ClientInvitationResendRequest,
     ClientInvitationResendResponse,
     PortalAgencyMatch,
+    PortalAgencyRead,
+    PortalClientRead,
     PortalContactRead,
     PortalContextRead,
     PortalMembershipRead,
@@ -144,15 +146,22 @@ async def _context(db: DbSession, user: CurrentUser) -> PortalContextRead:
     if not memberships:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "This account has no client portal access")
     agency, client, contact = memberships[0]
+    # Each agency's and client's branding read once: the active membership
+    # is also the first entry in the list, and one agency can appear for
+    # several clients. Every portal page load reads this.
+    agency_reads: dict[uuid.UUID, PortalAgencyRead] = {}
+    client_reads: dict[uuid.UUID, PortalClientRead] = {}
+    for ag, cl, _c in memberships:
+        if ag.id not in agency_reads:
+            agency_reads[ag.id] = await service.portal_agency_read(db, ag)
+        if cl.id not in client_reads:
+            client_reads[cl.id] = await service.portal_client_read(db, cl)
     membership_reads = [
-        PortalMembershipRead(
-            agency=await service.portal_agency_read(db, ag), client=await service.portal_client_read(db, cl)
-        )
-        for ag, cl, _c in memberships
+        PortalMembershipRead(agency=agency_reads[ag.id], client=client_reads[cl.id]) for ag, cl, _c in memberships
     ]
     return PortalContextRead(
-        agency=await service.portal_agency_read(db, agency),
-        client=await service.portal_client_read(db, client),
+        agency=agency_reads[agency.id],
+        client=client_reads[client.id],
         contact=PortalContactRead(
             id=contact.id,
             user_id=user.id,
@@ -166,7 +175,9 @@ async def _context(db: DbSession, user: CurrentUser) -> PortalContextRead:
 
 
 @router.get("/context", response_model=PortalContextRead)
-async def read_context(db: DbSession, current_user: CurrentUser, membership: PortalContext) -> PortalContextRead:
+async def read_context(db: DbSession, current_user: CurrentUser) -> PortalContextRead:
+    # No PortalContext dependency: _context loads the memberships itself
+    # (and 403s without any), so depending on it would query them twice.
     return await _context(db, current_user)
 
 

@@ -4,7 +4,8 @@
  * The client portal's two-pane messaging view: the client's threads on the
  * left, the selected thread + a composer on the right. Deliberately lighter
  * than the staff `MessagingInbox` — no websocket, no shared store. It loads
- * on navigation, polls the open thread every 15s, and appends optimistically
+ * on navigation, polls the open thread every 15s while the tab is visible
+ * (and catches up the moment it's shown again), and appends optimistically
  * on send. Staff messages and this client's own messages are distinguished
  * by `sender_kind`. The thread header shows who the client is talking to
  * (faces, names, job titles) and each message carries its sender's avatar,
@@ -50,6 +51,14 @@ interface PortalMessagesProps {
 
 // Consecutive messages from one sender within this window share one avatar + name line.
 const GROUP_WINDOW_MS = 5 * 60 * 1000;
+export const POLL_MS = 15_000;
+
+/** Same messages, same edits and deletions: a poll that found nothing new. */
+function threadKey(messages: Message[]): string {
+  return messages
+    .map((m) => `${m.id}:${m.edited_at ?? ""}:${m.deleted_at ?? ""}`)
+    .join("|");
+}
 
 function relTime(iso: string | null): string {
   if (!iso) return "";
@@ -100,15 +109,64 @@ const PortalMessages = ({
     bottomRef.current?.scrollIntoView({ block: "end" });
   }, [messages.length]);
 
+  // The poll compares against what's on screen without re-subscribing.
+  const messagesRef = useRef(messages);
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
+  // Opening a thread that had unread messages refreshes the route as well,
+  // so its unread dot and the sidebar badge clear (both are server-rendered).
+  const openedUnread =
+    (conversations.find((c) => c.id === activeId)?.unread_count ?? 0) > 0;
+  const openedUnreadRef = useRef(openedUnread);
+  useEffect(() => {
+    openedUnreadRef.current = openedUnread;
+  }, [openedUnread]);
+
   useEffect(() => {
     if (!activeId) return;
-    void markPortalReadAction(activeId);
-    const timer = setInterval(async () => {
-      const result = await getPortalThreadAction(activeId);
-      if (result.messages) setMessages(result.messages);
-    }, 15000);
-    return () => clearInterval(timer);
-  }, [activeId]);
+    void markPortalReadAction(activeId, { refresh: openedUnreadRef.current });
+
+    // Set on cleanup, so a poll still in flight when the client switches
+    // threads can't drop the old thread's messages into the new one.
+    let cancelled = false;
+    let inFlight = false;
+    const poll = async () => {
+      // A hidden tab doesn't poll: no requests from a portal left open in
+      // the background. It catches up as soon as it's shown again.
+      if (inFlight || document.visibilityState === "hidden") return;
+      inFlight = true;
+      try {
+        const result = await getPortalThreadAction(activeId);
+        if (cancelled || !result.messages) return;
+        const previous = messagesRef.current;
+        if (threadKey(result.messages) === threadKey(previous)) return;
+        setMessages(result.messages);
+        // They've seen it arrive, so it isn't unread.
+        const seen = new Set(previous.map((m) => m.id));
+        if (
+          result.messages.some(
+            (m) => !seen.has(m.id) && m.sender_id !== currentUserId,
+          )
+        ) {
+          void markPortalReadAction(activeId);
+        }
+      } finally {
+        inFlight = false;
+      }
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") void poll();
+    };
+    const timer = setInterval(poll, POLL_MS);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [activeId, currentUserId]);
 
   const participantById = new Map(participants.map((p) => [p.user_id, p]));
   const others = participants.filter((p) => p.user_id !== currentUserId);

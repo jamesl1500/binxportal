@@ -23,8 +23,29 @@ import { SITE } from "@/lib/site";
 import AuthShell from "@/components/auth/AuthShell/AuthShell";
 import PortalAuthGreeting from "@/components/portal-auth/PortalAuthGreeting/PortalAuthGreeting";
 
+const PORTAL_DESCRIPTION =
+  "Sign in to your client portal to follow your projects, review proposals, approve work and pay invoices.";
+
 export const metadata: Metadata = {
   title: { default: "Client portal", template: "%s · Binx" },
+  // What a client sees when a portal link is shared or previewed (an
+  // invite forwarded in Slack, say), instead of the site's pitch to agencies.
+  description: PORTAL_DESCRIPTION,
+  // An openGraph/twitter override here drops the root's file-based images
+  // (app/opengraph-image.tsx, app/twitter-image.tsx), so name them again.
+  openGraph: {
+    type: "website",
+    siteName: SITE.name,
+    title: "Your client portal",
+    description: PORTAL_DESCRIPTION,
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: SITE.name }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Your client portal",
+    description: PORTAL_DESCRIPTION,
+    images: ["/twitter-image"],
+  },
   robots: { index: false, follow: false },
 };
 

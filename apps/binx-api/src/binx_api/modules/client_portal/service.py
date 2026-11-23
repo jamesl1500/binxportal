@@ -402,13 +402,20 @@ def _progress(total: int, done: int) -> PortalProgress:
     return PortalProgress(total_tasks=total, done_tasks=done, percent=percent)
 
 
-async def _project_progress(db: AsyncSession, project_id: uuid.UUID) -> tuple[PortalProgress, list[PortalBoardColumn]]:
+async def _progress_for(
+    db: AsyncSession, project_ids: list[uuid.UUID]
+) -> dict[uuid.UUID, tuple[PortalProgress, list[PortalBoardColumn]]]:
+    """Each project's columns (with task counts) and progress, for any number
+    of projects in two queries, so the projects list doesn't cost two per
+    project."""
+    if not project_ids:
+        return {}
     lists = (
         (
             await db.execute(
                 select(ProjectTaskList)
-                .where(ProjectTaskList.project_id == project_id)
-                .order_by(ProjectTaskList.position)
+                .where(ProjectTaskList.project_id.in_(project_ids))
+                .order_by(ProjectTaskList.project_id, ProjectTaskList.position)
             )
         )
         .scalars()
@@ -418,18 +425,27 @@ async def _project_progress(db: AsyncSession, project_id: uuid.UUID) -> tuple[Po
         (
             await db.execute(
                 select(ProjectTask.list_id, func.count())
-                .where(ProjectTask.project_id == project_id)
+                .where(ProjectTask.project_id.in_(project_ids))
                 .group_by(ProjectTask.list_id)
             )
         ).all()
     )
-    columns = [
-        PortalBoardColumn(name=lst.name, position=lst.position, task_count=counts.get(lst.id, 0)) for lst in lists
-    ]
-    total = sum(c.task_count for c in columns)
-    # "Done" = whatever sits in the final column (its position is implicit status).
-    done = columns[-1].task_count if columns else 0
-    return _progress(total, done), columns
+    columns_by_project: dict[uuid.UUID, list[PortalBoardColumn]] = {pid: [] for pid in project_ids}
+    for lst in lists:
+        columns_by_project[lst.project_id].append(
+            PortalBoardColumn(name=lst.name, position=lst.position, task_count=counts.get(lst.id, 0))
+        )
+    out: dict[uuid.UUID, tuple[PortalProgress, list[PortalBoardColumn]]] = {}
+    for pid, columns in columns_by_project.items():
+        total = sum(c.task_count for c in columns)
+        # "Done" = whatever sits in the final column (its position is implicit status).
+        done = columns[-1].task_count if columns else 0
+        out[pid] = (_progress(total, done), columns)
+    return out
+
+
+async def _project_progress(db: AsyncSession, project_id: uuid.UUID) -> tuple[PortalProgress, list[PortalBoardColumn]]:
+    return (await _progress_for(db, [project_id]))[project_id]
 
 
 async def list_portal_projects(db: AsyncSession, client_id: uuid.UUID) -> list[tuple[Project, PortalProgress]]:
@@ -438,11 +454,8 @@ async def list_portal_projects(db: AsyncSession, client_id: uuid.UUID) -> list[t
         .scalars()
         .all()
     )
-    out: list[tuple[Project, PortalProgress]] = []
-    for project in projects:
-        progress, _columns = await _project_progress(db, project.id)
-        out.append((project, progress))
-    return out
+    progress = await _progress_for(db, [project.id for project in projects])
+    return [(project, progress[project.id][0]) for project in projects]
 
 
 async def get_portal_project_or_404(db: AsyncSession, client_id: uuid.UUID, project_id: uuid.UUID) -> Project:
