@@ -47,7 +47,9 @@ class TestServicesApi:
         )
         assert denied_patch.status_code == 403
 
-        archived = await client.patch(f"{base}/{created['id']}", json={"is_archived": True}, headers=auth_headers(owner))
+        archived = await client.patch(
+            f"{base}/{created['id']}", json={"is_archived": True}, headers=auth_headers(owner)
+        )
         assert archived.json()["is_archived"] is True
         assert (await client.get(base, headers=auth_headers(owner))).json() == []
         with_archived = await client.get(base, params={"include_archived": "true"}, headers=auth_headers(owner))

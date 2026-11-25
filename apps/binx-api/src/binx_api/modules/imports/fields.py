@@ -170,6 +170,25 @@ TIME_ENTRY_FIELDS: tuple[ImportField, ...] = (
     ImportField("hourly_rate", "Hourly rate", False, ("rate", "hourlyrate", "billingrate")),
 )
 
+SERVICE_FIELDS: tuple[ImportField, ...] = (
+    ImportField(
+        "name",
+        "Service name",
+        True,
+        ("name", "service", "servicename", "product", "productname", "item", "itemname", "package", "offering"),
+    ),
+    ImportField("description", "Description", False, ("description", "details", "summary", "included", "scope")),
+    ImportField(
+        "pricing",
+        "Pricing",
+        False,
+        ("pricing", "pricingtype", "pricetype", "billing", "billingtype", "unit", "per", "frequency", "type"),
+    ),
+    ImportField("price", "Price", True, ("price", "rate", "unitprice", "amount", "cost", "fee", "priceusd")),
+    ImportField("default_quantity", "Default quantity", False, ("quantity", "qty", "defaultquantity", "defaultqty")),
+    ImportField("status", "Status", False, ("status", "state")),
+)
+
 FIELDS_BY_KIND: dict[str, tuple[ImportField, ...]] = {
     "clients": CLIENT_FIELDS,
     "team": TEAM_FIELDS,
@@ -177,6 +196,7 @@ FIELDS_BY_KIND: dict[str, tuple[ImportField, ...]] = {
     "projects": PROJECT_FIELDS,
     "tasks": TASK_FIELDS,
     "time_entries": TIME_ENTRY_FIELDS,
+    "services": SERVICE_FIELDS,
 }
 
 _NON_ALNUM = re.compile(r"[^a-z0-9]+")

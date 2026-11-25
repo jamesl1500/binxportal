@@ -78,6 +78,17 @@ export const DATA_KINDS: DataKindInfo[] = [
     },
   },
   {
+    kind: "services",
+    label: "Services",
+    description: "Your services catalog: what you sell, how it's priced, and which services are archived.",
+    importable: {
+      heading: "Import services",
+      intro:
+        "Each service needs a name and a price. Pricing can be fixed, hourly or monthly (fixed if blank). Services you already have are skipped.",
+      adminOnly: true,
+    },
+  },
+  {
     kind: "invoices",
     label: "Invoices",
     description: "Every invoice with its status, dates and totals.",

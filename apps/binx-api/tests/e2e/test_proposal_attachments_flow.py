@@ -172,7 +172,9 @@ class TestProposalAttachments:
         agency, owner, client_row = ctx
         proposal = await _draft(client, agency.id, owner, client_id=client_row.id)
         attachment = (await _upload(client, agency.id, proposal["id"], owner)).json()
-        await client.post(f"/agencies/{agency.id}/proposals/{proposal['id']}/send", json={}, headers=auth_headers(owner))
+        await client.post(
+            f"/agencies/{agency.id}/proposals/{proposal['id']}/send", json={}, headers=auth_headers(owner)
+        )
 
         outsider = await make_user(db_session, full_name="Outsider")
         other_agency = await make_agency(db_session, owner=outsider, name="Other")

@@ -15598,6 +15598,115 @@
         "title": "ServiceCreate",
         "type": "object"
       },
+      "ServiceImportRequest": {
+        "properties": {
+          "dry_run": {
+            "default": true,
+            "title": "Dry Run",
+            "type": "boolean"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ServiceImportRow"
+            },
+            "maxItems": 500,
+            "minItems": 1,
+            "title": "Rows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "title": "ServiceImportRequest",
+        "type": "object"
+      },
+      "ServiceImportRow": {
+        "properties": {
+          "default_quantity": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Quantity"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "pricing": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pricing"
+          },
+          "row": {
+            "minimum": 1.0,
+            "title": "Row",
+            "type": "integer"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "required": [
+          "row"
+        ],
+        "title": "ServiceImportRow",
+        "type": "object"
+      },
       "ServiceRead": {
         "properties": {
           "agency_id": {
@@ -24059,7 +24168,8 @@
                 "tasks",
                 "time_entries",
                 "invoices",
-                "proposals"
+                "proposals",
+                "services"
               ],
               "title": "Kind",
               "type": "string"
@@ -24295,6 +24405,64 @@
         ]
       }
     },
+    "/agencies/{agency_id}/imports/services": {
+      "post": {
+        "operationId": "import_services_agencies__agency_id__imports_services_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServiceImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResultRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Import Services",
+        "tags": [
+          "imports"
+        ]
+      }
+    },
     "/agencies/{agency_id}/imports/tasks": {
       "post": {
         "operationId": "import_tasks_agencies__agency_id__imports_tasks_post",
@@ -24484,7 +24652,8 @@
                 "leads",
                 "projects",
                 "tasks",
-                "time_entries"
+                "time_entries",
+                "services"
               ],
               "title": "Kind",
               "type": "string"
@@ -24559,7 +24728,8 @@
                 "leads",
                 "projects",
                 "tasks",
-                "time_entries"
+                "time_entries",
+                "services"
               ],
               "title": "Kind",
               "type": "string"

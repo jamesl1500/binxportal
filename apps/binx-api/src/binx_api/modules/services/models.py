@@ -21,6 +21,12 @@ PRICING_HOURLY = "hourly"
 PRICING_MONTHLY = "monthly"
 
 pricing_types: list[str] = [PRICING_FIXED, PRICING_HOURLY, PRICING_MONTHLY]
+# How each type reads in exports (and lib/services-client.ts's labels).
+PRICING_TYPE_LABELS: dict[str, str] = {
+    PRICING_FIXED: "Fixed price",
+    PRICING_HOURLY: "Hourly",
+    PRICING_MONTHLY: "Monthly",
+}
 
 
 class Service(Base):

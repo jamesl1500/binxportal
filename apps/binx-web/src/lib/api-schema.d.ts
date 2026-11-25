@@ -1376,6 +1376,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agencies/{agency_id}/imports/services": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import Services */
+        post: operations["import_services_agencies__agency_id__imports_services_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agencies/{agency_id}/imports/tasks": {
         parameters: {
             query?: never;
@@ -10321,6 +10338,33 @@ export interface components {
             /** Unit Price Cents */
             unit_price_cents: number;
         };
+        /** ServiceImportRequest */
+        ServiceImportRequest: {
+            /**
+             * Dry Run
+             * @default true
+             */
+            dry_run: boolean;
+            /** Rows */
+            rows: components["schemas"]["ServiceImportRow"][];
+        };
+        /** ServiceImportRow */
+        ServiceImportRow: {
+            /** Default Quantity */
+            default_quantity?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Name */
+            name?: string | null;
+            /** Price */
+            price?: string | null;
+            /** Pricing */
+            pricing?: string | null;
+            /** Row */
+            row: number;
+            /** Status */
+            status?: string | null;
+        };
         /** ServiceRead */
         ServiceRead: {
             /**
@@ -14428,7 +14472,7 @@ export interface operations {
             };
             header?: never;
             path: {
-                kind: "clients" | "team" | "leads" | "projects" | "tasks" | "time_entries" | "invoices" | "proposals";
+                kind: "clients" | "team" | "leads" | "projects" | "tasks" | "time_entries" | "invoices" | "proposals" | "services";
                 agency_id: string;
             };
             cookie?: never;
@@ -14537,6 +14581,41 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["ProjectImportRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportResultRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_services_agencies__agency_id__imports_services_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ServiceImportRequest"];
             };
         };
         responses: {
@@ -14670,7 +14749,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                kind: "clients" | "team" | "leads" | "projects" | "tasks" | "time_entries";
+                kind: "clients" | "team" | "leads" | "projects" | "tasks" | "time_entries" | "services";
                 agency_id: string;
             };
             cookie?: never;
@@ -14708,7 +14787,7 @@ export interface operations {
             };
             header?: never;
             path: {
-                kind: "clients" | "team" | "leads" | "projects" | "tasks" | "time_entries";
+                kind: "clients" | "team" | "leads" | "projects" | "tasks" | "time_entries" | "services";
                 agency_id: string;
             };
             cookie?: never;

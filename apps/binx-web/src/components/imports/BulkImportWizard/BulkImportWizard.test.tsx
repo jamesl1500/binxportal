@@ -152,4 +152,37 @@ describe("BulkImportWizard", () => {
     render(<BulkImportWizard agencyId="a1" kind="team" />);
     expect(screen.getByRole("link", { name: "Excel" })).toHaveAttribute("href", "/api/agencies/a1/imports/team/template?format=xlsx");
   });
+
+  it("imports services with their own wording and template", async () => {
+    parse.mockResolvedValueOnce({
+      parsed: {
+        columns: ["Service name", "Price"],
+        rows: [{ row: 2, cells: ["Retainer", "2000"] }],
+        fields: [
+          { key: "name", label: "Service name", required: true },
+          { key: "price", label: "Price", required: true },
+        ],
+        mapping: { name: 0, price: 1 },
+      },
+    } as never);
+    run.mockResolvedValueOnce({
+      result: {
+        ...result(true),
+        rows: [{ row: 2, label: "Retainer", status: "ok" as const, message: null }],
+        imported: 1,
+        duplicates: 0,
+        over_limit: 0,
+        limit: null,
+        remaining: null,
+      },
+    } as never);
+    render(<BulkImportWizard agencyId="a1" kind="services" />);
+    expect(screen.getByRole("link", { name: "Excel" })).toHaveAttribute(
+      "href",
+      "/api/agencies/a1/imports/services/template?format=xlsx",
+    );
+    await userEvent.upload(screen.getByLabelText("Upload a services spreadsheet"), new File(["x"], "s.csv"));
+    await userEvent.click(await screen.findByRole("button", { name: "Review rows" }));
+    expect(await screen.findByRole("button", { name: "Import 1 service" })).toBeEnabled();
+  });
 });

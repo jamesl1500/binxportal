@@ -10,6 +10,7 @@
  * @author Binx Portal
  */
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getCurrentAgencyContext } from "@/lib/agencies";
@@ -51,6 +52,19 @@ const SettingsServicesPage = async () => {
           currency={billing.currency}
           canManage={canManage}
         />
+        <p className={styles.footnote}>
+          {canManage ? (
+            <>
+              Moving from a spreadsheet or another tool?{" "}
+              <Link href="/data/import/services">Import services</Link>, or{" "}
+              <Link href="/data">export the catalog</Link>.
+            </>
+          ) : (
+            <>
+              <Link href="/data">Export the catalog</Link> as a spreadsheet.
+            </>
+          )}
+        </p>
       </section>
     </div>
   );
