@@ -32,6 +32,7 @@ _settings = get_settings()
 # without it every visitor would share binx-web's own address — and one
 # bucket: 10 logins a minute, 5 password resets an hour, for everyone.
 CLIENT_IP_HEADER = "x-binx-client-ip"
+CLIENT_UA_HEADER = "x-binx-client-ua"
 PROXY_SECRET_HEADER = "x-binx-proxy-secret"
 
 
@@ -62,6 +63,22 @@ def client_ip(request: Request) -> str:
         if first:
             return first
     return get_remote_address(request)
+
+
+def client_user_agent(request: Request) -> str | None:
+    """The visitor's browser, for evidence records (proposal signatures and
+    their audit trail). Same trust rule as ``client_ip``: binx-web forwards
+    the browser's User-Agent in ``X-Binx-Client-UA`` alongside the shared
+    secret, because its own server-side calls would otherwise all read as
+    Node. Without the secret, the request's own header."""
+    secret = _settings.proxy_shared_secret
+    if secret:
+        given = request.headers.get(PROXY_SECRET_HEADER, "")
+        forwarded_ua = request.headers.get(CLIENT_UA_HEADER, "").strip()
+        if forwarded_ua and hmac.compare_digest(given.encode(), secret.encode()):
+            return forwarded_ua[:512]
+    agent = request.headers.get("user-agent", "").strip()
+    return agent[:512] or None
 
 
 limiter = Limiter(

@@ -214,3 +214,40 @@
   border: 1px solid rgba(220, 38, 38, 0.2);
   border-radius: t.$radius-sm;
 }
+
+.certificateWrap {
+  width: 100%;
+  max-width: 56rem;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-4;
+}
+
+.backLink {
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+  text-decoration: none;
+
+  &:hover {
+    color: t.$color-ink;
+  }
+}
+
+.certificateLink {
+  align-self: flex-start;
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  color: t.$color-ink;
+  text-underline-offset: 2px;
+}
+
+@media print {
+  .page {
+    padding: 0;
+    background: none;
+  }
+
+  .backLink {
+    display: none;
+  }
+}

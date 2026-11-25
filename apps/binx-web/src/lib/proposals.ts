@@ -41,6 +41,8 @@ export type ProposalLineItem = Schemas["ProposalLineItemRead"];
 export type ProposalSignature = Schemas["ProposalSignatureRead"];
 export type ProposalPublic = Schemas["ProposalPublicRead"];
 export type ProposalAttachment = Schemas["ProposalAttachmentRead"];
+export type ProposalEvent = Schemas["ProposalEventRead"];
+export type ProposalCertificate = Schemas["ProposalCertificateRead"];
 
 export interface ProposalLineItemInput {
   description: string;
@@ -262,10 +264,17 @@ export async function getPublicProposal(
   }
 }
 
+/**
+ * `POST /proposals/public/{token}/sign`. `consent` is the signer's tick on
+ * the e-sign consent statement; `documentHash` is the fingerprint of the
+ * version they were shown. binx-api refuses either missing or mismatched.
+ */
 export async function signPublicProposal(
   token: string,
   signerName: string,
   signerEmail: string,
+  consent: boolean,
+  documentHash: string | null,
 ): Promise<ProposalPublic> {
   try {
     const { data } = await api.post<ProposalPublic>(
@@ -273,6 +282,8 @@ export async function signPublicProposal(
       {
         signer_name: signerName,
         signer_email: signerEmail,
+        consent,
+        document_hash: documentHash,
       },
     );
     return data;
@@ -293,5 +304,54 @@ export async function declinePublicProposal(
     return data;
   } catch (error) {
     throw apiError(error, "Unable to decline this proposal");
+  }
+}
+
+/** The signing certificate for a signed proposal, by share token. */
+export async function getPublicCertificate(
+  token: string,
+): Promise<ProposalCertificate> {
+  try {
+    const { data } = await api.get<ProposalCertificate>(
+      `/proposals/public/${token}/certificate`,
+    );
+    return data;
+  } catch (error) {
+    throw apiError(error, "This signing certificate isn't available");
+  }
+}
+
+// ---- Signing record (staff) ----
+
+/** The audit trail: sent, each view, signed or declined, with IP and browser. */
+export async function getProposalEvents(
+  agencyId: string,
+  proposalId: string,
+): Promise<ProposalEvent[]> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.get<ProposalEvent[]>(
+      `/agencies/${agencyId}/proposals/${proposalId}/events`,
+      { headers },
+    );
+    return data;
+  } catch (error) {
+    throw apiError(error, "Unable to load the proposal's history");
+  }
+}
+
+export async function getProposalCertificate(
+  agencyId: string,
+  proposalId: string,
+): Promise<ProposalCertificate> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.get<ProposalCertificate>(
+      `/agencies/${agencyId}/proposals/${proposalId}/certificate`,
+      { headers },
+    );
+    return data;
+  } catch (error) {
+    throw apiError(error, "This signing certificate isn't available");
   }
 }

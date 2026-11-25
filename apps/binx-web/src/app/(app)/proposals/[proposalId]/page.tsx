@@ -14,9 +14,10 @@ import { notFound, redirect } from "next/navigation";
 
 import { AuthApiError } from "@/lib/auth";
 import { getCurrentAgencyContext } from "@/lib/agencies";
-import { getProposal } from "@/lib/proposals";
+import { getProposal, getProposalEvents } from "@/lib/proposals";
 import ProposalActions from "@/components/proposals/ProposalActions/ProposalActions";
 import ProposalAttachmentsManager from "@/components/proposals/ProposalAttachmentsManager/ProposalAttachmentsManager";
+import ProposalAuditTrail from "@/components/proposals/ProposalAuditTrail/ProposalAuditTrail";
 import ProposalView from "@/components/proposals/ProposalView/ProposalView";
 
 import styles from "../page.module.scss";
@@ -78,6 +79,18 @@ const ProposalPage = async ({ params }: ProposalPageProps) => {
         <ProposalView
           proposal={proposal}
           attachmentHrefBase={`/api/proposals/${currentAgency.id}/${proposal.id}/attachments`}
+          certificateHref={
+            proposal.status === "signed"
+              ? `/proposals/${proposal.id}/certificate`
+              : undefined
+          }
+        />
+      )}
+
+      {proposal.status !== "draft" && (
+        <ProposalAuditTrail
+          events={await getProposalEvents(currentAgency.id, proposal.id)}
+          documentHash={proposal.document_hash}
         />
       )}
     </div>

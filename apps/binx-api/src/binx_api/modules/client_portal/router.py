@@ -8,7 +8,7 @@ from fastapi.exceptions import HTTPException
 from binx_api.core import storage
 from binx_api.core.dependencies import CurrentUser, DbSession
 from binx_api.core.email import send_client_invitation_email
-from binx_api.core.rate_limit import client_ip, limiter
+from binx_api.core.rate_limit import client_ip, client_user_agent, limiter
 from binx_api.modules.boards import service as boards_service
 from binx_api.modules.boards.models import AUTHOR_CLIENT, DEFAULT_NOTE_WIDTH, ITEM_FILE, ITEM_IMAGE
 from binx_api.modules.boards.schemas import (
@@ -68,11 +68,18 @@ from binx_api.modules.messaging.models import SENDER_CLIENT
 from binx_api.modules.messaging.schemas import ConversationDetailRead, ConversationRead, MessageRead
 from binx_api.modules.projects import service as projects_service
 from binx_api.modules.proposals import service as proposals_service
+from binx_api.modules.proposals import signing as proposals_signing
 from binx_api.modules.proposals.router import _detail_read as _proposal_detail_read
 from binx_api.modules.proposals.router import _names as _proposal_names
 from binx_api.modules.proposals.router import _read as _proposal_read
 from binx_api.modules.proposals.router import attachment_download as _proposal_attachment_download
-from binx_api.modules.proposals.schemas import ProposalDeclineRequest, ProposalDetailRead, ProposalRead
+from binx_api.modules.proposals.schemas import (
+    PortalProposalSignRequest,
+    ProposalCertificateRead,
+    ProposalDeclineRequest,
+    ProposalDetailRead,
+    ProposalRead,
+)
 
 router = APIRouter(prefix="/portal", tags=["client-portal"])
 
@@ -804,12 +811,34 @@ async def list_portal_proposals(db: DbSession, membership: PortalContext) -> lis
     ]
 
 
+def _portal_visitor(request: Request, user) -> proposals_service.Visitor:
+    return proposals_service.Visitor(
+        ip_address=client_ip(request),
+        user_agent=client_user_agent(request),
+        label=f"{user.full_name} <{user.email}> (client portal)",
+        user_id=user.id,
+    )
+
+
 @router.get("/proposals/{proposal_id}", response_model=ProposalDetailRead)
-async def read_portal_proposal(db: DbSession, membership: PortalContext, proposal_id: uuid.UUID) -> ProposalDetailRead:
+async def read_portal_proposal(
+    db: DbSession, current_user: CurrentUser, membership: PortalContext, proposal_id: uuid.UUID, request: Request
+) -> ProposalDetailRead:
     agency, client, _contact = membership
     proposal = await _portal_proposal_or_404(db, agency.id, client.id, proposal_id)
+    await proposals_signing.ensure_document_record(db, proposal)
+    proposal = await proposals_service.record_view(db, proposal, _portal_visitor(request, current_user))
     lead_name, client_name = await _proposal_names(db, proposal)
     return await _proposal_detail_read(db, proposal, lead_name, client_name)
+
+
+@router.get("/proposals/{proposal_id}/certificate", response_model=ProposalCertificateRead)
+async def portal_proposal_certificate(
+    db: DbSession, membership: PortalContext, proposal_id: uuid.UUID
+) -> ProposalCertificateRead:
+    agency, client, _contact = membership
+    proposal = await _portal_proposal_or_404(db, agency.id, client.id, proposal_id)
+    return await proposals_signing.build_certificate(db, proposal)
 
 
 @router.get("/proposals/{proposal_id}/attachments/{attachment_id}")
@@ -824,7 +853,12 @@ async def download_portal_proposal_attachment(
 
 @router.post("/proposals/{proposal_id}/sign", response_model=ProposalDetailRead)
 async def sign_portal_proposal(
-    db: DbSession, current_user: CurrentUser, membership: PortalContext, proposal_id: uuid.UUID, request: Request
+    db: DbSession,
+    current_user: CurrentUser,
+    membership: PortalContext,
+    proposal_id: uuid.UUID,
+    data: PortalProposalSignRequest,
+    request: Request,
 ) -> ProposalDetailRead:
     """Signs with the signed-in contact's own name/email — unlike the public
     token flow, the portal already knows who this is."""
@@ -836,6 +870,11 @@ async def sign_portal_proposal(
         signer_name=current_user.full_name,
         signer_email=current_user.email,
         ip_address=client_ip(request),
+        user_agent=client_user_agent(request),
+        signed_via=proposals_service.SIGNED_VIA_PORTAL,
+        consent=data.consent,
+        document_hash=data.document_hash,
+        actor_user_id=current_user.id,
     )
     lead_name, client_name = await _proposal_names(db, proposal)
     return await _proposal_detail_read(db, proposal, lead_name, client_name)
@@ -843,11 +882,18 @@ async def sign_portal_proposal(
 
 @router.post("/proposals/{proposal_id}/decline", response_model=ProposalDetailRead)
 async def decline_portal_proposal(
-    db: DbSession, membership: PortalContext, proposal_id: uuid.UUID, data: ProposalDeclineRequest
+    db: DbSession,
+    current_user: CurrentUser,
+    membership: PortalContext,
+    proposal_id: uuid.UUID,
+    data: ProposalDeclineRequest,
+    request: Request,
 ) -> ProposalDetailRead:
     agency, client, _contact = membership
     proposal = await _portal_proposal_or_404(db, agency.id, client.id, proposal_id)
-    proposal = await proposals_service.decline_proposal(db, proposal, reason=data.reason)
+    proposal = await proposals_service.decline_proposal(
+        db, proposal, reason=data.reason, visitor=_portal_visitor(request, current_user)
+    )
     lead_name, client_name = await _proposal_names(db, proposal)
     return await _proposal_detail_read(db, proposal, lead_name, client_name)
 

@@ -35,9 +35,17 @@ export async function signPublicProposalAction(
   token: string,
   signerName: string,
   signerEmail: string,
+  consent: boolean,
+  documentHash: string | null,
 ): Promise<PublicProposalActionResult> {
   try {
-    const proposal = await signPublicProposal(token, signerName, signerEmail);
+    const proposal = await signPublicProposal(
+      token,
+      signerName,
+      signerEmail,
+      consent,
+      documentHash,
+    );
     refresh();
     return { proposal };
   } catch (error) {

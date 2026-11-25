@@ -76,6 +76,14 @@ class Proposal(Base):
     decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
     decline_reason: Mapped[str | None] = mapped_column(String(1024), default=None)
 
+    # The document as sent, frozen: a canonical JSON snapshot of everything the
+    # recipient is agreeing to (text, lines, totals, each attachment's sha256)
+    # and the SHA-256 of that snapshot. Set when the proposal is sent (see
+    # signing.py); a signature records the hash it was given, so what was
+    # signed can always be proven. Null on drafts.
+    document_snapshot: Mapped[str | None] = mapped_column(Text, default=None)
+    document_hash: Mapped[str | None] = mapped_column(String(64), default=None)
+
 
 class ProposalLineItem(Base):
     __tablename__ = "proposal_line_items"
@@ -137,3 +145,37 @@ class ProposalSignature(Base):
     signature_text: Mapped[str] = mapped_column(String(255))
     ip_address: Mapped[str | None] = mapped_column(String(64), default=None)
     signed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    # What makes the signature hold up (ESIGN/UETA): the browser it came from,
+    # how it was signed, the exact consent wording the signer accepted, and
+    # the fingerprint of the document they were shown. Null on signatures
+    # made before these were recorded.
+    user_agent: Mapped[str | None] = mapped_column(String(512), default=None)
+    signed_via: Mapped[str | None] = mapped_column(String(20), default=None)  # link | portal
+    consent_version: Mapped[str | None] = mapped_column(String(32), default=None)
+    consent_text: Mapped[str | None] = mapped_column(Text, default=None)
+    document_hash: Mapped[str | None] = mapped_column(String(64), default=None)
+
+
+EVENT_SENT = "sent"
+EVENT_VIEWED = "viewed"
+EVENT_SIGNED = "signed"
+EVENT_DECLINED = "declined"
+
+
+# The audit trail behind a signature: one row per thing that happened to a
+# sent proposal, with where it came from. Append-only, written by
+# signing.record_event.
+class ProposalEvent(Base):
+    __tablename__ = "proposal_events"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    proposal_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("proposals.id", ondelete="CASCADE"), index=True)
+    kind: Mapped[str] = mapped_column(String(30))
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    actor_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), default=None)
+    # Who it was, as known at the time ("Olivia Owner", "jane@example.com",
+    # "Share link"): kept as text so it survives the user being deleted.
+    actor_label: Mapped[str | None] = mapped_column(String(255), default=None)
+    ip_address: Mapped[str | None] = mapped_column(String(64), default=None)
+    user_agent: Mapped[str | None] = mapped_column(String(512), default=None)
+    detail: Mapped[str | None] = mapped_column(String(1024), default=None)

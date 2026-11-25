@@ -12,6 +12,7 @@ from __future__ import annotations
 import hashlib
 import mimetypes
 import uuid
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import ROUND_HALF_UP, Decimal
 
@@ -30,7 +31,11 @@ from binx_api.modules.leads import service as leads_service
 from binx_api.modules.leads.models import Lead
 from binx_api.modules.notifications import service as notifications_service
 from binx_api.modules.notifications.models import CATEGORY_INVOICING as NOTIFY_CATEGORY_PROPOSALS
+from binx_api.modules.proposals import signing
 from binx_api.modules.proposals.models import (
+    EVENT_DECLINED,
+    EVENT_SENT,
+    EVENT_SIGNED,
     MAX_PROPOSAL_ATTACHMENTS,
     PROPOSAL_CLOSED_STATUSES,
     STATUS_DECLINED,
@@ -48,6 +53,20 @@ from binx_api.modules.services import service as services_service
 from binx_api.modules.users.models import User
 
 settings = get_settings()
+
+SIGNED_VIA_LINK = "link"
+SIGNED_VIA_PORTAL = "portal"
+
+
+@dataclass(frozen=True)
+class Visitor:
+    """Who is acting on a proposal and from where, for the audit trail: the
+    share-link recipient (no account) or a signed-in portal contact."""
+
+    ip_address: str | None
+    user_agent: str | None
+    label: str
+    user_id: uuid.UUID | None = None
 
 
 def _round_cents(value: Decimal) -> int:
@@ -404,6 +423,17 @@ async def send_proposal(
 
     proposal.status = STATUS_SENT
     proposal.sent_at = datetime.now(UTC)
+    # Frozen now, with the final recipient and sent date in it: this is the
+    # document a signature will point at (see signing.py).
+    await signing.freeze_document(db, proposal)
+    signing.record_event(
+        db,
+        proposal.id,
+        EVENT_SENT,
+        actor_user_id=sent_by.id,
+        actor_label=sent_by.full_name,
+        detail=f"Sent to {proposal.recipient_email}",
+    )
     await db.commit()
     await db.refresh(proposal)
 
@@ -421,11 +451,28 @@ async def send_proposal(
     return proposal
 
 
-async def record_view(db: AsyncSession, proposal: Proposal) -> Proposal:
-    """Called from the public GET — first view only flips sent -> viewed."""
+async def record_view(db: AsyncSession, proposal: Proposal, visitor: Visitor | None = None) -> Proposal:
+    """Called when the recipient opens it (share link or portal). The first
+    view flips sent -> viewed; each view from a new browser (or after the
+    dedupe window) adds a "viewed" row to the audit trail."""
+    changed = False
     if proposal.status == STATUS_SENT:
         proposal.status = STATUS_VIEWED
         proposal.viewed_at = datetime.now(UTC)
+        changed = True
+    if visitor is not None:
+        changed = (
+            await signing.record_view(
+                db,
+                proposal.id,
+                actor_user_id=visitor.user_id,
+                actor_label=visitor.label,
+                ip_address=visitor.ip_address,
+                user_agent=visitor.user_agent,
+            )
+            or changed
+        )
+    if changed:
         await db.commit()
         await db.refresh(proposal)
     return proposal
@@ -438,11 +485,30 @@ async def sign_proposal(
     signer_name: str,
     signer_email: str,
     ip_address: str | None,
+    user_agent: str | None = None,
+    signed_via: str = SIGNED_VIA_LINK,
+    consent: bool = False,
+    document_hash: str | None = None,
+    actor_user_id: uuid.UUID | None = None,
 ) -> Proposal:
+    """A binding e-signature needs the signer's consent to sign
+    electronically and must be tied to the exact document they saw: the
+    request carries the fingerprint they were shown, and anything else is
+    refused (see signing.py)."""
     if proposal.status in PROPOSAL_CLOSED_STATUSES:
         raise HTTPException(status.HTTP_409_CONFLICT, "This proposal has already been decided")
     if display_status(proposal) == "expired":
         raise HTTPException(status.HTTP_409_CONFLICT, "This proposal has expired — ask the agency to resend it")
+    if not consent:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT, "Agree to sign electronically before signing this proposal"
+        )
+    await signing.ensure_document_record(db, proposal)
+    if not document_hash or document_hash != proposal.document_hash:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            "This isn't the version of the proposal you were sent. Reload the page and sign again.",
+        )
 
     now = datetime.now(UTC)
     db.add(
@@ -453,7 +519,23 @@ async def sign_proposal(
             signature_text=signer_name,
             ip_address=ip_address,
             signed_at=now,
+            user_agent=user_agent,
+            signed_via=signed_via,
+            consent_version=signing.CONSENT_VERSION,
+            consent_text=signing.CONSENT_TEXT,
+            document_hash=proposal.document_hash,
         )
+    )
+    signing.record_event(
+        db,
+        proposal.id,
+        EVENT_SIGNED,
+        actor_user_id=actor_user_id,
+        actor_label=f"{signer_name} <{signer_email}>",
+        ip_address=ip_address,
+        user_agent=user_agent,
+        detail=f"Signed via {'the client portal' if signed_via == SIGNED_VIA_PORTAL else 'the share link'}",
+        occurred_at=now,
     )
     proposal.status = STATUS_SIGNED
     proposal.decided_at = now
@@ -484,13 +566,26 @@ async def sign_proposal(
     return proposal
 
 
-async def decline_proposal(db: AsyncSession, proposal: Proposal, *, reason: str | None) -> Proposal:
+async def decline_proposal(
+    db: AsyncSession, proposal: Proposal, *, reason: str | None, visitor: Visitor | None = None
+) -> Proposal:
     if proposal.status in PROPOSAL_CLOSED_STATUSES:
         raise HTTPException(status.HTTP_409_CONFLICT, "This proposal has already been decided")
 
     proposal.status = STATUS_DECLINED
     proposal.decided_at = datetime.now(UTC)
     proposal.decline_reason = reason
+    signing.record_event(
+        db,
+        proposal.id,
+        EVENT_DECLINED,
+        actor_user_id=visitor.user_id if visitor else None,
+        actor_label=visitor.label if visitor else None,
+        ip_address=visitor.ip_address if visitor else None,
+        user_agent=visitor.user_agent if visitor else None,
+        detail=reason,
+        occurred_at=proposal.decided_at,
+    )
     await db.commit()
     await db.refresh(proposal)
 
@@ -518,7 +613,9 @@ async def decline_proposal(db: AsyncSession, proposal: Proposal, *, reason: str 
     return proposal
 
 
-async def get_public_proposal(db: AsyncSession, raw_token: str) -> tuple[Proposal, Agency]:
+async def get_public_proposal(
+    db: AsyncSession, raw_token: str, visitor: Visitor | None = None
+) -> tuple[Proposal, Agency]:
     proposal = await get_proposal_by_token_or_404(db, raw_token)
     if proposal.status == STATUS_DRAFT:
         # Never reachable via a real link (drafts have no valid share yet in
@@ -527,5 +624,6 @@ async def get_public_proposal(db: AsyncSession, raw_token: str) -> tuple[Proposa
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Proposal not found")
     agency = await db.get(Agency, proposal.agency_id)
     assert agency is not None
-    proposal = await record_view(db, proposal)
+    await signing.ensure_document_record(db, proposal)
+    proposal = await record_view(db, proposal, visitor)
     return proposal, agency

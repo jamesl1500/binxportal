@@ -37,6 +37,7 @@ import type {
   Message,
 } from "@/lib/messaging-client";
 import type {
+  ProposalCertificate,
   ProposalDetail,
   Proposal as StaffProposal,
 } from "@/lib/proposals";
@@ -305,12 +306,14 @@ export const getPortalProposal = cache(async (
  */
 export async function signPortalProposal(
   proposalId: string,
+  consent: boolean,
+  documentHash: string | null,
 ): Promise<PortalProposalDetail> {
   const headers = await authHeader();
   try {
     const { data } = await api.post<PortalProposalDetail>(
       `/portal/proposals/${proposalId}/sign`,
-      undefined,
+      { consent, document_hash: documentHash },
       {
         headers,
       },
@@ -961,5 +964,21 @@ export async function getPortalTeam(): Promise<PortalTeamMember[]> {
     return data;
   } catch (error) {
     rethrow(error, "Unable to load your team");
+  }
+}
+
+/** The signing certificate for one of the contact's signed proposals. */
+export async function getPortalProposalCertificate(
+  proposalId: string,
+): Promise<ProposalCertificate> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.get<ProposalCertificate>(
+      `/portal/proposals/${proposalId}/certificate`,
+      { headers },
+    );
+    return data;
+  } catch (error) {
+    rethrow(error, "This signing certificate isn't available");
   }
 }

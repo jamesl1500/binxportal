@@ -131,13 +131,21 @@ describe("proposals.ts", () => {
       });
     });
 
-    it("signPublicProposal POSTs the signer's name and email", async () => {
+    it("signPublicProposal POSTs the signer, their consent and the fingerprint they saw", async () => {
       mockedApi.post.mockResolvedValueOnce({ data: { status: "signed" } });
-      await proposals.signPublicProposal(TOKEN, "Jane Prospect", "jane@example.com");
+      await proposals.signPublicProposal(TOKEN, "Jane Prospect", "jane@example.com", true, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
       expect(mockedApi.post).toHaveBeenCalledWith(`/proposals/public/${TOKEN}/sign`, {
         signer_name: "Jane Prospect",
         signer_email: "jane@example.com",
+        consent: true,
+        document_hash: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       });
+    });
+
+    it("getPublicCertificate reads by token", async () => {
+      mockedApi.get.mockResolvedValueOnce({ data: { document_hash: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" } });
+      await expect(proposals.getPublicCertificate(TOKEN)).resolves.toEqual({ document_hash: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" });
+      expect(mockedApi.get).toHaveBeenCalledWith(`/proposals/public/${TOKEN}/certificate`);
     });
 
     it("declinePublicProposal POSTs the reason", async () => {
@@ -189,6 +197,21 @@ describe("proposals.ts", () => {
       mockedApi.delete.mockResolvedValueOnce({});
       await proposals.deleteProposalAttachment(A, P, "att-1");
       expect(mockedApi.delete).toHaveBeenCalledWith(`/agencies/${A}/proposals/${P}/attachments/att-1`, AUTH);
+    });
+  });
+
+  describe("signing record", () => {
+    it("reads the audit trail and the certificate", async () => {
+      mockedApi.get.mockResolvedValueOnce({ data: [] }).mockResolvedValueOnce({ data: { title: "T" } });
+      await expect(proposals.getProposalEvents(A, P)).resolves.toEqual([]);
+      await expect(proposals.getProposalCertificate(A, P)).resolves.toEqual({ title: "T" });
+      expect(mockedApi.get).toHaveBeenNthCalledWith(1, `/agencies/${A}/proposals/${P}/events`, AUTH);
+      expect(mockedApi.get).toHaveBeenNthCalledWith(2, `/agencies/${A}/proposals/${P}/certificate`, AUTH);
+    });
+
+    it("maps a not-yet-signed certificate to AuthApiError 409", async () => {
+      mockedApi.get.mockRejectedValueOnce(axiosError(409, "This proposal hasn't been signed yet"));
+      await expect(proposals.getProposalCertificate(A, P)).rejects.toMatchObject({ status: 409 });
     });
   });
 });

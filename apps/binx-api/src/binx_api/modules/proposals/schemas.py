@@ -94,12 +94,19 @@ class ProposalDetailRead(ProposalRead):
     line_items: list[ProposalLineItemRead]
     attachments: list[ProposalAttachmentRead]
     signature: "ProposalSignatureRead | None"
+    # The fingerprint of the document as sent (see signing.py), and the
+    # e-sign consent the recipient must accept to sign. None on drafts.
+    document_hash: str | None
+    consent_text: str
+    consent_version: str
 
 
 class ProposalSignatureRead(BaseModel):
     signer_name: str
     signer_email: str
     signed_at: datetime
+    # link | portal; None on signatures made before it was recorded.
+    signed_via: str | None = None
 
 
 # --- Public (unauthenticated, token-scoped) view ---------------------------
@@ -124,11 +131,28 @@ class ProposalPublicRead(BaseModel):
     line_items: list[ProposalLineItemRead]
     attachments: list[ProposalAttachmentRead]
     signature: ProposalSignatureRead | None
+    # The fingerprint of the document as sent (see signing.py), and the
+    # e-sign consent the recipient must accept to sign. None on drafts.
+    document_hash: str | None
+    consent_text: str
+    consent_version: str
 
 
 class ProposalSignRequest(BaseModel):
     signer_name: str = Field(min_length=1, max_length=255)
     signer_email: EmailStr
+    # The signer ticked the e-sign consent, and the fingerprint of the
+    # document they were shown. Both are checked by service.sign_proposal.
+    consent: bool = False
+    document_hash: str | None = Field(default=None, max_length=64)
+
+
+class PortalProposalSignRequest(BaseModel):
+    """The portal knows who's signing; it still needs consent and the
+    fingerprint of what they saw."""
+
+    consent: bool = False
+    document_hash: str | None = Field(default=None, max_length=64)
 
 
 class ProposalDeclineRequest(BaseModel):
@@ -139,3 +163,74 @@ class SendProposalRequest(BaseModel):
     # Overrides the proposal's stored recipient_email for this send only if
     # given — lets staff redirect a send without editing the draft first.
     recipient_email: EmailStr | None = None
+
+
+# --- Audit trail and signing certificate --------------------------------------
+
+
+class ProposalEventRead(BaseModel):
+    kind: str  # sent | viewed | signed | declined
+    occurred_at: datetime
+    actor_label: str | None
+    ip_address: str | None
+    user_agent: str | None
+    detail: str | None
+
+
+class CertificateLineRead(BaseModel):
+    description: str
+    details: str | None
+    quantity: str
+    unit_price_cents: int
+    amount_cents: int
+
+
+class CertificateAttachmentRead(BaseModel):
+    file_name: str
+    size: int
+    sha256: str
+
+
+class CertificateSignatureRead(BaseModel):
+    signer_name: str
+    signer_email: str
+    signature_text: str
+    signed_at: datetime
+    ip_address: str | None
+    user_agent: str | None
+    signed_via: str | None
+    consent_version: str | None
+    consent_text: str | None
+    # The fingerprint the signer was shown; None for signatures made before
+    # fingerprints were recorded.
+    document_hash: str | None
+
+
+class ProposalCertificateRead(BaseModel):
+    """The record of a signed proposal: the document exactly as it was sent
+    (read from the frozen snapshot, not today's rows), the signature with its
+    evidence, and the audit trail."""
+
+    proposal_id: uuid.UUID
+    agency_name: str
+    title: str
+    recipient_name: str | None
+    recipient_email: str | None
+    content: str | None
+    currency: str
+    tax_rate_percent: str
+    subtotal_cents: int
+    tax_cents: int
+    total_cents: int
+    valid_until: datetime | None
+    sent_at: datetime | None
+    line_items: list[CertificateLineRead]
+    attachments: list[CertificateAttachmentRead]
+    document_hash: str
+    # The stored snapshot still hashes to document_hash.
+    document_intact: bool
+    # The signature was made against this exact fingerprint.
+    signature_matches_document: bool
+    signature: CertificateSignatureRead
+    events: list[ProposalEventRead]
+    generated_at: datetime

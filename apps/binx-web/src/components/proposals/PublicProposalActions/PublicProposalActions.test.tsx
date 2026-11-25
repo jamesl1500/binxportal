@@ -13,6 +13,9 @@ import { toast } from "sonner";
 import PublicProposalActions from "./PublicProposalActions";
 
 const sign = vi.mocked(signPublicProposalAction);
+const CONSENT = "I agree to sign this proposal electronically.";
+const HASH = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+const props = { consentText: CONSENT, documentHash: HASH };
 const decline = vi.mocked(declinePublicProposalAction);
 
 beforeEach(() => {
@@ -24,20 +27,24 @@ beforeEach(() => {
 describe("PublicProposalActions", () => {
   it("shows the sign form prefilled with the recipient name and submits it", async () => {
     const user = userEvent.setup();
-    render(<PublicProposalActions token="tok" recipientName="Jamie Rivera" />);
+    render(<PublicProposalActions token="tok" recipientName="Jamie Rivera" {...props} />);
 
     await user.click(screen.getByRole("button", { name: "Sign this proposal" }));
     expect(screen.getByLabelText("Your name")).toHaveValue("Jamie Rivera");
 
     await user.type(screen.getByLabelText("Your email"), "jamie@example.com");
+    // Not until the e-sign consent is ticked.
+    expect(screen.getByRole("button", { name: "Sign proposal" })).toBeDisabled();
+    expect(screen.getByText(/aaaaaaaa…aaaaaaaa/)).toBeInTheDocument();
+    await user.click(screen.getByRole("checkbox", { name: CONSENT }));
     await user.click(screen.getByRole("button", { name: "Sign proposal" }));
 
-    expect(sign).toHaveBeenCalledWith("tok", "Jamie Rivera", "jamie@example.com");
+    expect(sign).toHaveBeenCalledWith("tok", "Jamie Rivera", "jamie@example.com", true, HASH);
   });
 
   it("shows the decline form and submits an optional reason", async () => {
     const user = userEvent.setup();
-    render(<PublicProposalActions token="tok" />);
+    render(<PublicProposalActions token="tok" {...props} />);
 
     await user.click(screen.getByRole("button", { name: "Decline" }));
     await user.type(screen.getByLabelText("Reason (optional)"), "Went with another agency");
@@ -48,7 +55,7 @@ describe("PublicProposalActions", () => {
 
   it("declines with a null reason when left blank", async () => {
     const user = userEvent.setup();
-    render(<PublicProposalActions token="tok" />);
+    render(<PublicProposalActions token="tok" {...props} />);
 
     await user.click(screen.getByRole("button", { name: "Decline" }));
     await user.click(screen.getByRole("button", { name: "Decline proposal" }));
@@ -59,11 +66,12 @@ describe("PublicProposalActions", () => {
   it("toasts an error the action returns", async () => {
     sign.mockResolvedValueOnce({ error: "This proposal has expired — ask the agency to resend it" } as never);
     const user = userEvent.setup();
-    render(<PublicProposalActions token="tok" />);
+    render(<PublicProposalActions token="tok" {...props} />);
 
     await user.click(screen.getByRole("button", { name: "Sign this proposal" }));
     await user.type(screen.getByLabelText("Your name"), "Jamie Rivera");
     await user.type(screen.getByLabelText("Your email"), "jamie@example.com");
+    await user.click(screen.getByRole("checkbox", { name: CONSENT }));
     await user.click(screen.getByRole("button", { name: "Sign proposal" }));
 
     expect(toast.error).toHaveBeenCalledWith("This proposal has expired — ask the agency to resend it");
@@ -71,7 +79,7 @@ describe("PublicProposalActions", () => {
 
   it("goes back to the choice from either form", async () => {
     const user = userEvent.setup();
-    render(<PublicProposalActions token="tok" />);
+    render(<PublicProposalActions token="tok" {...props} />);
 
     await user.click(screen.getByRole("button", { name: "Sign this proposal" }));
     await user.click(screen.getByRole("button", { name: "Back" }));

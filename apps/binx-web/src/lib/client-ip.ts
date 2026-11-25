@@ -20,6 +20,8 @@ import { timingSafeEqual } from "node:crypto";
 import { headers } from "next/headers";
 
 export const CLIENT_IP_HEADER = "x-binx-client-ip";
+/** The visitor's browser, for signature evidence (see binx-api's client_user_agent). */
+export const CLIENT_UA_HEADER = "x-binx-client-ua";
 export const PROXY_SECRET_HEADER = "x-binx-proxy-secret";
 
 function secretsMatch(given: string | null, expected: string): boolean {
@@ -48,10 +50,22 @@ export function resolveClientIp(
   return first || headerList.get("x-real-ip")?.trim() || null;
 }
 
+/** The visitor's User-Agent, with the same trust rule as `resolveClientIp`. */
+export function resolveClientUserAgent(
+  headerList: Headers,
+  secret: string,
+): string | null {
+  if (secretsMatch(headerList.get(PROXY_SECRET_HEADER), secret)) {
+    const forwarded = headerList.get(CLIENT_UA_HEADER)?.trim();
+    if (forwarded) return forwarded;
+  }
+  return headerList.get("user-agent")?.trim() || null;
+}
+
 /**
  * Headers to add to a server-side call to binx-api or to our own Route
- * Handlers. Empty when the secret isn't configured or there's no request in
- * scope (build time, background work).
+ * Handlers: the visitor's IP and browser. Empty when the secret isn't
+ * configured or there's no request in scope (build time, background work).
  */
 export async function clientIpHeaders(): Promise<Record<string, string>> {
   const secret = process.env.PROXY_SHARED_SECRET;
@@ -63,5 +77,11 @@ export async function clientIpHeaders(): Promise<Record<string, string>> {
     return {};
   }
   const ip = resolveClientIp(headerList, secret);
-  return ip ? { [CLIENT_IP_HEADER]: ip, [PROXY_SECRET_HEADER]: secret } : {};
+  if (!ip) return {};
+  const userAgent = resolveClientUserAgent(headerList, secret);
+  return {
+    [CLIENT_IP_HEADER]: ip,
+    [PROXY_SECRET_HEADER]: secret,
+    ...(userAgent ? { [CLIENT_UA_HEADER]: userAgent.slice(0, 512) } : {}),
+  };
 }

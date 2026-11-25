@@ -27,9 +27,11 @@ export interface PortalProposalActionResult {
 
 export async function signPortalProposalAction(
   proposalId: string,
+  consent: boolean,
+  documentHash: string | null,
 ): Promise<PortalProposalActionResult> {
   try {
-    const proposal = await signPortalProposal(proposalId);
+    const proposal = await signPortalProposal(proposalId, consent, documentHash);
     refresh();
     return { proposal };
   } catch (error) {

@@ -15,6 +15,8 @@
 
 import type { ProposalDetail } from "@/lib/proposals";
 import { proposalStatusLabel } from "@/lib/proposals-client";
+import Link from "next/link";
+
 import { formatMoneyCents } from "@/lib/money";
 import ProposalAttachmentList from "@/components/proposals/ProposalAttachmentList/ProposalAttachmentList";
 
@@ -25,6 +27,8 @@ interface ProposalViewProps {
   /** Download URL prefix for attachments (`${base}/${id}`). Omit to hide
    * the documents section. */
   attachmentHrefBase?: string;
+  /** Where the signing certificate is, once signed. */
+  certificateHref?: string;
 }
 
 function formatDate(iso: string): string {
@@ -35,12 +39,21 @@ function formatDate(iso: string): string {
   });
 }
 
+const SIGNED_VIA: Record<string, string> = {
+  portal: " in the client portal",
+  link: " from the share link",
+};
+
 function quantityLabel(quantity: string): string {
   const n = Number.parseFloat(quantity);
   return Number.isInteger(n) ? String(n) : quantity;
 }
 
-const ProposalView = ({ proposal, attachmentHrefBase }: ProposalViewProps) => {
+const ProposalView = ({
+  proposal,
+  attachmentHrefBase,
+  certificateHref,
+}: ProposalViewProps) => {
   const currency = proposal.currency;
 
   return (
@@ -171,7 +184,13 @@ const ProposalView = ({ proposal, attachmentHrefBase }: ProposalViewProps) => {
           </p>
           <p className={styles.partyLine}>
             Signed {formatDate(proposal.signature.signed_at)}
+            {SIGNED_VIA[proposal.signature.signed_via ?? ""] ?? ""}
           </p>
+          {certificateHref && (
+            <Link href={certificateHref} className={styles.certificateLink}>
+              View the signing certificate →
+            </Link>
+          )}
         </section>
       )}
 

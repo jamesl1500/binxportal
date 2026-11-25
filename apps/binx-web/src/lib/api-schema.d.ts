@@ -3160,6 +3160,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agencies/{agency_id}/proposals/{proposal_id}/certificate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Proposal Certificate */
+        get: operations["proposal_certificate_agencies__agency_id__proposals__proposal_id__certificate_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/proposals/{proposal_id}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Proposal Events
+         * @description The audit trail: sent, every view, signed or declined, with where
+         *     each came from. Staff only.
+         */
+        get: operations["list_proposal_events_agencies__agency_id__proposals__proposal_id__events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agencies/{agency_id}/proposals/{proposal_id}/send": {
         parameters: {
             query?: never;
@@ -4707,6 +4745,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/portal/proposals/{proposal_id}/certificate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Portal Proposal Certificate */
+        get: operations["portal_proposal_certificate_portal_proposals__proposal_id__certificate_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/portal/proposals/{proposal_id}/decline": {
         parameters: {
             query?: never;
@@ -4805,6 +4860,23 @@ export interface paths {
         };
         /** Download Public Attachment */
         get: operations["download_public_attachment_proposals_public__token__attachments__attachment_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/proposals/public/{token}/certificate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Public Certificate */
+        get: operations["public_certificate_proposals_public__token__certificate_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6693,6 +6765,54 @@ export interface components {
             leads: components["schemas"]["LeadListRead"][];
             /** Skipped */
             skipped: number;
+        };
+        /** CertificateAttachmentRead */
+        CertificateAttachmentRead: {
+            /** File Name */
+            file_name: string;
+            /** Sha256 */
+            sha256: string;
+            /** Size */
+            size: number;
+        };
+        /** CertificateLineRead */
+        CertificateLineRead: {
+            /** Amount Cents */
+            amount_cents: number;
+            /** Description */
+            description: string;
+            /** Details */
+            details: string | null;
+            /** Quantity */
+            quantity: string;
+            /** Unit Price Cents */
+            unit_price_cents: number;
+        };
+        /** CertificateSignatureRead */
+        CertificateSignatureRead: {
+            /** Consent Text */
+            consent_text: string | null;
+            /** Consent Version */
+            consent_version: string | null;
+            /** Document Hash */
+            document_hash: string | null;
+            /** Ip Address */
+            ip_address: string | null;
+            /** Signature Text */
+            signature_text: string;
+            /**
+             * Signed At
+             * Format: date-time
+             */
+            signed_at: string;
+            /** Signed Via */
+            signed_via: string | null;
+            /** Signer Email */
+            signer_email: string;
+            /** Signer Name */
+            signer_name: string;
+            /** User Agent */
+            user_agent: string | null;
         };
         /** ChangePasswordRequest */
         ChangePasswordRequest: {
@@ -9328,6 +9448,20 @@ export interface components {
             /** Status */
             status: string;
         };
+        /**
+         * PortalProposalSignRequest
+         * @description The portal knows who's signing; it still needs consent and the
+         *     fingerprint of what they saw.
+         */
+        PortalProposalSignRequest: {
+            /**
+             * Consent
+             * @default false
+             */
+            consent: boolean;
+            /** Document Hash */
+            document_hash?: string | null;
+        };
         /** PortalTaskListRead */
         PortalTaskListRead: {
             /**
@@ -9768,6 +9902,61 @@ export interface components {
             /** Size */
             size: number;
         };
+        /**
+         * ProposalCertificateRead
+         * @description The record of a signed proposal: the document exactly as it was sent
+         *     (read from the frozen snapshot, not today's rows), the signature with its
+         *     evidence, and the audit trail.
+         */
+        ProposalCertificateRead: {
+            /** Agency Name */
+            agency_name: string;
+            /** Attachments */
+            attachments: components["schemas"]["CertificateAttachmentRead"][];
+            /** Content */
+            content: string | null;
+            /** Currency */
+            currency: string;
+            /** Document Hash */
+            document_hash: string;
+            /** Document Intact */
+            document_intact: boolean;
+            /** Events */
+            events: components["schemas"]["ProposalEventRead"][];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /** Line Items */
+            line_items: components["schemas"]["CertificateLineRead"][];
+            /**
+             * Proposal Id
+             * Format: uuid
+             */
+            proposal_id: string;
+            /** Recipient Email */
+            recipient_email: string | null;
+            /** Recipient Name */
+            recipient_name: string | null;
+            /** Sent At */
+            sent_at: string | null;
+            signature: components["schemas"]["CertificateSignatureRead"];
+            /** Signature Matches Document */
+            signature_matches_document: boolean;
+            /** Subtotal Cents */
+            subtotal_cents: number;
+            /** Tax Cents */
+            tax_cents: number;
+            /** Tax Rate Percent */
+            tax_rate_percent: string;
+            /** Title */
+            title: string;
+            /** Total Cents */
+            total_cents: number;
+            /** Valid Until */
+            valid_until: string | null;
+        };
         /** ProposalCreate */
         ProposalCreate: {
             /** Client Id */
@@ -9815,6 +10004,10 @@ export interface components {
             client_id: string | null;
             /** Client Name */
             client_name: string | null;
+            /** Consent Text */
+            consent_text: string;
+            /** Consent Version */
+            consent_version: string;
             /** Content */
             content: string | null;
             /**
@@ -9830,6 +10023,8 @@ export interface components {
             decline_reason: string | null;
             /** Display Status */
             display_status: string;
+            /** Document Hash */
+            document_hash: string | null;
             /**
              * Id
              * Format: uuid
@@ -9866,6 +10061,24 @@ export interface components {
             valid_until: string | null;
             /** Viewed At */
             viewed_at: string | null;
+        };
+        /** ProposalEventRead */
+        ProposalEventRead: {
+            /** Actor Label */
+            actor_label: string | null;
+            /** Detail */
+            detail: string | null;
+            /** Ip Address */
+            ip_address: string | null;
+            /** Kind */
+            kind: string;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /** User Agent */
+            user_agent: string | null;
         };
         /** ProposalLineItemInput */
         ProposalLineItemInput: {
@@ -9912,12 +10125,18 @@ export interface components {
             agency_name: string;
             /** Attachments */
             attachments: components["schemas"]["ProposalAttachmentRead"][];
+            /** Consent Text */
+            consent_text: string;
+            /** Consent Version */
+            consent_version: string;
             /** Content */
             content: string | null;
             /** Currency */
             currency: string;
             /** Display Status */
             display_status: string;
+            /** Document Hash */
+            document_hash: string | null;
             /** Line Items */
             line_items: components["schemas"]["ProposalLineItemRead"][];
             /** Recipient Name */
@@ -9989,6 +10208,13 @@ export interface components {
         /** ProposalSignRequest */
         ProposalSignRequest: {
             /**
+             * Consent
+             * @default false
+             */
+            consent: boolean;
+            /** Document Hash */
+            document_hash?: string | null;
+            /**
              * Signer Email
              * Format: email
              */
@@ -10003,6 +10229,8 @@ export interface components {
              * Format: date-time
              */
             signed_at: string;
+            /** Signed Via */
+            signed_via?: string | null;
             /** Signer Email */
             signer_email: string;
             /** Signer Name */
@@ -19613,6 +19841,70 @@ export interface operations {
             };
         };
     };
+    proposal_certificate_agencies__agency_id__proposals__proposal_id__certificate_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposal_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalCertificateRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_proposal_events_agencies__agency_id__proposals__proposal_id__events_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposal_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalEventRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     send_proposal_agencies__agency_id__proposals__proposal_id__send_post: {
         parameters: {
             query?: never;
@@ -22878,6 +23170,37 @@ export interface operations {
             };
         };
     };
+    portal_proposal_certificate_portal_proposals__proposal_id__certificate_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalCertificateRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     decline_portal_proposal_portal_proposals__proposal_id__decline_post: {
         parameters: {
             query?: never;
@@ -22922,7 +23245,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PortalProposalSignRequest"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {
@@ -23045,6 +23372,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    public_certificate_proposals_public__token__certificate_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalCertificateRead"];
                 };
             };
             /** @description Validation Error */

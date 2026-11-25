@@ -4752,6 +4752,170 @@
         "title": "BulkAnalyzeRead",
         "type": "object"
       },
+      "CertificateAttachmentRead": {
+        "properties": {
+          "file_name": {
+            "title": "File Name",
+            "type": "string"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          },
+          "size": {
+            "title": "Size",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "file_name",
+          "size",
+          "sha256"
+        ],
+        "title": "CertificateAttachmentRead",
+        "type": "object"
+      },
+      "CertificateLineRead": {
+        "properties": {
+          "amount_cents": {
+            "title": "Amount Cents",
+            "type": "integer"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "details": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details"
+          },
+          "quantity": {
+            "title": "Quantity",
+            "type": "string"
+          },
+          "unit_price_cents": {
+            "title": "Unit Price Cents",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "description",
+          "details",
+          "quantity",
+          "unit_price_cents",
+          "amount_cents"
+        ],
+        "title": "CertificateLineRead",
+        "type": "object"
+      },
+      "CertificateSignatureRead": {
+        "properties": {
+          "consent_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consent Text"
+          },
+          "consent_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consent Version"
+          },
+          "document_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Hash"
+          },
+          "ip_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ip Address"
+          },
+          "signature_text": {
+            "title": "Signature Text",
+            "type": "string"
+          },
+          "signed_at": {
+            "format": "date-time",
+            "title": "Signed At",
+            "type": "string"
+          },
+          "signed_via": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed Via"
+          },
+          "signer_email": {
+            "title": "Signer Email",
+            "type": "string"
+          },
+          "signer_name": {
+            "title": "Signer Name",
+            "type": "string"
+          },
+          "user_agent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Agent"
+          }
+        },
+        "required": [
+          "signer_name",
+          "signer_email",
+          "signature_text",
+          "signed_at",
+          "ip_address",
+          "user_agent",
+          "signed_via",
+          "consent_version",
+          "consent_text",
+          "document_hash"
+        ],
+        "title": "CertificateSignatureRead",
+        "type": "object"
+      },
       "ChangePasswordRequest": {
         "properties": {
           "current_password": {
@@ -12607,6 +12771,30 @@
         "title": "PortalProjectRead",
         "type": "object"
       },
+      "PortalProposalSignRequest": {
+        "description": "The portal knows who's signing; it still needs consent and the\nfingerprint of what they saw.",
+        "properties": {
+          "consent": {
+            "default": false,
+            "title": "Consent",
+            "type": "boolean"
+          },
+          "document_hash": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Hash"
+          }
+        },
+        "title": "PortalProposalSignRequest",
+        "type": "object"
+      },
       "PortalTaskListRead": {
         "properties": {
           "id": {
@@ -13781,6 +13969,167 @@
         "title": "ProposalAttachmentRead",
         "type": "object"
       },
+      "ProposalCertificateRead": {
+        "description": "The record of a signed proposal: the document exactly as it was sent\n(read from the frozen snapshot, not today's rows), the signature with its\nevidence, and the audit trail.",
+        "properties": {
+          "agency_name": {
+            "title": "Agency Name",
+            "type": "string"
+          },
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/CertificateAttachmentRead"
+            },
+            "title": "Attachments",
+            "type": "array"
+          },
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "document_hash": {
+            "title": "Document Hash",
+            "type": "string"
+          },
+          "document_intact": {
+            "title": "Document Intact",
+            "type": "boolean"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/ProposalEventRead"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "line_items": {
+            "items": {
+              "$ref": "#/components/schemas/CertificateLineRead"
+            },
+            "title": "Line Items",
+            "type": "array"
+          },
+          "proposal_id": {
+            "format": "uuid",
+            "title": "Proposal Id",
+            "type": "string"
+          },
+          "recipient_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recipient Email"
+          },
+          "recipient_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recipient Name"
+          },
+          "sent_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sent At"
+          },
+          "signature": {
+            "$ref": "#/components/schemas/CertificateSignatureRead"
+          },
+          "signature_matches_document": {
+            "title": "Signature Matches Document",
+            "type": "boolean"
+          },
+          "subtotal_cents": {
+            "title": "Subtotal Cents",
+            "type": "integer"
+          },
+          "tax_cents": {
+            "title": "Tax Cents",
+            "type": "integer"
+          },
+          "tax_rate_percent": {
+            "title": "Tax Rate Percent",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "total_cents": {
+            "title": "Total Cents",
+            "type": "integer"
+          },
+          "valid_until": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid Until"
+          }
+        },
+        "required": [
+          "proposal_id",
+          "agency_name",
+          "title",
+          "recipient_name",
+          "recipient_email",
+          "content",
+          "currency",
+          "tax_rate_percent",
+          "subtotal_cents",
+          "tax_cents",
+          "total_cents",
+          "valid_until",
+          "sent_at",
+          "line_items",
+          "attachments",
+          "document_hash",
+          "document_intact",
+          "signature_matches_document",
+          "signature",
+          "events",
+          "generated_at"
+        ],
+        "title": "ProposalCertificateRead",
+        "type": "object"
+      },
       "ProposalCreate": {
         "properties": {
           "client_id": {
@@ -13950,6 +14299,14 @@
             ],
             "title": "Client Name"
           },
+          "consent_text": {
+            "title": "Consent Text",
+            "type": "string"
+          },
+          "consent_version": {
+            "title": "Consent Version",
+            "type": "string"
+          },
           "content": {
             "anyOf": [
               {
@@ -13996,6 +14353,17 @@
           "display_status": {
             "title": "Display Status",
             "type": "string"
+          },
+          "document_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Hash"
           },
           "id": {
             "format": "uuid",
@@ -14156,9 +14524,79 @@
           "share_url",
           "line_items",
           "attachments",
-          "signature"
+          "signature",
+          "document_hash",
+          "consent_text",
+          "consent_version"
         ],
         "title": "ProposalDetailRead",
+        "type": "object"
+      },
+      "ProposalEventRead": {
+        "properties": {
+          "actor_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor Label"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "ip_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ip Address"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "user_agent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Agent"
+          }
+        },
+        "required": [
+          "kind",
+          "occurred_at",
+          "actor_label",
+          "ip_address",
+          "user_agent",
+          "detail"
+        ],
+        "title": "ProposalEventRead",
         "type": "object"
       },
       "ProposalLineItemInput": {
@@ -14297,6 +14735,14 @@
             "title": "Attachments",
             "type": "array"
           },
+          "consent_text": {
+            "title": "Consent Text",
+            "type": "string"
+          },
+          "consent_version": {
+            "title": "Consent Version",
+            "type": "string"
+          },
           "content": {
             "anyOf": [
               {
@@ -14315,6 +14761,17 @@
           "display_status": {
             "title": "Display Status",
             "type": "string"
+          },
+          "document_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Hash"
           },
           "line_items": {
             "items": {
@@ -14396,7 +14853,10 @@
           "valid_until",
           "line_items",
           "attachments",
-          "signature"
+          "signature",
+          "document_hash",
+          "consent_text",
+          "consent_version"
         ],
         "title": "ProposalPublicRead",
         "type": "object"
@@ -14564,6 +15024,23 @@
       },
       "ProposalSignRequest": {
         "properties": {
+          "consent": {
+            "default": false,
+            "title": "Consent",
+            "type": "boolean"
+          },
+          "document_hash": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Hash"
+          },
           "signer_email": {
             "format": "email",
             "title": "Signer Email",
@@ -14589,6 +15066,17 @@
             "format": "date-time",
             "title": "Signed At",
             "type": "string"
+          },
+          "signed_via": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed Via"
           },
           "signer_email": {
             "title": "Signer Email",
@@ -34027,6 +34515,127 @@
         ]
       }
     },
+    "/agencies/{agency_id}/proposals/{proposal_id}/certificate": {
+      "get": {
+        "operationId": "proposal_certificate_agencies__agency_id__proposals__proposal_id__certificate_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Proposal Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalCertificateRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Proposal Certificate",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/proposals/{proposal_id}/events": {
+      "get": {
+        "description": "The audit trail: sent, every view, signed or declined, with where\neach came from. Staff only.",
+        "operationId": "list_proposal_events_agencies__agency_id__proposals__proposal_id__events_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Proposal Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProposalEventRead"
+                  },
+                  "title": "Response List Proposal Events Agencies  Agency Id  Proposals  Proposal Id  Events Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Proposal Events",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
     "/agencies/{agency_id}/proposals/{proposal_id}/send": {
       "post": {
         "operationId": "send_proposal_agencies__agency_id__proposals__proposal_id__send_post",
@@ -39575,6 +40184,54 @@
         ]
       }
     },
+    "/portal/proposals/{proposal_id}/certificate": {
+      "get": {
+        "operationId": "portal_proposal_certificate_portal_proposals__proposal_id__certificate_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Proposal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalCertificateRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Portal Proposal Certificate",
+        "tags": [
+          "client-portal"
+        ]
+      }
+    },
     "/portal/proposals/{proposal_id}/decline": {
       "post": {
         "operationId": "decline_portal_proposal_portal_proposals__proposal_id__decline_post",
@@ -39649,6 +40306,16 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PortalProposalSignRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "content": {
@@ -39845,6 +40512,48 @@
           }
         },
         "summary": "Download Public Attachment",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
+    "/proposals/public/{token}/certificate": {
+      "get": {
+        "operationId": "public_certificate_proposals_public__token__certificate_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalCertificateRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Public Certificate",
         "tags": [
           "proposals"
         ]

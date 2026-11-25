@@ -5,16 +5,24 @@ from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Upl
 
 from binx_api.core import storage
 from binx_api.core.dependencies import CurrentUser, DbSession
-from binx_api.core.rate_limit import client_ip
+from binx_api.core.rate_limit import client_ip, client_user_agent
 from binx_api.modules.agencies.dependencies import require_agency_role
 from binx_api.modules.agencies.models import ROLE_ADMIN, ROLE_MEMBER, ROLE_OWNER, Agency
-from binx_api.modules.proposals import service
-from binx_api.modules.proposals.models import STATUS_DRAFT, Proposal, ProposalAttachment, ProposalLineItem
+from binx_api.modules.proposals import service, signing
+from binx_api.modules.proposals.models import (
+    STATUS_DRAFT,
+    Proposal,
+    ProposalAttachment,
+    ProposalLineItem,
+    ProposalSignature,
+)
 from binx_api.modules.proposals.schemas import (
     ProposalAttachmentRead,
+    ProposalCertificateRead,
     ProposalCreate,
     ProposalDeclineRequest,
     ProposalDetailRead,
+    ProposalEventRead,
     ProposalLineItemRead,
     ProposalPublicRead,
     ProposalRead,
@@ -60,6 +68,33 @@ async def attachment_download(attachment: ProposalAttachment):
     )
 
 
+def signature_read(signature: ProposalSignature | None) -> ProposalSignatureRead | None:
+    if signature is None:
+        return None
+    return ProposalSignatureRead(
+        signer_name=signature.signer_name,
+        signer_email=signature.signer_email,
+        signed_at=signature.signed_at,
+        signed_via=signature.signed_via,
+    )
+
+
+def signing_fields(proposal: Proposal) -> dict:
+    """The e-sign fields every proposal read carries."""
+    return {
+        "document_hash": proposal.document_hash,
+        "consent_text": signing.CONSENT_TEXT,
+        "consent_version": signing.CONSENT_VERSION,
+    }
+
+
+def link_visitor(request: Request) -> service.Visitor:
+    """The share-link recipient: no account, so the trail names the link."""
+    return service.Visitor(
+        ip_address=client_ip(request), user_agent=client_user_agent(request), label="Recipient (share link)"
+    )
+
+
 def _read(proposal: Proposal, lead_name: str | None, client_name: str | None) -> ProposalRead:
     return ProposalRead(
         id=proposal.id,
@@ -100,13 +135,8 @@ async def _detail_read(
         share_url=service.share_url(proposal),
         line_items=[_line_item_read(item) for item in line_items],
         attachments=[attachment_read(item) for item in attachments],
-        signature=(
-            ProposalSignatureRead(
-                signer_name=signature.signer_name, signer_email=signature.signer_email, signed_at=signature.signed_at
-            )
-            if signature
-            else None
-        ),
+        signature=signature_read(signature),
+        **signing_fields(proposal),
     )
 
 
@@ -223,6 +253,26 @@ async def send_proposal(
     return await _detail_read(db, proposal, lead_name, client_name)
 
 
+@router.get("/{proposal_id}/events", response_model=list[ProposalEventRead])
+async def list_proposal_events(
+    db: DbSession, agency_and_role: AnyMember, proposal_id: uuid.UUID
+) -> list[ProposalEventRead]:
+    """The audit trail: sent, every view, signed or declined, with where
+    each came from. Staff only."""
+    agency, _role = agency_and_role
+    proposal = await service.get_proposal_or_404(db, agency.id, proposal_id)
+    return [signing.event_read(event) for event in await signing.list_events(db, proposal.id)]
+
+
+@router.get("/{proposal_id}/certificate", response_model=ProposalCertificateRead)
+async def proposal_certificate(
+    db: DbSession, agency_and_role: AnyMember, proposal_id: uuid.UUID
+) -> ProposalCertificateRead:
+    agency, _role = agency_and_role
+    proposal = await service.get_proposal_or_404(db, agency.id, proposal_id)
+    return await signing.build_certificate(db, proposal)
+
+
 # ---- Attachments (staff) ----------------------------------------------------
 
 
@@ -271,13 +321,17 @@ async def download_attachment(
 
 
 @public_router.get("/{token}", response_model=ProposalPublicRead)
-async def read_public_proposal(db: DbSession, token: str) -> ProposalPublicRead:
-    proposal, agency = await service.get_public_proposal(db, token)
+async def read_public_proposal(db: DbSession, token: str, request: Request) -> ProposalPublicRead:
+    proposal, agency = await service.get_public_proposal(db, token, link_visitor(request))
+    return await _public_read(db, proposal, agency.name)
+
+
+async def _public_read(db: DbSession, proposal: Proposal, agency_name: str) -> ProposalPublicRead:
     line_items = await service.list_line_items(db, proposal.id)
     attachments = await service.list_attachments(db, proposal.id)
     signature = await service.get_signature(db, proposal.id)
     return ProposalPublicRead(
-        agency_name=agency.name,
+        agency_name=agency_name,
         title=proposal.title,
         recipient_name=proposal.recipient_name,
         status=proposal.status,
@@ -291,14 +345,23 @@ async def read_public_proposal(db: DbSession, token: str) -> ProposalPublicRead:
         valid_until=proposal.valid_until,
         line_items=[_line_item_read(item) for item in line_items],
         attachments=[attachment_read(item) for item in attachments],
-        signature=(
-            ProposalSignatureRead(
-                signer_name=signature.signer_name, signer_email=signature.signer_email, signed_at=signature.signed_at
-            )
-            if signature
-            else None
-        ),
+        signature=signature_read(signature),
+        **signing_fields(proposal),
     )
+
+
+async def _public_after_change(db: DbSession, proposal: Proposal) -> ProposalPublicRead:
+    """The public read after a sign/decline, without logging another view."""
+    from binx_api.modules.agencies.models import Agency
+
+    agency = await db.get(Agency, proposal.agency_id)
+    return await _public_read(db, proposal, agency.name if agency else "")
+
+
+@public_router.get("/{token}/certificate", response_model=ProposalCertificateRead)
+async def public_certificate(db: DbSession, token: str) -> ProposalCertificateRead:
+    proposal = await service.get_proposal_by_token_or_404(db, token)
+    return await signing.build_certificate(db, proposal)
 
 
 @public_router.get("/{token}/attachments/{attachment_id}")
@@ -323,12 +386,18 @@ async def sign_public_proposal(
         signer_name=data.signer_name,
         signer_email=data.signer_email,
         ip_address=client_ip(request),
+        user_agent=client_user_agent(request),
+        signed_via=service.SIGNED_VIA_LINK,
+        consent=data.consent,
+        document_hash=data.document_hash,
     )
-    return await read_public_proposal(db, token)
+    return await _public_after_change(db, proposal)
 
 
 @public_router.post("/{token}/decline", response_model=ProposalPublicRead)
-async def decline_public_proposal(db: DbSession, token: str, data: ProposalDeclineRequest) -> ProposalPublicRead:
+async def decline_public_proposal(
+    db: DbSession, token: str, data: ProposalDeclineRequest, request: Request
+) -> ProposalPublicRead:
     proposal = await service.get_proposal_by_token_or_404(db, token)
-    await service.decline_proposal(db, proposal, reason=data.reason)
-    return await read_public_proposal(db, token)
+    proposal = await service.decline_proposal(db, proposal, reason=data.reason, visitor=link_visitor(request))
+    return await _public_after_change(db, proposal)

@@ -76,7 +76,13 @@ class TestSendSignDecline:
         assert fetched.status == "viewed"  # first public view flips sent -> viewed
 
         signed = await service.sign_proposal(
-            db_session, fetched, signer_name="Jane Prospect", signer_email="jane@example.com", ip_address="1.2.3.4"
+            db_session,
+            fetched,
+            signer_name="Jane Prospect",
+            signer_email="jane@example.com",
+            ip_address="1.2.3.4",
+            consent=True,
+            document_hash=fetched.document_hash,
         )
         assert signed.status == STATUS_SIGNED
         assert signed.decided_at is not None

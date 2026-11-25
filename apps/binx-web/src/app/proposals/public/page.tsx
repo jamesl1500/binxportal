@@ -13,6 +13,7 @@
  * @author Binx Portal
  */
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { getPublicProposal } from "@/lib/proposals";
 import { proposalStatusLabel } from "@/lib/proposals-client";
@@ -182,6 +183,15 @@ const PublicProposalPage = async ({
           </div>
         )}
 
+        {proposal.status === "signed" && (
+          <Link
+            href={`/proposals/public/certificate?token=${encodeURIComponent(token)}`}
+            className={styles.certificateLink}
+          >
+            View the signing certificate →
+          </Link>
+        )}
+
         {proposal.status === "declined" && (
           <div className={styles.decision}>
             <p className={styles.decisionTitle}>This proposal was declined.</p>
@@ -202,6 +212,8 @@ const PublicProposalPage = async ({
             <PublicProposalActions
               token={token}
               recipientName={proposal.recipient_name}
+              consentText={proposal.consent_text}
+              documentHash={proposal.document_hash}
             />
           </div>
         )}

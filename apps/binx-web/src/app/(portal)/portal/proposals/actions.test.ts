@@ -18,22 +18,22 @@ beforeEach(() => {
 describe("portal proposal actions", () => {
   it("signs the proposal and returns it", async () => {
     vi.mocked(portal.signPortalProposal).mockResolvedValueOnce({ status: "signed" } as never);
-    const result = await signPortalProposalAction("p1");
+    const result = await signPortalProposalAction("p1", true, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
     expect(result).toEqual({ proposal: { status: "signed" } });
-    expect(portal.signPortalProposal).toHaveBeenCalledWith("p1");
+    expect(portal.signPortalProposal).toHaveBeenCalledWith("p1", true, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
   });
 
   it("maps an AuthApiError to its message on sign", async () => {
     vi.mocked(portal.signPortalProposal).mockRejectedValueOnce(
       new AuthApiError("This proposal has expired — ask the agency to resend it", 409),
     );
-    const result = await signPortalProposalAction("p1");
+    const result = await signPortalProposalAction("p1", true, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
     expect(result).toEqual({ error: "This proposal has expired — ask the agency to resend it" });
   });
 
   it("falls back to a generic message for an unknown sign error", async () => {
     vi.mocked(portal.signPortalProposal).mockRejectedValueOnce(new Error("boom"));
-    const result = await signPortalProposalAction("p1");
+    const result = await signPortalProposalAction("p1", true, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
     expect(result).toEqual({ error: "Unable to sign this proposal" });
   });
 

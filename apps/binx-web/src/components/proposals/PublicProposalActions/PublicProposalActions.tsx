@@ -2,6 +2,8 @@
  * PublicProposalActions.tsx
  *
  * The sign / decline form a recipient sees on the public share-token page.
+ * Signing needs the e-sign consent ticked (SignatureConsent) and sends the
+ * fingerprint of the version shown, so the signature is tied to it.
  * Only rendered for a proposal that's still awaiting a decision (sent or
  * viewed) — the page itself shows read-only signature / decline info once
  * one has been made. Calls the co-located public `"use server"` actions,
@@ -20,12 +22,15 @@ import {
   declinePublicProposalAction,
   signPublicProposalAction,
 } from "@/app/proposals/public/actions";
+import SignatureConsent from "@/components/proposals/SignatureConsent/SignatureConsent";
 
 import styles from "./PublicProposalActions.module.scss";
 
 interface PublicProposalActionsProps {
   token: string;
   recipientName?: string | null;
+  consentText: string;
+  documentHash: string | null;
 }
 
 type Mode = "choose" | "sign" | "decline";
@@ -33,22 +38,32 @@ type Mode = "choose" | "sign" | "decline";
 const PublicProposalActions = ({
   token,
   recipientName,
+  consentText,
+  documentHash,
 }: PublicProposalActionsProps) => {
   const [isPending, startTransition] = useTransition();
   const [mode, setMode] = useState<Mode>("choose");
   const [signerName, setSignerName] = useState(recipientName ?? "");
   const [signerEmail, setSignerEmail] = useState("");
+  const [consent, setConsent] = useState(false);
   const [reason, setReason] = useState("");
 
   const handleSign = (event: React.FormEvent) => {
     event.preventDefault();
-    if (signerName.trim() === "" || signerEmail.trim() === "" || isPending)
+    if (
+      signerName.trim() === "" ||
+      signerEmail.trim() === "" ||
+      !consent ||
+      isPending
+    )
       return;
     startTransition(async () => {
       const result = await signPublicProposalAction(
         token,
         signerName.trim(),
         signerEmail.trim(),
+        consent,
+        documentHash,
       );
       if (result.error) {
         toast.error(result.error);
@@ -115,6 +130,12 @@ const PublicProposalActions = ({
             required
           />
         </label>
+        <SignatureConsent
+          consentText={consentText}
+          documentHash={documentHash}
+          checked={consent}
+          onChange={setConsent}
+        />
         <div className={styles.formActions}>
           <button
             type="button"
@@ -127,7 +148,10 @@ const PublicProposalActions = ({
             type="submit"
             className={styles.primary}
             disabled={
-              isPending || signerName.trim() === "" || signerEmail.trim() === ""
+              isPending ||
+              !consent ||
+              signerName.trim() === "" ||
+              signerEmail.trim() === ""
             }
           >
             {isPending ? "Signing…" : "Sign proposal"}

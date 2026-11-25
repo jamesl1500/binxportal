@@ -5,7 +5,7 @@ vi.mock("next/headers", () => ({
   headers: async () => mockHeaderMap,
 }));
 
-import { clientIpHeaders, resolveClientIp } from "@/lib/client-ip";
+import { clientIpHeaders, resolveClientIp, resolveClientUserAgent } from "@/lib/client-ip";
 
 describe("resolveClientIp", () => {
   it("uses the first X-Forwarded-For hop by default", () => {
@@ -53,5 +53,28 @@ describe("clientIpHeaders", () => {
       "x-binx-client-ip": "203.0.113.7",
       "x-binx-proxy-secret": "s3cret",
     });
+  });
+
+  it("forwards the visitor's browser for signature evidence", async () => {
+    vi.stubEnv("PROXY_SHARED_SECRET", "s3cret");
+    mockHeaderMap.set("x-forwarded-for", "203.0.113.7");
+    mockHeaderMap.set("user-agent", "Mozilla/5.0 (Chrome)");
+    expect(await clientIpHeaders()).toEqual({
+      "x-binx-client-ip": "203.0.113.7",
+      "x-binx-proxy-secret": "s3cret",
+      "x-binx-client-ua": "Mozilla/5.0 (Chrome)",
+    });
+  });
+});
+
+describe("resolveClientUserAgent", () => {
+  it("trusts a forwarded browser only with the shared secret", () => {
+    const forwarded = new Headers({
+      "user-agent": "node",
+      "x-binx-client-ua": "Mozilla/5.0 (Safari)",
+      "x-binx-proxy-secret": "s3cret",
+    });
+    expect(resolveClientUserAgent(forwarded, "s3cret")).toBe("Mozilla/5.0 (Safari)");
+    expect(resolveClientUserAgent(forwarded, "other")).toBe("node");
   });
 });
