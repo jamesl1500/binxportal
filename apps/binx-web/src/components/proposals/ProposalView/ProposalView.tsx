@@ -2,8 +2,11 @@
  * ProposalView.tsx
  *
  * The read layout for a proposal: title, status, recipient info, the
- * line-item table, totals, the content block, and — once decided —
- * signature details or a decline reason.
+ * line-item table (with each line's details), totals, the content block,
+ * attached documents, and — once decided — signature details or a decline
+ * reason. Shared by staff and the client portal; each passes the
+ * `attachmentHrefBase` for its own download route. Without it the documents
+ * section is left out (the staff draft page manages them separately).
  *
  * @module apps/binx-web/src/components/proposals/ProposalView/ProposalView.tsx
  * @author Binx Portal
@@ -13,11 +16,15 @@
 import type { ProposalDetail } from "@/lib/proposals";
 import { proposalStatusLabel } from "@/lib/proposals-client";
 import { formatMoneyCents } from "@/lib/money";
+import ProposalAttachmentList from "@/components/proposals/ProposalAttachmentList/ProposalAttachmentList";
 
 import styles from "./ProposalView.module.scss";
 
 interface ProposalViewProps {
   proposal: ProposalDetail;
+  /** Download URL prefix for attachments (`${base}/${id}`). Omit to hide
+   * the documents section. */
+  attachmentHrefBase?: string;
 }
 
 function formatDate(iso: string): string {
@@ -33,7 +40,7 @@ function quantityLabel(quantity: string): string {
   return Number.isInteger(n) ? String(n) : quantity;
 }
 
-const ProposalView = ({ proposal }: ProposalViewProps) => {
+const ProposalView = ({ proposal, attachmentHrefBase }: ProposalViewProps) => {
   const currency = proposal.currency;
 
   return (
@@ -101,7 +108,12 @@ const ProposalView = ({ proposal }: ProposalViewProps) => {
           <tbody>
             {proposal.line_items.map((item) => (
               <tr key={item.id}>
-                <td>{item.description}</td>
+                <td>
+                  {item.description}
+                  {item.details && (
+                    <span className={styles.lineDetails}>{item.details}</span>
+                  )}
+                </td>
                 <td className={styles.numCol}>
                   {quantityLabel(item.quantity)}
                 </td>
@@ -140,6 +152,16 @@ const ProposalView = ({ proposal }: ProposalViewProps) => {
           <dd>{formatMoneyCents(proposal.total_cents, currency)}</dd>
         </div>
       </dl>
+
+      {attachmentHrefBase && proposal.attachments.length > 0 && (
+        <section>
+          <h2 className={styles.sectionLabel}>Documents</h2>
+          <ProposalAttachmentList
+            attachments={proposal.attachments}
+            hrefBase={attachmentHrefBase}
+          />
+        </section>
+      )}
 
       {proposal.signature && (
         <section className={styles.decision}>

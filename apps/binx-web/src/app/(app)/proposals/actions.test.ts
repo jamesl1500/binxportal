@@ -6,6 +6,8 @@ vi.mock("@/lib/proposals", () => ({
   updateProposal: vi.fn(),
   deleteProposal: vi.fn(),
   sendProposal: vi.fn(),
+  uploadProposalAttachment: vi.fn(),
+  deleteProposalAttachment: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -21,8 +23,10 @@ import { redirect } from "next/navigation";
 import {
   createProposalAction,
   deleteProposalAction,
+  deleteProposalAttachmentAction,
   sendProposalAction,
   updateProposalAction,
+  uploadProposalAttachmentAction,
 } from "./actions";
 
 const agencyId = "a1";
@@ -98,5 +102,48 @@ describe("proposals actions", () => {
     );
     const result = await sendProposalAction(agencyId, "p1", null);
     expect(result).toEqual({ error: "Add a recipient email before sending" });
+  });
+});
+
+describe("proposal attachment actions", () => {
+  it("uploads the file from FormData", async () => {
+    const attachment = { id: "att-1" } as never;
+    vi.mocked(proposals.uploadProposalAttachment).mockResolvedValueOnce(attachment);
+    const file = new File(["%PDF"], "contract.pdf", { type: "application/pdf" });
+    const formData = new FormData();
+    formData.append("file", file);
+
+    await expect(uploadProposalAttachmentAction(agencyId, "p1", formData)).resolves.toEqual({ attachment });
+    const [, , sent] = vi.mocked(proposals.uploadProposalAttachment).mock.calls[0];
+    expect(sent.name).toBe("contract.pdf");
+  });
+
+  it("refuses a missing or empty file without calling binx-api", async () => {
+    await expect(uploadProposalAttachmentAction(agencyId, "p1", new FormData())).resolves.toEqual({
+      error: "Choose a file to attach",
+    });
+    const empty = new FormData();
+    empty.append("file", new File([], "empty.pdf"));
+    await expect(uploadProposalAttachmentAction(agencyId, "p1", empty)).resolves.toEqual({
+      error: "Choose a file to attach",
+    });
+    expect(proposals.uploadProposalAttachment).not.toHaveBeenCalled();
+  });
+
+  it("passes binx-api's limit message through", async () => {
+    vi.mocked(proposals.uploadProposalAttachment).mockRejectedValueOnce(
+      new AuthApiError("Only a draft proposal can be edited", 409),
+    );
+    const formData = new FormData();
+    formData.append("file", new File(["x"], "x.pdf"));
+    await expect(uploadProposalAttachmentAction(agencyId, "p1", formData)).resolves.toEqual({
+      error: "Only a draft proposal can be edited",
+    });
+  });
+
+  it("removes an attachment", async () => {
+    vi.mocked(proposals.deleteProposalAttachment).mockResolvedValueOnce(undefined);
+    await expect(deleteProposalAttachmentAction(agencyId, "p1", "att-1")).resolves.toEqual({});
+    expect(proposals.deleteProposalAttachment).toHaveBeenCalledWith(agencyId, "p1", "att-1");
   });
 });

@@ -3,7 +3,9 @@
  *
  * The unauthenticated, token-scoped page a proposal's recipient opens from
  * their share link: `/proposals/public?token=...`. Renders the proposal
- * read-only, plus a sign/decline form while it's still awaiting a decision.
+ * read-only (each line's details and any attached documents included), plus
+ * a sign/decline form while it's still awaiting a decision. Documents
+ * download through `/api/proposals/public/{token}/attachments/{id}`.
  * Not under `(app)` or `(auth)` — it needs no session at all, the opaque
  * token alone scopes the request (see `lib/proposals.ts#getPublicProposal`).
  *
@@ -15,6 +17,7 @@ import type { Metadata } from "next";
 import { getPublicProposal } from "@/lib/proposals";
 import { proposalStatusLabel } from "@/lib/proposals-client";
 import { formatMoneyCents } from "@/lib/money";
+import ProposalAttachmentList from "@/components/proposals/ProposalAttachmentList/ProposalAttachmentList";
 import PublicProposalActions from "@/components/proposals/PublicProposalActions/PublicProposalActions";
 
 import styles from "./page.module.scss";
@@ -117,7 +120,14 @@ const PublicProposalPage = async ({
             <tbody>
               {proposal.line_items.map((item) => (
                 <tr key={item.id}>
-                  <td>{item.description}</td>
+                  <td>
+                    {item.description}
+                    {item.details && (
+                      <span className={styles.lineDetails}>
+                        {item.details}
+                      </span>
+                    )}
+                  </td>
                   <td className={styles.numCol}>
                     {quantityLabel(item.quantity)}
                   </td>
@@ -149,6 +159,16 @@ const PublicProposalPage = async ({
             <dd>{formatMoneyCents(proposal.total_cents, currency)}</dd>
           </div>
         </dl>
+
+        {proposal.attachments.length > 0 && (
+          <section className={styles.documents}>
+            <h2 className={styles.documentsTitle}>Documents</h2>
+            <ProposalAttachmentList
+              attachments={proposal.attachments}
+              hrefBase={`/api/proposals/public/${encodeURIComponent(token)}/attachments`}
+            />
+          </section>
+        )}
 
         {proposal.signature && (
           <div className={styles.decision}>

@@ -1,15 +1,17 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, Request, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile, status
 
+from binx_api.core import storage
 from binx_api.core.dependencies import CurrentUser, DbSession
 from binx_api.core.rate_limit import client_ip
 from binx_api.modules.agencies.dependencies import require_agency_role
 from binx_api.modules.agencies.models import ROLE_ADMIN, ROLE_MEMBER, ROLE_OWNER, Agency
 from binx_api.modules.proposals import service
-from binx_api.modules.proposals.models import Proposal, ProposalLineItem
+from binx_api.modules.proposals.models import STATUS_DRAFT, Proposal, ProposalAttachment, ProposalLineItem
 from binx_api.modules.proposals.schemas import (
+    ProposalAttachmentRead,
     ProposalCreate,
     ProposalDeclineRequest,
     ProposalDetailRead,
@@ -33,9 +35,28 @@ def _line_item_read(item: ProposalLineItem) -> ProposalLineItemRead:
         id=item.id,
         position=item.position,
         description=item.description,
+        details=item.details,
         quantity=item.quantity,
         unit_price_cents=item.unit_price_cents,
         amount_cents=item.amount_cents,
+        service_id=item.service_id,
+    )
+
+
+def attachment_read(attachment: ProposalAttachment) -> ProposalAttachmentRead:
+    return ProposalAttachmentRead(
+        id=attachment.id,
+        file_name=attachment.file_name,
+        mime_type=attachment.mime_type,
+        size=attachment.size,
+        sha256=attachment.sha256,
+        created_at=attachment.created_at,
+    )
+
+
+async def attachment_download(attachment: ProposalAttachment):
+    return await storage.response(
+        attachment.storage_path, filename=attachment.file_name, media_type=attachment.mime_type
     )
 
 
@@ -67,6 +88,7 @@ async def _detail_read(
 ) -> ProposalDetailRead:
     base = _read(proposal, lead_name, client_name)
     line_items = await service.list_line_items(db, proposal.id)
+    attachments = await service.list_attachments(db, proposal.id)
     signature = await service.get_signature(db, proposal.id)
     return ProposalDetailRead(
         **base.model_dump(),
@@ -77,6 +99,7 @@ async def _detail_read(
         decline_reason=proposal.decline_reason,
         share_url=service.share_url(proposal),
         line_items=[_line_item_read(item) for item in line_items],
+        attachments=[attachment_read(item) for item in attachments],
         signature=(
             ProposalSignatureRead(
                 signer_name=signature.signer_name, signer_email=signature.signer_email, signed_at=signature.signed_at
@@ -200,6 +223,50 @@ async def send_proposal(
     return await _detail_read(db, proposal, lead_name, client_name)
 
 
+# ---- Attachments (staff) ----------------------------------------------------
+
+
+@router.post("/{proposal_id}/attachments", response_model=ProposalAttachmentRead, status_code=status.HTTP_201_CREATED)
+async def upload_attachment(
+    db: DbSession,
+    current_user: CurrentUser,
+    agency_and_role: AnyMember,
+    proposal_id: uuid.UUID,
+    file: Annotated[UploadFile, File()],
+) -> ProposalAttachmentRead:
+    agency, _role = agency_and_role
+    proposal = await service.get_proposal_or_404(db, agency.id, proposal_id)
+    attachment = await service.add_attachment(
+        db,
+        proposal,
+        uploaded_by=current_user,
+        file_name=file.filename,
+        content=await file.read(),
+        mime_type=file.content_type,
+    )
+    return attachment_read(attachment)
+
+
+@router.delete("/{proposal_id}/attachments/{attachment_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_attachment(
+    db: DbSession, agency_and_role: AnyMember, proposal_id: uuid.UUID, attachment_id: uuid.UUID
+) -> None:
+    agency, _role = agency_and_role
+    proposal = await service.get_proposal_or_404(db, agency.id, proposal_id)
+    attachment = await service.get_attachment_or_404(db, proposal.id, attachment_id)
+    await service.remove_attachment(db, proposal, attachment)
+
+
+@router.get("/{proposal_id}/attachments/{attachment_id}/download")
+async def download_attachment(
+    db: DbSession, agency_and_role: AnyMember, proposal_id: uuid.UUID, attachment_id: uuid.UUID
+):
+    agency, _role = agency_and_role
+    proposal = await service.get_proposal_or_404(db, agency.id, proposal_id)
+    attachment = await service.get_attachment_or_404(db, proposal.id, attachment_id)
+    return await attachment_download(attachment)
+
+
 # ---- Public (unauthenticated, token-scoped) -------------------------------
 
 
@@ -207,6 +274,7 @@ async def send_proposal(
 async def read_public_proposal(db: DbSession, token: str) -> ProposalPublicRead:
     proposal, agency = await service.get_public_proposal(db, token)
     line_items = await service.list_line_items(db, proposal.id)
+    attachments = await service.list_attachments(db, proposal.id)
     signature = await service.get_signature(db, proposal.id)
     return ProposalPublicRead(
         agency_name=agency.name,
@@ -222,6 +290,7 @@ async def read_public_proposal(db: DbSession, token: str) -> ProposalPublicRead:
         total_cents=proposal.total_cents,
         valid_until=proposal.valid_until,
         line_items=[_line_item_read(item) for item in line_items],
+        attachments=[attachment_read(item) for item in attachments],
         signature=(
             ProposalSignatureRead(
                 signer_name=signature.signer_name, signer_email=signature.signer_email, signed_at=signature.signed_at
@@ -230,6 +299,17 @@ async def read_public_proposal(db: DbSession, token: str) -> ProposalPublicRead:
             else None
         ),
     )
+
+
+@public_router.get("/{token}/attachments/{attachment_id}")
+async def download_public_attachment(db: DbSession, token: str, attachment_id: uuid.UUID):
+    # Same gate as the public read (no drafts, no agency on its deletion
+    # hold), but without recording a view: a download isn't a first look.
+    proposal = await service.get_proposal_by_token_or_404(db, token)
+    if proposal.status == STATUS_DRAFT:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Attachment not found")
+    attachment = await service.get_attachment_or_404(db, proposal.id, attachment_id)
+    return await attachment_download(attachment)
 
 
 @public_router.post("/{token}/sign", response_model=ProposalPublicRead)

@@ -47,6 +47,8 @@ export interface RecurringLineItemInput {
   description: string;
   quantity: string;
   unitPriceCents: number;
+  /** The catalog service the line was picked from, if any. */
+  serviceId?: string | null;
 }
 
 export interface RecurringScheduleInput {
@@ -85,6 +87,7 @@ function toPayload(input: RecurringScheduleInput) {
       description: item.description,
       quantity: item.quantity,
       unit_price_cents: item.unitPriceCents,
+      service_id: item.serviceId ?? null,
     })),
   };
 }

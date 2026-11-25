@@ -12,6 +12,7 @@ import { redirect } from "next/navigation";
 
 import { getCurrentAgencyContext } from "@/lib/agencies";
 import { getAgencyClients } from "@/lib/clients";
+import { getServices } from "@/lib/services";
 import ProposalForm from "@/components/proposals/ProposalForm/ProposalForm";
 
 import styles from "../page.module.scss";
@@ -29,9 +30,10 @@ const NewProposalPage = async ({ searchParams }: NewProposalPageProps) => {
     redirect("/onboarding/two");
   }
 
-  const [{ client }, clients] = await Promise.all([
+  const [{ client }, clients, services] = await Promise.all([
     searchParams,
     getAgencyClients(currentAgency.id),
+    getServices(currentAgency.id),
   ]);
 
   return (
@@ -44,7 +46,8 @@ const NewProposalPage = async ({ searchParams }: NewProposalPageProps) => {
           <span className={styles.eyebrow}>Proposals</span>
           <h1 className={styles.title}>New proposal</h1>
           <p className={styles.subtitle}>
-            Draft it here — you can review before sending.
+            Draft it here. You can attach documents and review it before
+            sending.
           </p>
         </div>
       </div>
@@ -59,6 +62,7 @@ const NewProposalPage = async ({ searchParams }: NewProposalPageProps) => {
             primaryContactEmail: c.primary_contact_email,
           }))}
           initialClientId={client ?? null}
+          services={services}
         />
       </div>
     </div>

@@ -9,14 +9,17 @@ once issued" shape as an Invoice.
 
 from __future__ import annotations
 
+import hashlib
+import mimetypes
 import uuid
 from datetime import UTC, datetime
 from decimal import ROUND_HALF_UP, Decimal
 
 from fastapi import HTTPException, status
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from binx_api.core import storage
 from binx_api.core.config import get_settings
 from binx_api.core.security import generate_opaque_token
 from binx_api.modules.activity import service as activity_service
@@ -28,6 +31,7 @@ from binx_api.modules.leads.models import Lead
 from binx_api.modules.notifications import service as notifications_service
 from binx_api.modules.notifications.models import CATEGORY_INVOICING as NOTIFY_CATEGORY_PROPOSALS
 from binx_api.modules.proposals.models import (
+    MAX_PROPOSAL_ATTACHMENTS,
     PROPOSAL_CLOSED_STATUSES,
     STATUS_DECLINED,
     STATUS_DRAFT,
@@ -35,10 +39,12 @@ from binx_api.modules.proposals.models import (
     STATUS_SIGNED,
     STATUS_VIEWED,
     Proposal,
+    ProposalAttachment,
     ProposalLineItem,
     ProposalSignature,
 )
 from binx_api.modules.proposals.schemas import ProposalLineItemInput
+from binx_api.modules.services import service as services_service
 from binx_api.modules.users.models import User
 
 settings = get_settings()
@@ -109,6 +115,7 @@ async def list_line_items(db: AsyncSession, proposal_id: uuid.UUID) -> list[Prop
 async def _replace_line_items(
     db: AsyncSession, proposal: Proposal, line_items: list[ProposalLineItemInput]
 ) -> list[ProposalLineItem]:
+    await services_service.validate_service_ids(db, proposal.agency_id, (item.service_id for item in line_items))
     await db.execute(
         delete(ProposalLineItem)
         .where(ProposalLineItem.proposal_id == proposal.id)
@@ -120,9 +127,11 @@ async def _replace_line_items(
             proposal_id=proposal.id,
             position=position,
             description=item.description,
+            details=(item.details or "").strip() or None,
             quantity=item.quantity,
             unit_price_cents=item.unit_price_cents,
             amount_cents=_line_amount(item.quantity, item.unit_price_cents),
+            service_id=item.service_id,
         )
         db.add(row)
         rows.append(row)
@@ -132,6 +141,98 @@ async def _replace_line_items(
 async def get_signature(db: AsyncSession, proposal_id: uuid.UUID) -> ProposalSignature | None:
     result = await db.execute(select(ProposalSignature).where(ProposalSignature.proposal_id == proposal_id))
     return result.scalar_one_or_none()
+
+
+# ---- Attachments -----------------------------------------------------------
+
+
+async def list_attachments(db: AsyncSession, proposal_id: uuid.UUID) -> list[ProposalAttachment]:
+    result = await db.execute(
+        select(ProposalAttachment)
+        .where(ProposalAttachment.proposal_id == proposal_id)
+        .order_by(ProposalAttachment.position, ProposalAttachment.created_at)
+    )
+    return list(result.scalars().all())
+
+
+async def get_attachment_or_404(
+    db: AsyncSession, proposal_id: uuid.UUID, attachment_id: uuid.UUID
+) -> ProposalAttachment:
+    result = await db.execute(
+        select(ProposalAttachment).where(
+            ProposalAttachment.id == attachment_id, ProposalAttachment.proposal_id == proposal_id
+        )
+    )
+    attachment = result.scalar_one_or_none()
+    if attachment is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Attachment not found")
+    return attachment
+
+
+def _clean_file_name(raw: str | None) -> str:
+    """The name shown to people and used for the download. Path parts are
+    dropped (some browsers prefix a fake Windows path); the storage key
+    never uses it, so this is about display, not safety."""
+    name = (raw or "").replace("\\", "/").rsplit("/", 1)[-1].strip()
+    name = "".join(ch for ch in name if ch.isprintable())
+    return (name or "attachment")[:255]
+
+
+async def add_attachment(
+    db: AsyncSession,
+    proposal: Proposal,
+    *,
+    uploaded_by: User,
+    file_name: str | None,
+    content: bytes,
+    mime_type: str | None,
+) -> ProposalAttachment:
+    _require_draft(proposal)
+    if not content:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "That file is empty")
+    if len(content) > settings.proposal_upload_max_bytes:
+        max_mb = settings.proposal_upload_max_bytes // (1024 * 1024)
+        raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, f"Files must be {max_mb}MB or smaller")
+    count = (await db.execute(select(func.count()).where(ProposalAttachment.proposal_id == proposal.id))).scalar_one()
+    if count >= MAX_PROPOSAL_ATTACHMENTS:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT, f"A proposal can have at most {MAX_PROPOSAL_ATTACHMENTS} attachments"
+        )
+
+    name = _clean_file_name(file_name)
+    generic = "application/octet-stream"
+    sent_type = mime_type if mime_type and mime_type != generic else None
+    resolved_type = sent_type or mimetypes.guess_type(name)[0] or generic
+    # The key is ours alone, so no part of a client-supplied name ever reaches
+    # a filesystem path or an S3 key.
+    storage_path = await storage.save(
+        "agencies",
+        f"{proposal.agency_id}/proposals/{proposal.id}/{uuid.uuid4().hex}",
+        content,
+        content_type=resolved_type,
+    )
+    attachment = ProposalAttachment(
+        proposal_id=proposal.id,
+        uploaded_by_id=uploaded_by.id,
+        position=count,
+        file_name=name,
+        storage_path=storage_path,
+        mime_type=resolved_type,
+        size=len(content),
+        sha256=hashlib.sha256(content).hexdigest(),
+    )
+    db.add(attachment)
+    await db.commit()
+    await db.refresh(attachment)
+    return attachment
+
+
+async def remove_attachment(db: AsyncSession, proposal: Proposal, attachment: ProposalAttachment) -> None:
+    _require_draft(proposal)
+    storage_path = attachment.storage_path
+    await db.delete(attachment)
+    await db.commit()
+    await storage.delete(storage_path)
 
 
 # ---- Create / update -----------------------------------------------------
@@ -266,8 +367,11 @@ async def delete_proposal(db: AsyncSession, proposal: Proposal, *, actor: User |
         raise HTTPException(status.HTTP_409_CONFLICT, "Only a draft proposal can be deleted")
     agency_id = proposal.agency_id
     title = proposal.title
+    storage_paths = [attachment.storage_path for attachment in await list_attachments(db, proposal.id)]
     await db.delete(proposal)
     await db.commit()
+    for storage_path in storage_paths:
+        await storage.delete(storage_path)
 
     await activity_service.log_agency_activity(
         db,

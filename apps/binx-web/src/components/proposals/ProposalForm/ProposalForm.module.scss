@@ -52,6 +52,38 @@
   align-items: center;
 }
 
+.lineRow {
+  align-items: start;
+}
+
+.lineDescription {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-1;
+  min-width: 0;
+}
+
+.addDetails {
+  align-self: flex-start;
+  padding: 0;
+  background: none;
+  border: none;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+  cursor: pointer;
+
+  &:hover {
+    color: t.$color-ink;
+  }
+}
+
+.lineTools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: t.$space-3;
+}
+
 .lineHead {
   @include m.mono-label;
   font-size: 0.5625rem;
@@ -64,12 +96,16 @@
 }
 
 .lineAmount {
+  // Lines align to the top (a line can grow a details box), so sit the
+  // amount level with the inputs' text.
+  padding-top: calc(#{t.$space-3} + 1px);
   font-size: t.$font-size-sm;
   font-weight: 600;
   white-space: nowrap;
 }
 
 .removeRow {
+  margin-top: t.$space-2;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -96,7 +132,6 @@
 }
 
 .addRow {
-  align-self: flex-start;
   display: inline-flex;
   align-items: center;
   gap: t.$space-2;

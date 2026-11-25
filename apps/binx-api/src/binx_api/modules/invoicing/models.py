@@ -134,6 +134,11 @@ class InvoiceLineItem(Base):
     quantity: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=Decimal("1"))
     unit_price_cents: Mapped[int] = mapped_column(Integer, default=0)
     amount_cents: Mapped[int] = mapped_column(Integer, default=0)
+    # The catalog service this line was made from, if any — provenance only,
+    # the values above are a copy (see services/models.py).
+    service_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("services.id", ondelete="SET NULL"), default=None, index=True
+    )
 
 
 # A payment received against an invoice — entered by a team member, or
@@ -232,3 +237,6 @@ class RecurringInvoiceLineItem(Base):
     description: Mapped[str] = mapped_column(String(1024))
     quantity: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=Decimal("1"))
     unit_price_cents: Mapped[int] = mapped_column(Integer, default=0)
+    service_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("services.id", ondelete="SET NULL"), default=None, index=True
+    )

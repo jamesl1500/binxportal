@@ -71,6 +71,7 @@ from binx_api.modules.proposals import service as proposals_service
 from binx_api.modules.proposals.router import _detail_read as _proposal_detail_read
 from binx_api.modules.proposals.router import _names as _proposal_names
 from binx_api.modules.proposals.router import _read as _proposal_read
+from binx_api.modules.proposals.router import attachment_download as _proposal_attachment_download
 from binx_api.modules.proposals.schemas import ProposalDeclineRequest, ProposalDetailRead, ProposalRead
 
 router = APIRouter(prefix="/portal", tags=["client-portal"])
@@ -809,6 +810,16 @@ async def read_portal_proposal(db: DbSession, membership: PortalContext, proposa
     proposal = await _portal_proposal_or_404(db, agency.id, client.id, proposal_id)
     lead_name, client_name = await _proposal_names(db, proposal)
     return await _proposal_detail_read(db, proposal, lead_name, client_name)
+
+
+@router.get("/proposals/{proposal_id}/attachments/{attachment_id}")
+async def download_portal_proposal_attachment(
+    db: DbSession, membership: PortalContext, proposal_id: uuid.UUID, attachment_id: uuid.UUID
+):
+    agency, client, _contact = membership
+    proposal = await _portal_proposal_or_404(db, agency.id, client.id, proposal_id)
+    attachment = await proposals_service.get_attachment_or_404(db, proposal.id, attachment_id)
+    return await _proposal_attachment_download(attachment)
 
 
 @router.post("/proposals/{proposal_id}/sign", response_model=ProposalDetailRead)

@@ -18,10 +18,13 @@ import { AuthApiError } from "@/lib/auth";
 import {
   createProposal,
   deleteProposal,
+  deleteProposalAttachment,
+  type ProposalAttachment,
   type ProposalDetail,
   type ProposalInput,
   sendProposal,
   updateProposal,
+  uploadProposalAttachment,
 } from "@/lib/proposals";
 
 function errorResult(error: unknown, fallback: string): { error: string } {
@@ -82,5 +85,48 @@ export async function sendProposalAction(
     return { proposal };
   } catch (error) {
     return errorResult(error, "Unable to send proposal");
+  }
+}
+
+export interface AttachmentActionResult {
+  error?: string;
+  attachment?: ProposalAttachment;
+}
+
+/** Takes FormData (a `file` entry) because a File can't cross into a
+ * server action any other way. */
+export async function uploadProposalAttachmentAction(
+  agencyId: string,
+  proposalId: string,
+  formData: FormData,
+): Promise<AttachmentActionResult> {
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "Choose a file to attach" };
+  }
+  try {
+    const attachment = await uploadProposalAttachment(
+      agencyId,
+      proposalId,
+      file,
+    );
+    refresh();
+    return { attachment };
+  } catch (error) {
+    return errorResult(error, "Unable to attach that file");
+  }
+}
+
+export async function deleteProposalAttachmentAction(
+  agencyId: string,
+  proposalId: string,
+  attachmentId: string,
+): Promise<{ error?: string }> {
+  try {
+    await deleteProposalAttachment(agencyId, proposalId, attachmentId);
+    refresh();
+    return {};
+  } catch (error) {
+    return errorResult(error, "Unable to remove that file");
   }
 }

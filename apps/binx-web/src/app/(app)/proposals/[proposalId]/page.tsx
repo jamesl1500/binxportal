@@ -1,8 +1,9 @@
 /**
  * page.tsx - Proposal Detail
  *
- * A single proposal: the status-aware action bar and the read view. A bad
- * :proposalId 404s.
+ * A single proposal: the status-aware action bar, the read view, and — while
+ * it's a draft — the documents panel for attaching files. Once sent, the
+ * read view lists the documents instead. A bad :proposalId 404s.
  *
  * @module apps/binx-web/src/app/(app)/proposals/[proposalId]/page.tsx
  * @author Binx Portal
@@ -15,6 +16,7 @@ import { AuthApiError } from "@/lib/auth";
 import { getCurrentAgencyContext } from "@/lib/agencies";
 import { getProposal } from "@/lib/proposals";
 import ProposalActions from "@/components/proposals/ProposalActions/ProposalActions";
+import ProposalAttachmentsManager from "@/components/proposals/ProposalAttachmentsManager/ProposalAttachmentsManager";
 import ProposalView from "@/components/proposals/ProposalView/ProposalView";
 
 import styles from "../page.module.scss";
@@ -63,7 +65,21 @@ const ProposalPage = async ({ params }: ProposalPageProps) => {
 
       <ProposalActions agencyId={currentAgency.id} proposal={proposal} />
 
-      <ProposalView proposal={proposal} />
+      {proposal.status === "draft" ? (
+        <>
+          <ProposalView proposal={proposal} />
+          <ProposalAttachmentsManager
+            agencyId={currentAgency.id}
+            proposalId={proposal.id}
+            attachments={proposal.attachments}
+          />
+        </>
+      ) : (
+        <ProposalView
+          proposal={proposal}
+          attachmentHrefBase={`/api/proposals/${currentAgency.id}/${proposal.id}/attachments`}
+        />
+      )}
     </div>
   );
 };

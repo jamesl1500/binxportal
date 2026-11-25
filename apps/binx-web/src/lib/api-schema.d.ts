@@ -3092,6 +3092,57 @@ export interface paths {
         patch: operations["update_proposal_agencies__agency_id__proposals__proposal_id__patch"];
         trace?: never;
     };
+    "/agencies/{agency_id}/proposals/{proposal_id}/attachments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload Attachment */
+        post: operations["upload_attachment_agencies__agency_id__proposals__proposal_id__attachments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/proposals/{proposal_id}/attachments/{attachment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Attachment */
+        delete: operations["delete_attachment_agencies__agency_id__proposals__proposal_id__attachments__attachment_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/proposals/{proposal_id}/attachments/{attachment_id}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download Attachment */
+        get: operations["download_attachment_agencies__agency_id__proposals__proposal_id__attachments__attachment_id__download_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agencies/{agency_id}/proposals/{proposal_id}/send": {
         parameters: {
             query?: never;
@@ -3211,6 +3262,42 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/services": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Services */
+        get: operations["list_services_agencies__agency_id__services_get"];
+        put?: never;
+        /** Create Service */
+        post: operations["create_service_agencies__agency_id__services_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/services/{service_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Service */
+        delete: operations["delete_service_agencies__agency_id__services__service_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Service */
+        patch: operations["update_service_agencies__agency_id__services__service_id__patch"];
         trace?: never;
     };
     "/agencies/{agency_id}/subdomain": {
@@ -4586,6 +4673,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/portal/proposals/{proposal_id}/attachments/{attachment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download Portal Proposal Attachment */
+        get: operations["download_portal_proposal_attachment_portal_proposals__proposal_id__attachments__attachment_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/portal/proposals/{proposal_id}/decline": {
         parameters: {
             query?: never;
@@ -4667,6 +4771,23 @@ export interface paths {
         };
         /** Read Public Proposal */
         get: operations["read_public_proposal_proposals_public__token__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/proposals/public/{token}/attachments/{attachment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download Public Attachment */
+        get: operations["download_public_attachment_proposals_public__token__attachments__attachment_id__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6481,6 +6602,11 @@ export interface components {
             body: string;
             /** Files */
             files?: string[] | null;
+        };
+        /** Body_upload_attachment_agencies__agency_id__proposals__proposal_id__attachments_post */
+        Body_upload_attachment_agencies__agency_id__proposals__proposal_id__attachments_post: {
+            /** File */
+            file: string;
         };
         /** Body_upload_avatar_users_me_avatar_put */
         Body_upload_avatar_users_me_avatar_put: {
@@ -8384,6 +8510,8 @@ export interface components {
             description: string;
             /** Quantity */
             quantity: number | string;
+            /** Service Id */
+            service_id?: string | null;
             /** Unit Price Cents */
             unit_price_cents: number;
         };
@@ -8402,6 +8530,8 @@ export interface components {
             position: number;
             /** Quantity */
             quantity: string;
+            /** Service Id */
+            service_id?: string | null;
             /** Unit Price Cents */
             unit_price_cents: number;
         };
@@ -9600,6 +9730,27 @@ export interface components {
             /** Status */
             status: string;
         };
+        /** ProposalAttachmentRead */
+        ProposalAttachmentRead: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** File Name */
+            file_name: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Mime Type */
+            mime_type: string;
+            /** Sha256 */
+            sha256: string;
+            /** Size */
+            size: number;
+        };
         /** ProposalCreate */
         ProposalCreate: {
             /** Client Id */
@@ -9641,6 +9792,8 @@ export interface components {
              * Format: uuid
              */
             agency_id: string;
+            /** Attachments */
+            attachments: components["schemas"]["ProposalAttachmentRead"][];
             /** Client Id */
             client_id: string | null;
             /** Client Name */
@@ -9701,8 +9854,12 @@ export interface components {
         ProposalLineItemInput: {
             /** Description */
             description: string;
+            /** Details */
+            details?: string | null;
             /** Quantity */
             quantity: number | string;
+            /** Service Id */
+            service_id?: string | null;
             /** Unit Price Cents */
             unit_price_cents: number;
         };
@@ -9712,6 +9869,8 @@ export interface components {
             amount_cents: number;
             /** Description */
             description: string;
+            /** Details */
+            details: string | null;
             /**
              * Id
              * Format: uuid
@@ -9721,6 +9880,8 @@ export interface components {
             position: number;
             /** Quantity */
             quantity: string;
+            /** Service Id */
+            service_id: string | null;
             /** Unit Price Cents */
             unit_price_cents: number;
         };
@@ -9732,6 +9893,8 @@ export interface components {
         ProposalPublicRead: {
             /** Agency Name */
             agency_name: string;
+            /** Attachments */
+            attachments: components["schemas"]["ProposalAttachmentRead"][];
             /** Content */
             content: string | null;
             /** Currency */
@@ -9925,6 +10088,8 @@ export interface components {
             description: string;
             /** Quantity */
             quantity: number | string;
+            /** Service Id */
+            service_id?: string | null;
             /** Unit Price Cents */
             unit_price_cents: number;
         };
@@ -9941,6 +10106,8 @@ export interface components {
             position: number;
             /** Quantity */
             quantity: string;
+            /** Service Id */
+            service_id?: string | null;
             /** Unit Price Cents */
             unit_price_cents: number;
         };
@@ -10134,6 +10301,73 @@ export interface components {
         SendProposalRequest: {
             /** Recipient Email */
             recipient_email?: string | null;
+        };
+        /** ServiceCreate */
+        ServiceCreate: {
+            /**
+             * Default Quantity
+             * @default 1
+             */
+            default_quantity: number | string;
+            /** Description */
+            description?: string | null;
+            /** Name */
+            name: string;
+            /**
+             * Pricing Type
+             * @default fixed
+             */
+            pricing_type: string;
+            /** Unit Price Cents */
+            unit_price_cents: number;
+        };
+        /** ServiceRead */
+        ServiceRead: {
+            /**
+             * Agency Id
+             * Format: uuid
+             */
+            agency_id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Default Quantity */
+            default_quantity: string;
+            /** Description */
+            description: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Is Archived */
+            is_archived: boolean;
+            /** Name */
+            name: string;
+            /** Pricing Type */
+            pricing_type: string;
+            /** Unit Price Cents */
+            unit_price_cents: number;
+        };
+        /**
+         * ServiceUpdate
+         * @description Partial update — only the fields sent change.
+         */
+        ServiceUpdate: {
+            /** Default Quantity */
+            default_quantity?: number | string | null;
+            /** Description */
+            description?: string | null;
+            /** Is Archived */
+            is_archived?: boolean | null;
+            /** Name */
+            name?: string | null;
+            /** Pricing Type */
+            pricing_type?: string | null;
+            /** Unit Price Cents */
+            unit_price_cents?: number | null;
         };
         /** SignupRequest */
         SignupRequest: {
@@ -19200,6 +19434,106 @@ export interface operations {
             };
         };
     };
+    upload_attachment_agencies__agency_id__proposals__proposal_id__attachments_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposal_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_attachment_agencies__agency_id__proposals__proposal_id__attachments_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalAttachmentRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_attachment_agencies__agency_id__proposals__proposal_id__attachments__attachment_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposal_id: string;
+                attachment_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_attachment_agencies__agency_id__proposals__proposal_id__attachments__attachment_id__download_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposal_id: string;
+                attachment_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     send_proposal_agencies__agency_id__proposals__proposal_id__send_post: {
         parameters: {
             query?: never;
@@ -19484,6 +19818,140 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AgencyRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_services_agencies__agency_id__services_get: {
+        parameters: {
+            query?: {
+                include_archived?: boolean;
+            };
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_service_agencies__agency_id__services_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ServiceCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_service_agencies__agency_id__services__service_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                service_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_service_agencies__agency_id__services__service_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                service_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ServiceUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceRead"];
                 };
             };
             /** @description Validation Error */
@@ -22299,6 +22767,38 @@ export interface operations {
             };
         };
     };
+    download_portal_proposal_attachment_portal_proposals__proposal_id__attachments__attachment_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposal_id: string;
+                attachment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     decline_portal_proposal_portal_proposals__proposal_id__decline_post: {
         parameters: {
             query?: never;
@@ -22434,6 +22934,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProposalPublicRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_public_attachment_proposals_public__token__attachments__attachment_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+                attachment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

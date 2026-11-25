@@ -53,6 +53,7 @@ async def _read(
                 description=item.description,
                 quantity=item.quantity,
                 unit_price_cents=item.unit_price_cents,
+                service_id=item.service_id,
             )
             for item in line_items
         ],

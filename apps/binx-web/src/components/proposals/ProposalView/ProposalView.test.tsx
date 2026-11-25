@@ -32,8 +32,18 @@ function makeProposal(overrides: Partial<ProposalDetail>): ProposalDetail {
     decline_reason: null,
     share_url: "https://app.example.com/proposals/public?token=tok",
     line_items: [
-      { id: "li1", position: 0, description: "Design", quantity: "1", unit_price_cents: 10000, amount_cents: 10000 },
+      {
+        id: "li1",
+        position: 0,
+        description: "Design",
+        details: null,
+        quantity: "1",
+        unit_price_cents: 10000,
+        amount_cents: 10000,
+        service_id: null,
+      },
     ],
+    attachments: [],
     signature: null,
     ...overrides,
   } as ProposalDetail;
@@ -48,6 +58,46 @@ describe("ProposalView", () => {
     expect(screen.getByText("jamie@example.com")).toBeInTheDocument();
     expect(screen.getByText("Design")).toBeInTheDocument();
     expect(screen.getAllByText("$100.00").length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("shows a line's details under its description", () => {
+    const [line] = makeProposal({}).line_items;
+    render(
+      <ProposalView proposal={makeProposal({ line_items: [{ ...line, details: "Two rounds of revisions" }] })} />,
+    );
+    expect(screen.getByText("Two rounds of revisions")).toBeInTheDocument();
+  });
+
+  it("lists documents through the given download route", () => {
+    const attachments = [
+      {
+        id: "att-1",
+        file_name: "contract.pdf",
+        mime_type: "application/pdf",
+        size: 1536,
+        sha256: "a".repeat(64),
+        created_at: "2026-06-01T00:00:00Z",
+      },
+    ];
+    render(
+      <ProposalView
+        proposal={makeProposal({ attachments })}
+        attachmentHrefBase="/api/portal/proposals/p1/attachments"
+      />,
+    );
+    expect(screen.getByRole("heading", { name: "Documents" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /contract\.pdf/ })).toHaveAttribute(
+      "href",
+      "/api/portal/proposals/p1/attachments/att-1",
+    );
+  });
+
+  it("leaves documents out without a download route (the draft page manages them)", () => {
+    const attachments = [
+      { id: "att-1", file_name: "contract.pdf", mime_type: "application/pdf", size: 1, sha256: "a", created_at: "" },
+    ];
+    render(<ProposalView proposal={makeProposal({ attachments })} />);
+    expect(screen.queryByRole("heading", { name: "Documents" })).not.toBeInTheDocument();
   });
 
   it("shows signature details once signed", () => {

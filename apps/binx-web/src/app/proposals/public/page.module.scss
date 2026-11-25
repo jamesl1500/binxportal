@@ -121,6 +121,28 @@
   }
 }
 
+.lineDetails {
+  display: block;
+  margin-top: t.$space-1;
+  font-size: t.$font-size-xs;
+  line-height: 1.5;
+  color: t.$color-ink-soft;
+  white-space: pre-line;
+}
+
+.documents {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+}
+
+.documentsTitle {
+  margin: 0;
+  @include m.mono-label;
+  font-size: 0.5625rem;
+  color: t.$color-ink-faint;
+}
+
 .numCol {
   text-align: right !important;
   white-space: nowrap;

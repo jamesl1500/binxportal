@@ -74,6 +74,7 @@ def _line_item_read(item: InvoiceLineItem) -> LineItemRead:
         quantity=item.quantity,
         unit_price_cents=item.unit_price_cents,
         amount_cents=item.amount_cents,
+        service_id=item.service_id,
     )
 
 

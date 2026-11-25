@@ -22,6 +22,31 @@ import ProposalForm from "./ProposalForm";
 
 const mockedCreate = vi.mocked(createProposalAction);
 
+const services = [
+  {
+    id: "svc-1",
+    agency_id: "a1",
+    name: "Brand strategy",
+    description: "Two workshops and a positioning doc",
+    pricing_type: "fixed",
+    unit_price_cents: 500000,
+    default_quantity: "1.00",
+    is_archived: false,
+    created_at: "2026-11-01T00:00:00Z",
+  },
+  {
+    id: "svc-2",
+    agency_id: "a1",
+    name: "Design hours",
+    description: null,
+    pricing_type: "hourly",
+    unit_price_cents: 15000,
+    default_quantity: "10.00",
+    is_archived: false,
+    created_at: "2026-11-01T00:00:00Z",
+  },
+];
+
 const clients = [
   { id: "client-1", name: "Acme Co", primaryContactName: "Wile Coyote", primaryContactEmail: "wile@acme.example" },
   { id: "client-2", name: "Globex", primaryContactName: null, primaryContactEmail: null },
@@ -68,10 +93,76 @@ describe("ProposalForm", () => {
         title: "Retainer proposal",
         leadId: null,
         clientId: null,
-        lineItems: [{ description: "Retainer", quantity: "1", unitPriceCents: 200000 }],
+        lineItems: [
+          { description: "Retainer", details: null, quantity: "1", unitPriceCents: 200000, serviceId: null },
+        ],
       }),
     );
     expect(mockPush).toHaveBeenCalledWith("/proposals/p1");
+  });
+
+  it("fills the empty line from a picked service, then adds a line for the next", async () => {
+    mockedCreate.mockResolvedValueOnce({ proposal: { id: "p1" } as never });
+    const user = userEvent.setup();
+    render(<ProposalForm agencyId="a1" clients={clients} services={services} />);
+
+    await user.type(screen.getByLabelText(/^Title$/), "Brand refresh");
+    await user.selectOptions(screen.getByLabelText("Add from services"), "svc-1");
+    expect(screen.getByLabelText("Line 1 description")).toHaveValue("Brand strategy");
+    expect(screen.getByLabelText("Line 1 details")).toHaveValue("Two workshops and a positioning doc");
+    expect(screen.getByLabelText("Line 1 unit price")).toHaveValue(5000);
+    // The picker snaps back so the next pick is a fresh choice.
+    expect(screen.getByLabelText("Add from services")).toHaveValue("");
+
+    await user.selectOptions(screen.getByLabelText("Add from services"), "svc-2");
+    expect(screen.getByLabelText("Line 2 description")).toHaveValue("Design hours");
+    expect(screen.getByLabelText("Line 2 quantity")).toHaveValue(10);
+
+    // The copied price can still be edited; the line keeps its service link.
+    await user.clear(screen.getByLabelText("Line 2 unit price"));
+    await user.type(screen.getByLabelText("Line 2 unit price"), "120");
+    await user.click(screen.getByRole("button", { name: /create draft/i }));
+
+    expect(mockedCreate).toHaveBeenCalledWith(
+      "a1",
+      expect.objectContaining({
+        lineItems: [
+          {
+            description: "Brand strategy",
+            details: "Two workshops and a positioning doc",
+            quantity: "1",
+            unitPriceCents: 500000,
+            serviceId: "svc-1",
+          },
+          { description: "Design hours", details: null, quantity: "10", unitPriceCents: 12000, serviceId: "svc-2" },
+        ],
+      }),
+    );
+  });
+
+  it("points at Settings → Services when the catalog is empty", () => {
+    render(<ProposalForm agencyId="a1" clients={clients} />);
+    expect(screen.getByRole("link", { name: /set up your services/i })).toHaveAttribute("href", "/settings/services");
+  });
+
+  it("opens a details box for a hand-typed line", async () => {
+    mockedCreate.mockResolvedValueOnce({ proposal: { id: "p1" } as never });
+    const user = userEvent.setup();
+    render(<ProposalForm agencyId="a1" clients={clients} />);
+
+    await user.type(screen.getByLabelText(/^Title$/), "Retainer proposal");
+    await user.type(screen.getByLabelText("Line 1 description"), "Retainer");
+    await user.type(screen.getByLabelText("Line 1 unit price"), "2000");
+    await user.click(screen.getByRole("button", { name: "+ Details" }));
+    await user.type(screen.getByLabelText("Line 1 details"), "Up to 20 hours a month");
+    await user.click(screen.getByRole("button", { name: /create draft/i }));
+
+    expect(mockedCreate).toHaveBeenCalledWith(
+      "a1",
+      expect.objectContaining({
+        lineItems: [expect.objectContaining({ details: "Up to 20 hours a month", serviceId: null })],
+      }),
+    );
   });
 
   it("lists every client as an option, defaulting to No client", () => {

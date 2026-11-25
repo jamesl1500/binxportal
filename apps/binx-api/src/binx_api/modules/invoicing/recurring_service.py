@@ -33,6 +33,7 @@ from binx_api.modules.invoicing.models import Invoice, RecurringInvoiceLineItem,
 from binx_api.modules.invoicing.recurring_schemas import RecurringLineItemInput
 from binx_api.modules.invoicing.schemas import LineItemInput
 from binx_api.modules.projects.models import Project
+from binx_api.modules.services import service as services_service
 from binx_api.modules.users.models import User
 from binx_api.modules.users.service import get_user_by_id
 
@@ -105,6 +106,7 @@ async def list_line_items(db: AsyncSession, schedule_id: uuid.UUID) -> list[Recu
 async def _replace_line_items(
     db: AsyncSession, schedule: RecurringInvoiceSchedule, line_items: list[RecurringLineItemInput]
 ) -> list[RecurringInvoiceLineItem]:
+    await services_service.validate_service_ids(db, schedule.agency_id, (item.service_id for item in line_items))
     await db.execute(
         delete(RecurringInvoiceLineItem)
         .where(RecurringInvoiceLineItem.schedule_id == schedule.id)
@@ -118,6 +120,7 @@ async def _replace_line_items(
             description=item.description,
             quantity=item.quantity,
             unit_price_cents=item.unit_price_cents,
+            service_id=item.service_id,
         )
         db.add(row)
         rows.append(row)
@@ -272,7 +275,10 @@ async def list_schedules(
 async def _generate_one(db: AsyncSession, schedule: RecurringInvoiceSchedule) -> Invoice:
     rows = await list_line_items(db, schedule.id)
     line_items = [
-        LineItemInput(description=r.description, quantity=r.quantity, unit_price_cents=r.unit_price_cents) for r in rows
+        LineItemInput(
+            description=r.description, quantity=r.quantity, unit_price_cents=r.unit_price_cents, service_id=r.service_id
+        )
+        for r in rows
     ]
     agency = await db.get(Agency, schedule.agency_id)
     assert agency is not None

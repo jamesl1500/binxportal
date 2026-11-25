@@ -75,6 +75,11 @@ class Settings(BaseSettings):
     # Per-file cap, enforced in messaging/service.py's save_message_attachment.
     message_upload_max_bytes: int = 25 * 1024 * 1024
 
+    # Per-file cap for documents attached to a proposal (stored in the
+    # "agencies" area under {agency_id}/proposals/, so the agency purge
+    # removes them). Enforced in proposals/service.py's add_attachment.
+    proposal_upload_max_bytes: int = 25 * 1024 * 1024
+
     # How long a websocket connection ticket stays valid. The browser can't
     # send the bearer token on a cross-origin WS handshake, so it trades the
     # session for one of these short-lived, single-purpose tokens first (see

@@ -66,7 +66,10 @@ const PortalProposalDetailPage = async ({
         }
       />
 
-      <ProposalView proposal={proposal} />
+      <ProposalView
+        proposal={proposal}
+        attachmentHrefBase={`/api/portal/proposals/${proposal.id}/attachments`}
+      />
 
       {awaitingDecision && <PortalProposalActions proposalId={proposal.id} />}
     </div>

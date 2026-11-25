@@ -40,11 +40,16 @@ export type ProposalDetail = Schemas["ProposalDetailRead"];
 export type ProposalLineItem = Schemas["ProposalLineItemRead"];
 export type ProposalSignature = Schemas["ProposalSignatureRead"];
 export type ProposalPublic = Schemas["ProposalPublicRead"];
+export type ProposalAttachment = Schemas["ProposalAttachmentRead"];
 
 export interface ProposalLineItemInput {
   description: string;
+  /** Longer copy shown to the client under the line. */
+  details?: string | null;
   quantity: string;
   unitPriceCents: number;
+  /** The catalog service the line was picked from, if any. */
+  serviceId?: string | null;
 }
 
 export interface ProposalInput {
@@ -73,8 +78,10 @@ function toPayload(input: ProposalInput) {
     valid_until: input.validUntil,
     line_items: input.lineItems.map((item) => ({
       description: item.description,
+      details: item.details ?? null,
       quantity: item.quantity,
       unit_price_cents: item.unitPriceCents,
+      service_id: item.serviceId ?? null,
     })),
   };
 }
@@ -192,6 +199,51 @@ export async function sendProposal(
     return data;
   } catch (error) {
     throw apiError(error, "Unable to send proposal");
+  }
+}
+
+// ---- Attachments (staff, drafts only) ----
+
+/**
+ * `POST /agencies/{agencyId}/proposals/{proposalId}/attachments`: one file
+ * per call. binx-api refuses once the proposal is sent, over its size cap,
+ * or past its per-proposal count.
+ */
+export async function uploadProposalAttachment(
+  agencyId: string,
+  proposalId: string,
+  file: File,
+): Promise<ProposalAttachment> {
+  const headers = await authHeader();
+  const formData = new FormData();
+  formData.append("file", file);
+  try {
+    // Dropping Content-Type lets axios set the multipart boundary (see
+    // lib/messaging.ts's sendMessage).
+    const { data } = await api.post<ProposalAttachment>(
+      `/agencies/${agencyId}/proposals/${proposalId}/attachments`,
+      formData,
+      { headers: { ...headers, "Content-Type": undefined } },
+    );
+    return data;
+  } catch (error) {
+    throw apiError(error, "Unable to attach that file");
+  }
+}
+
+export async function deleteProposalAttachment(
+  agencyId: string,
+  proposalId: string,
+  attachmentId: string,
+): Promise<void> {
+  const headers = await authHeader();
+  try {
+    await api.delete(
+      `/agencies/${agencyId}/proposals/${proposalId}/attachments/${attachmentId}`,
+      { headers },
+    );
+  } catch (error) {
+    throw apiError(error, "Unable to remove that file");
   }
 }
 

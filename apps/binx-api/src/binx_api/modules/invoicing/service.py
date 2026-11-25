@@ -45,6 +45,7 @@ from binx_api.modules.invoicing.schemas import CheckoutOutcome, LineItemInput
 from binx_api.modules.notifications import service as notifications_service
 from binx_api.modules.notifications.models import CATEGORY_INVOICING, EVENT_INVOICE_ISSUED, EVENT_INVOICE_PAID
 from binx_api.modules.projects.models import Project
+from binx_api.modules.services import service as services_service
 from binx_api.modules.users.models import User
 
 if TYPE_CHECKING:
@@ -636,6 +637,7 @@ async def list_line_items(db: AsyncSession, invoice_id: uuid.UUID) -> list[Invoi
 async def _replace_line_items(
     db: AsyncSession, invoice: Invoice, line_items: list[LineItemInput]
 ) -> list[InvoiceLineItem]:
+    await services_service.validate_service_ids(db, invoice.agency_id, (item.service_id for item in line_items))
     await db.execute(
         delete(InvoiceLineItem)
         .where(InvoiceLineItem.invoice_id == invoice.id)
@@ -650,6 +652,7 @@ async def _replace_line_items(
             quantity=item.quantity,
             unit_price_cents=item.unit_price_cents,
             amount_cents=_line_amount(item.quantity, item.unit_price_cents),
+            service_id=item.service_id,
         )
         db.add(row)
         rows.append(row)

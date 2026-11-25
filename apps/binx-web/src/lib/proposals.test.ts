@@ -79,7 +79,9 @@ describe("proposals.ts", () => {
       expect.objectContaining({
         title: "Website redesign",
         recipient_email: "jane@example.com",
-        line_items: [{ description: "Design", quantity: "1", unit_price_cents: 200_000 }],
+        line_items: [
+          { description: "Design", details: null, quantity: "1", unit_price_cents: 200_000, service_id: null },
+        ],
       }),
       AUTH,
     );
@@ -161,6 +163,32 @@ describe("proposals.ts", () => {
     ])("%s throws AuthApiError(401) when unauthenticated", async (_name, call) => {
       mockedGetAccessToken.mockResolvedValueOnce(undefined);
       await expect(call()).rejects.toMatchObject({ name: "AuthApiError", status: 401 });
+    });
+  });
+
+  describe("attachments", () => {
+    it("uploads as multipart, letting axios set the boundary", async () => {
+      mockedApi.post.mockResolvedValueOnce({ data: { id: "att-1" } });
+      const file = new File(["%PDF"], "contract.pdf");
+      await expect(proposals.uploadProposalAttachment(A, P, file)).resolves.toEqual({ id: "att-1" });
+      const [url, body, config] = mockedApi.post.mock.calls[0];
+      expect(url).toBe(`/agencies/${A}/proposals/${P}/attachments`);
+      expect((body as FormData).get("file")).toBeInstanceOf(File);
+      expect(config).toEqual({ headers: { Authorization: "Bearer tok", "Content-Type": undefined } });
+    });
+
+    it("maps an upload error to AuthApiError", async () => {
+      mockedApi.post.mockRejectedValueOnce(axiosError(413, "Files must be 25MB or smaller"));
+      await expect(proposals.uploadProposalAttachment(A, P, new File(["x"], "x"))).rejects.toMatchObject({
+        message: "Files must be 25MB or smaller",
+        status: 413,
+      });
+    });
+
+    it("deletes", async () => {
+      mockedApi.delete.mockResolvedValueOnce({});
+      await proposals.deleteProposalAttachment(A, P, "att-1");
+      expect(mockedApi.delete).toHaveBeenCalledWith(`/agencies/${A}/proposals/${P}/attachments/att-1`, AUTH);
     });
   });
 });

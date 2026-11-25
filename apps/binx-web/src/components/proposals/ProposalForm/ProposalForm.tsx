@@ -3,7 +3,9 @@
  *
  * The draft-proposal editor: an optional client select, title, recipient
  * name/email, a markdown-ish content textarea, currency, tax rate,
- * valid-until date, and a repeatable line-item table. Totals update live and
+ * valid-until date, and a repeatable line-item table (typed by hand or
+ * picked from the services catalog, with optional client-facing details
+ * under each line). Totals update live and
  * mirror binx-api's `_recalculate` math exactly (subtotal of line amounts,
  * then tax — proposals carry no discount). Used for both creating a new
  * draft and editing an existing one (sent/decided proposals are never
@@ -24,6 +26,8 @@ import { toast } from "sonner";
 
 import type { ProposalDetail, ProposalInput } from "@/lib/proposals";
 import { formatMoneyCents } from "@/lib/money";
+import { lineValuesFromService, type Service } from "@/lib/services-client";
+import ServicePicker from "@/components/services/ServicePicker/ServicePicker";
 import {
   createProposalAction,
   updateProposalAction,
@@ -45,22 +49,34 @@ interface ProposalFormProps {
   proposal?: ProposalDetail;
   /** Pre-selects a client on a new draft, e.g. from a client's Proposals tab. */
   initialClientId?: string | null;
+  /** Active catalog services for "Add from services". */
+  services?: Service[];
 }
 
 interface LineRow {
   key: string;
   description: string;
+  details: string;
+  /** The details box stays open once opened, even if emptied again. */
+  showDetails: boolean;
   quantity: string;
   unitPrice: string; // dollars, as typed
+  serviceId: string | null;
 }
 
 let rowCounter = 0;
 const newRow = (): LineRow => ({
   key: `r${rowCounter++}`,
   description: "",
+  details: "",
+  showDetails: false,
   quantity: "1",
   unitPrice: "",
+  serviceId: null,
 });
+
+const isBlank = (row: LineRow) =>
+  row.description.trim() === "" && row.unitPrice.trim() === "";
 
 function toCents(dollars: string): number {
   const n = Number.parseFloat(dollars);
@@ -78,6 +94,7 @@ const ProposalForm = ({
   clients,
   proposal,
   initialClientId = null,
+  services = [],
 }: ProposalFormProps) => {
   const router = useRouter();
   const isEdit = Boolean(proposal);
@@ -103,8 +120,11 @@ const ProposalForm = ({
       ? proposal.line_items.map((item) => ({
           key: `r${rowCounter++}`,
           description: item.description,
+          details: item.details ?? "",
+          showDetails: Boolean(item.details),
           quantity: item.quantity,
           unitPrice: centsToInput(item.unit_price_cents),
+          serviceId: item.service_id ?? null,
         }))
       : [newRow()],
   );
@@ -138,6 +158,22 @@ const ProposalForm = ({
     );
   };
 
+  // Fill the empty last line if there is one, else add a line.
+  const addService = (service: Service) => {
+    const values = lineValuesFromService(service);
+    setRows((prev) => {
+      const filled: LineRow = {
+        ...newRow(),
+        ...values,
+        showDetails: values.details !== "",
+      };
+      const last = prev[prev.length - 1];
+      return last && isBlank(last)
+        ? [...prev.slice(0, -1), { ...filled, key: last.key }]
+        : [...prev, filled];
+    });
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!canSubmit || submitting) return;
@@ -156,8 +192,10 @@ const ProposalForm = ({
         .filter((row) => row.description.trim() !== "")
         .map((row) => ({
           description: row.description.trim(),
+          details: row.details.trim() || null,
           quantity: String(Number.parseFloat(row.quantity) || 0),
           unitPriceCents: toCents(row.unitPrice),
+          serviceId: row.serviceId,
         })),
     };
 
@@ -269,15 +307,38 @@ const ProposalForm = ({
         </div>
         {rows.map((row, index) => (
           <div key={row.key} className={styles.lineRow}>
-            <input
-              className={styles.input}
-              placeholder="e.g. Discovery workshop"
-              value={row.description}
-              onChange={(event) =>
-                updateRow(row.key, { description: event.target.value })
-              }
-              aria-label={`Line ${index + 1} description`}
-            />
+            <div className={styles.lineDescription}>
+              <input
+                className={styles.input}
+                placeholder="e.g. Discovery workshop"
+                value={row.description}
+                onChange={(event) =>
+                  updateRow(row.key, { description: event.target.value })
+                }
+                aria-label={`Line ${index + 1} description`}
+              />
+              {row.showDetails ? (
+                <textarea
+                  className={styles.textarea}
+                  rows={2}
+                  maxLength={4000}
+                  placeholder="What's included. The client sees this under the line."
+                  value={row.details}
+                  onChange={(event) =>
+                    updateRow(row.key, { details: event.target.value })
+                  }
+                  aria-label={`Line ${index + 1} details`}
+                />
+              ) : (
+                <button
+                  type="button"
+                  className={styles.addDetails}
+                  onClick={() => updateRow(row.key, { showDetails: true })}
+                >
+                  + Details
+                </button>
+              )}
+            </div>
             <input
               className={styles.input}
               type="number"
@@ -321,13 +382,20 @@ const ProposalForm = ({
             </button>
           </div>
         ))}
-        <button
-          type="button"
-          className={styles.addRow}
-          onClick={() => setRows((prev) => [...prev, newRow()])}
-        >
-          <Plus aria-hidden="true" /> Add line
-        </button>
+        <div className={styles.lineTools}>
+          <button
+            type="button"
+            className={styles.addRow}
+            onClick={() => setRows((prev) => [...prev, newRow()])}
+          >
+            <Plus aria-hidden="true" /> Add line
+          </button>
+          <ServicePicker
+            services={services}
+            currency={currency}
+            onPick={addService}
+          />
+        </div>
       </div>
 
       <div className={styles.bottom}>

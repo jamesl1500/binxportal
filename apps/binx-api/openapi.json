@@ -4544,6 +4544,20 @@
         "title": "Body_post_message_portal_conversations__conversation_id__messages_post",
         "type": "object"
       },
+      "Body_upload_attachment_agencies__agency_id__proposals__proposal_id__attachments_post": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_attachment_agencies__agency_id__proposals__proposal_id__attachments_post",
+        "type": "object"
+      },
       "Body_upload_avatar_users_me_avatar_put": {
         "properties": {
           "file": {
@@ -10470,6 +10484,18 @@
             ],
             "title": "Quantity"
           },
+          "service_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Service Id"
+          },
           "unit_price_cents": {
             "minimum": 0.0,
             "title": "Unit Price Cents",
@@ -10506,6 +10532,18 @@
           "quantity": {
             "title": "Quantity",
             "type": "string"
+          },
+          "service_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Service Id"
           },
           "unit_price_cents": {
             "title": "Unit Price Cents",
@@ -13703,6 +13741,46 @@
         "title": "ProjectUpdate",
         "type": "object"
       },
+      "ProposalAttachmentRead": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "file_name": {
+            "title": "File Name",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "mime_type": {
+            "title": "Mime Type",
+            "type": "string"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          },
+          "size": {
+            "title": "Size",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "file_name",
+          "mime_type",
+          "size",
+          "sha256",
+          "created_at"
+        ],
+        "title": "ProposalAttachmentRead",
+        "type": "object"
+      },
       "ProposalCreate": {
         "properties": {
           "client_id": {
@@ -13841,6 +13919,13 @@
             "format": "uuid",
             "title": "Agency Id",
             "type": "string"
+          },
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/ProposalAttachmentRead"
+            },
+            "title": "Attachments",
+            "type": "array"
           },
           "client_id": {
             "anyOf": [
@@ -14070,6 +14155,7 @@
           "decline_reason",
           "share_url",
           "line_items",
+          "attachments",
           "signature"
         ],
         "title": "ProposalDetailRead",
@@ -14083,6 +14169,18 @@
             "title": "Description",
             "type": "string"
           },
+          "details": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details"
+          },
           "quantity": {
             "anyOf": [
               {
@@ -14094,6 +14192,18 @@
               }
             ],
             "title": "Quantity"
+          },
+          "service_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Service Id"
           },
           "unit_price_cents": {
             "minimum": 0.0,
@@ -14119,6 +14229,17 @@
             "title": "Description",
             "type": "string"
           },
+          "details": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details"
+          },
           "id": {
             "format": "uuid",
             "title": "Id",
@@ -14132,6 +14253,18 @@
             "title": "Quantity",
             "type": "string"
           },
+          "service_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Service Id"
+          },
           "unit_price_cents": {
             "title": "Unit Price Cents",
             "type": "integer"
@@ -14141,9 +14274,11 @@
           "id",
           "position",
           "description",
+          "details",
           "quantity",
           "unit_price_cents",
-          "amount_cents"
+          "amount_cents",
+          "service_id"
         ],
         "title": "ProposalLineItemRead",
         "type": "object"
@@ -14154,6 +14289,13 @@
           "agency_name": {
             "title": "Agency Name",
             "type": "string"
+          },
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/ProposalAttachmentRead"
+            },
+            "title": "Attachments",
+            "type": "array"
           },
           "content": {
             "anyOf": [
@@ -14253,6 +14395,7 @@
           "total_cents",
           "valid_until",
           "line_items",
+          "attachments",
           "signature"
         ],
         "title": "ProposalPublicRead",
@@ -14786,6 +14929,18 @@
             ],
             "title": "Quantity"
           },
+          "service_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Service Id"
+          },
           "unit_price_cents": {
             "minimum": 0.0,
             "title": "Unit Price Cents",
@@ -14818,6 +14973,18 @@
           "quantity": {
             "title": "Quantity",
             "type": "string"
+          },
+          "service_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Service Id"
           },
           "unit_price_cents": {
             "title": "Unit Price Cents",
@@ -15377,6 +15544,203 @@
           }
         },
         "title": "SendProposalRequest",
+        "type": "object"
+      },
+      "ServiceCreate": {
+        "properties": {
+          "default_quantity": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "default": "1",
+            "title": "Default Quantity"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "name": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "pricing_type": {
+            "default": "fixed",
+            "pattern": "^(fixed|hourly|monthly)$",
+            "title": "Pricing Type",
+            "type": "string"
+          },
+          "unit_price_cents": {
+            "minimum": 0.0,
+            "title": "Unit Price Cents",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "unit_price_cents"
+        ],
+        "title": "ServiceCreate",
+        "type": "object"
+      },
+      "ServiceRead": {
+        "properties": {
+          "agency_id": {
+            "format": "uuid",
+            "title": "Agency Id",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "default_quantity": {
+            "title": "Default Quantity",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "is_archived": {
+            "title": "Is Archived",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "pricing_type": {
+            "title": "Pricing Type",
+            "type": "string"
+          },
+          "unit_price_cents": {
+            "title": "Unit Price Cents",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "agency_id",
+          "name",
+          "description",
+          "pricing_type",
+          "unit_price_cents",
+          "default_quantity",
+          "is_archived",
+          "created_at"
+        ],
+        "title": "ServiceRead",
+        "type": "object"
+      },
+      "ServiceUpdate": {
+        "description": "Partial update \u2014 only the fields sent change.",
+        "properties": {
+          "default_quantity": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Quantity"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "is_archived": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Archived"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "pricing_type": {
+            "anyOf": [
+              {
+                "pattern": "^(fixed|hourly|monthly)$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pricing Type"
+          },
+          "unit_price_cents": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Price Cents"
+          }
+        },
+        "title": "ServiceUpdate",
         "type": "object"
       },
       "SignupRequest": {
@@ -33298,6 +33662,201 @@
         ]
       }
     },
+    "/agencies/{agency_id}/proposals/{proposal_id}/attachments": {
+      "post": {
+        "operationId": "upload_attachment_agencies__agency_id__proposals__proposal_id__attachments_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Proposal Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_attachment_agencies__agency_id__proposals__proposal_id__attachments_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalAttachmentRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Upload Attachment",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/proposals/{proposal_id}/attachments/{attachment_id}": {
+      "delete": {
+        "operationId": "delete_attachment_agencies__agency_id__proposals__proposal_id__attachments__attachment_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Proposal Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "attachment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Attachment Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Attachment",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/proposals/{proposal_id}/attachments/{attachment_id}/download": {
+      "get": {
+        "operationId": "download_attachment_agencies__agency_id__proposals__proposal_id__attachments__attachment_id__download_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Proposal Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "attachment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Attachment Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Download Attachment",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
     "/agencies/{agency_id}/proposals/{proposal_id}/send": {
       "post": {
         "operationId": "send_proposal_agencies__agency_id__proposals__proposal_id__send_post",
@@ -33827,6 +34386,241 @@
         "summary": "Restore Agency Endpoint",
         "tags": [
           "agencies"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/services": {
+      "get": {
+        "operationId": "list_services_agencies__agency_id__services_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_archived",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Archived",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ServiceRead"
+                  },
+                  "title": "Response List Services Agencies  Agency Id  Services Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Services",
+        "tags": [
+          "services"
+        ]
+      },
+      "post": {
+        "operationId": "create_service_agencies__agency_id__services_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServiceCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Service",
+        "tags": [
+          "services"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/services/{service_id}": {
+      "delete": {
+        "operationId": "delete_service_agencies__agency_id__services__service_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "service_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Service Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Service",
+        "tags": [
+          "services"
+        ]
+      },
+      "patch": {
+        "operationId": "update_service_agencies__agency_id__services__service_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "service_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Service Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServiceUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Service",
+        "tags": [
+          "services"
         ]
       }
     },
@@ -38555,6 +39349,62 @@
         ]
       }
     },
+    "/portal/proposals/{proposal_id}/attachments/{attachment_id}": {
+      "get": {
+        "operationId": "download_portal_proposal_attachment_portal_proposals__proposal_id__attachments__attachment_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Proposal Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "attachment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Attachment Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Download Portal Proposal Attachment",
+        "tags": [
+          "client-portal"
+        ]
+      }
+    },
     "/portal/proposals/{proposal_id}/decline": {
       "post": {
         "operationId": "decline_portal_proposal_portal_proposals__proposal_id__decline_post",
@@ -38775,6 +39625,56 @@
           }
         },
         "summary": "Read Public Proposal",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
+    "/proposals/public/{token}/attachments/{attachment_id}": {
+      "get": {
+        "operationId": "download_public_attachment_proposals_public__token__attachments__attachment_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "attachment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Attachment Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Download Public Attachment",
         "tags": [
           "proposals"
         ]

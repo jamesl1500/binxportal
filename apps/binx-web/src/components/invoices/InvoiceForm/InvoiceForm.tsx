@@ -24,6 +24,8 @@ import type {
   InvoiceInput,
 } from "@/lib/invoicing";
 import { formatMoneyCents } from "@/lib/money";
+import { lineValuesFromService, type Service } from "@/lib/services-client";
+import ServicePicker from "@/components/services/ServicePicker/ServicePicker";
 import {
   PLATFORM_FEE_LABEL,
   STRIPE_ESTIMATE_LABEL,
@@ -53,6 +55,8 @@ interface InvoiceFormProps {
   billingSettings: BillingSettings;
   /** Present when editing an existing draft. */
   invoice?: InvoiceDetail;
+  /** Active catalog services for "Add from services". */
+  services?: Service[];
 }
 
 interface LineRow {
@@ -60,6 +64,7 @@ interface LineRow {
   description: string;
   quantity: string;
   unitPrice: string; // dollars, as typed
+  serviceId: string | null;
 }
 
 type DiscountKind = "none" | "amount" | "percent";
@@ -70,7 +75,11 @@ const newRow = (): LineRow => ({
   description: "",
   quantity: "1",
   unitPrice: "",
+  serviceId: null,
 });
+
+const isBlank = (row: LineRow) =>
+  row.description.trim() === "" && row.unitPrice.trim() === "";
 
 function toCents(dollars: string): number {
   const n = Number.parseFloat(dollars);
@@ -97,6 +106,7 @@ const InvoiceForm = ({
   projects,
   billingSettings,
   invoice,
+  services = [],
 }: InvoiceFormProps) => {
   const router = useRouter();
   const isEdit = Boolean(invoice);
@@ -117,6 +127,7 @@ const InvoiceForm = ({
           description: item.description,
           quantity: item.quantity,
           unitPrice: centsToInput(item.unit_price_cents),
+          serviceId: item.service_id ?? null,
         }))
       : [newRow()],
   );
@@ -181,6 +192,26 @@ const InvoiceForm = ({
         row.quantity,
     );
 
+  // Fill the empty last line if there is one, else add a line. Invoices
+  // carry no per-line details, so only the name and price are copied.
+  const addService = (service: Service) => {
+    const { serviceId, description, quantity, unitPrice } =
+      lineValuesFromService(service);
+    setRows((prev) => {
+      const last = prev[prev.length - 1];
+      const filled: LineRow = {
+        key: last && isBlank(last) ? last.key : `r${rowCounter++}`,
+        description,
+        quantity,
+        unitPrice,
+        serviceId,
+      };
+      return last && isBlank(last)
+        ? [...prev.slice(0, -1), filled]
+        : [...prev, filled];
+    });
+  };
+
   const updateRow = (key: string, patch: Partial<LineRow>) => {
     setRows((prev) =>
       prev.map((row) => (row.key === key ? { ...row, ...patch } : row)),
@@ -208,6 +239,7 @@ const InvoiceForm = ({
           description: row.description.trim(),
           quantity: String(Number.parseFloat(row.quantity) || 0),
           unitPriceCents: toCents(row.unitPrice),
+          serviceId: row.serviceId,
         })),
     };
 
@@ -352,13 +384,20 @@ const InvoiceForm = ({
             </button>
           </div>
         ))}
-        <button
-          type="button"
-          className={styles.addRow}
-          onClick={() => setRows((prev) => [...prev, newRow()])}
-        >
-          <Plus aria-hidden="true" /> Add line
-        </button>
+        <div className={styles.lineTools}>
+          <button
+            type="button"
+            className={styles.addRow}
+            onClick={() => setRows((prev) => [...prev, newRow()])}
+          >
+            <Plus aria-hidden="true" /> Add line
+          </button>
+          <ServicePicker
+            services={services}
+            currency={currency}
+            onPick={addService}
+          />
+        </div>
       </div>
 
       <div className={styles.bottom}>

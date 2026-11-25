@@ -16,6 +16,7 @@ import { getCurrentAgencyContext } from "@/lib/agencies";
 import { getAgencyClients } from "@/lib/clients";
 import { getBillingSettings, getInvoice } from "@/lib/invoicing";
 import { getAgencyProjects } from "@/lib/projects";
+import { getServices } from "@/lib/services";
 import InvoiceForm from "@/components/invoices/InvoiceForm/InvoiceForm";
 
 import styles from "../../page.module.scss";
@@ -48,10 +49,11 @@ const EditInvoicePage = async ({ params }: EditInvoicePageProps) => {
     redirect(`/invoices/${invoiceId}`);
   }
 
-  const [clients, projects, settings] = await Promise.all([
+  const [clients, projects, settings, services] = await Promise.all([
     getAgencyClients(currentAgency.id),
     getAgencyProjects(currentAgency.id),
     getBillingSettings(currentAgency.id),
+    getServices(currentAgency.id),
   ]);
 
   return (
@@ -69,6 +71,7 @@ const EditInvoicePage = async ({ params }: EditInvoicePageProps) => {
       <div className={styles.formCard}>
         <InvoiceForm
           agencyId={currentAgency.id}
+          services={services}
           clients={clients.map((client) => ({
             id: client.id,
             name: client.name,

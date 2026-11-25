@@ -1,0 +1,28 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.select {
+  @include m.input-base;
+  width: auto;
+  max-width: 22rem;
+  padding-block: t.$space-2;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+  cursor: pointer;
+}
+
+.hint {
+  margin: 0;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+
+  a {
+    color: t.$color-ink-soft;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+
+    &:hover {
+      color: t.$color-ink;
+    }
+  }
+}

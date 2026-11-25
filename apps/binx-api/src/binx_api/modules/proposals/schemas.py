@@ -9,17 +9,32 @@ from pydantic import BaseModel, EmailStr, Field
 
 class ProposalLineItemInput(BaseModel):
     description: str = Field(min_length=1, max_length=1024)
+    details: str | None = Field(default=None, max_length=4000)
     quantity: Decimal = Field(gt=0, max_digits=12, decimal_places=2)
     unit_price_cents: int = Field(ge=0)
+    # Set when the line was picked from the services catalog.
+    service_id: uuid.UUID | None = None
 
 
 class ProposalLineItemRead(BaseModel):
     id: uuid.UUID
     position: int
     description: str
+    details: str | None
     quantity: Decimal
     unit_price_cents: int
     amount_cents: int
+    service_id: uuid.UUID | None
+
+
+class ProposalAttachmentRead(BaseModel):
+    id: uuid.UUID
+    file_name: str
+    mime_type: str
+    size: int
+    # Hex SHA-256 of the bytes as uploaded.
+    sha256: str
+    created_at: datetime
 
 
 # --- Create / update -------------------------------------------------------
@@ -77,6 +92,7 @@ class ProposalDetailRead(ProposalRead):
     decline_reason: str | None
     share_url: str
     line_items: list[ProposalLineItemRead]
+    attachments: list[ProposalAttachmentRead]
     signature: "ProposalSignatureRead | None"
 
 
@@ -106,6 +122,7 @@ class ProposalPublicRead(BaseModel):
     total_cents: int
     valid_until: datetime | None
     line_items: list[ProposalLineItemRead]
+    attachments: list[ProposalAttachmentRead]
     signature: ProposalSignatureRead | None
 
 

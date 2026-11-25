@@ -15,6 +15,7 @@ import { notFound, redirect } from "next/navigation";
 import { AuthApiError } from "@/lib/auth";
 import { getCurrentAgencyContext } from "@/lib/agencies";
 import { getAgencyClients } from "@/lib/clients";
+import { getServices } from "@/lib/services";
 import { getProposal } from "@/lib/proposals";
 import ProposalForm from "@/components/proposals/ProposalForm/ProposalForm";
 
@@ -48,7 +49,10 @@ const EditProposalPage = async ({ params }: EditProposalPageProps) => {
     redirect(`/proposals/${proposalId}`);
   }
 
-  const clients = await getAgencyClients(currentAgency.id);
+  const [clients, services] = await Promise.all([
+    getAgencyClients(currentAgency.id),
+    getServices(currentAgency.id),
+  ]);
 
   return (
     <div>
@@ -72,6 +76,7 @@ const EditProposalPage = async ({ params }: EditProposalPageProps) => {
             primaryContactEmail: c.primary_contact_email,
           }))}
           proposal={proposal}
+          services={services}
         />
       </div>
     </div>

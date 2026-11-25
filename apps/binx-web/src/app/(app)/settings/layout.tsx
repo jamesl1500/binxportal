@@ -2,7 +2,7 @@
  * layout.tsx - Agency Settings
  *
  * Shared chrome for the agency-settings tabs (Profile / Policies / Invoicing /
- * Plan / AI / General): the header and the grouped tab nav. The (app) layout
+ * Services / Plan / AI / General): the header and the grouped tab nav. The (app) layout
  * above already guards for a signed-in session with a current agency.
  *
  * @module apps/binx-web/src/app/(app)/settings/layout.tsx
@@ -32,7 +32,7 @@ const SettingsLayout = async ({ children }: { children: React.ReactNode }) => {
       <span className={styles.eyebrow}>Settings</span>
       <h1 className={styles.title}>Agency settings</h1>
       <p className={styles.subtitle}>
-        {currentAgency.name}&apos;s profile and policies, invoicing and plan, AI
+        {currentAgency.name}&apos;s profile and policies, invoicing, services and plan, AI
         limits, and general settings.
       </p>
 
