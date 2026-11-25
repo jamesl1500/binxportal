@@ -174,12 +174,10 @@ class InvoicePayment(Base):
 
 # ---- Recurring invoices (retainers) --------------------------------------
 # A template that stamps out a fresh draft (or auto-issued) Invoice on a
-# schedule — see recurring_service.py. There is no background worker in this
-# app, so "on a schedule" today means: whenever a schedule's next_run_date
-# has arrived by the time someone next opens the Recurring Invoices page
-# (recurring_service.catch_up_due_schedules is called from that GET) or hits
-# "Generate now". A real cron hitting recurring_service.catch_up_due_schedules
-# is a natural fast-follow once one exists in this deployment.
+# schedule. A background job in the API process bills each period on its
+# next_run_date; opening the Recurring Invoices page or "Generate now" can
+# bill sooner. See recurring_service.py's "Generation" section for how a
+# period is claimed so it's never billed twice.
 
 RECURRING_INTERVAL_WEEKLY = "weekly"
 RECURRING_INTERVAL_MONTHLY = "monthly"

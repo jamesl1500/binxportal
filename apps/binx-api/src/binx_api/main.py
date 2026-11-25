@@ -29,6 +29,7 @@ from binx_api.modules.feedback.router import router as feedback_router
 from binx_api.modules.files.router import router as files_router
 from binx_api.modules.imports.router import router as imports_router
 from binx_api.modules.invoicing.recurring_router import router as recurring_invoices_router
+from binx_api.modules.invoicing.recurring_service import run_recurring_loop
 from binx_api.modules.invoicing.router import router as invoicing_router
 from binx_api.modules.invoicing.webhooks_router import router as invoicing_webhooks_router
 from binx_api.modules.kickoffs.router import router as kickoffs_router
@@ -62,15 +63,17 @@ def _on_rate_limited(request: Request, exc: Exception) -> Response:
 
 @asynccontextmanager
 async def _lifespan(_app: FastAPI) -> AsyncIterator[None]:
-    """Runs the one background job: erasing agencies whose 30-day deletion
-    hold has ended. It has to run even if nobody visits, because the Privacy
-    Policy promises the data is gone on schedule."""
-    purge = asyncio.create_task(run_purge_loop())
+    """Runs the background jobs, which have to happen even if nobody
+    visits: erasing agencies whose 30-day deletion hold has ended (the
+    Privacy Policy promises the data is gone on schedule), and billing
+    recurring invoices on their date."""
+    jobs = [asyncio.create_task(run_purge_loop()), asyncio.create_task(run_recurring_loop())]
     try:
         yield
     finally:
-        purge.cancel()
-        await asyncio.gather(purge, return_exceptions=True)
+        for job in jobs:
+            job.cancel()
+        await asyncio.gather(*jobs, return_exceptions=True)
 
 
 def create_app() -> FastAPI:

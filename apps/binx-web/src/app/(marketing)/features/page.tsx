@@ -210,7 +210,7 @@ const GROUPS: { eyebrow: string; heading: string; items: Feature[] }[] = [
       {
         icon: Repeat,
         title: "Recurring invoices",
-        text: "Save weekly or monthly schedules for retainers. Generate each invoice in a click, or when you open Recurring invoices once it's due.",
+        text: "Save weekly or monthly schedules for retainers. Each invoice is created on its date, as a draft or sent straight to the client, and you can generate one early in a click.",
       },
       {
         icon: Sparkles,
