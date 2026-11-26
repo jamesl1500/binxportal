@@ -73,7 +73,7 @@ const FAQ = [
   },
   {
     q: "Are proposals included on every plan?",
-    a: "Yes. Every plan, Free included, can build proposals, send them as a link and collect an online signature. Signed proposals show up on the client record and in their portal.",
+    a: "Yes. Every plan, Free included, gets proposals with binding e-signatures, countersigning, the signed PDF and the automatic client setup when a proposal is signed. Lead portals, a branded page for each prospect, start on Starter.",
   },
   {
     q: "Can clients use the portal for free?",

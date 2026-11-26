@@ -36,6 +36,8 @@ test.describe("marketing site", () => {
     { path: "/alternatives/bloom", heading: "Bloom alternative" },
     { path: "/alternatives/milanote", heading: "Milanote alternative" },
     // Feature deep-dives.
+    { path: "/proposal-software", heading: "clients can sign, for real" },
+    { path: "/client-onboarding", heading: "onboarded, in one signature" },
     { path: "/client-approvals", heading: "clear yes from clients" },
     { path: "/visual-canvas", heading: "way creative people think" },
     {

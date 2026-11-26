@@ -41,6 +41,8 @@ const PUBLIC_PAGES = [
   "/alternatives/copilot-assembly",
   "/alternatives/bloom",
   "/alternatives/milanote",
+  "/proposal-software",
+  "/client-onboarding",
   "/client-approvals",
   "/visual-canvas",
   "/compare/notion-stripe-drive",

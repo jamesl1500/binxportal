@@ -8,7 +8,7 @@
  * — this is belt and braces. The (app) segments below are every top-level
  * route under that group; robots.test.ts fails if a new one is added without
  * being listed here. `/proposals` covers both the staff proposals area and the
- * token-scoped public share page.
+ * token-scoped public share page (and its signing certificate).
  *
  * @module apps/binx-web/src/app/robots.ts
  * @author Binx Portal
@@ -59,6 +59,9 @@ export default function robots(): MetadataRoute.Robots {
       disallow: [
         ...APP_SEGMENTS.map((segment) => `/${segment}`),
         "/portal",
+        // A lead's token-scoped portal (app/lead-portal): private to them,
+        // noindex'd in its own metadata too.
+        "/lead-portal",
         "/auth",
         "/onboarding",
         "/api",

@@ -22,4 +22,10 @@ describe("robots", () => {
     const disallow = Array.isArray(rules) ? rules.flatMap((r) => r.disallow ?? []) : rules.disallow;
     expect(disallow).toContain("/proposals");
   });
+
+  it("disallows the token-scoped lead portal", () => {
+    const rules = robots().rules;
+    const disallow = Array.isArray(rules) ? rules.flatMap((r) => r.disallow ?? []) : rules.disallow;
+    expect(disallow).toContain("/lead-portal");
+  });
 });

@@ -55,7 +55,7 @@ const FAQ = [
   },
   {
     q: "Does Binx do contracts and forms like Dubsado?",
-    a: "Partly. Binx has proposals with online e-signature, so a client can review your scope and pricing and sign from a link. It also has kickoff questionnaires for clients. It doesn't have contract templates or a general form builder yet, so you may want to keep a separate tool for those.",
+    a: "Partly. Binx proposals carry a binding e-signature, an optional countersignature and a signed PDF, and you can attach your own contract to one for the client to sign. A signature can then set up the client, deposit invoice, project and kickoff questionnaire automatically. There are no contract templates or general form builder yet, so you may want to keep a separate tool for those.",
   },
   {
     q: "Is there a free plan to try it?",

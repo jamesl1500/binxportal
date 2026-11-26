@@ -13,6 +13,7 @@ import {
   Bell,
   Bookmark,
   Building2,
+  DoorOpen,
   CalendarDays,
   CheckCheck,
   ClipboardList,
@@ -22,6 +23,7 @@ import {
   FileUp,
   LayoutDashboard,
   LayoutGrid,
+  Library,
   ListChecks,
   MessagesSquare,
   Newspaper,
@@ -31,6 +33,7 @@ import {
   Repeat,
   Sparkles,
   Timer,
+  UserCheck,
   Users,
   Wand2,
   ArrowRight,
@@ -47,7 +50,7 @@ const TITLE = "Features";
 // short breadcrumb name). Kept to 60 characters with the " · Binx Portal" suffix.
 const SEO_TITLE = "Features: proposals, client portal, invoicing";
 const DESCRIPTION =
-  "AI lead prospecting, signable proposals, a visual project canvas, client approvals, a team timeline, a client portal and invoicing: everything Binx does.";
+  "AI lead prospecting, e-signed proposals, lead portals, a visual project canvas, client approvals, a client portal and invoicing: everything Binx does.";
 
 export const metadata: Metadata = {
   title: SEO_TITLE,
@@ -82,13 +85,35 @@ const GROUPS: { eyebrow: string; heading: string; items: Feature[] }[] = [
       },
       {
         icon: FileSignature,
-        title: "Proposals with e-sign",
-        text: "Line items, tax, currency and a valid-until date. Send one link, see when it's opened, and let the client sign or decline online with a full record kept.",
+        title: "Proposals with binding e-sign",
+        text: "Line items, tax, a deposit and attached documents. The client signs online with consent and a fingerprint of what they saw, you can countersign, and everyone gets the signed PDF.",
+        isNew: true,
+        href: "/proposal-software",
+      },
+      {
+        icon: Library,
+        title: "Services catalog",
+        text: "Write each service once, with fixed, hourly or monthly pricing, and add it to proposals, invoices and recurring invoices in a click. Import your price list from a spreadsheet.",
+        isNew: true,
+      },
+      {
+        icon: DoorOpen,
+        title: "Lead portals",
+        text: "A branded page for each prospect with their proposals and a thread for questions, opened from a link with no login. On Starter and up.",
+        isNew: true,
+        href: "/client-onboarding",
+      },
+      {
+        icon: UserCheck,
+        title: "Signed means onboarded",
+        text: "When a lead signs, they become a client with a portal invite, the deposit invoice goes out, and the project and kickoff start once it's paid.",
+        isNew: true,
+        href: "/client-onboarding",
       },
       {
         icon: LayoutGrid,
         title: "Leads & pipeline",
-        text: "A lightweight CRM: stages, owners, notes and estimated value. Convert a won lead into a client and its details carry straight over.",
+        text: "A lightweight CRM: stages, owners, notes and estimated value. Convert a won lead into a client, or let a signed proposal do it, and its details carry straight over.",
       },
       {
         icon: Sparkles,
@@ -179,7 +204,7 @@ const GROUPS: { eyebrow: string; heading: string; items: Feature[] }[] = [
       {
         icon: FileUp,
         title: "Import & export",
-        text: "Bring clients, teammates, leads, projects and tasks in from a spreadsheet. Export your data, invoices and proposals included, whenever you want.",
+        text: "Bring clients, teammates, leads, projects, tasks and services in from a spreadsheet. Export your data, invoices and proposals included, whenever you want.",
       },
       {
         icon: Building2,

@@ -147,6 +147,10 @@ async def _run() -> None:
     from binx_api.modules.client_portal.models import ClientContact
     from binx_api.modules.invoicing.schemas import LineItemInput
     from binx_api.modules.invoicing.service import create_invoice, issue_invoice
+
+    # Proposals reference kickoff templates; load those models so the mapper
+    # can resolve the foreign key (the app does this through its routers).
+    from binx_api.modules.kickoffs import models as _kickoff_models  # noqa: F401
     from binx_api.modules.messaging.service import create_conversation, post_message
     from binx_api.modules.projects.service import create_project, create_task, get_project_board, move_task
     from binx_api.modules.users.models import User
@@ -524,7 +528,200 @@ async def _run() -> None:
         db.add(ClientContact(agency_id=sales_agency.id, client_id=sales_client.id, user_id=buyer.id, is_primary=True))
         await db.commit()
 
+        await _seed_showcase(
+            db,
+            agency=agency,
+            owner=owner,
+            client=client,
+            second_client=second_client,
+            sales_agency=sales_agency,
+            seller=seller,
+        )
+
     logger.info("Seed complete: agency=%r staff=%s client=%s", AGENCY_NAME, STAFF_EMAIL, CLIENT_EMAIL)
+
+
+# The proposals, services and lead portal the marketing screenshots show
+# (e2e/capture-marketing.spec.ts). Titles are mirrored there.
+SHOWCASE_PROPOSAL = "Brand & website refresh, phase two"
+SHOWCASE_SIGNED_PROPOSAL = "Kestrel Coffee packaging refresh"
+SHOWCASE_LEAD = "Alder & Oak"
+
+
+async def _seed_showcase(db, *, agency, owner, client, second_client, sales_agency, seller) -> None:
+    from binx_api.core import email as email_module
+    from binx_api.modules.lead_portal import service as lead_portal_service
+    from binx_api.modules.leads.service import create_lead
+    from binx_api.modules.proposals import service as proposals_service
+    from binx_api.modules.proposals.schemas import ProposalLineItemInput
+    from binx_api.modules.services.schemas import ServiceCreate
+    from binx_api.modules.services.service import create_service
+
+    # Signing a proposal emails both parties; seed data must never send real
+    # mail (the seed runs with the developer's .env, SES included).
+    async def _no_email(**kwargs) -> None:
+        logger.info("seed: skipped email %r", kwargs.get("subject"))
+
+    email_module.send_email = _no_email
+
+    catalog = {}
+    for name, pricing, price, description in (
+        (
+            "Brand strategy",
+            "fixed",
+            650_000,
+            "Two discovery workshops, a competitor review and a positioning document your team can use.",
+        ),
+        (
+            "Website design & build",
+            "fixed",
+            1_800_000,
+            "Up to eight templates, designed and built on your CMS, with launch support.",
+        ),
+        ("Design retainer", "monthly", 250_000, "Up to 20 hours of design a month, with priority turnaround."),
+    ):
+        catalog[name] = await create_service(
+            db,
+            agency.id,
+            ServiceCreate(name=name, description=description, pricing_type=pricing, unit_price_cents=price),
+            actor=owner,
+        )
+
+    def line(name: str, quantity: str = "1") -> ProposalLineItemInput:
+        service = catalog[name]
+        return ProposalLineItemInput(
+            description=service.name,
+            details=service.description,
+            quantity=Decimal(quantity),
+            unit_price_cents=service.unit_price_cents,
+            service_id=service.id,
+        )
+
+    # Sent, awaiting the client's signature (with a document attached).
+    proposal = await proposals_service.create_proposal(
+        db,
+        agency,
+        created_by=owner,
+        lead_id=None,
+        client_id=client.id,
+        title=SHOWCASE_PROPOSAL,
+        recipient_name=CLIENT_CONTACT_NAME,
+        recipient_email=CLIENT_EMAIL,
+        content=(
+            "Phase two takes the new identity online: a sharper positioning, a site that sells the range, "
+            "and a monthly retainer to keep it moving."
+        ),
+        currency="USD",
+        tax_rate_percent=Decimal("0"),
+        valid_until=datetime.now(UTC) + timedelta(days=21),
+        line_items=[line("Brand strategy"), line("Website design & build"), line("Design retainer", "3")],
+        requires_countersign=True,
+        deposit_percent=Decimal("30"),
+    )
+    await proposals_service.add_attachment(
+        db,
+        proposal,
+        uploaded_by=owner,
+        file_name="Statement of work.pdf",
+        content=b"%PDF-1.4\n% Fjord & Field: statement of work, phase two\n",
+        mime_type="application/pdf",
+    )
+    await proposals_service.send_proposal(db, proposal, sent_by=owner, recipient_email=None)
+
+    # Signed by the client and countersigned by the agency.
+    signed = await proposals_service.create_proposal(
+        db,
+        agency,
+        created_by=owner,
+        lead_id=None,
+        client_id=second_client.id,
+        title=SHOWCASE_SIGNED_PROPOSAL,
+        recipient_name="Dana Lowe",
+        recipient_email="dana@kestrel.example.com",
+        content="New bag and box designs for the spring range.",
+        currency="USD",
+        tax_rate_percent=Decimal("0"),
+        valid_until=None,
+        line_items=[line("Brand strategy")],
+        requires_countersign=True,
+    )
+    signed = await proposals_service.send_proposal(db, signed, sent_by=owner, recipient_email=None)
+    signed = await proposals_service.sign_proposal(
+        db,
+        signed,
+        signer_name="Dana Lowe",
+        signer_email="dana@kestrel.example.com",
+        ip_address="203.0.113.24",
+        user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 14_6) AppleWebKit/605.1.15 Safari/605.1.15",
+        consent=True,
+        document_hash=signed.document_hash,
+    )
+    await proposals_service.countersign_proposal(
+        db,
+        signed,
+        user=owner,
+        ip_address="198.51.100.7",
+        user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0 Safari/537.36",
+        consent=True,
+        document_hash=signed.document_hash,
+    )
+
+    # Harbor Lane: a lead with their portal on, a proposal and a conversation.
+    lead = await create_lead(
+        db,
+        sales_agency,
+        actor=seller,
+        name=SHOWCASE_LEAD,
+        contact_name="Maya Lindqvist",
+        contact_email="maya@alderandoak.example.com",
+        contact_phone=None,
+        website="https://alderandoak.example.com",
+        source="referral",
+        estimated_value_cents=2_400_000,
+        notes=None,
+    )
+    lead_proposal = await proposals_service.create_proposal(
+        db,
+        sales_agency,
+        created_by=seller,
+        lead_id=lead.id,
+        client_id=None,
+        title="Brand identity for Alder & Oak",
+        recipient_name="Maya Lindqvist",
+        recipient_email="maya@alderandoak.example.com",
+        content="A new identity for the furniture range, from naming through to packaging.",
+        currency="USD",
+        tax_rate_percent=Decimal("0"),
+        valid_until=datetime.now(UTC) + timedelta(days=14),
+        line_items=[
+            ProposalLineItemInput(description="Brand identity", quantity=Decimal("1"), unit_price_cents=1_600_000),
+            ProposalLineItemInput(description="Packaging system", quantity=Decimal("1"), unit_price_cents=800_000),
+        ],
+        deposit_percent=Decimal("25"),
+        create_project_on_accept=True,
+    )
+    await proposals_service.send_proposal(db, lead_proposal, sent_by=seller, recipient_email=None)
+    portal = await lead_portal_service.enable_portal(
+        db,
+        sales_agency,
+        lead,
+        actor=seller,
+        welcome_message=(
+            "Thanks for the great conversation last week. Your proposal is below, and you can ask us "
+            "anything right here before you sign."
+        ),
+    )
+    await lead_portal_service.post_lead_message(
+        db, portal, lead, body="Does the identity include a refresh of our product labels?", author_name=None
+    )
+    await lead_portal_service.post_agency_reply(
+        db,
+        sales_agency,
+        portal,
+        lead,
+        body="It does. The packaging system covers labels, swing tags and the shipping boxes.",
+        actor=seller,
+    )
 
 
 def main() -> None:

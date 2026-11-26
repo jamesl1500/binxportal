@@ -6,7 +6,7 @@ import MarketingFooter from "./MarketingFooter";
 describe("MarketingFooter", () => {
   it("renders the link columns with working hrefs", () => {
     render(<MarketingFooter />);
-    expect(screen.getByRole("navigation", { name: "Product" }).querySelectorAll("a")).toHaveLength(6);
+    expect(screen.getByRole("navigation", { name: "Product" }).querySelectorAll("a")).toHaveLength(8);
     expect(screen.getByRole("navigation", { name: "Company" }).querySelector('a[href="/investors"]')).not.toBeNull();
     expect(screen.getByRole("navigation", { name: "Legal" })).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "Product" }).querySelector('a[href="/pricing"]')).not.toBeNull();
