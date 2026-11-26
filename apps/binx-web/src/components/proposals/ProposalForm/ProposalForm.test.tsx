@@ -94,7 +94,17 @@ describe("ProposalForm", () => {
         leadId: null,
         clientId: null,
         lineItems: [
-          { description: "Retainer", details: null, quantity: "1", unitPriceCents: 200000, serviceId: null, billing: "one_time" },
+          {
+            description: "Retainer",
+            details: null,
+            quantity: "1",
+            unitPriceCents: 200000,
+            serviceId: null,
+            billing: "one_time",
+            packageKey: null,
+            optional: false,
+            selected: true,
+          },
         ],
       }),
     );
@@ -134,8 +144,21 @@ describe("ProposalForm", () => {
             unitPriceCents: 500000,
             serviceId: "svc-1",
             billing: "one_time",
+            packageKey: null,
+            optional: false,
+            selected: true,
           },
-          { description: "Design hours", details: null, quantity: "10", unitPriceCents: 12000, serviceId: "svc-2", billing: "one_time" },
+          {
+            description: "Design hours",
+            details: null,
+            quantity: "10",
+            unitPriceCents: 12000,
+            serviceId: "svc-2",
+            billing: "one_time",
+            packageKey: null,
+            optional: false,
+            selected: true,
+          },
         ],
       }),
     );
@@ -334,5 +357,104 @@ describe("ProposalForm", () => {
         ],
       }),
     );
+  });
+
+  it("offers packages: lines go in one, totals follow the recommended one, and it saves them", async () => {
+    mockedCreate.mockResolvedValueOnce({ proposal: { id: "p1" } as never });
+    const user = userEvent.setup();
+    render(<ProposalForm agencyId="a1" clients={clients} />);
+
+    await user.type(screen.getByLabelText(/^Title$/), "Website");
+    await user.type(screen.getByLabelText("Line 1 description"), "Discovery");
+    await user.type(screen.getByLabelText("Line 1 unit price"), "1000");
+    await user.click(screen.getByRole("button", { name: "Offer packages" }));
+    // Two packages to start, neither removable below two.
+    expect(screen.getByRole("button", { name: "Remove package 1" })).toBeDisabled();
+    expect(screen.getByText("Give each package a name.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /create draft/i })).toBeDisabled();
+
+    await user.type(screen.getByLabelText("Package 1 name"), "Essential");
+    await user.type(screen.getByLabelText("Package 2 name"), "Complete");
+    expect(screen.getByText("Add at least one line to Essential.")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Add line" }));
+    await user.type(screen.getByLabelText("Line 2 description"), "Small site");
+    await user.type(screen.getByLabelText("Line 2 unit price"), "4000");
+    await user.selectOptions(screen.getByLabelText("Line 2 package"), "Essential");
+    await user.click(screen.getByRole("button", { name: "Add line" }));
+    await user.type(screen.getByLabelText("Line 3 description"), "Large site");
+    await user.type(screen.getByLabelText("Line 3 unit price"), "9000");
+    await user.selectOptions(screen.getByLabelText("Line 3 package"), "Complete");
+    await user.click(screen.getByRole("radio", { name: "Recommend package 2" }));
+
+    // Discovery + Large site: the recommended package.
+    expect(screen.getByText("Total").nextSibling).toHaveTextContent("$10,000.00");
+    expect(screen.getByText(/For Complete\./)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /create draft/i }));
+    const input = mockedCreate.mock.calls[0][1];
+    expect(input.packages).toEqual([
+      expect.objectContaining({ name: "Essential", recommended: false }),
+      expect.objectContaining({ name: "Complete", recommended: true }),
+    ]);
+    const [essential, complete] = input.packages!;
+    expect(input.lineItems.map((item) => [item.description, item.packageKey])).toEqual([
+      ["Discovery", null],
+      ["Small site", essential.key],
+      ["Large site", complete.key],
+    ]);
+  });
+
+  it("makes add-ons, counting only the pre-selected ones", async () => {
+    mockedCreate.mockResolvedValueOnce({ proposal: { id: "p1" } as never });
+    const user = userEvent.setup();
+    render(<ProposalForm agencyId="a1" clients={clients} />);
+
+    await user.type(screen.getByLabelText(/^Title$/), "Website");
+    await user.type(screen.getByLabelText("Line 1 description"), "Site");
+    await user.type(screen.getByLabelText("Line 1 unit price"), "5000");
+    await user.click(screen.getByRole("button", { name: "Add line" }));
+    await user.type(screen.getByLabelText("Line 2 description"), "SEO");
+    await user.type(screen.getByLabelText("Line 2 unit price"), "800");
+    await user.selectOptions(screen.getByLabelText("Line 2 type"), "add_on");
+    expect(screen.getByText("Total").nextSibling).toHaveTextContent("$5,000.00");
+    expect(screen.getByText(/With the pre-selected add-ons\./)).toBeInTheDocument();
+
+    await user.selectOptions(screen.getByLabelText("Line 2 type"), "add_on_on");
+    expect(screen.getByText("Total").nextSibling).toHaveTextContent("$5,800.00");
+
+    await user.click(screen.getByRole("button", { name: /create draft/i }));
+    expect(mockedCreate.mock.calls[0][1].lineItems[1]).toEqual(
+      expect.objectContaining({ description: "SEO", optional: true, selected: true }),
+    );
+  });
+
+  it("loads a draft's packages and stops offering them on request", async () => {
+    const user = userEvent.setup();
+    const draft = {
+      id: "p1",
+      title: "Website",
+      currency: "USD",
+      tax_rate_percent: "0",
+      line_items: [
+        { id: "l1", description: "Small site", quantity: "1", unit_price_cents: 400000, package_id: "pk-1" },
+        { id: "l2", description: "Large site", quantity: "1", unit_price_cents: 900000, package_id: "pk-2" },
+        { id: "l3", description: "SEO", quantity: "1", unit_price_cents: 80000, optional: true, selected: false },
+      ],
+      packages: [
+        { id: "pk-1", name: "Essential", description: null, recommended: false, selected: false },
+        { id: "pk-2", name: "Complete", description: "Everything", recommended: true, selected: true },
+      ],
+    } as never;
+    render(<ProposalForm agencyId="a1" clients={clients} proposal={draft} />);
+
+    expect(screen.getByLabelText("Package 2 description")).toHaveValue("Everything");
+    expect(screen.getByLabelText("Line 1 package")).toHaveValue("pk-1");
+    expect(screen.getByLabelText("Line 3 type")).toHaveValue("add_on");
+    expect(screen.getByText("Total").nextSibling).toHaveTextContent("$9,000.00");
+
+    await user.click(screen.getByRole("button", { name: "Stop offering packages" }));
+    expect(screen.queryByLabelText("Line 1 package")).not.toBeInTheDocument();
+    expect(screen.getByText("Total").nextSibling).toHaveTextContent("$13,000.00");
   });
 });

@@ -52,6 +52,7 @@ _EVENT_LABELS = {
     "project_created": "Project started",
     "kickoff_sent": "Kickoff sent",
     "retainer_scheduled": "Monthly billing started",
+    "options_chosen": "Options chosen",
     "acceptance_blocked": "Setup blocked",
 }
 _METHOD_LABELS = {
@@ -189,10 +190,25 @@ class _CertificatePDF(FPDF):
         self.fact("Sent", _stamp(c.sent_at))
         if c.valid_until:
             self.fact("Valid until", _stamp(c.valid_until))
+        if c.package_name:
+            self.fact("Package chosen", c.package_name)
         if c.content:
             self.ln(1)
             self.para(c.content, size=9.5, gap=3)
 
+        self.lines_table(c)
+        self.ln(2)
+        self.totals(c)
+
+        if c.attachments:
+            self.ln(2)
+            self.label("Attached documents")
+            for item in c.attachments:
+                self.para(f"{item.file_name} ({item.size:,} bytes)", size=9, gap=0)
+                self.para(f"SHA-256 {item.sha256}", size=7.5, color=_SOFT, gap=1.5)
+
+    def lines_table(self, c: ProposalCertificateRead) -> None:
+        """The lines that were signed for (chosen add-ons marked)."""
         self.use(8.5)
         widths = (95, 15, 32, 32)
         with self.table(
@@ -205,7 +221,8 @@ class _CertificatePDF(FPDF):
         ) as table:
             table.row(["Description", "Qty", "Unit price", "Amount"])
             for line in c.line_items:
-                description = line.description + (f"\n{line.details}" if line.details else "")
+                name = f"{line.description} (add-on)" if line.add_on else line.description
+                description = name + (f"\n{line.details}" if line.details else "")
                 per = _PER_MONTH if line.billing == "monthly" else ""
                 table.row(
                     [
@@ -215,15 +232,6 @@ class _CertificatePDF(FPDF):
                         _money(line.amount_cents, c.currency) + per,
                     ]
                 )
-        self.ln(2)
-        self.totals(c)
-
-        if c.attachments:
-            self.ln(2)
-            self.label("Attached documents")
-            for item in c.attachments:
-                self.para(f"{item.file_name} ({item.size:,} bytes)", size=9, gap=0)
-                self.para(f"SHA-256 {item.sha256}", size=7.5, color=_SOFT, gap=1.5)
 
     def totals(self, c: ProposalCertificateRead) -> None:
         """The one-time totals, then the per-month totals of any monthly

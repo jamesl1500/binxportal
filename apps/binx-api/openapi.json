@@ -4777,6 +4777,11 @@
       },
       "CertificateLineRead": {
         "properties": {
+          "add_on": {
+            "default": false,
+            "title": "Add On",
+            "type": "boolean"
+          },
           "amount_cents": {
             "title": "Amount Cents",
             "type": "integer"
@@ -14412,6 +14417,17 @@
             "title": "Monthly Total Cents",
             "type": "integer"
           },
+          "package_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Package Name"
+          },
           "proposal_id": {
             "format": "uuid",
             "title": "Proposal Id",
@@ -14606,6 +14622,14 @@
               "$ref": "#/components/schemas/ProposalLineItemInput"
             },
             "title": "Line Items",
+            "type": "array"
+          },
+          "packages": {
+            "items": {
+              "$ref": "#/components/schemas/ProposalPackageInput"
+            },
+            "maxItems": 4,
+            "title": "Packages",
             "type": "array"
           },
           "recipient_email": {
@@ -14907,6 +14931,13 @@
             "title": "Monthly Total Cents",
             "type": "integer"
           },
+          "packages": {
+            "items": {
+              "$ref": "#/components/schemas/ProposalPackageRead"
+            },
+            "title": "Packages",
+            "type": "array"
+          },
           "recipient_email": {
             "anyOf": [
               {
@@ -15142,6 +15173,23 @@
             ],
             "title": "Details"
           },
+          "optional": {
+            "default": false,
+            "title": "Optional",
+            "type": "boolean"
+          },
+          "package_key": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Package Key"
+          },
           "quantity": {
             "anyOf": [
               {
@@ -15153,6 +15201,11 @@
               }
             ],
             "title": "Quantity"
+          },
+          "selected": {
+            "default": true,
+            "title": "Selected",
+            "type": "boolean"
           },
           "service_id": {
             "anyOf": [
@@ -15211,6 +15264,28 @@
             "title": "Id",
             "type": "string"
           },
+          "included": {
+            "default": true,
+            "title": "Included",
+            "type": "boolean"
+          },
+          "optional": {
+            "default": false,
+            "title": "Optional",
+            "type": "boolean"
+          },
+          "package_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Package Id"
+          },
           "position": {
             "title": "Position",
             "type": "integer"
@@ -15218,6 +15293,11 @@
           "quantity": {
             "title": "Quantity",
             "type": "string"
+          },
+          "selected": {
+            "default": true,
+            "title": "Selected",
+            "type": "boolean"
           },
           "service_id": {
             "anyOf": [
@@ -15247,6 +15327,129 @@
           "service_id"
         ],
         "title": "ProposalLineItemRead",
+        "type": "object"
+      },
+      "ProposalOptionsRequest": {
+        "description": "The recipient's choice before signing: one of the packages (required\nwhen there are any), and the add-ons they want. Add-ons left out are\nunticked.",
+        "properties": {
+          "add_on_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 200,
+            "title": "Add On Ids",
+            "type": "array"
+          },
+          "package_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Package Id"
+          }
+        },
+        "title": "ProposalOptionsRequest",
+        "type": "object"
+      },
+      "ProposalPackageInput": {
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "key": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Key",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "recommended": {
+            "default": false,
+            "title": "Recommended",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "key",
+          "name"
+        ],
+        "title": "ProposalPackageInput",
+        "type": "object"
+      },
+      "ProposalPackageRead": {
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "monthly_price_cents": {
+            "title": "Monthly Price Cents",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "position": {
+            "title": "Position",
+            "type": "integer"
+          },
+          "price_cents": {
+            "title": "Price Cents",
+            "type": "integer"
+          },
+          "recommended": {
+            "title": "Recommended",
+            "type": "boolean"
+          },
+          "selected": {
+            "title": "Selected",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "position",
+          "name",
+          "description",
+          "recommended",
+          "selected",
+          "price_cents",
+          "monthly_price_cents"
+        ],
+        "title": "ProposalPackageRead",
         "type": "object"
       },
       "ProposalPublicRead": {
@@ -15344,6 +15547,13 @@
             "default": 0,
             "title": "Monthly Total Cents",
             "type": "integer"
+          },
+          "packages": {
+            "items": {
+              "$ref": "#/components/schemas/ProposalPackageRead"
+            },
+            "title": "Packages",
+            "type": "array"
           },
           "recipient_name": {
             "anyOf": [
@@ -15765,6 +15975,14 @@
               "$ref": "#/components/schemas/ProposalLineItemInput"
             },
             "title": "Line Items",
+            "type": "array"
+          },
+          "packages": {
+            "items": {
+              "$ref": "#/components/schemas/ProposalPackageInput"
+            },
+            "maxItems": 4,
+            "title": "Packages",
             "type": "array"
           },
           "recipient_email": {
@@ -41755,6 +41973,65 @@
         ]
       }
     },
+    "/portal/proposals/{proposal_id}/options": {
+      "put": {
+        "description": "The contact's package and add-ons, before signing.",
+        "operationId": "choose_portal_proposal_options_portal_proposals__proposal_id__options_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Proposal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposalOptionsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalDetailRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Choose Portal Proposal Options",
+        "tags": [
+          "client-portal"
+        ]
+      }
+    },
     "/portal/proposals/{proposal_id}/sign": {
       "post": {
         "description": "Signs with the signed-in contact's own name/email \u2014 unlike the public\ntoken flow, the portal already knows who this is.",
@@ -42111,6 +42388,59 @@
           }
         },
         "summary": "Decline Public Proposal",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
+    "/proposals/public/{token}/options": {
+      "put": {
+        "description": "The recipient's package and add-ons, before signing. The response\ncarries the new document fingerprint to sign against.",
+        "operationId": "choose_public_proposal_options_proposals_public__token__options_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposalOptionsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalPublicRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Choose Public Proposal Options",
         "tags": [
           "proposals"
         ]

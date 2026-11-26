@@ -20,13 +20,15 @@ from binx_api.core.rate_limit import client_ip, client_user_agent
 from binx_api.modules.agencies.dependencies import require_agency_role
 from binx_api.modules.agencies.models import ROLE_ADMIN, ROLE_MEMBER, ROLE_OWNER, Agency
 from binx_api.modules.proposals import acceptance as acceptance_service
-from binx_api.modules.proposals import completion, service, signing
+from binx_api.modules.proposals import completion, options, service, signing
 from binx_api.modules.proposals.certificate_pdf import certificate_file_name, render_certificate_pdf
 from binx_api.modules.proposals.models import (
+    BILLING_MONTHLY,
     STATUS_DRAFT,
     Proposal,
     ProposalAttachment,
     ProposalLineItem,
+    ProposalPackage,
     ProposalSignature,
 )
 from binx_api.modules.proposals.schemas import (
@@ -39,6 +41,8 @@ from binx_api.modules.proposals.schemas import (
     ProposalDetailRead,
     ProposalEventRead,
     ProposalLineItemRead,
+    ProposalOptionsRequest,
+    ProposalPackageRead,
     ProposalPublicRead,
     ProposalRead,
     ProposalSignatureRead,
@@ -54,7 +58,7 @@ AnyMember = Annotated[tuple[Agency, str], Depends(require_agency_role(ROLE_OWNER
 OwnerOrAdmin = Annotated[tuple[Agency, str], Depends(require_agency_role(ROLE_OWNER, ROLE_ADMIN))]
 
 
-def _line_item_read(item: ProposalLineItem) -> ProposalLineItemRead:
+def _line_item_read(item: ProposalLineItem, chosen_id: uuid.UUID | None = None) -> ProposalLineItemRead:
     return ProposalLineItemRead(
         id=item.id,
         position=item.position,
@@ -65,6 +69,38 @@ def _line_item_read(item: ProposalLineItem) -> ProposalLineItemRead:
         amount_cents=item.amount_cents,
         service_id=item.service_id,
         billing=item.billing,
+        package_id=item.package_id,
+        optional=item.optional,
+        selected=item.selected,
+        included=options.is_included(item, chosen_id),
+    )
+
+
+def _package_read(package: ProposalPackage, lines: list[ProposalLineItem]) -> ProposalPackageRead:
+    own = [line for line in lines if line.package_id == package.id and not line.optional]
+    return ProposalPackageRead(
+        id=package.id,
+        position=package.position,
+        name=package.name,
+        description=package.description,
+        recommended=package.recommended,
+        selected=package.selected,
+        price_cents=sum(line.amount_cents for line in own if line.billing != BILLING_MONTHLY),
+        monthly_price_cents=sum(line.amount_cents for line in own if line.billing == BILLING_MONTHLY),
+    )
+
+
+async def lines_and_packages(
+    db: DbSession, proposal: Proposal
+) -> tuple[list[ProposalLineItemRead], list[ProposalPackageRead]]:
+    """Every line (each saying whether it's in the deal) and the packages."""
+    lines = await service.list_line_items(db, proposal.id)
+    packages = await service.list_packages(db, proposal.id)
+    chosen = options.chosen_package(packages)
+    chosen_id = chosen.id if chosen else None
+    return (
+        [_line_item_read(item, chosen_id) for item in lines],
+        [_package_read(package, lines) for package in packages],
     )
 
 
@@ -174,7 +210,7 @@ async def _detail_read(
     include_acceptance: bool = True,
 ) -> ProposalDetailRead:
     base = _read(proposal, lead_name, client_name)
-    line_items = await service.list_line_items(db, proposal.id)
+    line_items, packages = await lines_and_packages(db, proposal)
     attachments = await service.list_attachments(db, proposal.id)
     signature = await service.get_signature(db, proposal.id)
     return ProposalDetailRead(
@@ -185,7 +221,8 @@ async def _detail_read(
         decided_at=proposal.decided_at,
         decline_reason=proposal.decline_reason,
         share_url=service.share_url(proposal),
-        line_items=[_line_item_read(item) for item in line_items],
+        line_items=line_items,
+        packages=packages,
         attachments=[attachment_read(item) for item in attachments],
         signature=signature_read(signature),
         **(await signing_fields(db, proposal)),
@@ -280,6 +317,7 @@ async def create_proposal(
         tax_rate_percent=data.tax_rate_percent,
         valid_until=data.valid_until,
         line_items=data.line_items,
+        packages=data.packages,
         requires_countersign=data.requires_countersign,
         deposit_percent=data.deposit_percent,
         create_project_on_accept=data.create_project_on_accept,
@@ -316,6 +354,7 @@ async def update_proposal(
         tax_rate_percent=data.tax_rate_percent,
         valid_until=data.valid_until,
         line_items=data.line_items,
+        packages=data.packages,
         requires_countersign=data.requires_countersign,
         deposit_percent=data.deposit_percent,
         create_project_on_accept=data.create_project_on_accept,
@@ -472,7 +511,7 @@ async def read_public_proposal(db: DbSession, token: str, request: Request) -> P
 
 
 async def _public_read(db: DbSession, proposal: Proposal, agency_name: str) -> ProposalPublicRead:
-    line_items = await service.list_line_items(db, proposal.id)
+    line_items, packages = await lines_and_packages(db, proposal)
     attachments = await service.list_attachments(db, proposal.id)
     signature = await service.get_signature(db, proposal.id)
     return ProposalPublicRead(
@@ -491,7 +530,8 @@ async def _public_read(db: DbSession, proposal: Proposal, agency_name: str) -> P
         monthly_tax_cents=proposal.monthly_tax_cents,
         monthly_total_cents=proposal.monthly_total_cents,
         valid_until=proposal.valid_until,
-        line_items=[_line_item_read(item) for item in line_items],
+        line_items=line_items,
+        packages=packages,
         attachments=[attachment_read(item) for item in attachments],
         signature=signature_read(signature),
         **(await signing_fields(db, proposal)),
@@ -546,6 +586,19 @@ async def sign_public_proposal(
         document_hash=data.document_hash,
     )
     completion.schedule(background_tasks, proposal)
+    return await _public_after_change(db, proposal)
+
+
+@public_router.put("/{token}/options", response_model=ProposalPublicRead)
+async def choose_public_proposal_options(
+    db: DbSession, token: str, data: ProposalOptionsRequest, request: Request
+) -> ProposalPublicRead:
+    """The recipient's package and add-ons, before signing. The response
+    carries the new document fingerprint to sign against."""
+    proposal = await service.get_proposal_by_token_or_404(db, token)
+    proposal = await service.choose_options(
+        db, proposal, package_id=data.package_id, add_on_ids=data.add_on_ids, visitor=link_visitor(request)
+    )
     return await _public_after_change(db, proposal)
 
 

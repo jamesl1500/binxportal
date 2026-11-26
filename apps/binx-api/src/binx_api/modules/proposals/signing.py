@@ -14,7 +14,11 @@ The document record: when a proposal is sent, ``freeze_document`` writes a
 canonical JSON snapshot of everything the recipient is agreeing to (text,
 line items, totals, and each attachment's sha256) and its SHA-256. Sent
 proposals can't be edited, so the snapshot stays true; the signer's request
-carries the hash they were shown and is refused if it doesn't match.
+carries the hash they were shown and is refused if it doesn't match. The one
+change a sent proposal allows is the recipient's own choice of package and
+add-ons (service.choose_options), which freezes it again: the snapshot holds
+only the lines in the deal, so the signature points at exactly what they
+chose.
 """
 
 from __future__ import annotations
@@ -30,6 +34,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from binx_api.modules.agencies.models import Agency
+from binx_api.modules.proposals import options
 from binx_api.modules.proposals.models import (
     EVENT_VIEWED,
     STATUS_DRAFT,
@@ -38,7 +43,6 @@ from binx_api.modules.proposals.models import (
     ProposalAttachment,
     ProposalCountersignature,
     ProposalEvent,
-    ProposalLineItem,
     ProposalSignature,
 )
 from binx_api.modules.proposals.schemas import (
@@ -59,7 +63,7 @@ CONSENT_TEXT = (
     "electronically, and I confirm I can open and keep a copy of them."
 )
 
-SNAPSHOT_VERSION = 2
+SNAPSHOT_VERSION = 3
 # Repeat views from the same browser within this window add no new event.
 VIEW_DEDUPE_WINDOW = timedelta(minutes=30)
 
@@ -81,13 +85,9 @@ async def build_snapshot(db: AsyncSession, proposal: Proposal) -> str:
     sorted and numbers are strings or integers, so the same proposal always
     produces the same bytes (and the same hash)."""
     agency = await db.get(Agency, proposal.agency_id)
-    lines = (
-        await db.execute(
-            select(ProposalLineItem)
-            .where(ProposalLineItem.proposal_id == proposal.id)
-            .order_by(ProposalLineItem.position)
-        )
-    ).scalars()
+    packages = await options.list_packages(db, proposal.id)
+    chosen = options.chosen_package(packages)
+    lines = await options.list_included_lines(db, proposal.id)
     attachments = (
         await db.execute(
             select(ProposalAttachment)
@@ -115,6 +115,9 @@ async def build_snapshot(db: AsyncSession, proposal: Proposal) -> str:
             "monthly_total_cents": proposal.monthly_total_cents,
             "valid_until": _iso(proposal.valid_until),
             "sent_at": _iso(proposal.sent_at),
+            # v3: the chosen package, and only the lines in the deal (add-ons
+            # flagged); lines left out aren't part of what's signed.
+            "package": {"name": chosen.name, "description": chosen.description} if chosen else None,
             "line_items": [
                 {
                     "position": line.position,
@@ -124,6 +127,7 @@ async def build_snapshot(db: AsyncSession, proposal: Proposal) -> str:
                     "unit_price_cents": line.unit_price_cents,
                     "amount_cents": line.amount_cents,
                     "billing": line.billing,
+                    "add_on": line.optional,
                 }
                 for line in lines
             ],
@@ -278,6 +282,7 @@ async def build_certificate(db: AsyncSession, proposal: Proposal) -> ProposalCer
         monthly_total_cents=data.get("monthly_total_cents", 0),
         valid_until=_parse_datetime(data["valid_until"]),
         sent_at=_parse_datetime(data["sent_at"]),
+        package_name=(data.get("package") or {}).get("name"),
         line_items=[
             CertificateLineRead(
                 description=line["description"],
@@ -286,6 +291,7 @@ async def build_certificate(db: AsyncSession, proposal: Proposal) -> ProposalCer
                 unit_price_cents=line["unit_price_cents"],
                 amount_cents=line["amount_cents"],
                 billing=line.get("billing", "one_time"),
+                add_on=line.get("add_on", False),
             )
             for line in data["line_items"]
         ],

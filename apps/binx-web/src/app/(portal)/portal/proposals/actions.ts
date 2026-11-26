@@ -15,6 +15,7 @@ import { refresh } from "next/cache";
 
 import { AuthApiError } from "@/lib/auth";
 import {
+  choosePortalProposalOptions,
   declinePortalProposal,
   type PortalProposalDetail,
   signPortalProposal,
@@ -39,6 +40,27 @@ export async function signPortalProposalAction(
       return { error: error.message };
     }
     return { error: "Unable to sign this proposal" };
+  }
+}
+
+export async function choosePortalProposalOptionsAction(
+  proposalId: string,
+  packageId: string | null,
+  addOnIds: string[],
+): Promise<PortalProposalActionResult> {
+  try {
+    const proposal = await choosePortalProposalOptions(
+      proposalId,
+      packageId,
+      addOnIds,
+    );
+    refresh();
+    return { proposal };
+  } catch (error) {
+    if (error instanceof AuthApiError) {
+      return { error: error.message };
+    }
+    return { error: "Unable to save your choice" };
   }
 }
 

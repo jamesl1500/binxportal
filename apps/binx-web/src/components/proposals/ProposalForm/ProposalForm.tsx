@@ -6,8 +6,11 @@
  * valid-until date, and a repeatable line-item table (typed by hand or
  * picked from the services catalog, with optional client-facing details
  * under each line). Each line is one-time or monthly (a retainer, totalled
- * per month and billed every month once accepted). Totals update live and
- * mirror binx-api's `_recalculate` math exactly (subtotals of line amounts,
+ * per month and billed every month once accepted). A proposal can also
+ * offer packages (the client picks one; a line can belong to one) and
+ * optional add-ons (the client ticks them or not). Totals update live and
+ * mirror binx-api's `_recalculate` math exactly (subtotals of the lines in
+ * the starting choice: the recommended package and pre-selected add-ons,
  * then tax — proposals carry no discount). Used for both creating a new
  * draft and editing an existing one (sent/decided proposals are never
  * editable — the page redirects away). The client select is what actually
@@ -82,6 +85,46 @@ interface LineRow {
   serviceId: string | null;
   /** Monthly lines are a retainer: totalled per month, billed every month. */
   billing: LineBilling;
+  /** The package it's in (a PackageRow key); null: every package. */
+  packageKey: string | null;
+  /** Always in, or an add-on the client can tick (pre-selected or not). */
+  kind: LineKind;
+}
+
+type LineKind = "included" | "add_on" | "add_on_on";
+
+interface PackageRow {
+  key: string;
+  name: string;
+  description: string;
+  recommended: boolean;
+}
+
+/** binx-api proposals/models.py MAX_PROPOSAL_PACKAGES. */
+const MAX_PACKAGES = 4;
+
+let packageCounter = 0;
+const newPackage = (): PackageRow => ({
+  key: `p${packageCounter++}`,
+  name: "",
+  description: "",
+  recommended: false,
+});
+
+/** Why the packages can't be saved yet, if they can't. */
+function packageProblem(packages: PackageRow[], rows: LineRow[]): string | null {
+  if (packages.length === 0) return null;
+  const names = packages.map((pkg) => pkg.name.trim().toLowerCase());
+  if (names.some((name) => name === "")) return "Give each package a name.";
+  if (new Set(names).size !== names.length)
+    return "Give each package a different name.";
+  const empty = packages.find(
+    (pkg) =>
+      !rows.some(
+        (row) => row.packageKey === pkg.key && row.description.trim() !== "",
+      ),
+  );
+  return empty ? `Add at least one line to ${empty.name.trim()}.` : null;
 }
 
 let rowCounter = 0;
@@ -94,6 +137,8 @@ const newRow = (): LineRow => ({
   unitPrice: "",
   serviceId: null,
   billing: "one_time",
+  packageKey: null,
+  kind: "included",
 });
 
 const isBlank = (row: LineRow) =>
@@ -153,8 +198,23 @@ const ProposalForm = ({
           unitPrice: centsToInput(item.unit_price_cents),
           serviceId: item.service_id ?? null,
           billing: item.billing === "monthly" ? "monthly" : "one_time",
+          packageKey: item.package_id ?? null,
+          kind: item.optional
+            ? item.selected
+              ? "add_on_on"
+              : "add_on"
+            : "included",
         }))
       : [newRow()],
+  );
+  // Keyed by the package's id when editing, so lines keep pointing at it.
+  const [packages, setPackages] = useState<PackageRow[]>(
+    (proposal?.packages ?? []).map((pkg) => ({
+      key: pkg.id,
+      name: pkg.name,
+      description: pkg.description ?? "",
+      recommended: pkg.recommended,
+    })),
   );
   const [requiresCountersign, setRequiresCountersign] = useState(
     proposal?.requires_countersign ?? false,
@@ -172,18 +232,31 @@ const ProposalForm = ({
   );
   const [submitting, setSubmitting] = useState(false);
 
+  // The package the client starts on: the recommended one, else the first.
+  const startingPackage =
+    packages.find((pkg) => pkg.recommended) ?? packages[0] ?? null;
+
   // Mirrors binx-api's _recalculate: one-time lines make the total, monthly
-  // lines a per-month total, both taxed at the same rate.
+  // lines a per-month total, both taxed at the same rate. Only lines in the
+  // starting choice count (every-package lines and the starting package's,
+  // add-ons only when pre-selected).
   const totals = useMemo(() => {
     const lineAmounts = rows.map((row) =>
       roundHalfUp(
         (Number.parseFloat(row.quantity) || 0) * toCents(row.unitPrice),
       ),
     );
+    const startingKey = startingPackage?.key ?? null;
+    const counts = (row: LineRow | undefined) =>
+      Boolean(row) &&
+      (row!.packageKey === null || row!.packageKey === startingKey) &&
+      row!.kind !== "add_on";
     const sumOf = (billing: LineBilling) =>
       lineAmounts.reduce(
         (sum, amount, index) =>
-          rows[index]?.billing === billing ? sum + amount : sum,
+          rows[index]?.billing === billing && counts(rows[index])
+            ? sum + amount
+            : sum,
         0,
       );
     const taxOf = (cents: number) =>
@@ -205,10 +278,14 @@ const ProposalForm = ({
         monthly_total_cents: monthly + taxOf(monthly),
       }),
     };
-  }, [rows, taxRate]);
+  }, [rows, taxRate, startingPackage]);
+
+  const hasAddOns = rows.some((row) => row.kind !== "included");
+  const problem = packageProblem(packages, rows);
 
   const canSubmit =
     title.trim() !== "" &&
+    problem === null &&
     rows.some(
       (row) =>
         row.description.trim() !== "" &&
@@ -219,6 +296,30 @@ const ProposalForm = ({
   const updateRow = (key: string, patch: Partial<LineRow>) => {
     setRows((prev) =>
       prev.map((row) => (row.key === key ? { ...row, ...patch } : row)),
+    );
+  };
+
+  const updatePackage = (key: string, patch: Partial<PackageRow>) => {
+    setPackages((prev) =>
+      prev.map((pkg) => (pkg.key === key ? { ...pkg, ...patch } : pkg)),
+    );
+  };
+
+  const recommend = (key: string) => {
+    setPackages((prev) =>
+      prev.map((pkg) => ({ ...pkg, recommended: pkg.key === key })),
+    );
+  };
+
+  // A package's lines move to every package when it goes.
+  const removePackages = (keys: string[]) => {
+    setPackages((prev) => prev.filter((pkg) => !keys.includes(pkg.key)));
+    setRows((prev) =>
+      prev.map((row) =>
+        row.packageKey && keys.includes(row.packageKey)
+          ? { ...row, packageKey: null }
+          : row,
+      ),
     );
   };
 
@@ -265,7 +366,16 @@ const ProposalForm = ({
           unitPriceCents: toCents(row.unitPrice),
           serviceId: row.serviceId,
           billing: row.billing,
+          packageKey: row.packageKey,
+          optional: row.kind !== "included",
+          selected: row.kind !== "add_on",
         })),
+      packages: packages.map((pkg) => ({
+        key: pkg.key,
+        name: pkg.name.trim(),
+        description: pkg.description.trim() || null,
+        recommended: pkg.recommended,
+      })),
     };
 
     setSubmitting(true);
@@ -379,6 +489,99 @@ const ProposalForm = ({
         />
       </label>
 
+      <fieldset className={styles.packagesBox}>
+        <legend className={styles.legend}>Packages</legend>
+        {packages.length === 0 ? (
+          <div className={styles.packagesEmpty}>
+            <p className={styles.acceptanceHint}>
+              Let the client choose between two to four packages, like
+              Essential and Complete. A line can belong to one package, and
+              only counts if that&apos;s the one they choose.
+            </p>
+            <button
+              type="button"
+              className={styles.addRow}
+              onClick={() => setPackages([newPackage(), newPackage()])}
+            >
+              <Plus aria-hidden="true" /> Offer packages
+            </button>
+          </div>
+        ) : (
+          <>
+            {packages.map((pkg, index) => (
+              <div key={pkg.key} className={styles.packageRow}>
+                <input
+                  className={styles.input}
+                  placeholder={index === 0 ? "e.g. Essential" : "e.g. Complete"}
+                  maxLength={120}
+                  value={pkg.name}
+                  onChange={(event) =>
+                    updatePackage(pkg.key, { name: event.target.value })
+                  }
+                  aria-label={`Package ${index + 1} name`}
+                />
+                <input
+                  className={styles.input}
+                  placeholder="Who it's for, in a line"
+                  maxLength={2000}
+                  value={pkg.description}
+                  onChange={(event) =>
+                    updatePackage(pkg.key, { description: event.target.value })
+                  }
+                  aria-label={`Package ${index + 1} description`}
+                />
+                <label className={styles.recommend}>
+                  <input
+                    type="radio"
+                    name="recommended-package"
+                    checked={pkg.recommended}
+                    onChange={() => recommend(pkg.key)}
+                    aria-label={`Recommend package ${index + 1}`}
+                  />
+                  <span>Recommended</span>
+                </label>
+                <button
+                  type="button"
+                  className={styles.removeRow}
+                  onClick={() => removePackages([pkg.key])}
+                  disabled={packages.length <= 2}
+                  aria-label={`Remove package ${index + 1}`}
+                >
+                  <Trash2 aria-hidden="true" />
+                </button>
+              </div>
+            ))}
+            <div className={styles.lineTools}>
+              {packages.length < MAX_PACKAGES && (
+                <button
+                  type="button"
+                  className={styles.addRow}
+                  onClick={() => setPackages((prev) => [...prev, newPackage()])}
+                >
+                  <Plus aria-hidden="true" /> Add package
+                </button>
+              )}
+              <button
+                type="button"
+                className={styles.addDetails}
+                onClick={() => removePackages(packages.map((pkg) => pkg.key))}
+              >
+                Stop offering packages
+              </button>
+            </div>
+            <small className={styles.help}>
+              Put each line in a package, or in every package. The
+              recommended package is selected until the client picks.
+            </small>
+            {problem && (
+              <p className={styles.problem} role="status">
+                {problem}
+              </p>
+            )}
+          </>
+        )}
+      </fieldset>
+
       <div className={styles.lines}>
         <div className={styles.lineHead}>
           <span>Description</span>
@@ -434,6 +637,37 @@ const ProposalForm = ({
                 >
                   <option value="one_time">One-time</option>
                   <option value="monthly">Monthly</option>
+                </select>
+                {packages.length > 0 && (
+                  <select
+                    className={styles.billing}
+                    value={row.packageKey ?? ""}
+                    onChange={(event) =>
+                      updateRow(row.key, {
+                        packageKey: event.target.value || null,
+                      })
+                    }
+                    aria-label={`Line ${index + 1} package`}
+                  >
+                    <option value="">Every package</option>
+                    {packages.map((pkg, packageIndex) => (
+                      <option key={pkg.key} value={pkg.key}>
+                        {pkg.name.trim() || `Package ${packageIndex + 1}`}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                <select
+                  className={styles.billing}
+                  value={row.kind}
+                  onChange={(event) =>
+                    updateRow(row.key, { kind: event.target.value as LineKind })
+                  }
+                  aria-label={`Line ${index + 1} type`}
+                >
+                  <option value="included">Included</option>
+                  <option value="add_on">Optional add-on</option>
+                  <option value="add_on_on">Add-on, pre-selected</option>
                 </select>
               </div>
             </div>
@@ -608,20 +842,30 @@ const ProposalForm = ({
           </label>
         </div>
 
-        <dl className={styles.totals}>
-          {totals.rows.map((row) => (
-            <div
-              key={`${row.label}-${row.perMonth}`}
-              className={row.grand ? styles.grandTotal : undefined}
-            >
-              <dt>{row.label}</dt>
-              <dd>
-                {formatMoneyCents(row.cents, currency)}
-                {row.perMonth ? PER_MONTH : ""}
-              </dd>
-            </div>
-          ))}
-        </dl>
+        <div className={styles.totals}>
+          {(startingPackage || hasAddOns) && (
+            <p className={styles.totalsNote}>
+              {startingPackage
+                ? `For ${startingPackage.name.trim() || "the first package"}${hasAddOns ? " with the pre-selected add-ons" : ""}.`
+                : "With the pre-selected add-ons."}{" "}
+              The client&apos;s choice sets the final price.
+            </p>
+          )}
+          <dl className={styles.totalRows}>
+            {totals.rows.map((row) => (
+              <div
+                key={`${row.label}-${row.perMonth}`}
+                className={row.grand ? styles.grandTotal : undefined}
+              >
+                <dt>{row.label}</dt>
+                <dd>
+                  {formatMoneyCents(row.cents, currency)}
+                  {row.perMonth ? PER_MONTH : ""}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
       </div>
 
       <div className={styles.actions}>

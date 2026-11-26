@@ -210,6 +210,12 @@ const SigningCertificate = ({ certificate, pdfHref }: SigningCertificateProps) =
               <dd>{utcStamp(certificate.valid_until)}</dd>
             </div>
           )}
+          {certificate.package_name && (
+            <div>
+              <dt>Package chosen</dt>
+              <dd>{certificate.package_name}</dd>
+            </div>
+          )}
         </dl>
 
         {certificate.content && (
@@ -230,6 +236,7 @@ const SigningCertificate = ({ certificate, pdfHref }: SigningCertificateProps) =
               <tr key={index}>
                 <td>
                   {line.description}
+                  {line.add_on && " (add-on)"}
                   {line.details && (
                     <span className={styles.details}>{line.details}</span>
                   )}

@@ -34,6 +34,7 @@ const LABELS: Record<string, string> = {
   project_created: "Project started",
   kickoff_sent: "Kickoff sent",
   retainer_scheduled: "Monthly billing started",
+  options_chosen: "Options chosen",
   acceptance_blocked: "Setup blocked",
 };
 

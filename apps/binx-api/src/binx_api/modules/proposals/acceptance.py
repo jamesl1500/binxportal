@@ -45,7 +45,7 @@ from binx_api.modules.invoicing.schemas import LineItemInput
 from binx_api.modules.leads.models import Lead
 from binx_api.modules.notifications import service as notifications_service
 from binx_api.modules.notifications.models import CATEGORY_INVOICING as NOTIFY_CATEGORY_PROPOSALS
-from binx_api.modules.proposals import signing
+from binx_api.modules.proposals import options, signing
 from binx_api.modules.proposals.models import (
     ACCEPTANCE_AWAITING_DEPOSIT,
     ACCEPTANCE_BLOCKED,
@@ -62,7 +62,6 @@ from binx_api.modules.proposals.models import (
     EVENT_RETAINER_SCHEDULED,
     Proposal,
     ProposalAcceptance,
-    ProposalLineItem,
     ProposalSignature,
 )
 from binx_api.modules.users.models import User
@@ -365,13 +364,8 @@ async def _start_retainer(
 
     if proposal.monthly_total_cents <= 0 or acceptance.retainer_schedule_id is not None:
         return
-    lines = (
-        await db.execute(
-            select(ProposalLineItem)
-            .where(ProposalLineItem.proposal_id == proposal.id, ProposalLineItem.billing == BILLING_MONTHLY)
-            .order_by(ProposalLineItem.position)
-        )
-    ).scalars()
+    # Only the monthly lines in the deal (the chosen package, ticked add-ons).
+    lines = [line for line in await options.list_included_lines(db, proposal.id) if line.billing == BILLING_MONTHLY]
     today = datetime.now(UTC).date()
     try:
         schedule = await recurring_service.create_schedule(

@@ -16,9 +16,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { getPublicProposal } from "@/lib/proposals";
-import { billingSuffix, PER_MONTH, proposalStatusLabel, proposalTotalRows } from "@/lib/proposals-client";
+import { PER_MONTH, proposalStatusLabel, proposalTotalRows } from "@/lib/proposals-client";
 import { formatMoneyCents } from "@/lib/money";
 import ProposalAttachmentList from "@/components/proposals/ProposalAttachmentList/ProposalAttachmentList";
+import ProposalLines from "@/components/proposals/ProposalLines/ProposalLines";
 import PublicProposalActions from "@/components/proposals/PublicProposalActions/PublicProposalActions";
 
 import styles from "./page.module.scss";
@@ -38,11 +39,6 @@ function formatDate(iso: string): string {
     month: "long",
     day: "numeric",
   });
-}
-
-function quantityLabel(quantity: string): string {
-  const n = Number.parseFloat(quantity);
-  return Number.isInteger(n) ? String(n) : quantity;
 }
 
 const PublicProposalPage = async ({
@@ -108,43 +104,12 @@ const PublicProposalPage = async ({
           <p className={styles.content}>{proposal.content}</p>
         )}
 
-        <div className={styles.tableScroll}>
-          <table className={styles.lineTable}>
-            <thead>
-              <tr>
-                <th>Description</th>
-                <th className={styles.numCol}>Qty</th>
-                <th className={styles.numCol}>Unit price</th>
-                <th className={styles.numCol}>Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {proposal.line_items.map((item) => (
-                <tr key={item.id}>
-                  <td>
-                    {item.description}
-                    {item.details && (
-                      <span className={styles.lineDetails}>
-                        {item.details}
-                      </span>
-                    )}
-                  </td>
-                  <td className={styles.numCol}>
-                    {quantityLabel(item.quantity)}
-                  </td>
-                  <td className={styles.numCol}>
-                    {formatMoneyCents(item.unit_price_cents, currency)}
-                    {billingSuffix(item.billing)}
-                  </td>
-                  <td className={styles.numCol}>
-                    {formatMoneyCents(item.amount_cents, currency)}
-                    {billingSuffix(item.billing)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ProposalLines
+          currency={currency}
+          lineItems={proposal.line_items}
+          packages={proposal.packages}
+          choose={awaitingDecision ? { token } : undefined}
+        />
 
         <dl className={styles.totals}>
           {proposalTotalRows(proposal).map((row) => (

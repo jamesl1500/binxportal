@@ -80,6 +80,7 @@ from binx_api.modules.proposals.schemas import (
     ProposalCertificateRead,
     ProposalDeclineRequest,
     ProposalDetailRead,
+    ProposalOptionsRequest,
     ProposalRead,
 )
 
@@ -887,6 +888,29 @@ async def sign_portal_proposal(
         actor_user_id=current_user.id,
     )
     proposals_completion.schedule(background_tasks, proposal)
+    lead_name, client_name = await _proposal_names(db, proposal)
+    return await _proposal_detail_read(db, proposal, lead_name, client_name, include_acceptance=False)
+
+
+@router.put("/proposals/{proposal_id}/options", response_model=ProposalDetailRead)
+async def choose_portal_proposal_options(
+    db: DbSession,
+    current_user: CurrentUser,
+    membership: PortalContext,
+    proposal_id: uuid.UUID,
+    data: ProposalOptionsRequest,
+    request: Request,
+) -> ProposalDetailRead:
+    """The contact's package and add-ons, before signing."""
+    agency, client, _contact = membership
+    proposal = await _portal_proposal_or_404(db, agency.id, client.id, proposal_id)
+    proposal = await proposals_service.choose_options(
+        db,
+        proposal,
+        package_id=data.package_id,
+        add_on_ids=data.add_on_ids,
+        visitor=_portal_visitor(request, current_user),
+    )
     lead_name, client_name = await _proposal_names(db, proposal)
     return await _proposal_detail_read(db, proposal, lead_name, client_name, include_acceptance=False)
 

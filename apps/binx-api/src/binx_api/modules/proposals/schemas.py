@@ -5,6 +5,8 @@ from typing import Literal
 
 from pydantic import BaseModel, EmailStr, Field, model_validator
 
+from binx_api.modules.proposals.models import MAX_PROPOSAL_PACKAGES
+
 # --- Line items ----------------------------------------------------------
 
 
@@ -18,6 +20,37 @@ class ProposalLineItemInput(BaseModel):
     # A monthly line is a retainer: its amount is per month, it's left out of
     # the one-time total, and accepting the proposal bills it every month.
     billing: Literal["one_time", "monthly"] = "one_time"
+    # The package (by its key in this request's packages) the line is part
+    # of; None puts it in every option.
+    package_key: str | None = Field(default=None, max_length=40)
+    # An add-on the recipient can tick or untick before signing; selected is
+    # whether it starts ticked. Ignored on required lines.
+    optional: bool = False
+    selected: bool = True
+
+
+class ProposalPackageInput(BaseModel):
+    # The form's own handle for the package, so lines can say which one
+    # they're in. Not stored.
+    key: str = Field(min_length=1, max_length=40)
+    name: str = Field(min_length=1, max_length=120)
+    description: str | None = Field(default=None, max_length=2000)
+    # Selected until the recipient chooses (the first package if none is).
+    recommended: bool = False
+
+
+class ProposalPackageRead(BaseModel):
+    id: uuid.UUID
+    position: int
+    name: str
+    description: str | None
+    recommended: bool
+    # The one currently chosen (by the recipient, or the recommended one).
+    selected: bool
+    # What the package's own required lines come to, before tax: one-time,
+    # and per month.
+    price_cents: int
+    monthly_price_cents: int
 
 
 class ProposalLineItemRead(BaseModel):
@@ -30,6 +63,12 @@ class ProposalLineItemRead(BaseModel):
     amount_cents: int
     service_id: uuid.UUID | None
     billing: str = "one_time"
+    package_id: uuid.UUID | None = None
+    optional: bool = False
+    selected: bool = True
+    # Counts toward the totals: in every option or the chosen package, and
+    # ticked if it's an add-on.
+    included: bool = True
 
 
 class ProposalAttachmentRead(BaseModel):
@@ -56,6 +95,8 @@ class ProposalCreate(BaseModel):
     tax_rate_percent: Decimal = Field(default=Decimal("0"), ge=0, le=100, max_digits=6, decimal_places=3)
     valid_until: datetime | None = None
     line_items: list[ProposalLineItemInput] = Field(default_factory=list)
+    # Alternatives the recipient picks one of (two to four), or none.
+    packages: list[ProposalPackageInput] = Field(default_factory=list, max_length=MAX_PROPOSAL_PACKAGES)
     # The agency countersigns after the client (owner/admin), and the
     # proposal is only complete once both have.
     requires_countersign: bool = False
@@ -68,6 +109,29 @@ class ProposalCreate(BaseModel):
     def _kickoff_needs_a_project(self) -> "ProposalCreate":
         if self.kickoff_template_id is not None and not self.create_project_on_accept:
             raise ValueError("A kickoff questionnaire needs a project, turn on “start a project”")
+        return self
+
+    @model_validator(mode="after")
+    def _packages_hold_together(self) -> "ProposalCreate":
+        if not self.packages:
+            if any(item.package_key for item in self.line_items):
+                raise ValueError("A line is in a package that isn't on the proposal")
+            return self
+        keys = [package.key for package in self.packages]
+        if len(self.packages) < 2:
+            raise ValueError("Offer at least two packages, or none")
+        if len(set(keys)) != len(keys):
+            raise ValueError("Each package needs its own key")
+        if len({package.name.strip().lower() for package in self.packages}) != len(keys):
+            raise ValueError("Give each package a different name")
+        if sum(package.recommended for package in self.packages) > 1:
+            raise ValueError("Recommend one package at most")
+        used = {item.package_key for item in self.line_items}
+        if used - set(keys) - {None}:
+            raise ValueError("A line is in a package that isn't on the proposal")
+        empty = [package.name for package in self.packages if package.key not in used]
+        if empty:
+            raise ValueError(f"Add at least one line to the {empty[0]} package")
         return self
 
 
@@ -137,6 +201,7 @@ class ProposalDetailRead(ProposalRead):
     decline_reason: str | None
     share_url: str
     line_items: list[ProposalLineItemRead]
+    packages: list[ProposalPackageRead] = Field(default_factory=list)
     attachments: list[ProposalAttachmentRead]
     signature: "ProposalSignatureRead | None"
     # The fingerprint of the document as sent (see signing.py), and the
@@ -187,6 +252,7 @@ class ProposalPublicRead(BaseModel):
     monthly_total_cents: int = 0
     valid_until: datetime | None
     line_items: list[ProposalLineItemRead]
+    packages: list[ProposalPackageRead] = Field(default_factory=list)
     attachments: list[ProposalAttachmentRead]
     signature: ProposalSignatureRead | None
     # The fingerprint of the document as sent (see signing.py), and the
@@ -225,6 +291,15 @@ class PortalProposalSignRequest(BaseModel):
     document_hash: str | None = Field(default=None, max_length=64)
 
 
+class ProposalOptionsRequest(BaseModel):
+    """The recipient's choice before signing: one of the packages (required
+    when there are any), and the add-ons they want. Add-ons left out are
+    unticked."""
+
+    package_id: uuid.UUID | None = None
+    add_on_ids: list[uuid.UUID] = Field(default_factory=list, max_length=200)
+
+
 class ProposalDeclineRequest(BaseModel):
     reason: str | None = Field(default=None, max_length=1024)
 
@@ -254,6 +329,8 @@ class CertificateLineRead(BaseModel):
     unit_price_cents: int
     amount_cents: int
     billing: str = "one_time"
+    # An optional add-on the signer chose.
+    add_on: bool = False
 
 
 class CertificateAttachmentRead(BaseModel):
@@ -299,6 +376,8 @@ class ProposalCertificateRead(BaseModel):
     monthly_total_cents: int = 0
     valid_until: datetime | None
     sent_at: datetime | None
+    # The package the signer chose, when the proposal offered packages.
+    package_name: str | None = None
     line_items: list[CertificateLineRead]
     attachments: list[CertificateAttachmentRead]
     document_hash: str

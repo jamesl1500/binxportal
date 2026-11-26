@@ -99,41 +99,6 @@
   line-height: 1.6;
 }
 
-.tableScroll {
-  @include m.table-scroll;
-  border-radius: t.$radius-sm;
-}
-
-.lineTable {
-  width: 100%;
-  border-collapse: collapse;
-
-  th {
-    padding: t.$space-2 t.$space-3;
-    @include m.mono-label;
-    font-size: 0.5625rem;
-    color: t.$color-ink-faint;
-    text-align: left;
-    border-bottom: 1px solid t.$color-border;
-  }
-
-  td {
-    padding: t.$space-3;
-    font-size: t.$font-size-sm;
-    color: t.$color-ink;
-    border-bottom: 1px solid t.$color-border;
-  }
-}
-
-.lineDetails {
-  display: block;
-  margin-top: t.$space-1;
-  font-size: t.$font-size-xs;
-  line-height: 1.5;
-  color: t.$color-ink-soft;
-  white-space: pre-line;
-}
-
 .documents {
   display: flex;
   flex-direction: column;
@@ -145,11 +110,6 @@
   @include m.mono-label;
   font-size: 0.5625rem;
   color: t.$color-ink-faint;
-}
-
-.numCol {
-  text-align: right !important;
-  white-space: nowrap;
 }
 
 .totals {

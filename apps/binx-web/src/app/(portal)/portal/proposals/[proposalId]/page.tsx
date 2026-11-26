@@ -74,6 +74,7 @@ const PortalProposalDetailPage = async ({
             ? `/portal/proposals/${proposal.id}/certificate`
             : undefined
         }
+        choose={awaitingDecision ? { proposalId: proposal.id } : undefined}
       />
 
       {awaitingDecision && (

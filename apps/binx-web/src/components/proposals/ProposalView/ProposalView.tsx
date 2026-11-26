@@ -15,7 +15,6 @@
 
 import type { ProposalDetail } from "@/lib/proposals";
 import {
-  billingSuffix,
   PER_MONTH,
   proposalStatusLabel,
   proposalTotalRows,
@@ -24,6 +23,9 @@ import Link from "next/link";
 
 import { formatMoneyCents } from "@/lib/money";
 import ProposalAttachmentList from "@/components/proposals/ProposalAttachmentList/ProposalAttachmentList";
+import ProposalLines, {
+  type ChooseTarget,
+} from "@/components/proposals/ProposalLines/ProposalLines";
 
 import styles from "./ProposalView.module.scss";
 
@@ -34,6 +36,8 @@ interface ProposalViewProps {
   attachmentHrefBase?: string;
   /** Where the signing certificate is, once signed. */
   certificateHref?: string;
+  /** Set while the recipient can still pick a package / add-ons. */
+  choose?: ChooseTarget;
 }
 
 function formatDate(iso: string): string {
@@ -49,15 +53,11 @@ const SIGNED_VIA: Record<string, string> = {
   link: " from the share link",
 };
 
-function quantityLabel(quantity: string): string {
-  const n = Number.parseFloat(quantity);
-  return Number.isInteger(n) ? String(n) : quantity;
-}
-
 const ProposalView = ({
   proposal,
   attachmentHrefBase,
   certificateHref,
+  choose,
 }: ProposalViewProps) => {
   const currency = proposal.currency;
 
@@ -113,48 +113,12 @@ const ProposalView = ({
         </section>
       )}
 
-      <div className={styles.tableScroll}>
-        <table className={styles.lineTable}>
-          <thead>
-            <tr>
-              <th>Description</th>
-              <th className={styles.numCol}>Qty</th>
-              <th className={styles.numCol}>Unit price</th>
-              <th className={styles.numCol}>Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            {proposal.line_items.map((item) => (
-              <tr key={item.id}>
-                <td>
-                  {item.description}
-                  {item.details && (
-                    <span className={styles.lineDetails}>{item.details}</span>
-                  )}
-                </td>
-                <td className={styles.numCol}>
-                  {quantityLabel(item.quantity)}
-                </td>
-                <td className={styles.numCol}>
-                  {formatMoneyCents(item.unit_price_cents, currency)}
-                  {billingSuffix(item.billing)}
-                </td>
-                <td className={styles.numCol}>
-                  {formatMoneyCents(item.amount_cents, currency)}
-                  {billingSuffix(item.billing)}
-                </td>
-              </tr>
-            ))}
-            {proposal.line_items.length === 0 && (
-              <tr>
-                <td colSpan={4} className={styles.noLines}>
-                  No line items yet.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <ProposalLines
+        currency={currency}
+        lineItems={proposal.line_items}
+        packages={proposal.packages}
+        choose={choose}
+      />
 
       <dl className={styles.totals}>
         {proposalTotalRows(proposal).map((row) => (

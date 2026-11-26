@@ -324,6 +324,25 @@ export async function signPortalProposal(
   }
 }
 
+/** `PUT /portal/proposals/{proposalId}/options`: the contact's package and add-ons. */
+export async function choosePortalProposalOptions(
+  proposalId: string,
+  packageId: string | null,
+  addOnIds: string[],
+): Promise<PortalProposalDetail> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.put<PortalProposalDetail>(
+      `/portal/proposals/${proposalId}/options`,
+      { package_id: packageId, add_on_ids: addOnIds },
+      { headers },
+    );
+    return data;
+  } catch (error) {
+    rethrow(error, "Unable to save your choice");
+  }
+}
+
 export async function declinePortalProposal(
   proposalId: string,
   reason: string | null,

@@ -14,6 +14,7 @@ import { refresh } from "next/cache";
 
 import { AuthApiError } from "@/lib/auth";
 import {
+  choosePublicProposalOptions,
   declinePublicProposal,
   type ProposalPublic,
   signPublicProposal,
@@ -50,6 +51,24 @@ export async function signPublicProposalAction(
     return { proposal };
   } catch (error) {
     return errorResult(error, "Unable to sign this proposal");
+  }
+}
+
+export async function choosePublicProposalOptionsAction(
+  token: string,
+  packageId: string | null,
+  addOnIds: string[],
+): Promise<PublicProposalActionResult> {
+  try {
+    const proposal = await choosePublicProposalOptions(
+      token,
+      packageId,
+      addOnIds,
+    );
+    refresh();
+    return { proposal };
+  } catch (error) {
+    return errorResult(error, "Unable to save your choice");
   }
 }
 

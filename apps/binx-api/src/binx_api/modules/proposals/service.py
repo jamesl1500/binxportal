@@ -31,11 +31,12 @@ from binx_api.modules.leads import service as leads_service
 from binx_api.modules.leads.models import Lead
 from binx_api.modules.notifications import service as notifications_service
 from binx_api.modules.notifications.models import CATEGORY_INVOICING as NOTIFY_CATEGORY_PROPOSALS
-from binx_api.modules.proposals import completion, signing
+from binx_api.modules.proposals import completion, options, signing
 from binx_api.modules.proposals.models import (
     BILLING_MONTHLY,
     EVENT_COUNTERSIGNED,
     EVENT_DECLINED,
+    EVENT_OPTIONS_CHOSEN,
     EVENT_SENT,
     EVENT_SIGNED,
     MAX_PROPOSAL_ATTACHMENTS,
@@ -49,9 +50,10 @@ from binx_api.modules.proposals.models import (
     ProposalAttachment,
     ProposalCountersignature,
     ProposalLineItem,
+    ProposalPackage,
     ProposalSignature,
 )
-from binx_api.modules.proposals.schemas import ProposalLineItemInput
+from binx_api.modules.proposals.schemas import ProposalLineItemInput, ProposalPackageInput
 from binx_api.modules.services import service as services_service
 from binx_api.modules.users.models import User
 
@@ -84,9 +86,13 @@ def _tax(subtotal: int, rate: Decimal) -> int:
     return _round_cents(Decimal(subtotal) * Decimal(rate) / Decimal(100))
 
 
-def _recalculate(proposal: Proposal, line_items: list[ProposalLineItem]) -> None:
+def _recalculate(
+    proposal: Proposal, line_items: list[ProposalLineItem], packages: list[ProposalPackage] | None = None
+) -> None:
     """One-time lines make the total; monthly lines a separate per-month
-    total, taxed at the same rate."""
+    total, taxed at the same rate. Only the lines in the deal count: those
+    in every option or the chosen package, and the ticked add-ons."""
+    line_items = options.included_lines(line_items, packages or [])
     one_time = sum(item.amount_cents for item in line_items if item.billing != BILLING_MONTHLY)
     monthly = sum(item.amount_cents for item in line_items if item.billing == BILLING_MONTHLY)
     proposal.subtotal_cents = one_time
@@ -147,14 +153,44 @@ async def list_line_items(db: AsyncSession, proposal_id: uuid.UUID) -> list[Prop
 
 
 async def _replace_line_items(
-    db: AsyncSession, proposal: Proposal, line_items: list[ProposalLineItemInput]
-) -> list[ProposalLineItem]:
+    db: AsyncSession,
+    proposal: Proposal,
+    line_items: list[ProposalLineItemInput],
+    packages: list[ProposalPackageInput] | None = None,
+) -> tuple[list[ProposalLineItem], list[ProposalPackage]]:
+    """Replaces the lines and packages wholesale (the input is already
+    validated to hang together, see ProposalCreate). The recommended
+    package, else the first, starts selected."""
     await services_service.validate_service_ids(db, proposal.agency_id, (item.service_id for item in line_items))
     await db.execute(
         delete(ProposalLineItem)
         .where(ProposalLineItem.proposal_id == proposal.id)
         .execution_options(synchronize_session=False)
     )
+    await db.execute(
+        delete(ProposalPackage)
+        .where(ProposalPackage.proposal_id == proposal.id)
+        .execution_options(synchronize_session=False)
+    )
+    package_rows: list[ProposalPackage] = []
+    ids: dict[str, uuid.UUID] = {}
+    packages = packages or []
+    starting = next((p.key for p in packages if p.recommended), packages[0].key if packages else None)
+    for position, package in enumerate(packages):
+        package_row = ProposalPackage(
+            id=uuid.uuid4(),
+            proposal_id=proposal.id,
+            position=position,
+            name=package.name.strip(),
+            description=(package.description or "").strip() or None,
+            recommended=package.recommended,
+            selected=package.key == starting,
+        )
+        ids[package.key] = package_row.id
+        db.add(package_row)
+        package_rows.append(package_row)
+    if package_rows:
+        await db.flush()
     rows: list[ProposalLineItem] = []
     for position, item in enumerate(line_items):
         row = ProposalLineItem(
@@ -167,10 +203,17 @@ async def _replace_line_items(
             amount_cents=_line_amount(item.quantity, item.unit_price_cents),
             service_id=item.service_id,
             billing=item.billing,
+            package_id=ids.get(item.package_key) if item.package_key else None,
+            optional=item.optional,
+            selected=item.selected or not item.optional,
         )
         db.add(row)
         rows.append(row)
-    return rows
+    return rows, package_rows
+
+
+async def list_packages(db: AsyncSession, proposal_id: uuid.UUID) -> list[ProposalPackage]:
+    return await options.list_packages(db, proposal_id)
 
 
 async def get_signature(db: AsyncSession, proposal_id: uuid.UUID) -> ProposalSignature | None:
@@ -296,6 +339,7 @@ async def create_proposal(
     tax_rate_percent: Decimal,
     valid_until: datetime | None,
     line_items: list[ProposalLineItemInput],
+    packages: list[ProposalPackageInput] | None = None,
     requires_countersign: bool = False,
     deposit_percent: Decimal | None = None,
     create_project_on_accept: bool = False,
@@ -330,8 +374,8 @@ async def create_proposal(
     db.add(proposal)
     await db.flush()
 
-    rows = await _replace_line_items(db, proposal, line_items)
-    _recalculate(proposal, rows)
+    rows, package_rows = await _replace_line_items(db, proposal, line_items, packages)
+    _recalculate(proposal, rows, package_rows)
     await db.commit()
     await db.refresh(proposal)
 
@@ -363,6 +407,7 @@ async def update_proposal(
     tax_rate_percent: Decimal,
     valid_until: datetime | None,
     line_items: list[ProposalLineItemInput],
+    packages: list[ProposalPackageInput] | None = None,
     requires_countersign: bool = False,
     deposit_percent: Decimal | None = None,
     create_project_on_accept: bool = False,
@@ -389,8 +434,8 @@ async def update_proposal(
     proposal.create_project_on_accept = create_project_on_accept
     proposal.kickoff_template_id = kickoff_template_id
 
-    rows = await _replace_line_items(db, proposal, line_items)
-    _recalculate(proposal, rows)
+    rows, package_rows = await _replace_line_items(db, proposal, line_items, packages)
+    _recalculate(proposal, rows, package_rows)
     await db.commit()
     await db.refresh(proposal)
     return proposal
@@ -517,6 +562,86 @@ async def record_view(db: AsyncSession, proposal: Proposal, visitor: Visitor | N
     if changed:
         await db.commit()
         await db.refresh(proposal)
+    return proposal
+
+
+def _choice_summary(chosen: ProposalPackage | None, add_ons: list[ProposalLineItem]) -> str:
+    names = [line.description for line in add_ons]
+    listed = ", ".join(names[:-1]) + f" and {names[-1]}" if len(names) > 1 else (names[0] if names else "")
+    if chosen is None:
+        return f"Chose the add-ons {listed}" if names else "Chose no add-ons"
+    return f"Chose the {chosen.name} package" + (f", with {listed}" if names else ", no add-ons")
+
+
+async def choose_options(
+    db: AsyncSession,
+    proposal: Proposal,
+    *,
+    package_id: uuid.UUID | None,
+    add_on_ids: list[uuid.UUID],
+    visitor: Visitor | None = None,
+) -> Proposal:
+    """The recipient picks a package and the add-ons they want, before
+    signing. The totals follow, and the document is frozen again with the
+    choice in it, so the fingerprint they sign is of exactly what they chose.
+    Add-ons that belong to other packages keep their state, so switching
+    back finds them as they were."""
+    if proposal.status in PROPOSAL_CLOSED_STATUSES:
+        raise HTTPException(status.HTTP_409_CONFLICT, "This proposal has already been decided")
+    if proposal.status == STATUS_DRAFT:
+        raise HTTPException(status.HTTP_409_CONFLICT, "This proposal hasn't been sent yet")
+    if display_status(proposal) == "expired":
+        raise HTTPException(status.HTTP_409_CONFLICT, "This proposal has expired — ask the agency to resend it")
+
+    packages = await options.list_packages(db, proposal.id)
+    lines = await list_line_items(db, proposal.id)
+    chosen: ProposalPackage | None = None
+    if packages:
+        chosen = next((package for package in packages if package.id == package_id), None)
+        if chosen is None:
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Choose one of the packages")
+    elif package_id is not None:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "This proposal doesn't offer packages")
+    chosen_id = chosen.id if chosen else None
+
+    wanted = set(add_on_ids)
+    add_ons = {line.id: line for line in lines if line.optional}
+    if wanted - add_ons.keys():
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "That add-on isn't on this proposal")
+    for line_id in wanted:
+        if not options.available(add_ons[line_id], chosen_id):
+            raise HTTPException(
+                status.HTTP_422_UNPROCESSABLE_CONTENT,
+                f"“{add_ons[line_id].description}” isn't part of the {chosen.name if chosen else 'chosen'} package",
+            )
+
+    changed = False
+    for package in packages:
+        if package.selected != (package.id == chosen_id):
+            package.selected = package.id == chosen_id
+            changed = True
+    for line in add_ons.values():
+        if options.available(line, chosen_id) and line.selected != (line.id in wanted):
+            line.selected = line.id in wanted
+            changed = True
+    if not changed:
+        return proposal
+
+    _recalculate(proposal, lines, packages)
+    await signing.freeze_document(db, proposal)
+    picked = [line for line in lines if line.optional and options.is_included(line, chosen_id)]
+    signing.record_event(
+        db,
+        proposal.id,
+        EVENT_OPTIONS_CHOSEN,
+        actor_user_id=visitor.user_id if visitor else None,
+        actor_label=visitor.label if visitor else None,
+        ip_address=visitor.ip_address if visitor else None,
+        user_agent=visitor.user_agent if visitor else None,
+        detail=_choice_summary(chosen, picked),
+    )
+    await db.commit()
+    await db.refresh(proposal)
     return proposal
 
 

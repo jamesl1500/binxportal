@@ -122,6 +122,27 @@ class Proposal(Base):
     )
 
 
+# Packages: a proposal can offer two to four alternatives ("Essential",
+# "Complete") for the recipient to choose one of before signing. Lines that
+# belong to a package only count when it's the chosen one; lines without a
+# package are in every option. Exactly one package is selected at any time
+# (the recommended one until the recipient picks).
+MAX_PROPOSAL_PACKAGES = 4
+
+
+class ProposalPackage(Base):
+    __tablename__ = "proposal_packages"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    proposal_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("proposals.id", ondelete="CASCADE"), index=True)
+    position: Mapped[int] = mapped_column(Integer, default=0)
+    name: Mapped[str] = mapped_column(String(120))
+    description: Mapped[str | None] = mapped_column(Text, default=None)
+    # The agency's pick, shown with a badge and selected until the recipient chooses.
+    recommended: Mapped[bool] = mapped_column(Boolean, default=False)
+    selected: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
 class ProposalLineItem(Base):
     __tablename__ = "proposal_line_items"
 
@@ -137,6 +158,15 @@ class ProposalLineItem(Base):
     amount_cents: Mapped[int] = mapped_column(Integer, default=0)
     # one_time | monthly (see LINE_BILLINGS). A monthly line's amount is per month.
     billing: Mapped[str] = mapped_column(String(20), default=BILLING_ONE_TIME, server_default=BILLING_ONE_TIME)
+    # The package this line is part of (None: in every option).
+    package_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("proposal_packages.id", ondelete="CASCADE"), default=None, index=True
+    )
+    # An optional add-on the recipient can tick or untick before signing;
+    # selected is whether it's in (the agency sets the starting state).
+    # Required lines are always selected.
+    optional: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    selected: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
     # Which catalog service this line was made from, if any. Provenance only:
     # the values above are a copy and never follow later catalog edits.
     service_id: Mapped[uuid.UUID | None] = mapped_column(
@@ -200,6 +230,8 @@ EVENT_VIEWED = "viewed"
 EVENT_SIGNED = "signed"
 EVENT_COUNTERSIGNED = "countersigned"
 EVENT_DECLINED = "declined"
+# The recipient chose a package or add-ons (the document is re-frozen).
+EVENT_OPTIONS_CHOSEN = "options_chosen"
 # Acceptance (acceptance.py), after the proposal is complete.
 EVENT_CLIENT_CREATED = "client_created"
 EVENT_PORTAL_INVITED = "portal_invited"

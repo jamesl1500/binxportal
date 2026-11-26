@@ -44,6 +44,7 @@ export type ProposalAttachment = Schemas["ProposalAttachmentRead"];
 export type ProposalEvent = Schemas["ProposalEventRead"];
 export type ProposalCertificate = Schemas["ProposalCertificateRead"];
 export type ProposalAcceptance = Schemas["ProposalAcceptanceRead"];
+export type ProposalPackage = Schemas["ProposalPackageRead"];
 
 export interface ProposalLineItemInput {
   description: string;
@@ -55,6 +56,21 @@ export interface ProposalLineItemInput {
   serviceId?: string | null;
   /** A monthly line is a retainer, billed every month once accepted. */
   billing?: "one_time" | "monthly";
+  /** The package (by its key in `packages`) the line is in; none: every option. */
+  packageKey?: string | null;
+  /** An add-on the client can tick or untick; `selected` is its starting state. */
+  optional?: boolean;
+  selected?: boolean;
+}
+
+/** A package the client can choose (one of two to four). */
+export interface ProposalPackageInput {
+  /** The form's own handle for it, so lines can say which one they're in. */
+  key: string;
+  name: string;
+  description?: string | null;
+  /** Selected until the client chooses. */
+  recommended?: boolean;
 }
 
 export interface ProposalInput {
@@ -68,6 +84,7 @@ export interface ProposalInput {
   taxRatePercent: string;
   validUntil: string | null;
   lineItems: ProposalLineItemInput[];
+  packages?: ProposalPackageInput[];
   /** The agency countersigns after the client (owner/admin). */
   requiresCountersign?: boolean;
   /** What accepting it sets in motion (binx-api proposals/acceptance.py). */
@@ -98,6 +115,15 @@ function toPayload(input: ProposalInput) {
       unit_price_cents: item.unitPriceCents,
       service_id: item.serviceId ?? null,
       billing: item.billing ?? "one_time",
+      package_key: item.packageKey ?? null,
+      optional: item.optional ?? false,
+      selected: item.selected ?? true,
+    })),
+    packages: (input.packages ?? []).map((pkg) => ({
+      key: pkg.key,
+      name: pkg.name,
+      description: pkg.description ?? null,
+      recommended: pkg.recommended ?? false,
     })),
   };
 }
@@ -303,6 +329,27 @@ export async function signPublicProposal(
     return data;
   } catch (error) {
     throw apiError(error, "Unable to sign this proposal");
+  }
+}
+
+/**
+ * `PUT /proposals/public/{token}/options`: the recipient's package (required
+ * when the proposal offers any) and the add-ons they want. The response
+ * carries the new document fingerprint to sign against.
+ */
+export async function choosePublicProposalOptions(
+  token: string,
+  packageId: string | null,
+  addOnIds: string[],
+): Promise<ProposalPublic> {
+  try {
+    const { data } = await api.put<ProposalPublic>(
+      `/proposals/public/${token}/options`,
+      { package_id: packageId, add_on_ids: addOnIds },
+    );
+    return data;
+  } catch (error) {
+    throw apiError(error, "Unable to save your choice");
   }
 }
 

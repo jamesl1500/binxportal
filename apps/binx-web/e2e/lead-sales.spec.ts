@@ -182,3 +182,77 @@ test.describe("accepting a proposal from a lead", () => {
     await expect(salesPage).toHaveURL(/\/projects\/[0-9a-f-]{36}/);
   });
 });
+
+test.describe("packages and add-ons", () => {
+  test("the agency offers two packages and an add-on; the lead picks, and signs what they chose", async ({
+    salesPage,
+    browser,
+  }) => {
+    const agencyId = await salesAgencyId(salesPage);
+    const leadName = `Osprey ${RUN}`;
+    const lead = await createLead(salesPage, agencyId, leadName);
+
+    await salesPage.goto(`/leads/${lead.id}`);
+    await salesPage.getByRole("link", { name: "New proposal" }).click();
+    await salesPage.getByLabel(/^Title$/).fill(`Site for ${leadName}`);
+    await salesPage.getByLabel("Line 1 description").fill("Discovery workshop");
+    await salesPage.getByLabel("Line 1 unit price").fill("2000");
+    await clickUntilVisible(
+      salesPage.getByRole("button", { name: "Offer packages" }),
+      salesPage.getByLabel("Package 1 name"),
+    );
+    await salesPage.getByLabel("Package 1 name").fill("Essential");
+    await salesPage.getByLabel("Package 2 name").fill("Complete");
+    await salesPage.getByRole("radio", { name: "Recommend package 2" }).check();
+    for (const [n, description, price, pkg] of [
+      [2, "Five-page website", "6000", "Essential"],
+      [3, "Ten-page website", "9000", "Complete"],
+      [4, "SEO setup", "800", ""],
+    ] as const) {
+      await salesPage.getByRole("button", { name: "Add line" }).click();
+      await salesPage.getByLabel(`Line ${n} description`).fill(description);
+      await salesPage.getByLabel(`Line ${n} unit price`).fill(price);
+      if (pkg) await salesPage.getByLabel(`Line ${n} package`).selectOption({ label: pkg });
+    }
+    await salesPage.getByLabel("Line 4 type").selectOption("add_on");
+    // Discovery + Ten-page website: the recommended package, no add-ons.
+    await expect(salesPage.getByText(/For Complete with the pre-selected add-ons/)).toBeVisible();
+    await expect(salesPage.getByText("$11,000.00").first()).toBeVisible();
+    await salesPage.getByRole("button", { name: /create draft/i }).click();
+    await salesPage.waitForURL(/\/proposals\/[0-9a-f-]{36}$/);
+    const id = salesPage.url().split("/").pop()!;
+    await salesPage.getByRole("button", { name: "Send proposal" }).click();
+    await salesPage.getByRole("dialog").getByRole("button", { name: "Send proposal" }).click();
+    await expect(salesPage.getByRole("heading", { name: "History" })).toBeVisible();
+    const { share_url: shareUrl } = await api(salesPage, "get", `/agencies/${agencyId}/proposals/${id}`);
+
+    // The lead switches to Essential and adds SEO; the price follows.
+    const lead_ = await asTheLead(browser, shareUrl);
+    const page = lead_.page;
+    await expect(page.getByRole("group", { name: "Choose a package" })).toBeVisible();
+    await expect(page.getByRole("radio", { name: /Complete/ })).toBeChecked();
+    await expect(async () => {
+      await page.getByRole("radio", { name: /Essential/ }).check();
+      await expect(page.getByText("$8,000.00").first()).toBeVisible({ timeout: 3_000 });
+    }).toPass({ timeout: 20_000 });
+    await page.getByRole("checkbox", { name: /SEO setup/ }).check();
+    await expect(page.getByText("$8,800.00").first()).toBeVisible();
+
+    await clickUntilVisible(page.getByRole("button", { name: "Sign this proposal" }), page.getByLabel("Your email"));
+    await page.getByLabel("Your email").fill(`alex+${RUN}@northwind.example.com`);
+    await page.getByRole("checkbox", { name: /sign this proposal electronically/i }).check();
+    await page.getByRole("button", { name: "Sign proposal" }).click();
+    await page.getByRole("link", { name: /view the signing certificate/i }).click();
+
+    // The signed record is the choice: Essential, with SEO as an add-on.
+    await expect(page.getByText("Package chosen")).toBeVisible();
+    await expect(page.getByText("Essential", { exact: true })).toBeVisible();
+    await expect(page.getByText("SEO setup (add-on)")).toBeVisible();
+    await expect(page.getByText("Ten-page website")).toHaveCount(0);
+    await lead_.close();
+
+    // The agency sees what was chosen.
+    await salesPage.reload();
+    await expect(salesPage.getByText(/Chose the Essential package, with SEO setup/)).toBeVisible();
+  });
+});

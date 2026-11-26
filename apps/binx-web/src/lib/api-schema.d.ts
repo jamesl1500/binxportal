@@ -4959,6 +4959,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/portal/proposals/{proposal_id}/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Choose Portal Proposal Options
+         * @description The contact's package and add-ons, before signing.
+         */
+        put: operations["choose_portal_proposal_options_portal_proposals__proposal_id__options_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/portal/proposals/{proposal_id}/sign": {
         parameters: {
             query?: never;
@@ -5093,6 +5113,27 @@ export interface paths {
         put?: never;
         /** Decline Public Proposal */
         post: operations["decline_public_proposal_proposals_public__token__decline_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/proposals/public/{token}/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Choose Public Proposal Options
+         * @description The recipient's package and add-ons, before signing. The response
+         *     carries the new document fingerprint to sign against.
+         */
+        put: operations["choose_public_proposal_options_proposals_public__token__options_put"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -6974,6 +7015,11 @@ export interface components {
         };
         /** CertificateLineRead */
         CertificateLineRead: {
+            /**
+             * Add On
+             * @default false
+             */
+            add_on: boolean;
             /** Amount Cents */
             amount_cents: number;
             /**
@@ -10250,6 +10296,8 @@ export interface components {
              * @default 0
              */
             monthly_total_cents: number;
+            /** Package Name */
+            package_name?: string | null;
             /**
              * Proposal Id
              * Format: uuid
@@ -10303,6 +10351,8 @@ export interface components {
             lead_id?: string | null;
             /** Line Items */
             line_items?: components["schemas"]["ProposalLineItemInput"][];
+            /** Packages */
+            packages?: components["schemas"]["ProposalPackageInput"][];
             /** Recipient Email */
             recipient_email?: string | null;
             /** Recipient Name */
@@ -10400,6 +10450,8 @@ export interface components {
              * @default 0
              */
             monthly_total_cents: number;
+            /** Packages */
+            packages?: components["schemas"]["ProposalPackageRead"][];
             /** Recipient Email */
             recipient_email: string | null;
             /** Recipient Name */
@@ -10458,8 +10510,20 @@ export interface components {
             description: string;
             /** Details */
             details?: string | null;
+            /**
+             * Optional
+             * @default false
+             */
+            optional: boolean;
+            /** Package Key */
+            package_key?: string | null;
             /** Quantity */
             quantity: number | string;
+            /**
+             * Selected
+             * @default true
+             */
+            selected: boolean;
             /** Service Id */
             service_id?: string | null;
             /** Unit Price Cents */
@@ -10483,14 +10547,79 @@ export interface components {
              * Format: uuid
              */
             id: string;
+            /**
+             * Included
+             * @default true
+             */
+            included: boolean;
+            /**
+             * Optional
+             * @default false
+             */
+            optional: boolean;
+            /** Package Id */
+            package_id?: string | null;
             /** Position */
             position: number;
             /** Quantity */
             quantity: string;
+            /**
+             * Selected
+             * @default true
+             */
+            selected: boolean;
             /** Service Id */
             service_id: string | null;
             /** Unit Price Cents */
             unit_price_cents: number;
+        };
+        /**
+         * ProposalOptionsRequest
+         * @description The recipient's choice before signing: one of the packages (required
+         *     when there are any), and the add-ons they want. Add-ons left out are
+         *     unticked.
+         */
+        ProposalOptionsRequest: {
+            /** Add On Ids */
+            add_on_ids?: string[];
+            /** Package Id */
+            package_id?: string | null;
+        };
+        /** ProposalPackageInput */
+        ProposalPackageInput: {
+            /** Description */
+            description?: string | null;
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+            /**
+             * Recommended
+             * @default false
+             */
+            recommended: boolean;
+        };
+        /** ProposalPackageRead */
+        ProposalPackageRead: {
+            /** Description */
+            description: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Monthly Price Cents */
+            monthly_price_cents: number;
+            /** Name */
+            name: string;
+            /** Position */
+            position: number;
+            /** Price Cents */
+            price_cents: number;
+            /** Recommended */
+            recommended: boolean;
+            /** Selected */
+            selected: boolean;
         };
         /**
          * ProposalPublicRead
@@ -10534,6 +10663,8 @@ export interface components {
              * @default 0
              */
             monthly_total_cents: number;
+            /** Packages */
+            packages?: components["schemas"]["ProposalPackageRead"][];
             /** Recipient Name */
             recipient_name: string | null;
             /** Requires Countersign */
@@ -10675,6 +10806,8 @@ export interface components {
             lead_id?: string | null;
             /** Line Items */
             line_items?: components["schemas"]["ProposalLineItemInput"][];
+            /** Packages */
+            packages?: components["schemas"]["ProposalPackageInput"][];
             /** Recipient Email */
             recipient_email?: string | null;
             /** Recipient Name */
@@ -24112,6 +24245,41 @@ export interface operations {
             };
         };
     };
+    choose_portal_proposal_options_portal_proposals__proposal_id__options_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProposalOptionsRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalDetailRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     sign_portal_proposal_portal_proposals__proposal_id__sign_post: {
         parameters: {
             query?: never;
@@ -24335,6 +24503,41 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["ProposalDeclineRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalPublicRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    choose_public_proposal_options_proposals_public__token__options_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProposalOptionsRequest"];
             };
         };
         responses: {

@@ -26,7 +26,7 @@ function certificate(overrides: Partial<ProposalCertificate> = {}): ProposalCert
     valid_until: null,
     sent_at: "2026-11-20T09:00:00Z",
     line_items: [
-      { description: "Brand strategy", details: "Two workshops", quantity: "1.00", unit_price_cents: 500000, amount_cents: 500000, billing: "one_time" },
+      { description: "Brand strategy", details: "Two workshops", quantity: "1.00", unit_price_cents: 500000, amount_cents: 500000, billing: "one_time", add_on: false },
     ],
     attachments: [{ file_name: "sow.pdf", size: 2048, sha256: "b".repeat(64) }],
     document_hash: HASH,
