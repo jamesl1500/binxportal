@@ -14,6 +14,9 @@ signature is in), turning a signed proposal into a client relationship.
    this waits until the deposit is paid (``on_invoice_paid``). A kickoff
    needs a portal contact to send to, so it's sent once the signer joins
    (``on_contact_joined``) if they haven't yet.
+5. The retainer: the proposal's monthly lines become a monthly recurring
+   invoice schedule for the client (issued automatically, from the day the
+   work starts, so also after any deposit).
 
 Every step is idempotent and recorded in the proposal's history. A step
 that can't run (most often a plan limit on clients or projects) leaves the
@@ -37,6 +40,7 @@ from binx_api.core.errors import capture_error
 from binx_api.modules.agencies.models import ROLE_OWNER, Agency, AgencyClient, AgencyMember
 from binx_api.modules.client_portal.models import ClientContact
 from binx_api.modules.invoicing.models import STATUS_PAID, Invoice
+from binx_api.modules.invoicing.recurring_schemas import RecurringLineItemInput
 from binx_api.modules.invoicing.schemas import LineItemInput
 from binx_api.modules.leads.models import Lead
 from binx_api.modules.notifications import service as notifications_service
@@ -47,6 +51,7 @@ from binx_api.modules.proposals.models import (
     ACCEPTANCE_BLOCKED,
     ACCEPTANCE_DONE,
     ACCEPTANCE_IN_PROGRESS,
+    BILLING_MONTHLY,
     EVENT_ACCEPTANCE_BLOCKED,
     EVENT_CLIENT_CREATED,
     EVENT_DEPOSIT_INVOICED,
@@ -54,8 +59,10 @@ from binx_api.modules.proposals.models import (
     EVENT_KICKOFF_SENT,
     EVENT_PORTAL_INVITED,
     EVENT_PROJECT_CREATED,
+    EVENT_RETAINER_SCHEDULED,
     Proposal,
     ProposalAcceptance,
+    ProposalLineItem,
     ProposalSignature,
 )
 from binx_api.modules.users.models import User
@@ -344,6 +351,72 @@ async def _send_kickoff_if_ready(
     await db.commit()
 
 
+async def _start_retainer(
+    db: AsyncSession,
+    proposal: Proposal,
+    acceptance: ProposalAcceptance,
+    agency: Agency,
+    client: AgencyClient,
+    actor: User,
+) -> None:
+    """Bills the monthly lines every month, starting today, on today's day of
+    the month (the 29th to 31st become the 28th, as for any schedule)."""
+    from binx_api.modules.invoicing import recurring_service
+
+    if proposal.monthly_total_cents <= 0 or acceptance.retainer_schedule_id is not None:
+        return
+    lines = (
+        await db.execute(
+            select(ProposalLineItem)
+            .where(ProposalLineItem.proposal_id == proposal.id, ProposalLineItem.billing == BILLING_MONTHLY)
+            .order_by(ProposalLineItem.position)
+        )
+    ).scalars()
+    today = datetime.now(UTC).date()
+    try:
+        schedule = await recurring_service.create_schedule(
+            db,
+            agency,
+            created_by=actor,
+            client_id=client.id,
+            project_id=acceptance.project_id,
+            title=f"Retainer: {proposal.title}"[:255],
+            interval="monthly",
+            interval_count=1,
+            day_of_month=min(today.day, 28),
+            weekday=None,
+            due_days=14,
+            tax_rate_percent=proposal.tax_rate_percent,
+            notes=f"Monthly services from the signed proposal “{proposal.title}”."[:4096],
+            payment_instructions=None,
+            auto_issue=True,
+            start_date=today,
+            line_items=[
+                RecurringLineItemInput(
+                    description=line.description,
+                    quantity=line.quantity,
+                    unit_price_cents=line.unit_price_cents,
+                    service_id=line.service_id,
+                )
+                for line in lines
+            ],
+        )
+    except HTTPException as exc:
+        raise AcceptanceBlocked(f"Couldn't start the monthly billing: {_http_reason(exc)}") from None
+    acceptance.retainer_schedule_id = schedule.id
+    signing.record_event(
+        db,
+        proposal.id,
+        EVENT_RETAINER_SCHEDULED,
+        actor_label="Binx",
+        detail=(
+            f"Monthly billing of {_money(proposal.monthly_total_cents, proposal.currency)} a month, "
+            f"from {today:%B} {today.day}, {today.year}"
+        ),
+    )
+    await db.commit()
+
+
 # ---- Running it ------------------------------------------------------------------
 
 
@@ -360,6 +433,7 @@ async def _run(db: AsyncSession, proposal: Proposal, acceptance: ProposalAccepta
         await db.commit()
         return
     await _start_project(db, proposal, acceptance, agency, client, actor)
+    await _start_retainer(db, proposal, acceptance, agency, client, actor)
     acceptance.status = ACCEPTANCE_DONE
     acceptance.blocked_reason = None
     acceptance.completed_at = acceptance.completed_at or datetime.now(UTC)

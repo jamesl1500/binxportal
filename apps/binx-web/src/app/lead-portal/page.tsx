@@ -16,7 +16,7 @@ import type { Metadata } from "next";
 
 import { getPublicLeadPortal } from "@/lib/lead-portal";
 import { formatMoneyCents } from "@/lib/money";
-import { proposalStatusLabel } from "@/lib/proposals-client";
+import { proposalPriceLabel, proposalStatusLabel } from "@/lib/proposals-client";
 import LeadPortalQuestionForm from "@/components/leads/LeadPortalQuestionForm/LeadPortalQuestionForm";
 
 import styles from "./page.module.scss";
@@ -122,7 +122,7 @@ const LeadPortalPage = async ({ searchParams }: PageProps) => {
                   <div>
                     <p className={styles.proposalTitle}>{proposal.title}</p>
                     <p className={styles.muted}>
-                      {formatMoneyCents(proposal.total_cents, proposal.currency)}
+                      {proposalPriceLabel(proposal, (cents) => formatMoneyCents(cents, proposal.currency))}
                       {proposal.valid_until ? ` · valid until ${formatDate(proposal.valid_until)}` : ""}
                     </p>
                   </div>

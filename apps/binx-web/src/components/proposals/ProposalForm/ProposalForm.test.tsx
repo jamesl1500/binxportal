@@ -94,7 +94,7 @@ describe("ProposalForm", () => {
         leadId: null,
         clientId: null,
         lineItems: [
-          { description: "Retainer", details: null, quantity: "1", unitPriceCents: 200000, serviceId: null },
+          { description: "Retainer", details: null, quantity: "1", unitPriceCents: 200000, serviceId: null, billing: "one_time" },
         ],
       }),
     );
@@ -133,8 +133,9 @@ describe("ProposalForm", () => {
             quantity: "1",
             unitPriceCents: 500000,
             serviceId: "svc-1",
+            billing: "one_time",
           },
-          { description: "Design hours", details: null, quantity: "10", unitPriceCents: 12000, serviceId: "svc-2" },
+          { description: "Design hours", details: null, quantity: "10", unitPriceCents: 12000, serviceId: "svc-2", billing: "one_time" },
         ],
       }),
     );
@@ -293,5 +294,45 @@ describe("ProposalForm", () => {
     await user.type(screen.getByLabelText("Line 1 unit price"), "1");
     await user.click(screen.getByRole("button", { name: /create draft/i }));
     expect(mockedCreate).toHaveBeenCalledWith("a1", expect.objectContaining({ leadId: null }));
+  });
+
+  it("totals monthly lines per month, apart from the one-time total", async () => {
+    mockedCreate.mockResolvedValueOnce({ proposal: { id: "p1" } as never });
+    const user = userEvent.setup();
+    const retainer = {
+      ...services[0],
+      id: "svc-3",
+      name: "Design retainer",
+      description: null,
+      pricing_type: "monthly",
+      unit_price_cents: 250000,
+    };
+    render(<ProposalForm agencyId="a1" clients={clients} services={[...services, retainer]} />);
+
+    await user.type(screen.getByLabelText(/^Title$/), "Brand refresh");
+    await user.type(screen.getByLabelText("Line 1 description"), "Strategy");
+    await user.type(screen.getByLabelText("Line 1 unit price"), "5000");
+    // A monthly service comes in as a monthly line.
+    await user.selectOptions(screen.getByLabelText("Add from services"), "svc-3");
+    expect(screen.getByLabelText("Line 2 billing")).toHaveValue("monthly");
+    expect(screen.getByText("Monthly total").nextSibling).toHaveTextContent("$2,500.00 / mo");
+    expect(screen.getByText("Total").nextSibling).toHaveTextContent("$5,000.00");
+    expect(screen.getByText(/invoiced every month from when the work starts/)).toBeInTheDocument();
+
+    // Any line can be switched by hand.
+    await user.selectOptions(screen.getByLabelText("Line 1 billing"), "monthly");
+    expect(screen.queryByText("Total")).not.toBeInTheDocument();
+    expect(screen.getByText("Monthly total").nextSibling).toHaveTextContent("$7,500.00 / mo");
+
+    await user.click(screen.getByRole("button", { name: /create draft/i }));
+    expect(mockedCreate).toHaveBeenCalledWith(
+      "a1",
+      expect.objectContaining({
+        lineItems: [
+          expect.objectContaining({ description: "Strategy", billing: "monthly" }),
+          expect.objectContaining({ description: "Design retainer", billing: "monthly", serviceId: "svc-3" }),
+        ],
+      }),
+    );
   });
 });

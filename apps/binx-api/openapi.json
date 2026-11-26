@@ -4781,6 +4781,11 @@
             "title": "Amount Cents",
             "type": "integer"
           },
+          "billing": {
+            "default": "one_time",
+            "title": "Billing",
+            "type": "string"
+          },
           "description": {
             "title": "Description",
             "type": "string"
@@ -14226,6 +14231,30 @@
             ],
             "title": "Project Name"
           },
+          "retainer_next_run_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retainer Next Run Date"
+          },
+          "retainer_schedule_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retainer Schedule Id"
+          },
           "status": {
             "title": "Status",
             "type": "string"
@@ -14367,6 +14396,21 @@
             },
             "title": "Line Items",
             "type": "array"
+          },
+          "monthly_subtotal_cents": {
+            "default": 0,
+            "title": "Monthly Subtotal Cents",
+            "type": "integer"
+          },
+          "monthly_tax_cents": {
+            "default": 0,
+            "title": "Monthly Tax Cents",
+            "type": "integer"
+          },
+          "monthly_total_cents": {
+            "default": 0,
+            "title": "Monthly Total Cents",
+            "type": "integer"
           },
           "proposal_id": {
             "format": "uuid",
@@ -14848,6 +14892,21 @@
             "title": "Line Items",
             "type": "array"
           },
+          "monthly_subtotal_cents": {
+            "default": 0,
+            "title": "Monthly Subtotal Cents",
+            "type": "integer"
+          },
+          "monthly_tax_cents": {
+            "default": 0,
+            "title": "Monthly Tax Cents",
+            "type": "integer"
+          },
+          "monthly_total_cents": {
+            "default": 0,
+            "title": "Monthly Total Cents",
+            "type": "integer"
+          },
           "recipient_email": {
             "anyOf": [
               {
@@ -15056,6 +15115,15 @@
       },
       "ProposalLineItemInput": {
         "properties": {
+          "billing": {
+            "default": "one_time",
+            "enum": [
+              "one_time",
+              "monthly"
+            ],
+            "title": "Billing",
+            "type": "string"
+          },
           "description": {
             "maxLength": 1024,
             "minLength": 1,
@@ -15117,6 +15185,11 @@
           "amount_cents": {
             "title": "Amount Cents",
             "type": "integer"
+          },
+          "billing": {
+            "default": "one_time",
+            "title": "Billing",
+            "type": "string"
           },
           "description": {
             "title": "Description",
@@ -15256,6 +15329,21 @@
             },
             "title": "Line Items",
             "type": "array"
+          },
+          "monthly_subtotal_cents": {
+            "default": 0,
+            "title": "Monthly Subtotal Cents",
+            "type": "integer"
+          },
+          "monthly_tax_cents": {
+            "default": 0,
+            "title": "Monthly Tax Cents",
+            "type": "integer"
+          },
+          "monthly_total_cents": {
+            "default": 0,
+            "title": "Monthly Total Cents",
+            "type": "integer"
           },
           "recipient_name": {
             "anyOf": [
@@ -15415,6 +15503,21 @@
               }
             ],
             "title": "Lead Name"
+          },
+          "monthly_subtotal_cents": {
+            "default": 0,
+            "title": "Monthly Subtotal Cents",
+            "type": "integer"
+          },
+          "monthly_tax_cents": {
+            "default": 0,
+            "title": "Monthly Tax Cents",
+            "type": "integer"
+          },
+          "monthly_total_cents": {
+            "default": 0,
+            "title": "Monthly Total Cents",
+            "type": "integer"
           },
           "recipient_email": {
             "anyOf": [
@@ -15841,6 +15944,11 @@
           "display_status": {
             "title": "Display Status",
             "type": "string"
+          },
+          "monthly_total_cents": {
+            "default": 0,
+            "title": "Monthly Total Cents",
+            "type": "integer"
           },
           "sent_at": {
             "anyOf": [

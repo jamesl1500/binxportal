@@ -42,6 +42,9 @@ export interface ServiceLineValues {
   details: string;
   quantity: string;
   unitPrice: string; // dollars, as the editors' price inputs hold it
+  /** Monthly services become monthly lines on a proposal (a retainer);
+   * invoice editors ignore it. */
+  billing: "one_time" | "monthly";
 }
 
 /** "1.00" -> "1", "2.50" -> "2.5" — how a person would type it. */
@@ -57,5 +60,6 @@ export function lineValuesFromService(service: Service): ServiceLineValues {
     details: service.description ?? "",
     quantity: quantityInput(service.default_quantity),
     unitPrice: (service.unit_price_cents / 100).toFixed(2),
+    billing: service.pricing_type === "monthly" ? "monthly" : "one_time",
   };
 }

@@ -595,6 +595,7 @@ async def _seed_showcase(db, *, agency, owner, client, second_client, sales_agen
             quantity=Decimal(quantity),
             unit_price_cents=service.unit_price_cents,
             service_id=service.id,
+            billing="monthly" if service.pricing_type == "monthly" else "one_time",
         )
 
     # Sent, awaiting the client's signature (with a document attached).
@@ -614,7 +615,7 @@ async def _seed_showcase(db, *, agency, owner, client, second_client, sales_agen
         currency="USD",
         tax_rate_percent=Decimal("0"),
         valid_until=datetime.now(UTC) + timedelta(days=21),
-        line_items=[line("Brand strategy"), line("Website design & build"), line("Design retainer", "3")],
+        line_items=[line("Brand strategy"), line("Website design & build"), line("Design retainer")],
         requires_countersign=True,
         deposit_percent=Decimal("30"),
     )

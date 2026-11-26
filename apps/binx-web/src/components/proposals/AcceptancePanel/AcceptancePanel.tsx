@@ -4,7 +4,7 @@
  * On a fully signed proposal for a lead or client: what accepting it set in
  * motion, step by step, with links. The lead became a client, the signer was
  * invited to the portal, the deposit invoice (and whether it's paid), the
- * project and its kickoff. When a step was blocked (usually a plan limit),
+ * project and its kickoff, and the monthly billing of any monthly lines. When a step was blocked (usually a plan limit),
  * it says why and offers a retry, which picks up where it stopped.
  *
  * @module apps/binx-web/src/components/proposals/AcceptancePanel/AcceptancePanel.tsx
@@ -29,6 +29,9 @@ interface AcceptancePanelProps {
   /** The proposal's settings, to say what's still to come. */
   depositPercent: string | null;
   createsProject: boolean;
+  /** The monthly lines' total, formatted ("$2,500.00 / mo"); null when the
+   * proposal has none. */
+  monthlyLabel?: string | null;
 }
 
 type StepState = "done" | "waiting" | "todo";
@@ -52,10 +55,50 @@ const HEADLINES: Record<string, string> = {
   blocked: "Setting up the client needs you",
 };
 
+function formatDay(day: string): string {
+  // A calendar date ("2026-12-03"): read as local, not UTC midnight.
+  const [year, month, date] = day.split("-").map(Number);
+  return new Date(year, month - 1, date).toLocaleDateString(undefined, {
+    month: "long",
+    day: "numeric",
+  });
+}
+
+function retainerStep(
+  acceptance: ProposalAcceptance,
+  monthlyLabel: string,
+): Step {
+  if (acceptance.retainer_schedule_id) {
+    return {
+      key: "retainer",
+      state: "done",
+      label: (
+        <>
+          Monthly billing of {monthlyLabel},{" "}
+          <Link href="/invoices/recurring">
+            {acceptance.retainer_next_run_date
+              ? `next invoice ${formatDay(acceptance.retainer_next_run_date)}`
+              : "paused"}
+          </Link>
+        </>
+      ),
+    };
+  }
+  const waiting = acceptance.status === "awaiting_deposit";
+  return {
+    key: "retainer",
+    state: waiting ? "waiting" : "todo",
+    label: waiting
+      ? "Monthly billing starts when the deposit is paid"
+      : "Start the monthly billing",
+  };
+}
+
 function steps(
   acceptance: ProposalAcceptance,
   depositPercent: string | null,
   createsProject: boolean,
+  monthlyLabel: string | null,
 ): Step[] {
   const list: Step[] = [];
   if (acceptance.client_id) {
@@ -132,6 +175,7 @@ function steps(
       });
     }
   }
+  if (monthlyLabel) list.push(retainerStep(acceptance, monthlyLabel));
   return list;
 }
 
@@ -141,6 +185,7 @@ const AcceptancePanel = ({
   acceptance,
   depositPercent,
   createsProject,
+  monthlyLabel = null,
 }: AcceptancePanelProps) => {
   const [isPending, startTransition] = useTransition();
   const blocked = acceptance.status === "blocked";
@@ -179,12 +224,14 @@ const AcceptancePanel = ({
         </div>
       )}
       <ol className={styles.steps}>
-        {steps(acceptance, depositPercent, createsProject).map((step) => (
+        {steps(acceptance, depositPercent, createsProject, monthlyLabel).map(
+          (step) => (
           <li key={step.key} className={styles.step} data-state={step.state}>
             {ICONS[step.state]}
             <span>{step.label}</span>
           </li>
-        ))}
+          ),
+        )}
       </ol>
     </section>
   );

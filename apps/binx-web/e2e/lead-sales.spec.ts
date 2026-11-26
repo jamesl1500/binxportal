@@ -116,6 +116,12 @@ test.describe("accepting a proposal from a lead", () => {
     await salesPage.getByLabel(/^Title$/).fill(`Website for ${leadName}`);
     await salesPage.getByLabel("Line 1 description").fill("Website design and build");
     await salesPage.getByLabel("Line 1 unit price").fill("10000");
+    // A monthly care plan: billed every month once the work starts.
+    await salesPage.getByRole("button", { name: "Add line" }).click();
+    await salesPage.getByLabel("Line 2 description").fill("Website care plan");
+    await salesPage.getByLabel("Line 2 unit price").fill("500");
+    await salesPage.getByLabel("Line 2 billing").selectOption("monthly");
+    await expect(salesPage.getByText("$500.00 / mo").first()).toBeVisible();
     await salesPage.getByLabel("Deposit (% of the total)").fill("30");
     await expect(salesPage.getByRole("checkbox", { name: /start a project/i })).toBeChecked();
     await salesPage.getByRole("button", { name: /create draft/i }).click();
@@ -127,7 +133,9 @@ test.describe("accepting a proposal from a lead", () => {
 
     // The lead opens their portal, reviews the proposal and signs it.
     const lead_ = await asTheLead(browser, portal.url);
+    await expect(lead_.page.getByText(/\$10,000\.00 \+ \$500\.00 \/ mo/)).toBeVisible();
     await lead_.page.getByRole("link", { name: "Review & sign" }).click();
+    await expect(lead_.page.getByText("Monthly total")).toBeVisible();
     await clickUntilVisible(
       lead_.page.getByRole("button", { name: "Sign this proposal" }),
       lead_.page.getByLabel("Your email"),
@@ -153,6 +161,7 @@ test.describe("accepting a proposal from a lead", () => {
     await expect(salesPage.getByRole("link", { name: leadName })).toBeVisible();
     await expect(salesPage.getByText(/awaiting payment/)).toBeVisible();
     await expect(salesPage.getByText("Project starts when the deposit is paid")).toBeVisible();
+    await expect(salesPage.getByText("Monthly billing starts when the deposit is paid")).toBeVisible();
 
     const { acceptance } = await api(salesPage, "get", `/agencies/${agencyId}/proposals/${id}`);
     await api(salesPage, "post", `/agencies/${agencyId}/invoices/${acceptance.deposit_invoice_id}/payments`, {
@@ -162,6 +171,8 @@ test.describe("accepting a proposal from a lead", () => {
     });
     await salesPage.reload();
     await expect(salesPage.getByRole("heading", { name: "Accepted and set up" })).toBeVisible();
+    await expect(salesPage.getByText(/Monthly billing of \$500\.00 \/ mo/)).toBeVisible();
+    await expect(salesPage.getByRole("link", { name: /next invoice/ })).toHaveAttribute("href", "/invoices/recurring");
     await salesPage.getByRole("link", { name: `Website for ${leadName}` }).first().click();
     await expect(salesPage).toHaveURL(/\/projects\/[0-9a-f-]{36}/);
   });

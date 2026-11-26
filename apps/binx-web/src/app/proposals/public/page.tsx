@@ -16,7 +16,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { getPublicProposal } from "@/lib/proposals";
-import { proposalStatusLabel } from "@/lib/proposals-client";
+import { billingSuffix, PER_MONTH, proposalStatusLabel, proposalTotalRows } from "@/lib/proposals-client";
 import { formatMoneyCents } from "@/lib/money";
 import ProposalAttachmentList from "@/components/proposals/ProposalAttachmentList/ProposalAttachmentList";
 import PublicProposalActions from "@/components/proposals/PublicProposalActions/PublicProposalActions";
@@ -134,9 +134,11 @@ const PublicProposalPage = async ({
                   </td>
                   <td className={styles.numCol}>
                     {formatMoneyCents(item.unit_price_cents, currency)}
+                    {billingSuffix(item.billing)}
                   </td>
                   <td className={styles.numCol}>
                     {formatMoneyCents(item.amount_cents, currency)}
+                    {billingSuffix(item.billing)}
                   </td>
                 </tr>
               ))}
@@ -145,20 +147,15 @@ const PublicProposalPage = async ({
         </div>
 
         <dl className={styles.totals}>
-          <div>
-            <dt>Subtotal</dt>
-            <dd>{formatMoneyCents(proposal.subtotal_cents, currency)}</dd>
-          </div>
-          {proposal.tax_cents > 0 && (
-            <div>
-              <dt>Tax ({Number.parseFloat(proposal.tax_rate_percent)}%)</dt>
-              <dd>{formatMoneyCents(proposal.tax_cents, currency)}</dd>
+          {proposalTotalRows(proposal).map((row) => (
+            <div key={`${row.label}-${row.perMonth}`} className={row.grand ? styles.grandTotal : undefined}>
+              <dt>{row.label}</dt>
+              <dd>
+                {formatMoneyCents(row.cents, currency)}
+                {row.perMonth ? PER_MONTH : ""}
+              </dd>
             </div>
-          )}
-          <div className={styles.grandTotal}>
-            <dt>Total</dt>
-            <dd>{formatMoneyCents(proposal.total_cents, currency)}</dd>
-          </div>
+          ))}
         </dl>
 
         {proposal.attachments.length > 0 && (

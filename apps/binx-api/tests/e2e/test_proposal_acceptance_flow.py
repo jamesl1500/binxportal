@@ -330,3 +330,157 @@ class TestSettings:
         body = created.json()
         assert body["deposit_percent"] == "25.000"
         assert body["create_project_on_accept"] is True
+
+
+MONTHLY_LINES = [
+    {"description": "Brand strategy", "quantity": "1", "unit_price_cents": 1_000_000},
+    {"description": "Design retainer", "quantity": "2", "unit_price_cents": 150_000, "billing": "monthly"},
+]
+
+
+class TestMonthlyLines:
+    async def test_monthly_lines_are_totalled_per_month_and_left_out_of_the_total_and_deposit(
+        self, client, ctx
+    ) -> None:
+        agency, owner = ctx
+        sent = await _sent(
+            client, agency, owner, recipient_email="jane@fjord.example", line_items=MONTHLY_LINES, tax_rate_percent="10"
+        )
+        assert [line["billing"] for line in sent["line_items"]] == ["one_time", "monthly"]
+        assert (sent["subtotal_cents"], sent["tax_cents"], sent["total_cents"]) == (1_000_000, 100_000, 1_100_000)
+        assert (sent["monthly_subtotal_cents"], sent["monthly_tax_cents"], sent["monthly_total_cents"]) == (
+            300_000,
+            30_000,
+            330_000,
+        )
+        public = (await client.get(f"/proposals/public/{_token(sent['share_url'])}")).json()
+        assert public["monthly_total_cents"] == 330_000
+        assert public["line_items"][1]["billing"] == "monthly"
+
+    async def test_an_unknown_billing_is_refused(self, client, ctx) -> None:
+        agency, owner = ctx
+        resp = await client.post(
+            f"/agencies/{agency.id}/proposals",
+            json={
+                "title": "P",
+                "line_items": [{"description": "X", "quantity": "1", "unit_price_cents": 1, "billing": "weekly"}],
+            },
+            headers=auth_headers(owner),
+        )
+        assert resp.status_code == 422
+
+    async def test_accepting_starts_monthly_billing_for_the_client_and_project(self, client, ctx, db_session) -> None:
+        from binx_api.modules.invoicing.models import RecurringInvoiceLineItem, RecurringInvoiceSchedule
+
+        agency, owner = ctx
+        lead = await _lead(client, agency, owner)
+        sent = await _sent(
+            client,
+            agency,
+            owner,
+            lead_id=lead["id"],
+            recipient_email="jane@fjord.example",
+            create_project_on_accept=True,
+            line_items=MONTHLY_LINES,
+            tax_rate_percent="10",
+        )
+        await _sign(client, sent)
+
+        acceptance = (await _staff(client, agency, owner, sent["id"]))["acceptance"]
+        assert acceptance["status"] == "done"
+        assert acceptance["retainer_next_run_date"] == date.today().isoformat()
+        schedule = await db_session.get(RecurringInvoiceSchedule, acceptance["retainer_schedule_id"])
+        assert str(schedule.client_id) == acceptance["client_id"]
+        assert str(schedule.project_id) == acceptance["project_id"]
+        assert (schedule.interval, schedule.interval_count, schedule.auto_issue) == ("monthly", 1, True)
+        assert schedule.day_of_month == min(date.today().day, 28)
+        assert schedule.tax_rate_percent == 10
+        rows = await db_session.execute(
+            select(RecurringInvoiceLineItem).where(RecurringInvoiceLineItem.schedule_id == schedule.id)
+        )
+        assert [(line.description, line.quantity, line.unit_price_cents) for line in rows.scalars()] == [
+            ("Design retainer", 2, 150_000)
+        ]
+        history = await _history(client, agency, owner, sent["id"])
+        assert history[-2:] == ["project_created", "retainer_scheduled"]
+
+        # Running acceptance again adds no second schedule.
+        await client.post(f"/agencies/{agency.id}/proposals/{sent['id']}/acceptance/retry", headers=auth_headers(owner))
+        assert len((await db_session.execute(select(RecurringInvoiceSchedule))).scalars().all()) == 1
+
+    async def test_monthly_billing_waits_for_the_deposit(self, client, ctx) -> None:
+        agency, owner = ctx
+        lead = await _lead(client, agency, owner)
+        sent = await _sent(
+            client,
+            agency,
+            owner,
+            lead_id=lead["id"],
+            recipient_email="jane@fjord.example",
+            deposit_percent="50",
+            line_items=MONTHLY_LINES,
+        )
+        await _sign(client, sent)
+
+        acceptance = (await _staff(client, agency, owner, sent["id"]))["acceptance"]
+        assert acceptance["status"] == "awaiting_deposit"
+        assert acceptance["retainer_schedule_id"] is None
+        invoice = await client.get(
+            f"/agencies/{agency.id}/invoices/{acceptance['deposit_invoice_id']}", headers=auth_headers(owner)
+        )
+        assert invoice.json()["total_cents"] == 500_000  # half the one-time 10,000.00, not the retainer
+
+        paid = await client.post(
+            f"/agencies/{agency.id}/invoices/{acceptance['deposit_invoice_id']}/payments",
+            json={"amount_cents": 500_000, "paid_on": date.today().isoformat(), "method": "bank_transfer"},
+            headers=auth_headers(owner),
+        )
+        assert paid.status_code == 201, paid.text
+        acceptance = (await _staff(client, agency, owner, sent["id"]))["acceptance"]
+        assert acceptance["status"] == "done"
+        assert acceptance["retainer_schedule_id"] is not None
+        assert acceptance["project_id"] is None
+
+    async def test_the_certificate_and_pdf_show_the_monthly_lines(self, client, ctx) -> None:
+        agency, owner = ctx
+        sent = await _sent(client, agency, owner, recipient_email="jane@fjord.example", line_items=MONTHLY_LINES)
+        await _sign(client, sent)
+        token = _token(sent["share_url"])
+        certificate = (await client.get(f"/proposals/public/{token}/certificate")).json()
+        assert certificate["document_intact"] is True
+        assert [line["billing"] for line in certificate["line_items"]] == ["one_time", "monthly"]
+        assert certificate["monthly_total_cents"] == 300_000
+        pdf = await client.get(f"/proposals/public/{token}/certificate.pdf")
+        assert pdf.status_code == 200
+        assert pdf.content.startswith(b"%PDF")
+
+
+class TestOlderSnapshots:
+    async def test_a_v1_snapshot_still_verifies_and_reads_as_one_time(self, client, ctx, db_session) -> None:
+        """Documents signed before monthly lines existed have no billing or
+        monthly totals in their snapshot. Their certificate still reads (as
+        one-time) and still matches its fingerprint."""
+        import json
+
+        from binx_api.modules.proposals import signing
+        from binx_api.modules.proposals.models import Proposal
+
+        agency, owner = ctx
+        sent = await _sent(client, agency, owner, recipient_email="jane@fjord.example")
+        proposal = await db_session.get(Proposal, sent["id"])
+        data = json.loads(proposal.document_snapshot)
+        data["version"] = 1
+        for key in ("monthly_subtotal_cents", "monthly_tax_cents", "monthly_total_cents"):
+            del data[key]
+        for line in data["line_items"]:
+            del line["billing"]
+        proposal.document_snapshot = signing._canonical_json(data)
+        proposal.document_hash = signing.hash_snapshot(proposal.document_snapshot)
+        await db_session.commit()
+
+        await _sign(client, sent | {"document_hash": proposal.document_hash})
+        certificate = (await client.get(f"/proposals/public/{_token(sent['share_url'])}/certificate")).json()
+        assert certificate["document_intact"] is True
+        assert certificate["signature_matches_document"] is True
+        assert certificate["line_items"][0]["billing"] == "one_time"
+        assert certificate["monthly_total_cents"] == 0

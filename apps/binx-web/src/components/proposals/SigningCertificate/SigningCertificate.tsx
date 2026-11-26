@@ -19,6 +19,7 @@ import { CheckCircle2, Download, ShieldAlert } from "lucide-react";
 import { formatBytes } from "@/lib/boards-client";
 import { formatMoneyCents } from "@/lib/money";
 import type { ProposalCertificate } from "@/lib/proposals";
+import { billingSuffix, PER_MONTH, proposalTotalRows } from "@/lib/proposals-client";
 import PrintButton from "@/components/proposals/SigningCertificate/PrintButton";
 
 import styles from "./SigningCertificate.module.scss";
@@ -236,36 +237,25 @@ const SigningCertificate = ({ certificate, pdfHref }: SigningCertificateProps) =
                 <td className={styles.num}>{quantityLabel(line.quantity)}</td>
                 <td className={styles.num}>
                   {formatMoneyCents(line.unit_price_cents, currency)}
+                  {billingSuffix(line.billing)}
                 </td>
                 <td className={styles.num}>
                   {formatMoneyCents(line.amount_cents, currency)}
+                  {billingSuffix(line.billing)}
                 </td>
               </tr>
             ))}
           </tbody>
           <tfoot>
-            <tr>
-              <td colSpan={3}>Subtotal</td>
-              <td className={styles.num}>
-                {formatMoneyCents(certificate.subtotal_cents, currency)}
-              </td>
-            </tr>
-            {certificate.tax_cents > 0 && (
-              <tr>
-                <td colSpan={3}>
-                  Tax ({Number.parseFloat(certificate.tax_rate_percent)}%)
-                </td>
+            {proposalTotalRows(certificate).map((row) => (
+              <tr key={`${row.label}-${row.perMonth}`} className={row.grand ? styles.total : undefined}>
+                <td colSpan={3}>{row.label}</td>
                 <td className={styles.num}>
-                  {formatMoneyCents(certificate.tax_cents, currency)}
+                  {formatMoneyCents(row.cents, currency)}
+                  {row.perMonth ? PER_MONTH : ""}
                 </td>
               </tr>
-            )}
-            <tr className={styles.total}>
-              <td colSpan={3}>Total</td>
-              <td className={styles.num}>
-                {formatMoneyCents(certificate.total_cents, currency)}
-              </td>
-            </tr>
+            ))}
           </tfoot>
         </table>
 

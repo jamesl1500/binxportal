@@ -43,6 +43,8 @@ class PublicLeadPortalProposal(BaseModel):
     display_status: str
     currency: str
     total_cents: int
+    # Per month, for its monthly lines (zero when there are none).
+    monthly_total_cents: int = 0
     valid_until: datetime | None
     sent_at: datetime | None
     # The proposal's own share link: review, download documents, sign.

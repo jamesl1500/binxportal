@@ -80,7 +80,7 @@ describe("proposals.ts", () => {
         title: "Website redesign",
         recipient_email: "jane@example.com",
         line_items: [
-          { description: "Design", details: null, quantity: "1", unit_price_cents: 200_000, service_id: null },
+          { description: "Design", details: null, quantity: "1", unit_price_cents: 200_000, service_id: null, billing: "one_time" },
         ],
       }),
       AUTH,

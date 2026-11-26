@@ -29,6 +29,13 @@ PROPOSAL_CLOSED_STATUSES: set[str] = {STATUS_SIGNED, STATUS_DECLINED}
 # references without turning a proposal into a file share.
 MAX_PROPOSAL_ATTACHMENTS = 10
 
+# How a line is billed. One-time lines make up the proposal's total (and its
+# deposit); monthly lines are a retainer, totalled separately per month and
+# billed by a recurring schedule once the proposal is accepted.
+BILLING_ONE_TIME = "one_time"
+BILLING_MONTHLY = "monthly"
+LINE_BILLINGS: tuple[str, ...] = (BILLING_ONE_TIME, BILLING_MONTHLY)
+
 
 # One proposal document. Optionally tied to a Lead (the common case — sent
 # before the prospect is a client) or directly to an AgencyClient (an
@@ -65,6 +72,11 @@ class Proposal(Base):
     subtotal_cents: Mapped[int] = mapped_column(Integer, default=0)
     tax_cents: Mapped[int] = mapped_column(Integer, default=0)
     total_cents: Mapped[int] = mapped_column(Integer, default=0)
+    # The monthly lines' totals, per month (same tax rate). Zero when the
+    # proposal has none.
+    monthly_subtotal_cents: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    monthly_tax_cents: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    monthly_total_cents: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 
     # Signing after this date is refused (display-only "expired" state,
     # computed the same way invoicing's "overdue" is — see service.py's
@@ -117,6 +129,8 @@ class ProposalLineItem(Base):
     quantity: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=Decimal("1"))
     unit_price_cents: Mapped[int] = mapped_column(Integer, default=0)
     amount_cents: Mapped[int] = mapped_column(Integer, default=0)
+    # one_time | monthly (see LINE_BILLINGS). A monthly line's amount is per month.
+    billing: Mapped[str] = mapped_column(String(20), default=BILLING_ONE_TIME, server_default=BILLING_ONE_TIME)
     # Which catalog service this line was made from, if any. Provenance only:
     # the values above are a copy and never follow later catalog edits.
     service_id: Mapped[uuid.UUID | None] = mapped_column(
@@ -187,6 +201,7 @@ EVENT_DEPOSIT_INVOICED = "deposit_invoiced"
 EVENT_DEPOSIT_PAID = "deposit_paid"
 EVENT_PROJECT_CREATED = "project_created"
 EVENT_KICKOFF_SENT = "kickoff_sent"
+EVENT_RETAINER_SCHEDULED = "retainer_scheduled"
 EVENT_ACCEPTANCE_BLOCKED = "acceptance_blocked"
 
 ACCEPTANCE_IN_PROGRESS = "in_progress"
@@ -223,6 +238,10 @@ class ProposalAcceptance(Base):
     project_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("projects.id", ondelete="SET NULL"), default=None)
     kickoff_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("kickoffs.id", ondelete="SET NULL"), default=None)
     kickoff_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    # The recurring schedule billing the proposal's monthly lines.
+    retainer_schedule_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("recurring_invoice_schedules.id", ondelete="SET NULL"), default=None
+    )
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
 
 

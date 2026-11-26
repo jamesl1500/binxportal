@@ -5,8 +5,9 @@
  * name/email, a markdown-ish content textarea, currency, tax rate,
  * valid-until date, and a repeatable line-item table (typed by hand or
  * picked from the services catalog, with optional client-facing details
- * under each line). Totals update live and
- * mirror binx-api's `_recalculate` math exactly (subtotal of line amounts,
+ * under each line). Each line is one-time or monthly (a retainer, totalled
+ * per month and billed every month once accepted). Totals update live and
+ * mirror binx-api's `_recalculate` math exactly (subtotals of line amounts,
  * then tax — proposals carry no discount). Used for both creating a new
  * draft and editing an existing one (sent/decided proposals are never
  * editable — the page redirects away). The client select is what actually
@@ -26,6 +27,12 @@ import { toast } from "sonner";
 
 import type { ProposalDetail, ProposalInput } from "@/lib/proposals";
 import { formatMoneyCents } from "@/lib/money";
+import {
+  billingSuffix,
+  type LineBilling,
+  PER_MONTH,
+  proposalTotalRows,
+} from "@/lib/proposals-client";
 import { lineValuesFromService, type Service } from "@/lib/services-client";
 import ServicePicker from "@/components/services/ServicePicker/ServicePicker";
 import {
@@ -73,6 +80,8 @@ interface LineRow {
   quantity: string;
   unitPrice: string; // dollars, as typed
   serviceId: string | null;
+  /** Monthly lines are a retainer: totalled per month, billed every month. */
+  billing: LineBilling;
 }
 
 let rowCounter = 0;
@@ -84,6 +93,7 @@ const newRow = (): LineRow => ({
   quantity: "1",
   unitPrice: "",
   serviceId: null,
+  billing: "one_time",
 });
 
 const isBlank = (row: LineRow) =>
@@ -142,6 +152,7 @@ const ProposalForm = ({
           quantity: item.quantity,
           unitPrice: centsToInput(item.unit_price_cents),
           serviceId: item.service_id ?? null,
+          billing: item.billing === "monthly" ? "monthly" : "one_time",
         }))
       : [newRow()],
   );
@@ -161,17 +172,39 @@ const ProposalForm = ({
   );
   const [submitting, setSubmitting] = useState(false);
 
+  // Mirrors binx-api's _recalculate: one-time lines make the total, monthly
+  // lines a per-month total, both taxed at the same rate.
   const totals = useMemo(() => {
     const lineAmounts = rows.map((row) =>
       roundHalfUp(
         (Number.parseFloat(row.quantity) || 0) * toCents(row.unitPrice),
       ),
     );
-    const subtotal = lineAmounts.reduce((sum, amount) => sum + amount, 0);
-    const tax = roundHalfUp(
-      (subtotal * (Number.parseFloat(taxRate) || 0)) / 100,
-    );
-    return { lineAmounts, subtotal, tax, total: subtotal + tax };
+    const sumOf = (billing: LineBilling) =>
+      lineAmounts.reduce(
+        (sum, amount, index) =>
+          rows[index]?.billing === billing ? sum + amount : sum,
+        0,
+      );
+    const taxOf = (cents: number) =>
+      roundHalfUp((cents * (Number.parseFloat(taxRate) || 0)) / 100);
+    const subtotal = sumOf("one_time");
+    const monthly = sumOf("monthly");
+    return {
+      lineAmounts,
+      hasMonthly: rows.some(
+        (row) => row.billing === "monthly" && row.description.trim() !== "",
+      ),
+      rows: proposalTotalRows({
+        tax_rate_percent: taxRate || "0",
+        subtotal_cents: subtotal,
+        tax_cents: taxOf(subtotal),
+        total_cents: subtotal + taxOf(subtotal),
+        monthly_subtotal_cents: monthly,
+        monthly_tax_cents: taxOf(monthly),
+        monthly_total_cents: monthly + taxOf(monthly),
+      }),
+    };
   }, [rows, taxRate]);
 
   const canSubmit =
@@ -231,6 +264,7 @@ const ProposalForm = ({
           quantity: String(Number.parseFloat(row.quantity) || 0),
           unitPriceCents: toCents(row.unitPrice),
           serviceId: row.serviceId,
+          billing: row.billing,
         })),
     };
 
@@ -365,7 +399,7 @@ const ProposalForm = ({
                 }
                 aria-label={`Line ${index + 1} description`}
               />
-              {row.showDetails ? (
+              {row.showDetails && (
                 <textarea
                   className={styles.textarea}
                   rows={2}
@@ -377,15 +411,31 @@ const ProposalForm = ({
                   }
                   aria-label={`Line ${index + 1} details`}
                 />
-              ) : (
-                <button
-                  type="button"
-                  className={styles.addDetails}
-                  onClick={() => updateRow(row.key, { showDetails: true })}
-                >
-                  + Details
-                </button>
               )}
+              <div className={styles.lineMeta}>
+                {!row.showDetails && (
+                  <button
+                    type="button"
+                    className={styles.addDetails}
+                    onClick={() => updateRow(row.key, { showDetails: true })}
+                  >
+                    + Details
+                  </button>
+                )}
+                <select
+                  className={styles.billing}
+                  value={row.billing}
+                  onChange={(event) =>
+                    updateRow(row.key, {
+                      billing: event.target.value as LineBilling,
+                    })
+                  }
+                  aria-label={`Line ${index + 1} billing`}
+                >
+                  <option value="one_time">One-time</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </div>
             </div>
             <input
               className={styles.input}
@@ -412,6 +462,7 @@ const ProposalForm = ({
             />
             <span className={styles.lineAmount}>
               {formatMoneyCents(totals.lineAmounts[index] ?? 0, currency)}
+              {billingSuffix(row.billing)}
             </span>
             <button
               type="button"
@@ -451,7 +502,10 @@ const ProposalForm = ({
         <p className={styles.acceptanceHint}>
           Once it&apos;s signed{requiresCountersign ? " and countersigned" : ""}
           , {leadId ? "the lead becomes a client and " : ""}the signer is
-          invited to the client portal. You can also:
+          invited to the client portal.
+          {totals.hasMonthly &&
+            " The monthly lines are invoiced every month from when the work starts, as a recurring invoice you can pause."}{" "}
+          You can also:
         </p>
         <div className={styles.field}>
           <label className={styles.label} htmlFor="proposal-deposit">
@@ -470,7 +524,8 @@ const ProposalForm = ({
             onChange={(event) => setDepositPercent(event.target.value)}
           />
           <small id="proposal-deposit-help" className={styles.help}>
-            Invoiced automatically; the project waits until it&apos;s paid.
+            {totals.hasMonthly ? "Of the one-time total. " : ""}Invoiced
+            automatically; the project waits until it&apos;s paid.
           </small>
         </div>
         <label className={styles.checkboxField}>
@@ -554,20 +609,18 @@ const ProposalForm = ({
         </div>
 
         <dl className={styles.totals}>
-          <div>
-            <dt>Subtotal</dt>
-            <dd>{formatMoneyCents(totals.subtotal, currency)}</dd>
-          </div>
-          {totals.tax > 0 && (
-            <div>
-              <dt>Tax</dt>
-              <dd>{formatMoneyCents(totals.tax, currency)}</dd>
+          {totals.rows.map((row) => (
+            <div
+              key={`${row.label}-${row.perMonth}`}
+              className={row.grand ? styles.grandTotal : undefined}
+            >
+              <dt>{row.label}</dt>
+              <dd>
+                {formatMoneyCents(row.cents, currency)}
+                {row.perMonth ? PER_MONTH : ""}
+              </dd>
             </div>
-          )}
-          <div className={styles.grandTotal}>
-            <dt>Total</dt>
-            <dd>{formatMoneyCents(totals.total, currency)}</dd>
-          </div>
+          ))}
         </dl>
       </div>
 

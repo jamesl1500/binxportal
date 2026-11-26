@@ -53,6 +53,7 @@ def _line_item_read(item: ProposalLineItem) -> ProposalLineItemRead:
         unit_price_cents=item.unit_price_cents,
         amount_cents=item.amount_cents,
         service_id=item.service_id,
+        billing=item.billing,
     )
 
 
@@ -144,6 +145,9 @@ def _read(proposal: Proposal, lead_name: str | None, client_name: str | None) ->
         subtotal_cents=proposal.subtotal_cents,
         tax_cents=proposal.tax_cents,
         total_cents=proposal.total_cents,
+        monthly_subtotal_cents=proposal.monthly_subtotal_cents,
+        monthly_tax_cents=proposal.monthly_tax_cents,
+        monthly_total_cents=proposal.monthly_total_cents,
         valid_until=proposal.valid_until,
         sent_at=proposal.sent_at,
         created_at=proposal.created_at,
@@ -183,7 +187,7 @@ async def _detail_read(
 
 async def acceptance_read(db: DbSession, proposal: Proposal) -> ProposalAcceptanceRead | None:
     from binx_api.modules.agencies.models import AgencyClient
-    from binx_api.modules.invoicing.models import Invoice
+    from binx_api.modules.invoicing.models import Invoice, RecurringInvoiceSchedule
     from binx_api.modules.projects.models import Project
 
     row = await acceptance_service.get_acceptance(db, proposal.id)
@@ -192,6 +196,7 @@ async def acceptance_read(db: DbSession, proposal: Proposal) -> ProposalAcceptan
     client = await db.get(AgencyClient, row.client_id) if row.client_id else None
     invoice = await db.get(Invoice, row.deposit_invoice_id) if row.deposit_invoice_id else None
     project = await db.get(Project, row.project_id) if row.project_id else None
+    retainer = await db.get(RecurringInvoiceSchedule, row.retainer_schedule_id) if row.retainer_schedule_id else None
     return ProposalAcceptanceRead(
         status=row.status,
         blocked_reason=row.blocked_reason,
@@ -206,6 +211,8 @@ async def acceptance_read(db: DbSession, proposal: Proposal) -> ProposalAcceptan
         project_id=row.project_id,
         project_name=project.name if project else None,
         kickoff_sent_at=row.kickoff_sent_at,
+        retainer_schedule_id=retainer.id if retainer else None,
+        retainer_next_run_date=retainer.next_run_date if retainer and retainer.is_active else None,
         completed_at=row.completed_at,
     )
 
@@ -467,6 +474,9 @@ async def _public_read(db: DbSession, proposal: Proposal, agency_name: str) -> P
         subtotal_cents=proposal.subtotal_cents,
         tax_cents=proposal.tax_cents,
         total_cents=proposal.total_cents,
+        monthly_subtotal_cents=proposal.monthly_subtotal_cents,
+        monthly_tax_cents=proposal.monthly_tax_cents,
+        monthly_total_cents=proposal.monthly_total_cents,
         valid_until=proposal.valid_until,
         line_items=[_line_item_read(item) for item in line_items],
         attachments=[attachment_read(item) for item in attachments],

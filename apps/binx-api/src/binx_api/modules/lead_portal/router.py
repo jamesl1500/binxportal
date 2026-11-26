@@ -127,6 +127,7 @@ async def read_public_portal(db: DbSession, token: str) -> PublicLeadPortalRead:
                 display_status=proposals_service.display_status(proposal),
                 currency=proposal.currency,
                 total_cents=proposal.total_cents,
+                monthly_total_cents=proposal.monthly_total_cents,
                 valid_until=proposal.valid_until,
                 sent_at=proposal.sent_at,
                 url=proposals_service.share_url(proposal),

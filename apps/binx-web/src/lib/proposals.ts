@@ -53,6 +53,8 @@ export interface ProposalLineItemInput {
   unitPriceCents: number;
   /** The catalog service the line was picked from, if any. */
   serviceId?: string | null;
+  /** A monthly line is a retainer, billed every month once accepted. */
+  billing?: "one_time" | "monthly";
 }
 
 export interface ProposalInput {
@@ -95,6 +97,7 @@ function toPayload(input: ProposalInput) {
       quantity: item.quantity,
       unit_price_cents: item.unitPriceCents,
       service_id: item.serviceId ?? null,
+      billing: item.billing ?? "one_time",
     })),
   };
 }

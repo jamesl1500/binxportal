@@ -1,6 +1,7 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
+from typing import Literal
 
 from pydantic import BaseModel, EmailStr, Field, model_validator
 
@@ -14,6 +15,9 @@ class ProposalLineItemInput(BaseModel):
     unit_price_cents: int = Field(ge=0)
     # Set when the line was picked from the services catalog.
     service_id: uuid.UUID | None = None
+    # A monthly line is a retainer: its amount is per month, it's left out of
+    # the one-time total, and accepting the proposal bills it every month.
+    billing: Literal["one_time", "monthly"] = "one_time"
 
 
 class ProposalLineItemRead(BaseModel):
@@ -25,6 +29,7 @@ class ProposalLineItemRead(BaseModel):
     unit_price_cents: int
     amount_cents: int
     service_id: uuid.UUID | None
+    billing: str = "one_time"
 
 
 class ProposalAttachmentRead(BaseModel):
@@ -92,6 +97,10 @@ class ProposalRead(BaseModel):
     subtotal_cents: int
     tax_cents: int
     total_cents: int
+    # Per month, for the monthly lines (zero when there are none).
+    monthly_subtotal_cents: int = 0
+    monthly_tax_cents: int = 0
+    monthly_total_cents: int = 0
     valid_until: datetime | None
     sent_at: datetime | None
     created_at: datetime
@@ -114,6 +123,9 @@ class ProposalAcceptanceRead(BaseModel):
     project_id: uuid.UUID | None
     project_name: str | None
     kickoff_sent_at: datetime | None
+    # The recurring schedule billing the monthly lines, once started.
+    retainer_schedule_id: uuid.UUID | None = None
+    retainer_next_run_date: date | None = None
     completed_at: datetime | None
 
 
@@ -169,6 +181,10 @@ class ProposalPublicRead(BaseModel):
     subtotal_cents: int
     tax_cents: int
     total_cents: int
+    # Per month, for the monthly lines (zero when there are none).
+    monthly_subtotal_cents: int = 0
+    monthly_tax_cents: int = 0
+    monthly_total_cents: int = 0
     valid_until: datetime | None
     line_items: list[ProposalLineItemRead]
     attachments: list[ProposalAttachmentRead]
@@ -237,6 +253,7 @@ class CertificateLineRead(BaseModel):
     quantity: str
     unit_price_cents: int
     amount_cents: int
+    billing: str = "one_time"
 
 
 class CertificateAttachmentRead(BaseModel):
@@ -276,6 +293,10 @@ class ProposalCertificateRead(BaseModel):
     subtotal_cents: int
     tax_cents: int
     total_cents: int
+    # Per month, for the monthly lines (zero when there are none).
+    monthly_subtotal_cents: int = 0
+    monthly_tax_cents: int = 0
+    monthly_total_cents: int = 0
     valid_until: datetime | None
     sent_at: datetime | None
     line_items: list[CertificateLineRead]

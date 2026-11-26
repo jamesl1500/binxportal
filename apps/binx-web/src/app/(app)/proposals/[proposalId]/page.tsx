@@ -14,7 +14,9 @@ import { notFound, redirect } from "next/navigation";
 
 import { AuthApiError, getCurrentUser } from "@/lib/auth";
 import { getCurrentAgencyContext } from "@/lib/agencies";
+import { formatMoneyCents } from "@/lib/money";
 import { getProposal, getProposalEvents } from "@/lib/proposals";
+import { PER_MONTH } from "@/lib/proposals-client";
 import ProposalActions from "@/components/proposals/ProposalActions/ProposalActions";
 import ProposalAttachmentsManager from "@/components/proposals/ProposalAttachmentsManager/ProposalAttachmentsManager";
 import ProposalAuditTrail from "@/components/proposals/ProposalAuditTrail/ProposalAuditTrail";
@@ -75,6 +77,11 @@ const ProposalPage = async ({ params }: ProposalPageProps) => {
           acceptance={proposal.acceptance}
           depositPercent={proposal.deposit_percent ?? null}
           createsProject={proposal.create_project_on_accept ?? false}
+          monthlyLabel={
+            proposal.monthly_total_cents
+              ? `${formatMoneyCents(proposal.monthly_total_cents, proposal.currency)}${PER_MONTH}`
+              : null
+          }
         />
       )}
 

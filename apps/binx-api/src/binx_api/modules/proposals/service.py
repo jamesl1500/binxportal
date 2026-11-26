@@ -33,6 +33,7 @@ from binx_api.modules.notifications import service as notifications_service
 from binx_api.modules.notifications.models import CATEGORY_INVOICING as NOTIFY_CATEGORY_PROPOSALS
 from binx_api.modules.proposals import acceptance, completion, signing
 from binx_api.modules.proposals.models import (
+    BILLING_MONTHLY,
     EVENT_COUNTERSIGNED,
     EVENT_DECLINED,
     EVENT_SENT,
@@ -79,12 +80,21 @@ def _line_amount(quantity: Decimal, unit_price_cents: int) -> int:
     return _round_cents(Decimal(quantity) * Decimal(unit_price_cents))
 
 
+def _tax(subtotal: int, rate: Decimal) -> int:
+    return _round_cents(Decimal(subtotal) * Decimal(rate) / Decimal(100))
+
+
 def _recalculate(proposal: Proposal, line_items: list[ProposalLineItem]) -> None:
-    subtotal = sum(item.amount_cents for item in line_items)
-    tax = _round_cents(Decimal(subtotal) * Decimal(proposal.tax_rate_percent) / Decimal(100))
-    proposal.subtotal_cents = subtotal
-    proposal.tax_cents = tax
-    proposal.total_cents = subtotal + tax
+    """One-time lines make the total; monthly lines a separate per-month
+    total, taxed at the same rate."""
+    one_time = sum(item.amount_cents for item in line_items if item.billing != BILLING_MONTHLY)
+    monthly = sum(item.amount_cents for item in line_items if item.billing == BILLING_MONTHLY)
+    proposal.subtotal_cents = one_time
+    proposal.tax_cents = _tax(one_time, proposal.tax_rate_percent)
+    proposal.total_cents = one_time + proposal.tax_cents
+    proposal.monthly_subtotal_cents = monthly
+    proposal.monthly_tax_cents = _tax(monthly, proposal.tax_rate_percent)
+    proposal.monthly_total_cents = monthly + proposal.monthly_tax_cents
 
 
 def display_status(proposal: Proposal, *, now: datetime | None = None) -> str:
@@ -156,6 +166,7 @@ async def _replace_line_items(
             unit_price_cents=item.unit_price_cents,
             amount_cents=_line_amount(item.quantity, item.unit_price_cents),
             service_id=item.service_id,
+            billing=item.billing,
         )
         db.add(row)
         rows.append(row)

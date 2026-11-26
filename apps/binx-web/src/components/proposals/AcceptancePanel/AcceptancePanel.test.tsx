@@ -115,4 +115,33 @@ describe("AcceptancePanel", () => {
     await user.click(screen.getByRole("button", { name: "Retry setup" }));
     expect(toast.error).toHaveBeenCalledWith("Still over the limit");
   });
+
+  it("shows the monthly billing it started, and its next invoice", () => {
+    render(
+      <AcceptancePanel
+        agencyId="a1"
+        proposalId="p1"
+        acceptance={acceptance({ retainer_schedule_id: "rs1", retainer_next_run_date: "2026-12-03" })}
+        depositPercent={null}
+        createsProject={false}
+        monthlyLabel="$2,500.00 / mo"
+      />,
+    );
+    expect(screen.getByText(/Monthly billing of \$2,500\.00 \/ mo/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /next invoice December 3/ })).toHaveAttribute("href", "/invoices/recurring");
+  });
+
+  it("says monthly billing waits for the deposit", () => {
+    render(
+      <AcceptancePanel
+        agencyId="a1"
+        proposalId="p1"
+        acceptance={acceptance({ status: "awaiting_deposit", deposit_invoice_id: "i1", project_id: null })}
+        depositPercent="30.000"
+        createsProject={false}
+        monthlyLabel="$2,500.00 / mo"
+      />,
+    );
+    expect(screen.getByText("Monthly billing starts when the deposit is paid")).toBeInTheDocument();
+  });
 });

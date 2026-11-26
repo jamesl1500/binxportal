@@ -6976,6 +6976,11 @@ export interface components {
         CertificateLineRead: {
             /** Amount Cents */
             amount_cents: number;
+            /**
+             * Billing
+             * @default one_time
+             */
+            billing: string;
             /** Description */
             description: string;
             /** Details */
@@ -10171,6 +10176,10 @@ export interface components {
             project_id: string | null;
             /** Project Name */
             project_name: string | null;
+            /** Retainer Next Run Date */
+            retainer_next_run_date?: string | null;
+            /** Retainer Schedule Id */
+            retainer_schedule_id?: string | null;
             /** Status */
             status: string;
         };
@@ -10226,6 +10235,21 @@ export interface components {
             generated_at: string;
             /** Line Items */
             line_items: components["schemas"]["CertificateLineRead"][];
+            /**
+             * Monthly Subtotal Cents
+             * @default 0
+             */
+            monthly_subtotal_cents: number;
+            /**
+             * Monthly Tax Cents
+             * @default 0
+             */
+            monthly_tax_cents: number;
+            /**
+             * Monthly Total Cents
+             * @default 0
+             */
+            monthly_total_cents: number;
             /**
              * Proposal Id
              * Format: uuid
@@ -10361,6 +10385,21 @@ export interface components {
             lead_name: string | null;
             /** Line Items */
             line_items: components["schemas"]["ProposalLineItemRead"][];
+            /**
+             * Monthly Subtotal Cents
+             * @default 0
+             */
+            monthly_subtotal_cents: number;
+            /**
+             * Monthly Tax Cents
+             * @default 0
+             */
+            monthly_tax_cents: number;
+            /**
+             * Monthly Total Cents
+             * @default 0
+             */
+            monthly_total_cents: number;
             /** Recipient Email */
             recipient_email: string | null;
             /** Recipient Name */
@@ -10409,6 +10448,12 @@ export interface components {
         };
         /** ProposalLineItemInput */
         ProposalLineItemInput: {
+            /**
+             * Billing
+             * @default one_time
+             * @enum {string}
+             */
+            billing: "one_time" | "monthly";
             /** Description */
             description: string;
             /** Details */
@@ -10424,6 +10469,11 @@ export interface components {
         ProposalLineItemRead: {
             /** Amount Cents */
             amount_cents: number;
+            /**
+             * Billing
+             * @default one_time
+             */
+            billing: string;
             /** Description */
             description: string;
             /** Details */
@@ -10469,6 +10519,21 @@ export interface components {
             document_hash: string | null;
             /** Line Items */
             line_items: components["schemas"]["ProposalLineItemRead"][];
+            /**
+             * Monthly Subtotal Cents
+             * @default 0
+             */
+            monthly_subtotal_cents: number;
+            /**
+             * Monthly Tax Cents
+             * @default 0
+             */
+            monthly_tax_cents: number;
+            /**
+             * Monthly Total Cents
+             * @default 0
+             */
+            monthly_total_cents: number;
             /** Recipient Name */
             recipient_name: string | null;
             /** Requires Countersign */
@@ -10518,6 +10583,21 @@ export interface components {
             lead_id: string | null;
             /** Lead Name */
             lead_name: string | null;
+            /**
+             * Monthly Subtotal Cents
+             * @default 0
+             */
+            monthly_subtotal_cents: number;
+            /**
+             * Monthly Tax Cents
+             * @default 0
+             */
+            monthly_tax_cents: number;
+            /**
+             * Monthly Total Cents
+             * @default 0
+             */
+            monthly_total_cents: number;
             /** Recipient Email */
             recipient_email: string | null;
             /** Recipient Name */
@@ -10647,6 +10727,11 @@ export interface components {
             currency: string;
             /** Display Status */
             display_status: string;
+            /**
+             * Monthly Total Cents
+             * @default 0
+             */
+            monthly_total_cents: number;
             /** Sent At */
             sent_at: string | null;
             /** Title */

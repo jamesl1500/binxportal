@@ -33,6 +33,7 @@ _FONT_CANDIDATES: list[tuple[str, str]] = [
 
 _INK = (10, 10, 11)
 _SOFT = (110, 110, 118)
+_PER_MONTH = " / mo"
 _FAINT = (161, 161, 170)
 _RULE = (225, 225, 228)
 _OK = (22, 101, 52)
@@ -44,6 +45,14 @@ _EVENT_LABELS = {
     "signed": "Signed",
     "countersigned": "Countersigned",
     "declined": "Declined",
+    "client_created": "Became a client",
+    "portal_invited": "Invited to the portal",
+    "deposit_invoiced": "Deposit invoiced",
+    "deposit_paid": "Deposit paid",
+    "project_created": "Project started",
+    "kickoff_sent": "Kickoff sent",
+    "retainer_scheduled": "Monthly billing started",
+    "acceptance_blocked": "Setup blocked",
 }
 _METHOD_LABELS = {
     "portal": "Client portal (signed-in account)",
@@ -197,19 +206,17 @@ class _CertificatePDF(FPDF):
             table.row(["Description", "Qty", "Unit price", "Amount"])
             for line in c.line_items:
                 description = line.description + (f"\n{line.details}" if line.details else "")
+                per = _PER_MONTH if line.billing == "monthly" else ""
                 table.row(
                     [
                         self.text_of(description),
                         _quantity(line.quantity),
-                        _money(line.unit_price_cents, c.currency),
-                        _money(line.amount_cents, c.currency),
+                        _money(line.unit_price_cents, c.currency) + per,
+                        _money(line.amount_cents, c.currency) + per,
                     ]
                 )
         self.ln(2)
-        self.totals_row("Subtotal", _money(c.subtotal_cents, c.currency))
-        if c.tax_cents:
-            self.totals_row(f"Tax ({float(c.tax_rate_percent):g}%)", _money(c.tax_cents, c.currency))
-        self.totals_row("Total", _money(c.total_cents, c.currency), bold=True)
+        self.totals(c)
 
         if c.attachments:
             self.ln(2)
@@ -217,6 +224,22 @@ class _CertificatePDF(FPDF):
             for item in c.attachments:
                 self.para(f"{item.file_name} ({item.size:,} bytes)", size=9, gap=0)
                 self.para(f"SHA-256 {item.sha256}", size=7.5, color=_SOFT, gap=1.5)
+
+    def totals(self, c: ProposalCertificateRead) -> None:
+        """The one-time totals, then the per-month totals of any monthly
+        lines (the one-time block is left out when everything is monthly)."""
+        tax_label = f"Tax ({float(c.tax_rate_percent):g}%)"
+        if c.subtotal_cents or not c.monthly_total_cents:
+            self.totals_row("Subtotal", _money(c.subtotal_cents, c.currency))
+            if c.tax_cents:
+                self.totals_row(tax_label, _money(c.tax_cents, c.currency))
+            self.totals_row("Total", _money(c.total_cents, c.currency), bold=True)
+        if c.monthly_total_cents:
+            self.ln(1)
+            self.totals_row("Monthly", _money(c.monthly_subtotal_cents, c.currency) + _PER_MONTH)
+            if c.monthly_tax_cents:
+                self.totals_row(tax_label, _money(c.monthly_tax_cents, c.currency) + _PER_MONTH)
+            self.totals_row("Monthly total", _money(c.monthly_total_cents, c.currency) + _PER_MONTH, bold=True)
 
     def totals_row(self, name: str, value: str, *, bold: bool = False) -> None:
         self.use(9.5, bold=bold, color=_INK if bold else _SOFT)

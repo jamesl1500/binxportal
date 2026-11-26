@@ -59,7 +59,7 @@ CONSENT_TEXT = (
     "electronically, and I confirm I can open and keep a copy of them."
 )
 
-SNAPSHOT_VERSION = 1
+SNAPSHOT_VERSION = 2
 # Repeat views from the same browser within this window add no new event.
 VIEW_DEDUPE_WINDOW = timedelta(minutes=30)
 
@@ -109,6 +109,10 @@ async def build_snapshot(db: AsyncSession, proposal: Proposal) -> str:
             "subtotal_cents": proposal.subtotal_cents,
             "tax_cents": proposal.tax_cents,
             "total_cents": proposal.total_cents,
+            # v2: per-month totals and each line's billing.
+            "monthly_subtotal_cents": proposal.monthly_subtotal_cents,
+            "monthly_tax_cents": proposal.monthly_tax_cents,
+            "monthly_total_cents": proposal.monthly_total_cents,
             "valid_until": _iso(proposal.valid_until),
             "sent_at": _iso(proposal.sent_at),
             "line_items": [
@@ -119,6 +123,7 @@ async def build_snapshot(db: AsyncSession, proposal: Proposal) -> str:
                     "quantity": str(line.quantity),
                     "unit_price_cents": line.unit_price_cents,
                     "amount_cents": line.amount_cents,
+                    "billing": line.billing,
                 }
                 for line in lines
             ],
@@ -267,6 +272,10 @@ async def build_certificate(db: AsyncSession, proposal: Proposal) -> ProposalCer
         subtotal_cents=data["subtotal_cents"],
         tax_cents=data["tax_cents"],
         total_cents=data["total_cents"],
+        # Absent from v1 snapshots, which had no monthly lines.
+        monthly_subtotal_cents=data.get("monthly_subtotal_cents", 0),
+        monthly_tax_cents=data.get("monthly_tax_cents", 0),
+        monthly_total_cents=data.get("monthly_total_cents", 0),
         valid_until=_parse_datetime(data["valid_until"]),
         sent_at=_parse_datetime(data["sent_at"]),
         line_items=[
@@ -276,6 +285,7 @@ async def build_certificate(db: AsyncSession, proposal: Proposal) -> ProposalCer
                 quantity=line["quantity"],
                 unit_price_cents=line["unit_price_cents"],
                 amount_cents=line["amount_cents"],
+                billing=line.get("billing", "one_time"),
             )
             for line in data["line_items"]
         ],

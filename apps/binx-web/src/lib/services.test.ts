@@ -86,6 +86,29 @@ describe("lineValuesFromService", () => {
         is_archived: false,
         created_at: "2026-11-01T00:00:00Z",
       }),
-    ).toEqual({ serviceId: "svc-1", description: "Design hours", details: "", quantity: "2.5", unitPrice: "150.50" });
+    ).toEqual({
+      serviceId: "svc-1",
+      description: "Design hours",
+      details: "",
+      quantity: "2.5",
+      unitPrice: "150.50",
+      billing: "one_time",
+    });
+  });
+
+  it("makes a monthly service a monthly line", () => {
+    expect(
+      lineValuesFromService({
+        id: "svc-2",
+        agency_id: "a1",
+        name: "Retainer",
+        description: null,
+        pricing_type: "monthly",
+        unit_price_cents: 250000,
+        default_quantity: "1.00",
+        is_archived: false,
+        created_at: "2026-11-01T00:00:00Z",
+      }).billing,
+    ).toBe("monthly");
   });
 });

@@ -24,7 +24,17 @@ const LABELS: Record<string, string> = {
   sent: "Sent",
   viewed: "Opened",
   signed: "Signed",
+  countersigned: "Countersigned",
   declined: "Declined",
+  // What accepting it set up (binx-api proposals/acceptance.py).
+  client_created: "Became a client",
+  portal_invited: "Invited to the portal",
+  deposit_invoiced: "Deposit invoiced",
+  deposit_paid: "Deposit paid",
+  project_created: "Project started",
+  kickoff_sent: "Kickoff sent",
+  retainer_scheduled: "Monthly billing started",
+  acceptance_blocked: "Setup blocked",
 };
 
 const ProposalAuditTrail = ({ events, documentHash }: ProposalAuditTrailProps) => (
