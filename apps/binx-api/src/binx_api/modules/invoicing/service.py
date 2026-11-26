@@ -582,8 +582,15 @@ async def _next_invoice_number(db: AsyncSession, agency: Agency) -> str:
     """Allocate the next per-agency invoice number under a row lock so two
     concurrent creations can't collide on it."""
     await get_or_create_billing_settings(db, agency)  # ensure the row exists to lock
+    # populate_existing: the row is already in the session (loaded just
+    # above, unlocked), and without it the locked SELECT hands back that
+    # cached object with the counter read *before* the lock, so two
+    # concurrent creations would still get the same number.
     result = await db.execute(
-        select(AgencyBillingSettings).where(AgencyBillingSettings.agency_id == agency.id).with_for_update()
+        select(AgencyBillingSettings)
+        .where(AgencyBillingSettings.agency_id == agency.id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
     )
     settings = result.scalar_one()
     number = f"{settings.invoice_prefix}{settings.next_invoice_number:0{settings.number_padding}d}"
