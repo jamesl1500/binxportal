@@ -36,6 +36,7 @@ from binx_api.modules.proposals.models import (
     STATUS_SIGNED,
     Proposal,
     ProposalAttachment,
+    ProposalCountersignature,
     ProposalEvent,
     ProposalLineItem,
     ProposalSignature,
@@ -250,6 +251,9 @@ async def build_certificate(db: AsyncSession, proposal: Proposal) -> ProposalCer
     await ensure_document_record(db, proposal)
     assert proposal.document_snapshot is not None and proposal.document_hash is not None
     data = json.loads(proposal.document_snapshot)
+    counter = await db.scalar(
+        select(ProposalCountersignature).where(ProposalCountersignature.proposal_id == proposal.id)
+    )
 
     return ProposalCertificateRead(
         proposal_id=proposal.id,
@@ -291,6 +295,24 @@ async def build_certificate(db: AsyncSession, proposal: Proposal) -> ProposalCer
             consent_text=signature.consent_text,
             document_hash=signature.document_hash,
         ),
+        requires_countersign=proposal.requires_countersign,
+        countersignature=(
+            CertificateSignatureRead(
+                signer_name=counter.signer_name,
+                signer_email=counter.signer_email,
+                signature_text=counter.signature_text,
+                signed_at=counter.signed_at,
+                ip_address=counter.ip_address,
+                user_agent=counter.user_agent,
+                signed_via="agency",
+                consent_version=counter.consent_version,
+                consent_text=counter.consent_text,
+                document_hash=counter.document_hash,
+            )
+            if counter
+            else None
+        ),
+        completed_at=proposal.completed_at,
         events=[event_read(event) for event in await list_events(db, proposal.id)],
         generated_at=datetime.now(UTC),
     )

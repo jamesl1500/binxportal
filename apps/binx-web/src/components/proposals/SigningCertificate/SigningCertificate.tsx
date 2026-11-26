@@ -14,7 +14,7 @@
  * @module apps/binx-web/src/components/proposals/SigningCertificate/SigningCertificate.tsx
  * @author Binx Portal
  */
-import { CheckCircle2, ShieldAlert } from "lucide-react";
+import { CheckCircle2, Download, ShieldAlert } from "lucide-react";
 
 import { formatBytes } from "@/lib/boards-client";
 import { formatMoneyCents } from "@/lib/money";
@@ -23,14 +23,19 @@ import PrintButton from "@/components/proposals/SigningCertificate/PrintButton";
 
 import styles from "./SigningCertificate.module.scss";
 
+type CertificateSignature = ProposalCertificate["signature"];
+
 interface SigningCertificateProps {
   certificate: ProposalCertificate;
+  /** The signed-record PDF, through this page's own download route. */
+  pdfHref?: string;
 }
 
 const EVENT_LABELS: Record<string, string> = {
   sent: "Sent",
   viewed: "Viewed",
   signed: "Signed",
+  countersigned: "Countersigned",
   declined: "Declined",
 };
 
@@ -44,10 +49,70 @@ function quantityLabel(quantity: string): string {
   return Number.isInteger(n) ? String(n) : quantity;
 }
 
+const METHOD_LABELS: Record<string, string> = {
+  portal: "Client portal (signed-in account)",
+  link: "Share link sent to the recipient",
+  agency: "Agency account (countersignature)",
+};
+
 function methodLabel(signedVia: string | null): string {
-  if (signedVia === "portal") return "Client portal (signed-in account)";
-  if (signedVia === "link") return "Share link sent to the recipient";
-  return "Not recorded";
+  return METHOD_LABELS[signedVia ?? ""] ?? "Not recorded";
+}
+
+function SignatureSection({
+  title,
+  signature,
+}: {
+  title: string;
+  signature: CertificateSignature;
+}) {
+  return (
+    <section className={styles.section}>
+      <h2 className={styles.sectionTitle}>{title}</h2>
+      <p className={styles.typedSignature}>{signature.signature_text}</p>
+      <dl className={styles.facts}>
+        <div>
+          <dt>Signer</dt>
+          <dd>
+            {signature.signer_name} · {signature.signer_email}
+          </dd>
+        </div>
+        <div>
+          <dt>Signed</dt>
+          <dd>{utcStamp(signature.signed_at)}</dd>
+        </div>
+        <div>
+          <dt>Method</dt>
+          <dd>{methodLabel(signature.signed_via)}</dd>
+        </div>
+        <div>
+          <dt>IP address</dt>
+          <dd>{signature.ip_address ?? "Not recorded"}</dd>
+        </div>
+        <div className={styles.wide}>
+          <dt>Browser</dt>
+          <dd>{signature.user_agent ?? "Not recorded"}</dd>
+        </div>
+        <div className={styles.wide}>
+          <dt>Document fingerprint signed</dt>
+          <dd className={styles.hash}>
+            {signature.document_hash ?? "Not recorded"}
+          </dd>
+        </div>
+      </dl>
+      {signature.consent_text && (
+        <blockquote className={styles.consent}>
+          <span className={styles.consentLabel}>
+            Electronic signature consent accepted
+            {signature.consent_version
+              ? ` (version ${signature.consent_version})`
+              : ""}
+          </span>
+          {signature.consent_text}
+        </blockquote>
+      )}
+    </section>
+  );
 }
 
 function verdictCopy(certificate: ProposalCertificate): {
@@ -72,7 +137,7 @@ function verdictCopy(certificate: ProposalCertificate): {
   };
 }
 
-const SigningCertificate = ({ certificate }: SigningCertificateProps) => {
+const SigningCertificate = ({ certificate, pdfHref }: SigningCertificateProps) => {
   const { signature, currency } = certificate;
   const verified =
     certificate.document_intact && certificate.signature_matches_document;
@@ -92,7 +157,14 @@ const SigningCertificate = ({ certificate }: SigningCertificateProps) => {
             . Generated {utcStamp(certificate.generated_at)}.
           </p>
         </div>
-        <PrintButton className={styles.print} />
+        <div className={styles.headerActions}>
+          {pdfHref && (
+            <a href={pdfHref} className={styles.print} download>
+              <Download aria-hidden="true" /> Download PDF
+            </a>
+          )}
+          <PrintButton className={styles.print} />
+        </div>
       </header>
 
       <div className={styles.verdict} data-verified={verified || undefined}>
@@ -214,51 +286,26 @@ const SigningCertificate = ({ certificate }: SigningCertificateProps) => {
         )}
       </section>
 
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Signature</h2>
-        <p className={styles.typedSignature}>{signature.signature_text}</p>
-        <dl className={styles.facts}>
-          <div>
-            <dt>Signer</dt>
-            <dd>
-              {signature.signer_name} · {signature.signer_email}
-            </dd>
-          </div>
-          <div>
-            <dt>Signed</dt>
-            <dd>{utcStamp(signature.signed_at)}</dd>
-          </div>
-          <div>
-            <dt>Method</dt>
-            <dd>{methodLabel(signature.signed_via)}</dd>
-          </div>
-          <div>
-            <dt>IP address</dt>
-            <dd>{signature.ip_address ?? "Not recorded"}</dd>
-          </div>
-          <div className={styles.wide}>
-            <dt>Browser</dt>
-            <dd>{signature.user_agent ?? "Not recorded"}</dd>
-          </div>
-          <div className={styles.wide}>
-            <dt>Document fingerprint signed</dt>
-            <dd className={styles.hash}>
-              {signature.document_hash ?? "Not recorded"}
-            </dd>
-          </div>
-        </dl>
-        {signature.consent_text && (
-          <blockquote className={styles.consent}>
-            <span className={styles.consentLabel}>
-              Electronic signature consent accepted
-              {signature.consent_version
-                ? ` (version ${signature.consent_version})`
-                : ""}
-            </span>
-            {signature.consent_text}
-          </blockquote>
-        )}
-      </section>
+      <SignatureSection
+        title={certificate.countersignature ? "Client signature" : "Signature"}
+        signature={signature}
+      />
+      {certificate.countersignature ? (
+        <SignatureSection
+          title="Agency countersignature"
+          signature={certificate.countersignature}
+        />
+      ) : (
+        certificate.requires_countersign && (
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>Agency countersignature</h2>
+            <p className={styles.content}>
+              Not countersigned yet. The proposal is complete once{" "}
+              {certificate.agency_name} has countersigned.
+            </p>
+          </section>
+        )
+      )}
 
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Audit trail</h2>

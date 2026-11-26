@@ -80,6 +80,12 @@ class Settings(BaseSettings):
     # removes them). Enforced in proposals/service.py's add_attachment.
     proposal_upload_max_bytes: int = 25 * 1024 * 1024
 
+    # TrueType font for signed-proposal PDFs (proposals/certificate_pdf.py).
+    # Unset: DejaVu Sans from the Docker image, else a system Arial, else the
+    # built-in Latin-1 font.
+    pdf_font_path: str | None = None
+    pdf_font_bold_path: str | None = None
+
     # How long a websocket connection ticket stays valid. The browser can't
     # send the bearer token on a cross-origin WS handshake, so it trades the
     # session for one of these short-lived, single-purpose tokens first (see

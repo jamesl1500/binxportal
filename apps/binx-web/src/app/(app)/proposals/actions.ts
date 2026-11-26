@@ -16,6 +16,7 @@ import { redirect } from "next/navigation";
 
 import { AuthApiError } from "@/lib/auth";
 import {
+  countersignProposal,
   createProposal,
   deleteProposal,
   deleteProposalAttachment,
@@ -128,5 +129,25 @@ export async function deleteProposalAttachmentAction(
     return {};
   } catch (error) {
     return errorResult(error, "Unable to remove that file");
+  }
+}
+
+export async function countersignProposalAction(
+  agencyId: string,
+  proposalId: string,
+  consent: boolean,
+  documentHash: string | null,
+): Promise<ProposalActionResult> {
+  try {
+    const proposal = await countersignProposal(
+      agencyId,
+      proposalId,
+      consent,
+      documentHash,
+    );
+    refresh();
+    return { proposal };
+  } catch (error) {
+    return errorResult(error, "Unable to countersign this proposal");
   }
 }

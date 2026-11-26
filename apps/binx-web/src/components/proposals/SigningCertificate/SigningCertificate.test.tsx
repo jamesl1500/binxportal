@@ -41,6 +41,9 @@ function certificate(overrides: Partial<ProposalCertificate> = {}): ProposalCert
       consent_text: "I agree to sign this proposal electronically.",
       document_hash: HASH,
     },
+    requires_countersign: false,
+    countersignature: null,
+    completed_at: "2026-11-21T14:03:22Z",
     events: [
       { kind: "sent", occurred_at: "2026-11-20T09:00:00Z", actor_label: "Olivia Owner", ip_address: null, user_agent: null, detail: "Sent to jane@example.com" },
       { kind: "signed", occurred_at: "2026-11-21T14:03:22Z", actor_label: "Jane Prospect <jane@example.com>", ip_address: "203.0.113.50", user_agent: "Mozilla/5.0 (Chrome)", detail: null },
@@ -92,5 +95,36 @@ describe("SigningCertificate", () => {
 
   it("formats stamps as UTC regardless of the viewer's zone", () => {
     expect(utcStamp("2026-11-21T09:03:22-05:00")).toBe("2026-11-21 14:03:22 UTC");
+  });
+
+  it("shows the agency's countersignature and a PDF download", () => {
+    const base = certificate();
+    render(
+      <SigningCertificate
+        certificate={certificate({
+          requires_countersign: true,
+          countersignature: {
+            ...base.signature,
+            signer_name: "Olivia Owner",
+            signer_email: "olivia@northlight.example",
+            signature_text: "Olivia Owner",
+            signed_via: "agency",
+          },
+        })}
+        pdfHref="/api/proposals/a1/p1/certificate"
+      />,
+    );
+    expect(screen.getByRole("heading", { name: "Client signature" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Agency countersignature" })).toBeInTheDocument();
+    expect(screen.getByText("Agency account (countersignature)")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /download pdf/i })).toHaveAttribute(
+      "href",
+      "/api/proposals/a1/p1/certificate",
+    );
+  });
+
+  it("says when the countersignature is still due", () => {
+    render(<SigningCertificate certificate={certificate({ requires_countersign: true, completed_at: null })} />);
+    expect(screen.getByText(/not countersigned yet/i)).toBeInTheDocument();
   });
 });

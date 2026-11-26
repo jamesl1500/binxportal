@@ -214,4 +214,14 @@ describe("proposals.ts", () => {
       await expect(proposals.getProposalCertificate(A, P)).rejects.toMatchObject({ status: 409 });
     });
   });
+
+  it("countersignProposal POSTs consent and the fingerprint", async () => {
+    mockedApi.post.mockResolvedValueOnce({ data: { id: P } });
+    await proposals.countersignProposal(A, P, true, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    expect(mockedApi.post).toHaveBeenCalledWith(
+      `/agencies/${A}/proposals/${P}/countersign`,
+      { consent: true, document_hash: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" },
+      AUTH,
+    );
+  });
 });

@@ -16,6 +16,8 @@ export const PROPOSAL_STATUS_LABELS: Record<string, string> = {
   sent: "Sent",
   viewed: "Viewed",
   signed: "Signed",
+  // The client has signed; the agency's countersignature is still due.
+  awaiting_countersign: "Awaiting countersignature",
   declined: "Declined",
   expired: "Expired",
 };

@@ -1,7 +1,7 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Response, UploadFile, status
 
 from binx_api.core import storage
 from binx_api.core.dependencies import CurrentUser, DbSession
@@ -9,6 +9,7 @@ from binx_api.core.rate_limit import client_ip, client_user_agent
 from binx_api.modules.agencies.dependencies import require_agency_role
 from binx_api.modules.agencies.models import ROLE_ADMIN, ROLE_MEMBER, ROLE_OWNER, Agency
 from binx_api.modules.proposals import service, signing
+from binx_api.modules.proposals.certificate_pdf import certificate_file_name, render_certificate_pdf
 from binx_api.modules.proposals.models import (
     STATUS_DRAFT,
     Proposal,
@@ -17,6 +18,7 @@ from binx_api.modules.proposals.models import (
     ProposalSignature,
 )
 from binx_api.modules.proposals.schemas import (
+    CountersignRequest,
     ProposalAttachmentRead,
     ProposalCertificateRead,
     ProposalCreate,
@@ -36,6 +38,7 @@ router = APIRouter(prefix="/agencies/{agency_id}/proposals", tags=["proposals"])
 public_router = APIRouter(prefix="/proposals/public", tags=["proposals"])
 
 AnyMember = Annotated[tuple[Agency, str], Depends(require_agency_role(ROLE_OWNER, ROLE_ADMIN, ROLE_MEMBER))]
+OwnerOrAdmin = Annotated[tuple[Agency, str], Depends(require_agency_role(ROLE_OWNER, ROLE_ADMIN))]
 
 
 def _line_item_read(item: ProposalLineItem) -> ProposalLineItemRead:
@@ -79,13 +82,40 @@ def signature_read(signature: ProposalSignature | None) -> ProposalSignatureRead
     )
 
 
-def signing_fields(proposal: Proposal) -> dict:
+async def signing_fields(db: DbSession, proposal: Proposal) -> dict:
     """The e-sign fields every proposal read carries."""
+    counter = await service.get_countersignature(db, proposal.id)
     return {
         "document_hash": proposal.document_hash,
         "consent_text": signing.CONSENT_TEXT,
         "consent_version": signing.CONSENT_VERSION,
+        "requires_countersign": proposal.requires_countersign,
+        "countersignature": (
+            ProposalSignatureRead(
+                signer_name=counter.signer_name,
+                signer_email=counter.signer_email,
+                signed_at=counter.signed_at,
+                signed_via="agency",
+            )
+            if counter
+            else None
+        ),
+        "completed_at": proposal.completed_at,
     }
+
+
+async def certificate_pdf_response(db: DbSession, proposal: Proposal) -> Response:
+    """The signing certificate as a PDF download (409 until signed)."""
+    certificate = await signing.build_certificate(db, proposal)
+    name = certificate_file_name(certificate).replace('"', "")
+    return Response(
+        content=render_certificate_pdf(certificate),
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{name}"',
+            "Cache-Control": "private, no-store",
+        },
+    )
 
 
 def link_visitor(request: Request) -> service.Visitor:
@@ -136,7 +166,7 @@ async def _detail_read(
         line_items=[_line_item_read(item) for item in line_items],
         attachments=[attachment_read(item) for item in attachments],
         signature=signature_read(signature),
-        **signing_fields(proposal),
+        **(await signing_fields(db, proposal)),
     )
 
 
@@ -192,6 +222,7 @@ async def create_proposal(
         tax_rate_percent=data.tax_rate_percent,
         valid_until=data.valid_until,
         line_items=data.line_items,
+        requires_countersign=data.requires_countersign,
     )
     lead_name, client_name = await _names(db, proposal)
     return await _detail_read(db, proposal, lead_name, client_name)
@@ -224,6 +255,7 @@ async def update_proposal(
         tax_rate_percent=data.tax_rate_percent,
         valid_until=data.valid_until,
         line_items=data.line_items,
+        requires_countersign=data.requires_countersign,
     )
     lead_name, client_name = await _names(db, proposal)
     return await _detail_read(db, proposal, lead_name, client_name)
@@ -271,6 +303,39 @@ async def proposal_certificate(
     agency, _role = agency_and_role
     proposal = await service.get_proposal_or_404(db, agency.id, proposal_id)
     return await signing.build_certificate(db, proposal)
+
+
+@router.get("/{proposal_id}/certificate.pdf")
+async def proposal_certificate_pdf(db: DbSession, agency_and_role: AnyMember, proposal_id: uuid.UUID) -> Response:
+    agency, _role = agency_and_role
+    proposal = await service.get_proposal_or_404(db, agency.id, proposal_id)
+    return await certificate_pdf_response(db, proposal)
+
+
+@router.post("/{proposal_id}/countersign", response_model=ProposalDetailRead)
+async def countersign_proposal(
+    db: DbSession,
+    current_user: CurrentUser,
+    agency_and_role: OwnerOrAdmin,
+    proposal_id: uuid.UUID,
+    data: CountersignRequest,
+    request: Request,
+) -> ProposalDetailRead:
+    """The agency's signature, after the client's. Owners and admins only:
+    it binds the agency."""
+    agency, _role = agency_and_role
+    proposal = await service.get_proposal_or_404(db, agency.id, proposal_id)
+    proposal = await service.countersign_proposal(
+        db,
+        proposal,
+        user=current_user,
+        ip_address=client_ip(request),
+        user_agent=client_user_agent(request),
+        consent=data.consent,
+        document_hash=data.document_hash,
+    )
+    lead_name, client_name = await _names(db, proposal)
+    return await _detail_read(db, proposal, lead_name, client_name)
 
 
 # ---- Attachments (staff) ----------------------------------------------------
@@ -346,7 +411,7 @@ async def _public_read(db: DbSession, proposal: Proposal, agency_name: str) -> P
         line_items=[_line_item_read(item) for item in line_items],
         attachments=[attachment_read(item) for item in attachments],
         signature=signature_read(signature),
-        **signing_fields(proposal),
+        **(await signing_fields(db, proposal)),
     )
 
 
@@ -362,6 +427,12 @@ async def _public_after_change(db: DbSession, proposal: Proposal) -> ProposalPub
 async def public_certificate(db: DbSession, token: str) -> ProposalCertificateRead:
     proposal = await service.get_proposal_by_token_or_404(db, token)
     return await signing.build_certificate(db, proposal)
+
+
+@public_router.get("/{token}/certificate.pdf")
+async def public_certificate_pdf(db: DbSession, token: str) -> Response:
+    proposal = await service.get_proposal_by_token_or_404(db, token)
+    return await certificate_pdf_response(db, proposal)
 
 
 @public_router.get("/{token}/attachments/{attachment_id}")

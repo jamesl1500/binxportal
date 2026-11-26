@@ -8,6 +8,7 @@ vi.mock("@/lib/proposals", () => ({
   sendProposal: vi.fn(),
   uploadProposalAttachment: vi.fn(),
   deleteProposalAttachment: vi.fn(),
+  countersignProposal: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -21,6 +22,7 @@ import * as proposals from "@/lib/proposals";
 import { redirect } from "next/navigation";
 
 import {
+  countersignProposalAction,
   createProposalAction,
   deleteProposalAction,
   deleteProposalAttachmentAction,
@@ -145,5 +147,22 @@ describe("proposal attachment actions", () => {
     vi.mocked(proposals.deleteProposalAttachment).mockResolvedValueOnce(undefined);
     await expect(deleteProposalAttachmentAction(agencyId, "p1", "att-1")).resolves.toEqual({});
     expect(proposals.deleteProposalAttachment).toHaveBeenCalledWith(agencyId, "p1", "att-1");
+  });
+});
+
+describe("countersignProposalAction", () => {
+  it("countersigns with consent and the fingerprint", async () => {
+    vi.mocked(proposals.countersignProposal).mockResolvedValueOnce({ id: "p1" } as never);
+    await expect(countersignProposalAction(agencyId, "p1", true, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")).resolves.toEqual({ proposal: { id: "p1" } });
+    expect(proposals.countersignProposal).toHaveBeenCalledWith(agencyId, "p1", true, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+  });
+
+  it("passes binx-api's refusal through", async () => {
+    vi.mocked(proposals.countersignProposal).mockRejectedValueOnce(
+      new AuthApiError("The client hasn't signed this proposal yet", 409),
+    );
+    await expect(countersignProposalAction(agencyId, "p1", true, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")).resolves.toEqual({
+      error: "The client hasn't signed this proposal yet",
+    });
   });
 });

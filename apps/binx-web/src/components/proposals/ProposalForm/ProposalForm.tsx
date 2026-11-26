@@ -128,6 +128,9 @@ const ProposalForm = ({
         }))
       : [newRow()],
   );
+  const [requiresCountersign, setRequiresCountersign] = useState(
+    proposal?.requires_countersign ?? false,
+  );
   const [submitting, setSubmitting] = useState(false);
 
   const totals = useMemo(() => {
@@ -188,6 +191,7 @@ const ProposalForm = ({
       currency: currency.trim().toUpperCase() || "USD",
       taxRatePercent: taxRate || "0",
       validUntil: validUntil || null,
+      requiresCountersign,
       lineItems: rows
         .filter((row) => row.description.trim() !== "")
         .map((row) => ({
@@ -410,6 +414,21 @@ const ProposalForm = ({
                 setCurrency(event.target.value.toUpperCase())
               }
             />
+          </label>
+
+          <label className={styles.checkboxField}>
+            <input
+              type="checkbox"
+              checked={requiresCountersign}
+              onChange={(event) => setRequiresCountersign(event.target.checked)}
+            />
+            <span>
+              Require our countersignature
+              <small>
+                After the client signs, an owner or admin signs for the agency.
+                The proposal is complete once both have.
+              </small>
+            </span>
           </label>
 
           <label className={styles.field}>

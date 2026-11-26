@@ -73,6 +73,7 @@ from binx_api.modules.proposals.router import _detail_read as _proposal_detail_r
 from binx_api.modules.proposals.router import _names as _proposal_names
 from binx_api.modules.proposals.router import _read as _proposal_read
 from binx_api.modules.proposals.router import attachment_download as _proposal_attachment_download
+from binx_api.modules.proposals.router import certificate_pdf_response as _proposal_certificate_pdf
 from binx_api.modules.proposals.schemas import (
     PortalProposalSignRequest,
     ProposalCertificateRead,
@@ -839,6 +840,13 @@ async def portal_proposal_certificate(
     agency, client, _contact = membership
     proposal = await _portal_proposal_or_404(db, agency.id, client.id, proposal_id)
     return await proposals_signing.build_certificate(db, proposal)
+
+
+@router.get("/proposals/{proposal_id}/certificate.pdf")
+async def portal_proposal_certificate_pdf(db: DbSession, membership: PortalContext, proposal_id: uuid.UUID):
+    agency, client, _contact = membership
+    proposal = await _portal_proposal_or_404(db, agency.id, client.id, proposal_id)
+    return await _proposal_certificate_pdf(db, proposal)
 
 
 @router.get("/proposals/{proposal_id}/attachments/{attachment_id}")

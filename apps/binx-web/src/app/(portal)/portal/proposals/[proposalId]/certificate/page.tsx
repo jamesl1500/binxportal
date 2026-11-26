@@ -45,7 +45,10 @@ const PortalCertificatePage = async ({ params }: PageProps) => {
         title="Signing certificate"
         subtitle="Your record of what you signed, when and how. Print it or save it as a PDF to keep a copy."
       />
-      <SigningCertificate certificate={certificate} />
+      <SigningCertificate
+        certificate={certificate}
+        pdfHref={`/api/portal/proposals/${proposalId}/certificate`}
+      />
     </div>
   );
 };

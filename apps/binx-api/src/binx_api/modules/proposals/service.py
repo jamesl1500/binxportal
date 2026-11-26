@@ -31,8 +31,9 @@ from binx_api.modules.leads import service as leads_service
 from binx_api.modules.leads.models import Lead
 from binx_api.modules.notifications import service as notifications_service
 from binx_api.modules.notifications.models import CATEGORY_INVOICING as NOTIFY_CATEGORY_PROPOSALS
-from binx_api.modules.proposals import signing
+from binx_api.modules.proposals import completion, signing
 from binx_api.modules.proposals.models import (
+    EVENT_COUNTERSIGNED,
     EVENT_DECLINED,
     EVENT_SENT,
     EVENT_SIGNED,
@@ -45,6 +46,7 @@ from binx_api.modules.proposals.models import (
     STATUS_VIEWED,
     Proposal,
     ProposalAttachment,
+    ProposalCountersignature,
     ProposalLineItem,
     ProposalSignature,
 )
@@ -89,6 +91,9 @@ def display_status(proposal: Proposal, *, now: datetime | None = None) -> str:
     now = now or datetime.now(UTC)
     if proposal.status in (STATUS_SENT, STATUS_VIEWED) and proposal.valid_until and proposal.valid_until < now:
         return "expired"
+    if proposal.status == STATUS_SIGNED and proposal.completed_at is None:
+        # The client has signed; the agency's countersignature is still due.
+        return "awaiting_countersign"
     return proposal.status
 
 
@@ -272,6 +277,7 @@ async def create_proposal(
     tax_rate_percent: Decimal,
     valid_until: datetime | None,
     line_items: list[ProposalLineItemInput],
+    requires_countersign: bool = False,
 ) -> Proposal:
     lead: Lead | None = None
     if lead_id is not None:
@@ -292,6 +298,7 @@ async def create_proposal(
         content=content,
         tax_rate_percent=tax_rate_percent,
         valid_until=valid_until,
+        requires_countersign=requires_countersign,
         status=STATUS_DRAFT,
     )
     db.add(proposal)
@@ -330,6 +337,7 @@ async def update_proposal(
     tax_rate_percent: Decimal,
     valid_until: datetime | None,
     line_items: list[ProposalLineItemInput],
+    requires_countersign: bool = False,
 ) -> Proposal:
     _require_draft(proposal)
     if lead_id is not None:
@@ -346,6 +354,7 @@ async def update_proposal(
     proposal.currency = currency
     proposal.tax_rate_percent = tax_rate_percent
     proposal.valid_until = valid_until
+    proposal.requires_countersign = requires_countersign
 
     rows = await _replace_line_items(db, proposal, line_items)
     _recalculate(proposal, rows)
@@ -539,16 +548,23 @@ async def sign_proposal(
     )
     proposal.status = STATUS_SIGNED
     proposal.decided_at = now
+    if not proposal.requires_countersign:
+        proposal.completed_at = now
     await db.commit()
     await db.refresh(proposal)
 
     if proposal.created_by_id is not None:
+        awaiting = proposal.completed_at is None
         await notifications_service.notify(
             db,
             user_id=proposal.created_by_id,
             category=NOTIFY_CATEGORY_PROPOSALS,
-            event_type="proposal_signed",
-            title=f"{signer_name} signed “{proposal.title}”",
+            event_type="proposal_awaiting_countersign" if awaiting else "proposal_signed",
+            title=(
+                f"{signer_name} signed “{proposal.title}”. It's ready for your countersignature"
+                if awaiting
+                else f"{signer_name} signed “{proposal.title}”"
+            ),
             body=f"Signed by {signer_name} ({signer_email}).",
             link=f"/proposals/{proposal.id}",
             agency_id=proposal.agency_id,
@@ -563,6 +579,94 @@ async def sign_proposal(
         target_id=proposal.id,
         target_name=proposal.title,
     )
+    if proposal.completed_at is not None:
+        await _on_completed(db, proposal)
+    return proposal
+
+
+async def _on_completed(db: AsyncSession, proposal: Proposal, *, agency_email: str | None = None) -> None:
+    """Every required signature is in: see completion.py."""
+    if agency_email is None and proposal.created_by_id is not None:
+        creator = await db.get(User, proposal.created_by_id)
+        agency_email = creator.email if creator else None
+    await completion.send_signed_record(db, proposal, agency_email=agency_email)
+
+
+async def get_countersignature(db: AsyncSession, proposal_id: uuid.UUID) -> ProposalCountersignature | None:
+    return await db.scalar(select(ProposalCountersignature).where(ProposalCountersignature.proposal_id == proposal_id))
+
+
+async def countersign_proposal(
+    db: AsyncSession,
+    proposal: Proposal,
+    *,
+    user: User,
+    ip_address: str | None,
+    user_agent: str | None,
+    consent: bool,
+    document_hash: str | None,
+) -> Proposal:
+    """The agency's signature, after the client's, on a proposal that
+    requires one. Same rules as the client's: consent to sign electronically
+    and the fingerprint of the exact version, which is the one the client
+    signed. Completes the proposal."""
+    if not proposal.requires_countersign:
+        raise HTTPException(status.HTTP_409_CONFLICT, "This proposal doesn't need a countersignature")
+    if proposal.status != STATUS_SIGNED:
+        raise HTTPException(status.HTTP_409_CONFLICT, "The client hasn't signed this proposal yet")
+    if proposal.completed_at is not None:
+        raise HTTPException(status.HTTP_409_CONFLICT, "This proposal has already been countersigned")
+    if not consent:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Agree to sign electronically before countersigning")
+    if not document_hash or document_hash != proposal.document_hash:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            "This isn't the version the client signed. Reload the page and countersign again.",
+        )
+
+    now = datetime.now(UTC)
+    db.add(
+        ProposalCountersignature(
+            proposal_id=proposal.id,
+            user_id=user.id,
+            signer_name=user.full_name,
+            signer_email=user.email,
+            signature_text=user.full_name,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            signed_at=now,
+            consent_version=signing.CONSENT_VERSION,
+            consent_text=signing.CONSENT_TEXT,
+            document_hash=proposal.document_hash,
+        )
+    )
+    signing.record_event(
+        db,
+        proposal.id,
+        EVENT_COUNTERSIGNED,
+        actor_user_id=user.id,
+        actor_label=f"{user.full_name} <{user.email}>",
+        ip_address=ip_address,
+        user_agent=user_agent,
+        detail="Countersigned for the agency",
+        occurred_at=now,
+    )
+    proposal.completed_at = now
+    await db.commit()
+    await db.refresh(proposal)
+
+    await activity_service.log_agency_activity(
+        db,
+        proposal.agency_id,
+        category=ACTIVITY_CATEGORY_PROPOSALS,
+        event_type="proposal_countersigned",
+        summary=f"{user.full_name} countersigned the proposal “{proposal.title}”",
+        actor=user,
+        target_type="proposal",
+        target_id=proposal.id,
+        target_name=proposal.title,
+    )
+    await _on_completed(db, proposal, agency_email=user.email)
     return proposal
 
 

@@ -3177,6 +3177,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agencies/{agency_id}/proposals/{proposal_id}/certificate.pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Proposal Certificate Pdf */
+        get: operations["proposal_certificate_pdf_agencies__agency_id__proposals__proposal_id__certificate_pdf_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/proposals/{proposal_id}/countersign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Countersign Proposal
+         * @description The agency's signature, after the client's. Owners and admins only:
+         *     it binds the agency.
+         */
+        post: operations["countersign_proposal_agencies__agency_id__proposals__proposal_id__countersign_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agencies/{agency_id}/proposals/{proposal_id}/events": {
         parameters: {
             query?: never;
@@ -4762,6 +4800,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/portal/proposals/{proposal_id}/certificate.pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Portal Proposal Certificate Pdf */
+        get: operations["portal_proposal_certificate_pdf_portal_proposals__proposal_id__certificate_pdf_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/portal/proposals/{proposal_id}/decline": {
         parameters: {
             query?: never;
@@ -4877,6 +4932,23 @@ export interface paths {
         };
         /** Public Certificate */
         get: operations["public_certificate_proposals_public__token__certificate_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/proposals/public/{token}/certificate.pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Public Certificate Pdf */
+        get: operations["public_certificate_pdf_proposals_public__token__certificate_pdf_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7164,6 +7236,20 @@ export interface components {
             project_id?: string | null;
             /** Title */
             title?: string | null;
+        };
+        /**
+         * CountersignRequest
+         * @description An owner or admin countersigning: their consent and the fingerprint
+         *     of the version they're signing (the one the client signed).
+         */
+        CountersignRequest: {
+            /**
+             * Consent
+             * @default false
+             */
+            consent: boolean;
+            /** Document Hash */
+            document_hash?: string | null;
         };
         /**
          * DashboardLayoutRead
@@ -9913,8 +9999,11 @@ export interface components {
             agency_name: string;
             /** Attachments */
             attachments: components["schemas"]["CertificateAttachmentRead"][];
+            /** Completed At */
+            completed_at: string | null;
             /** Content */
             content: string | null;
+            countersignature: components["schemas"]["CertificateSignatureRead"] | null;
             /** Currency */
             currency: string;
             /** Document Hash */
@@ -9939,6 +10028,8 @@ export interface components {
             recipient_email: string | null;
             /** Recipient Name */
             recipient_name: string | null;
+            /** Requires Countersign */
+            requires_countersign: boolean;
             /** Sent At */
             sent_at: string | null;
             signature: components["schemas"]["CertificateSignatureRead"];
@@ -9977,6 +10068,11 @@ export interface components {
             /** Recipient Name */
             recipient_name?: string | null;
             /**
+             * Requires Countersign
+             * @default false
+             */
+            requires_countersign: boolean;
+            /**
              * Tax Rate Percent
              * @default 0
              */
@@ -10004,12 +10100,15 @@ export interface components {
             client_id: string | null;
             /** Client Name */
             client_name: string | null;
+            /** Completed At */
+            completed_at: string | null;
             /** Consent Text */
             consent_text: string;
             /** Consent Version */
             consent_version: string;
             /** Content */
             content: string | null;
+            countersignature: components["schemas"]["ProposalSignatureRead"] | null;
             /**
              * Created At
              * Format: date-time
@@ -10040,6 +10139,8 @@ export interface components {
             recipient_email: string | null;
             /** Recipient Name */
             recipient_name: string | null;
+            /** Requires Countersign */
+            requires_countersign: boolean;
             /** Sent At */
             sent_at: string | null;
             /** Share Url */
@@ -10125,12 +10226,15 @@ export interface components {
             agency_name: string;
             /** Attachments */
             attachments: components["schemas"]["ProposalAttachmentRead"][];
+            /** Completed At */
+            completed_at: string | null;
             /** Consent Text */
             consent_text: string;
             /** Consent Version */
             consent_version: string;
             /** Content */
             content: string | null;
+            countersignature: components["schemas"]["ProposalSignatureRead"] | null;
             /** Currency */
             currency: string;
             /** Display Status */
@@ -10141,6 +10245,8 @@ export interface components {
             line_items: components["schemas"]["ProposalLineItemRead"][];
             /** Recipient Name */
             recipient_name: string | null;
+            /** Requires Countersign */
+            requires_countersign: boolean;
             signature: components["schemas"]["ProposalSignatureRead"] | null;
             /** Status */
             status: string;
@@ -10258,6 +10364,11 @@ export interface components {
             recipient_email?: string | null;
             /** Recipient Name */
             recipient_name?: string | null;
+            /**
+             * Requires Countersign
+             * @default false
+             */
+            requires_countersign: boolean;
             /**
              * Tax Rate Percent
              * @default 0
@@ -19873,6 +19984,74 @@ export interface operations {
             };
         };
     };
+    proposal_certificate_pdf_agencies__agency_id__proposals__proposal_id__certificate_pdf_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposal_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    countersign_proposal_agencies__agency_id__proposals__proposal_id__countersign_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposal_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CountersignRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalDetailRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_proposal_events_agencies__agency_id__proposals__proposal_id__events_get: {
         parameters: {
             query?: never;
@@ -23201,6 +23380,37 @@ export interface operations {
             };
         };
     };
+    portal_proposal_certificate_pdf_portal_proposals__proposal_id__certificate_pdf_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     decline_portal_proposal_portal_proposals__proposal_id__decline_post: {
         parameters: {
             query?: never;
@@ -23403,6 +23613,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProposalCertificateRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    public_certificate_pdf_proposals_public__token__certificate_pdf_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

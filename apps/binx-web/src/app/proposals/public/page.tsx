@@ -180,6 +180,20 @@ const PublicProposalPage = async ({
               {proposal.signature.signer_email} ·{" "}
               {formatDate(proposal.signature.signed_at)}
             </p>
+            {proposal.countersignature ? (
+              <p className={styles.decisionLine}>
+                Countersigned by {proposal.countersignature.signer_name} for{" "}
+                {proposal.agency_name} ·{" "}
+                {formatDate(proposal.countersignature.signed_at)}
+              </p>
+            ) : (
+              proposal.requires_countersign && (
+                <p className={styles.decisionLine}>
+                  {proposal.agency_name} will countersign next. You&apos;ll
+                  get the signed PDF by email once they have.
+                </p>
+              )
+            )}
           </div>
         )}
 

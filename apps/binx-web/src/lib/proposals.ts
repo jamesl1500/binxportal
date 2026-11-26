@@ -65,6 +65,8 @@ export interface ProposalInput {
   taxRatePercent: string;
   validUntil: string | null;
   lineItems: ProposalLineItemInput[];
+  /** The agency countersigns after the client (owner/admin). */
+  requiresCountersign?: boolean;
 }
 
 function toPayload(input: ProposalInput) {
@@ -78,6 +80,7 @@ function toPayload(input: ProposalInput) {
     currency: input.currency,
     tax_rate_percent: input.taxRatePercent,
     valid_until: input.validUntil,
+    requires_countersign: input.requiresCountersign ?? false,
     line_items: input.lineItems.map((item) => ({
       description: item.description,
       details: item.details ?? null,
@@ -353,5 +356,29 @@ export async function getProposalCertificate(
     return data;
   } catch (error) {
     throw apiError(error, "This signing certificate isn't available");
+  }
+}
+
+/**
+ * `POST /agencies/{agencyId}/proposals/{proposalId}/countersign`: the
+ * agency's signature after the client's. Owners/admins only; needs consent
+ * and the fingerprint of the version the client signed.
+ */
+export async function countersignProposal(
+  agencyId: string,
+  proposalId: string,
+  consent: boolean,
+  documentHash: string | null,
+): Promise<ProposalDetail> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.post<ProposalDetail>(
+      `/agencies/${agencyId}/proposals/${proposalId}/countersign`,
+      { consent, document_hash: documentHash },
+      { headers },
+    );
+    return data;
+  } catch (error) {
+    throw apiError(error, "Unable to countersign this proposal");
   }
 }

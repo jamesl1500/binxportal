@@ -63,7 +63,10 @@ const PublicCertificatePage = async ({ searchParams }: PageProps) => {
         >
           ← Back to the proposal
         </Link>
-        <SigningCertificate certificate={certificate} />
+        <SigningCertificate
+          certificate={certificate}
+          pdfHref={`/api/proposals/public/${encodeURIComponent(token)}/certificate`}
+        />
       </div>
     </div>
   );

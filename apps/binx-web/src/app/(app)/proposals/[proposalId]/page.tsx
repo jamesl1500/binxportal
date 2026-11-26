@@ -12,12 +12,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
-import { AuthApiError } from "@/lib/auth";
+import { AuthApiError, getCurrentUser } from "@/lib/auth";
 import { getCurrentAgencyContext } from "@/lib/agencies";
 import { getProposal, getProposalEvents } from "@/lib/proposals";
 import ProposalActions from "@/components/proposals/ProposalActions/ProposalActions";
 import ProposalAttachmentsManager from "@/components/proposals/ProposalAttachmentsManager/ProposalAttachmentsManager";
 import ProposalAuditTrail from "@/components/proposals/ProposalAuditTrail/ProposalAuditTrail";
+import CountersignPanel from "@/components/proposals/CountersignPanel/CountersignPanel";
 import ProposalView from "@/components/proposals/ProposalView/ProposalView";
 
 import styles from "../page.module.scss";
@@ -65,6 +66,24 @@ const ProposalPage = async ({ params }: ProposalPageProps) => {
       </Link>
 
       <ProposalActions agencyId={currentAgency.id} proposal={proposal} />
+
+      {proposal.display_status === "awaiting_countersign" && (
+        <CountersignPanel
+          agencyId={currentAgency.id}
+          proposalId={proposal.id}
+          clientName={
+            proposal.signature?.signer_name ??
+            proposal.recipient_name ??
+            "The client"
+          }
+          consentText={proposal.consent_text}
+          documentHash={proposal.document_hash}
+          canSign={
+            currentAgency.role === "owner" || currentAgency.role === "admin"
+          }
+          signerName={(await getCurrentUser())?.full_name ?? "you"}
+        />
+      )}
 
       {proposal.status === "draft" ? (
         <>

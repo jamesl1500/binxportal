@@ -1,5 +1,7 @@
 import asyncio
 import logging
+from dataclasses import dataclass
+from email.message import EmailMessage
 
 import boto3
 from botocore.exceptions import ClientError
@@ -33,7 +35,38 @@ def _recipient_allowed(to: str) -> bool:
     return False
 
 
-async def send_email(*, to: str, subject: str, body: str, html: str | None = None) -> None:
+@dataclass(frozen=True)
+class EmailAttachment:
+    file_name: str
+    content: bytes
+    mime_type: str = "application/octet-stream"
+
+
+def _raw_message(
+    *, to: str, subject: str, body: str, html: str | None, attachments: list[EmailAttachment]
+) -> bytes:
+    """A MIME message for SES SendRawEmail, the only SES call that carries
+    attachments: text + HTML alternatives, then each file."""
+    message = EmailMessage()
+    message["Subject"] = subject
+    message["From"] = settings.ses_from_email
+    message["To"] = to
+    if settings.ses_reply_to:
+        message["Reply-To"] = settings.ses_reply_to
+    message.set_content(body)
+    if html:
+        message.add_alternative(html, subtype="html")
+    for item in attachments:
+        maintype, _, subtype = item.mime_type.partition("/")
+        message.add_attachment(
+            item.content, maintype=maintype, subtype=subtype or "octet-stream", filename=item.file_name
+        )
+    return message.as_bytes()
+
+
+async def send_email(
+    *, to: str, subject: str, body: str, html: str | None = None, attachments: list[EmailAttachment] | None = None
+) -> None:
     """Sends via Amazon SES when configured (``SES_FROM_EMAIL`` set) — the
     boto3 call is sync, so it runs in a thread rather than blocking the event
     loop. Unset (every dev/test environment) just logs, same as before —
@@ -64,6 +97,19 @@ async def send_email(*, to: str, subject: str, body: str, html: str | None = Non
         return
     if not _recipient_allowed(to):
         logger.info("EMAIL (not in SES_ALLOWED_RECIPIENTS, not sent) to=%s subject=%s\n%s", to, subject, body)
+        return
+    if attachments:
+        raw = _raw_message(to=to, subject=subject, body=body, html=html, attachments=attachments)
+        try:
+            await asyncio.to_thread(
+                _get_ses_client().send_raw_email,
+                Source=settings.ses_from_email,
+                Destinations=[to],
+                RawMessage={"Data": raw},
+            )
+        except ClientError as exc:
+            logger.warning("Failed to send email to=%s subject=%s", to, subject)
+            await capture_error(exc, tags={"upstream": "ses"}, context={"subject": subject})
         return
     message_body: dict = {"Text": {"Data": body, "Charset": "UTF-8"}}
     if html:
@@ -340,4 +386,40 @@ async def send_feedback_reply_email(*, to: str, label: str, original: str, respo
             cta_label="See your feedback",
             cta_url=link,
         ),
+    )
+
+
+async def send_proposal_signed_email(
+    *,
+    to: str,
+    agency_name: str,
+    title: str,
+    signer_names: str,
+    pdf: bytes,
+    pdf_name: str,
+    view_url: str,
+) -> None:
+    """The fully signed record, sent to each party once every signature is
+    in, with the signed PDF attached. One recipient per message, like every
+    email here, so nobody sees another party's address."""
+    await send_email(
+        to=to,
+        subject=f"Signed: {title}",
+        body=(
+            f"“{title}” from {agency_name} has been signed by {signer_names}.\n\n"
+            "The signed record is attached as a PDF: the proposal exactly as it was sent, "
+            "each signature, and the audit trail. Keep it for your records.\n\n"
+            f"View it online: {view_url}"
+        ),
+        html=render_html(
+            heading=f"Signed: {title}",
+            paragraphs=[
+                f"“{title}” from {agency_name} has been signed by {signer_names}.",
+                "The signed record is attached as a PDF: the proposal exactly as it was sent, "
+                "each signature, and the audit trail. Keep it for your records.",
+            ],
+            cta_label="View the signing certificate",
+            cta_url=view_url,
+        ),
+        attachments=[EmailAttachment(file_name=pdf_name, content=pdf, mime_type="application/pdf")],
     )

@@ -370,8 +370,8 @@ def email_outbox(monkeypatch: pytest.MonkeyPatch) -> list[SimpleNamespace]:
     """
     outbox: list[SimpleNamespace] = []
 
-    async def _capture(*, to: str, subject: str, body: str, html: str | None = None) -> None:
-        outbox.append(SimpleNamespace(to=to, subject=subject, body=body, html=html))
+    async def _capture(*, to: str, subject: str, body: str, html: str | None = None, attachments=None) -> None:
+        outbox.append(SimpleNamespace(to=to, subject=subject, body=body, html=html, attachments=attachments or []))
 
     monkeypatch.setattr("binx_api.core.email.send_email", _capture)
     return outbox

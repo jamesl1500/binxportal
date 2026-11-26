@@ -43,6 +43,12 @@
   color: t.$color-ink-soft;
 }
 
+.headerActions {
+  display: flex;
+  gap: t.$space-2;
+  flex-wrap: wrap;
+}
+
 .print {
   @include m.button-base;
   background: t.$color-surface;
@@ -272,7 +278,8 @@
     padding: 0;
   }
 
-  .print {
+  .print,
+  .headerActions {
     display: none;
   }
 }

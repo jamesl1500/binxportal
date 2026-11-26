@@ -186,6 +186,17 @@ const ProposalView = ({
             Signed {formatDate(proposal.signature.signed_at)}
             {SIGNED_VIA[proposal.signature.signed_via ?? ""] ?? ""}
           </p>
+          {proposal.countersignature && (
+            <p className={styles.partyLine}>
+              Countersigned by {proposal.countersignature.signer_name} for the
+              agency, {formatDate(proposal.countersignature.signed_at)}
+            </p>
+          )}
+          {proposal.requires_countersign && !proposal.countersignature && (
+            <p className={styles.partyLine}>
+              Awaiting the agency&apos;s countersignature.
+            </p>
+          )}
           {certificateHref && (
             <Link href={certificateHref} className={styles.certificateLink}>
               View the signing certificate →

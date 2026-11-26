@@ -51,6 +51,9 @@ class ProposalCreate(BaseModel):
     tax_rate_percent: Decimal = Field(default=Decimal("0"), ge=0, le=100, max_digits=6, decimal_places=3)
     valid_until: datetime | None = None
     line_items: list[ProposalLineItemInput] = Field(default_factory=list)
+    # The agency countersigns after the client (owner/admin), and the
+    # proposal is only complete once both have.
+    requires_countersign: bool = False
 
 
 class ProposalUpdate(ProposalCreate):
@@ -99,6 +102,10 @@ class ProposalDetailRead(ProposalRead):
     document_hash: str | None
     consent_text: str
     consent_version: str
+    requires_countersign: bool
+    countersignature: "ProposalSignatureRead | None"
+    # Every required signature is in (the agreement is binding).
+    completed_at: datetime | None
 
 
 class ProposalSignatureRead(BaseModel):
@@ -136,6 +143,10 @@ class ProposalPublicRead(BaseModel):
     document_hash: str | None
     consent_text: str
     consent_version: str
+    requires_countersign: bool
+    countersignature: "ProposalSignatureRead | None"
+    # Every required signature is in (the agreement is binding).
+    completed_at: datetime | None
 
 
 class ProposalSignRequest(BaseModel):
@@ -143,6 +154,14 @@ class ProposalSignRequest(BaseModel):
     signer_email: EmailStr
     # The signer ticked the e-sign consent, and the fingerprint of the
     # document they were shown. Both are checked by service.sign_proposal.
+    consent: bool = False
+    document_hash: str | None = Field(default=None, max_length=64)
+
+
+class CountersignRequest(BaseModel):
+    """An owner or admin countersigning: their consent and the fingerprint
+    of the version they're signing (the one the client signed)."""
+
     consent: bool = False
     document_hash: str | None = Field(default=None, max_length=64)
 
@@ -232,5 +251,8 @@ class ProposalCertificateRead(BaseModel):
     # The signature was made against this exact fingerprint.
     signature_matches_document: bool
     signature: CertificateSignatureRead
+    requires_countersign: bool
+    countersignature: CertificateSignatureRead | None
+    completed_at: datetime | None
     events: list[ProposalEventRead]
     generated_at: datetime

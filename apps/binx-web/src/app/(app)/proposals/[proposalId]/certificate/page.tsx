@@ -48,7 +48,10 @@ const ProposalCertificatePage = async ({ params }: PageProps) => {
       <Link href={`/proposals/${proposalId}`} className={styles.backLink}>
         ← Back to {certificate.title}
       </Link>
-      <SigningCertificate certificate={certificate} />
+      <SigningCertificate
+        certificate={certificate}
+        pdfHref={`/api/proposals/${currentAgency.id}/${proposalId}/certificate`}
+      />
     </div>
   );
 };

@@ -9,7 +9,7 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, Text, Uuid
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, Text, Uuid
 from sqlalchemy.orm import Mapped, mapped_column
 
 from binx_api.core.database import Base
@@ -83,6 +83,15 @@ class Proposal(Base):
     # signed can always be proven. Null on drafts.
     document_snapshot: Mapped[str | None] = mapped_column(Text, default=None)
     document_hash: Mapped[str | None] = mapped_column(String(64), default=None)
+
+    # When on, the agency countersigns after the client does (an owner or
+    # admin, see service.countersign_proposal), and the proposal is only
+    # complete once both have signed.
+    requires_countersign: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    # Every required signature is in: the client's, plus the agency's when
+    # requires_countersign. This is the moment the agreement is binding, and
+    # what accepting a proposal (converting a lead to a client) keys off.
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
 
 
 class ProposalLineItem(Base):
@@ -159,7 +168,30 @@ class ProposalSignature(Base):
 EVENT_SENT = "sent"
 EVENT_VIEWED = "viewed"
 EVENT_SIGNED = "signed"
+EVENT_COUNTERSIGNED = "countersigned"
 EVENT_DECLINED = "declined"
+
+
+# The agency's signature on a proposal that requires one, made by an owner or
+# admin after the client has signed. Same evidence as the client's signature,
+# plus who on the team it was.
+class ProposalCountersignature(Base):
+    __tablename__ = "proposal_countersignatures"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    proposal_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("proposals.id", ondelete="CASCADE"), unique=True, index=True
+    )
+    user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), default=None)
+    signer_name: Mapped[str] = mapped_column(String(255))
+    signer_email: Mapped[str] = mapped_column(String(255))
+    signature_text: Mapped[str] = mapped_column(String(255))
+    ip_address: Mapped[str | None] = mapped_column(String(64), default=None)
+    user_agent: Mapped[str | None] = mapped_column(String(512), default=None)
+    signed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    consent_version: Mapped[str] = mapped_column(String(32))
+    consent_text: Mapped[str] = mapped_column(Text)
+    document_hash: Mapped[str] = mapped_column(String(64))
 
 
 # The audit trail behind a signature: one row per thing that happened to a

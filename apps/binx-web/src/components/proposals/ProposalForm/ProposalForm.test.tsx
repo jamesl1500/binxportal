@@ -232,4 +232,18 @@ describe("ProposalForm", () => {
     await user.click(screen.getByRole("button", { name: /create draft/i }));
     expect(mockedCreate).not.toHaveBeenCalled();
   });
+
+  it("can require the agency's countersignature", async () => {
+    mockedCreate.mockResolvedValueOnce({ proposal: { id: "p1" } as never });
+    const user = userEvent.setup();
+    render(<ProposalForm agencyId="a1" clients={clients} />);
+
+    await user.type(screen.getByLabelText(/^Title$/), "Retainer proposal");
+    await user.type(screen.getByLabelText("Line 1 description"), "Retainer");
+    await user.type(screen.getByLabelText("Line 1 unit price"), "2000");
+    await user.click(screen.getByRole("checkbox", { name: /require our countersignature/i }));
+    await user.click(screen.getByRole("button", { name: /create draft/i }));
+
+    expect(mockedCreate).toHaveBeenCalledWith("a1", expect.objectContaining({ requiresCountersign: true }));
+  });
 });
