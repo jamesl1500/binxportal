@@ -108,6 +108,7 @@ from binx_api.modules.lead_portal import models as _lead_portal_models  # noqa: 
 from binx_api.modules.leads import models as _leads_models  # noqa: E402,F401
 from binx_api.modules.messaging import models as _messaging_models  # noqa: E402,F401
 from binx_api.modules.projects import models as _project_models  # noqa: E402,F401
+from binx_api.modules.proposals import completion as _proposal_completion  # noqa: E402
 from binx_api.modules.proposals import models as _proposals_models  # noqa: E402,F401
 from binx_api.modules.services import models as _services_models  # noqa: E402,F401
 from binx_api.modules.time_tracking import models as _time_tracking_models  # noqa: E402,F401
@@ -187,10 +188,14 @@ async def db_session(engine, _schema) -> AsyncGenerator[AsyncSession]:
     _error_store.session_factory = lambda: AsyncSession(
         bind=connection, expire_on_commit=False, join_transaction_mode="create_savepoint"
     )
+    # Same for the work a signature sets off after its response.
+    default_completion_sessions = _proposal_completion.session_factory
+    _proposal_completion.session_factory = _error_store.session_factory
     try:
         yield session
     finally:
         _error_store.session_factory = default_error_sessions
+        _proposal_completion.session_factory = default_completion_sessions
         await session.close()
         await transaction.rollback()
         await connection.close()

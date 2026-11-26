@@ -1,7 +1,18 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Response, UploadFile, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    File,
+    HTTPException,
+    Query,
+    Request,
+    Response,
+    UploadFile,
+    status,
+)
 
 from binx_api.core import storage
 from binx_api.core.dependencies import CurrentUser, DbSession
@@ -9,7 +20,7 @@ from binx_api.core.rate_limit import client_ip, client_user_agent
 from binx_api.modules.agencies.dependencies import require_agency_role
 from binx_api.modules.agencies.models import ROLE_ADMIN, ROLE_MEMBER, ROLE_OWNER, Agency
 from binx_api.modules.proposals import acceptance as acceptance_service
-from binx_api.modules.proposals import service, signing
+from binx_api.modules.proposals import completion, service, signing
 from binx_api.modules.proposals.certificate_pdf import certificate_file_name, render_certificate_pdf
 from binx_api.modules.proposals.models import (
     STATUS_DRAFT,
@@ -387,6 +398,7 @@ async def countersign_proposal(
     proposal_id: uuid.UUID,
     data: CountersignRequest,
     request: Request,
+    background_tasks: BackgroundTasks,
 ) -> ProposalDetailRead:
     """The agency's signature, after the client's. Owners and admins only:
     it binds the agency."""
@@ -401,6 +413,7 @@ async def countersign_proposal(
         consent=data.consent,
         document_hash=data.document_hash,
     )
+    completion.schedule(background_tasks, proposal)
     lead_name, client_name = await _names(db, proposal)
     return await _detail_read(db, proposal, lead_name, client_name)
 
@@ -518,7 +531,7 @@ async def download_public_attachment(db: DbSession, token: str, attachment_id: u
 
 @public_router.post("/{token}/sign", response_model=ProposalPublicRead)
 async def sign_public_proposal(
-    db: DbSession, token: str, data: ProposalSignRequest, request: Request
+    db: DbSession, token: str, data: ProposalSignRequest, request: Request, background_tasks: BackgroundTasks
 ) -> ProposalPublicRead:
     proposal = await service.get_proposal_by_token_or_404(db, token)
     proposal = await service.sign_proposal(
@@ -532,6 +545,7 @@ async def sign_public_proposal(
         consent=data.consent,
         document_hash=data.document_hash,
     )
+    completion.schedule(background_tasks, proposal)
     return await _public_after_change(db, proposal)
 
 

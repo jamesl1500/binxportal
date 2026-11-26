@@ -1,9 +1,11 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 vi.mock("@/app/(app)/proposals/actions", () => ({ retryProposalAcceptanceAction: vi.fn() }));
+const mockRefresh = vi.fn();
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: mockRefresh }) }));
 
 import { toast } from "sonner";
 
@@ -143,5 +145,50 @@ describe("AcceptancePanel", () => {
       />,
     );
     expect(screen.getByText("Monthly billing starts when the deposit is paid")).toBeInTheDocument();
+  });
+
+  it("re-fetches the page while the setup is still running, then stops", () => {
+    vi.useFakeTimers();
+    try {
+      const { rerender } = render(
+        <AcceptancePanel
+          agencyId="a1"
+          proposalId="p1"
+          acceptance={acceptance({ status: "in_progress", client_id: null, project_id: null, completed_at: null })}
+          depositPercent={null}
+          createsProject
+        />,
+      );
+      expect(screen.getByRole("heading", { name: "Setting up the client" })).toBeInTheDocument();
+      act(() => vi.advanceTimersByTime(1500));
+      expect(mockRefresh).toHaveBeenCalledTimes(1);
+
+      rerender(
+        <AcceptancePanel agencyId="a1" proposalId="p1" acceptance={acceptance()} depositPercent={null} createsProject />,
+      );
+      act(() => vi.advanceTimersByTime(6000));
+      expect(mockRefresh).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("gives up re-fetching after a while", () => {
+    vi.useFakeTimers();
+    try {
+      render(
+        <AcceptancePanel
+          agencyId="a1"
+          proposalId="p1"
+          acceptance={acceptance({ status: "in_progress" })}
+          depositPercent={null}
+          createsProject
+        />,
+      );
+      act(() => vi.advanceTimersByTime(120_000));
+      expect(mockRefresh).toHaveBeenCalledTimes(20);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

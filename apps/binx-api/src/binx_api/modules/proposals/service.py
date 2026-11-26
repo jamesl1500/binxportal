@@ -31,7 +31,7 @@ from binx_api.modules.leads import service as leads_service
 from binx_api.modules.leads.models import Lead
 from binx_api.modules.notifications import service as notifications_service
 from binx_api.modules.notifications.models import CATEGORY_INVOICING as NOTIFY_CATEGORY_PROPOSALS
-from binx_api.modules.proposals import acceptance, completion, signing
+from binx_api.modules.proposals import completion, signing
 from binx_api.modules.proposals.models import (
     BILLING_MONTHLY,
     EVENT_COUNTERSIGNED,
@@ -582,7 +582,7 @@ async def sign_proposal(
     proposal.status = STATUS_SIGNED
     proposal.decided_at = now
     if not proposal.requires_countersign:
-        proposal.completed_at = now
+        completion.mark_complete(db, proposal, now)
     await db.commit()
     await db.refresh(proposal)
 
@@ -612,24 +612,9 @@ async def sign_proposal(
         target_id=proposal.id,
         target_name=proposal.title,
     )
-    if proposal.completed_at is not None:
-        await _on_completed(db, proposal)
-        # Acceptance can roll the session back on a failure, which expires
-        # this object; hand the caller a loaded one.
-        await db.refresh(proposal)
+    # When that completed it, the caller schedules completion.process to
+    # run after the response (completion.schedule).
     return proposal
-
-
-async def _on_completed(db: AsyncSession, proposal: Proposal, *, agency_email: str | None = None) -> None:
-    """Every required signature is in: see completion.py."""
-    if agency_email is None and proposal.created_by_id is not None:
-        creator = await db.get(User, proposal.created_by_id)
-        agency_email = creator.email if creator else None
-    proposal_id = proposal.id
-    await acceptance.accept(db, proposal)
-    proposal = await db.get(Proposal, proposal_id, populate_existing=True)
-    assert proposal is not None
-    await completion.send_signed_record(db, proposal, agency_email=agency_email)
 
 
 async def get_countersignature(db: AsyncSession, proposal_id: uuid.UUID) -> ProposalCountersignature | None:
@@ -691,7 +676,7 @@ async def countersign_proposal(
         detail="Countersigned for the agency",
         occurred_at=now,
     )
-    proposal.completed_at = now
+    completion.mark_complete(db, proposal, now)
     await db.commit()
     await db.refresh(proposal)
 
@@ -706,9 +691,7 @@ async def countersign_proposal(
         target_id=proposal.id,
         target_name=proposal.title,
     )
-    agency_email = user.email
-    await _on_completed(db, proposal, agency_email=agency_email)
-    await db.refresh(proposal)
+    # The caller schedules completion.process to run after the response.
     return proposal
 
 

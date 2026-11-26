@@ -143,21 +143,26 @@ test.describe("accepting a proposal from a lead", () => {
     await lead_.page.getByLabel("Your email").fill(`alex+${RUN}@northwind.example.com`);
     await lead_.page.getByRole("checkbox").check();
     await lead_.page.getByRole("button", { name: "Sign proposal" }).click();
-    // Signing does the most work of any step (the signature, then accepting
-    // it: client, invitation, deposit invoice, signed PDF and emails).
-    await expect(lead_.page.getByRole("link", { name: /view the signing certificate/i })).toBeVisible({
-      timeout: 30_000,
-    });
+    // The signature answers as soon as it's saved; setting the lead up as a
+    // client (and the signed PDF emails) runs after the response.
+    await expect(lead_.page.getByRole("link", { name: /view the signing certificate/i })).toBeVisible();
 
-    // Their portal now points them to their client portal.
+    // Their portal now points them to their client portal. (Setting them up
+    // runs just after the signature is saved, so allow it a moment.)
     const link = new URL(portal.url);
-    await lead_.page.goto(`${link.pathname}${link.search}`);
-    await expect(lead_.page.getByRole("heading", { name: "You're all set" })).toBeVisible();
+    await expect(async () => {
+      await lead_.page.goto(`${link.pathname}${link.search}`);
+      await expect(lead_.page.getByRole("heading", { name: "You're all set" })).toBeVisible({ timeout: 2_000 });
+    }).toPass({ timeout: 30_000 });
     await lead_.close();
 
     // On the agency side: a client now, the deposit invoiced, the project waiting on it.
+    // The setup may still be finishing: the panel refreshes itself until it
+    // has (no reload needed).
     await salesPage.reload();
-    await expect(salesPage.getByRole("heading", { name: "Accepted, waiting on the deposit" })).toBeVisible();
+    await expect(salesPage.getByRole("heading", { name: "Accepted, waiting on the deposit" })).toBeVisible({
+      timeout: 30_000,
+    });
     await expect(salesPage.getByRole("link", { name: leadName })).toBeVisible();
     await expect(salesPage.getByText(/awaiting payment/)).toBeVisible();
     await expect(salesPage.getByText("Project starts when the deposit is paid")).toBeVisible();

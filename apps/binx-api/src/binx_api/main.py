@@ -43,6 +43,7 @@ from binx_api.modules.messaging.router import ws_router as messaging_ws_router
 from binx_api.modules.notifications.router import router as notifications_router
 from binx_api.modules.ops.router import router as ops_router
 from binx_api.modules.projects.router import router as projects_router
+from binx_api.modules.proposals.completion import run_completion_loop
 from binx_api.modules.proposals.router import public_router as proposals_public_router
 from binx_api.modules.proposals.router import router as proposals_router
 from binx_api.modules.services.router import router as services_router
@@ -68,8 +69,13 @@ async def _lifespan(_app: FastAPI) -> AsyncIterator[None]:
     """Runs the background jobs, which have to happen even if nobody
     visits: erasing agencies whose 30-day deletion hold has ended (the
     Privacy Policy promises the data is gone on schedule), and billing
-    recurring invoices on their date."""
-    jobs = [asyncio.create_task(run_purge_loop()), asyncio.create_task(run_recurring_loop())]
+    recurring invoices on their date, and finishing signed proposals whose
+    follow-up a crash or restart interrupted (proposals/completion.py)."""
+    jobs = [
+        asyncio.create_task(run_purge_loop()),
+        asyncio.create_task(run_recurring_loop()),
+        asyncio.create_task(run_completion_loop()),
+    ]
     try:
         yield
     finally:

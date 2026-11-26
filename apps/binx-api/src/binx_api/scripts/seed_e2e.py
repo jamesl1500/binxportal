@@ -552,6 +552,7 @@ async def _seed_showcase(db, *, agency, owner, client, second_client, sales_agen
     from binx_api.core import email as email_module
     from binx_api.modules.lead_portal import service as lead_portal_service
     from binx_api.modules.leads.service import create_lead
+    from binx_api.modules.proposals import completion as proposals_completion
     from binx_api.modules.proposals import service as proposals_service
     from binx_api.modules.proposals.schemas import ProposalLineItemInput
     from binx_api.modules.services.schemas import ServiceCreate
@@ -666,6 +667,8 @@ async def _seed_showcase(db, *, agency, owner, client, second_client, sales_agen
         consent=True,
         document_hash=signed.document_hash,
     )
+    # In the app this runs after the countersign request answers.
+    await proposals_completion.process(db, signed.id)
 
     # Harbor Lane: a lead with their portal on, a proposal and a conversation.
     lead = await create_lead(

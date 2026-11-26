@@ -2,7 +2,7 @@ import uuid
 from datetime import date, datetime
 from typing import Annotated
 
-from fastapi import APIRouter, File, Form, Query, Request, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, File, Form, Query, Request, UploadFile, status
 from fastapi.exceptions import HTTPException
 
 from binx_api.core import storage
@@ -67,6 +67,7 @@ from binx_api.modules.messaging import service as messaging_service
 from binx_api.modules.messaging.models import SENDER_CLIENT
 from binx_api.modules.messaging.schemas import ConversationDetailRead, ConversationRead, MessageRead
 from binx_api.modules.projects import service as projects_service
+from binx_api.modules.proposals import completion as proposals_completion
 from binx_api.modules.proposals import service as proposals_service
 from binx_api.modules.proposals import signing as proposals_signing
 from binx_api.modules.proposals.router import _detail_read as _proposal_detail_read
@@ -867,6 +868,7 @@ async def sign_portal_proposal(
     proposal_id: uuid.UUID,
     data: PortalProposalSignRequest,
     request: Request,
+    background_tasks: BackgroundTasks,
 ) -> ProposalDetailRead:
     """Signs with the signed-in contact's own name/email — unlike the public
     token flow, the portal already knows who this is."""
@@ -884,6 +886,7 @@ async def sign_portal_proposal(
         document_hash=data.document_hash,
         actor_user_id=current_user.id,
     )
+    proposals_completion.schedule(background_tasks, proposal)
     lead_name, client_name = await _proposal_names(db, proposal)
     return await _proposal_detail_read(db, proposal, lead_name, client_name, include_acceptance=False)
 

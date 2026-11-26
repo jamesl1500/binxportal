@@ -104,6 +104,12 @@ class Proposal(Base):
     # requires_countersign. This is the moment the agreement is binding, and
     # what accepting a proposal (converting a lead to a client) keys off.
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    # What completing it sets off (acceptance, then the signed record by
+    # email) runs after the signing request has answered (completion.py).
+    # Claimed by whoever runs it, so it runs once; processed once done. A
+    # claim left behind by a crash is picked up again by the sweep.
+    completion_claimed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    completion_processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
 
     # What accepting it sets in motion (acceptance.py), chosen on the draft:
     # a deposit invoice for this share of the total, and a project (with a

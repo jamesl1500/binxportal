@@ -7,13 +7,18 @@
  * project and its kickoff, and the monthly billing of any monthly lines. When a step was blocked (usually a plan limit),
  * it says why and offers a retry, which picks up where it stopped.
  *
+ * The setup runs just after the signature is saved (binx-api
+ * proposals/completion.py), so a page loaded in that moment shows it in
+ * progress; the panel re-fetches the page for a short while until it's done.
+ *
  * @module apps/binx-web/src/components/proposals/AcceptancePanel/AcceptancePanel.tsx
  * @author Binx Portal
  */
 "use client";
 
-import { useTransition } from "react";
+import { useEffect, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AlertTriangle, CheckCircle2, Circle, Clock } from "lucide-react";
 import { toast } from "sonner";
 
@@ -35,6 +40,10 @@ interface AcceptancePanelProps {
 }
 
 type StepState = "done" | "waiting" | "todo";
+
+// While the setup runs: a refresh every 1.5 s, for up to 30 s.
+const POLL_INTERVAL_MS = 1500;
+const POLL_LIMIT = 20;
 
 interface Step {
   key: string;
@@ -189,6 +198,22 @@ const AcceptancePanel = ({
 }: AcceptancePanelProps) => {
   const [isPending, startTransition] = useTransition();
   const blocked = acceptance.status === "blocked";
+  const router = useRouter();
+  const settingUp = acceptance.status === "in_progress";
+
+  useEffect(() => {
+    if (!settingUp) return;
+    let polls = 0;
+    const timer = window.setInterval(() => {
+      polls += 1;
+      if (polls > POLL_LIMIT) {
+        window.clearInterval(timer);
+        return;
+      }
+      router.refresh();
+    }, POLL_INTERVAL_MS);
+    return () => window.clearInterval(timer);
+  }, [settingUp, router]);
 
   const retry = () =>
     startTransition(async () => {
