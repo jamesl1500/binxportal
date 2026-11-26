@@ -50,8 +50,22 @@ AGENCY_NAME = "Northlight Studio"
 CLIENT_NAME = "Fjord & Field"
 PROJECT_NAME = "Brand & Website Refresh"
 
-DEMO_EMAILS = [STAFF_EMAIL, CLIENT_EMAIL, TEAMMATE_EMAIL]
-DEMO_USER_NAMES = [STAFF_USER_NAME, CLIENT_USER_NAME, TEAMMATE_USER_NAME]
+# A second agency, on the Starter plan, for the sales flows (lead portals,
+# turning a signed proposal into a client). Kept apart from Northlight so
+# those specs can add clients without touching Northlight's Free-plan
+# numbers, which other specs assert on.
+SALES_EMAIL = "e2e-sales@harborlane.example.com"
+SALES_USER_NAME = "e2e_sales"
+SALES_NAME = "Riley Chen"
+SALES_AGENCY_NAME = "Harbor Lane Studio"
+# Harbor Lane's own client with a portal contact, for signing in the portal.
+SALES_CLIENT_NAME = "Pine & Co"
+BUYER_EMAIL = "e2e-buyer@pineandco.example.com"
+BUYER_USER_NAME = "e2e_buyer"
+BUYER_NAME = "Jordan Pike"
+
+DEMO_EMAILS = [STAFF_EMAIL, CLIENT_EMAIL, TEAMMATE_EMAIL, SALES_EMAIL, BUYER_EMAIL]
+DEMO_USER_NAMES = [STAFF_USER_NAME, CLIENT_USER_NAME, TEAMMATE_USER_NAME, SALES_USER_NAME, BUYER_USER_NAME]
 
 # Every PageCoachmark id in binx-web (grep `<PageCoachmark`). The welcome tour and
 # these popups open a modal over the app on first visit, which would intercept
@@ -148,7 +162,9 @@ async def _run() -> None:
 
     async with async_session_factory() as db:
         # --- Wipe any previous run ---------------------------------------
-        agencies = (await db.execute(select(Agency).where(Agency.name == AGENCY_NAME))).scalars().all()
+        agencies = (
+            (await db.execute(select(Agency).where(Agency.name.in_([AGENCY_NAME, SALES_AGENCY_NAME])))).scalars().all()
+        )
         for agency in agencies:
             await db.delete(agency)  # cascades to members, clients, projects, invoices, boards, conversations
         stale_users = (
@@ -474,6 +490,39 @@ async def _run() -> None:
             body="Amazing, taking a look now. Concept 2 is really strong.",
             uploads=[],
         )
+
+        # --- The sales agency (Starter) ---------------------------------------
+        from binx_api.modules.billing.service import get_or_create_subscription
+
+        seller = await verified_user(SALES_USER_NAME, SALES_EMAIL, SALES_NAME)
+        await update_tutorial_progress(db, seller, tour_completed=True, dismissed_popups=list(_TUTORIAL_POPUP_IDS))
+        sales_agency = await create_agency_with_owner(db, owner=seller, name=SALES_AGENCY_NAME)
+        # Set directly rather than through change_plan, which (rightly) refuses
+        # paid plans when Stripe is configured: this is seed data, not a sale.
+        subscription = await get_or_create_subscription(db, sales_agency.id)
+        subscription.plan = "starter"
+        # Live in-app toasts for signatures and lead questions would pop up
+        # over whatever page this user's specs have open at the time; the
+        # specs check the pages, not the toasts.
+        from binx_api.modules.users.models import UserNotificationSettings
+
+        db.add(UserNotificationSettings(user_id=seller.id, inapp_team=False, inapp_invoicing=False))
+        await db.commit()
+
+        buyer = await verified_user(BUYER_USER_NAME, BUYER_EMAIL, BUYER_NAME)
+        await update_tutorial_progress(db, buyer, tour_completed=False, dismissed_popups=list(_PORTAL_TOUR_IDS))
+        sales_client = await create_client(
+            db,
+            sales_agency,
+            name=SALES_CLIENT_NAME,
+            primary_contact_name=BUYER_NAME,
+            primary_contact_email=BUYER_EMAIL,
+            primary_contact_phone=None,
+            website=None,
+            notes=None,
+        )
+        db.add(ClientContact(agency_id=sales_agency.id, client_id=sales_client.id, user_id=buyer.id, is_primary=True))
+        await db.commit()
 
     logger.info("Seed complete: agency=%r staff=%s client=%s", AGENCY_NAME, STAFF_EMAIL, CLIENT_EMAIL)
 

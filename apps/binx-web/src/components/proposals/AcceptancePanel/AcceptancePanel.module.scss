@@ -1,0 +1,104 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.panel {
+  @include m.card-base;
+  margin-bottom: t.$space-6;
+  padding: t.$space-6;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-4;
+
+  &[data-status="done"] {
+    border-color: rgba(21, 128, 61, 0.35);
+  }
+
+  &[data-status="blocked"] {
+    border-color: rgba(220, 38, 38, 0.35);
+  }
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-ink;
+}
+
+.blocked {
+  display: flex;
+  align-items: center;
+  gap: t.$space-3;
+  flex-wrap: wrap;
+  padding: t.$space-3 t.$space-4;
+  font-size: t.$font-size-sm;
+  color: t.$color-danger;
+  background: rgba(220, 38, 38, 0.05);
+  border-radius: t.$radius-md;
+
+  > svg {
+    flex: none;
+    width: 1rem;
+    height: 1rem;
+  }
+
+  p {
+    flex: 1;
+    margin: 0;
+    min-width: 12rem;
+  }
+}
+
+.retry {
+  @include m.button-base;
+  padding: t.$space-2 t.$space-4;
+  background: t.$color-surface;
+  border-color: t.$color-border-strong;
+  color: t.$color-ink;
+}
+
+.steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+}
+
+.step {
+  display: flex;
+  align-items: flex-start;
+  gap: t.$space-3;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+
+  svg {
+    flex: none;
+    width: 1rem;
+    height: 1rem;
+    margin-top: 0.15rem;
+  }
+
+  a {
+    color: t.$color-ink;
+    font-weight: 600;
+    text-underline-offset: 2px;
+  }
+
+  &[data-state="done"] svg {
+    color: #15803d;
+  }
+
+  &[data-state="waiting"] svg {
+    color: #b45309;
+  }
+
+  &[data-state="todo"] {
+    color: t.$color-ink-soft;
+
+    svg {
+      color: t.$color-ink-faint;
+    }
+  }
+}

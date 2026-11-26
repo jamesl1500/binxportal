@@ -31,7 +31,7 @@ from binx_api.modules.leads import service as leads_service
 from binx_api.modules.leads.models import Lead
 from binx_api.modules.notifications import service as notifications_service
 from binx_api.modules.notifications.models import CATEGORY_INVOICING as NOTIFY_CATEGORY_PROPOSALS
-from binx_api.modules.proposals import completion, signing
+from binx_api.modules.proposals import acceptance, completion, signing
 from binx_api.modules.proposals.models import (
     EVENT_COUNTERSIGNED,
     EVENT_DECLINED,
@@ -262,6 +262,14 @@ async def remove_attachment(db: AsyncSession, proposal: Proposal, attachment: Pr
 # ---- Create / update -----------------------------------------------------
 
 
+async def _check_kickoff_template(db: AsyncSession, agency_id: uuid.UUID, template_id: uuid.UUID | None) -> None:
+    if template_id is None:
+        return
+    from binx_api.modules.kickoffs import service as kickoffs_service
+
+    await kickoffs_service.get_template_or_404(db, agency_id, template_id)
+
+
 async def create_proposal(
     db: AsyncSession,
     agency: Agency,
@@ -278,12 +286,16 @@ async def create_proposal(
     valid_until: datetime | None,
     line_items: list[ProposalLineItemInput],
     requires_countersign: bool = False,
+    deposit_percent: Decimal | None = None,
+    create_project_on_accept: bool = False,
+    kickoff_template_id: uuid.UUID | None = None,
 ) -> Proposal:
     lead: Lead | None = None
     if lead_id is not None:
         lead = await leads_service.get_lead_or_404(db, agency.id, lead_id)
     if client_id is not None:
         await agencies_service.get_client_or_404(db, agency.id, client_id)
+    await _check_kickoff_template(db, agency.id, kickoff_template_id)
 
     proposal = Proposal(
         agency_id=agency.id,
@@ -299,6 +311,9 @@ async def create_proposal(
         tax_rate_percent=tax_rate_percent,
         valid_until=valid_until,
         requires_countersign=requires_countersign,
+        deposit_percent=deposit_percent,
+        create_project_on_accept=create_project_on_accept,
+        kickoff_template_id=kickoff_template_id,
         status=STATUS_DRAFT,
     )
     db.add(proposal)
@@ -338,12 +353,16 @@ async def update_proposal(
     valid_until: datetime | None,
     line_items: list[ProposalLineItemInput],
     requires_countersign: bool = False,
+    deposit_percent: Decimal | None = None,
+    create_project_on_accept: bool = False,
+    kickoff_template_id: uuid.UUID | None = None,
 ) -> Proposal:
     _require_draft(proposal)
     if lead_id is not None:
         await leads_service.get_lead_or_404(db, proposal.agency_id, lead_id)
     if client_id is not None:
         await agencies_service.get_client_or_404(db, proposal.agency_id, client_id)
+    await _check_kickoff_template(db, proposal.agency_id, kickoff_template_id)
 
     proposal.lead_id = lead_id
     proposal.client_id = client_id
@@ -355,6 +374,9 @@ async def update_proposal(
     proposal.tax_rate_percent = tax_rate_percent
     proposal.valid_until = valid_until
     proposal.requires_countersign = requires_countersign
+    proposal.deposit_percent = deposit_percent
+    proposal.create_project_on_accept = create_project_on_accept
+    proposal.kickoff_template_id = kickoff_template_id
 
     rows = await _replace_line_items(db, proposal, line_items)
     _recalculate(proposal, rows)
@@ -581,6 +603,9 @@ async def sign_proposal(
     )
     if proposal.completed_at is not None:
         await _on_completed(db, proposal)
+        # Acceptance can roll the session back on a failure, which expires
+        # this object; hand the caller a loaded one.
+        await db.refresh(proposal)
     return proposal
 
 
@@ -589,6 +614,10 @@ async def _on_completed(db: AsyncSession, proposal: Proposal, *, agency_email: s
     if agency_email is None and proposal.created_by_id is not None:
         creator = await db.get(User, proposal.created_by_id)
         agency_email = creator.email if creator else None
+    proposal_id = proposal.id
+    await acceptance.accept(db, proposal)
+    proposal = await db.get(Proposal, proposal_id, populate_existing=True)
+    assert proposal is not None
     await completion.send_signed_record(db, proposal, agency_email=agency_email)
 
 
@@ -666,7 +695,9 @@ async def countersign_proposal(
         target_id=proposal.id,
         target_name=proposal.title,
     )
-    await _on_completed(db, proposal, agency_email=user.email)
+    agency_email = user.email
+    await _on_completed(db, proposal, agency_email=agency_email)
+    await db.refresh(proposal)
     return proposal
 
 

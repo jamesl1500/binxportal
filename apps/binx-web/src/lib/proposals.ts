@@ -43,6 +43,7 @@ export type ProposalPublic = Schemas["ProposalPublicRead"];
 export type ProposalAttachment = Schemas["ProposalAttachmentRead"];
 export type ProposalEvent = Schemas["ProposalEventRead"];
 export type ProposalCertificate = Schemas["ProposalCertificateRead"];
+export type ProposalAcceptance = Schemas["ProposalAcceptanceRead"];
 
 export interface ProposalLineItemInput {
   description: string;
@@ -67,6 +68,10 @@ export interface ProposalInput {
   lineItems: ProposalLineItemInput[];
   /** The agency countersigns after the client (owner/admin). */
   requiresCountersign?: boolean;
+  /** What accepting it sets in motion (binx-api proposals/acceptance.py). */
+  depositPercent?: string | null;
+  createProjectOnAccept?: boolean;
+  kickoffTemplateId?: string | null;
 }
 
 function toPayload(input: ProposalInput) {
@@ -81,6 +86,9 @@ function toPayload(input: ProposalInput) {
     tax_rate_percent: input.taxRatePercent,
     valid_until: input.validUntil,
     requires_countersign: input.requiresCountersign ?? false,
+    deposit_percent: input.depositPercent || null,
+    create_project_on_accept: input.createProjectOnAccept ?? false,
+    kickoff_template_id: input.kickoffTemplateId || null,
     line_items: input.lineItems.map((item) => ({
       description: item.description,
       details: item.details ?? null,
@@ -380,5 +388,27 @@ export async function countersignProposal(
     return data;
   } catch (error) {
     throw apiError(error, "Unable to countersign this proposal");
+  }
+}
+
+/**
+ * `POST /agencies/{agencyId}/proposals/{proposalId}/acceptance/retry`:
+ * re-runs a blocked acceptance (after a plan upgrade, say), picking up where
+ * it stopped.
+ */
+export async function retryProposalAcceptance(
+  agencyId: string,
+  proposalId: string,
+): Promise<ProposalDetail> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.post<ProposalDetail>(
+      `/agencies/${agencyId}/proposals/${proposalId}/acceptance/retry`,
+      undefined,
+      { headers },
+    );
+    return data;
+  } catch (error) {
+    throw apiError(error, "Unable to finish setting this client up");
   }
 }

@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, model_validator
 
 # --- Line items ----------------------------------------------------------
 
@@ -54,6 +54,16 @@ class ProposalCreate(BaseModel):
     # The agency countersigns after the client (owner/admin), and the
     # proposal is only complete once both have.
     requires_countersign: bool = False
+    # What accepting it sets in motion (proposals/acceptance.py).
+    deposit_percent: Decimal | None = Field(default=None, gt=0, le=100, max_digits=6, decimal_places=3)
+    create_project_on_accept: bool = False
+    kickoff_template_id: uuid.UUID | None = None
+
+    @model_validator(mode="after")
+    def _kickoff_needs_a_project(self) -> "ProposalCreate":
+        if self.kickoff_template_id is not None and not self.create_project_on_accept:
+            raise ValueError("A kickoff questionnaire needs a project, turn on “start a project”")
+        return self
 
 
 class ProposalUpdate(ProposalCreate):
@@ -87,6 +97,26 @@ class ProposalRead(BaseModel):
     created_at: datetime
 
 
+class ProposalAcceptanceRead(BaseModel):
+    """What accepting the proposal did (staff only)."""
+
+    # in_progress | awaiting_deposit | done | blocked
+    status: str
+    blocked_reason: str | None
+    client_id: uuid.UUID | None
+    client_name: str | None
+    converted_lead: bool
+    invited_email: str | None
+    deposit_invoice_id: uuid.UUID | None
+    deposit_invoice_number: str | None
+    deposit_invoice_status: str | None
+    deposit_paid_at: datetime | None
+    project_id: uuid.UUID | None
+    project_name: str | None
+    kickoff_sent_at: datetime | None
+    completed_at: datetime | None
+
+
 class ProposalDetailRead(ProposalRead):
     content: str | None
     tax_rate_percent: Decimal
@@ -106,6 +136,11 @@ class ProposalDetailRead(ProposalRead):
     countersignature: "ProposalSignatureRead | None"
     # Every required signature is in (the agreement is binding).
     completed_at: datetime | None
+    deposit_percent: Decimal | None = None
+    create_project_on_accept: bool = False
+    kickoff_template_id: uuid.UUID | None = None
+    # Staff reads only; None until the proposal is complete (and on portal reads).
+    acceptance: ProposalAcceptanceRead | None = None
 
 
 class ProposalSignatureRead(BaseModel):

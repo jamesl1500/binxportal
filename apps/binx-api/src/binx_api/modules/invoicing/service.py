@@ -1057,6 +1057,12 @@ async def add_payment(
         target_id=invoice.id,
         target_name=invoice.number,
     )
+    if fully_paid:
+        # A proposal's deposit landing starts the work it was waiting on.
+        # Imported here: proposals depends on invoicing, not the other way.
+        from binx_api.modules.proposals import acceptance
+
+        await acceptance.on_invoice_paid(db, invoice)
     return payment
 
 

@@ -1934,6 +1934,59 @@ export interface paths {
         patch: operations["assign_owner_agencies__agency_id__leads__lead_id__owner_patch"];
         trace?: never;
     };
+    "/agencies/{agency_id}/leads/{lead_id}/portal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Portal */
+        get: operations["read_portal_agencies__agency_id__leads__lead_id__portal_get"];
+        /** Enable Portal */
+        put: operations["enable_portal_agencies__agency_id__leads__lead_id__portal_put"];
+        post?: never;
+        /** Disable Portal */
+        delete: operations["disable_portal_agencies__agency_id__leads__lead_id__portal_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/leads/{lead_id}/portal/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reply */
+        post: operations["reply_agencies__agency_id__leads__lead_id__portal_messages_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/leads/{lead_id}/portal/reset-link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reset Link */
+        post: operations["reset_link_agencies__agency_id__leads__lead_id__portal_reset_link_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agencies/{agency_id}/leads/{lead_id}/status": {
         parameters: {
             query?: never;
@@ -3109,6 +3162,27 @@ export interface paths {
         patch: operations["update_proposal_agencies__agency_id__proposals__proposal_id__patch"];
         trace?: never;
     };
+    "/agencies/{agency_id}/proposals/{proposal_id}/acceptance/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Retry Acceptance
+         * @description Re-runs a blocked acceptance (after upgrading the plan, say). Picks
+         *     up where it stopped; finished steps aren't repeated.
+         */
+        post: operations["retry_acceptance_agencies__agency_id__proposals__proposal_id__acceptance_retry_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agencies/{agency_id}/proposals/{proposal_id}/attachments": {
         parameters: {
             query?: never;
@@ -3949,6 +4023,57 @@ export interface paths {
         get: operations["health_check_files_health_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lead-portal/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Public Portal */
+        get: operations["read_public_portal_lead_portal__token__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lead-portal/{token}/logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Public Logo */
+        get: operations["public_logo_lead_portal__token__logo_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lead-portal/{token}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ask */
+        post: operations["ask_lead_portal__token__messages_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -8545,6 +8670,54 @@ export interface components {
             /** Owner Id */
             owner_id?: string | null;
         };
+        /** LeadPortalMessageCreate */
+        LeadPortalMessageCreate: {
+            /** Body */
+            body: string;
+        };
+        /** LeadPortalMessageRead */
+        LeadPortalMessageRead: {
+            /** Author Kind */
+            author_kind: string;
+            /** Author Name */
+            author_name: string;
+            /** Body */
+            body: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+        };
+        /**
+         * LeadPortalRead
+         * @description The staff view of a lead's portal.
+         */
+        LeadPortalRead: {
+            /** Enabled */
+            enabled: boolean;
+            /** Last Viewed At */
+            last_viewed_at: string | null;
+            /** Messages */
+            messages: components["schemas"]["LeadPortalMessageRead"][];
+            /** Url */
+            url: string | null;
+            /** Welcome Message */
+            welcome_message: string | null;
+        };
+        /**
+         * LeadPortalUpdate
+         * @description Turn the portal on (or keep it on) and set its welcome note.
+         */
+        LeadPortalUpdate: {
+            /** Welcome Message */
+            welcome_message?: string | null;
+        };
         /** LeadRead */
         LeadRead: {
             /**
@@ -9967,6 +10140,40 @@ export interface components {
             /** Status */
             status: string;
         };
+        /**
+         * ProposalAcceptanceRead
+         * @description What accepting the proposal did (staff only).
+         */
+        ProposalAcceptanceRead: {
+            /** Blocked Reason */
+            blocked_reason: string | null;
+            /** Client Id */
+            client_id: string | null;
+            /** Client Name */
+            client_name: string | null;
+            /** Completed At */
+            completed_at: string | null;
+            /** Converted Lead */
+            converted_lead: boolean;
+            /** Deposit Invoice Id */
+            deposit_invoice_id: string | null;
+            /** Deposit Invoice Number */
+            deposit_invoice_number: string | null;
+            /** Deposit Invoice Status */
+            deposit_invoice_status: string | null;
+            /** Deposit Paid At */
+            deposit_paid_at: string | null;
+            /** Invited Email */
+            invited_email: string | null;
+            /** Kickoff Sent At */
+            kickoff_sent_at: string | null;
+            /** Project Id */
+            project_id: string | null;
+            /** Project Name */
+            project_name: string | null;
+            /** Status */
+            status: string;
+        };
         /** ProposalAttachmentRead */
         ProposalAttachmentRead: {
             /**
@@ -10055,10 +10262,19 @@ export interface components {
             /** Content */
             content?: string | null;
             /**
+             * Create Project On Accept
+             * @default false
+             */
+            create_project_on_accept: boolean;
+            /**
              * Currency
              * @default USD
              */
             currency: string;
+            /** Deposit Percent */
+            deposit_percent?: number | string | null;
+            /** Kickoff Template Id */
+            kickoff_template_id?: string | null;
             /** Lead Id */
             lead_id?: string | null;
             /** Line Items */
@@ -10089,6 +10305,7 @@ export interface components {
         };
         /** ProposalDetailRead */
         ProposalDetailRead: {
+            acceptance?: components["schemas"]["ProposalAcceptanceRead"] | null;
             /**
              * Agency Id
              * Format: uuid
@@ -10110,6 +10327,11 @@ export interface components {
             content: string | null;
             countersignature: components["schemas"]["ProposalSignatureRead"] | null;
             /**
+             * Create Project On Accept
+             * @default false
+             */
+            create_project_on_accept: boolean;
+            /**
              * Created At
              * Format: date-time
              */
@@ -10120,6 +10342,8 @@ export interface components {
             decided_at: string | null;
             /** Decline Reason */
             decline_reason: string | null;
+            /** Deposit Percent */
+            deposit_percent?: string | null;
             /** Display Status */
             display_status: string;
             /** Document Hash */
@@ -10129,6 +10353,8 @@ export interface components {
              * Format: uuid
              */
             id: string;
+            /** Kickoff Template Id */
+            kickoff_template_id?: string | null;
             /** Lead Id */
             lead_id: string | null;
             /** Lead Name */
@@ -10352,10 +10578,19 @@ export interface components {
             /** Content */
             content?: string | null;
             /**
+             * Create Project On Accept
+             * @default false
+             */
+            create_project_on_accept: boolean;
+            /**
              * Currency
              * @default USD
              */
             currency: string;
+            /** Deposit Percent */
+            deposit_percent?: number | string | null;
+            /** Kickoff Template Id */
+            kickoff_template_id?: string | null;
             /** Lead Id */
             lead_id?: string | null;
             /** Line Items */
@@ -10398,6 +10633,57 @@ export interface components {
             source: string;
             /** Website */
             website?: string | null;
+        };
+        /** PublicLeadPortalMessageCreate */
+        PublicLeadPortalMessageCreate: {
+            /** Author Name */
+            author_name?: string | null;
+            /** Body */
+            body: string;
+        };
+        /** PublicLeadPortalProposal */
+        PublicLeadPortalProposal: {
+            /** Currency */
+            currency: string;
+            /** Display Status */
+            display_status: string;
+            /** Sent At */
+            sent_at: string | null;
+            /** Title */
+            title: string;
+            /** Total Cents */
+            total_cents: number;
+            /** Url */
+            url: string;
+            /** Valid Until */
+            valid_until: string | null;
+        };
+        /**
+         * PublicLeadPortalRead
+         * @description What the lead sees. Nothing internal: no ids beyond what the page
+         *     needs, no other leads, no staff names beyond who replied.
+         */
+        PublicLeadPortalRead: {
+            /** Agency Name */
+            agency_name: string;
+            /** Brand Color */
+            brand_color: string | null;
+            /** Contact Name */
+            contact_name: string | null;
+            /** Has Logo */
+            has_logo: boolean;
+            /** Is Client */
+            is_client: boolean;
+            /** Lead Name */
+            lead_name: string;
+            /** Messages */
+            messages: components["schemas"]["LeadPortalMessageRead"][];
+            /** Portal Login Url */
+            portal_login_url: string;
+            /** Proposals */
+            proposals: components["schemas"]["PublicLeadPortalProposal"][];
+            /** Welcome Message */
+            welcome_message: string | null;
         };
         /**
          * QualificationsUpdate
@@ -16485,6 +16771,172 @@ export interface operations {
             };
         };
     };
+    read_portal_agencies__agency_id__leads__lead_id__portal_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadPortalRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    enable_portal_agencies__agency_id__leads__lead_id__portal_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeadPortalUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadPortalRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    disable_portal_agencies__agency_id__leads__lead_id__portal_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reply_agencies__agency_id__leads__lead_id__portal_messages_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeadPortalMessageCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadPortalMessageRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reset_link_agencies__agency_id__leads__lead_id__portal_reset_link_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadPortalRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     change_status_agencies__agency_id__leads__lead_id__status_patch: {
         parameters: {
             query?: never;
@@ -19852,6 +20304,38 @@ export interface operations {
             };
         };
     };
+    retry_acceptance_agencies__agency_id__proposals__proposal_id__acceptance_retry_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposal_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalDetailRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     upload_attachment_agencies__agency_id__proposals__proposal_id__attachments_post: {
         parameters: {
             query?: never;
@@ -21818,6 +22302,103 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+        };
+    };
+    read_public_portal_lead_portal__token__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicLeadPortalRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    public_logo_lead_portal__token__logo_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ask_lead_portal__token__messages_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PublicLeadPortalMessageCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadPortalMessageRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

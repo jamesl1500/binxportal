@@ -17,6 +17,7 @@ import { redirect } from "next/navigation";
 import { AuthApiError } from "@/lib/auth";
 import {
   countersignProposal,
+  retryProposalAcceptance,
   createProposal,
   deleteProposal,
   deleteProposalAttachment,
@@ -149,5 +150,18 @@ export async function countersignProposalAction(
     return { proposal };
   } catch (error) {
     return errorResult(error, "Unable to countersign this proposal");
+  }
+}
+
+export async function retryProposalAcceptanceAction(
+  agencyId: string,
+  proposalId: string,
+): Promise<ProposalActionResult> {
+  try {
+    const proposal = await retryProposalAcceptance(agencyId, proposalId);
+    refresh();
+    return { proposal };
+  } catch (error) {
+    return errorResult(error, "Unable to finish setting this client up");
   }
 }

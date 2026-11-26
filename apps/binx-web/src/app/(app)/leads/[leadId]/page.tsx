@@ -16,6 +16,10 @@ import { notFound, redirect } from "next/navigation";
 import { AuthApiError } from "@/lib/auth";
 import { getAgencyMembers, getCurrentAgencyContext } from "@/lib/agencies";
 import { getLead, getLeadEvents } from "@/lib/leads";
+import { getProposals } from "@/lib/proposals";
+import { getLeadPortal } from "@/lib/lead-portal";
+import LeadPortalCard from "@/components/leads/LeadPortalCard/LeadPortalCard";
+import { proposalStatusLabel } from "@/lib/proposals-client";
 import { LEAD_SOURCE_LABELS } from "@/lib/leads-client";
 import { formatMoneyCents } from "@/lib/money";
 import AiMarkdown from "@/components/ai/AiMarkdown/AiMarkdown";
@@ -68,9 +72,11 @@ const LeadDetailPage = async ({ params }: LeadDetailPageProps) => {
     throw error;
   }
 
-  const [events, members] = await Promise.all([
+  const [events, members, proposals, portal] = await Promise.all([
     getLeadEvents(agencyId, leadId),
     getAgencyMembers(agencyId),
+    getProposals(agencyId, { leadId }),
+    getLeadPortal(agencyId, leadId),
   ]);
   const converted = Boolean(lead.converted_client_id);
 
@@ -193,6 +199,42 @@ const LeadDetailPage = async ({ params }: LeadDetailPageProps) => {
         </div>
 
         <aside className={styles.sideCol}>
+          <section className={styles.card}>
+            <div className={styles.cardHead}>
+              <h2 className={styles.cardTitle}>Proposals</h2>
+              <Link
+                href={`/proposals/new?lead=${lead.id}`}
+                className={styles.cardLink}
+              >
+                New proposal
+              </Link>
+            </div>
+            {proposals.length === 0 ? (
+              <p className={styles.muted}>
+                Send {lead.name} a proposal. When they sign it, they become a
+                client and get their portal.
+              </p>
+            ) : (
+              <ul className={styles.proposalList}>
+                {proposals.map((proposal) => (
+                  <li key={proposal.id}>
+                    <Link href={`/proposals/${proposal.id}`}>
+                      {proposal.title}
+                    </Link>
+                    <span>{proposalStatusLabel(proposal.display_status)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <LeadPortalCard
+            agencyId={agencyId}
+            leadId={lead.id}
+            leadName={lead.name}
+            portal={portal}
+          />
+
           <section className={styles.card}>
             <h2 className={styles.cardTitle}>Convert</h2>
             <ConvertLeadButton

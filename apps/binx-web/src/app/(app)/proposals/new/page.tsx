@@ -2,6 +2,8 @@
  * page.tsx - New Proposal
  *
  * Draft-proposal editor. binx-api assigns the share token on creation.
+ * `?lead=` starts it for a lead (from the lead's page), and `?client=` for a
+ * client; signing it then sets that lead up as a client.
  *
  * @module apps/binx-web/src/app/(app)/proposals/new/page.tsx
  * @author Binx Portal
@@ -12,6 +14,8 @@ import { redirect } from "next/navigation";
 
 import { getCurrentAgencyContext } from "@/lib/agencies";
 import { getAgencyClients } from "@/lib/clients";
+import { getKickoffTemplates } from "@/lib/kickoffs";
+import { getLead } from "@/lib/leads";
 import { getServices } from "@/lib/services";
 import ProposalForm from "@/components/proposals/ProposalForm/ProposalForm";
 
@@ -20,7 +24,7 @@ import styles from "../page.module.scss";
 export const metadata: Metadata = { title: "New proposal" };
 
 interface NewProposalPageProps {
-  searchParams: Promise<{ client?: string }>;
+  searchParams: Promise<{ client?: string; lead?: string }>;
 }
 
 const NewProposalPage = async ({ searchParams }: NewProposalPageProps) => {
@@ -30,11 +34,16 @@ const NewProposalPage = async ({ searchParams }: NewProposalPageProps) => {
     redirect("/onboarding/two");
   }
 
-  const [{ client }, clients, services] = await Promise.all([
-    searchParams,
-    getAgencyClients(currentAgency.id),
-    getServices(currentAgency.id),
-  ]);
+  const [{ client, lead: leadId }, clients, services, kickoffTemplates] =
+    await Promise.all([
+      searchParams,
+      getAgencyClients(currentAgency.id),
+      getServices(currentAgency.id),
+      getKickoffTemplates(currentAgency.id),
+    ]);
+  const lead = leadId
+    ? await getLead(currentAgency.id, leadId).catch(() => null)
+    : null;
 
   return (
     <div>
@@ -63,6 +72,20 @@ const NewProposalPage = async ({ searchParams }: NewProposalPageProps) => {
           }))}
           initialClientId={client ?? null}
           services={services}
+          kickoffTemplates={kickoffTemplates.map((t) => ({
+            id: t.id,
+            name: t.name,
+          }))}
+          lead={
+            lead
+              ? {
+                  id: lead.id,
+                  name: lead.name,
+                  contactName: lead.contact_name,
+                  contactEmail: lead.contact_email,
+                }
+              : null
+          }
         />
       </div>
     </div>

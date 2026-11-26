@@ -246,4 +246,52 @@ describe("ProposalForm", () => {
 
     expect(mockedCreate).toHaveBeenCalledWith("a1", expect.objectContaining({ requiresCountersign: true }));
   });
+
+  it("starts a proposal for a lead, prefilled, with acceptance settings", async () => {
+    mockedCreate.mockResolvedValueOnce({ proposal: { id: "p1" } as never });
+    const user = userEvent.setup();
+    render(
+      <ProposalForm
+        agencyId="a1"
+        clients={clients}
+        lead={{ id: "lead-1", name: "Northwind", contactName: "Alex Kim", contactEmail: "alex@northwind.example" }}
+        kickoffTemplates={[{ id: "kt1", name: "Brand kickoff" }]}
+      />,
+    );
+
+    expect(screen.getByText(/For the lead/)).toHaveTextContent("Northwind");
+    expect(screen.getByLabelText("Recipient name")).toHaveValue("Alex Kim");
+    expect(screen.getByLabelText("Recipient email")).toHaveValue("alex@northwind.example");
+    // A lead's proposal starts a project by default.
+    expect(screen.getByRole("checkbox", { name: /start a project/i })).toBeChecked();
+
+    await user.type(screen.getByLabelText(/^Title$/), "Brand refresh");
+    await user.type(screen.getByLabelText("Line 1 description"), "Strategy");
+    await user.type(screen.getByLabelText("Line 1 unit price"), "5000");
+    await user.type(screen.getByLabelText(/deposit/i), "30");
+    await user.selectOptions(screen.getByLabelText("Kickoff questionnaire"), "kt1");
+    await user.click(screen.getByRole("button", { name: /create draft/i }));
+
+    expect(mockedCreate).toHaveBeenCalledWith(
+      "a1",
+      expect.objectContaining({
+        leadId: "lead-1",
+        depositPercent: "30",
+        createProjectOnAccept: true,
+        kickoffTemplateId: "kt1",
+      }),
+    );
+  });
+
+  it("can drop the lead", async () => {
+    mockedCreate.mockResolvedValueOnce({ proposal: { id: "p1" } as never });
+    const user = userEvent.setup();
+    render(<ProposalForm agencyId="a1" clients={clients} lead={{ id: "lead-1", name: "Northwind" }} />);
+    await user.click(screen.getByRole("button", { name: "Not for this lead" }));
+    await user.type(screen.getByLabelText(/^Title$/), "P");
+    await user.type(screen.getByLabelText("Line 1 description"), "X");
+    await user.type(screen.getByLabelText("Line 1 unit price"), "1");
+    await user.click(screen.getByRole("button", { name: /create draft/i }));
+    expect(mockedCreate).toHaveBeenCalledWith("a1", expect.objectContaining({ leadId: null }));
+  });
 });

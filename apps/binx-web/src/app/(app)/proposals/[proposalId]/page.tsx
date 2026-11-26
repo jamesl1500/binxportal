@@ -19,6 +19,7 @@ import ProposalActions from "@/components/proposals/ProposalActions/ProposalActi
 import ProposalAttachmentsManager from "@/components/proposals/ProposalAttachmentsManager/ProposalAttachmentsManager";
 import ProposalAuditTrail from "@/components/proposals/ProposalAuditTrail/ProposalAuditTrail";
 import CountersignPanel from "@/components/proposals/CountersignPanel/CountersignPanel";
+import AcceptancePanel from "@/components/proposals/AcceptancePanel/AcceptancePanel";
 import ProposalView from "@/components/proposals/ProposalView/ProposalView";
 
 import styles from "../page.module.scss";
@@ -66,6 +67,16 @@ const ProposalPage = async ({ params }: ProposalPageProps) => {
       </Link>
 
       <ProposalActions agencyId={currentAgency.id} proposal={proposal} />
+
+      {proposal.acceptance && (
+        <AcceptancePanel
+          agencyId={currentAgency.id}
+          proposalId={proposal.id}
+          acceptance={proposal.acceptance}
+          depositPercent={proposal.deposit_percent ?? null}
+          createsProject={proposal.create_project_on_accept ?? false}
+        />
+      )}
 
       {proposal.display_status === "awaiting_countersign" && (
         <CountersignPanel

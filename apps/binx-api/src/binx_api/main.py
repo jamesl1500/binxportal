@@ -34,6 +34,8 @@ from binx_api.modules.invoicing.router import router as invoicing_router
 from binx_api.modules.invoicing.webhooks_router import router as invoicing_webhooks_router
 from binx_api.modules.kickoffs.router import router as kickoffs_router
 from binx_api.modules.kickoffs.router import templates_router as kickoff_templates_router
+from binx_api.modules.lead_portal.router import public_router as lead_portal_public_router
+from binx_api.modules.lead_portal.router import router as lead_portal_router
 from binx_api.modules.leads.router import router as leads_router
 from binx_api.modules.meetings.router import router as meetings_router
 from binx_api.modules.messaging.router import router as conversations_router
@@ -121,6 +123,8 @@ def create_app() -> FastAPI:
     app.include_router(client_portal_router)
     app.include_router(dashboard_router)
     app.include_router(leads_router)
+    app.include_router(lead_portal_router)
+    app.include_router(lead_portal_public_router)
     app.include_router(ai_router)
     app.include_router(billing_router)
     app.include_router(billing_webhooks_router)

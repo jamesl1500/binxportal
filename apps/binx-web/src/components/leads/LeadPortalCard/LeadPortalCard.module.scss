@@ -1,0 +1,203 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.card {
+  @include m.card-base;
+  padding: t.$space-5;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-ink;
+}
+
+.subtitle {
+  margin: t.$space-2 0 0;
+  @include m.mono-label;
+  font-size: 0.5625rem;
+  color: t.$color-ink-faint;
+}
+
+.badge {
+  @include m.mono-label;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.5625rem;
+  color: #15803d;
+  border: 1px solid rgba(21, 128, 61, 0.35);
+  border-radius: t.$radius-sm;
+}
+
+.muted {
+  margin: 0;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+}
+
+.upgrade {
+  margin: 0;
+  font-size: t.$font-size-xs;
+  color: #92400e;
+
+  a {
+    color: inherit;
+    font-weight: 600;
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-1;
+}
+
+.label {
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  color: t.$color-ink-soft;
+}
+
+.textarea {
+  @include m.input-base;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.linkRow {
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+  min-width: 0;
+}
+
+.link {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: t.$space-2;
+  font-family: var(--font-mono);
+  font-size: t.$font-size-xs;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+}
+
+.iconButton {
+  @include m.touch-target;
+  flex: none;
+  display: inline-flex;
+  padding: t.$space-2;
+  color: t.$color-ink-soft;
+  background: none;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+  cursor: pointer;
+
+  svg {
+    width: 0.85rem;
+    height: 0.85rem;
+  }
+
+  &:hover {
+    color: t.$color-ink;
+  }
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: t.$space-3;
+  flex-wrap: wrap;
+}
+
+.primary {
+  @include m.button-base;
+  align-self: flex-start;
+  padding: t.$space-2 t.$space-4;
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+}
+
+.secondary {
+  @include m.button-base;
+  padding: t.$space-2 t.$space-4;
+  background: t.$color-surface;
+  border-color: t.$color-border;
+  color: t.$color-ink;
+}
+
+.textButton {
+  padding: 0;
+  background: none;
+  border: none;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+  }
+}
+
+.thread {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+}
+
+.message {
+  padding: t.$space-2 t.$space-3;
+  border-radius: t.$radius-md;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+
+  &[data-author="agency"] {
+    background: t.$color-surface;
+    border-style: dashed;
+  }
+}
+
+.messageMeta {
+  margin: 0 0 0.15rem;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+}
+
+.messageBody {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+  white-space: pre-line;
+}
+
+.replyForm {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

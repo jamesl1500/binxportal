@@ -1,0 +1,203 @@
+@use "../../styles/tokens" as t;
+@use "../../styles/mixins" as m;
+
+.page {
+  --brand: #{t.$color-accent};
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  padding: t.$space-6;
+  background: t.$color-paper;
+
+  @media (min-width: 640px) {
+    padding: t.$space-12 t.$space-6;
+  }
+}
+
+.shell {
+  width: 100%;
+  max-width: 44rem;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-5;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  min-height: 2.5rem;
+}
+
+.logo {
+  max-height: 2.5rem;
+  max-width: 12rem;
+  object-fit: contain;
+}
+
+.agency {
+  font-family: var(--font-heading);
+  font-size: t.$font-size-xl;
+  color: t.$color-ink;
+}
+
+.card {
+  @include m.card-base;
+  padding: t.$space-6;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+  border-top: 3px solid var(--brand);
+
+  @media (max-width: 560px) {
+    padding: t.$space-5;
+  }
+}
+
+.eyebrow {
+  @include m.mono-label;
+  color: t.$color-ink-soft;
+}
+
+.title {
+  @include m.display-heading;
+  margin: 0;
+  font-size: t.$font-size-2xl;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-ink;
+}
+
+.welcome {
+  margin: 0;
+  font-size: t.$font-size-base;
+  line-height: 1.6;
+  color: t.$color-ink;
+  white-space: pre-line;
+}
+
+.muted {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+}
+
+.clientBanner {
+  @include m.card-base;
+  padding: t.$space-6;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+  border-color: rgba(21, 128, 61, 0.35);
+  background: rgba(21, 128, 61, 0.04);
+
+  h2 {
+    margin: 0;
+    font-family: var(--font-heading);
+    font-size: t.$font-size-lg;
+  }
+
+  p {
+    margin: 0;
+    font-size: t.$font-size-sm;
+    color: t.$color-ink;
+  }
+}
+
+.proposals {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+}
+
+.proposal {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: t.$space-3;
+  padding: t.$space-4;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+
+  @media (max-width: 560px) {
+    grid-template-columns: 1fr auto;
+
+    .primary {
+      grid-column: 1 / -1;
+    }
+  }
+}
+
+.proposalTitle {
+  margin: 0 0 0.15rem;
+  font-weight: 600;
+  color: t.$color-ink;
+}
+
+.status {
+  @include m.mono-label;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.5625rem;
+  color: t.$color-ink-soft;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+
+  &[data-status="signed"] {
+    color: #15803d;
+    border-color: rgba(21, 128, 61, 0.35);
+  }
+}
+
+.primary {
+  @include m.button-base;
+  align-self: flex-start;
+  padding: t.$space-2 t.$space-4;
+  background: var(--brand);
+  color: t.$color-accent-foreground;
+  text-decoration: none;
+}
+
+.thread {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+}
+
+.message {
+  padding: t.$space-3;
+  border-radius: t.$radius-md;
+  background: t.$color-paper;
+  border: 1px solid t.$color-border;
+
+  &[data-author="agency"] {
+    background: t.$color-surface;
+    border-left: 3px solid var(--brand);
+  }
+}
+
+.messageMeta {
+  margin: 0 0 t.$space-1;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+}
+
+.messageBody {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  white-space: pre-line;
+}
+
+.footer {
+  text-align: center;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+}

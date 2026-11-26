@@ -51,6 +51,17 @@ interface ProposalFormProps {
   initialClientId?: string | null;
   /** Active catalog services for "Add from services". */
   services?: Service[];
+  /** The lead a new proposal is for, e.g. from the lead's page. */
+  lead?: LeadOption | null;
+  /** Kickoff questionnaires a new project can start with. */
+  kickoffTemplates?: { id: string; name: string }[];
+}
+
+interface LeadOption {
+  id: string;
+  name: string;
+  contactName?: string | null;
+  contactEmail?: string | null;
 }
 
 interface LineRow {
@@ -95,6 +106,8 @@ const ProposalForm = ({
   proposal,
   initialClientId = null,
   services = [],
+  lead = null,
+  kickoffTemplates = [],
 }: ProposalFormProps) => {
   const router = useRouter();
   const isEdit = Boolean(proposal);
@@ -103,11 +116,15 @@ const ProposalForm = ({
     proposal?.client_id ?? initialClientId ?? "",
   );
   const [title, setTitle] = useState(proposal?.title ?? "");
+  const [leadId, setLeadId] = useState<string | null>(
+    proposal ? proposal.lead_id : (lead?.id ?? null),
+  );
+  const leadName = proposal?.lead_name ?? lead?.name ?? null;
   const [recipientName, setRecipientName] = useState(
-    proposal?.recipient_name ?? "",
+    proposal?.recipient_name ?? lead?.contactName ?? "",
   );
   const [recipientEmail, setRecipientEmail] = useState(
-    proposal?.recipient_email ?? "",
+    proposal?.recipient_email ?? lead?.contactEmail ?? "",
   );
   const [content, setContent] = useState(proposal?.content ?? "");
   const [currency, setCurrency] = useState(proposal?.currency ?? "USD");
@@ -130,6 +147,17 @@ const ProposalForm = ({
   );
   const [requiresCountersign, setRequiresCountersign] = useState(
     proposal?.requires_countersign ?? false,
+  );
+  const [depositPercent, setDepositPercent] = useState(
+    proposal?.deposit_percent
+      ? String(Number.parseFloat(proposal.deposit_percent))
+      : "",
+  );
+  const [createProject, setCreateProject] = useState(
+    proposal?.create_project_on_accept ?? Boolean(lead),
+  );
+  const [kickoffTemplateId, setKickoffTemplateId] = useState(
+    proposal?.kickoff_template_id ?? "",
   );
   const [submitting, setSubmitting] = useState(false);
 
@@ -182,7 +210,7 @@ const ProposalForm = ({
     if (!canSubmit || submitting) return;
 
     const input: ProposalInput = {
-      leadId: proposal?.lead_id ?? null,
+      leadId,
       clientId: clientId || null,
       title: title.trim(),
       recipientName: recipientName.trim() || null,
@@ -192,6 +220,9 @@ const ProposalForm = ({
       taxRatePercent: taxRate || "0",
       validUntil: validUntil || null,
       requiresCountersign,
+      depositPercent: depositPercent.trim() || null,
+      createProjectOnAccept: createProject,
+      kickoffTemplateId: createProject ? kickoffTemplateId || null : null,
       lineItems: rows
         .filter((row) => row.description.trim() !== "")
         .map((row) => ({
@@ -222,6 +253,19 @@ const ProposalForm = ({
 
   return (
     <form className={styles.form} onSubmit={handleSubmit}>
+      {leadId && leadName && (
+        <p className={styles.leadChip}>
+          For the lead <strong>{leadName}</strong>. Signing it turns them
+          into a client.
+          <button
+            type="button"
+            className={styles.leadRemove}
+            onClick={() => setLeadId(null)}
+          >
+            Not for this lead
+          </button>
+        </p>
+      )}
       <div className={styles.grid}>
         <label className={styles.field}>
           <span className={styles.label}>Client</span>
@@ -401,6 +445,70 @@ const ProposalForm = ({
           />
         </div>
       </div>
+
+      <fieldset className={styles.acceptance}>
+        <legend className={styles.legend}>When it&apos;s accepted</legend>
+        <p className={styles.acceptanceHint}>
+          Once it&apos;s signed{requiresCountersign ? " and countersigned" : ""}
+          , {leadId ? "the lead becomes a client and " : ""}the signer is
+          invited to the client portal. You can also:
+        </p>
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="proposal-deposit">
+            Deposit (% of the total)
+          </label>
+          <input
+            id="proposal-deposit"
+            className={styles.input}
+            type="number"
+            min="0"
+            max="100"
+            step="1"
+            placeholder="No deposit"
+            value={depositPercent}
+            aria-describedby="proposal-deposit-help"
+            onChange={(event) => setDepositPercent(event.target.value)}
+          />
+          <small id="proposal-deposit-help" className={styles.help}>
+            Invoiced automatically; the project waits until it&apos;s paid.
+          </small>
+        </div>
+        <label className={styles.checkboxField}>
+          <input
+            type="checkbox"
+            checked={createProject}
+            onChange={(event) => setCreateProject(event.target.checked)}
+          />
+          <span>
+            Start a project for the work
+            <small>Named after the proposal, for the new client.</small>
+          </span>
+        </label>
+        {createProject && kickoffTemplates.length > 0 && (
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="proposal-kickoff">
+              Kickoff questionnaire
+            </label>
+            <select
+              id="proposal-kickoff"
+              className={styles.input}
+              value={kickoffTemplateId}
+              aria-describedby="proposal-kickoff-help"
+              onChange={(event) => setKickoffTemplateId(event.target.value)}
+            >
+              <option value="">None</option>
+              {kickoffTemplates.map((template) => (
+                <option key={template.id} value={template.id}>
+                  {template.name}
+                </option>
+              ))}
+            </select>
+            <small id="proposal-kickoff-help" className={styles.help}>
+              Sent to the client when they join their portal.
+            </small>
+          </div>
+        )}
+      </fieldset>
 
       <div className={styles.bottom}>
         <div className={styles.terms}>

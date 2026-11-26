@@ -42,9 +42,7 @@ class EmailAttachment:
     mime_type: str = "application/octet-stream"
 
 
-def _raw_message(
-    *, to: str, subject: str, body: str, html: str | None, attachments: list[EmailAttachment]
-) -> bytes:
+def _raw_message(*, to: str, subject: str, body: str, html: str | None, attachments: list[EmailAttachment]) -> bytes:
     """A MIME message for SES SendRawEmail, the only SES call that carries
     attachments: text + HTML alternatives, then each file."""
     message = EmailMessage()
@@ -422,4 +420,59 @@ async def send_proposal_signed_email(
             cta_url=view_url,
         ),
         attachments=[EmailAttachment(file_name=pdf_name, content=pdf, mime_type="application/pdf")],
+    )
+
+
+async def send_proposal_accepted_email(
+    *, to: str, agency_name: str, title: str, accept_url: str, deposit_text: str | None
+) -> None:
+    """Sent to a proposal's signer once it's complete and they've been set up
+    as a client: their invitation into the agency's client portal, and the
+    deposit waiting there, if any. The link carries a one-time invitation
+    token, same as a normal portal invite."""
+    next_step = (
+        f"Your deposit invoice for {deposit_text} is waiting in the portal; work starts once it's paid."
+        if deposit_text
+        else "Your project, files and messages with the team will all be there."
+    )
+    await send_email(
+        to=to,
+        subject=f"Welcome aboard, {agency_name}'s client portal is ready",
+        body=(
+            f"Thanks for signing “{title}”. {agency_name} has set you up with a client portal.\n\n"
+            f"{next_step}\n\n"
+            f"Open your portal: {accept_url}\n\n"
+            "This link is just for you and expires in 7 days."
+        ),
+        html=render_html(
+            heading="Welcome aboard",
+            paragraphs=[
+                f"Thanks for signing “{title}”. {agency_name} has set you up with a client portal.",
+                next_step,
+                "This link is just for you and expires in 7 days.",
+            ],
+            cta_label="Open your portal",
+            cta_url=accept_url,
+        ),
+    )
+
+
+async def send_lead_portal_reply_email(
+    *, to: str, agency_name: str, replier_name: str, body: str, portal_url: str
+) -> None:
+    """A reply from the agency to a question asked in a lead portal, with a
+    link back to the conversation."""
+    await send_email(
+        to=to,
+        subject=f"{replier_name} from {agency_name} replied",
+        body=(
+            f"{replier_name} from {agency_name} replied to your question:\n\n{body}\n\n"
+            f"Reply or review your proposal: {portal_url}"
+        ),
+        html=render_html(
+            heading=f"{replier_name} replied",
+            paragraphs=[f"{replier_name} from {agency_name} replied to your question:", body],
+            cta_label="Open the conversation",
+            cta_url=portal_url,
+        ),
     )

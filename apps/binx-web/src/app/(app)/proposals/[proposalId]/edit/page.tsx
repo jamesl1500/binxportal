@@ -15,6 +15,7 @@ import { notFound, redirect } from "next/navigation";
 import { AuthApiError } from "@/lib/auth";
 import { getCurrentAgencyContext } from "@/lib/agencies";
 import { getAgencyClients } from "@/lib/clients";
+import { getKickoffTemplates } from "@/lib/kickoffs";
 import { getServices } from "@/lib/services";
 import { getProposal } from "@/lib/proposals";
 import ProposalForm from "@/components/proposals/ProposalForm/ProposalForm";
@@ -49,9 +50,10 @@ const EditProposalPage = async ({ params }: EditProposalPageProps) => {
     redirect(`/proposals/${proposalId}`);
   }
 
-  const [clients, services] = await Promise.all([
+  const [clients, services, kickoffTemplates] = await Promise.all([
     getAgencyClients(currentAgency.id),
     getServices(currentAgency.id),
+    getKickoffTemplates(currentAgency.id),
   ]);
 
   return (
@@ -77,6 +79,10 @@ const EditProposalPage = async ({ params }: EditProposalPageProps) => {
           }))}
           proposal={proposal}
           services={services}
+          kickoffTemplates={kickoffTemplates.map((t) => ({
+            id: t.id,
+            name: t.name,
+          }))}
         />
       </div>
     </div>

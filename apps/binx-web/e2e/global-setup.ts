@@ -121,4 +121,18 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
     (page) => expect(page.getByText(`${DEMO.clientName} · ${DEMO.agency}`)).toBeVisible(),
     path.join(AUTH_DIR, "client.json"),
   );
+  await saveSignedInState(
+    baseURL,
+    DEMO.sales.email,
+    "/dashboard",
+    (page) => expect(page.getByRole("navigation", { name: "Primary" })).toBeVisible(),
+    path.join(AUTH_DIR, "sales.json"),
+  );
+  await saveSignedInState(
+    baseURL,
+    DEMO.sales.buyer.email,
+    "/portal",
+    (page) => expect(page.getByText(`${DEMO.sales.clientName} · ${DEMO.sales.agency}`)).toBeVisible(),
+    path.join(AUTH_DIR, "buyer.json"),
+  );
 }

@@ -9,6 +9,7 @@ vi.mock("@/lib/proposals", () => ({
   uploadProposalAttachment: vi.fn(),
   deleteProposalAttachment: vi.fn(),
   countersignProposal: vi.fn(),
+  retryProposalAcceptance: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -23,6 +24,7 @@ import { redirect } from "next/navigation";
 
 import {
   countersignProposalAction,
+  retryProposalAcceptanceAction,
   createProposalAction,
   deleteProposalAction,
   deleteProposalAttachmentAction,
@@ -164,5 +166,12 @@ describe("countersignProposalAction", () => {
     await expect(countersignProposalAction(agencyId, "p1", true, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")).resolves.toEqual({
       error: "The client hasn't signed this proposal yet",
     });
+  });
+});
+
+describe("retryProposalAcceptanceAction", () => {
+  it("retries and refreshes", async () => {
+    vi.mocked(proposals.retryProposalAcceptance).mockResolvedValueOnce({ id: "p1" } as never);
+    await expect(retryProposalAcceptanceAction(agencyId, "p1")).resolves.toEqual({ proposal: { id: "p1" } });
   });
 });

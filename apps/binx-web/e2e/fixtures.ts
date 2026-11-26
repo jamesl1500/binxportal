@@ -10,7 +10,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { test as base, type Page } from "@playwright/test";
+import { expect as baseExpect, test as base, type Locator, type Page } from "@playwright/test";
 
 export const AUTH_DIR = path.join(__dirname, ".auth");
 
@@ -47,6 +47,19 @@ export const DEMO = {
     email: "e2e-client@fjordandfield.example.com",
     name: "Priya Nair",
   },
+  /**
+   * A second agency on the Starter plan, for the sales flows (lead portals,
+   * turning a signed proposal into a client), kept apart from Northlight's
+   * Free-plan numbers that other specs assert on.
+   */
+  sales: {
+    email: "e2e-sales@harborlane.example.com",
+    name: "Riley Chen",
+    agency: "Harbor Lane Studio",
+    /** Harbor Lane's client, with a portal contact (the buyer). */
+    clientName: "Pine & Co",
+    buyer: { email: "e2e-buyer@pineandco.example.com", name: "Jordan Pike" },
+  },
   agency: "Northlight Studio",
   clientName: "Fjord & Field",
   projectName: "Brand & Website Refresh",
@@ -55,6 +68,8 @@ export const DEMO = {
 type Fixtures = {
   staffPage: Page;
   clientPage: Page;
+  salesPage: Page;
+  buyerPage: Page;
 };
 
 export const test = base.extend<Fixtures>({
@@ -72,6 +87,36 @@ export const test = base.extend<Fixtures>({
     await provide(page);
     await context.close();
   },
+  salesPage: async ({ browser }, provide) => {
+    const context = await browser.newContext({ storageState: path.join(AUTH_DIR, "sales.json") });
+    const page = await context.newPage();
+    await provide(page);
+    await context.close();
+  },
+  buyerPage: async ({ browser }, provide) => {
+    const context = await browser.newContext({ storageState: path.join(AUTH_DIR, "buyer.json") });
+    const page = await context.newPage();
+    await provide(page);
+    await context.close();
+  },
 });
 
 export { expect } from "@playwright/test";
+
+/**
+ * Clicks `trigger` until `effect` shows. On a freshly loaded page the server
+ * HTML is clickable a moment before React hydrates and attaches handlers,
+ * and a click in that window is silently lost; on a busy dev server that
+ * window can be long. Retrying the click (rather than sleeping) keeps the
+ * test as fast as the page allows.
+ */
+export async function clickUntilVisible(trigger: Locator, effect: Locator): Promise<void> {
+  await baseExpect(async () => {
+    if (await effect.isVisible()) return;
+    // Only click while the trigger is still there: once the first click has
+    // landed it may be gone (replaced by what it opened), and a click on a
+    // missing element would wait forever.
+    if (await trigger.isVisible()) await trigger.click({ timeout: 2_000 });
+    await baseExpect(effect).toBeVisible({ timeout: 5_000 });
+  }).toPass({ timeout: 45_000 });
+}

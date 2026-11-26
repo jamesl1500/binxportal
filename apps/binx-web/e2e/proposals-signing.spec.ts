@@ -13,19 +13,21 @@ import path from "node:path";
 
 import type { Page } from "@playwright/test";
 
-import { AUTH_DIR, DEMO, expect, test } from "./fixtures";
+import { AUTH_DIR, clickUntilVisible, DEMO, expect, test } from "./fixtures";
 
 const API_URL = process.env.E2E_API_URL ?? "http://localhost:8000";
 const RUN = Date.now().toString(36);
 
-/** The staff session's bearer token, for the few reads the UI doesn't surface (the share URL). */
-function staffToken(): string {
-  const state = JSON.parse(fs.readFileSync(path.join(AUTH_DIR, "staff.json"), "utf8"));
+type Account = "staff" | "sales";
+
+/** A session's bearer token, for the few reads the UI doesn't surface (the share URL). */
+function tokenFor(account: Account): string {
+  const state = JSON.parse(fs.readFileSync(path.join(AUTH_DIR, `${account}.json`), "utf8"));
   return state.cookies.find((c: { name: string }) => c.name === "binx_access_token").value;
 }
 
-async function apiGet(page: Page, url: string) {
-  const res = await page.request.get(`${API_URL}${url}`, { headers: { Authorization: `Bearer ${staffToken()}` } });
+async function apiGet(page: Page, url: string, account: Account = "staff") {
+  const res = await page.request.get(`${API_URL}${url}`, { headers: { Authorization: `Bearer ${tokenFor(account)}` } });
   expect(res.ok()).toBeTruthy();
   return res.json();
 }
@@ -128,81 +130,84 @@ test.describe("services catalog", () => {
   });
 });
 
+// The signing flows run as Harbor Lane (DEMO.sales) and its portal client:
+// each signature notifies the proposal's author, and those live toasts must
+// not land on the Northlight pages other specs are clicking through.
 test.describe("proposal signing", () => {
   test("client signs in the portal, the agency countersigns, both see the signed record", async ({
-    staffPage,
-    clientPage,
+    salesPage,
+    buyerPage,
   }) => {
     const service = `Brand sprint ${RUN}`;
-    await addService(staffPage, service, "fixed", "8000", "Two-week brand sprint.");
-    const title = `Brand sprint for ${DEMO.clientName} ${RUN}`;
-    const id = await draftFromService(staffPage, { title, service, client: DEMO.clientName, countersign: true });
+    await addService(salesPage, service, "fixed", "8000", "Two-week brand sprint.");
+    const title = `Brand sprint for ${DEMO.sales.clientName} ${RUN}`;
+    const id = await draftFromService(salesPage, { title, service, client: DEMO.sales.clientName, countersign: true });
 
     // A document travels with the proposal.
-    await staffPage.getByLabel(/attach files/i).setInputFiles({
+    await salesPage.getByLabel(/attach files/i).setInputFiles({
       name: "Statement of work.pdf",
       mimeType: "application/pdf",
       buffer: Buffer.from("%PDF-1.4 statement of work"),
     });
-    await expect(staffPage.getByRole("link", { name: /Statement of work\.pdf/ })).toBeVisible();
-    await send(staffPage);
+    await expect(salesPage.getByRole("link", { name: /Statement of work\.pdf/ })).toBeVisible();
+    await send(salesPage);
 
     // The client signs in their portal, after consenting.
-    await clientPage.goto(`/portal/proposals/${id}`);
-    await expect(clientPage.getByRole("link", { name: /Statement of work\.pdf/ })).toBeVisible();
-    await expect(clientPage.getByText("Two-week brand sprint.")).toBeVisible();
-    await clientPage.getByRole("button", { name: "Sign this proposal" }).click();
-    const sign = clientPage.getByRole("button", { name: "Sign proposal" });
+    await buyerPage.goto(`/portal/proposals/${id}`);
+    await expect(buyerPage.getByRole("link", { name: /Statement of work\.pdf/ })).toBeVisible();
+    await expect(buyerPage.getByText("Two-week brand sprint.")).toBeVisible();
+    const sign = buyerPage.getByRole("button", { name: "Sign proposal" });
+    await clickUntilVisible(buyerPage.getByRole("button", { name: "Sign this proposal" }), sign);
     await expect(sign).toBeDisabled();
-    await clientPage.getByRole("checkbox").check();
+    await buyerPage.getByRole("checkbox").check();
     await sign.click();
-    await expect(clientPage.getByText("Awaiting the agency's countersignature.")).toBeVisible();
+    await expect(buyerPage.getByText("Awaiting the agency's countersignature.")).toBeVisible();
 
     // The agency countersigns.
-    await staffPage.goto(`/proposals/${id}`);
-    await expect(staffPage.getByRole("heading", { name: "Ready for your countersignature" })).toBeVisible();
-    await staffPage.getByRole("checkbox").check();
-    await staffPage.getByRole("button", { name: "Countersign proposal" }).click();
-    await expect(staffPage.getByText(/Countersigned by .* for the/)).toBeVisible();
-    const history = staffPage.getByRole("heading", { name: "History" }).locator("xpath=../..");
+    await salesPage.goto(`/proposals/${id}`);
+    await expect(salesPage.getByRole("heading", { name: "Ready for your countersignature" })).toBeVisible();
+    await salesPage.getByRole("checkbox").check();
+    await salesPage.getByRole("button", { name: "Countersign proposal" }).click();
+    await expect(salesPage.getByText(/Countersigned by .* for the/)).toBeVisible();
+    const history = salesPage.getByRole("heading", { name: "History" }).locator("xpath=../..");
     for (const event of ["Sent", "Opened", "Signed", "countersigned"]) {
       await expect(history.getByText(event, { exact: false }).first()).toBeVisible();
     }
 
     // The signed record: the staff certificate and its PDF...
-    await staffPage.getByRole("link", { name: /view the signing certificate/i }).click();
-    await expect(staffPage.getByText("The signed record matches its fingerprint.")).toBeVisible();
-    await expect(staffPage.getByRole("heading", { name: "Agency countersignature" })).toBeVisible();
-    const pdfHref = await staffPage.getByRole("link", { name: /download pdf/i }).getAttribute("href");
-    const staffPdf = await staffPage.request.get(pdfHref!);
+    await salesPage.getByRole("link", { name: /view the signing certificate/i }).click();
+    await expect(salesPage.getByText("The signed record matches its fingerprint.")).toBeVisible();
+    await expect(salesPage.getByRole("heading", { name: "Agency countersignature" })).toBeVisible();
+    const pdfHref = await salesPage.getByRole("link", { name: /download pdf/i }).getAttribute("href");
+    const staffPdf = await salesPage.request.get(pdfHref!);
     expect(staffPdf.headers()["content-type"]).toBe("application/pdf");
     expect((await staffPdf.body()).subarray(0, 4).toString()).toBe("%PDF");
 
     // ...and the client's, from the portal.
-    await clientPage.goto(`/portal/proposals/${id}`);
-    await clientPage.getByRole("link", { name: /view the signing certificate/i }).click();
-    await expect(clientPage.getByRole("heading", { name: "Client signature" })).toBeVisible();
-    await expect(clientPage.getByText("Client portal (signed-in account)")).toBeVisible();
-    const portalPdf = await clientPage.request.get(`/api/portal/proposals/${id}/certificate`);
+    await buyerPage.goto(`/portal/proposals/${id}`);
+    await buyerPage.getByRole("link", { name: /view the signing certificate/i }).click();
+    await expect(buyerPage.getByRole("heading", { name: "Client signature" })).toBeVisible();
+    await expect(buyerPage.getByText("Client portal (signed-in account)")).toBeVisible();
+    const portalPdf = await buyerPage.request.get(`/api/portal/proposals/${id}/certificate`);
     expect(portalPdf.headers()["content-type"]).toBe("application/pdf");
   });
 
-  test("a recipient without an account signs from the share link", async ({ staffPage, browser }) => {
+  test("a recipient without an account signs from the share link", async ({ salesPage, browser }) => {
     const service = `Audit ${RUN}`;
-    await addService(staffPage, service, "fixed", "1500");
-    const id = await draftFromService(staffPage, { title: `Site audit ${RUN}`, service });
-    await send(staffPage);
+    await addService(salesPage, service, "fixed", "1500");
+    const id = await draftFromService(salesPage, { title: `Site audit ${RUN}`, service });
+    await send(salesPage);
 
-    const agencyId = (await apiGet(staffPage, "/agencies/mine")).find(
-      (a: { name: string }) => a.name === DEMO.agency,
+    const agencyId = (await apiGet(salesPage, "/agencies/mine", "sales")).find(
+      (a: { name: string }) => a.name === DEMO.sales.agency,
     ).id;
-    const { share_url: shareUrl } = await apiGet(staffPage, `/agencies/${agencyId}/proposals/${id}`);
+    const { share_url: shareUrl } = await apiGet(salesPage, `/agencies/${agencyId}/proposals/${id}`, "sales");
     const shareLink = new URL(shareUrl);
 
     const visitor = await browser.newContext();
     const page = await visitor.newPage();
     await page.goto(`${shareLink.pathname}${shareLink.search}`);
-    await page.getByRole("button", { name: "Sign this proposal" }).click();
+    await clickUntilVisible(page.getByRole("button", { name: "Sign this proposal" }), page.getByLabel("Your email"));
     await page.getByLabel("Your email").fill(`jane+${RUN}@fjordandfield.example.com`);
     await expect(page.getByText(/You're signing document/)).toBeVisible();
     await expect(page.getByRole("button", { name: "Sign proposal" })).toBeDisabled();

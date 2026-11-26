@@ -93,6 +93,16 @@ class Proposal(Base):
     # what accepting a proposal (converting a lead to a client) keys off.
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
 
+    # What accepting it sets in motion (acceptance.py), chosen on the draft:
+    # a deposit invoice for this share of the total, and a project (with a
+    # kickoff questionnaire from a template) for the work. With a deposit,
+    # the project waits until the deposit is paid.
+    deposit_percent: Mapped[Decimal | None] = mapped_column(Numeric(6, 3), default=None)
+    create_project_on_accept: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    kickoff_template_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("kickoff_templates.id", ondelete="SET NULL"), default=None
+    )
+
 
 class ProposalLineItem(Base):
     __tablename__ = "proposal_line_items"
@@ -170,6 +180,50 @@ EVENT_VIEWED = "viewed"
 EVENT_SIGNED = "signed"
 EVENT_COUNTERSIGNED = "countersigned"
 EVENT_DECLINED = "declined"
+# Acceptance (acceptance.py), after the proposal is complete.
+EVENT_CLIENT_CREATED = "client_created"
+EVENT_PORTAL_INVITED = "portal_invited"
+EVENT_DEPOSIT_INVOICED = "deposit_invoiced"
+EVENT_DEPOSIT_PAID = "deposit_paid"
+EVENT_PROJECT_CREATED = "project_created"
+EVENT_KICKOFF_SENT = "kickoff_sent"
+EVENT_ACCEPTANCE_BLOCKED = "acceptance_blocked"
+
+ACCEPTANCE_IN_PROGRESS = "in_progress"
+ACCEPTANCE_AWAITING_DEPOSIT = "awaiting_deposit"
+ACCEPTANCE_DONE = "done"
+ACCEPTANCE_BLOCKED = "blocked"
+
+
+# What accepting a completed proposal did: the client it landed on (a lead
+# converted, or the proposal's existing client), the signer's portal
+# invitation, the deposit invoice, and the project and kickoff. One row per
+# proposal; every step is idempotent, so a blocked acceptance (a plan limit,
+# say) can be retried and picks up where it stopped.
+class ProposalAcceptance(Base):
+    __tablename__ = "proposal_acceptances"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    proposal_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("proposals.id", ondelete="CASCADE"), unique=True, index=True
+    )
+    status: Mapped[str] = mapped_column(String(20), default=ACCEPTANCE_IN_PROGRESS)
+    # Why it stopped, when status is blocked, in words for the agency.
+    blocked_reason: Mapped[str | None] = mapped_column(String(1024), default=None)
+    client_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("agency_clients.id", ondelete="SET NULL"), default=None, index=True
+    )
+    # True when this acceptance converted the proposal's lead into the client.
+    converted_lead: Mapped[bool] = mapped_column(Boolean, default=False)
+    invited_email: Mapped[str | None] = mapped_column(String(255), default=None)
+    deposit_invoice_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("invoices.id", ondelete="SET NULL"), default=None, index=True
+    )
+    deposit_paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    project_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("projects.id", ondelete="SET NULL"), default=None)
+    kickoff_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("kickoffs.id", ondelete="SET NULL"), default=None)
+    kickoff_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
 
 
 # The agency's signature on a proposal that requires one, made by an owner or

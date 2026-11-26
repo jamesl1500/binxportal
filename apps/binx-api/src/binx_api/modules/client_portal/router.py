@@ -830,7 +830,7 @@ async def read_portal_proposal(
     await proposals_signing.ensure_document_record(db, proposal)
     proposal = await proposals_service.record_view(db, proposal, _portal_visitor(request, current_user))
     lead_name, client_name = await _proposal_names(db, proposal)
-    return await _proposal_detail_read(db, proposal, lead_name, client_name)
+    return await _proposal_detail_read(db, proposal, lead_name, client_name, include_acceptance=False)
 
 
 @router.get("/proposals/{proposal_id}/certificate", response_model=ProposalCertificateRead)
@@ -885,7 +885,7 @@ async def sign_portal_proposal(
         actor_user_id=current_user.id,
     )
     lead_name, client_name = await _proposal_names(db, proposal)
-    return await _proposal_detail_read(db, proposal, lead_name, client_name)
+    return await _proposal_detail_read(db, proposal, lead_name, client_name, include_acceptance=False)
 
 
 @router.post("/proposals/{proposal_id}/decline", response_model=ProposalDetailRead)
@@ -903,7 +903,7 @@ async def decline_portal_proposal(
         db, proposal, reason=data.reason, visitor=_portal_visitor(request, current_user)
     )
     lead_name, client_name = await _proposal_names(db, proposal)
-    return await _proposal_detail_read(db, proposal, lead_name, client_name)
+    return await _proposal_detail_read(db, proposal, lead_name, client_name, include_acceptance=False)
 
 
 # ---- Messages ------------------------------------------------------

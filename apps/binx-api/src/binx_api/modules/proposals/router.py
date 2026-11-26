@@ -8,6 +8,7 @@ from binx_api.core.dependencies import CurrentUser, DbSession
 from binx_api.core.rate_limit import client_ip, client_user_agent
 from binx_api.modules.agencies.dependencies import require_agency_role
 from binx_api.modules.agencies.models import ROLE_ADMIN, ROLE_MEMBER, ROLE_OWNER, Agency
+from binx_api.modules.proposals import acceptance as acceptance_service
 from binx_api.modules.proposals import service, signing
 from binx_api.modules.proposals.certificate_pdf import certificate_file_name, render_certificate_pdf
 from binx_api.modules.proposals.models import (
@@ -19,6 +20,7 @@ from binx_api.modules.proposals.models import (
 )
 from binx_api.modules.proposals.schemas import (
     CountersignRequest,
+    ProposalAcceptanceRead,
     ProposalAttachmentRead,
     ProposalCertificateRead,
     ProposalCreate,
@@ -149,7 +151,12 @@ def _read(proposal: Proposal, lead_name: str | None, client_name: str | None) ->
 
 
 async def _detail_read(
-    db: DbSession, proposal: Proposal, lead_name: str | None, client_name: str | None
+    db: DbSession,
+    proposal: Proposal,
+    lead_name: str | None,
+    client_name: str | None,
+    *,
+    include_acceptance: bool = True,
 ) -> ProposalDetailRead:
     base = _read(proposal, lead_name, client_name)
     line_items = await service.list_line_items(db, proposal.id)
@@ -167,6 +174,39 @@ async def _detail_read(
         attachments=[attachment_read(item) for item in attachments],
         signature=signature_read(signature),
         **(await signing_fields(db, proposal)),
+        deposit_percent=proposal.deposit_percent,
+        create_project_on_accept=proposal.create_project_on_accept,
+        kickoff_template_id=proposal.kickoff_template_id,
+        acceptance=await acceptance_read(db, proposal) if include_acceptance else None,
+    )
+
+
+async def acceptance_read(db: DbSession, proposal: Proposal) -> ProposalAcceptanceRead | None:
+    from binx_api.modules.agencies.models import AgencyClient
+    from binx_api.modules.invoicing.models import Invoice
+    from binx_api.modules.projects.models import Project
+
+    row = await acceptance_service.get_acceptance(db, proposal.id)
+    if row is None:
+        return None
+    client = await db.get(AgencyClient, row.client_id) if row.client_id else None
+    invoice = await db.get(Invoice, row.deposit_invoice_id) if row.deposit_invoice_id else None
+    project = await db.get(Project, row.project_id) if row.project_id else None
+    return ProposalAcceptanceRead(
+        status=row.status,
+        blocked_reason=row.blocked_reason,
+        client_id=row.client_id,
+        client_name=client.name if client else None,
+        converted_lead=row.converted_lead,
+        invited_email=row.invited_email,
+        deposit_invoice_id=row.deposit_invoice_id,
+        deposit_invoice_number=invoice.number if invoice else None,
+        deposit_invoice_status=invoice.status if invoice else None,
+        deposit_paid_at=row.deposit_paid_at,
+        project_id=row.project_id,
+        project_name=project.name if project else None,
+        kickoff_sent_at=row.kickoff_sent_at,
+        completed_at=row.completed_at,
     )
 
 
@@ -223,6 +263,9 @@ async def create_proposal(
         valid_until=data.valid_until,
         line_items=data.line_items,
         requires_countersign=data.requires_countersign,
+        deposit_percent=data.deposit_percent,
+        create_project_on_accept=data.create_project_on_accept,
+        kickoff_template_id=data.kickoff_template_id,
     )
     lead_name, client_name = await _names(db, proposal)
     return await _detail_read(db, proposal, lead_name, client_name)
@@ -256,6 +299,9 @@ async def update_proposal(
         valid_until=data.valid_until,
         line_items=data.line_items,
         requires_countersign=data.requires_countersign,
+        deposit_percent=data.deposit_percent,
+        create_project_on_accept=data.create_project_on_accept,
+        kickoff_template_id=data.kickoff_template_id,
     )
     lead_name, client_name = await _names(db, proposal)
     return await _detail_read(db, proposal, lead_name, client_name)
@@ -310,6 +356,20 @@ async def proposal_certificate_pdf(db: DbSession, agency_and_role: AnyMember, pr
     agency, _role = agency_and_role
     proposal = await service.get_proposal_or_404(db, agency.id, proposal_id)
     return await certificate_pdf_response(db, proposal)
+
+
+@router.post("/{proposal_id}/acceptance/retry", response_model=ProposalDetailRead)
+async def retry_acceptance(db: DbSession, agency_and_role: AnyMember, proposal_id: uuid.UUID) -> ProposalDetailRead:
+    """Re-runs a blocked acceptance (after upgrading the plan, say). Picks
+    up where it stopped; finished steps aren't repeated."""
+    agency, _role = agency_and_role
+    proposal = await service.get_proposal_or_404(db, agency.id, proposal_id)
+    if proposal.completed_at is None:
+        raise HTTPException(status.HTTP_409_CONFLICT, "This proposal isn't fully signed yet")
+    await acceptance_service.accept(db, proposal)
+    proposal = await service.get_proposal_or_404(db, agency.id, proposal_id)
+    lead_name, client_name = await _names(db, proposal)
+    return await _detail_read(db, proposal, lead_name, client_name)
 
 
 @router.post("/{proposal_id}/countersign", response_model=ProposalDetailRead)
