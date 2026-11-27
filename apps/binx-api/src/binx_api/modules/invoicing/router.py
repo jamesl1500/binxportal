@@ -9,7 +9,7 @@ from binx_api.modules.agencies.dependencies import require_agency_role
 from binx_api.modules.agencies.models import ROLE_ADMIN, ROLE_MEMBER, ROLE_OWNER, Agency, AgencyClient
 from binx_api.modules.ai import service as ai_service
 from binx_api.modules.ai.schemas import AiDraftRead
-from binx_api.modules.invoicing import fees, service
+from binx_api.modules.invoicing import fees, payouts, service
 from binx_api.modules.invoicing.models import STATUS_VOID, Invoice, InvoiceLineItem, InvoicePayment
 from binx_api.modules.invoicing.schemas import (
     BillingSettingsRead,
@@ -29,6 +29,7 @@ from binx_api.modules.invoicing.schemas import (
     PaymentRead,
     StripeConnectStatusRead,
     StripeOnboardingLinkRead,
+    StripePayoutsSessionRead,
 )
 from binx_api.modules.time_tracking import service as time_tracking_service
 
@@ -212,6 +213,19 @@ async def read_stripe_connect_status(
         onboarded_at=settings_row.stripe_connect_onboarded_at,
         created_by_name=await service.connect_created_by_name(db, settings_row),
         created_at=settings_row.stripe_connect_created_at,
+    )
+
+
+@router.post("/billing-settings/stripe/payouts-session", response_model=StripePayoutsSessionRead)
+async def start_stripe_payouts_session(db: DbSession, agency_and_role: AgencyAndRole) -> StripePayoutsSessionRead:
+    """Owners and admins: the agency's Stripe balance and payouts, and paying
+    out, through Stripe's embedded Payouts component."""
+    agency, _role = agency_and_role
+    session = await payouts.start_payouts_session(db, agency)
+    return StripePayoutsSessionRead(
+        client_secret=session.client_secret,
+        publishable_key=session.publishable_key,
+        expires_at=session.expires_at,
     )
 
 

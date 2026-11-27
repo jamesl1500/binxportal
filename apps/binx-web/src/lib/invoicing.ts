@@ -268,6 +268,34 @@ export async function startStripeConnectOnboarding(
   }
 }
 
+/**
+ * startStripePayoutsSession
+ *
+ * `POST /agencies/{agencyId}/billing-settings/stripe/payouts-session`: a
+ * single-use client secret (and the publishable key) for Stripe's embedded
+ * Payouts component on this agency's own Stripe account. Owners and admins.
+ *
+ * @function startStripePayoutsSession
+ * @throws {AuthApiError} - 409 until Stripe is connected; 403 for members.
+ */
+export async function startStripePayoutsSession(
+  agencyId: string,
+): Promise<{ client_secret: string; publishable_key: string; expires_at: string }> {
+  const headers = await authHeader();
+  try {
+    const { data } = await api.post<{
+      client_secret: string;
+      publishable_key: string;
+      expires_at: string;
+    }>(`/agencies/${agencyId}/billing-settings/stripe/payouts-session`, undefined, {
+      headers,
+    });
+    return data;
+  } catch (error) {
+    throw apiError(error, "Unable to open your payouts");
+  }
+}
+
 // ---- Invoices ----
 
 function toInvoicePayload(input: InvoiceInput) {

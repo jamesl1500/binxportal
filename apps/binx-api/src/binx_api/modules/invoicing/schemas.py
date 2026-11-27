@@ -246,6 +246,15 @@ class CheckoutConfirmRead(BaseModel):
     invoice: InvoiceDetailRead
 
 
+class StripePayoutsSessionRead(BaseModel):
+    """Opens Stripe's embedded Payouts component for this agency's own
+    account (invoicing/payouts.py). Single use, and short-lived."""
+
+    client_secret: str
+    publishable_key: str
+    expires_at: datetime
+
+
 class StripeConnectStatusRead(BaseModel):
     connected: bool
     charges_enabled: bool

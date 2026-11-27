@@ -1,0 +1,27 @@
+@use "../../../styles/tokens" as t;
+
+.panel {
+  padding: t.$space-5;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  min-height: 12rem;
+}
+
+.loading,
+.error {
+  margin: 0;
+  padding: t.$space-5;
+  font-size: t.$font-size-sm;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+}
+
+.loading {
+  color: t.$color-ink-soft;
+}
+
+.error {
+  color: t.$color-danger;
+}
