@@ -19,6 +19,7 @@ from fastapi import HTTPException
 from sqlalchemy import select
 
 from binx_api.core import stripe_client, stripe_events
+from binx_api.core.errors import UpstreamError
 from binx_api.modules.invoicing import service
 from binx_api.modules.invoicing.models import AgencyBillingSettings
 from tests.factories import make_agency, make_user
@@ -163,8 +164,10 @@ class TestStartConnectOnboarding:
             raise stripe.APIConnectionError("Stripe is unreachable")
 
         monkeypatch.setattr(stripe_client, "create_connect_account", fail)
-        with pytest.raises(stripe.APIConnectionError):
+        with pytest.raises(UpstreamError) as raised:
             await service.start_connect_onboarding(db_session, agency, created_by=owner)
+        # The Stripe error stays attached, so the report shows the real cause.
+        assert isinstance(raised.value.__cause__, stripe.APIConnectionError)
 
         row = (
             await db_session.execute(select(AgencyBillingSettings).where(AgencyBillingSettings.agency_id == agency_id))
@@ -344,3 +347,51 @@ class TestConnectAccountWebhookRouter:
             "/webhooks/stripe/connect-account", content=b"{}", headers={"stripe-signature": "t=1,v1=x"}
         )
         assert second.status_code == 200
+
+
+class TestStripeRefusesToCreateTheAccount:
+    async def test_the_agency_gets_a_clear_reported_error_not_a_500(
+        self, client, db_session, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Production, Nov 2026: Binx's own live Stripe account wasn't
+        activated, and Stripe refused to create connected accounts."""
+        from tests.conftest import auth_headers
+
+        monkeypatch.setattr(stripe_client.settings, "stripe_secret_key", "sk_live_fake")
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+
+        async def refuse(_params):
+            raise stripe.InvalidRequestError(
+                "Your account must be activated in order to create accounts. You can activate your accounts at "
+                "https://dashboard.stripe.com/account/onboarding.",
+                param=None,
+            )
+
+        monkeypatch.setattr(stripe_client, "create_connect_account", refuse)
+        resp = await client.post(f"/agencies/{agency.id}/billing-settings/stripe/connect", headers=auth_headers(owner))
+
+        assert resp.status_code == 502
+        body = resp.json()
+        assert body["code"] == "stripe_connect_unavailable"
+        assert body["detail"].startswith("We couldn't connect Stripe just now.")
+        assert "dashboard.stripe.com" not in body["detail"]
+        # Reported (it carries a reference to quote to support).
+        assert body.get("reference")
+
+    async def test_a_failed_onboarding_link_is_reported_the_same_way(
+        self, db_session, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(stripe_client.settings, "stripe_secret_key", "sk_test_fake")
+        owner = await make_user(db_session)
+        agency = await make_agency(db_session, owner=owner)
+        billing = await service.get_or_create_billing_settings(db_session, agency)
+        billing.stripe_connect_account_id = "acct_existing"
+        await db_session.commit()
+
+        async def refuse(_params):
+            raise stripe.InvalidRequestError("No such account", param="account")
+
+        monkeypatch.setattr(stripe_client, "create_account_link", refuse)
+        with pytest.raises(UpstreamError):
+            await service.start_connect_onboarding(db_session, agency, created_by=owner)

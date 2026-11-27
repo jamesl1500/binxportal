@@ -24,6 +24,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from binx_api.core import stripe_client
 from binx_api.core.config import get_settings
 from binx_api.core.database import get_or_create
+from binx_api.core.errors import UpstreamError
 from binx_api.modules.activity import service as activity_service
 from binx_api.modules.activity.models import CATEGORY_INVOICING as ACTIVITY_CATEGORY_INVOICING
 from binx_api.modules.activity.models import CATEGORY_SETTINGS as ACTIVITY_CATEGORY_SETTINGS
@@ -169,6 +170,21 @@ def _connect_return_url(agency_id: uuid.UUID, state: str, return_to: ConnectRetu
     return f"{settings.frontend_url}/api/stripe/connect/return?{query}"
 
 
+# What an agency sees when Stripe won't set up its account. A refusal here
+# is nearly always on the platform's side (e.g. Binx's own Stripe account not
+# yet activated for live payments, or Connect not enabled on it), never
+# something the agency can fix, so the message doesn't ask them to change
+# anything; the error is reported with its Stripe request id.
+CONNECT_UNAVAILABLE = (
+    "We couldn't connect Stripe just now. It's a problem on our side, not with your account; "
+    "we've been notified. Please try again later."
+)
+
+
+def _connect_failed(exc: stripe.StripeError) -> UpstreamError:
+    return UpstreamError(CONNECT_UNAVAILABLE, service="stripe", code="stripe_connect_unavailable")
+
+
 async def _create_connect_account(
     db: AsyncSession, agency: Agency, billing_settings: AgencyBillingSettings, *, created_by: User, country: str
 ) -> AgencyBillingSettings:
@@ -215,6 +231,9 @@ async def _create_connect_account(
         account_params["contact_email"] = billing_settings.contact_email
     try:
         account = await stripe_client.create_connect_account(account_params)
+    except stripe.StripeError as exc:
+        await db.rollback()  # releases the lock
+        raise _connect_failed(exc) from exc
     except Exception:
         await db.rollback()  # releases the lock
         raise
@@ -270,7 +289,15 @@ async def start_connect_onboarding(
     account_id = billing_settings.stripe_connect_account_id
     if account_id is None:  # set just above; narrows the type
         raise HTTPException(status.HTTP_502_BAD_GATEWAY, "Couldn't create a Stripe account")
-    link = await stripe_client.create_account_link(
+    try:
+        link = await _create_onboarding_link(agency.id, account_id, return_to)
+    except stripe.StripeError as exc:
+        raise _connect_failed(exc) from exc
+    return stripe_client.require_url(link.url)
+
+
+async def _create_onboarding_link(agency_id: uuid.UUID, account_id: str, return_to: ConnectReturnTo):
+    return await stripe_client.create_account_link(
         {
             "account": account_id,
             # No `configurations` here: Stripe removed that field from
@@ -279,13 +306,12 @@ async def start_connect_onboarding(
             "use_case": {
                 "type": "account_onboarding",
                 "account_onboarding": {
-                    "refresh_url": _connect_return_url(agency.id, "refresh", return_to),
-                    "return_url": _connect_return_url(agency.id, "return", return_to),
+                    "refresh_url": _connect_return_url(agency_id, "refresh", return_to),
+                    "return_url": _connect_return_url(agency_id, "return", return_to),
                 },
             },
         }
     )
-    return stripe_client.require_url(link.url)
 
 
 async def connect_created_by_name(db: AsyncSession, billing_settings: AgencyBillingSettings) -> str | None:
