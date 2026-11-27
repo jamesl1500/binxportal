@@ -147,6 +147,15 @@ test.describe("accepting a proposal from a lead", () => {
     // client (and the signed PDF emails) runs after the response.
     await expect(lead_.page.getByRole("link", { name: /view the signing certificate/i })).toBeVisible();
 
+    // The deposit shows up under the signature once it's issued (the page
+    // refreshes itself). Without Stripe connected here, it points to the
+    // invoice rather than offering to take the card.
+    const depositPanel = lead_.page.getByRole("region", { name: "Deposit" });
+    await expect(depositPanel.getByRole("heading", { name: "Deposit: $3,000.00" })).toBeVisible();
+    await expect(depositPanel.getByText(/has sent you invoice|Pay \$3,000\.00 deposit/)).toBeVisible({
+      timeout: 30_000,
+    });
+
     // Their portal now points them to their client portal. (Setting them up
     // runs just after the signature is saved, so allow it a moment.)
     const link = new URL(portal.url);
@@ -370,5 +379,59 @@ test.describe("packages in the client portal", () => {
     const staff = await api(salesPage, "get", `/agencies/${agencyId}/proposals/${draft.id}`);
     expect(staff.total_cents).toBe(470_000);
     expect(staff.packages.find((p: { selected: boolean }) => p.selected).name).toBe("Starter");
+  });
+});
+
+test.describe("proposal templates", () => {
+  test("save a proposal as a template, then start the next one from it", async ({ salesPage }) => {
+    const agencyId = await salesAgencyId(salesPage);
+    const draft = await api(salesPage, "post", `/agencies/${agencyId}/proposals`, {
+      title: `Brand sprint ${RUN}`,
+      content: "Two weeks, one brand.",
+      deposit_percent: "40",
+      packages: [
+        { key: "a", name: "Lite" },
+        { key: "b", name: "Full", recommended: true },
+      ],
+      line_items: [
+        { description: "Workshop", quantity: "1", unit_price_cents: 150_000 },
+        { description: "Logo only", quantity: "1", unit_price_cents: 300_000, package_key: "a" },
+        { description: "Full identity", quantity: "1", unit_price_cents: 900_000, package_key: "b" },
+      ],
+    });
+
+    // Save it as a template from its page.
+    await salesPage.goto(`/proposals/${draft.id}`);
+    await clickUntilVisible(
+      salesPage.getByRole("button", { name: "Save as template" }),
+      salesPage.getByLabel("Template name"),
+    );
+    const name = `Brand sprint template ${RUN}`;
+    await salesPage.getByLabel("Template name").fill(name);
+    await salesPage.getByRole("button", { name: "Save template" }).click();
+    await expect(salesPage.getByText("Saved as a template")).toBeVisible();
+
+    // It's listed, priced at its recommended package.
+    await salesPage.goto("/proposals/templates");
+    const item = salesPage.getByRole("listitem").filter({ hasText: name });
+    await expect(item.getByText("Packages: Lite, Full")).toBeVisible();
+    await expect(item.getByText("$10,500.00")).toBeVisible();
+
+    // Start a proposal from it: prefilled, packages and all.
+    await item.getByRole("link", { name: `Use ${name}` }).click();
+    await expect(salesPage.getByText(new RegExp(`From the template ${name}`))).toBeVisible();
+    await expect(salesPage.getByLabel(/^Title$/)).toHaveValue(`Brand sprint ${RUN}`);
+    await expect(salesPage.getByLabel("Package 2 name")).toHaveValue("Full");
+    await expect(salesPage.getByLabel("Deposit (% of the total)")).toHaveValue("40");
+    await salesPage.getByLabel(/^Title$/).fill(`Brand sprint for Pine ${RUN}`);
+    await salesPage.getByRole("button", { name: /create draft/i }).click();
+    await salesPage.waitForURL(/\/proposals\/[0-9a-f-]{36}$/);
+    await expect(salesPage.getByRole("heading", { name: `Brand sprint for Pine ${RUN}` })).toBeVisible();
+
+    // The template counts the use.
+    await salesPage.goto("/proposals/templates");
+    await expect(
+      salesPage.getByRole("listitem").filter({ hasText: name }).getByText(/1 proposal, last/),
+    ).toBeVisible();
   });
 });

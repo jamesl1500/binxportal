@@ -253,6 +253,14 @@ def _clean_file_name(raw: str | None) -> str:
     return (name or "attachment")[:255]
 
 
+def _resolve_mime(name: str, mime_type: str | None) -> str:
+    """The browser's type unless it's the generic one, else a guess from the
+    file name."""
+    generic = "application/octet-stream"
+    sent_type = mime_type if mime_type and mime_type != generic else None
+    return sent_type or mimetypes.guess_type(name)[0] or generic
+
+
 async def add_attachment(
     db: AsyncSession,
     proposal: Proposal,
@@ -275,9 +283,7 @@ async def add_attachment(
         )
 
     name = _clean_file_name(file_name)
-    generic = "application/octet-stream"
-    sent_type = mime_type if mime_type and mime_type != generic else None
-    resolved_type = sent_type or mimetypes.guess_type(name)[0] or generic
+    resolved_type = _resolve_mime(name, mime_type)
     # The key is ours alone, so no part of a client-supplied name ever reaches
     # a filesystem path or an S3 key.
     storage_path = await storage.save(

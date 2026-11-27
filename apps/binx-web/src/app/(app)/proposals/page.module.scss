@@ -92,3 +92,51 @@
   border-radius: t.$radius-md;
   padding: t.$space-6;
 }
+
+.secondaryButton {
+  @include m.button-base;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  text-decoration: none;
+  color: t.$color-ink;
+}
+
+.templatePicker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: t.$space-2;
+  margin-bottom: t.$space-4;
+}
+
+.templatePickerLabel {
+  @include m.mono-label;
+  font-size: 0.625rem;
+  color: t.$color-ink-faint;
+  margin-right: t.$space-1;
+}
+
+.templateChip {
+  padding: t.$space-1 t.$space-3;
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  color: t.$color-ink;
+  text-decoration: none;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: 999px;
+
+  &:hover {
+    border-color: t.$color-ink-faint;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.templateManage {
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+  text-underline-offset: 2px;
+}

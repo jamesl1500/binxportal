@@ -11,7 +11,12 @@
  * optional add-ons (the client ticks them or not). Totals update live and
  * mirror binx-api's `_recalculate` math exactly (subtotals of the lines in
  * the starting choice: the recommended package and pre-selected add-ons,
- * then tax — proposals carry no discount). Used for both creating a new
+ * then tax — proposals carry no discount).
+ *
+ * Templates use it too: `fromTemplate` prefills a new proposal from one
+ * (binx-api copies its documents on create), and `templateEditor` edits a
+ * template itself (a name and description instead of who it's for, and how
+ * many days proposals made from it stay open instead of a date). Used for both creating a new
  * draft and editing an existing one (sent/decided proposals are never
  * editable — the page redirects away). The client select is what actually
  * attaches a proposal to an `AgencyClient` row; picking a client also
@@ -28,7 +33,11 @@ import { useRouter } from "next/navigation";
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import type { ProposalDetail, ProposalInput } from "@/lib/proposals";
+import type {
+  ProposalDetail,
+  ProposalInput,
+  ProposalTemplateData,
+} from "@/lib/proposals";
 import { formatMoneyCents } from "@/lib/money";
 import {
   billingSuffix,
@@ -42,6 +51,10 @@ import {
   createProposalAction,
   updateProposalAction,
 } from "@/app/(app)/proposals/actions";
+import {
+  createTemplateAction,
+  updateTemplateAction,
+} from "@/app/(app)/proposals/templates/actions";
 
 import styles from "./ProposalForm.module.scss";
 
@@ -65,6 +78,118 @@ interface ProposalFormProps {
   lead?: LeadOption | null;
   /** Kickoff questionnaires a new project can start with. */
   kickoffTemplates?: { id: string; name: string }[];
+  /** Start a new proposal from this template (prefilled). */
+  fromTemplate?: TemplateStart | null;
+  /** Edit a template (or make one, without an id) instead of a proposal. */
+  templateEditor?: TemplateEditor | null;
+}
+
+export interface TemplateStart {
+  id: string;
+  name: string;
+  data: ProposalTemplateData;
+  attachmentCount: number;
+}
+
+export interface TemplateEditor {
+  id?: string;
+  name: string;
+  description: string;
+  data?: ProposalTemplateData | null;
+}
+
+/** What the editor starts from: a proposal, or a template's contents. */
+interface Seed {
+  title: string;
+  content: string | null;
+  currency: string;
+  tax_rate_percent: string;
+  valid_until: string | null;
+  valid_for_days: number | null;
+  line_items: {
+    description: string;
+    details: string | null;
+    quantity: string;
+    unit_price_cents: number;
+    service_id: string | null;
+    billing: string;
+    package_id: string | null;
+    optional: boolean;
+    selected: boolean;
+  }[];
+  packages: {
+    id: string;
+    name: string;
+    description: string | null;
+    recommended: boolean;
+  }[];
+  requires_countersign: boolean;
+  require_email_code: boolean;
+  deposit_percent: string | null;
+  create_project_on_accept: boolean;
+  kickoff_template_id: string | null;
+}
+
+function daysFromToday(days: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+function seedFromProposal(proposal: ProposalDetail): Seed {
+  return {
+    ...proposal,
+    tax_rate_percent: String(proposal.tax_rate_percent),
+    valid_for_days: null,
+    deposit_percent: proposal.deposit_percent ? String(proposal.deposit_percent) : null,
+    kickoff_template_id: proposal.kickoff_template_id ?? null,
+    require_email_code: proposal.require_email_code ?? false,
+    create_project_on_accept: proposal.create_project_on_accept ?? false,
+    line_items: proposal.line_items.map((item) => ({
+      ...item,
+      quantity: String(item.quantity),
+      service_id: item.service_id ?? null,
+      billing: item.billing ?? "one_time",
+      package_id: item.package_id ?? null,
+      optional: item.optional ?? false,
+      selected: item.selected ?? true,
+    })),
+    packages: proposal.packages ?? [],
+  };
+}
+
+function seedFromTemplate(data: ProposalTemplateData): Seed {
+  return {
+    title: data.title,
+    content: data.content ?? null,
+    currency: data.currency ?? "USD",
+    tax_rate_percent: String(data.tax_rate_percent ?? "0"),
+    valid_until: data.valid_for_days ? daysFromToday(data.valid_for_days) : null,
+    valid_for_days: data.valid_for_days ?? null,
+    line_items: (data.line_items ?? []).map((line) => ({
+      description: line.description,
+      details: line.details ?? null,
+      quantity: String(line.quantity),
+      unit_price_cents: line.unit_price_cents,
+      service_id: line.service_id ?? null,
+      billing: line.billing ?? "one_time",
+      // A template's lines point at its packages by key.
+      package_id: line.package_key ?? null,
+      optional: line.optional ?? false,
+      selected: line.selected ?? true,
+    })),
+    packages: (data.packages ?? []).map((pkg) => ({
+      id: pkg.key,
+      name: pkg.name,
+      description: pkg.description ?? null,
+      recommended: pkg.recommended ?? false,
+    })),
+    requires_countersign: data.requires_countersign ?? false,
+    require_email_code: data.require_email_code ?? false,
+    deposit_percent: data.deposit_percent ? String(data.deposit_percent) : null,
+    create_project_on_accept: data.create_project_on_accept ?? false,
+    kickoff_template_id: data.kickoff_template_id ?? null,
+  };
 }
 
 interface LeadOption {
@@ -163,14 +288,30 @@ const ProposalForm = ({
   services = [],
   lead = null,
   kickoffTemplates = [],
+  fromTemplate = null,
+  templateEditor = null,
 }: ProposalFormProps) => {
   const router = useRouter();
   const isEdit = Boolean(proposal);
+  const isTemplate = Boolean(templateEditor);
+  const templateData = fromTemplate?.data ?? templateEditor?.data ?? null;
+  const seed: Seed | null = proposal
+    ? seedFromProposal(proposal)
+    : templateData
+      ? seedFromTemplate(templateData)
+      : null;
+  const [templateName, setTemplateName] = useState(templateEditor?.name ?? "");
+  const [templateDescription, setTemplateDescription] = useState(
+    templateEditor?.description ?? "",
+  );
+  const [validForDays, setValidForDays] = useState(
+    seed?.valid_for_days ? String(seed.valid_for_days) : "",
+  );
 
   const [clientId, setClientId] = useState(
     proposal?.client_id ?? initialClientId ?? "",
   );
-  const [title, setTitle] = useState(proposal?.title ?? "");
+  const [title, setTitle] = useState(seed?.title ?? "");
   const [leadId, setLeadId] = useState<string | null>(
     proposal ? proposal.lead_id : (lead?.id ?? null),
   );
@@ -181,15 +322,15 @@ const ProposalForm = ({
   const [recipientEmail, setRecipientEmail] = useState(
     proposal?.recipient_email ?? lead?.contactEmail ?? "",
   );
-  const [content, setContent] = useState(proposal?.content ?? "");
-  const [currency, setCurrency] = useState(proposal?.currency ?? "USD");
-  const [taxRate, setTaxRate] = useState(proposal?.tax_rate_percent ?? "0");
+  const [content, setContent] = useState(seed?.content ?? "");
+  const [currency, setCurrency] = useState(seed?.currency ?? "USD");
+  const [taxRate, setTaxRate] = useState(seed?.tax_rate_percent ?? "0");
   const [validUntil, setValidUntil] = useState(
-    proposal?.valid_until ? proposal.valid_until.slice(0, 10) : "",
+    seed?.valid_until ? seed.valid_until.slice(0, 10) : "",
   );
   const [rows, setRows] = useState<LineRow[]>(
-    proposal && proposal.line_items.length > 0
-      ? proposal.line_items.map((item) => ({
+    seed && seed.line_items.length > 0
+      ? seed.line_items.map((item) => ({
           key: `r${rowCounter++}`,
           description: item.description,
           details: item.details ?? "",
@@ -209,7 +350,7 @@ const ProposalForm = ({
   );
   // Keyed by the package's id when editing, so lines keep pointing at it.
   const [packages, setPackages] = useState<PackageRow[]>(
-    (proposal?.packages ?? []).map((pkg) => ({
+    (seed?.packages ?? []).map((pkg) => ({
       key: pkg.id,
       name: pkg.name,
       description: pkg.description ?? "",
@@ -217,21 +358,21 @@ const ProposalForm = ({
     })),
   );
   const [requiresCountersign, setRequiresCountersign] = useState(
-    proposal?.requires_countersign ?? false,
+    seed?.requires_countersign ?? false,
   );
   const [requireEmailCode, setRequireEmailCode] = useState(
-    proposal?.require_email_code ?? false,
+    seed?.require_email_code ?? false,
   );
   const [depositPercent, setDepositPercent] = useState(
-    proposal?.deposit_percent
-      ? String(Number.parseFloat(proposal.deposit_percent))
+    seed?.deposit_percent
+      ? String(Number.parseFloat(seed.deposit_percent))
       : "",
   );
   const [createProject, setCreateProject] = useState(
-    proposal?.create_project_on_accept ?? Boolean(lead),
+    seed?.create_project_on_accept ?? Boolean(lead),
   );
   const [kickoffTemplateId, setKickoffTemplateId] = useState(
-    proposal?.kickoff_template_id ?? "",
+    seed?.kickoff_template_id ?? "",
   );
   const [submitting, setSubmitting] = useState(false);
 
@@ -288,6 +429,7 @@ const ProposalForm = ({
 
   const canSubmit =
     title.trim() !== "" &&
+    (!isTemplate || templateName.trim() !== "") &&
     problem === null &&
     rows.some(
       (row) =>
@@ -380,7 +522,34 @@ const ProposalForm = ({
         description: pkg.description.trim() || null,
         recommended: pkg.recommended,
       })),
+      templateId: fromTemplate?.id ?? null,
     };
+
+    if (templateEditor) {
+      const templateInput = {
+        name: templateName.trim(),
+        description: templateDescription.trim() || null,
+        terms: input,
+        validForDays: Number.parseInt(validForDays, 10) || null,
+      };
+      setSubmitting(true);
+      try {
+        const result = templateEditor.id
+          ? await updateTemplateAction(agencyId, templateEditor.id, templateInput)
+          : await createTemplateAction(agencyId, templateInput);
+        if (result.error) {
+          toast.error(result.error);
+          return;
+        }
+        toast.success("Template saved");
+        if (!templateEditor.id && result.template) {
+          router.push(`/proposals/templates/${result.template.id}`);
+        }
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -401,7 +570,40 @@ const ProposalForm = ({
 
   return (
     <form className={styles.form} onSubmit={handleSubmit}>
-      {leadId && leadName && (
+      {isTemplate && (
+        <div className={styles.grid}>
+          <label className={styles.field}>
+            <span className={styles.label}>Template name</span>
+            <input
+              className={styles.input}
+              placeholder="e.g. Website build"
+              maxLength={120}
+              value={templateName}
+              onChange={(event) => setTemplateName(event.target.value)}
+              required
+            />
+          </label>
+          <label className={styles.field}>
+            <span className={styles.label}>Description</span>
+            <input
+              className={styles.input}
+              placeholder="When to use it, for your team"
+              maxLength={500}
+              value={templateDescription}
+              onChange={(event) => setTemplateDescription(event.target.value)}
+            />
+          </label>
+        </div>
+      )}
+      {fromTemplate && (
+        <p className={styles.leadChip}>
+          From the template <strong>{fromTemplate.name}</strong>
+          {fromTemplate.attachmentCount > 0
+            ? `. Its ${fromTemplate.attachmentCount === 1 ? "document is" : `${fromTemplate.attachmentCount} documents are`} attached when you create the draft.`
+            : "."}
+        </p>
+      )}
+      {!isTemplate && leadId && leadName && (
         <p className={styles.leadChip}>
           For the lead <strong>{leadName}</strong>. Signing it turns them
           into a client.
@@ -415,6 +617,7 @@ const ProposalForm = ({
         </p>
       )}
       <div className={styles.grid}>
+        {!isTemplate && (
         <label className={styles.field}>
           <span className={styles.label}>Client</span>
           <select
@@ -438,6 +641,7 @@ const ProposalForm = ({
             ))}
           </select>
         </label>
+        )}
 
         <label className={styles.field}>
           <span className={styles.label}>Title</span>
@@ -450,16 +654,34 @@ const ProposalForm = ({
           />
         </label>
 
-        <label className={styles.field}>
-          <span className={styles.label}>Valid until</span>
-          <input
-            type="date"
-            className={styles.input}
-            value={validUntil}
-            onChange={(event) => setValidUntil(event.target.value)}
-          />
-        </label>
+        {isTemplate ? (
+          <label className={styles.field}>
+            <span className={styles.label}>Valid for (days)</span>
+            <input
+              type="number"
+              min="1"
+              max="365"
+              step="1"
+              className={styles.input}
+              placeholder="No expiry"
+              value={validForDays}
+              onChange={(event) => setValidForDays(event.target.value)}
+            />
+          </label>
+        ) : (
+          <label className={styles.field}>
+            <span className={styles.label}>Valid until</span>
+            <input
+              type="date"
+              className={styles.input}
+              value={validUntil}
+              onChange={(event) => setValidUntil(event.target.value)}
+            />
+          </label>
+        )}
 
+        {!isTemplate && (
+        <>
         <label className={styles.field}>
           <span className={styles.label}>Recipient name</span>
           <input
@@ -480,6 +702,8 @@ const ProposalForm = ({
             onChange={(event) => setRecipientEmail(event.target.value)}
           />
         </label>
+        </>
+        )}
       </div>
 
       <label className={styles.field}>
@@ -900,7 +1124,13 @@ const ProposalForm = ({
           className={styles.submit}
           disabled={!canSubmit || submitting}
         >
-          {submitting ? "Saving…" : isEdit ? "Save draft" : "Create draft"}
+          {submitting
+            ? "Saving…"
+            : isTemplate
+              ? "Save template"
+              : isEdit
+                ? "Save draft"
+                : "Create draft"}
         </button>
       </div>
     </form>

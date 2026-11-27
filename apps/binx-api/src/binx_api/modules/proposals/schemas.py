@@ -1,7 +1,7 @@
 import uuid
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Literal
+from typing import Literal, Self
 
 from pydantic import BaseModel, EmailStr, Field, model_validator
 
@@ -84,16 +84,15 @@ class ProposalAttachmentRead(BaseModel):
 # --- Create / update -------------------------------------------------------
 
 
-class ProposalCreate(BaseModel):
-    lead_id: uuid.UUID | None = None
-    client_id: uuid.UUID | None = None
+class ProposalTerms(BaseModel):
+    """What a proposal offers and what accepting it does, without who it's
+    for: shared by proposals and templates (ProposalTemplateData), so a
+    template holds exactly what a proposal would accept."""
+
     title: str = Field(min_length=1, max_length=255)
-    recipient_name: str | None = Field(default=None, max_length=255)
-    recipient_email: EmailStr | None = None
     content: str | None = Field(default=None, max_length=20_000)
     currency: str = Field(default="USD", pattern="^[A-Za-z]{3}$")
     tax_rate_percent: Decimal = Field(default=Decimal("0"), ge=0, le=100, max_digits=6, decimal_places=3)
-    valid_until: datetime | None = None
     line_items: list[ProposalLineItemInput] = Field(default_factory=list)
     # Alternatives the recipient picks one of (two to four), or none.
     packages: list[ProposalPackageInput] = Field(default_factory=list, max_length=MAX_PROPOSAL_PACKAGES)
@@ -108,13 +107,13 @@ class ProposalCreate(BaseModel):
     kickoff_template_id: uuid.UUID | None = None
 
     @model_validator(mode="after")
-    def _kickoff_needs_a_project(self) -> "ProposalCreate":
+    def _kickoff_needs_a_project(self) -> Self:
         if self.kickoff_template_id is not None and not self.create_project_on_accept:
             raise ValueError("A kickoff questionnaire needs a project, turn on “start a project”")
         return self
 
     @model_validator(mode="after")
-    def _packages_hold_together(self) -> "ProposalCreate":
+    def _packages_hold_together(self) -> Self:
         if not self.packages:
             if any(item.package_key for item in self.line_items):
                 raise ValueError("A line is in a package that isn't on the proposal")
@@ -135,6 +134,17 @@ class ProposalCreate(BaseModel):
         if empty:
             raise ValueError(f"Add at least one line to the {empty[0]} package")
         return self
+
+
+class ProposalCreate(ProposalTerms):
+    lead_id: uuid.UUID | None = None
+    client_id: uuid.UUID | None = None
+    recipient_name: str | None = Field(default=None, max_length=255)
+    recipient_email: EmailStr | None = None
+    valid_until: datetime | None = None
+    # Made from this template: its documents are copied onto the proposal
+    # (the rest comes in the fields above, prefilled from it).
+    template_id: uuid.UUID | None = None
 
 
 class ProposalUpdate(ProposalCreate):
@@ -170,6 +180,29 @@ class ProposalRead(BaseModel):
     valid_until: datetime | None
     sent_at: datetime | None
     created_at: datetime
+
+
+class ProposalDepositRead(BaseModel):
+    """Where a signed proposal's deposit stands, for the signer (see
+    proposals/deposit.py):
+
+    - ``awaiting_countersign``: it's issued once the agency countersigns;
+    - ``preparing``: the deposit invoice is being issued (seconds);
+    - ``due``: issued and unpaid; ``pay_online`` when the agency takes
+      payments through Stripe;
+    - ``paid``;
+    - ``unavailable``: setting it up stopped, or the invoice was voided; the
+      agency follows up.
+    """
+
+    status: str
+    # The balance to pay when due; otherwise the deposit's amount.
+    amount_cents: int
+    currency: str
+    invoice_number: str | None = None
+    # Portal reads only, to link to the invoice.
+    invoice_id: uuid.UUID | None = None
+    pay_online: bool = False
 
 
 class ProposalAcceptanceRead(BaseModel):
@@ -221,6 +254,8 @@ class ProposalDetailRead(ProposalRead):
     kickoff_template_id: uuid.UUID | None = None
     # Staff reads only; None until the proposal is complete (and on portal reads).
     acceptance: ProposalAcceptanceRead | None = None
+    # Once signed, when it asks for a deposit.
+    deposit: ProposalDepositRead | None = None
 
 
 class ProposalSignatureRead(BaseModel):
@@ -267,6 +302,16 @@ class ProposalPublicRead(BaseModel):
     countersignature: "ProposalSignatureRead | None"
     # Every required signature is in (the agreement is binding).
     completed_at: datetime | None
+    # Once signed, when it asks for a deposit: pay it from this page.
+    deposit: ProposalDepositRead | None = None
+
+
+class ProposalDepositConfirmRead(BaseModel):
+    """The share link's return from paying the deposit (outcomes as for an
+    invoice: paid, processing, failed, open)."""
+
+    outcome: str
+    proposal: ProposalPublicRead
 
 
 class ProposalSignRequest(BaseModel):
@@ -412,3 +457,49 @@ class ProposalCertificateRead(BaseModel):
     completed_at: datetime | None
     events: list[ProposalEventRead]
     generated_at: datetime
+
+
+# --- Templates ---------------------------------------------------------------
+
+
+class ProposalTemplateData(ProposalTerms):
+    """A template's contents: a proposal's terms, plus how long proposals
+    made from it stay open (their valid-until date is set from it)."""
+
+    valid_for_days: int | None = Field(default=None, ge=1, le=365)
+
+
+class ProposalTemplateWrite(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    description: str | None = Field(default=None, max_length=500)
+    data: ProposalTemplateData
+
+
+class SaveAsTemplateRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    description: str | None = Field(default=None, max_length=500)
+
+
+class ProposalTemplateSummaryRead(BaseModel):
+    id: uuid.UUID
+    name: str
+    description: str | None
+    # From the template's contents, for the list: its proposal title, how
+    # many lines, its packages, and the price of its starting choice (the
+    # recommended package and pre-selected add-ons), with tax.
+    title: str
+    line_count: int
+    package_names: list[str]
+    currency: str
+    total_cents: int
+    monthly_total_cents: int
+    attachment_count: int
+    use_count: int
+    last_used_at: datetime | None
+    created_at: datetime
+    updated_at: datetime | None
+
+
+class ProposalTemplateRead(ProposalTemplateSummaryRead):
+    data: ProposalTemplateData
+    attachments: list[ProposalAttachmentRead]

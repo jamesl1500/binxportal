@@ -203,6 +203,31 @@ describe("proposals.ts", () => {
       expect(error).toMatchObject({ agencyName: "Northlight", title: "Brand refresh", emailHint: "j•••@fjord.example" });
     });
 
+    it("starts and confirms the deposit payment through the share link", async () => {
+      mockedAccessHeaders.mockResolvedValue({ "X-Proposal-Access": "jwt" });
+      const ACCESS = { headers: { "X-Proposal-Access": "jwt" } };
+      mockedApi.post.mockResolvedValueOnce({ data: { checkout_url: "https://checkout.stripe.test/s" } });
+      await expect(proposals.startPublicDepositCheckout(TOKEN)).resolves.toEqual({
+        checkout_url: "https://checkout.stripe.test/s",
+      });
+      expect(mockedApi.post).toHaveBeenCalledWith(`/proposals/public/${TOKEN}/deposit/checkout`, undefined, ACCESS);
+
+      mockedApi.post.mockResolvedValueOnce({ data: { outcome: "paid", proposal: { status: "signed" } } });
+      await expect(proposals.confirmPublicDeposit(TOKEN, "cs_1")).resolves.toMatchObject({ outcome: "paid" });
+      expect(mockedApi.post).toHaveBeenLastCalledWith(
+        `/proposals/public/${TOKEN}/deposit/confirm`,
+        { session_id: "cs_1" },
+        ACCESS,
+      );
+
+      mockedApi.post.mockRejectedValueOnce(axiosError(409, "The deposit is already paid"));
+      await expect(proposals.startPublicDepositCheckout(TOKEN)).rejects.toMatchObject({
+        name: "AuthApiError",
+        status: 409,
+        message: "The deposit is already paid",
+      });
+    });
+
     it("asks for a code and trades one for access", async () => {
       mockedApi.post.mockResolvedValueOnce({ data: { email_hint: "j•••@fjord.example" } });
       await expect(proposals.requestPublicProposalCode(TOKEN)).resolves.toEqual({ email_hint: "j•••@fjord.example" });

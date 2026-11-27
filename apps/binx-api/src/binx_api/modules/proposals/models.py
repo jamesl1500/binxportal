@@ -336,3 +336,39 @@ class ProposalEvent(Base):
     ip_address: Mapped[str | None] = mapped_column(String(64), default=None)
     user_agent: Mapped[str | None] = mapped_column(String(512), default=None)
     detail: Mapped[str | None] = mapped_column(String(1024), default=None)
+
+
+# Templates: a saved starting point for new proposals (the terms, the lines,
+# packages and add-ons, what accepting it does, and its documents), so an
+# agency doesn't rebuild the same proposal for every lead. ``data`` is the
+# JSON of schemas.ProposalTemplateData, validated on the way in and out; a
+# proposal made from one is an independent copy.
+MAX_PROPOSAL_TEMPLATES = 100
+
+
+class ProposalTemplate(Base):
+    __tablename__ = "proposal_templates"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    agency_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("agencies.id", ondelete="CASCADE"), index=True)
+    created_by_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), default=None)
+    name: Mapped[str] = mapped_column(String(120))
+    description: Mapped[str | None] = mapped_column(String(500), default=None)
+    data: Mapped[str] = mapped_column(Text)
+    use_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+
+
+# A template's documents, copied onto each proposal made from it. Bytes live
+# under {agency_id}/proposal-templates/{template_id}/ in the "agencies" area.
+class ProposalTemplateAttachment(Base):
+    __tablename__ = "proposal_template_attachments"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    template_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("proposal_templates.id", ondelete="CASCADE"), index=True)
+    position: Mapped[int] = mapped_column(Integer, default=0)
+    file_name: Mapped[str] = mapped_column(String(255))
+    storage_path: Mapped[str] = mapped_column(String(1024))
+    mime_type: Mapped[str] = mapped_column(String(255))
+    size: Mapped[int] = mapped_column(Integer)
+    sha256: Mapped[str] = mapped_column(String(64))

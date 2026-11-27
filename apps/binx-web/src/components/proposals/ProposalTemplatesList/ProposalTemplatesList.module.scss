@@ -1,0 +1,147 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+}
+
+.item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: t.$space-6;
+  padding: t.$space-4 t.$space-5;
+  border-bottom: 1px solid t.$color-border;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    gap: t.$space-3;
+  }
+}
+
+.main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-1;
+}
+
+.name {
+  font-weight: 700;
+  color: t.$color-ink;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.description {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+}
+
+.meta {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-1 t.$space-3;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+}
+
+.docs {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+
+  svg {
+    width: 0.8rem;
+    height: 0.8rem;
+  }
+}
+
+.used {
+  margin: 0;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-faint;
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: t.$space-2;
+  flex: none;
+
+  @media (max-width: 640px) {
+    align-items: flex-start;
+  }
+}
+
+.price {
+  font-weight: 700;
+  white-space: nowrap;
+  color: t.$color-ink;
+}
+
+.actions {
+  display: flex;
+  gap: t.$space-2;
+}
+
+.primary,
+.ghost,
+.ghostDanger {
+  @include m.button-base;
+  text-decoration: none;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+}
+
+.primary {
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+
+  &:hover {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+}
+
+.ghost {
+  background: t.$color-surface;
+}
+
+.ghostDanger {
+  background: t.$color-surface;
+  color: t.$color-danger;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: t.$space-4;
+  padding: t.$space-8;
+  background: t.$color-surface;
+  border: 1px dashed t.$color-border;
+  border-radius: t.$radius-md;
+
+  p {
+    margin: 0;
+    max-width: 36rem;
+    font-size: t.$font-size-sm;
+    color: t.$color-ink-soft;
+    line-height: 1.6;
+  }
+}

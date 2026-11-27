@@ -6,6 +6,9 @@
  * sent, the files are frozen with the rest of the proposal, and the read
  * view lists them instead.
  *
+ * Also manages a proposal template's documents (`templateId`), which are
+ * copied onto each proposal made from it.
+ *
  * Several files can be picked at once; they upload one after another, so
  * one failure (too large, too many) doesn't lose the rest.
  *
@@ -27,20 +30,33 @@ import {
   deleteProposalAttachmentAction,
   uploadProposalAttachmentAction,
 } from "@/app/(app)/proposals/actions";
+import {
+  deleteTemplateAttachmentAction,
+  uploadTemplateAttachmentAction,
+} from "@/app/(app)/proposals/templates/actions";
 
 import styles from "./ProposalAttachmentsManager.module.scss";
 
 interface ProposalAttachmentsManagerProps {
   agencyId: string;
-  proposalId: string;
+  /** A draft proposal's documents, or (with templateId) a template's. */
+  proposalId?: string;
+  templateId?: string;
   attachments: ProposalAttachment[];
 }
 
 const ProposalAttachmentsManager = ({
   agencyId,
   proposalId,
+  templateId,
   attachments,
 }: ProposalAttachmentsManagerProps) => {
+  const ownerId = (templateId ?? proposalId)!;
+  const upload = templateId ? uploadTemplateAttachmentAction : uploadProposalAttachmentAction;
+  const remove = templateId ? deleteTemplateAttachmentAction : deleteProposalAttachmentAction;
+  const hrefBase = templateId
+    ? `/api/proposal-templates/${agencyId}/${templateId}/attachments`
+    : `/api/proposals/${agencyId}/${proposalId}/attachments`;
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -56,11 +72,7 @@ const ProposalAttachmentsManager = ({
       setUploading(file.name);
       const formData = new FormData();
       formData.append("file", file);
-      const result = await uploadProposalAttachmentAction(
-        agencyId,
-        proposalId,
-        formData,
-      );
+      const result = await upload(agencyId, ownerId, formData);
       if (result.error) {
         toast.error(`${file.name}: ${result.error}`);
       } else {
@@ -76,11 +88,7 @@ const ProposalAttachmentsManager = ({
   const handleRemove = async (attachment: AttachmentItem) => {
     setBusyId(attachment.id);
     try {
-      const result = await deleteProposalAttachmentAction(
-        agencyId,
-        proposalId,
-        attachment.id,
-      );
+      const result = await remove(agencyId, ownerId, attachment.id);
       if (result.error) toast.error(result.error);
     } finally {
       setBusyId(null);
@@ -95,8 +103,9 @@ const ProposalAttachmentsManager = ({
             Documents
           </h2>
           <p className={styles.subtitle}>
-            Contracts, decks or case studies the client can download with the
-            proposal. They can&apos;t be changed once it&apos;s sent.
+            {templateId
+              ? "Copied onto every proposal made from this template."
+              : "Contracts, decks or case studies the client can download with the proposal. They can't be changed once it's sent."}
           </p>
         </div>
         <label
@@ -121,7 +130,7 @@ const ProposalAttachmentsManager = ({
       ) : (
         <ProposalAttachmentList
           attachments={attachments}
-          hrefBase={`/api/proposals/${agencyId}/${proposalId}/attachments`}
+          hrefBase={hrefBase}
           onRemove={handleRemove}
           busyId={busyId}
         />

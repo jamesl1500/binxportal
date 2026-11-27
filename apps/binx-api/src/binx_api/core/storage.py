@@ -82,6 +82,38 @@ async def save(area: str, key: str, content: bytes, *, content_type: str) -> str
     return str(path)
 
 
+async def copy(storage_path: str, area: str, key: str) -> str:
+    """Copies a stored file to ``{area}/{key}`` (S3 copies it server side)
+    and returns the new ``storage_path``. 404s if the source is gone."""
+    if storage_path.startswith(_S3_SCHEME):
+        bucket, source_key = _split_s3(storage_path)
+        target_bucket = settings.upload_bucket or bucket
+        full_key = f"{area}/{key}"
+        try:
+            await asyncio.to_thread(
+                _get_s3_client().copy_object,
+                Bucket=target_bucket,
+                Key=full_key,
+                CopySource={"Bucket": bucket, "Key": source_key},
+            )
+        except ClientError as exc:
+            if exc.response.get("Error", {}).get("Code") in ("NoSuchKey", "404"):
+                raise HTTPException(status.HTTP_404_NOT_FOUND, "File not found") from None
+            raise
+        return f"{_S3_SCHEME}{target_bucket}/{full_key}"
+
+    source = Path(storage_path)
+    if not source.is_file():
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "File not found")
+    if settings.upload_bucket:
+        content = await asyncio.to_thread(source.read_bytes)
+        return await save(area, key, content, content_type="application/octet-stream")
+    target = _local_root(area) / key
+    target.parent.mkdir(parents=True, exist_ok=True)
+    await asyncio.to_thread(shutil.copyfile, source, target)
+    return str(target)
+
+
 async def delete(storage_path: str) -> None:
     """Best-effort delete of one stored file."""
     if storage_path.startswith(_S3_SCHEME):
