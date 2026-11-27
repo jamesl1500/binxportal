@@ -49,6 +49,8 @@ export type ProposalEvent = Schemas["ProposalEventRead"];
 export type ProposalCertificate = Schemas["ProposalCertificateRead"];
 export type ProposalAcceptance = Schemas["ProposalAcceptanceRead"];
 export type ProposalPackage = Schemas["ProposalPackageRead"];
+export type ProposalDeposit = Schemas["ProposalDepositRead"];
+export type ProposalTemplateData = Schemas["ProposalTemplateData-Output"];
 
 export interface ProposalLineItemInput {
   description: string;
@@ -97,9 +99,12 @@ export interface ProposalInput {
   depositPercent?: string | null;
   createProjectOnAccept?: boolean;
   kickoffTemplateId?: string | null;
+  /** Made from this template: binx-api copies its documents on. */
+  templateId?: string | null;
 }
 
-function toPayload(input: ProposalInput) {
+/** The request body binx-api takes for a proposal (create and update). */
+export function toPayload(input: ProposalInput) {
   return {
     lead_id: input.leadId,
     client_id: input.clientId,
@@ -115,6 +120,7 @@ function toPayload(input: ProposalInput) {
     deposit_percent: input.depositPercent || null,
     create_project_on_accept: input.createProjectOnAccept ?? false,
     kickoff_template_id: input.kickoffTemplateId || null,
+    template_id: input.templateId || null,
     line_items: input.lineItems.map((item) => ({
       description: item.description,
       details: item.details ?? null,
@@ -363,6 +369,45 @@ export async function choosePublicProposalOptions(
     return data;
   } catch (error) {
     throw apiError(error, "Unable to save your choice");
+  }
+}
+
+/**
+ * `POST /proposals/public/{token}/deposit/checkout`: a Stripe Checkout
+ * Session for the signed proposal's deposit. Returns where to send them.
+ */
+export async function startPublicDepositCheckout(
+  token: string,
+): Promise<{ checkout_url: string }> {
+  try {
+    const { data } = await api.post<{ checkout_url: string }>(
+      `/proposals/public/${token}/deposit/checkout`,
+      undefined,
+      { headers: await proposalAccessHeaders(token) },
+    );
+    return data;
+  } catch (error) {
+    throw apiError(error, "Unable to start the payment");
+  }
+}
+
+/** `POST /proposals/public/{token}/deposit/confirm`, on the way back from Stripe. */
+export async function confirmPublicDeposit(
+  token: string,
+  sessionId: string,
+): Promise<{ outcome: string; proposal: ProposalPublic }> {
+  try {
+    const { data } = await api.post<{
+      outcome: string;
+      proposal: ProposalPublic;
+    }>(
+      `/proposals/public/${token}/deposit/confirm`,
+      { session_id: sessionId },
+      { headers: await proposalAccessHeaders(token) },
+    );
+    return data;
+  } catch (error) {
+    throw apiError(error, "Unable to check the payment");
   }
 }
 

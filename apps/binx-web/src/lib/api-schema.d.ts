@@ -881,6 +881,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agencies/{agency_id}/billing-settings/stripe/payouts-session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start Stripe Payouts Session
+         * @description Owners and admins: the agency's Stripe balance and payouts, and paying
+         *     out, through Stripe's embedded Payouts component.
+         */
+        post: operations["start_stripe_payouts_session_agencies__agency_id__billing_settings_stripe_payouts_session_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agencies/{agency_id}/billing-settings/stripe/status": {
         parameters: {
             query?: never;
@@ -3125,6 +3146,94 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agencies/{agency_id}/proposal-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Templates */
+        get: operations["list_templates_agencies__agency_id__proposal_templates_get"];
+        put?: never;
+        /** Create Template */
+        post: operations["create_template_agencies__agency_id__proposal_templates_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/proposal-templates/{template_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Template */
+        get: operations["read_template_agencies__agency_id__proposal_templates__template_id__get"];
+        /** Update Template */
+        put: operations["update_template_agencies__agency_id__proposal_templates__template_id__put"];
+        post?: never;
+        /** Delete Template */
+        delete: operations["delete_template_agencies__agency_id__proposal_templates__template_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/proposal-templates/{template_id}/attachments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload Template Attachment */
+        post: operations["upload_template_attachment_agencies__agency_id__proposal_templates__template_id__attachments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/proposal-templates/{template_id}/attachments/{attachment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Template Attachment */
+        delete: operations["delete_template_attachment_agencies__agency_id__proposal_templates__template_id__attachments__attachment_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/proposal-templates/{template_id}/attachments/{attachment_id}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download Template Attachment */
+        get: operations["download_template_attachment_agencies__agency_id__proposal_templates__template_id__attachments__attachment_id__download_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agencies/{agency_id}/proposals": {
         parameters: {
             query?: never;
@@ -3310,6 +3419,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agencies/{agency_id}/proposals/{proposal_id}/save-as-template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Save As Template
+         * @description A new template from this proposal's terms and documents (any status).
+         */
+        post: operations["save_as_template_agencies__agency_id__proposals__proposal_id__save_as_template_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agencies/{agency_id}/proposals/{proposal_id}/send": {
         parameters: {
             query?: never;
@@ -3431,6 +3560,42 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agencies/{agency_id}/service-categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Categories */
+        get: operations["list_categories_agencies__agency_id__service_categories_get"];
+        put?: never;
+        /** Create Category */
+        post: operations["create_category_agencies__agency_id__service_categories_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/service-categories/{category_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Category */
+        delete: operations["delete_category_agencies__agency_id__service_categories__category_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Category */
+        patch: operations["update_category_agencies__agency_id__service_categories__category_id__patch"];
+        trace?: never;
+    };
     "/agencies/{agency_id}/services": {
         parameters: {
             query?: never;
@@ -3465,6 +3630,60 @@ export interface paths {
         head?: never;
         /** Update Service */
         patch: operations["update_service_agencies__agency_id__services__service_id__patch"];
+        trace?: never;
+    };
+    "/agencies/{agency_id}/services/{service_id}/attachments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload Service Attachment */
+        post: operations["upload_service_attachment_agencies__agency_id__services__service_id__attachments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/services/{service_id}/attachments/{attachment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Service Attachment */
+        delete: operations["delete_service_attachment_agencies__agency_id__services__service_id__attachments__attachment_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/services/{service_id}/attachments/{attachment_id}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download Service Attachment
+         * @description ``inline`` for showing a photo in the page rather than downloading it.
+         */
+        get: operations["download_service_attachment_agencies__agency_id__services__service_id__attachments__attachment_id__download_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/agencies/{agency_id}/subdomain": {
@@ -5150,6 +5369,48 @@ export interface paths {
         put?: never;
         /** Decline Public Proposal */
         post: operations["decline_public_proposal_proposals_public__token__decline_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/proposals/public/{token}/deposit/checkout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start Public Deposit Checkout
+         * @description Stripe Checkout for the signed proposal's deposit invoice (on the
+         *     agency's connected account). 409 until it's issued and due.
+         */
+        post: operations["start_public_deposit_checkout_proposals_public__token__deposit_checkout_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/proposals/public/{token}/deposit/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirm Public Deposit
+         * @description The share link's return from Stripe: checks the session and records
+         *     the payment if it's in (the webhook does the same; whichever is first).
+         */
+        post: operations["confirm_public_deposit_proposals_public__token__deposit_confirm_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -7027,8 +7288,18 @@ export interface components {
             /** File */
             file: string;
         };
+        /** Body_upload_service_attachment_agencies__agency_id__services__service_id__attachments_post */
+        Body_upload_service_attachment_agencies__agency_id__services__service_id__attachments_post: {
+            /** File */
+            file: string;
+        };
         /** Body_upload_task_file_agencies__agency_id__projects__project_id__tasks__task_id__files_post */
         Body_upload_task_file_agencies__agency_id__projects__project_id__tasks__task_id__files_post: {
+            /** File */
+            file: string;
+        };
+        /** Body_upload_template_attachment_agencies__agency_id__proposal_templates__template_id__attachments_post */
+        Body_upload_template_attachment_agencies__agency_id__proposal_templates__template_id__attachments_post: {
             /** File */
             file: string;
         };
@@ -10411,7 +10682,7 @@ export interface components {
             /** Lead Id */
             lead_id?: string | null;
             /** Line Items */
-            line_items?: components["schemas"]["ProposalLineItemInput"][];
+            line_items?: components["schemas"]["ProposalLineItemInput-Input"][];
             /** Packages */
             packages?: components["schemas"]["ProposalPackageInput"][];
             /** Recipient Email */
@@ -10433,6 +10704,8 @@ export interface components {
              * @default 0
              */
             tax_rate_percent: number | string;
+            /** Template Id */
+            template_id?: string | null;
             /** Title */
             title: string;
             /** Valid Until */
@@ -10442,6 +10715,46 @@ export interface components {
         ProposalDeclineRequest: {
             /** Reason */
             reason?: string | null;
+        };
+        /**
+         * ProposalDepositConfirmRead
+         * @description The share link's return from paying the deposit (outcomes as for an
+         *     invoice: paid, processing, failed, open).
+         */
+        ProposalDepositConfirmRead: {
+            /** Outcome */
+            outcome: string;
+            proposal: components["schemas"]["ProposalPublicRead"];
+        };
+        /**
+         * ProposalDepositRead
+         * @description Where a signed proposal's deposit stands, for the signer (see
+         *     proposals/deposit.py):
+         *
+         *     - ``awaiting_countersign``: it's issued once the agency countersigns;
+         *     - ``preparing``: the deposit invoice is being issued (seconds);
+         *     - ``due``: issued and unpaid; ``pay_online`` when the agency takes
+         *       payments through Stripe;
+         *     - ``paid``;
+         *     - ``unavailable``: setting it up stopped, or the invoice was voided; the
+         *       agency follows up.
+         */
+        ProposalDepositRead: {
+            /** Amount Cents */
+            amount_cents: number;
+            /** Currency */
+            currency: string;
+            /** Invoice Id */
+            invoice_id?: string | null;
+            /** Invoice Number */
+            invoice_number?: string | null;
+            /**
+             * Pay Online
+             * @default false
+             */
+            pay_online: boolean;
+            /** Status */
+            status: string;
         };
         /** ProposalDetailRead */
         ProposalDetailRead: {
@@ -10482,6 +10795,7 @@ export interface components {
             decided_at: string | null;
             /** Decline Reason */
             decline_reason: string | null;
+            deposit?: components["schemas"]["ProposalDepositRead"] | null;
             /** Deposit Percent */
             deposit_percent?: string | null;
             /** Display Status */
@@ -10570,7 +10884,7 @@ export interface components {
             user_agent: string | null;
         };
         /** ProposalLineItemInput */
-        ProposalLineItemInput: {
+        "ProposalLineItemInput-Input": {
             /**
              * Billing
              * @default one_time
@@ -10590,6 +10904,37 @@ export interface components {
             package_key?: string | null;
             /** Quantity */
             quantity: number | string;
+            /**
+             * Selected
+             * @default true
+             */
+            selected: boolean;
+            /** Service Id */
+            service_id?: string | null;
+            /** Unit Price Cents */
+            unit_price_cents: number;
+        };
+        /** ProposalLineItemInput */
+        "ProposalLineItemInput-Output": {
+            /**
+             * Billing
+             * @default one_time
+             * @enum {string}
+             */
+            billing: "one_time" | "monthly";
+            /** Description */
+            description: string;
+            /** Details */
+            details?: string | null;
+            /**
+             * Optional
+             * @default false
+             */
+            optional: boolean;
+            /** Package Key */
+            package_key?: string | null;
+            /** Quantity */
+            quantity: string;
             /**
              * Selected
              * @default true
@@ -10713,6 +11058,7 @@ export interface components {
             countersignature: components["schemas"]["ProposalSignatureRead"] | null;
             /** Currency */
             currency: string;
+            deposit?: components["schemas"]["ProposalDepositRead"] | null;
             /** Display Status */
             display_status: string;
             /** Document Hash */
@@ -10851,6 +11197,183 @@ export interface components {
             signer_name: string;
         };
         /**
+         * ProposalTemplateData
+         * @description A template's contents: a proposal's terms, plus how long proposals
+         *     made from it stay open (their valid-until date is set from it).
+         */
+        "ProposalTemplateData-Input": {
+            /** Content */
+            content?: string | null;
+            /**
+             * Create Project On Accept
+             * @default false
+             */
+            create_project_on_accept: boolean;
+            /**
+             * Currency
+             * @default USD
+             */
+            currency: string;
+            /** Deposit Percent */
+            deposit_percent?: number | string | null;
+            /** Kickoff Template Id */
+            kickoff_template_id?: string | null;
+            /** Line Items */
+            line_items?: components["schemas"]["ProposalLineItemInput-Input"][];
+            /** Packages */
+            packages?: components["schemas"]["ProposalPackageInput"][];
+            /**
+             * Require Email Code
+             * @default false
+             */
+            require_email_code: boolean;
+            /**
+             * Requires Countersign
+             * @default false
+             */
+            requires_countersign: boolean;
+            /**
+             * Tax Rate Percent
+             * @default 0
+             */
+            tax_rate_percent: number | string;
+            /** Title */
+            title: string;
+            /** Valid For Days */
+            valid_for_days?: number | null;
+        };
+        /**
+         * ProposalTemplateData
+         * @description A template's contents: a proposal's terms, plus how long proposals
+         *     made from it stay open (their valid-until date is set from it).
+         */
+        "ProposalTemplateData-Output": {
+            /** Content */
+            content?: string | null;
+            /**
+             * Create Project On Accept
+             * @default false
+             */
+            create_project_on_accept: boolean;
+            /**
+             * Currency
+             * @default USD
+             */
+            currency: string;
+            /** Deposit Percent */
+            deposit_percent?: string | null;
+            /** Kickoff Template Id */
+            kickoff_template_id?: string | null;
+            /** Line Items */
+            line_items?: components["schemas"]["ProposalLineItemInput-Output"][];
+            /** Packages */
+            packages?: components["schemas"]["ProposalPackageInput"][];
+            /**
+             * Require Email Code
+             * @default false
+             */
+            require_email_code: boolean;
+            /**
+             * Requires Countersign
+             * @default false
+             */
+            requires_countersign: boolean;
+            /**
+             * Tax Rate Percent
+             * @default 0
+             */
+            tax_rate_percent: string;
+            /** Title */
+            title: string;
+            /** Valid For Days */
+            valid_for_days?: number | null;
+        };
+        /** ProposalTemplateRead */
+        ProposalTemplateRead: {
+            /** Attachment Count */
+            attachment_count: number;
+            /** Attachments */
+            attachments: components["schemas"]["ProposalAttachmentRead"][];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Currency */
+            currency: string;
+            data: components["schemas"]["ProposalTemplateData-Output"];
+            /** Description */
+            description: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Last Used At */
+            last_used_at: string | null;
+            /** Line Count */
+            line_count: number;
+            /** Monthly Total Cents */
+            monthly_total_cents: number;
+            /** Name */
+            name: string;
+            /** Package Names */
+            package_names: string[];
+            /** Title */
+            title: string;
+            /** Total Cents */
+            total_cents: number;
+            /** Updated At */
+            updated_at: string | null;
+            /** Use Count */
+            use_count: number;
+        };
+        /** ProposalTemplateSummaryRead */
+        ProposalTemplateSummaryRead: {
+            /** Attachment Count */
+            attachment_count: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Currency */
+            currency: string;
+            /** Description */
+            description: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Last Used At */
+            last_used_at: string | null;
+            /** Line Count */
+            line_count: number;
+            /** Monthly Total Cents */
+            monthly_total_cents: number;
+            /** Name */
+            name: string;
+            /** Package Names */
+            package_names: string[];
+            /** Title */
+            title: string;
+            /** Total Cents */
+            total_cents: number;
+            /** Updated At */
+            updated_at: string | null;
+            /** Use Count */
+            use_count: number;
+        };
+        /** ProposalTemplateWrite */
+        ProposalTemplateWrite: {
+            data: components["schemas"]["ProposalTemplateData-Input"];
+            /** Description */
+            description?: string | null;
+            /** Name */
+            name: string;
+        };
+        /**
          * ProposalUpdate
          * @description Full replace of a draft proposal — same shape as create.
          */
@@ -10876,7 +11399,7 @@ export interface components {
             /** Lead Id */
             lead_id?: string | null;
             /** Line Items */
-            line_items?: components["schemas"]["ProposalLineItemInput"][];
+            line_items?: components["schemas"]["ProposalLineItemInput-Input"][];
             /** Packages */
             packages?: components["schemas"]["ProposalPackageInput"][];
             /** Recipient Email */
@@ -10898,6 +11421,8 @@ export interface components {
              * @default 0
              */
             tax_rate_percent: number | string;
+            /** Template Id */
+            template_id?: string | null;
             /** Title */
             title: string;
             /** Valid Until */
@@ -11233,13 +11758,67 @@ export interface components {
             /** Role */
             role: string;
         };
+        /** SaveAsTemplateRequest */
+        SaveAsTemplateRequest: {
+            /** Description */
+            description?: string | null;
+            /** Name */
+            name: string;
+        };
         /** SendProposalRequest */
         SendProposalRequest: {
             /** Recipient Email */
             recipient_email?: string | null;
         };
+        /** ServiceAttachmentRead */
+        ServiceAttachmentRead: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** File Name */
+            file_name: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Mime Type */
+            mime_type: string;
+            /** Size */
+            size: number;
+        };
+        /** ServiceCategoryCreate */
+        ServiceCategoryCreate: {
+            /** Name */
+            name: string;
+        };
+        /** ServiceCategoryRead */
+        ServiceCategoryRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Position */
+            position: number;
+            /** Service Count */
+            service_count: number;
+        };
+        /** ServiceCategoryUpdate */
+        ServiceCategoryUpdate: {
+            /** Name */
+            name?: string | null;
+            /** Position */
+            position?: number | null;
+        };
         /** ServiceCreate */
         ServiceCreate: {
+            /** Category Id */
+            category_id?: string | null;
             /**
              * Default Quantity
              * @default 1
@@ -11247,6 +11826,11 @@ export interface components {
             default_quantity: number | string;
             /** Description */
             description?: string | null;
+            /**
+             * Is Starting Price
+             * @default false
+             */
+            is_starting_price: boolean;
             /** Name */
             name: string;
             /**
@@ -11269,6 +11853,8 @@ export interface components {
         };
         /** ServiceImportRow */
         ServiceImportRow: {
+            /** Category */
+            category?: string | null;
             /** Default Quantity */
             default_quantity?: string | null;
             /** Description */
@@ -11281,6 +11867,8 @@ export interface components {
             pricing?: string | null;
             /** Row */
             row: number;
+            /** Starting Price */
+            starting_price?: string | null;
             /** Status */
             status?: string | null;
         };
@@ -11291,6 +11879,12 @@ export interface components {
              * Format: uuid
              */
             agency_id: string;
+            /** Attachments */
+            attachments?: components["schemas"]["ServiceAttachmentRead"][];
+            /** Category Id */
+            category_id?: string | null;
+            /** Category Name */
+            category_name?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -11307,6 +11901,11 @@ export interface components {
             id: string;
             /** Is Archived */
             is_archived: boolean;
+            /**
+             * Is Starting Price
+             * @default false
+             */
+            is_starting_price: boolean;
             /** Name */
             name: string;
             /** Pricing Type */
@@ -11319,12 +11918,16 @@ export interface components {
          * @description Partial update — only the fields sent change.
          */
         ServiceUpdate: {
+            /** Category Id */
+            category_id?: string | null;
             /** Default Quantity */
             default_quantity?: number | string | null;
             /** Description */
             description?: string | null;
             /** Is Archived */
             is_archived?: boolean | null;
+            /** Is Starting Price */
+            is_starting_price?: boolean | null;
             /** Name */
             name?: string | null;
             /** Pricing Type */
@@ -11393,6 +11996,22 @@ export interface components {
         StripeOnboardingLinkRead: {
             /** Onboarding Url */
             onboarding_url: string;
+        };
+        /**
+         * StripePayoutsSessionRead
+         * @description Opens Stripe's embedded Payouts component for this agency's own
+         *     account (invoicing/payouts.py). Single use, and short-lived.
+         */
+        StripePayoutsSessionRead: {
+            /** Client Secret */
+            client_secret: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Publishable Key */
+            publishable_key: string;
         };
         /** SubscriptionRead */
         SubscriptionRead: {
@@ -14138,6 +14757,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StripeOnboardingLinkRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_stripe_payouts_session_agencies__agency_id__billing_settings_stripe_payouts_session_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StripePayoutsSessionRead"];
                 };
             };
             /** @description Validation Error */
@@ -20430,6 +21080,270 @@ export interface operations {
             };
         };
     };
+    list_templates_agencies__agency_id__proposal_templates_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalTemplateSummaryRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_template_agencies__agency_id__proposal_templates_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProposalTemplateWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalTemplateRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_template_agencies__agency_id__proposal_templates__template_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                template_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalTemplateRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_template_agencies__agency_id__proposal_templates__template_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                template_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProposalTemplateWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalTemplateRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_template_agencies__agency_id__proposal_templates__template_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                template_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_template_attachment_agencies__agency_id__proposal_templates__template_id__attachments_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                template_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_template_attachment_agencies__agency_id__proposal_templates__template_id__attachments_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalAttachmentRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_template_attachment_agencies__agency_id__proposal_templates__template_id__attachments__attachment_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                template_id: string;
+                attachment_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_template_attachment_agencies__agency_id__proposal_templates__template_id__attachments__attachment_id__download_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                template_id: string;
+                attachment_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_proposals_agencies__agency_id__proposals_get: {
         parameters: {
             query?: {
@@ -20862,6 +21776,42 @@ export interface operations {
             };
         };
     };
+    save_as_template_agencies__agency_id__proposals__proposal_id__save_as_template_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposal_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveAsTemplateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalTemplateRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     send_proposal_agencies__agency_id__proposals__proposal_id__send_post: {
         parameters: {
             query?: never;
@@ -21159,6 +22109,138 @@ export interface operations {
             };
         };
     };
+    list_categories_agencies__agency_id__service_categories_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceCategoryRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_category_agencies__agency_id__service_categories_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ServiceCategoryCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceCategoryRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_category_agencies__agency_id__service_categories__category_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                category_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_category_agencies__agency_id__service_categories__category_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                category_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ServiceCategoryUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceCategoryRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_services_agencies__agency_id__services_get: {
         parameters: {
             query?: {
@@ -21280,6 +22362,108 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ServiceRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_service_attachment_agencies__agency_id__services__service_id__attachments_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                service_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_service_attachment_agencies__agency_id__services__service_id__attachments_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceAttachmentRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_service_attachment_agencies__agency_id__services__service_id__attachments__attachment_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                service_id: string;
+                attachment_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_service_attachment_agencies__agency_id__services__service_id__attachments__attachment_id__download_get: {
+        parameters: {
+            query?: {
+                inline?: boolean;
+            };
+            header?: never;
+            path: {
+                service_id: string;
+                attachment_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
@@ -24655,6 +25839,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProposalPublicRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_public_deposit_checkout_proposals_public__token__deposit_checkout_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckoutSessionRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirm_public_deposit_proposals_public__token__deposit_confirm_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckoutConfirmRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalDepositConfirmRead"];
                 };
             };
             /** @description Validation Error */

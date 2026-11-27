@@ -13,6 +13,7 @@
 "use client";
 
 import { useTransition } from "react";
+import Link from "next/link";
 import { CheckCircle2, CircleAlert } from "lucide-react";
 import { toast } from "sonner";
 
@@ -91,6 +92,11 @@ const StripeConnectPanel = ({
         )}
         <StartedBy status={status} />
         <FeeNote />
+        {canManage && (
+          <p className={styles.detail}>
+            <Link href="/settings/payouts">See your balance and payouts →</Link>
+          </p>
+        )}
       </div>
     );
   }

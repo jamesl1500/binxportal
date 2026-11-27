@@ -16,10 +16,15 @@ import { refresh } from "next/cache";
 import { AuthApiError } from "@/lib/auth";
 import {
   createService,
+  createServiceCategory,
   deleteService,
+  deleteServiceAttachment,
+  deleteServiceCategory,
   type Service,
   type ServiceInput,
   updateService,
+  updateServiceCategory,
+  uploadServiceAttachment,
 } from "@/lib/services";
 
 export interface ServiceActionResult {
@@ -87,5 +92,77 @@ export async function deleteServiceAction(
     return {};
   } catch (error) {
     return errorResult(error, "Unable to delete service");
+  }
+}
+
+export async function createCategoryAction(
+  agencyId: string,
+  name: string,
+): Promise<{ error?: string }> {
+  try {
+    await createServiceCategory(agencyId, name);
+    refresh();
+    return {};
+  } catch (error) {
+    return errorResult(error, "Unable to add the category");
+  }
+}
+
+export async function renameCategoryAction(
+  agencyId: string,
+  categoryId: string,
+  name: string,
+): Promise<{ error?: string }> {
+  try {
+    await updateServiceCategory(agencyId, categoryId, { name });
+    refresh();
+    return {};
+  } catch (error) {
+    return errorResult(error, "Unable to rename the category");
+  }
+}
+
+export async function deleteCategoryAction(
+  agencyId: string,
+  categoryId: string,
+): Promise<{ error?: string }> {
+  try {
+    await deleteServiceCategory(agencyId, categoryId);
+    refresh();
+    return {};
+  } catch (error) {
+    return errorResult(error, "Unable to delete the category");
+  }
+}
+
+export async function uploadServiceFileAction(
+  agencyId: string,
+  serviceId: string,
+  formData: FormData,
+): Promise<{ error?: string }> {
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "Choose a photo or PDF" };
+  }
+  try {
+    await uploadServiceAttachment(agencyId, serviceId, file);
+    refresh();
+    return {};
+  } catch (error) {
+    return errorResult(error, "Unable to add that file");
+  }
+}
+
+export async function deleteServiceFileAction(
+  agencyId: string,
+  serviceId: string,
+  attachmentId: string,
+): Promise<{ error?: string }> {
+  try {
+    await deleteServiceAttachment(agencyId, serviceId, attachmentId);
+    refresh();
+    return {};
+  } catch (error) {
+    return errorResult(error, "Unable to remove that file");
   }
 }

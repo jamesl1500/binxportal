@@ -421,6 +421,13 @@ class FakeS3:
             "ETag": f'"{len(body)}"',
         }
 
+    def copy_object(self, *, Bucket: str, Key: str, CopySource: dict) -> dict:  # noqa: N803
+        source = (CopySource["Bucket"], CopySource["Key"])
+        if source not in self.objects:
+            raise ClientError({"Error": {"Code": "NoSuchKey", "Message": "missing"}}, "CopyObject")
+        self.objects[(Bucket, Key)] = self.objects[source]
+        return {}
+
     def delete_object(self, *, Bucket: str, Key: str) -> dict:  # noqa: N803
         self.objects.pop((Bucket, Key), None)
         return {}

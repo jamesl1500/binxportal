@@ -12,8 +12,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { AuthApiError } from "@/lib/auth";
-import { getPortalProposal } from "@/lib/portal";
+import { getPortalContext, getPortalProposal } from "@/lib/portal";
 import PortalProposalActions from "@/components/proposals/PortalProposalActions/PortalProposalActions";
+import DepositPanel from "@/components/proposals/DepositPanel/DepositPanel";
 import ProposalView from "@/components/proposals/ProposalView/ProposalView";
 import PortalPageHeader from "@/components/portal/PortalPageHeader/PortalPageHeader";
 
@@ -50,6 +51,7 @@ const PortalProposalDetailPage = async ({
     throw error;
   }
 
+  const agencyName = (await getPortalContext())?.agency.name ?? "Your agency";
   const awaitingDecision =
     proposal.display_status === "sent" || proposal.display_status === "viewed";
 
@@ -76,6 +78,18 @@ const PortalProposalDetailPage = async ({
         }
         choose={awaitingDecision ? { proposalId: proposal.id } : undefined}
       />
+
+      {proposal.deposit && (
+        <DepositPanel
+          deposit={proposal.deposit}
+          agencyName={agencyName}
+          invoiceHref={
+            proposal.deposit.invoice_id
+              ? `/portal/invoices/${proposal.deposit.invoice_id}`
+              : undefined
+          }
+        />
+      )}
 
       {awaitingDecision && (
         <PortalProposalActions

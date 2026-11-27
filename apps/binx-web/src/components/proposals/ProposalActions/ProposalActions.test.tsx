@@ -8,9 +8,14 @@ vi.mock("@/app/(app)/proposals/actions", () => ({
   sendProposalAction: vi.fn(),
 }));
 
+vi.mock("@/app/(app)/proposals/templates/actions", () => ({ saveAsTemplateAction: vi.fn() }));
+const push = vi.fn();
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
+
 Object.assign(navigator, { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
 
 import { deleteProposalAction, sendProposalAction } from "@/app/(app)/proposals/actions";
+import { saveAsTemplateAction } from "@/app/(app)/proposals/templates/actions";
 import { toast } from "sonner";
 import ProposalActions from "./ProposalActions";
 
@@ -82,5 +87,27 @@ describe("ProposalActions", () => {
     await userEvent.click(screen.getByRole("button", { name: "Delete" }));
     await userEvent.click(screen.getByRole("button", { name: "Delete proposal" }));
     expect(toast.error).toHaveBeenCalledWith("Cannot delete a sent proposal");
+  });
+
+  it("saves the proposal as a template under the name given", async () => {
+    vi.mocked(saveAsTemplateAction).mockResolvedValueOnce({ template: { id: "t1" } as never });
+    const user = userEvent.setup();
+    render(<ProposalActions agencyId="a1" proposal={proposal("sent")} />);
+
+    await user.click(screen.getByRole("button", { name: "Save as template" }));
+    const name = screen.getByLabelText("Template name");
+    expect(name).toHaveValue("Website redesign");
+    await user.clear(name);
+    await user.type(name, "Website build");
+    await user.type(screen.getByLabelText("Description (optional)"), "Our standard site");
+    await user.click(screen.getByRole("button", { name: "Save template" }));
+
+    expect(saveAsTemplateAction).toHaveBeenCalledWith("a1", "p1", "Website build", "Our standard site");
+    expect(toast.success).toHaveBeenCalledWith("Saved as a template", expect.objectContaining({ action: expect.anything() }));
+    const { action } = vi.mocked(toast.success).mock.calls.at(-1)![1] as unknown as {
+      action: { onClick: (event: unknown) => void };
+    };
+    action.onClick({});
+    expect(push).toHaveBeenCalledWith("/proposals/templates/t1");
   });
 });

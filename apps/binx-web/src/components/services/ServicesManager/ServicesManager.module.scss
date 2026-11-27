@@ -249,3 +249,52 @@
     color: t.$color-ink;
   }
 }
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+}
+
+.groupTitle {
+  margin: t.$space-2 0 0;
+  @include m.mono-label;
+  font-size: 0.625rem;
+  color: t.$color-ink-faint;
+}
+
+.checkboxField {
+  display: flex;
+  align-items: flex-start;
+  gap: t.$space-3;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+  cursor: pointer;
+
+  input {
+    @include m.touch-checkbox;
+    flex: none;
+  }
+
+  small {
+    display: block;
+    margin-top: 0.125rem;
+    font-size: t.$font-size-xs;
+    color: t.$color-ink-soft;
+  }
+}
+
+.filesEditor {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+  margin-top: t.$space-4;
+  padding-top: t.$space-4;
+  border-top: 1px solid t.$color-border;
+}
+
+.filesHint {
+  margin: 0;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+}

@@ -21,6 +21,7 @@ import { PER_MONTH, proposalStatusLabel, proposalTotalRows } from "@/lib/proposa
 import { formatMoneyCents } from "@/lib/money";
 import ProposalAttachmentList from "@/components/proposals/ProposalAttachmentList/ProposalAttachmentList";
 import ProposalCodeGate from "@/components/proposals/ProposalCodeGate/ProposalCodeGate";
+import DepositPanel from "@/components/proposals/DepositPanel/DepositPanel";
 import ProposalLines from "@/components/proposals/ProposalLines/ProposalLines";
 import PublicProposalActions from "@/components/proposals/PublicProposalActions/PublicProposalActions";
 
@@ -32,7 +33,12 @@ export const metadata: Metadata = {
 };
 
 interface PublicProposalPageProps {
-  searchParams: Promise<{ token?: string }>;
+  searchParams: Promise<{
+    token?: string;
+    /** Back from paying the deposit with Stripe: paid | cancelled. */
+    deposit?: string;
+    session_id?: string;
+  }>;
 }
 
 function formatDate(iso: string): string {
@@ -46,7 +52,8 @@ function formatDate(iso: string): string {
 const PublicProposalPage = async ({
   searchParams,
 }: PublicProposalPageProps) => {
-  const { token } = await searchParams;
+  const { token, deposit: depositReturn, session_id: sessionId } =
+    await searchParams;
 
   let proposal: Awaited<ReturnType<typeof getPublicProposal>> | null = null;
   let tokenError: string | null = null;
@@ -176,6 +183,19 @@ const PublicProposalPage = async ({
               )
             )}
           </div>
+        )}
+
+        {proposal.deposit && (
+          <DepositPanel
+            deposit={proposal.deposit}
+            agencyName={proposal.agency_name}
+            token={token}
+            returned={
+              depositReturn
+                ? { outcome: depositReturn, sessionId: sessionId }
+                : undefined
+            }
+          />
         )}
 
         {proposal.status === "signed" && (

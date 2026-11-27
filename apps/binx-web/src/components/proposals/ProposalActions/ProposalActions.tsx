@@ -13,8 +13,9 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Dialog } from "@base-ui/react/dialog";
-import { Copy } from "lucide-react";
+import { Copy, LayoutTemplate } from "lucide-react";
 import { toast } from "sonner";
 
 import type { ProposalDetail } from "@/lib/proposals";
@@ -22,6 +23,8 @@ import {
   deleteProposalAction,
   sendProposalAction,
 } from "@/app/(app)/proposals/actions";
+
+import { saveAsTemplateAction } from "@/app/(app)/proposals/templates/actions";
 
 import styles from "./ProposalActions.module.scss";
 
@@ -51,6 +54,10 @@ const ProposalActions = ({ agencyId, proposal }: ProposalActionsProps) => {
   const [isPending, startTransition] = useTransition();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [sendOpen, setSendOpen] = useState(false);
+  const [templateOpen, setTemplateOpen] = useState(false);
+  const [templateName, setTemplateName] = useState(proposal.title);
+  const [templateDescription, setTemplateDescription] = useState("");
+  const router = useRouter();
   const [recipientEmail, setRecipientEmail] = useState(
     proposal.recipient_email ?? "",
   );
@@ -67,6 +74,29 @@ const ProposalActions = ({ agencyId, proposal }: ProposalActionsProps) => {
     });
   };
 
+  const handleSaveAsTemplate = () => {
+    startTransition(async () => {
+      const result = await saveAsTemplateAction(
+        agencyId,
+        proposal.id,
+        templateName.trim(),
+        templateDescription.trim() || null,
+      );
+      if (result.error || !result.template) {
+        toast.error(result.error ?? "Unable to save the template");
+        return;
+      }
+      setTemplateOpen(false);
+      const templateId = result.template.id;
+      toast.success("Saved as a template", {
+        action: {
+          label: "View",
+          onClick: () => router.push(`/proposals/templates/${templateId}`),
+        },
+      });
+    });
+  };
+
   const handleCopyLink = async () => {
     const ok = await copyToClipboard(proposal.share_url);
     toast[ok ? "success" : "error"](
@@ -77,6 +107,13 @@ const ProposalActions = ({ agencyId, proposal }: ProposalActionsProps) => {
   return (
     <div className={styles.bar}>
       <div className={styles.left}>
+        <button
+          type="button"
+          className={styles.ghost}
+          onClick={() => setTemplateOpen(true)}
+        >
+          <LayoutTemplate aria-hidden="true" /> Save as template
+        </button>
         {!isDraft && (
           <button
             type="button"
@@ -123,6 +160,59 @@ const ProposalActions = ({ agencyId, proposal }: ProposalActionsProps) => {
           </span>
         )}
       </div>
+
+      <Dialog.Root open={templateOpen} onOpenChange={setTemplateOpen}>
+        <Dialog.Portal>
+          <Dialog.Backdrop className={styles.backdrop} />
+          <Dialog.Popup className={styles.dialog} aria-label="Save as a template">
+            <Dialog.Title className={styles.dialogTitle}>
+              Save as a template
+            </Dialog.Title>
+            <Dialog.Description className={styles.dialogDescription}>
+              Its scope, lines, packages, add-ons, documents and what happens
+              when it&apos;s accepted, ready to start the next proposal from.
+              Who it&apos;s for isn&apos;t saved.
+            </Dialog.Description>
+            <label className={styles.field}>
+              <span className={styles.fieldLabel}>Template name</span>
+              <input
+                className={styles.input}
+                value={templateName}
+                maxLength={120}
+                onChange={(event) => setTemplateName(event.target.value)}
+                required
+              />
+            </label>
+            <label className={styles.field}>
+              <span className={styles.fieldLabel}>Description (optional)</span>
+              <input
+                className={styles.input}
+                value={templateDescription}
+                maxLength={500}
+                placeholder="When to use it, for your team"
+                onChange={(event) => setTemplateDescription(event.target.value)}
+              />
+            </label>
+            <div className={styles.dialogActions}>
+              <button
+                type="button"
+                className={styles.ghost}
+                onClick={() => setTemplateOpen(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={styles.primary}
+                disabled={isPending || templateName.trim() === ""}
+                onClick={handleSaveAsTemplate}
+              >
+                Save template
+              </button>
+            </div>
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>
 
       <Dialog.Root open={deleteOpen} onOpenChange={setDeleteOpen}>
         <Dialog.Portal>

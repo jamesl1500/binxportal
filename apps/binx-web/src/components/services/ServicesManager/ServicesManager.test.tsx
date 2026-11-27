@@ -7,6 +7,11 @@ vi.mock("@/app/(app)/settings/services/actions", () => ({
   updateServiceAction: vi.fn(),
   setServiceArchivedAction: vi.fn(),
   deleteServiceAction: vi.fn(),
+  createCategoryAction: vi.fn(),
+  renameCategoryAction: vi.fn(),
+  deleteCategoryAction: vi.fn(),
+  uploadServiceFileAction: vi.fn(),
+  deleteServiceFileAction: vi.fn(),
 }));
 
 vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
@@ -38,6 +43,7 @@ function service(overrides: Partial<Service> = {}): Service {
     unit_price_cents: 200000,
     default_quantity: "1.00",
     is_archived: false,
+    is_starting_price: false,
     created_at: "2026-11-01T00:00:00Z",
     ...overrides,
   };
@@ -90,6 +96,8 @@ describe("ServicesManager", () => {
       pricingType: "hourly",
       unitPriceCents: 15050,
       defaultQuantity: "1",
+      isStartingPrice: false,
+      categoryId: null,
     });
     expect(toast.success).toHaveBeenCalled();
     expect(screen.queryByLabelText("Name")).not.toBeInTheDocument();
@@ -160,5 +168,71 @@ describe("ServicesManager", () => {
     expect(mockedDelete).not.toHaveBeenCalled();
     await user.click(await screen.findByRole("button", { name: "Delete service" }));
     expect(mockedDelete).toHaveBeenCalledWith("a1", "svc-1");
+  });
+
+  describe("categories, starting prices and files", () => {
+    const categories = [
+      { id: "c1", name: "Branding", position: 0, service_count: 1 },
+      { id: "c2", name: "Retainers", position: 1, service_count: 1 },
+    ];
+
+    it("groups the catalog by category and shows a starting price as From", () => {
+      render(
+        <ServicesManager
+          agencyId="a1"
+          services={[
+            service({ category_id: "c2", category_name: "Retainers" }),
+            service({ id: "svc-2", name: "Brand identity", pricing_type: "fixed", unit_price_cents: 500000, is_starting_price: true, category_id: "c1", category_name: "Branding" }),
+            service({ id: "svc-3", name: "Odd job", pricing_type: "fixed", unit_price_cents: 10000 }),
+          ]}
+          categories={categories}
+          currency="USD"
+          canManage
+        />,
+      );
+      const groups = screen.getAllByRole("region").filter((r) => r.tagName === "SECTION" && r.getAttribute("aria-label"));
+      expect(groups.map((g) => g.getAttribute("aria-label"))).toEqual(["Branding", "Retainers", "No category"]);
+      expect(within(groups[0]).getByText("From $5,000.00")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Categories" })).toBeInTheDocument();
+    });
+
+    it("saves the category and the starting price", async () => {
+      mockedCreate.mockResolvedValueOnce({ service: service() });
+      const user = userEvent.setup();
+      render(<ServicesManager agencyId="a1" services={[]} categories={categories} currency="USD" canManage />);
+
+      await user.click(screen.getByRole("button", { name: /add service/i }));
+      await user.type(screen.getByLabelText("Name"), "Brand identity");
+      await user.type(screen.getByLabelText("Price (USD)"), "5000");
+      await user.selectOptions(screen.getByLabelText("Category"), "c1");
+      await user.click(screen.getByRole("checkbox", { name: /starting price/i }));
+      expect(screen.getByText(/Shown as “From \$5,000.00”/)).toBeInTheDocument();
+      await user.click(screen.getAllByRole("button", { name: "Add service" }).at(-1)!);
+
+      expect(mockedCreate).toHaveBeenCalledWith(
+        "a1",
+        expect.objectContaining({ categoryId: "c1", isStartingPrice: true, unitPriceCents: 500000 }),
+      );
+    });
+
+    it("shows a service's photos and PDFs, and lets them be managed while editing", async () => {
+      const user = userEvent.setup();
+      const files = [
+        { id: "f1", file_name: "logo.png", mime_type: "image/png", size: 10, created_at: "2026-11-01T00:00:00Z" },
+        { id: "f2", file_name: "spec.pdf", mime_type: "application/pdf", size: 10, created_at: "2026-11-01T00:00:00Z" },
+      ];
+      render(<ServicesManager agencyId="a1" services={[service({ attachments: files })]} currency="USD" canManage />);
+
+      expect(screen.getByRole("img", { name: "logo.png" })).toHaveAttribute(
+        "src",
+        "/api/services/a1/svc-1/attachments/f1?inline=1",
+      );
+      expect(screen.getByText("spec.pdf")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Remove logo.png" })).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: "Edit Design retainer" }));
+      expect(screen.getByRole("button", { name: "Remove logo.png" })).toBeInTheDocument();
+      expect(screen.getByLabelText("Add photos or PDFs to Design retainer")).toBeInTheDocument();
+    });
   });
 });

@@ -46,6 +46,8 @@ from binx_api.modules.projects.router import router as projects_router
 from binx_api.modules.proposals.completion import run_completion_loop
 from binx_api.modules.proposals.router import public_router as proposals_public_router
 from binx_api.modules.proposals.router import router as proposals_router
+from binx_api.modules.proposals.templates_router import router as proposal_templates_router
+from binx_api.modules.services.router import categories_router as service_categories_router
 from binx_api.modules.services.router import router as services_router
 from binx_api.modules.time_tracking.router import router as time_tracking_router
 from binx_api.modules.timeline.router import router as timeline_router
@@ -137,8 +139,10 @@ def create_app() -> FastAPI:
     app.include_router(invoicing_webhooks_router)
     app.include_router(boards_router)
     app.include_router(proposals_router)
+    app.include_router(proposal_templates_router)
     app.include_router(proposals_public_router)
     app.include_router(services_router)
+    app.include_router(service_categories_router)
     app.include_router(time_tracking_router)
     app.include_router(recurring_invoices_router)
     app.include_router(kickoffs_router)

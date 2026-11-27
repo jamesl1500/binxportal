@@ -16,10 +16,12 @@ import { AuthApiError } from "@/lib/auth";
 import { rememberProposalAccess } from "@/lib/proposal-access";
 import {
   choosePublicProposalOptions,
+  confirmPublicDeposit,
   declinePublicProposal,
   type ProposalPublic,
   requestPublicProposalCode,
   signPublicProposal,
+  startPublicDepositCheckout,
   verifyPublicProposalCode,
 } from "@/lib/proposals";
 
@@ -116,5 +118,31 @@ export async function verifyProposalCodeAction(
     return {};
   } catch (error) {
     return errorResult(error, "Unable to check that code");
+  }
+}
+
+/** Starts paying the deposit; the caller sends the browser to the URL. */
+export async function startDepositCheckoutAction(
+  token: string,
+): Promise<{ error?: string; checkoutUrl?: string }> {
+  try {
+    const { checkout_url } = await startPublicDepositCheckout(token);
+    return { checkoutUrl: checkout_url };
+  } catch (error) {
+    return errorResult(error, "Unable to start the payment");
+  }
+}
+
+/** Back from Stripe: checks the payment, then reloads the page's data. */
+export async function confirmDepositAction(
+  token: string,
+  sessionId: string,
+): Promise<{ error?: string; outcome?: string }> {
+  try {
+    const { outcome } = await confirmPublicDeposit(token, sessionId);
+    refresh();
+    return { outcome };
+  } catch (error) {
+    return errorResult(error, "Unable to check the payment");
   }
 }

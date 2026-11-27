@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     # The SDK's own TypedDicts for each call: a misspelled or mistyped Stripe
     # field at any call site is a type error instead of a runtime 400.
     from stripe import RequestOptions
-    from stripe.params import CustomerCreateParams, PaymentIntentRetrieveParams
+    from stripe.params import AccountSessionCreateParams, CustomerCreateParams, PaymentIntentRetrieveParams
     from stripe.params.billing_portal import SessionCreateParams as PortalSessionCreateParams
     from stripe.params.checkout import SessionCreateParams as CheckoutSessionCreateParams
     from stripe.params.v2.core import AccountCreateParams, AccountLinkCreateParams, AccountRetrieveParams
@@ -134,6 +134,11 @@ async def retrieve_connect_account(
 
 async def create_account_link(params: AccountLinkCreateParams) -> stripe.v2.core.AccountLink:
     return await _get_client().v2.core.account_links.create_async(params)
+
+
+async def create_account_session(params: AccountSessionCreateParams) -> stripe.AccountSession:
+    """For Connect embedded components (invoicing/payouts.py)."""
+    return await _get_client().v1.account_sessions.create_async(params)
 
 
 def construct_event(payload: bytes, sig_header: str, secret: str) -> stripe.Event:

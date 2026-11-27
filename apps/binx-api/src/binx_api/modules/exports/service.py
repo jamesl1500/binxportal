@@ -358,6 +358,7 @@ async def export_services(db: AsyncSession, agency_id: uuid.UUID, *, viewer_is_a
     """The whole catalog, archived services included (marked in Status), so
     the file re-imports as the same catalog."""
     services = await services_service.list_services(db, agency_id, include_archived=True)
+    categories = await services_service.category_names(db, (item.category_id for item in services))
     rows: list[list[Cell]] = [
         [
             item.name,
@@ -367,10 +368,22 @@ async def export_services(db: AsyncSession, agency_id: uuid.UUID, *, viewer_is_a
             item.default_quantity,
             "Archived" if item.is_archived else "Active",
             item.created_at,
+            categories.get(item.category_id) if item.category_id else None,
+            "Yes" if item.is_starting_price else "No",
         ]
         for item in services
     ]
-    headers = ["Service name", "Description", "Pricing", "Price", "Default quantity", "Status", "Added"]
+    headers = [
+        "Service name",
+        "Description",
+        "Pricing",
+        "Price",
+        "Default quantity",
+        "Status",
+        "Added",
+        "Category",
+        "Starting price",
+    ]
     return ExportTable(headers, rows, "Services")
 
 

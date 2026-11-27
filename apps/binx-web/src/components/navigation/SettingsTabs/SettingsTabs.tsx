@@ -25,6 +25,7 @@ const TAB_GROUPS: { href: string; label: string }[][] = [
   ],
   [
     { href: "/settings/invoicing", label: "Invoicing" },
+    { href: "/settings/payouts", label: "Payouts" },
     { href: "/settings/services", label: "Services" },
     { href: "/settings/meetings", label: "Meetings" },
     { href: "/settings/plan", label: "Plan" },

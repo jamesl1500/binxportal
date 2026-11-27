@@ -48,6 +48,9 @@ const ProposalsPage = async () => {
           </div>
 
           <div className={styles.actions}>
+            <Link href="/proposals/templates" className={styles.secondaryButton}>
+              Templates
+            </Link>
             <Link href="/proposals/new" className={styles.newButton}>
               <Plus aria-hidden="true" />
               New proposal

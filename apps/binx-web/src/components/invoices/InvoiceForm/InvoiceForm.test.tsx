@@ -122,6 +122,7 @@ describe("InvoiceForm", () => {
         unit_price_cents: 200000,
         default_quantity: "1.00",
         is_archived: false,
+        is_starting_price: false,
         created_at: "2026-11-01T00:00:00Z",
       },
     ];

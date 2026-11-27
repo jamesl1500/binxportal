@@ -361,7 +361,15 @@ async def get_connect_status(db: AsyncSession, agency: Agency, *, refresh: bool 
 
 
 async def start_invoice_checkout(
-    db: AsyncSession, invoice: Invoice, agency: Agency, billing_settings: AgencyBillingSettings, *, paid_by: User
+    db: AsyncSession,
+    invoice: Invoice,
+    agency: Agency,
+    billing_settings: AgencyBillingSettings,
+    *,
+    paid_by: User | None,
+    success_url: str | None = None,
+    cancel_url: str | None = None,
+    extra_metadata: dict[str, str] | None = None,
 ) -> str:
     """A Checkout Session created *on the connected account* — the agency is
     the merchant of record. Always for the full outstanding balance; no
@@ -372,7 +380,11 @@ async def start_invoice_checkout(
 
     Binx's platform fee rides along as the PaymentIntent's
     ``application_fee_amount`` — it comes out of the agency's side, so the
-    client pays exactly the invoice balance. See invoicing/fees.py."""
+    client pays exactly the invoice balance. See invoicing/fees.py.
+
+    The return URLs default to the client portal's invoice page; a payer
+    with no account yet (a proposal's signer paying its deposit, see
+    proposals/deposit.py) passes ``paid_by=None`` and its own pages."""
     balance = invoice.total_cents - invoice.amount_paid_cents
     fee_cents = fees.platform_fee_cents(balance)
 
@@ -389,9 +401,10 @@ async def start_invoice_checkout(
             }
         ],
         "metadata": {
+            **(extra_metadata or {}),
             "invoice_id": str(invoice.id),
             "agency_id": str(agency.id),
-            "paid_by_user_id": str(paid_by.id),
+            **({"paid_by_user_id": str(paid_by.id)} if paid_by else {}),
             # The fee as charged, so a recorded payment can fall back to it
             # if the charge's balance transaction can't be read.
             "platform_fee_cents": str(fee_cents),
@@ -399,10 +412,9 @@ async def start_invoice_checkout(
         # {CHECKOUT_SESSION_ID} is a Stripe template variable, filled in on
         # redirect — the return page hands it to confirm_checkout_session so
         # the payment is recorded without waiting on the webhook.
-        "success_url": (
-            f"{settings.frontend_url}/portal/invoices/{invoice.id}?checkout=success&session_id={{CHECKOUT_SESSION_ID}}"
-        ),
-        "cancel_url": f"{settings.frontend_url}/portal/invoices/{invoice.id}?checkout=cancel",
+        "success_url": success_url
+        or f"{settings.frontend_url}/portal/invoices/{invoice.id}?checkout=success&session_id={{CHECKOUT_SESSION_ID}}",
+        "cancel_url": cancel_url or f"{settings.frontend_url}/portal/invoices/{invoice.id}?checkout=cancel",
     }
     if fee_cents:
         params["payment_intent_data"] = {"application_fee_amount": fee_cents}

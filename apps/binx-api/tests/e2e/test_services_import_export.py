@@ -8,7 +8,7 @@ from decimal import Decimal
 import pytest
 from sqlalchemy import select
 
-from binx_api.modules.services.models import Service
+from binx_api.modules.services.models import Service, ServiceCategory
 from tests.conftest import auth_headers
 from tests.factories import add_agency_member, make_agency, make_user
 
@@ -117,8 +117,15 @@ class TestServiceRoundTrip:
             user,
             agency,
             [
-                {"row": 2, "name": "Brand strategy", "price": "5000", "description": "Workshops"},
-                {"row": 3, "name": "Design retainer", "price": "2000", "pricing": "monthly"},
+                {
+                    "row": 2,
+                    "name": "Brand strategy",
+                    "price": "5000",
+                    "description": "Workshops",
+                    "category": "Branding",
+                    "starting_price": "Yes",
+                },
+                {"row": 3, "name": "Design retainer", "price": "2000", "pricing": "monthly", "category": "Retainers"},
                 {"row": 4, "name": "Dev hours", "price": "150", "pricing": "hourly", "default_quantity": "2.5"},
                 {"row": 5, "name": "Old package", "price": "900", "status": "archived"},
             ],
@@ -146,14 +153,20 @@ class TestServiceRoundTrip:
         assert result.json()["imported"] == 4
 
         def shape(agency_id):
-            return select(
-                Service.name,
-                Service.description,
-                Service.pricing_type,
-                Service.unit_price_cents,
-                Service.default_quantity,
-                Service.is_archived,
-            ).where(Service.agency_id == agency_id)
+            return (
+                select(
+                    Service.name,
+                    Service.description,
+                    Service.pricing_type,
+                    Service.unit_price_cents,
+                    Service.default_quantity,
+                    Service.is_archived,
+                    Service.is_starting_price,
+                    ServiceCategory.name,
+                )
+                .outerjoin(ServiceCategory, ServiceCategory.id == Service.category_id)
+                .where(Service.agency_id == agency_id)
+            )
 
         original = sorted((await db_session.execute(shape(agency.id))).all())
         copy = sorted((await db_session.execute(shape(other.id))).all())

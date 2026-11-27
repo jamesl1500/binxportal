@@ -19,8 +19,9 @@ from binx_api.core.dependencies import CurrentUser, DbSession
 from binx_api.core.rate_limit import client_ip, client_user_agent, limiter
 from binx_api.modules.agencies.dependencies import require_agency_role
 from binx_api.modules.agencies.models import ROLE_ADMIN, ROLE_MEMBER, ROLE_OWNER, Agency
+from binx_api.modules.invoicing.schemas import CheckoutConfirmRequest, CheckoutSessionRead
 from binx_api.modules.proposals import acceptance as acceptance_service
-from binx_api.modules.proposals import access, completion, options, service, signing
+from binx_api.modules.proposals import access, completion, deposit, options, service, signing, templates
 from binx_api.modules.proposals.certificate_pdf import certificate_file_name, render_certificate_pdf
 from binx_api.modules.proposals.models import (
     BILLING_MONTHLY,
@@ -41,6 +42,7 @@ from binx_api.modules.proposals.schemas import (
     ProposalCodeVerifyRequest,
     ProposalCreate,
     ProposalDeclineRequest,
+    ProposalDepositConfirmRead,
     ProposalDetailRead,
     ProposalEventRead,
     ProposalLineItemRead,
@@ -50,7 +52,9 @@ from binx_api.modules.proposals.schemas import (
     ProposalRead,
     ProposalSignatureRead,
     ProposalSignRequest,
+    ProposalTemplateRead,
     ProposalUpdate,
+    SaveAsTemplateRequest,
     SendProposalRequest,
 )
 
@@ -234,6 +238,7 @@ async def _detail_read(
         create_project_on_accept=proposal.create_project_on_accept,
         kickoff_template_id=proposal.kickoff_template_id,
         acceptance=await acceptance_read(db, proposal) if include_acceptance else None,
+        deposit=await deposit.deposit_read(db, proposal, with_invoice_id=True),
     )
 
 
@@ -307,6 +312,8 @@ async def create_proposal(
     db: DbSession, current_user: CurrentUser, agency_and_role: AnyMember, data: ProposalCreate
 ) -> ProposalDetailRead:
     agency, _role = agency_and_role
+    # Made from a template: check it's this agency's before creating anything.
+    template = await templates.get_template_or_404(db, agency.id, data.template_id) if data.template_id else None
     proposal = await service.create_proposal(
         db,
         agency,
@@ -328,8 +335,31 @@ async def create_proposal(
         create_project_on_accept=data.create_project_on_accept,
         kickoff_template_id=data.kickoff_template_id,
     )
+    if template is not None:
+        await templates.apply_to_proposal(db, template, proposal, uploaded_by=current_user)
     lead_name, client_name = await _names(db, proposal)
     return await _detail_read(db, proposal, lead_name, client_name)
+
+
+@router.post(
+    "/{proposal_id}/save-as-template", response_model=ProposalTemplateRead, status_code=status.HTTP_201_CREATED
+)
+async def save_as_template(
+    db: DbSession,
+    current_user: CurrentUser,
+    agency_and_role: AnyMember,
+    proposal_id: uuid.UUID,
+    data: SaveAsTemplateRequest,
+) -> ProposalTemplateRead:
+    """A new template from this proposal's terms and documents (any status)."""
+    from binx_api.modules.proposals.templates_router import template_read
+
+    agency, _role = agency_and_role
+    proposal = await service.get_proposal_or_404(db, agency.id, proposal_id)
+    template = await templates.save_proposal_as_template(
+        db, proposal, agency, created_by=current_user, name=data.name, description=data.description
+    )
+    return await template_read(db, template)
 
 
 @router.get("/{proposal_id}", response_model=ProposalDetailRead)
@@ -583,6 +613,7 @@ async def _public_read(db: DbSession, proposal: Proposal, agency_name: str) -> P
         attachments=[attachment_read(item) for item in attachments],
         signature=signature_read(signature),
         **(await signing_fields(db, proposal)),
+        deposit=await deposit.deposit_read(db, proposal),
     )
 
 
@@ -649,6 +680,27 @@ async def choose_public_proposal_options(
         db, proposal, package_id=data.package_id, add_on_ids=data.add_on_ids, visitor=link_visitor(request)
     )
     return await _public_after_change(db, proposal)
+
+
+@public_router.post("/{token}/deposit/checkout", response_model=CheckoutSessionRead)
+@limiter.limit("20/hour")
+async def start_public_deposit_checkout(request: Request, db: DbSession, token: str) -> CheckoutSessionRead:
+    """Stripe Checkout for the signed proposal's deposit invoice (on the
+    agency's connected account). 409 until it's issued and due."""
+    proposal = await _gated(db, token, request)
+    return CheckoutSessionRead(checkout_url=await deposit.start_checkout(db, proposal))
+
+
+@public_router.post("/{token}/deposit/confirm", response_model=ProposalDepositConfirmRead)
+async def confirm_public_deposit(
+    db: DbSession, token: str, data: CheckoutConfirmRequest, request: Request
+) -> ProposalDepositConfirmRead:
+    """The share link's return from Stripe: checks the session and records
+    the payment if it's in (the webhook does the same; whichever is first)."""
+    proposal = await _gated(db, token, request)
+    outcome = await deposit.confirm_checkout(db, proposal, data.session_id)
+    await db.refresh(proposal)
+    return ProposalDepositConfirmRead(outcome=outcome, proposal=await _public_after_change(db, proposal))
 
 
 @public_router.post("/{token}/decline", response_model=ProposalPublicRead)

@@ -14,9 +14,15 @@ vi.mock("@/app/(app)/proposals/actions", () => ({
   updateProposalAction: vi.fn(),
 }));
 
-vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
+vi.mock("@/app/(app)/proposals/templates/actions", () => ({
+  createTemplateAction: vi.fn(),
+  updateTemplateAction: vi.fn(),
+}));
+
+vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 
 import { createProposalAction } from "@/app/(app)/proposals/actions";
+import { createTemplateAction, updateTemplateAction } from "@/app/(app)/proposals/templates/actions";
 
 import ProposalForm from "./ProposalForm";
 
@@ -32,6 +38,7 @@ const services = [
     unit_price_cents: 500000,
     default_quantity: "1.00",
     is_archived: false,
+    is_starting_price: false,
     created_at: "2026-11-01T00:00:00Z",
   },
   {
@@ -43,6 +50,7 @@ const services = [
     unit_price_cents: 15000,
     default_quantity: "10.00",
     is_archived: false,
+    is_starting_price: false,
     created_at: "2026-11-01T00:00:00Z",
   },
 ];
@@ -476,5 +484,110 @@ describe("ProposalForm", () => {
     const draft = { id: "p1", title: "Pricing", currency: "USD", tax_rate_percent: "0", line_items: [], require_email_code: true } as never;
     render(<ProposalForm agencyId="a1" clients={clients} proposal={draft} />);
     expect(screen.getByRole("checkbox", { name: /ask for an email code/i })).toBeChecked();
+  });
+
+  describe("templates", () => {
+    const templateData = {
+      title: "Website for {client}",
+      content: "Scope",
+      currency: "USD",
+      tax_rate_percent: "10.000",
+      valid_for_days: 30,
+      deposit_percent: "25.000",
+      create_project_on_accept: true,
+      requires_countersign: true,
+      require_email_code: false,
+      kickoff_template_id: null,
+      packages: [
+        { key: "e", name: "Essential", description: null, recommended: false },
+        { key: "c", name: "Complete", description: "Everything", recommended: true },
+      ],
+      line_items: [
+        { description: "Discovery", details: null, quantity: "1.00", unit_price_cents: 100000, service_id: null, billing: "one_time", package_key: null, optional: false, selected: true },
+        { description: "Five pages", details: null, quantity: "1.00", unit_price_cents: 400000, service_id: null, billing: "one_time", package_key: "e", optional: false, selected: true },
+        { description: "Ten pages", details: null, quantity: "1.00", unit_price_cents: 700000, service_id: null, billing: "one_time", package_key: "c", optional: false, selected: true },
+        { description: "SEO", details: null, quantity: "1.00", unit_price_cents: 80000, service_id: null, billing: "one_time", package_key: null, optional: true, selected: false },
+      ],
+    } as never;
+
+    it("prefills a new proposal from a template and sends its id", async () => {
+      mockedCreate.mockResolvedValueOnce({ proposal: { id: "p1" } as never });
+      const user = userEvent.setup();
+      render(
+        <ProposalForm
+          agencyId="a1"
+          clients={clients}
+          fromTemplate={{ id: "t1", name: "Website build", data: templateData, attachmentCount: 2 }}
+        />,
+      );
+
+      expect(screen.getByText(/2 documents are attached when you create the draft/)).toBeInTheDocument();
+      expect(screen.getByLabelText(/^Title$/)).toHaveValue("Website for {client}");
+      expect(screen.getByLabelText("Line 2 package")).toHaveValue("e");
+      expect(screen.getByLabelText("Line 3 package")).toHaveValue("c");
+      expect(screen.getByLabelText("Line 4 type")).toHaveValue("add_on");
+      expect(screen.getByLabelText("Deposit (% of the total)")).toHaveValue(25);
+      // Valid until: 30 days from today.
+      const expected = new Date();
+      expected.setDate(expected.getDate() + 30);
+      expect(screen.getByLabelText("Valid until")).toHaveValue(expected.toISOString().slice(0, 10));
+      // Discovery + Ten pages, + 10% tax.
+      expect(screen.getByText("Total").nextSibling).toHaveTextContent("$8,800.00");
+
+      await user.clear(screen.getByLabelText(/^Title$/));
+      await user.type(screen.getByLabelText(/^Title$/), "Website for Fjord");
+      await user.click(screen.getByRole("button", { name: /create draft/i }));
+      expect(mockedCreate).toHaveBeenCalledWith(
+        "a1",
+        expect.objectContaining({ title: "Website for Fjord", templateId: "t1", requiresCountersign: true }),
+      );
+    });
+
+    it("edits a template: a name instead of who it's for, days instead of a date", async () => {
+      vi.mocked(updateTemplateAction).mockResolvedValueOnce({ template: { id: "t1" } as never });
+      const user = userEvent.setup();
+      render(
+        <ProposalForm
+          agencyId="a1"
+          clients={clients}
+          templateEditor={{ id: "t1", name: "Website build", description: "", data: templateData }}
+        />,
+      );
+
+      expect(screen.queryByLabelText("Client")).not.toBeInTheDocument();
+      expect(screen.queryByLabelText("Recipient email")).not.toBeInTheDocument();
+      expect(screen.queryByLabelText("Valid until")).not.toBeInTheDocument();
+      expect(screen.getByLabelText("Valid for (days)")).toHaveValue(30);
+      await user.type(screen.getByLabelText("Description"), "Our usual site");
+      await user.clear(screen.getByLabelText("Valid for (days)"));
+      await user.type(screen.getByLabelText("Valid for (days)"), "14");
+      await user.click(screen.getByRole("button", { name: "Save template" }));
+
+      expect(updateTemplateAction).toHaveBeenCalledWith(
+        "a1",
+        "t1",
+        expect.objectContaining({ name: "Website build", description: "Our usual site", validForDays: 14 }),
+      );
+      expect(mockPush).not.toHaveBeenCalled();
+    });
+
+    it("needs a name to create a template, then opens it", async () => {
+      vi.mocked(createTemplateAction).mockResolvedValueOnce({ template: { id: "t9" } as never });
+      const user = userEvent.setup();
+      render(<ProposalForm agencyId="a1" clients={clients} templateEditor={{ name: "", description: "" }} />);
+
+      await user.type(screen.getByLabelText(/^Title$/), "Retainer");
+      await user.type(screen.getByLabelText("Line 1 description"), "Design");
+      await user.type(screen.getByLabelText("Line 1 unit price"), "100");
+      expect(screen.getByRole("button", { name: "Save template" })).toBeDisabled();
+      await user.type(screen.getByLabelText("Template name"), "Monthly design");
+      await user.click(screen.getByRole("button", { name: "Save template" }));
+
+      expect(createTemplateAction).toHaveBeenCalledWith(
+        "a1",
+        expect.objectContaining({ name: "Monthly design", validForDays: null }),
+      );
+      expect(mockPush).toHaveBeenCalledWith("/proposals/templates/t9");
+    });
   });
 });
