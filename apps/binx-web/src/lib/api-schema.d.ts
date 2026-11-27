@@ -881,6 +881,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agencies/{agency_id}/billing-settings/stripe/payouts-session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start Stripe Payouts Session
+         * @description Owners and admins: the agency's Stripe balance and payouts, and paying
+         *     out, through Stripe's embedded Payouts component.
+         */
+        post: operations["start_stripe_payouts_session_agencies__agency_id__billing_settings_stripe_payouts_session_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agencies/{agency_id}/billing-settings/stripe/status": {
         parameters: {
             query?: never;
@@ -3539,6 +3560,42 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agencies/{agency_id}/service-categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Categories */
+        get: operations["list_categories_agencies__agency_id__service_categories_get"];
+        put?: never;
+        /** Create Category */
+        post: operations["create_category_agencies__agency_id__service_categories_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/service-categories/{category_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Category */
+        delete: operations["delete_category_agencies__agency_id__service_categories__category_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Category */
+        patch: operations["update_category_agencies__agency_id__service_categories__category_id__patch"];
+        trace?: never;
+    };
     "/agencies/{agency_id}/services": {
         parameters: {
             query?: never;
@@ -3573,6 +3630,60 @@ export interface paths {
         head?: never;
         /** Update Service */
         patch: operations["update_service_agencies__agency_id__services__service_id__patch"];
+        trace?: never;
+    };
+    "/agencies/{agency_id}/services/{service_id}/attachments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload Service Attachment */
+        post: operations["upload_service_attachment_agencies__agency_id__services__service_id__attachments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/services/{service_id}/attachments/{attachment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Service Attachment */
+        delete: operations["delete_service_attachment_agencies__agency_id__services__service_id__attachments__attachment_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/services/{service_id}/attachments/{attachment_id}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download Service Attachment
+         * @description ``inline`` for showing a photo in the page rather than downloading it.
+         */
+        get: operations["download_service_attachment_agencies__agency_id__services__service_id__attachments__attachment_id__download_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/agencies/{agency_id}/subdomain": {
@@ -7174,6 +7285,11 @@ export interface components {
         };
         /** Body_upload_project_file_agencies__agency_id__projects__project_id__files_post */
         Body_upload_project_file_agencies__agency_id__projects__project_id__files_post: {
+            /** File */
+            file: string;
+        };
+        /** Body_upload_service_attachment_agencies__agency_id__services__service_id__attachments_post */
+        Body_upload_service_attachment_agencies__agency_id__services__service_id__attachments_post: {
             /** File */
             file: string;
         };
@@ -11654,8 +11770,55 @@ export interface components {
             /** Recipient Email */
             recipient_email?: string | null;
         };
+        /** ServiceAttachmentRead */
+        ServiceAttachmentRead: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** File Name */
+            file_name: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Mime Type */
+            mime_type: string;
+            /** Size */
+            size: number;
+        };
+        /** ServiceCategoryCreate */
+        ServiceCategoryCreate: {
+            /** Name */
+            name: string;
+        };
+        /** ServiceCategoryRead */
+        ServiceCategoryRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Position */
+            position: number;
+            /** Service Count */
+            service_count: number;
+        };
+        /** ServiceCategoryUpdate */
+        ServiceCategoryUpdate: {
+            /** Name */
+            name?: string | null;
+            /** Position */
+            position?: number | null;
+        };
         /** ServiceCreate */
         ServiceCreate: {
+            /** Category Id */
+            category_id?: string | null;
             /**
              * Default Quantity
              * @default 1
@@ -11663,6 +11826,11 @@ export interface components {
             default_quantity: number | string;
             /** Description */
             description?: string | null;
+            /**
+             * Is Starting Price
+             * @default false
+             */
+            is_starting_price: boolean;
             /** Name */
             name: string;
             /**
@@ -11685,6 +11853,8 @@ export interface components {
         };
         /** ServiceImportRow */
         ServiceImportRow: {
+            /** Category */
+            category?: string | null;
             /** Default Quantity */
             default_quantity?: string | null;
             /** Description */
@@ -11697,6 +11867,8 @@ export interface components {
             pricing?: string | null;
             /** Row */
             row: number;
+            /** Starting Price */
+            starting_price?: string | null;
             /** Status */
             status?: string | null;
         };
@@ -11707,6 +11879,12 @@ export interface components {
              * Format: uuid
              */
             agency_id: string;
+            /** Attachments */
+            attachments?: components["schemas"]["ServiceAttachmentRead"][];
+            /** Category Id */
+            category_id?: string | null;
+            /** Category Name */
+            category_name?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -11723,6 +11901,11 @@ export interface components {
             id: string;
             /** Is Archived */
             is_archived: boolean;
+            /**
+             * Is Starting Price
+             * @default false
+             */
+            is_starting_price: boolean;
             /** Name */
             name: string;
             /** Pricing Type */
@@ -11735,12 +11918,16 @@ export interface components {
          * @description Partial update — only the fields sent change.
          */
         ServiceUpdate: {
+            /** Category Id */
+            category_id?: string | null;
             /** Default Quantity */
             default_quantity?: number | string | null;
             /** Description */
             description?: string | null;
             /** Is Archived */
             is_archived?: boolean | null;
+            /** Is Starting Price */
+            is_starting_price?: boolean | null;
             /** Name */
             name?: string | null;
             /** Pricing Type */
@@ -11809,6 +11996,22 @@ export interface components {
         StripeOnboardingLinkRead: {
             /** Onboarding Url */
             onboarding_url: string;
+        };
+        /**
+         * StripePayoutsSessionRead
+         * @description Opens Stripe's embedded Payouts component for this agency's own
+         *     account (invoicing/payouts.py). Single use, and short-lived.
+         */
+        StripePayoutsSessionRead: {
+            /** Client Secret */
+            client_secret: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Publishable Key */
+            publishable_key: string;
         };
         /** SubscriptionRead */
         SubscriptionRead: {
@@ -14554,6 +14757,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StripeOnboardingLinkRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_stripe_payouts_session_agencies__agency_id__billing_settings_stripe_payouts_session_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StripePayoutsSessionRead"];
                 };
             };
             /** @description Validation Error */
@@ -21875,6 +22109,138 @@ export interface operations {
             };
         };
     };
+    list_categories_agencies__agency_id__service_categories_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceCategoryRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_category_agencies__agency_id__service_categories_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ServiceCategoryCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceCategoryRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_category_agencies__agency_id__service_categories__category_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                category_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_category_agencies__agency_id__service_categories__category_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                category_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ServiceCategoryUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceCategoryRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_services_agencies__agency_id__services_get: {
         parameters: {
             query?: {
@@ -21996,6 +22362,108 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ServiceRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_service_attachment_agencies__agency_id__services__service_id__attachments_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                service_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_service_attachment_agencies__agency_id__services__service_id__attachments_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceAttachmentRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_service_attachment_agencies__agency_id__services__service_id__attachments__attachment_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                service_id: string;
+                attachment_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_service_attachment_agencies__agency_id__services__service_id__attachments__attachment_id__download_get: {
+        parameters: {
+            query?: {
+                inline?: boolean;
+            };
+            header?: never;
+            path: {
+                service_id: string;
+                attachment_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

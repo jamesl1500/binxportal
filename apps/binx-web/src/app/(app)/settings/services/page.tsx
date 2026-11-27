@@ -15,7 +15,7 @@ import { redirect } from "next/navigation";
 
 import { getCurrentAgencyContext } from "@/lib/agencies";
 import { getBillingSettings } from "@/lib/invoicing";
-import { getServices } from "@/lib/services";
+import { getServiceCategories, getServices } from "@/lib/services";
 import ServicesManager from "@/components/services/ServicesManager/ServicesManager";
 
 import styles from "../page.module.scss";
@@ -32,9 +32,10 @@ const SettingsServicesPage = async () => {
   const canManage =
     currentAgency.role === "owner" || currentAgency.role === "admin";
 
-  const [services, billing] = await Promise.all([
+  const [services, billing, categories] = await Promise.all([
     getServices(currentAgency.id, { includeArchived: true }),
     getBillingSettings(currentAgency.id),
+    getServiceCategories(currentAgency.id),
   ]);
 
   return (
@@ -49,6 +50,7 @@ const SettingsServicesPage = async () => {
         <ServicesManager
           agencyId={currentAgency.id}
           services={services}
+          categories={categories}
           currency={billing.currency}
           canManage={canManage}
         />

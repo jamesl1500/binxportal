@@ -82,6 +82,7 @@ from binx_api.modules.projects.models import (
     project_statuses,
 )
 from binx_api.modules.projects.schemas import ProjectCreate
+from binx_api.modules.services import service as services_service
 from binx_api.modules.services.models import PRICING_FIXED, PRICING_HOURLY, PRICING_MONTHLY, Service
 from binx_api.modules.services.schemas import ServiceCreate
 from binx_api.modules.time_tracking import service as time_service
@@ -1029,6 +1030,18 @@ def _service_quantity(value: str) -> Decimal:
     return quantity.quantize(Decimal("0.01"))
 
 
+def _service_starting(value: str | None) -> bool:
+    """Yes/No (and the like); blank is No."""
+    if value is None:
+        return False
+    text = value.strip().casefold()
+    if text in ("yes", "y", "true", "1", "from", "starting"):
+        return True
+    if text in ("no", "n", "false", "0", "fixed", "exact"):
+        return False
+    raise ValueError(f"Starting price: \u201c{value}\u201d must be Yes or No")
+
+
 def _service_row(data: dict[str, str | None]) -> tuple[ServiceCreate, bool]:
     archived = _service_archived(data["status"])
     created = ServiceCreate.model_validate(
@@ -1038,6 +1051,7 @@ def _service_row(data: dict[str, str | None]) -> tuple[ServiceCreate, bool]:
             "pricing_type": _service_pricing(data["pricing"]),
             "unit_price_cents": _typed("Price", parse_money_cents, data["price"]),
             "default_quantity": _typed("Default quantity", _service_quantity, data["default_quantity"]) or Decimal("1"),
+            "is_starting_price": _service_starting(data.get("starting_price")),
         }
     )
     return created, archived
@@ -1067,7 +1081,7 @@ async def import_services(
 
     seen: dict[str, int] = {}
     results: list[ImportRowResult] = []
-    to_create: list[tuple[ServiceCreate, bool]] = []
+    to_create: list[tuple[ServiceCreate, bool, str | None]] = []
 
     for row in rows:
         data = {key: _clean(value) for key, value in row.model_dump(exclude={"row"}).items()}
@@ -1091,10 +1105,16 @@ async def import_services(
             results.append(_duplicate(row.row, label, f"Same service name as row {seen[key]}"))
             continue
         seen[key] = row.row
-        to_create.append((created, archived))
+        to_create.append((created, archived, (data.get("category") or "").strip()[:80] or None))
         results.append(ImportRowResult(row=row.row, label=label, status="ok"))
 
     if not dry_run and to_create:
+        # Categories by name, made the first time one is named.
+        categories: dict[str, uuid.UUID] = {}
+        for _created, _archived, category in to_create:
+            if category and category.casefold() not in categories:
+                found = await services_service.get_or_create_category(db, agency.id, category)
+                categories[category.casefold()] = found.id
         db.add_all(
             Service(
                 agency_id=agency.id,
@@ -1105,8 +1125,10 @@ async def import_services(
                 unit_price_cents=created.unit_price_cents,
                 default_quantity=created.default_quantity,
                 is_archived=archived,
+                is_starting_price=created.is_starting_price,
+                category_id=categories.get(category.casefold()) if category else None,
             )
-            for created, archived in to_create
+            for created, archived, category in to_create
         )
         await db.commit()
         count = len(to_create)

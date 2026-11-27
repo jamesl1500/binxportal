@@ -214,6 +214,8 @@ interface LineRow {
   packageKey: string | null;
   /** Always in, or an add-on the client can tick (pre-selected or not). */
   kind: LineKind;
+  /** Picked from a service priced "from": a nudge to set this client's price. */
+  startingPrice?: boolean;
 }
 
 type LineKind = "included" | "add_on" | "add_on_on";
@@ -885,6 +887,11 @@ const ProposalForm = ({
                     ))}
                   </select>
                 )}
+                {row.startingPrice && (
+                  <span id={`${row.key}-starting`} className={styles.startingHint}>
+                    Starting price: set it for this client
+                  </span>
+                )}
                 <select
                   className={styles.billing}
                   value={row.kind}
@@ -918,9 +925,10 @@ const ProposalForm = ({
               placeholder="0.00"
               value={row.unitPrice}
               onChange={(event) =>
-                updateRow(row.key, { unitPrice: event.target.value })
+                updateRow(row.key, { unitPrice: event.target.value, startingPrice: false })
               }
               aria-label={`Line ${index + 1} unit price`}
+              aria-describedby={row.startingPrice ? `${row.key}-starting` : undefined}
             />
             <span className={styles.lineAmount}>
               {formatMoneyCents(totals.lineAmounts[index] ?? 0, currency)}

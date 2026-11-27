@@ -11,6 +11,10 @@
  * Editing a service never changes a saved document: line items copy the
  * name, description and price when the service is picked.
  *
+ * Services can sit in categories (the list groups by them), have a
+ * "starting from" price, and carry photos and PDFs (added while editing),
+ * which join a draft proposal when one of its lines comes from the service.
+ *
  * @module apps/binx-web/src/components/services/ServicesManager/ServicesManager.tsx
  * @author Binx Portal
  */
@@ -22,12 +26,16 @@ import { toast } from "sonner";
 
 import { formatMoneyCents } from "@/lib/money";
 import {
+  groupServices,
   PRICING_TYPES,
-  PRICING_UNIT_SUFFIX,
   pricingTypeLabel,
   type Service,
+  type ServiceCategory,
+  servicePriceLabel,
 } from "@/lib/services-client";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog/ConfirmDialog";
+import ServiceCategoriesEditor from "@/components/services/ServiceCategoriesEditor/ServiceCategoriesEditor";
+import ServiceFiles from "@/components/services/ServiceFiles/ServiceFiles";
 import {
   createServiceAction,
   deleteServiceAction,
@@ -41,6 +49,7 @@ interface ServicesManagerProps {
   agencyId: string;
   /** Every service, archived ones included. */
   services: Service[];
+  categories?: ServiceCategory[];
   currency: string;
   canManage: boolean;
 }
@@ -51,6 +60,8 @@ interface Draft {
   pricingType: string;
   unitPrice: string; // dollars, as typed
   defaultQuantity: string;
+  isStartingPrice: boolean;
+  categoryId: string;
 }
 
 const EMPTY_DRAFT: Draft = {
@@ -59,6 +70,8 @@ const EMPTY_DRAFT: Draft = {
   pricingType: "fixed",
   unitPrice: "",
   defaultQuantity: "1",
+  isStartingPrice: false,
+  categoryId: "",
 };
 
 function draftFrom(service: Service): Draft {
@@ -68,6 +81,8 @@ function draftFrom(service: Service): Draft {
     pricingType: service.pricing_type,
     unitPrice: (service.unit_price_cents / 100).toFixed(2),
     defaultQuantity: String(Number.parseFloat(service.default_quantity) || 1),
+    isStartingPrice: service.is_starting_price ?? false,
+    categoryId: service.category_id ?? "",
   };
 }
 
@@ -78,6 +93,7 @@ function toCents(dollars: string): number {
 
 interface ServiceFormProps {
   initial: Draft;
+  categories: ServiceCategory[];
   currency: string;
   submitLabel: string;
   onSubmit: (draft: Draft) => Promise<boolean>;
@@ -86,6 +102,7 @@ interface ServiceFormProps {
 
 const ServiceForm = ({
   initial,
+  categories,
   currency,
   submitLabel,
   onSubmit,
@@ -166,7 +183,38 @@ const ServiceForm = ({
             onChange={(event) => set({ defaultQuantity: event.target.value })}
           />
         </label>
+        {categories.length > 0 && (
+          <label className={styles.field}>
+            <span className={styles.label}>Category</span>
+            <select
+              className={styles.input}
+              value={draft.categoryId}
+              onChange={(event) => set({ categoryId: event.target.value })}
+            >
+              <option value="">No category</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
       </div>
+      <label className={styles.checkboxField}>
+        <input
+          type="checkbox"
+          checked={draft.isStartingPrice}
+          onChange={(event) => set({ isStartingPrice: event.target.checked })}
+        />
+        <span>
+          Starting price
+          <small>
+            Shown as “From {formatMoneyCents(toCents(draft.unitPrice || "0"), currency)}”. Adjust it on each proposal or
+            invoice.
+          </small>
+        </span>
+      </label>
       <label className={styles.field}>
         <span className={styles.label}>Description</span>
         <textarea
@@ -197,6 +245,7 @@ const ServiceForm = ({
 const ServicesManager = ({
   agencyId,
   services,
+  categories = [],
   currency,
   canManage,
 }: ServicesManagerProps) => {
@@ -216,7 +265,11 @@ const ServicesManager = ({
     pricingType: draft.pricingType,
     unitPriceCents: toCents(draft.unitPrice),
     defaultQuantity: String(Number.parseFloat(draft.defaultQuantity) || 1),
+    isStartingPrice: draft.isStartingPrice,
+    categoryId: draft.categoryId || null,
   });
+  const groups = groupServices(visible, categories);
+  const money = (cents: number) => formatMoneyCents(cents, currency);
 
   const handleCreate = async (draft: Draft) => {
     const result = await createServiceAction(agencyId, toInput(draft));
@@ -296,6 +349,7 @@ const ServicesManager = ({
         <div className={styles.formCard}>
           <ServiceForm
             initial={EMPTY_DRAFT}
+            categories={categories}
             currency={currency}
             submitLabel="Add service"
             onSubmit={handleCreate}
@@ -311,17 +365,36 @@ const ServicesManager = ({
             : "No services yet. An owner or admin can add them here."}
         </p>
       ) : (
+        groups.map((group) => (
+        <section key={group.id ?? "none"} className={styles.group} aria-label={group.name ?? "No category"}>
+        {categories.length > 0 && (
+          <h3 className={styles.groupTitle}>{group.name ?? "No category"}</h3>
+        )}
         <ul className={styles.list}>
-          {visible.map((service) =>
+          {group.services.map((service) =>
             editingId === service.id ? (
               <li key={service.id} className={styles.formCard}>
                 <ServiceForm
                   initial={draftFrom(service)}
+                  categories={categories}
                   currency={currency}
                   submitLabel="Save changes"
                   onSubmit={(draft) => handleUpdate(service.id, draft)}
                   onCancel={() => setEditingId(null)}
                 />
+                <div className={styles.filesEditor}>
+                  <span className={styles.label}>Photos and PDFs</span>
+                  <p className={styles.filesHint}>
+                    Attached to a draft proposal when you add this service to it.
+                  </p>
+                  <ServiceFiles
+                    agencyId={agencyId}
+                    serviceId={service.id}
+                    serviceName={service.name}
+                    files={service.attachments ?? []}
+                    editable
+                  />
+                </div>
               </li>
             ) : (
               <li
@@ -341,11 +414,16 @@ const ServicesManager = ({
                       {service.description}
                     </p>
                   )}
+                  <ServiceFiles
+                    agencyId={agencyId}
+                    serviceId={service.id}
+                    serviceName={service.name}
+                    files={service.attachments ?? []}
+                  />
                 </div>
                 <div className={styles.itemPrice}>
                   <span className={styles.price}>
-                    {formatMoneyCents(service.unit_price_cents, currency)}
-                    {PRICING_UNIT_SUFFIX[service.pricing_type] ?? ""}
+                    {servicePriceLabel(service, money)}
                   </span>
                   <span className={styles.pricing}>
                     {pricingTypeLabel(service.pricing_type)}
@@ -403,6 +481,12 @@ const ServicesManager = ({
             ),
           )}
         </ul>
+        </section>
+        ))
+      )}
+
+      {canManage && (
+        <ServiceCategoriesEditor agencyId={agencyId} categories={categories} />
       )}
 
       {archived.length > 0 && (

@@ -4712,6 +4712,20 @@
         "title": "Body_upload_project_file_agencies__agency_id__projects__project_id__files_post",
         "type": "object"
       },
+      "Body_upload_service_attachment_agencies__agency_id__services__service_id__attachments_post": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_service_attachment_agencies__agency_id__services__service_id__attachments_post",
+        "type": "object"
+      },
       "Body_upload_task_file_agencies__agency_id__projects__project_id__tasks__task_id__files_post": {
         "properties": {
           "file": {
@@ -17846,8 +17860,131 @@
         "title": "SendProposalRequest",
         "type": "object"
       },
+      "ServiceAttachmentRead": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "file_name": {
+            "title": "File Name",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "mime_type": {
+            "title": "Mime Type",
+            "type": "string"
+          },
+          "size": {
+            "title": "Size",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "file_name",
+          "mime_type",
+          "size",
+          "created_at"
+        ],
+        "title": "ServiceAttachmentRead",
+        "type": "object"
+      },
+      "ServiceCategoryCreate": {
+        "properties": {
+          "name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "ServiceCategoryCreate",
+        "type": "object"
+      },
+      "ServiceCategoryRead": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "position": {
+            "title": "Position",
+            "type": "integer"
+          },
+          "service_count": {
+            "title": "Service Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "position",
+          "service_count"
+        ],
+        "title": "ServiceCategoryRead",
+        "type": "object"
+      },
+      "ServiceCategoryUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "position": {
+            "anyOf": [
+              {
+                "maximum": 1000.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position"
+          }
+        },
+        "title": "ServiceCategoryUpdate",
+        "type": "object"
+      },
       "ServiceCreate": {
         "properties": {
+          "category_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
           "default_quantity": {
             "anyOf": [
               {
@@ -17872,6 +18009,11 @@
               }
             ],
             "title": "Description"
+          },
+          "is_starting_price": {
+            "default": false,
+            "title": "Is Starting Price",
+            "type": "boolean"
           },
           "name": {
             "maxLength": 255,
@@ -17923,6 +18065,18 @@
       },
       "ServiceImportRow": {
         "properties": {
+          "category": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
           "default_quantity": {
             "anyOf": [
               {
@@ -17988,6 +18142,18 @@
             "title": "Row",
             "type": "integer"
           },
+          "starting_price": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Starting Price"
+          },
           "status": {
             "anyOf": [
               {
@@ -18013,6 +18179,36 @@
             "format": "uuid",
             "title": "Agency Id",
             "type": "string"
+          },
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/ServiceAttachmentRead"
+            },
+            "title": "Attachments",
+            "type": "array"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
+          "category_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Name"
           },
           "created_at": {
             "format": "date-time",
@@ -18041,6 +18237,11 @@
           },
           "is_archived": {
             "title": "Is Archived",
+            "type": "boolean"
+          },
+          "is_starting_price": {
+            "default": false,
+            "title": "Is Starting Price",
             "type": "boolean"
           },
           "name": {
@@ -18073,6 +18274,18 @@
       "ServiceUpdate": {
         "description": "Partial update \u2014 only the fields sent change.",
         "properties": {
+          "category_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
           "default_quantity": {
             "anyOf": [
               {
@@ -18110,6 +18323,17 @@
               }
             ],
             "title": "Is Archived"
+          },
+          "is_starting_price": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Starting Price"
           },
           "name": {
             "anyOf": [
@@ -18329,6 +18553,31 @@
           "onboarding_url"
         ],
         "title": "StripeOnboardingLinkRead",
+        "type": "object"
+      },
+      "StripePayoutsSessionRead": {
+        "description": "Opens Stripe's embedded Payouts component for this agency's own\naccount (invoicing/payouts.py). Single use, and short-lived.",
+        "properties": {
+          "client_secret": {
+            "title": "Client Secret",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "publishable_key": {
+            "title": "Publishable Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "client_secret",
+          "publishable_key",
+          "expires_at"
+        ],
+        "title": "StripePayoutsSessionRead",
         "type": "object"
       },
       "SubscriptionRead": {
@@ -24137,6 +24386,55 @@
           }
         ],
         "summary": "Start Stripe Connect Onboarding",
+        "tags": [
+          "invoicing"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/billing-settings/stripe/payouts-session": {
+      "post": {
+        "description": "Owners and admins: the agency's Stripe balance and payouts, and paying\nout, through Stripe's embedded Payouts component.",
+        "operationId": "start_stripe_payouts_session_agencies__agency_id__billing_settings_stripe_payouts_session_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StripePayoutsSessionRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Start Stripe Payouts Session",
         "tags": [
           "invoicing"
         ]
@@ -38008,6 +38306,231 @@
         ]
       }
     },
+    "/agencies/{agency_id}/service-categories": {
+      "get": {
+        "operationId": "list_categories_agencies__agency_id__service_categories_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ServiceCategoryRead"
+                  },
+                  "title": "Response List Categories Agencies  Agency Id  Service Categories Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Categories",
+        "tags": [
+          "services"
+        ]
+      },
+      "post": {
+        "operationId": "create_category_agencies__agency_id__service_categories_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServiceCategoryCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceCategoryRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Category",
+        "tags": [
+          "services"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/service-categories/{category_id}": {
+      "delete": {
+        "operationId": "delete_category_agencies__agency_id__service_categories__category_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "category_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Category Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Category",
+        "tags": [
+          "services"
+        ]
+      },
+      "patch": {
+        "operationId": "update_category_agencies__agency_id__service_categories__category_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "category_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Category Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServiceCategoryUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceCategoryRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Category",
+        "tags": [
+          "services"
+        ]
+      }
+    },
     "/agencies/{agency_id}/services": {
       "get": {
         "operationId": "list_services_agencies__agency_id__services_get",
@@ -38238,6 +38761,212 @@
           }
         ],
         "summary": "Update Service",
+        "tags": [
+          "services"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/services/{service_id}/attachments": {
+      "post": {
+        "operationId": "upload_service_attachment_agencies__agency_id__services__service_id__attachments_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "service_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Service Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_service_attachment_agencies__agency_id__services__service_id__attachments_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceAttachmentRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Upload Service Attachment",
+        "tags": [
+          "services"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/services/{service_id}/attachments/{attachment_id}": {
+      "delete": {
+        "operationId": "delete_service_attachment_agencies__agency_id__services__service_id__attachments__attachment_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "service_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Service Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "attachment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Attachment Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Service Attachment",
+        "tags": [
+          "services"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/services/{service_id}/attachments/{attachment_id}/download": {
+      "get": {
+        "description": "``inline`` for showing a photo in the page rather than downloading it.",
+        "operationId": "download_service_attachment_agencies__agency_id__services__service_id__attachments__attachment_id__download_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "service_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Service Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "attachment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Attachment Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "inline",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Inline",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Download Service Attachment",
         "tags": [
           "services"
         ]

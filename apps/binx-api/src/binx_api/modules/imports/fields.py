@@ -187,6 +187,13 @@ SERVICE_FIELDS: tuple[ImportField, ...] = (
     ImportField("price", "Price", True, ("price", "rate", "unitprice", "amount", "cost", "fee", "priceusd")),
     ImportField("default_quantity", "Default quantity", False, ("quantity", "qty", "defaultquantity", "defaultqty")),
     ImportField("status", "Status", False, ("status", "state")),
+    ImportField("category", "Category", False, ("category", "group", "section", "servicecategory", "collection")),
+    ImportField(
+        "starting_price",
+        "Starting price",
+        False,
+        ("startingprice", "startingfrom", "from", "pricefrom", "fromprice", "minimum", "minimumprice"),
+    ),
 )
 
 FIELDS_BY_KIND: dict[str, tuple[ImportField, ...]] = {

@@ -10,6 +10,7 @@ once issued" shape as an Invoice.
 from __future__ import annotations
 
 import hashlib
+import json
 import mimetypes
 import uuid
 from dataclasses import dataclass
@@ -213,6 +214,39 @@ async def list_packages(db: AsyncSession, proposal_id: uuid.UUID) -> list[Propos
     return await options.list_packages(db, proposal_id)
 
 
+async def _offer_service_files(db: AsyncSession, proposal: Proposal, lines: list[ProposalLineItem]) -> None:
+    """Copies the photos and PDFs of the services this draft's lines came
+    from onto it, each one once: a file the agency removes from the draft
+    isn't brought back by the next save (``service_files_offered`` keeps
+    track). Files that don't fit under the attachment limit wait for room."""
+    service_ids = list(dict.fromkeys(line.service_id for line in lines if line.service_id))
+    if not service_ids:
+        return
+    offered: set[str] = set(json.loads(proposal.service_files_offered or "[]"))
+    files = await services_service.attachments_by_service(db, service_ids)
+    fresh = [item for sid in service_ids for item in files.get(sid, []) if str(item.id) not in offered]
+    if not fresh:
+        return
+    count = (await db.execute(select(func.count()).where(ProposalAttachment.proposal_id == proposal.id))).scalar_one()
+    for position, item in enumerate(fresh[: max(MAX_PROPOSAL_ATTACHMENTS - count, 0)], start=count):
+        path = await storage.copy(
+            item.storage_path, "agencies", f"{proposal.agency_id}/proposals/{proposal.id}/{uuid.uuid4().hex}"
+        )
+        db.add(
+            ProposalAttachment(
+                proposal_id=proposal.id,
+                position=position,
+                file_name=item.file_name,
+                storage_path=path,
+                mime_type=item.mime_type,
+                size=item.size,
+                sha256=item.sha256,
+            )
+        )
+        offered.add(str(item.id))
+    proposal.service_files_offered = json.dumps(sorted(offered))
+
+
 async def get_signature(db: AsyncSession, proposal_id: uuid.UUID) -> ProposalSignature | None:
     result = await db.execute(select(ProposalSignature).where(ProposalSignature.proposal_id == proposal_id))
     return result.scalar_one_or_none()
@@ -381,6 +415,7 @@ async def create_proposal(
 
     rows, package_rows = await _replace_line_items(db, proposal, line_items, packages)
     _recalculate(proposal, rows, package_rows)
+    await _offer_service_files(db, proposal, rows)
     await db.commit()
     await db.refresh(proposal)
 
@@ -443,6 +478,7 @@ async def update_proposal(
 
     rows, package_rows = await _replace_line_items(db, proposal, line_items, packages)
     _recalculate(proposal, rows, package_rows)
+    await _offer_service_files(db, proposal, rows)
     await db.commit()
     await db.refresh(proposal)
     return proposal

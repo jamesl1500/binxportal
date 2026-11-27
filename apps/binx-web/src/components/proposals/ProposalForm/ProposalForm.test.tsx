@@ -38,6 +38,7 @@ const services = [
     unit_price_cents: 500000,
     default_quantity: "1.00",
     is_archived: false,
+    is_starting_price: false,
     created_at: "2026-11-01T00:00:00Z",
   },
   {
@@ -49,6 +50,7 @@ const services = [
     unit_price_cents: 15000,
     default_quantity: "10.00",
     is_archived: false,
+    is_starting_price: false,
     created_at: "2026-11-01T00:00:00Z",
   },
 ];

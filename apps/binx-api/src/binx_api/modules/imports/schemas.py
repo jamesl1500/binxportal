@@ -159,6 +159,8 @@ class ServiceImportRow(BaseModel):
     price: RawValue = _raw()
     default_quantity: RawValue = _raw()
     status: RawValue = _raw()
+    category: RawValue = _raw()
+    starting_price: RawValue = _raw()
 
 
 class ServiceImportRequest(BaseModel):

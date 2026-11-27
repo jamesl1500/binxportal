@@ -123,6 +123,11 @@ class Proposal(Base):
     access_code_window_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
     access_code_window_sends: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 
+    # The service files (services.ServiceAttachment ids, as a JSON list)
+    # already copied onto this draft from its lines' services. Each is
+    # offered once, so one removed from the draft stays removed.
+    service_files_offered: Mapped[str | None] = mapped_column(Text, default=None)
+
     # What accepting it sets in motion (acceptance.py), chosen on the draft:
     # a deposit invoice for this share of the total, and a project (with a
     # kickoff questionnaire from a template) for the work. With a deposit,
