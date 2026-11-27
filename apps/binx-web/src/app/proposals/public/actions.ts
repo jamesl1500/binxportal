@@ -13,11 +13,14 @@
 import { refresh } from "next/cache";
 
 import { AuthApiError } from "@/lib/auth";
+import { rememberProposalAccess } from "@/lib/proposal-access";
 import {
   choosePublicProposalOptions,
   declinePublicProposal,
   type ProposalPublic,
+  requestPublicProposalCode,
   signPublicProposal,
+  verifyPublicProposalCode,
 } from "@/lib/proposals";
 
 function errorResult(error: unknown, fallback: string): { error: string } {
@@ -82,5 +85,36 @@ export async function declinePublicProposalAction(
     return { proposal };
   } catch (error) {
     return errorResult(error, "Unable to decline this proposal");
+  }
+}
+
+/** Emails the proposal's recipient a code that opens it. */
+export async function requestProposalCodeAction(
+  token: string,
+): Promise<{ error?: string; emailHint?: string }> {
+  try {
+    const { email_hint } = await requestPublicProposalCode(token);
+    return { emailHint: email_hint };
+  } catch (error) {
+    return errorResult(error, "Unable to send a code");
+  }
+}
+
+/** Checks the code; on success keeps the access and reloads the page open. */
+export async function verifyProposalCodeAction(
+  token: string,
+  code: string,
+): Promise<{ error?: string }> {
+  try {
+    const access = await verifyPublicProposalCode(token, code);
+    await rememberProposalAccess(
+      token,
+      access.access_token,
+      access.expires_in_seconds,
+    );
+    refresh();
+    return {};
+  } catch (error) {
+    return errorResult(error, "Unable to check that code");
   }
 }

@@ -31,7 +31,7 @@ from binx_api.modules.leads import service as leads_service
 from binx_api.modules.leads.models import Lead
 from binx_api.modules.notifications import service as notifications_service
 from binx_api.modules.notifications.models import CATEGORY_INVOICING as NOTIFY_CATEGORY_PROPOSALS
-from binx_api.modules.proposals import completion, options, signing
+from binx_api.modules.proposals import access, completion, options, signing
 from binx_api.modules.proposals.models import (
     BILLING_MONTHLY,
     EVENT_COUNTERSIGNED,
@@ -341,6 +341,7 @@ async def create_proposal(
     line_items: list[ProposalLineItemInput],
     packages: list[ProposalPackageInput] | None = None,
     requires_countersign: bool = False,
+    require_email_code: bool = False,
     deposit_percent: Decimal | None = None,
     create_project_on_accept: bool = False,
     kickoff_template_id: uuid.UUID | None = None,
@@ -366,6 +367,7 @@ async def create_proposal(
         tax_rate_percent=tax_rate_percent,
         valid_until=valid_until,
         requires_countersign=requires_countersign,
+        require_email_code=require_email_code,
         deposit_percent=deposit_percent,
         create_project_on_accept=create_project_on_accept,
         kickoff_template_id=kickoff_template_id,
@@ -409,6 +411,7 @@ async def update_proposal(
     line_items: list[ProposalLineItemInput],
     packages: list[ProposalPackageInput] | None = None,
     requires_countersign: bool = False,
+    require_email_code: bool = False,
     deposit_percent: Decimal | None = None,
     create_project_on_accept: bool = False,
     kickoff_template_id: uuid.UUID | None = None,
@@ -430,6 +433,7 @@ async def update_proposal(
     proposal.tax_rate_percent = tax_rate_percent
     proposal.valid_until = valid_until
     proposal.requires_countersign = requires_countersign
+    proposal.require_email_code = require_email_code
     proposal.deposit_percent = deposit_percent
     proposal.create_project_on_accept = create_project_on_accept
     proposal.kickoff_template_id = kickoff_template_id
@@ -868,7 +872,7 @@ async def decline_proposal(
 
 
 async def get_public_proposal(
-    db: AsyncSession, raw_token: str, visitor: Visitor | None = None
+    db: AsyncSession, raw_token: str, visitor: Visitor | None = None, access_token: str | None = None
 ) -> tuple[Proposal, Agency]:
     proposal = await get_proposal_by_token_or_404(db, raw_token)
     if proposal.status == STATUS_DRAFT:
@@ -878,6 +882,8 @@ async def get_public_proposal(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Proposal not found")
     agency = await db.get(Agency, proposal.agency_id)
     assert agency is not None
+    # Before anything is shown or a view recorded (access.py).
+    access.require_access(proposal, access_token, agency.name)
     await signing.ensure_document_record(db, proposal)
     proposal = await record_view(db, proposal, visitor)
     return proposal, agency

@@ -53,6 +53,7 @@ _EVENT_LABELS = {
     "kickoff_sent": "Kickoff sent",
     "retainer_scheduled": "Monthly billing started",
     "options_chosen": "Options chosen",
+    "email_verified": "Email verified",
     "acceptance_blocked": "Setup blocked",
 }
 _METHOD_LABELS = {

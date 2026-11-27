@@ -256,3 +256,37 @@ test.describe("packages and add-ons", () => {
     await expect(salesPage.getByText(/Chose the Essential package, with SEO setup/)).toBeVisible();
   });
 });
+
+test.describe("email code", () => {
+  test("a protected proposal stays shut on its link until the emailed code is entered", async ({
+    salesPage,
+    browser,
+  }) => {
+    const agencyId = await salesAgencyId(salesPage);
+    const lead = await createLead(salesPage, agencyId, `Heron ${RUN}`);
+    const draft = await api(salesPage, "post", `/agencies/${agencyId}/proposals`, {
+      title: `Pricing for Heron ${RUN}`,
+      lead_id: lead.id,
+      require_email_code: true,
+      line_items: [{ description: "Confidential retainer", quantity: "1", unit_price_cents: 4_200_000 }],
+    });
+    const sent = await api(salesPage, "post", `/agencies/${agencyId}/proposals/${draft.id}/send`, {});
+
+    const lead_ = await asTheLead(browser, sent.share_url);
+    const page = lead_.page;
+    await expect(page.getByRole("heading", { name: `Pricing for Heron ${RUN}` })).toBeVisible();
+    await expect(page.getByText("a•••@northwind.example.com")).toBeVisible();
+    await expect(page.getByText("Confidential retainer")).toHaveCount(0);
+    await expect(page.getByText("$42,000.00")).toHaveCount(0);
+
+    await clickUntilVisible(
+      page.getByRole("button", { name: "Email me a code" }),
+      page.getByLabel("Code from the email"),
+    );
+    await page.getByLabel("Code from the email").fill("000000");
+    await page.getByRole("button", { name: "Open", exact: true }).click();
+    await expect(page.getByText(/That code isn.t right/)).toBeVisible();
+    await expect(page.getByText("Confidential retainer")).toHaveCount(0);
+    await lead_.close();
+  });
+});

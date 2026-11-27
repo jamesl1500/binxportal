@@ -219,6 +219,9 @@ const ProposalForm = ({
   const [requiresCountersign, setRequiresCountersign] = useState(
     proposal?.requires_countersign ?? false,
   );
+  const [requireEmailCode, setRequireEmailCode] = useState(
+    proposal?.require_email_code ?? false,
+  );
   const [depositPercent, setDepositPercent] = useState(
     proposal?.deposit_percent
       ? String(Number.parseFloat(proposal.deposit_percent))
@@ -354,6 +357,7 @@ const ProposalForm = ({
       taxRatePercent: taxRate || "0",
       validUntil: validUntil || null,
       requiresCountersign,
+      requireEmailCode,
       depositPercent: depositPercent.trim() || null,
       createProjectOnAccept: createProject,
       kickoffTemplateId: createProject ? kickoffTemplateId || null : null,
@@ -824,6 +828,21 @@ const ProposalForm = ({
               <small>
                 After the client signs, an owner or admin signs for the agency.
                 The proposal is complete once both have.
+              </small>
+            </span>
+          </label>
+
+          <label className={styles.checkboxField}>
+            <input
+              type="checkbox"
+              checked={requireEmailCode}
+              onChange={(event) => setRequireEmailCode(event.target.checked)}
+            />
+            <span>
+              Ask for an email code to open it
+              <small>
+                The share link alone won&apos;t open it: the recipient enters
+                a code we email to them. For sensitive pricing.
               </small>
             </span>
           </label>

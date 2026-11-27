@@ -423,6 +423,26 @@ async def send_proposal_signed_email(
     )
 
 
+async def send_proposal_code_email(*, to: str, agency_name: str, title: str, code: str, minutes: int) -> None:
+    """The code that opens a proposal its agency protected with one. Only
+    ever sent to the proposal's own recipient address."""
+    await send_email(
+        to=to,
+        subject=f"Your code for “{title}”: {code}",
+        body=(
+            f"Use this code to open “{title}” from {agency_name}:\n\n{code}\n\n"
+            f"It works once, for the next {minutes} minutes. If you didn't ask for it, you can ignore this email."
+        ),
+        html=render_html(
+            heading=code,
+            paragraphs=[
+                f"Use this code to open “{title}” from {agency_name}.",
+                f"It works once, for the next {minutes} minutes. If you didn't ask for it, you can ignore this email.",
+            ],
+        ),
+    )
+
+
 async def send_proposal_accepted_email(
     *, to: str, agency_name: str, title: str, accept_url: str, deposit_text: str | None
 ) -> None:

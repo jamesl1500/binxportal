@@ -35,6 +35,7 @@ const LABELS: Record<string, string> = {
   kickoff_sent: "Kickoff sent",
   retainer_scheduled: "Monthly billing started",
   options_chosen: "Options chosen",
+  email_verified: "Email verified",
   acceptance_blocked: "Setup blocked",
 };
 

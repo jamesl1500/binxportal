@@ -14284,6 +14284,25 @@
         "title": "ProposalAcceptanceRead",
         "type": "object"
       },
+      "ProposalAccessRead": {
+        "description": "Opens a code-protected proposal: send it back in the\nX-Proposal-Access header on share-link requests.",
+        "properties": {
+          "access_token": {
+            "title": "Access Token",
+            "type": "string"
+          },
+          "expires_in_seconds": {
+            "title": "Expires In Seconds",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "access_token",
+          "expires_in_seconds"
+        ],
+        "title": "ProposalAccessRead",
+        "type": "object"
+      },
       "ProposalAttachmentRead": {
         "properties": {
           "created_at": {
@@ -14540,6 +14559,35 @@
         "title": "ProposalCertificateRead",
         "type": "object"
       },
+      "ProposalCodeSentRead": {
+        "description": "Where the code went, masked (\"j\u2022\u2022\u2022@fjord.example\").",
+        "properties": {
+          "email_hint": {
+            "title": "Email Hint",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email_hint"
+        ],
+        "title": "ProposalCodeSentRead",
+        "type": "object"
+      },
+      "ProposalCodeVerifyRequest": {
+        "properties": {
+          "code": {
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "title": "ProposalCodeVerifyRequest",
+        "type": "object"
+      },
       "ProposalCreate": {
         "properties": {
           "client_id": {
@@ -14655,6 +14703,11 @@
               }
             ],
             "title": "Recipient Name"
+          },
+          "require_email_code": {
+            "default": false,
+            "title": "Require Email Code",
+            "type": "boolean"
           },
           "requires_countersign": {
             "default": false,
@@ -14959,6 +15012,11 @@
               }
             ],
             "title": "Recipient Name"
+          },
+          "require_email_code": {
+            "default": false,
+            "title": "Require Email Code",
+            "type": "boolean"
           },
           "requires_countersign": {
             "title": "Requires Countersign",
@@ -16009,6 +16067,11 @@
             ],
             "title": "Recipient Name"
           },
+          "require_email_code": {
+            "default": false,
+            "title": "Require Email Code",
+            "type": "boolean"
+          },
           "requires_countersign": {
             "default": false,
             "title": "Requires Countersign",
@@ -16164,9 +16227,16 @@
             "type": "string"
           },
           "monthly_total_cents": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "default": 0,
-            "title": "Monthly Total Cents",
-            "type": "integer"
+            "title": "Monthly Total Cents"
           },
           "sent_at": {
             "anyOf": [
@@ -16185,8 +16255,15 @@
             "type": "string"
           },
           "total_cents": {
-            "title": "Total Cents",
-            "type": "integer"
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Cents"
           },
           "url": {
             "title": "Url",
@@ -42336,6 +42413,101 @@
           }
         },
         "summary": "Public Certificate Pdf",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
+    "/proposals/public/{token}/code": {
+      "post": {
+        "description": "Emails a code to the proposal's recipient (only ever them).",
+        "operationId": "send_public_proposal_code_proposals_public__token__code_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalCodeSentRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Send Public Proposal Code",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
+    "/proposals/public/{token}/code/verify": {
+      "post": {
+        "operationId": "verify_public_proposal_code_proposals_public__token__code_verify_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposalCodeVerifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalAccessRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Verify Public Proposal Code",
         "tags": [
           "proposals"
         ]

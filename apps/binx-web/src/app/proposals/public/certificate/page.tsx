@@ -12,6 +12,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { getPublicCertificate } from "@/lib/proposals";
+import { ProposalCodeRequired } from "@/lib/proposal-access";
+import ProposalCodeGate from "@/components/proposals/ProposalCodeGate/ProposalCodeGate";
 import SigningCertificate from "@/components/proposals/SigningCertificate/SigningCertificate";
 
 import styles from "../page.module.scss";
@@ -31,15 +33,33 @@ const PublicCertificatePage = async ({ searchParams }: PageProps) => {
   let certificate: Awaited<ReturnType<typeof getPublicCertificate>> | null =
     null;
   let error = "This certificate link is missing its token.";
+  let gate: ProposalCodeRequired | null = null;
   if (token) {
     try {
       certificate = await getPublicCertificate(token);
     } catch (caught) {
+      if (caught instanceof ProposalCodeRequired) gate = caught;
       error =
         caught instanceof Error
           ? caught.message
           : "This signing certificate isn't available.";
     }
+  }
+
+  if (token && gate) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.card}>
+          <ProposalCodeGate
+            token={token}
+            agencyName={gate.agencyName}
+            title={gate.title}
+            emailHint={gate.emailHint}
+            what="this signed record"
+          />
+        </div>
+      </div>
+    );
   }
 
   if (!token || !certificate) {

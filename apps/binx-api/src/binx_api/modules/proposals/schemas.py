@@ -100,6 +100,8 @@ class ProposalCreate(BaseModel):
     # The agency countersigns after the client (owner/admin), and the
     # proposal is only complete once both have.
     requires_countersign: bool = False
+    # Ask for a code emailed to the recipient before it opens (access.py).
+    require_email_code: bool = False
     # What accepting it sets in motion (proposals/acceptance.py).
     deposit_percent: Decimal | None = Field(default=None, gt=0, le=100, max_digits=6, decimal_places=3)
     create_project_on_accept: bool = False
@@ -213,6 +215,7 @@ class ProposalDetailRead(ProposalRead):
     countersignature: "ProposalSignatureRead | None"
     # Every required signature is in (the agreement is binding).
     completed_at: datetime | None
+    require_email_code: bool = False
     deposit_percent: Decimal | None = None
     create_project_on_accept: bool = False
     kickoff_template_id: uuid.UUID | None = None
@@ -298,6 +301,24 @@ class ProposalOptionsRequest(BaseModel):
 
     package_id: uuid.UUID | None = None
     add_on_ids: list[uuid.UUID] = Field(default_factory=list, max_length=200)
+
+
+class ProposalCodeSentRead(BaseModel):
+    """Where the code went, masked ("j•••@fjord.example")."""
+
+    email_hint: str
+
+
+class ProposalCodeVerifyRequest(BaseModel):
+    code: str = Field(min_length=1, max_length=20)
+
+
+class ProposalAccessRead(BaseModel):
+    """Opens a code-protected proposal: send it back in the
+    X-Proposal-Access header on share-link requests."""
+
+    access_token: str
+    expires_in_seconds: int
 
 
 class ProposalDeclineRequest(BaseModel):

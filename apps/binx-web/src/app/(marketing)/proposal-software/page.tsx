@@ -18,6 +18,8 @@ import {
   FileCheck2,
   Fingerprint,
   History,
+  KeyRound,
+  Layers,
   Library,
   Paperclip,
   PenLine,
@@ -79,6 +81,11 @@ const FEATURES = [
     text: "Write each service once, with fixed, hourly or monthly pricing, and add it to proposals, invoices and recurring invoices in one pick. Import your price list from a spreadsheet.",
   },
   {
+    icon: Layers,
+    title: "Packages and add-ons",
+    text: "Offer two to four packages, like Essential and Complete, plus optional extras. The client picks before signing, the price follows, and only what they chose is invoiced.",
+  },
+  {
     icon: Paperclip,
     title: "Documents travel with the proposal",
     text: "Attach the statement of work, terms or a deck (up to 25 MB a file). The client reads them in the same place they sign.",
@@ -99,6 +106,11 @@ const FEATURES = [
     text: "Sent, opened, signed and countersigned, each with its time and who did it. It's on the proposal for your team and on the certificate for everyone.",
   },
   {
+    icon: KeyRound,
+    title: "An email code for sensitive pricing",
+    text: "Turn it on and the link alone won't open the proposal: the recipient enters a code we email to their address. The audit trail records that they did.",
+  },
+  {
     icon: FileCheck2,
     title: "Countersign, then a signed PDF",
     text: "Require the agency's countersignature when it matters. Once complete, every party gets a PDF of the signed record, and the certificate checks it against its fingerprint.",
@@ -116,7 +128,7 @@ const FAQ = [
   },
   {
     q: "Can we change a proposal after sending it?",
-    a: "No: sending locks it. The document the client sees is frozen and fingerprinted, and a signature only goes through against that exact version. To change the terms, send a new proposal.",
+    a: "No: sending locks it. The document the client sees is frozen and fingerprinted, and a signature only goes through against that exact version. The one thing the client can change is their choice of package and add-ons, and the fingerprint is taken again with that choice in it. To change the terms, send a new proposal.",
   },
   {
     q: "Do I need DocuSign as well?",

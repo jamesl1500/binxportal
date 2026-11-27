@@ -14,6 +14,10 @@ import axios from "axios";
 import { api } from "@/lib/api";
 import type { Schemas } from "@/lib/api-types";
 import { AuthApiError, extractDetailMessage, getAccessToken } from "@/lib/auth";
+import {
+  codeRequiredFrom,
+  proposalAccessHeaders,
+} from "@/lib/proposal-access";
 
 async function authHeader(): Promise<{ Authorization: string }> {
   const accessToken = await getAccessToken();
@@ -87,6 +91,8 @@ export interface ProposalInput {
   packages?: ProposalPackageInput[];
   /** The agency countersigns after the client (owner/admin). */
   requiresCountersign?: boolean;
+  /** Ask for a code emailed to the recipient before it opens. */
+  requireEmailCode?: boolean;
   /** What accepting it sets in motion (binx-api proposals/acceptance.py). */
   depositPercent?: string | null;
   createProjectOnAccept?: boolean;
@@ -105,6 +111,7 @@ function toPayload(input: ProposalInput) {
     tax_rate_percent: input.taxRatePercent,
     valid_until: input.validUntil,
     requires_countersign: input.requiresCountersign ?? false,
+    require_email_code: input.requireEmailCode ?? false,
     deposit_percent: input.depositPercent || null,
     create_project_on_accept: input.createProjectOnAccept ?? false,
     kickoff_template_id: input.kickoffTemplateId || null,
@@ -297,10 +304,14 @@ export async function getPublicProposal(
   try {
     const { data } = await api.get<ProposalPublic>(
       `/proposals/public/${token}`,
+      { headers: await proposalAccessHeaders(token) },
     );
     return data;
   } catch (error) {
-    throw apiError(error, "This proposal link is invalid or has expired");
+    throw (
+      codeRequiredFrom(error) ??
+      apiError(error, "This proposal link is invalid or has expired")
+    );
   }
 }
 
@@ -325,6 +336,7 @@ export async function signPublicProposal(
         consent,
         document_hash: documentHash,
       },
+      { headers: await proposalAccessHeaders(token) },
     );
     return data;
   } catch (error) {
@@ -346,6 +358,7 @@ export async function choosePublicProposalOptions(
     const { data } = await api.put<ProposalPublic>(
       `/proposals/public/${token}/options`,
       { package_id: packageId, add_on_ids: addOnIds },
+      { headers: await proposalAccessHeaders(token) },
     );
     return data;
   } catch (error) {
@@ -361,10 +374,44 @@ export async function declinePublicProposal(
     const { data } = await api.post<ProposalPublic>(
       `/proposals/public/${token}/decline`,
       { reason },
+      { headers: await proposalAccessHeaders(token) },
     );
     return data;
   } catch (error) {
     throw apiError(error, "Unable to decline this proposal");
+  }
+}
+
+/**
+ * `POST /proposals/public/{token}/code`: emails a code to the proposal's
+ * recipient. Returns where it went, masked ("j•••@fjord.example").
+ */
+export async function requestPublicProposalCode(
+  token: string,
+): Promise<{ email_hint: string }> {
+  try {
+    const { data } = await api.post<{ email_hint: string }>(
+      `/proposals/public/${token}/code`,
+    );
+    return data;
+  } catch (error) {
+    throw apiError(error, "Unable to send a code");
+  }
+}
+
+/** `POST /proposals/public/{token}/code/verify`: the code, for an access token. */
+export async function verifyPublicProposalCode(
+  token: string,
+  code: string,
+): Promise<{ access_token: string; expires_in_seconds: number }> {
+  try {
+    const { data } = await api.post<{
+      access_token: string;
+      expires_in_seconds: number;
+    }>(`/proposals/public/${token}/code/verify`, { code });
+    return data;
+  } catch (error) {
+    throw apiError(error, "Unable to check that code");
   }
 }
 
@@ -375,10 +422,14 @@ export async function getPublicCertificate(
   try {
     const { data } = await api.get<ProposalCertificate>(
       `/proposals/public/${token}/certificate`,
+      { headers: await proposalAccessHeaders(token) },
     );
     return data;
   } catch (error) {
-    throw apiError(error, "This signing certificate isn't available");
+    throw (
+      codeRequiredFrom(error) ??
+      apiError(error, "This signing certificate isn't available")
+    );
   }
 }
 

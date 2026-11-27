@@ -16,11 +16,11 @@ from fastapi import (
 
 from binx_api.core import storage
 from binx_api.core.dependencies import CurrentUser, DbSession
-from binx_api.core.rate_limit import client_ip, client_user_agent
+from binx_api.core.rate_limit import client_ip, client_user_agent, limiter
 from binx_api.modules.agencies.dependencies import require_agency_role
 from binx_api.modules.agencies.models import ROLE_ADMIN, ROLE_MEMBER, ROLE_OWNER, Agency
 from binx_api.modules.proposals import acceptance as acceptance_service
-from binx_api.modules.proposals import completion, options, service, signing
+from binx_api.modules.proposals import access, completion, options, service, signing
 from binx_api.modules.proposals.certificate_pdf import certificate_file_name, render_certificate_pdf
 from binx_api.modules.proposals.models import (
     BILLING_MONTHLY,
@@ -34,8 +34,11 @@ from binx_api.modules.proposals.models import (
 from binx_api.modules.proposals.schemas import (
     CountersignRequest,
     ProposalAcceptanceRead,
+    ProposalAccessRead,
     ProposalAttachmentRead,
     ProposalCertificateRead,
+    ProposalCodeSentRead,
+    ProposalCodeVerifyRequest,
     ProposalCreate,
     ProposalDeclineRequest,
     ProposalDetailRead,
@@ -226,6 +229,7 @@ async def _detail_read(
         attachments=[attachment_read(item) for item in attachments],
         signature=signature_read(signature),
         **(await signing_fields(db, proposal)),
+        require_email_code=proposal.require_email_code,
         deposit_percent=proposal.deposit_percent,
         create_project_on_accept=proposal.create_project_on_accept,
         kickoff_template_id=proposal.kickoff_template_id,
@@ -319,6 +323,7 @@ async def create_proposal(
         line_items=data.line_items,
         packages=data.packages,
         requires_countersign=data.requires_countersign,
+        require_email_code=data.require_email_code,
         deposit_percent=data.deposit_percent,
         create_project_on_accept=data.create_project_on_accept,
         kickoff_template_id=data.kickoff_template_id,
@@ -356,6 +361,7 @@ async def update_proposal(
         line_items=data.line_items,
         packages=data.packages,
         requires_countersign=data.requires_countersign,
+        require_email_code=data.require_email_code,
         deposit_percent=data.deposit_percent,
         create_project_on_accept=data.create_project_on_accept,
         kickoff_template_id=data.kickoff_template_id,
@@ -506,8 +512,50 @@ async def download_attachment(
 
 @public_router.get("/{token}", response_model=ProposalPublicRead)
 async def read_public_proposal(db: DbSession, token: str, request: Request) -> ProposalPublicRead:
-    proposal, agency = await service.get_public_proposal(db, token, link_visitor(request))
+    proposal, agency = await service.get_public_proposal(
+        db, token, link_visitor(request), access_token=request.headers.get(access.ACCESS_HEADER)
+    )
     return await _public_read(db, proposal, agency.name)
+
+
+# Drafts have no share link yet, as far as anyone outside the agency knows.
+_NOT_FOUND = "Proposal not found"
+
+
+async def _gated(db: DbSession, token: str, request: Request) -> Proposal:
+    """The proposal behind a share link, once the visitor has its email
+    code when it asks for one (access.py)."""
+    proposal = await service.get_proposal_by_token_or_404(db, token)
+    if proposal.require_email_code:
+        if proposal.status == STATUS_DRAFT:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, _NOT_FOUND)
+        agency = await db.get(Agency, proposal.agency_id)
+        access.require_access(proposal, request.headers.get(access.ACCESS_HEADER), agency.name if agency else "")
+    return proposal
+
+
+@public_router.post("/{token}/code", response_model=ProposalCodeSentRead)
+@limiter.limit("10/hour")
+async def send_public_proposal_code(request: Request, db: DbSession, token: str) -> ProposalCodeSentRead:
+    """Emails a code to the proposal's recipient (only ever them)."""
+    proposal = await service.get_proposal_by_token_or_404(db, token)
+    if proposal.status == STATUS_DRAFT:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, _NOT_FOUND)
+    return ProposalCodeSentRead(email_hint=await access.send_code(db, proposal))
+
+
+@public_router.post("/{token}/code/verify", response_model=ProposalAccessRead)
+@limiter.limit("30/hour")
+async def verify_public_proposal_code(
+    request: Request, db: DbSession, token: str, data: ProposalCodeVerifyRequest
+) -> ProposalAccessRead:
+    proposal = await service.get_proposal_by_token_or_404(db, token)
+    if proposal.status == STATUS_DRAFT:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, _NOT_FOUND)
+    access_token = await access.verify_code(
+        db, proposal, data.code, ip_address=client_ip(request), user_agent=client_user_agent(request)
+    )
+    return ProposalAccessRead(access_token=access_token, expires_in_seconds=int(access.ACCESS_TTL.total_seconds()))
 
 
 async def _public_read(db: DbSession, proposal: Proposal, agency_name: str) -> ProposalPublicRead:
@@ -547,22 +595,23 @@ async def _public_after_change(db: DbSession, proposal: Proposal) -> ProposalPub
 
 
 @public_router.get("/{token}/certificate", response_model=ProposalCertificateRead)
-async def public_certificate(db: DbSession, token: str) -> ProposalCertificateRead:
-    proposal = await service.get_proposal_by_token_or_404(db, token)
+async def public_certificate(db: DbSession, token: str, request: Request) -> ProposalCertificateRead:
+    proposal = await _gated(db, token, request)
     return await signing.build_certificate(db, proposal)
 
 
 @public_router.get("/{token}/certificate.pdf")
-async def public_certificate_pdf(db: DbSession, token: str) -> Response:
-    proposal = await service.get_proposal_by_token_or_404(db, token)
+async def public_certificate_pdf(db: DbSession, token: str, request: Request) -> Response:
+    proposal = await _gated(db, token, request)
     return await certificate_pdf_response(db, proposal)
 
 
 @public_router.get("/{token}/attachments/{attachment_id}")
-async def download_public_attachment(db: DbSession, token: str, attachment_id: uuid.UUID):
+async def download_public_attachment(db: DbSession, token: str, attachment_id: uuid.UUID, request: Request):
     # Same gate as the public read (no drafts, no agency on its deletion
-    # hold), but without recording a view: a download isn't a first look.
-    proposal = await service.get_proposal_by_token_or_404(db, token)
+    # hold, the email code), but without recording a view: a download isn't
+    # a first look.
+    proposal = await _gated(db, token, request)
     if proposal.status == STATUS_DRAFT:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Attachment not found")
     attachment = await service.get_attachment_or_404(db, proposal.id, attachment_id)
@@ -573,7 +622,7 @@ async def download_public_attachment(db: DbSession, token: str, attachment_id: u
 async def sign_public_proposal(
     db: DbSession, token: str, data: ProposalSignRequest, request: Request, background_tasks: BackgroundTasks
 ) -> ProposalPublicRead:
-    proposal = await service.get_proposal_by_token_or_404(db, token)
+    proposal = await _gated(db, token, request)
     proposal = await service.sign_proposal(
         db,
         proposal,
@@ -595,7 +644,7 @@ async def choose_public_proposal_options(
 ) -> ProposalPublicRead:
     """The recipient's package and add-ons, before signing. The response
     carries the new document fingerprint to sign against."""
-    proposal = await service.get_proposal_by_token_or_404(db, token)
+    proposal = await _gated(db, token, request)
     proposal = await service.choose_options(
         db, proposal, package_id=data.package_id, add_on_ids=data.add_on_ids, visitor=link_visitor(request)
     )
@@ -606,6 +655,6 @@ async def choose_public_proposal_options(
 async def decline_public_proposal(
     db: DbSession, token: str, data: ProposalDeclineRequest, request: Request
 ) -> ProposalPublicRead:
-    proposal = await service.get_proposal_by_token_or_404(db, token)
+    proposal = await _gated(db, token, request)
     proposal = await service.decline_proposal(db, proposal, reason=data.reason, visitor=link_visitor(request))
     return await _public_after_change(db, proposal)

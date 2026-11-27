@@ -122,7 +122,15 @@ const LeadPortalPage = async ({ searchParams }: PageProps) => {
                   <div>
                     <p className={styles.proposalTitle}>{proposal.title}</p>
                     <p className={styles.muted}>
-                      {proposalPriceLabel(proposal, (cents) => formatMoneyCents(cents, proposal.currency))}
+                      {proposal.total_cents === null
+                        ? "Price on the proposal"
+                        : proposalPriceLabel(
+                            {
+                              total_cents: proposal.total_cents,
+                              monthly_total_cents: proposal.monthly_total_cents ?? 0,
+                            },
+                            (cents) => formatMoneyCents(cents, proposal.currency),
+                          )}
                       {proposal.valid_until ? ` · valid until ${formatDate(proposal.valid_until)}` : ""}
                     </p>
                   </div>

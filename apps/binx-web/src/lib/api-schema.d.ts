@@ -5102,6 +5102,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/proposals/public/{token}/code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send Public Proposal Code
+         * @description Emails a code to the proposal's recipient (only ever them).
+         */
+        post: operations["send_public_proposal_code_proposals_public__token__code_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/proposals/public/{token}/code/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Verify Public Proposal Code */
+        post: operations["verify_public_proposal_code_proposals_public__token__code_verify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/proposals/public/{token}/decline": {
         parameters: {
             query?: never;
@@ -10229,6 +10266,17 @@ export interface components {
             /** Status */
             status: string;
         };
+        /**
+         * ProposalAccessRead
+         * @description Opens a code-protected proposal: send it back in the
+         *     X-Proposal-Access header on share-link requests.
+         */
+        ProposalAccessRead: {
+            /** Access Token */
+            access_token: string;
+            /** Expires In Seconds */
+            expires_in_seconds: number;
+        };
         /** ProposalAttachmentRead */
         ProposalAttachmentRead: {
             /**
@@ -10327,6 +10375,19 @@ export interface components {
             /** Valid Until */
             valid_until: string | null;
         };
+        /**
+         * ProposalCodeSentRead
+         * @description Where the code went, masked ("j•••@fjord.example").
+         */
+        ProposalCodeSentRead: {
+            /** Email Hint */
+            email_hint: string;
+        };
+        /** ProposalCodeVerifyRequest */
+        ProposalCodeVerifyRequest: {
+            /** Code */
+            code: string;
+        };
         /** ProposalCreate */
         ProposalCreate: {
             /** Client Id */
@@ -10357,6 +10418,11 @@ export interface components {
             recipient_email?: string | null;
             /** Recipient Name */
             recipient_name?: string | null;
+            /**
+             * Require Email Code
+             * @default false
+             */
+            require_email_code: boolean;
             /**
              * Requires Countersign
              * @default false
@@ -10456,6 +10522,11 @@ export interface components {
             recipient_email: string | null;
             /** Recipient Name */
             recipient_name: string | null;
+            /**
+             * Require Email Code
+             * @default false
+             */
+            require_email_code: boolean;
             /** Requires Countersign */
             requires_countersign: boolean;
             /** Sent At */
@@ -10813,6 +10884,11 @@ export interface components {
             /** Recipient Name */
             recipient_name?: string | null;
             /**
+             * Require Email Code
+             * @default false
+             */
+            require_email_code: boolean;
+            /**
              * Requires Countersign
              * @default false
              */
@@ -10864,13 +10940,13 @@ export interface components {
              * Monthly Total Cents
              * @default 0
              */
-            monthly_total_cents: number;
+            monthly_total_cents: number | null;
             /** Sent At */
             sent_at: string | null;
             /** Title */
             title: string;
             /** Total Cents */
-            total_cents: number;
+            total_cents: number | null;
             /** Url */
             url: string;
             /** Valid Until */
@@ -24478,6 +24554,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    send_public_proposal_code_proposals_public__token__code_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalCodeSentRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    verify_public_proposal_code_proposals_public__token__code_verify_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProposalCodeVerifyRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalAccessRead"];
                 };
             };
             /** @description Validation Error */

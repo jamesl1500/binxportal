@@ -111,6 +111,18 @@ class Proposal(Base):
     completion_claimed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
     completion_processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
 
+    # Ask for a code emailed to the recipient before showing the proposal on
+    # its share link (access.py): only someone with that inbox can open it.
+    # The code is stored hashed, single-use, and short-lived; sends are
+    # capped per day (the window), so it can't be guessed by brute force.
+    require_email_code: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    access_code_hash: Mapped[str | None] = mapped_column(String(64), default=None)
+    access_code_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    access_code_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    access_code_attempts: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    access_code_window_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    access_code_window_sends: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+
     # What accepting it sets in motion (acceptance.py), chosen on the draft:
     # a deposit invoice for this share of the total, and a project (with a
     # kickoff questionnaire from a template) for the work. With a deposit,
@@ -232,6 +244,8 @@ EVENT_COUNTERSIGNED = "countersigned"
 EVENT_DECLINED = "declined"
 # The recipient chose a package or add-ons (the document is re-frozen).
 EVENT_OPTIONS_CHOSEN = "options_chosen"
+# The recipient opened a code-protected proposal with the code emailed to them.
+EVENT_EMAIL_VERIFIED = "email_verified"
 # Acceptance (acceptance.py), after the proposal is complete.
 EVENT_CLIENT_CREATED = "client_created"
 EVENT_PORTAL_INVITED = "portal_invited"

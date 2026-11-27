@@ -16,9 +16,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { getPublicProposal } from "@/lib/proposals";
+import { ProposalCodeRequired } from "@/lib/proposal-access";
 import { PER_MONTH, proposalStatusLabel, proposalTotalRows } from "@/lib/proposals-client";
 import { formatMoneyCents } from "@/lib/money";
 import ProposalAttachmentList from "@/components/proposals/ProposalAttachmentList/ProposalAttachmentList";
+import ProposalCodeGate from "@/components/proposals/ProposalCodeGate/ProposalCodeGate";
 import ProposalLines from "@/components/proposals/ProposalLines/ProposalLines";
 import PublicProposalActions from "@/components/proposals/PublicProposalActions/PublicProposalActions";
 
@@ -48,6 +50,7 @@ const PublicProposalPage = async ({
 
   let proposal: Awaited<ReturnType<typeof getPublicProposal>> | null = null;
   let tokenError: string | null = null;
+  let gate: ProposalCodeRequired | null = null;
 
   if (!token) {
     tokenError = "This proposal link is missing its token.";
@@ -55,11 +58,27 @@ const PublicProposalPage = async ({
     try {
       proposal = await getPublicProposal(token);
     } catch (error) {
+      if (error instanceof ProposalCodeRequired) gate = error;
       tokenError =
         error instanceof Error
           ? error.message
           : "This proposal link is invalid or has expired.";
     }
+  }
+
+  if (token && gate) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.card}>
+          <ProposalCodeGate
+            token={token}
+            agencyName={gate.agencyName}
+            title={gate.title}
+            emailHint={gate.emailHint}
+          />
+        </div>
+      </div>
+    );
   }
 
   if (!token || !proposal) {
