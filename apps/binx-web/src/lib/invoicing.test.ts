@@ -120,7 +120,7 @@ describe("invoicing.ts", () => {
       `/agencies/${A}/invoices`,
       expect.objectContaining({
         client_id: "client-1",
-        line_items: [{ description: "Design", quantity: "2", unit_price_cents: 5000 }],
+        line_items: [{ description: "Design", quantity: "2", unit_price_cents: 5000, service_id: null }],
       }),
       AUTH,
     );

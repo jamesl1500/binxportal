@@ -16,6 +16,9 @@ import PortalProposalActions from "./PortalProposalActions";
 
 const mockedSign = vi.mocked(signPortalProposalAction);
 const mockedDecline = vi.mocked(declinePortalProposalAction);
+const CONSENT = "I agree to sign this proposal electronically.";
+const HASH = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+const props = { consentText: CONSENT, documentHash: HASH };
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -23,29 +26,35 @@ beforeEach(() => {
 
 describe("PortalProposalActions", () => {
   it("shows Sign and Decline choices with no form up front", () => {
-    render(<PortalProposalActions proposalId="p1" />);
+    render(<PortalProposalActions proposalId="p1" {...props} />);
 
     expect(screen.getByRole("button", { name: "Sign this proposal" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Decline" })).toBeInTheDocument();
     expect(screen.queryByLabelText(/reason/i)).not.toBeInTheDocument();
   });
 
-  it("signs with a single click — no name or email to type", async () => {
+  it("signs after the e-sign consent — no name or email to type", async () => {
     mockedSign.mockResolvedValueOnce({ proposal: { status: "signed" } as never });
     const user = userEvent.setup();
-    render(<PortalProposalActions proposalId="p1" />);
+    render(<PortalProposalActions proposalId="p1" {...props} />);
 
     await user.click(screen.getByRole("button", { name: "Sign this proposal" }));
+    expect(screen.queryByLabelText("Your name")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sign proposal" })).toBeDisabled();
+    await user.click(screen.getByRole("checkbox", { name: CONSENT }));
+    await user.click(screen.getByRole("button", { name: "Sign proposal" }));
 
-    expect(mockedSign).toHaveBeenCalledWith("p1");
+    expect(mockedSign).toHaveBeenCalledWith("p1", true, HASH);
   });
 
   it("shows a toast when signing fails", async () => {
     mockedSign.mockResolvedValueOnce({ error: "This proposal has expired" });
     const user = userEvent.setup();
-    render(<PortalProposalActions proposalId="p1" />);
+    render(<PortalProposalActions proposalId="p1" {...props} />);
 
     await user.click(screen.getByRole("button", { name: "Sign this proposal" }));
+    await user.click(screen.getByRole("checkbox", { name: CONSENT }));
+    await user.click(screen.getByRole("button", { name: "Sign proposal" }));
 
     expect(mockedToastError).toHaveBeenCalledWith("This proposal has expired");
   });
@@ -53,7 +62,7 @@ describe("PortalProposalActions", () => {
   it("declines with an optional reason", async () => {
     mockedDecline.mockResolvedValueOnce({ proposal: { status: "declined" } as never });
     const user = userEvent.setup();
-    render(<PortalProposalActions proposalId="p1" />);
+    render(<PortalProposalActions proposalId="p1" {...props} />);
 
     await user.click(screen.getByRole("button", { name: "Decline" }));
     await user.type(screen.getByLabelText(/reason/i), "Going with another agency");
@@ -64,7 +73,7 @@ describe("PortalProposalActions", () => {
 
   it("Back returns to the choose step without declining", async () => {
     const user = userEvent.setup();
-    render(<PortalProposalActions proposalId="p1" />);
+    render(<PortalProposalActions proposalId="p1" {...props} />);
 
     await user.click(screen.getByRole("button", { name: "Decline" }));
     await user.click(screen.getByRole("button", { name: "Back" }));

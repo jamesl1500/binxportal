@@ -20,12 +20,14 @@ from binx_api.modules.errors import models as errors_models  # noqa: F401
 from binx_api.modules.feedback import models as feedback_models  # noqa: F401
 from binx_api.modules.invoicing import models as invoicing_models  # noqa: F401
 from binx_api.modules.kickoffs import models as kickoffs_models  # noqa: F401
+from binx_api.modules.lead_portal import models as lead_portal_models  # noqa: F401
 from binx_api.modules.leads import models as leads_models  # noqa: F401
 from binx_api.modules.meetings import models as meetings_models  # noqa: F401
 from binx_api.modules.messaging import models as messaging_models  # noqa: F401
 from binx_api.modules.notifications import models as notifications_models  # noqa: F401
 from binx_api.modules.projects import models as projects_models  # noqa: F401
 from binx_api.modules.proposals import models as proposals_models  # noqa: F401
+from binx_api.modules.services import models as services_models  # noqa: F401
 from binx_api.modules.time_tracking import models as time_tracking_models  # noqa: F401
 from binx_api.modules.timeline import models as timeline_models  # noqa: F401
 from binx_api.modules.users import models as users_models  # noqa: F401

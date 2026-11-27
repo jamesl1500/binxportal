@@ -18,16 +18,22 @@ beforeEach(() => {
 describe("public proposal actions", () => {
   it("signs the proposal and returns it", async () => {
     vi.mocked(proposals.signPublicProposal).mockResolvedValueOnce({ status: "signed" } as never);
-    const result = await signPublicProposalAction("tok", "Jamie Rivera", "jamie@example.com");
+    const result = await signPublicProposalAction("tok", "Jamie Rivera", "jamie@example.com", true, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
     expect(result).toEqual({ proposal: { status: "signed" } });
-    expect(proposals.signPublicProposal).toHaveBeenCalledWith("tok", "Jamie Rivera", "jamie@example.com");
+    expect(proposals.signPublicProposal).toHaveBeenCalledWith(
+      "tok",
+      "Jamie Rivera",
+      "jamie@example.com",
+      true,
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    );
   });
 
   it("maps an AuthApiError to its message on sign", async () => {
     vi.mocked(proposals.signPublicProposal).mockRejectedValueOnce(
       new AuthApiError("This proposal has expired — ask the agency to resend it", 409),
     );
-    const result = await signPublicProposalAction("tok", "Jamie Rivera", "jamie@example.com");
+    const result = await signPublicProposalAction("tok", "Jamie Rivera", "jamie@example.com", true, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
     expect(result).toEqual({ error: "This proposal has expired — ask the agency to resend it" });
   });
 

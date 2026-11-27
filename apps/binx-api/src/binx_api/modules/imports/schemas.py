@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-ImportKind = Literal["clients", "team", "leads", "projects", "tasks", "time_entries"]
+ImportKind = Literal["clients", "team", "leads", "projects", "tasks", "time_entries", "services"]
 
 # Per-file row caps. Kept modest so an import is one ordinary request — no
 # background job, no stored upload.
@@ -14,6 +14,7 @@ MAX_LEAD_ROWS = 500
 MAX_PROJECT_ROWS = 200
 MAX_TASK_ROWS = 1000
 MAX_TIME_ENTRY_ROWS = 2000
+MAX_SERVICE_ROWS = 500
 
 MAX_ROWS_BY_KIND: dict[str, int] = {
     "clients": MAX_CLIENT_ROWS,
@@ -22,6 +23,7 @@ MAX_ROWS_BY_KIND: dict[str, int] = {
     "projects": MAX_PROJECT_ROWS,
     "tasks": MAX_TASK_ROWS,
     "time_entries": MAX_TIME_ENTRY_ROWS,
+    "services": MAX_SERVICE_ROWS,
 }
 
 # Loose bound on any single raw value; the real per-field limits are applied
@@ -146,6 +148,21 @@ class TimeEntryImportRow(BaseModel):
 
 class TimeEntryImportRequest(BaseModel):
     rows: list[TimeEntryImportRow] = Field(min_length=1, max_length=MAX_TIME_ENTRY_ROWS)
+    dry_run: bool = True
+
+
+class ServiceImportRow(BaseModel):
+    row: int = Field(ge=1)
+    name: RawValue = _raw()
+    description: RawValue = _raw()
+    pricing: RawValue = _raw()
+    price: RawValue = _raw()
+    default_quantity: RawValue = _raw()
+    status: RawValue = _raw()
+
+
+class ServiceImportRequest(BaseModel):
+    rows: list[ServiceImportRow] = Field(min_length=1, max_length=MAX_SERVICE_ROWS)
     dry_run: bool = True
 
 

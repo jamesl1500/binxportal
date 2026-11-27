@@ -45,6 +45,7 @@ from binx_api.modules.invoicing.schemas import CheckoutOutcome, LineItemInput
 from binx_api.modules.notifications import service as notifications_service
 from binx_api.modules.notifications.models import CATEGORY_INVOICING, EVENT_INVOICE_ISSUED, EVENT_INVOICE_PAID
 from binx_api.modules.projects.models import Project
+from binx_api.modules.services import service as services_service
 from binx_api.modules.users.models import User
 
 if TYPE_CHECKING:
@@ -581,8 +582,15 @@ async def _next_invoice_number(db: AsyncSession, agency: Agency) -> str:
     """Allocate the next per-agency invoice number under a row lock so two
     concurrent creations can't collide on it."""
     await get_or_create_billing_settings(db, agency)  # ensure the row exists to lock
+    # populate_existing: the row is already in the session (loaded just
+    # above, unlocked), and without it the locked SELECT hands back that
+    # cached object with the counter read *before* the lock, so two
+    # concurrent creations would still get the same number.
     result = await db.execute(
-        select(AgencyBillingSettings).where(AgencyBillingSettings.agency_id == agency.id).with_for_update()
+        select(AgencyBillingSettings)
+        .where(AgencyBillingSettings.agency_id == agency.id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
     )
     settings = result.scalar_one()
     number = f"{settings.invoice_prefix}{settings.next_invoice_number:0{settings.number_padding}d}"
@@ -636,6 +644,7 @@ async def list_line_items(db: AsyncSession, invoice_id: uuid.UUID) -> list[Invoi
 async def _replace_line_items(
     db: AsyncSession, invoice: Invoice, line_items: list[LineItemInput]
 ) -> list[InvoiceLineItem]:
+    await services_service.validate_service_ids(db, invoice.agency_id, (item.service_id for item in line_items))
     await db.execute(
         delete(InvoiceLineItem)
         .where(InvoiceLineItem.invoice_id == invoice.id)
@@ -650,6 +659,7 @@ async def _replace_line_items(
             quantity=item.quantity,
             unit_price_cents=item.unit_price_cents,
             amount_cents=_line_amount(item.quantity, item.unit_price_cents),
+            service_id=item.service_id,
         )
         db.add(row)
         rows.append(row)
@@ -1047,6 +1057,12 @@ async def add_payment(
         target_id=invoice.id,
         target_name=invoice.number,
     )
+    if fully_paid:
+        # A proposal's deposit landing starts the work it was waiting on.
+        # Imported here: proposals depends on invoicing, not the other way.
+        from binx_api.modules.proposals import acceptance
+
+        await acceptance.on_invoice_paid(db, invoice)
     return payment
 
 

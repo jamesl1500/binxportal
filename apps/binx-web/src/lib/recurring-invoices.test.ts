@@ -71,7 +71,7 @@ describe("recurring-invoices.ts", () => {
         client_id: "client-1",
         interval: "monthly",
         day_of_month: 1,
-        line_items: [{ description: "Retainer", quantity: "1", unit_price_cents: 500_000 }],
+        line_items: [{ description: "Retainer", quantity: "1", unit_price_cents: 500_000, service_id: null }],
       }),
       AUTH,
     );

@@ -1376,6 +1376,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agencies/{agency_id}/imports/services": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import Services */
+        post: operations["import_services_agencies__agency_id__imports_services_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agencies/{agency_id}/imports/tasks": {
         parameters: {
             query?: never;
@@ -1915,6 +1932,59 @@ export interface paths {
         head?: never;
         /** Assign Owner */
         patch: operations["assign_owner_agencies__agency_id__leads__lead_id__owner_patch"];
+        trace?: never;
+    };
+    "/agencies/{agency_id}/leads/{lead_id}/portal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Portal */
+        get: operations["read_portal_agencies__agency_id__leads__lead_id__portal_get"];
+        /** Enable Portal */
+        put: operations["enable_portal_agencies__agency_id__leads__lead_id__portal_put"];
+        post?: never;
+        /** Disable Portal */
+        delete: operations["disable_portal_agencies__agency_id__leads__lead_id__portal_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/leads/{lead_id}/portal/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reply */
+        post: operations["reply_agencies__agency_id__leads__lead_id__portal_messages_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/leads/{lead_id}/portal/reset-link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reset Link */
+        post: operations["reset_link_agencies__agency_id__leads__lead_id__portal_reset_link_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/agencies/{agency_id}/leads/{lead_id}/status": {
@@ -3092,6 +3162,154 @@ export interface paths {
         patch: operations["update_proposal_agencies__agency_id__proposals__proposal_id__patch"];
         trace?: never;
     };
+    "/agencies/{agency_id}/proposals/{proposal_id}/acceptance/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Retry Acceptance
+         * @description Re-runs a blocked acceptance (after upgrading the plan, say). Picks
+         *     up where it stopped; finished steps aren't repeated.
+         */
+        post: operations["retry_acceptance_agencies__agency_id__proposals__proposal_id__acceptance_retry_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/proposals/{proposal_id}/attachments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload Attachment */
+        post: operations["upload_attachment_agencies__agency_id__proposals__proposal_id__attachments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/proposals/{proposal_id}/attachments/{attachment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Attachment */
+        delete: operations["delete_attachment_agencies__agency_id__proposals__proposal_id__attachments__attachment_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/proposals/{proposal_id}/attachments/{attachment_id}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download Attachment */
+        get: operations["download_attachment_agencies__agency_id__proposals__proposal_id__attachments__attachment_id__download_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/proposals/{proposal_id}/certificate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Proposal Certificate */
+        get: operations["proposal_certificate_agencies__agency_id__proposals__proposal_id__certificate_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/proposals/{proposal_id}/certificate.pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Proposal Certificate Pdf */
+        get: operations["proposal_certificate_pdf_agencies__agency_id__proposals__proposal_id__certificate_pdf_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/proposals/{proposal_id}/countersign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Countersign Proposal
+         * @description The agency's signature, after the client's. Owners and admins only:
+         *     it binds the agency.
+         */
+        post: operations["countersign_proposal_agencies__agency_id__proposals__proposal_id__countersign_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/proposals/{proposal_id}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Proposal Events
+         * @description The audit trail: sent, every view, signed or declined, with where
+         *     each came from. Staff only.
+         */
+        get: operations["list_proposal_events_agencies__agency_id__proposals__proposal_id__events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agencies/{agency_id}/proposals/{proposal_id}/send": {
         parameters: {
             query?: never;
@@ -3211,6 +3429,42 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/services": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Services */
+        get: operations["list_services_agencies__agency_id__services_get"];
+        put?: never;
+        /** Create Service */
+        post: operations["create_service_agencies__agency_id__services_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agencies/{agency_id}/services/{service_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Service */
+        delete: operations["delete_service_agencies__agency_id__services__service_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Service */
+        patch: operations["update_service_agencies__agency_id__services__service_id__patch"];
         trace?: never;
     };
     "/agencies/{agency_id}/subdomain": {
@@ -3769,6 +4023,57 @@ export interface paths {
         get: operations["health_check_files_health_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lead-portal/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Public Portal */
+        get: operations["read_public_portal_lead_portal__token__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lead-portal/{token}/logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Public Logo */
+        get: operations["public_logo_lead_portal__token__logo_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lead-portal/{token}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ask */
+        post: operations["ask_lead_portal__token__messages_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4586,6 +4891,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/portal/proposals/{proposal_id}/attachments/{attachment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download Portal Proposal Attachment */
+        get: operations["download_portal_proposal_attachment_portal_proposals__proposal_id__attachments__attachment_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/portal/proposals/{proposal_id}/certificate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Portal Proposal Certificate */
+        get: operations["portal_proposal_certificate_portal_proposals__proposal_id__certificate_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/portal/proposals/{proposal_id}/certificate.pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Portal Proposal Certificate Pdf */
+        get: operations["portal_proposal_certificate_pdf_portal_proposals__proposal_id__certificate_pdf_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/portal/proposals/{proposal_id}/decline": {
         parameters: {
             query?: never;
@@ -4597,6 +4953,26 @@ export interface paths {
         put?: never;
         /** Decline Portal Proposal */
         post: operations["decline_portal_proposal_portal_proposals__proposal_id__decline_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/portal/proposals/{proposal_id}/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Choose Portal Proposal Options
+         * @description The contact's package and add-ons, before signing.
+         */
+        put: operations["choose_portal_proposal_options_portal_proposals__proposal_id__options_put"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -4675,6 +5051,94 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/proposals/public/{token}/attachments/{attachment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download Public Attachment */
+        get: operations["download_public_attachment_proposals_public__token__attachments__attachment_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/proposals/public/{token}/certificate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Public Certificate */
+        get: operations["public_certificate_proposals_public__token__certificate_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/proposals/public/{token}/certificate.pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Public Certificate Pdf */
+        get: operations["public_certificate_pdf_proposals_public__token__certificate_pdf_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/proposals/public/{token}/code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send Public Proposal Code
+         * @description Emails a code to the proposal's recipient (only ever them).
+         */
+        post: operations["send_public_proposal_code_proposals_public__token__code_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/proposals/public/{token}/code/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Verify Public Proposal Code */
+        post: operations["verify_public_proposal_code_proposals_public__token__code_verify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/proposals/public/{token}/decline": {
         parameters: {
             query?: never;
@@ -4686,6 +5150,27 @@ export interface paths {
         put?: never;
         /** Decline Public Proposal */
         post: operations["decline_public_proposal_proposals_public__token__decline_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/proposals/public/{token}/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Choose Public Proposal Options
+         * @description The recipient's package and add-ons, before signing. The response
+         *     carries the new document fingerprint to sign against.
+         */
+        put: operations["choose_public_proposal_options_proposals_public__token__options_put"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -6482,6 +6967,11 @@ export interface components {
             /** Files */
             files?: string[] | null;
         };
+        /** Body_upload_attachment_agencies__agency_id__proposals__proposal_id__attachments_post */
+        Body_upload_attachment_agencies__agency_id__proposals__proposal_id__attachments_post: {
+            /** File */
+            file: string;
+        };
         /** Body_upload_avatar_users_me_avatar_put */
         Body_upload_avatar_users_me_avatar_put: {
             /** File */
@@ -6550,6 +7040,64 @@ export interface components {
             leads: components["schemas"]["LeadListRead"][];
             /** Skipped */
             skipped: number;
+        };
+        /** CertificateAttachmentRead */
+        CertificateAttachmentRead: {
+            /** File Name */
+            file_name: string;
+            /** Sha256 */
+            sha256: string;
+            /** Size */
+            size: number;
+        };
+        /** CertificateLineRead */
+        CertificateLineRead: {
+            /**
+             * Add On
+             * @default false
+             */
+            add_on: boolean;
+            /** Amount Cents */
+            amount_cents: number;
+            /**
+             * Billing
+             * @default one_time
+             */
+            billing: string;
+            /** Description */
+            description: string;
+            /** Details */
+            details: string | null;
+            /** Quantity */
+            quantity: string;
+            /** Unit Price Cents */
+            unit_price_cents: number;
+        };
+        /** CertificateSignatureRead */
+        CertificateSignatureRead: {
+            /** Consent Text */
+            consent_text: string | null;
+            /** Consent Version */
+            consent_version: string | null;
+            /** Document Hash */
+            document_hash: string | null;
+            /** Ip Address */
+            ip_address: string | null;
+            /** Signature Text */
+            signature_text: string;
+            /**
+             * Signed At
+             * Format: date-time
+             */
+            signed_at: string;
+            /** Signed Via */
+            signed_via: string | null;
+            /** Signer Email */
+            signer_email: string;
+            /** Signer Name */
+            signer_name: string;
+            /** User Agent */
+            user_agent: string | null;
         };
         /** ChangePasswordRequest */
         ChangePasswordRequest: {
@@ -6901,6 +7449,20 @@ export interface components {
             project_id?: string | null;
             /** Title */
             title?: string | null;
+        };
+        /**
+         * CountersignRequest
+         * @description An owner or admin countersigning: their consent and the fingerprint
+         *     of the version they're signing (the one the client signed).
+         */
+        CountersignRequest: {
+            /**
+             * Consent
+             * @default false
+             */
+            consent: boolean;
+            /** Document Hash */
+            document_hash?: string | null;
         };
         /**
          * DashboardLayoutRead
@@ -8196,6 +8758,54 @@ export interface components {
             /** Owner Id */
             owner_id?: string | null;
         };
+        /** LeadPortalMessageCreate */
+        LeadPortalMessageCreate: {
+            /** Body */
+            body: string;
+        };
+        /** LeadPortalMessageRead */
+        LeadPortalMessageRead: {
+            /** Author Kind */
+            author_kind: string;
+            /** Author Name */
+            author_name: string;
+            /** Body */
+            body: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+        };
+        /**
+         * LeadPortalRead
+         * @description The staff view of a lead's portal.
+         */
+        LeadPortalRead: {
+            /** Enabled */
+            enabled: boolean;
+            /** Last Viewed At */
+            last_viewed_at: string | null;
+            /** Messages */
+            messages: components["schemas"]["LeadPortalMessageRead"][];
+            /** Url */
+            url: string | null;
+            /** Welcome Message */
+            welcome_message: string | null;
+        };
+        /**
+         * LeadPortalUpdate
+         * @description Turn the portal on (or keep it on) and set its welcome note.
+         */
+        LeadPortalUpdate: {
+            /** Welcome Message */
+            welcome_message?: string | null;
+        };
         /** LeadRead */
         LeadRead: {
             /**
@@ -8384,6 +8994,8 @@ export interface components {
             description: string;
             /** Quantity */
             quantity: number | string;
+            /** Service Id */
+            service_id?: string | null;
             /** Unit Price Cents */
             unit_price_cents: number;
         };
@@ -8402,6 +9014,8 @@ export interface components {
             position: number;
             /** Quantity */
             quantity: string;
+            /** Service Id */
+            service_id?: string | null;
             /** Unit Price Cents */
             unit_price_cents: number;
         };
@@ -9181,6 +9795,20 @@ export interface components {
             /** Status */
             status: string;
         };
+        /**
+         * PortalProposalSignRequest
+         * @description The portal knows who's signing; it still needs consent and the
+         *     fingerprint of what they saw.
+         */
+        PortalProposalSignRequest: {
+            /**
+             * Consent
+             * @default false
+             */
+            consent: boolean;
+            /** Document Hash */
+            document_hash?: string | null;
+        };
         /** PortalTaskListRead */
         PortalTaskListRead: {
             /**
@@ -9600,6 +10228,166 @@ export interface components {
             /** Status */
             status: string;
         };
+        /**
+         * ProposalAcceptanceRead
+         * @description What accepting the proposal did (staff only).
+         */
+        ProposalAcceptanceRead: {
+            /** Blocked Reason */
+            blocked_reason: string | null;
+            /** Client Id */
+            client_id: string | null;
+            /** Client Name */
+            client_name: string | null;
+            /** Completed At */
+            completed_at: string | null;
+            /** Converted Lead */
+            converted_lead: boolean;
+            /** Deposit Invoice Id */
+            deposit_invoice_id: string | null;
+            /** Deposit Invoice Number */
+            deposit_invoice_number: string | null;
+            /** Deposit Invoice Status */
+            deposit_invoice_status: string | null;
+            /** Deposit Paid At */
+            deposit_paid_at: string | null;
+            /** Invited Email */
+            invited_email: string | null;
+            /** Kickoff Sent At */
+            kickoff_sent_at: string | null;
+            /** Project Id */
+            project_id: string | null;
+            /** Project Name */
+            project_name: string | null;
+            /** Retainer Next Run Date */
+            retainer_next_run_date?: string | null;
+            /** Retainer Schedule Id */
+            retainer_schedule_id?: string | null;
+            /** Status */
+            status: string;
+        };
+        /**
+         * ProposalAccessRead
+         * @description Opens a code-protected proposal: send it back in the
+         *     X-Proposal-Access header on share-link requests.
+         */
+        ProposalAccessRead: {
+            /** Access Token */
+            access_token: string;
+            /** Expires In Seconds */
+            expires_in_seconds: number;
+        };
+        /** ProposalAttachmentRead */
+        ProposalAttachmentRead: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** File Name */
+            file_name: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Mime Type */
+            mime_type: string;
+            /** Sha256 */
+            sha256: string;
+            /** Size */
+            size: number;
+        };
+        /**
+         * ProposalCertificateRead
+         * @description The record of a signed proposal: the document exactly as it was sent
+         *     (read from the frozen snapshot, not today's rows), the signature with its
+         *     evidence, and the audit trail.
+         */
+        ProposalCertificateRead: {
+            /** Agency Name */
+            agency_name: string;
+            /** Attachments */
+            attachments: components["schemas"]["CertificateAttachmentRead"][];
+            /** Completed At */
+            completed_at: string | null;
+            /** Content */
+            content: string | null;
+            countersignature: components["schemas"]["CertificateSignatureRead"] | null;
+            /** Currency */
+            currency: string;
+            /** Document Hash */
+            document_hash: string;
+            /** Document Intact */
+            document_intact: boolean;
+            /** Events */
+            events: components["schemas"]["ProposalEventRead"][];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /** Line Items */
+            line_items: components["schemas"]["CertificateLineRead"][];
+            /**
+             * Monthly Subtotal Cents
+             * @default 0
+             */
+            monthly_subtotal_cents: number;
+            /**
+             * Monthly Tax Cents
+             * @default 0
+             */
+            monthly_tax_cents: number;
+            /**
+             * Monthly Total Cents
+             * @default 0
+             */
+            monthly_total_cents: number;
+            /** Package Name */
+            package_name?: string | null;
+            /**
+             * Proposal Id
+             * Format: uuid
+             */
+            proposal_id: string;
+            /** Recipient Email */
+            recipient_email: string | null;
+            /** Recipient Name */
+            recipient_name: string | null;
+            /** Requires Countersign */
+            requires_countersign: boolean;
+            /** Sent At */
+            sent_at: string | null;
+            signature: components["schemas"]["CertificateSignatureRead"];
+            /** Signature Matches Document */
+            signature_matches_document: boolean;
+            /** Subtotal Cents */
+            subtotal_cents: number;
+            /** Tax Cents */
+            tax_cents: number;
+            /** Tax Rate Percent */
+            tax_rate_percent: string;
+            /** Title */
+            title: string;
+            /** Total Cents */
+            total_cents: number;
+            /** Valid Until */
+            valid_until: string | null;
+        };
+        /**
+         * ProposalCodeSentRead
+         * @description Where the code went, masked ("j•••@fjord.example").
+         */
+        ProposalCodeSentRead: {
+            /** Email Hint */
+            email_hint: string;
+        };
+        /** ProposalCodeVerifyRequest */
+        ProposalCodeVerifyRequest: {
+            /** Code */
+            code: string;
+        };
         /** ProposalCreate */
         ProposalCreate: {
             /** Client Id */
@@ -9607,18 +10395,39 @@ export interface components {
             /** Content */
             content?: string | null;
             /**
+             * Create Project On Accept
+             * @default false
+             */
+            create_project_on_accept: boolean;
+            /**
              * Currency
              * @default USD
              */
             currency: string;
+            /** Deposit Percent */
+            deposit_percent?: number | string | null;
+            /** Kickoff Template Id */
+            kickoff_template_id?: string | null;
             /** Lead Id */
             lead_id?: string | null;
             /** Line Items */
             line_items?: components["schemas"]["ProposalLineItemInput"][];
+            /** Packages */
+            packages?: components["schemas"]["ProposalPackageInput"][];
             /** Recipient Email */
             recipient_email?: string | null;
             /** Recipient Name */
             recipient_name?: string | null;
+            /**
+             * Require Email Code
+             * @default false
+             */
+            require_email_code: boolean;
+            /**
+             * Requires Countersign
+             * @default false
+             */
+            requires_countersign: boolean;
             /**
              * Tax Rate Percent
              * @default 0
@@ -9636,17 +10445,32 @@ export interface components {
         };
         /** ProposalDetailRead */
         ProposalDetailRead: {
+            acceptance?: components["schemas"]["ProposalAcceptanceRead"] | null;
             /**
              * Agency Id
              * Format: uuid
              */
             agency_id: string;
+            /** Attachments */
+            attachments: components["schemas"]["ProposalAttachmentRead"][];
             /** Client Id */
             client_id: string | null;
             /** Client Name */
             client_name: string | null;
+            /** Completed At */
+            completed_at: string | null;
+            /** Consent Text */
+            consent_text: string;
+            /** Consent Version */
+            consent_version: string;
             /** Content */
             content: string | null;
+            countersignature: components["schemas"]["ProposalSignatureRead"] | null;
+            /**
+             * Create Project On Accept
+             * @default false
+             */
+            create_project_on_accept: boolean;
             /**
              * Created At
              * Format: date-time
@@ -9658,23 +10482,53 @@ export interface components {
             decided_at: string | null;
             /** Decline Reason */
             decline_reason: string | null;
+            /** Deposit Percent */
+            deposit_percent?: string | null;
             /** Display Status */
             display_status: string;
+            /** Document Hash */
+            document_hash: string | null;
             /**
              * Id
              * Format: uuid
              */
             id: string;
+            /** Kickoff Template Id */
+            kickoff_template_id?: string | null;
             /** Lead Id */
             lead_id: string | null;
             /** Lead Name */
             lead_name: string | null;
             /** Line Items */
             line_items: components["schemas"]["ProposalLineItemRead"][];
+            /**
+             * Monthly Subtotal Cents
+             * @default 0
+             */
+            monthly_subtotal_cents: number;
+            /**
+             * Monthly Tax Cents
+             * @default 0
+             */
+            monthly_tax_cents: number;
+            /**
+             * Monthly Total Cents
+             * @default 0
+             */
+            monthly_total_cents: number;
+            /** Packages */
+            packages?: components["schemas"]["ProposalPackageRead"][];
             /** Recipient Email */
             recipient_email: string | null;
             /** Recipient Name */
             recipient_name: string | null;
+            /**
+             * Require Email Code
+             * @default false
+             */
+            require_email_code: boolean;
+            /** Requires Countersign */
+            requires_countersign: boolean;
             /** Sent At */
             sent_at: string | null;
             /** Share Url */
@@ -9697,12 +10551,52 @@ export interface components {
             /** Viewed At */
             viewed_at: string | null;
         };
+        /** ProposalEventRead */
+        ProposalEventRead: {
+            /** Actor Label */
+            actor_label: string | null;
+            /** Detail */
+            detail: string | null;
+            /** Ip Address */
+            ip_address: string | null;
+            /** Kind */
+            kind: string;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /** User Agent */
+            user_agent: string | null;
+        };
         /** ProposalLineItemInput */
         ProposalLineItemInput: {
+            /**
+             * Billing
+             * @default one_time
+             * @enum {string}
+             */
+            billing: "one_time" | "monthly";
             /** Description */
             description: string;
+            /** Details */
+            details?: string | null;
+            /**
+             * Optional
+             * @default false
+             */
+            optional: boolean;
+            /** Package Key */
+            package_key?: string | null;
             /** Quantity */
             quantity: number | string;
+            /**
+             * Selected
+             * @default true
+             */
+            selected: boolean;
+            /** Service Id */
+            service_id?: string | null;
             /** Unit Price Cents */
             unit_price_cents: number;
         };
@@ -9710,19 +10604,93 @@ export interface components {
         ProposalLineItemRead: {
             /** Amount Cents */
             amount_cents: number;
+            /**
+             * Billing
+             * @default one_time
+             */
+            billing: string;
             /** Description */
             description: string;
+            /** Details */
+            details: string | null;
             /**
              * Id
              * Format: uuid
              */
             id: string;
+            /**
+             * Included
+             * @default true
+             */
+            included: boolean;
+            /**
+             * Optional
+             * @default false
+             */
+            optional: boolean;
+            /** Package Id */
+            package_id?: string | null;
             /** Position */
             position: number;
             /** Quantity */
             quantity: string;
+            /**
+             * Selected
+             * @default true
+             */
+            selected: boolean;
+            /** Service Id */
+            service_id: string | null;
             /** Unit Price Cents */
             unit_price_cents: number;
+        };
+        /**
+         * ProposalOptionsRequest
+         * @description The recipient's choice before signing: one of the packages (required
+         *     when there are any), and the add-ons they want. Add-ons left out are
+         *     unticked.
+         */
+        ProposalOptionsRequest: {
+            /** Add On Ids */
+            add_on_ids?: string[];
+            /** Package Id */
+            package_id?: string | null;
+        };
+        /** ProposalPackageInput */
+        ProposalPackageInput: {
+            /** Description */
+            description?: string | null;
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+            /**
+             * Recommended
+             * @default false
+             */
+            recommended: boolean;
+        };
+        /** ProposalPackageRead */
+        ProposalPackageRead: {
+            /** Description */
+            description: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Monthly Price Cents */
+            monthly_price_cents: number;
+            /** Name */
+            name: string;
+            /** Position */
+            position: number;
+            /** Price Cents */
+            price_cents: number;
+            /** Recommended */
+            recommended: boolean;
+            /** Selected */
+            selected: boolean;
         };
         /**
          * ProposalPublicRead
@@ -9732,16 +10700,46 @@ export interface components {
         ProposalPublicRead: {
             /** Agency Name */
             agency_name: string;
+            /** Attachments */
+            attachments: components["schemas"]["ProposalAttachmentRead"][];
+            /** Completed At */
+            completed_at: string | null;
+            /** Consent Text */
+            consent_text: string;
+            /** Consent Version */
+            consent_version: string;
             /** Content */
             content: string | null;
+            countersignature: components["schemas"]["ProposalSignatureRead"] | null;
             /** Currency */
             currency: string;
             /** Display Status */
             display_status: string;
+            /** Document Hash */
+            document_hash: string | null;
             /** Line Items */
             line_items: components["schemas"]["ProposalLineItemRead"][];
+            /**
+             * Monthly Subtotal Cents
+             * @default 0
+             */
+            monthly_subtotal_cents: number;
+            /**
+             * Monthly Tax Cents
+             * @default 0
+             */
+            monthly_tax_cents: number;
+            /**
+             * Monthly Total Cents
+             * @default 0
+             */
+            monthly_total_cents: number;
+            /** Packages */
+            packages?: components["schemas"]["ProposalPackageRead"][];
             /** Recipient Name */
             recipient_name: string | null;
+            /** Requires Countersign */
+            requires_countersign: boolean;
             signature: components["schemas"]["ProposalSignatureRead"] | null;
             /** Status */
             status: string;
@@ -9787,6 +10785,21 @@ export interface components {
             lead_id: string | null;
             /** Lead Name */
             lead_name: string | null;
+            /**
+             * Monthly Subtotal Cents
+             * @default 0
+             */
+            monthly_subtotal_cents: number;
+            /**
+             * Monthly Tax Cents
+             * @default 0
+             */
+            monthly_tax_cents: number;
+            /**
+             * Monthly Total Cents
+             * @default 0
+             */
+            monthly_total_cents: number;
             /** Recipient Email */
             recipient_email: string | null;
             /** Recipient Name */
@@ -9809,6 +10822,13 @@ export interface components {
         /** ProposalSignRequest */
         ProposalSignRequest: {
             /**
+             * Consent
+             * @default false
+             */
+            consent: boolean;
+            /** Document Hash */
+            document_hash?: string | null;
+            /**
              * Signer Email
              * Format: email
              */
@@ -9823,6 +10843,8 @@ export interface components {
              * Format: date-time
              */
             signed_at: string;
+            /** Signed Via */
+            signed_via?: string | null;
             /** Signer Email */
             signer_email: string;
             /** Signer Name */
@@ -9838,18 +10860,39 @@ export interface components {
             /** Content */
             content?: string | null;
             /**
+             * Create Project On Accept
+             * @default false
+             */
+            create_project_on_accept: boolean;
+            /**
              * Currency
              * @default USD
              */
             currency: string;
+            /** Deposit Percent */
+            deposit_percent?: number | string | null;
+            /** Kickoff Template Id */
+            kickoff_template_id?: string | null;
             /** Lead Id */
             lead_id?: string | null;
             /** Line Items */
             line_items?: components["schemas"]["ProposalLineItemInput"][];
+            /** Packages */
+            packages?: components["schemas"]["ProposalPackageInput"][];
             /** Recipient Email */
             recipient_email?: string | null;
             /** Recipient Name */
             recipient_name?: string | null;
+            /**
+             * Require Email Code
+             * @default false
+             */
+            require_email_code: boolean;
+            /**
+             * Requires Countersign
+             * @default false
+             */
+            requires_countersign: boolean;
             /**
              * Tax Rate Percent
              * @default 0
@@ -9879,6 +10922,62 @@ export interface components {
             source: string;
             /** Website */
             website?: string | null;
+        };
+        /** PublicLeadPortalMessageCreate */
+        PublicLeadPortalMessageCreate: {
+            /** Author Name */
+            author_name?: string | null;
+            /** Body */
+            body: string;
+        };
+        /** PublicLeadPortalProposal */
+        PublicLeadPortalProposal: {
+            /** Currency */
+            currency: string;
+            /** Display Status */
+            display_status: string;
+            /**
+             * Monthly Total Cents
+             * @default 0
+             */
+            monthly_total_cents: number | null;
+            /** Sent At */
+            sent_at: string | null;
+            /** Title */
+            title: string;
+            /** Total Cents */
+            total_cents: number | null;
+            /** Url */
+            url: string;
+            /** Valid Until */
+            valid_until: string | null;
+        };
+        /**
+         * PublicLeadPortalRead
+         * @description What the lead sees. Nothing internal: no ids beyond what the page
+         *     needs, no other leads, no staff names beyond who replied.
+         */
+        PublicLeadPortalRead: {
+            /** Agency Name */
+            agency_name: string;
+            /** Brand Color */
+            brand_color: string | null;
+            /** Contact Name */
+            contact_name: string | null;
+            /** Has Logo */
+            has_logo: boolean;
+            /** Is Client */
+            is_client: boolean;
+            /** Lead Name */
+            lead_name: string;
+            /** Messages */
+            messages: components["schemas"]["LeadPortalMessageRead"][];
+            /** Portal Login Url */
+            portal_login_url: string;
+            /** Proposals */
+            proposals: components["schemas"]["PublicLeadPortalProposal"][];
+            /** Welcome Message */
+            welcome_message: string | null;
         };
         /**
          * QualificationsUpdate
@@ -9925,6 +11024,8 @@ export interface components {
             description: string;
             /** Quantity */
             quantity: number | string;
+            /** Service Id */
+            service_id?: string | null;
             /** Unit Price Cents */
             unit_price_cents: number;
         };
@@ -9941,6 +11042,8 @@ export interface components {
             position: number;
             /** Quantity */
             quantity: string;
+            /** Service Id */
+            service_id?: string | null;
             /** Unit Price Cents */
             unit_price_cents: number;
         };
@@ -10134,6 +11237,100 @@ export interface components {
         SendProposalRequest: {
             /** Recipient Email */
             recipient_email?: string | null;
+        };
+        /** ServiceCreate */
+        ServiceCreate: {
+            /**
+             * Default Quantity
+             * @default 1
+             */
+            default_quantity: number | string;
+            /** Description */
+            description?: string | null;
+            /** Name */
+            name: string;
+            /**
+             * Pricing Type
+             * @default fixed
+             */
+            pricing_type: string;
+            /** Unit Price Cents */
+            unit_price_cents: number;
+        };
+        /** ServiceImportRequest */
+        ServiceImportRequest: {
+            /**
+             * Dry Run
+             * @default true
+             */
+            dry_run: boolean;
+            /** Rows */
+            rows: components["schemas"]["ServiceImportRow"][];
+        };
+        /** ServiceImportRow */
+        ServiceImportRow: {
+            /** Default Quantity */
+            default_quantity?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Name */
+            name?: string | null;
+            /** Price */
+            price?: string | null;
+            /** Pricing */
+            pricing?: string | null;
+            /** Row */
+            row: number;
+            /** Status */
+            status?: string | null;
+        };
+        /** ServiceRead */
+        ServiceRead: {
+            /**
+             * Agency Id
+             * Format: uuid
+             */
+            agency_id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Default Quantity */
+            default_quantity: string;
+            /** Description */
+            description: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Is Archived */
+            is_archived: boolean;
+            /** Name */
+            name: string;
+            /** Pricing Type */
+            pricing_type: string;
+            /** Unit Price Cents */
+            unit_price_cents: number;
+        };
+        /**
+         * ServiceUpdate
+         * @description Partial update — only the fields sent change.
+         */
+        ServiceUpdate: {
+            /** Default Quantity */
+            default_quantity?: number | string | null;
+            /** Description */
+            description?: string | null;
+            /** Is Archived */
+            is_archived?: boolean | null;
+            /** Name */
+            name?: string | null;
+            /** Pricing Type */
+            pricing_type?: string | null;
+            /** Unit Price Cents */
+            unit_price_cents?: number | null;
         };
         /** SignupRequest */
         SignupRequest: {
@@ -14194,7 +15391,7 @@ export interface operations {
             };
             header?: never;
             path: {
-                kind: "clients" | "team" | "leads" | "projects" | "tasks" | "time_entries" | "invoices" | "proposals";
+                kind: "clients" | "team" | "leads" | "projects" | "tasks" | "time_entries" | "invoices" | "proposals" | "services";
                 agency_id: string;
             };
             cookie?: never;
@@ -14303,6 +15500,41 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["ProjectImportRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportResultRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_services_agencies__agency_id__imports_services_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ServiceImportRequest"];
             };
         };
         responses: {
@@ -14436,7 +15668,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                kind: "clients" | "team" | "leads" | "projects" | "tasks" | "time_entries";
+                kind: "clients" | "team" | "leads" | "projects" | "tasks" | "time_entries" | "services";
                 agency_id: string;
             };
             cookie?: never;
@@ -14474,7 +15706,7 @@ export interface operations {
             };
             header?: never;
             path: {
-                kind: "clients" | "team" | "leads" | "projects" | "tasks" | "time_entries";
+                kind: "clients" | "team" | "leads" | "projects" | "tasks" | "time_entries" | "services";
                 agency_id: string;
             };
             cookie?: never;
@@ -15820,6 +17052,172 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LeadRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_portal_agencies__agency_id__leads__lead_id__portal_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadPortalRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    enable_portal_agencies__agency_id__leads__lead_id__portal_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeadPortalUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadPortalRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    disable_portal_agencies__agency_id__leads__lead_id__portal_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reply_agencies__agency_id__leads__lead_id__portal_messages_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeadPortalMessageCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadPortalMessageRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reset_link_agencies__agency_id__leads__lead_id__portal_reset_link_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadPortalRead"];
                 };
             };
             /** @description Validation Error */
@@ -19200,6 +20598,270 @@ export interface operations {
             };
         };
     };
+    retry_acceptance_agencies__agency_id__proposals__proposal_id__acceptance_retry_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposal_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalDetailRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_attachment_agencies__agency_id__proposals__proposal_id__attachments_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposal_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_attachment_agencies__agency_id__proposals__proposal_id__attachments_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalAttachmentRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_attachment_agencies__agency_id__proposals__proposal_id__attachments__attachment_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposal_id: string;
+                attachment_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_attachment_agencies__agency_id__proposals__proposal_id__attachments__attachment_id__download_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposal_id: string;
+                attachment_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    proposal_certificate_agencies__agency_id__proposals__proposal_id__certificate_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposal_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalCertificateRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    proposal_certificate_pdf_agencies__agency_id__proposals__proposal_id__certificate_pdf_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposal_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    countersign_proposal_agencies__agency_id__proposals__proposal_id__countersign_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposal_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CountersignRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalDetailRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_proposal_events_agencies__agency_id__proposals__proposal_id__events_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposal_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalEventRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     send_proposal_agencies__agency_id__proposals__proposal_id__send_post: {
         parameters: {
             query?: never;
@@ -19484,6 +21146,140 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AgencyRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_services_agencies__agency_id__services_get: {
+        parameters: {
+            query?: {
+                include_archived?: boolean;
+            };
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_service_agencies__agency_id__services_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ServiceCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_service_agencies__agency_id__services__service_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                service_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_service_agencies__agency_id__services__service_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                service_id: string;
+                agency_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ServiceUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceRead"];
                 };
             };
             /** @description Validation Error */
@@ -20800,6 +22596,103 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+        };
+    };
+    read_public_portal_lead_portal__token__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicLeadPortalRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    public_logo_lead_portal__token__logo_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ask_lead_portal__token__messages_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PublicLeadPortalMessageCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadPortalMessageRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -22299,6 +24192,100 @@ export interface operations {
             };
         };
     };
+    download_portal_proposal_attachment_portal_proposals__proposal_id__attachments__attachment_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposal_id: string;
+                attachment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    portal_proposal_certificate_portal_proposals__proposal_id__certificate_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalCertificateRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    portal_proposal_certificate_pdf_portal_proposals__proposal_id__certificate_pdf_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     decline_portal_proposal_portal_proposals__proposal_id__decline_post: {
         parameters: {
             query?: never;
@@ -22334,6 +24321,41 @@ export interface operations {
             };
         };
     };
+    choose_portal_proposal_options_portal_proposals__proposal_id__options_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProposalOptionsRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalDetailRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     sign_portal_proposal_portal_proposals__proposal_id__sign_post: {
         parameters: {
             query?: never;
@@ -22343,7 +24365,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PortalProposalSignRequest"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {
@@ -22447,6 +24473,166 @@ export interface operations {
             };
         };
     };
+    download_public_attachment_proposals_public__token__attachments__attachment_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+                attachment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    public_certificate_proposals_public__token__certificate_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalCertificateRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    public_certificate_pdf_proposals_public__token__certificate_pdf_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    send_public_proposal_code_proposals_public__token__code_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalCodeSentRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    verify_public_proposal_code_proposals_public__token__code_verify_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProposalCodeVerifyRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalAccessRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     decline_public_proposal_proposals_public__token__decline_post: {
         parameters: {
             query?: never;
@@ -22459,6 +24645,41 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["ProposalDeclineRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalPublicRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    choose_public_proposal_options_proposals_public__token__options_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProposalOptionsRequest"];
             };
         };
         responses: {

@@ -143,6 +143,11 @@ $brand: var(--portal-primary, #{t.$color-ink});
     background: #fffbeb;
     border-color: #fde68a;
   }
+  &[data-status="awaiting_countersign"] {
+    color: #b45309;
+    background: #fffbeb;
+    border-color: #fde68a;
+  }
 
   &[data-status="signed"] {
     color: #15803d;

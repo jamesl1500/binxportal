@@ -103,7 +103,7 @@ describe("RecurringScheduleForm", () => {
         interval: "monthly",
         dayOfMonth: 15,
         weekday: null,
-        lineItems: [{ description: "Retainer", quantity: "1", unitPriceCents: 200000 }],
+        lineItems: [{ description: "Retainer", quantity: "1", unitPriceCents: 200000, serviceId: null }],
       }),
     );
     expect(mockPush).toHaveBeenCalledWith("/invoices/recurring");

@@ -24,7 +24,13 @@ RUN uv sync --frozen --no-dev
 
 FROM python:3.13-slim-bookworm AS runtime
 WORKDIR /app
-RUN useradd --create-home --uid 1000 appuser
+# DejaVu Sans: a Unicode TrueType font for the signed-proposal PDFs
+# (modules/proposals/certificate_pdf.py), so signer names and proposal text in
+# any script render instead of falling back to Latin-1.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --create-home --uid 1000 appuser
 COPY --from=builder --chown=appuser:appuser /app /app
 
 ENV PATH="/app/.venv/bin:$PATH" \

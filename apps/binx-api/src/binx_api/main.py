@@ -29,10 +29,13 @@ from binx_api.modules.feedback.router import router as feedback_router
 from binx_api.modules.files.router import router as files_router
 from binx_api.modules.imports.router import router as imports_router
 from binx_api.modules.invoicing.recurring_router import router as recurring_invoices_router
+from binx_api.modules.invoicing.recurring_service import run_recurring_loop
 from binx_api.modules.invoicing.router import router as invoicing_router
 from binx_api.modules.invoicing.webhooks_router import router as invoicing_webhooks_router
 from binx_api.modules.kickoffs.router import router as kickoffs_router
 from binx_api.modules.kickoffs.router import templates_router as kickoff_templates_router
+from binx_api.modules.lead_portal.router import public_router as lead_portal_public_router
+from binx_api.modules.lead_portal.router import router as lead_portal_router
 from binx_api.modules.leads.router import router as leads_router
 from binx_api.modules.meetings.router import router as meetings_router
 from binx_api.modules.messaging.router import router as conversations_router
@@ -40,8 +43,10 @@ from binx_api.modules.messaging.router import ws_router as messaging_ws_router
 from binx_api.modules.notifications.router import router as notifications_router
 from binx_api.modules.ops.router import router as ops_router
 from binx_api.modules.projects.router import router as projects_router
+from binx_api.modules.proposals.completion import run_completion_loop
 from binx_api.modules.proposals.router import public_router as proposals_public_router
 from binx_api.modules.proposals.router import router as proposals_router
+from binx_api.modules.services.router import router as services_router
 from binx_api.modules.time_tracking.router import router as time_tracking_router
 from binx_api.modules.timeline.router import router as timeline_router
 from binx_api.modules.users.router import router as users_router
@@ -61,15 +66,22 @@ def _on_rate_limited(request: Request, exc: Exception) -> Response:
 
 @asynccontextmanager
 async def _lifespan(_app: FastAPI) -> AsyncIterator[None]:
-    """Runs the one background job: erasing agencies whose 30-day deletion
-    hold has ended. It has to run even if nobody visits, because the Privacy
-    Policy promises the data is gone on schedule."""
-    purge = asyncio.create_task(run_purge_loop())
+    """Runs the background jobs, which have to happen even if nobody
+    visits: erasing agencies whose 30-day deletion hold has ended (the
+    Privacy Policy promises the data is gone on schedule), and billing
+    recurring invoices on their date, and finishing signed proposals whose
+    follow-up a crash or restart interrupted (proposals/completion.py)."""
+    jobs = [
+        asyncio.create_task(run_purge_loop()),
+        asyncio.create_task(run_recurring_loop()),
+        asyncio.create_task(run_completion_loop()),
+    ]
     try:
         yield
     finally:
-        purge.cancel()
-        await asyncio.gather(purge, return_exceptions=True)
+        for job in jobs:
+            job.cancel()
+        await asyncio.gather(*jobs, return_exceptions=True)
 
 
 def create_app() -> FastAPI:
@@ -117,6 +129,8 @@ def create_app() -> FastAPI:
     app.include_router(client_portal_router)
     app.include_router(dashboard_router)
     app.include_router(leads_router)
+    app.include_router(lead_portal_router)
+    app.include_router(lead_portal_public_router)
     app.include_router(ai_router)
     app.include_router(billing_router)
     app.include_router(billing_webhooks_router)
@@ -124,6 +138,7 @@ def create_app() -> FastAPI:
     app.include_router(boards_router)
     app.include_router(proposals_router)
     app.include_router(proposals_public_router)
+    app.include_router(services_router)
     app.include_router(time_tracking_router)
     app.include_router(recurring_invoices_router)
     app.include_router(kickoffs_router)

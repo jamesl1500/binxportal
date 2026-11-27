@@ -23,6 +23,9 @@ const TARGETS = [
   "approvals",
   "invoicing",
   "dashboard",
+  "proposal-sign",
+  "certificate",
+  "lead-portal",
 ];
 const WIDTH = 1600;
 

@@ -16,8 +16,13 @@ import path from "node:path";
 
 import type { Page } from "@playwright/test";
 
-import { test, expect } from "./fixtures";
-import { DEMO } from "./fixtures";
+import { AUTH_DIR, clickUntilVisible, DEMO, expect, test } from "./fixtures";
+
+const API_URL = process.env.E2E_API_URL ?? "http://localhost:8000";
+// Mirrored from binx-api's scripts/seed_e2e.py (_seed_showcase).
+const SHOWCASE_PROPOSAL = "Brand & website refresh, phase two";
+const SHOWCASE_SIGNED_PROPOSAL = "Kestrel Coffee packaging refresh";
+const SHOWCASE_LEAD = "Alder & Oak";
 
 const OUT = path.join(__dirname, "screenshots");
 const SHOT = { width: 1440, height: 1024 } as const;
@@ -115,5 +120,51 @@ test.describe("@screenshots marketing captures", () => {
     await expect(staffPage.getByRole("navigation", { name: "Primary" })).toBeVisible();
     await staffPage.waitForTimeout(800);
     await shoot(staffPage, "dashboard");
+  });
+
+  test("proposals — the client signing in their portal", async ({ clientPage }) => {
+    await clientPage.setViewportSize(SHOT);
+    await clientPage.goto("/portal/proposals");
+    await clientPage.getByRole("link", { name: SHOWCASE_PROPOSAL }).click();
+    await expect(clientPage.getByRole("heading", { name: SHOWCASE_PROPOSAL }).first()).toBeVisible();
+    const sign = clientPage.getByRole("button", { name: "Sign proposal" });
+    await clickUntilVisible(clientPage.getByRole("button", { name: "Sign this proposal" }), sign);
+    await clientPage.getByRole("checkbox").check();
+    await clientPage.locator("body").click({ position: { x: 5, y: 5 } });
+    await sign.evaluate((el) => el.scrollIntoView({ block: "end" }));
+    await clientPage.waitForTimeout(500);
+    await shoot(clientPage, "proposal-sign");
+  });
+
+  test("proposals — the signing certificate", async ({ staffPage }) => {
+    await staffPage.setViewportSize(SHOT);
+    await staffPage.goto("/proposals");
+    await staffPage.getByRole("link", { name: SHOWCASE_SIGNED_PROPOSAL }).click();
+    await staffPage.getByRole("link", { name: /view the signing certificate/i }).click();
+    await expect(staffPage.getByText("The signed record matches its fingerprint.")).toBeVisible();
+    await staffPage.waitForTimeout(500);
+    await shoot(staffPage, "certificate");
+  });
+
+  test("lead portal — what the lead sees", async ({ salesPage, browser }) => {
+    const state = JSON.parse(fs.readFileSync(path.join(AUTH_DIR, "sales.json"), "utf8"));
+    const token = state.cookies.find((c: { name: string }) => c.name === "binx_access_token").value;
+    const headers = { Authorization: `Bearer ${token}` };
+    const agencies = await (await salesPage.request.get(`${API_URL}/agencies/mine`, { headers })).json();
+    const agency = agencies.find((a: { name: string }) => a.name === DEMO.sales.agency);
+    const leads = await (await salesPage.request.get(`${API_URL}/agencies/${agency.id}/leads`, { headers })).json();
+    const lead = leads.find((l: { name: string }) => l.name === SHOWCASE_LEAD);
+    const portal = await (
+      await salesPage.request.get(`${API_URL}/agencies/${agency.id}/leads/${lead.id}/portal`, { headers })
+    ).json();
+
+    const context = await browser.newContext({ viewport: SHOT, deviceScaleFactor: 2 });
+    const page = await context.newPage();
+    const url = new URL(portal.url);
+    await page.goto(`${url.pathname}${url.search}`);
+    await expect(page.getByRole("heading", { name: "Hi Maya," })).toBeVisible();
+    await page.waitForTimeout(600);
+    await shoot(page, "lead-portal");
+    await context.close();
   });
 });

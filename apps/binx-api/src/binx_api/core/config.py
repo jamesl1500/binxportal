@@ -75,6 +75,17 @@ class Settings(BaseSettings):
     # Per-file cap, enforced in messaging/service.py's save_message_attachment.
     message_upload_max_bytes: int = 25 * 1024 * 1024
 
+    # Per-file cap for documents attached to a proposal (stored in the
+    # "agencies" area under {agency_id}/proposals/, so the agency purge
+    # removes them). Enforced in proposals/service.py's add_attachment.
+    proposal_upload_max_bytes: int = 25 * 1024 * 1024
+
+    # TrueType font for signed-proposal PDFs (proposals/certificate_pdf.py).
+    # Unset: DejaVu Sans from the Docker image, else a system Arial, else the
+    # built-in Latin-1 font.
+    pdf_font_path: str | None = None
+    pdf_font_bold_path: str | None = None
+
     # How long a websocket connection ticket stays valid. The browser can't
     # send the bearer token on a cross-origin WS handshake, so it trades the
     # session for one of these short-lived, single-purpose tokens first (see
@@ -169,6 +180,10 @@ class Settings(BaseSettings):
     # anyone else is logged instead of sent (see core/email.py). Unset (the
     # default — production, staging) means no restriction.
     ses_allowed_recipients: str | None = None
+    # Dev and E2E only: when SES isn't configured (ses_from_email unset), each
+    # email is also written as a JSON file in this folder, so end-to-end tests
+    # can read the codes and links that were sent. Ignored when SES is on.
+    email_outbox_dir: str | None = None
     # Explicit rather than relying on boto3's IMDS region auto-detection,
     # which isn't guaranteed across botocore versions/configs.
     aws_region: str = "us-east-2"

@@ -1,0 +1,253 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-6;
+}
+
+.sectionLabel {
+  margin: 0 0 t.$space-2;
+  padding: 0;
+  @include m.mono-label;
+  font-size: 0.5625rem;
+  color: t.$color-ink-faint;
+}
+
+.tableScroll {
+  @include m.table-scroll;
+  border-radius: t.$radius-sm;
+}
+
+.lineTable {
+  width: 100%;
+  border-collapse: collapse;
+
+  th {
+    padding: t.$space-2 t.$space-3;
+    @include m.mono-label;
+    font-size: 0.5625rem;
+    color: t.$color-ink-faint;
+    text-align: left;
+    border-bottom: 1px solid t.$color-border;
+  }
+
+  td {
+    padding: t.$space-3;
+    font-size: t.$font-size-sm;
+    color: t.$color-ink;
+    border-bottom: 1px solid t.$color-border;
+  }
+}
+
+.numCol {
+  text-align: right !important;
+  white-space: nowrap;
+}
+
+.noLines {
+  text-align: center !important;
+  color: t.$color-ink-faint;
+}
+
+.lineDetails {
+  display: block;
+  margin-top: t.$space-1;
+  font-size: t.$font-size-xs;
+  line-height: 1.5;
+  color: t.$color-ink-soft;
+  white-space: pre-line;
+}
+
+.packages,
+.addOns {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+
+  // Read-only views disable the fieldset; keep it looking like content.
+  &:disabled {
+    opacity: 1;
+  }
+}
+
+.packageGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: t.$space-3;
+}
+
+.packageCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+  padding: t.$space-4;
+  background: t.$color-surface;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-md;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+
+  .packages:not(:disabled) & {
+    cursor: pointer;
+
+    &:hover {
+      border-color: t.$color-ink-faint;
+    }
+  }
+
+  &:focus-within {
+    outline: 2px solid var(--app-accent, #{t.$color-brand});
+    outline-offset: 2px;
+  }
+
+  &[data-selected] {
+    border-color: var(--app-accent, #{t.$color-brand});
+    box-shadow: 0 0 0 1px var(--app-accent, #{t.$color-brand});
+  }
+
+  .packages:disabled &:not([data-selected]) {
+    opacity: 0.7;
+  }
+}
+
+.packageTop {
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+  flex-wrap: wrap;
+}
+
+.radio,
+.checkbox {
+  margin: 0;
+  accent-color: var(--app-accent, #{t.$color-brand});
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+// Read-only cards keep the radio for the selected state, out of sight.
+.hiddenInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.packageName {
+  font-weight: 700;
+  font-size: t.$font-size-base;
+  color: t.$color-ink;
+}
+
+.badge,
+.badgeSelected {
+  padding: 0.125rem t.$space-2;
+  @include m.mono-label;
+  font-size: 0.5625rem;
+  border-radius: t.$radius-sm;
+  border: 1px solid t.$color-border;
+  color: t.$color-ink-soft;
+  background: t.$color-paper;
+}
+
+.badgeSelected {
+  color: #15803d;
+  background: rgba(21, 128, 61, 0.1);
+  border-color: transparent;
+}
+
+.packagePrice {
+  font-size: t.$font-size-lg;
+  font-weight: 700;
+  color: t.$color-ink;
+}
+
+.packageDescription {
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+  white-space: pre-line;
+  line-height: 1.5;
+}
+
+.packageLines {
+  margin: t.$space-1 0 0;
+  padding: t.$space-2 0 0;
+  list-style: none;
+  border-top: 1px solid t.$color-border;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+
+  li {
+    display: flex;
+    justify-content: space-between;
+    gap: t.$space-3;
+    font-size: t.$font-size-sm;
+    color: t.$color-ink;
+  }
+}
+
+.amount {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.addOnList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid t.$color-border;
+
+  li {
+    border-bottom: 1px solid t.$color-border;
+  }
+}
+
+.addOn {
+  display: flex;
+  align-items: flex-start;
+  gap: t.$space-3;
+  padding: t.$space-3;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink;
+
+  .addOns:not(:disabled) & {
+    cursor: pointer;
+  }
+
+  .checkbox {
+    margin-top: 0.15rem;
+  }
+}
+
+.addOnText {
+  flex: 1;
+}
+
+.addOnState {
+  @include m.mono-label;
+  font-size: 0.5625rem;
+  color: t.$color-ink-faint;
+  white-space: nowrap;
+  align-self: center;
+
+  [data-selected] & {
+    color: #15803d;
+  }
+}
+
+// A live region that takes no room while empty (the gap above is enough).
+.saving {
+  margin: calc(-1 * #{t.$space-6} + #{t.$space-2}) 0 0;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+}

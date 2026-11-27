@@ -1,5 +1,11 @@
 import asyncio
+import json
 import logging
+import time
+import uuid
+from dataclasses import dataclass
+from email.message import EmailMessage
+from pathlib import Path
 
 import boto3
 from botocore.exceptions import ClientError
@@ -33,7 +39,50 @@ def _recipient_allowed(to: str) -> bool:
     return False
 
 
-async def send_email(*, to: str, subject: str, body: str, html: str | None = None) -> None:
+@dataclass(frozen=True)
+class EmailAttachment:
+    file_name: str
+    content: bytes
+    mime_type: str = "application/octet-stream"
+
+
+def _raw_message(*, to: str, subject: str, body: str, html: str | None, attachments: list[EmailAttachment]) -> bytes:
+    """A MIME message for SES SendRawEmail, the only SES call that carries
+    attachments: text + HTML alternatives, then each file."""
+    message = EmailMessage()
+    message["Subject"] = subject
+    message["From"] = settings.ses_from_email
+    message["To"] = to
+    if settings.ses_reply_to:
+        message["Reply-To"] = settings.ses_reply_to
+    message.set_content(body)
+    if html:
+        message.add_alternative(html, subtype="html")
+    for item in attachments:
+        maintype, _, subtype = item.mime_type.partition("/")
+        message.add_attachment(
+            item.content, maintype=maintype, subtype=subtype or "octet-stream", filename=item.file_name
+        )
+    return message.as_bytes()
+
+
+def _write_outbox(*, to: str, subject: str, body: str) -> None:
+    """Dev/E2E only (settings.email_outbox_dir, with SES off): one JSON file
+    per email, named so they sort by time."""
+    if not settings.email_outbox_dir:
+        return
+    folder = Path(settings.email_outbox_dir)
+    try:
+        folder.mkdir(parents=True, exist_ok=True)
+        name = f"{time.time_ns()}-{uuid.uuid4().hex[:8]}.json"
+        (folder / name).write_text(json.dumps({"to": to, "subject": subject, "body": body}), encoding="utf-8")
+    except OSError:
+        logger.warning("Couldn't write the email outbox file in %s", folder)
+
+
+async def send_email(
+    *, to: str, subject: str, body: str, html: str | None = None, attachments: list[EmailAttachment] | None = None
+) -> None:
     """Sends via Amazon SES when configured (``SES_FROM_EMAIL`` set) — the
     boto3 call is sync, so it runs in a thread rather than blocking the event
     loop. Unset (every dev/test environment) just logs, same as before —
@@ -61,9 +110,23 @@ async def send_email(*, to: str, subject: str, body: str, html: str | None = Non
     """
     if not settings.ses_from_email:
         logger.info("EMAIL to=%s subject=%s\n%s", to, subject, body)
+        _write_outbox(to=to, subject=subject, body=body)
         return
     if not _recipient_allowed(to):
         logger.info("EMAIL (not in SES_ALLOWED_RECIPIENTS, not sent) to=%s subject=%s\n%s", to, subject, body)
+        return
+    if attachments:
+        raw = _raw_message(to=to, subject=subject, body=body, html=html, attachments=attachments)
+        try:
+            await asyncio.to_thread(
+                _get_ses_client().send_raw_email,
+                Source=settings.ses_from_email,
+                Destinations=[to],
+                RawMessage={"Data": raw},
+            )
+        except ClientError as exc:
+            logger.warning("Failed to send email to=%s subject=%s", to, subject)
+            await capture_error(exc, tags={"upstream": "ses"}, context={"subject": subject})
         return
     message_body: dict = {"Text": {"Data": body, "Charset": "UTF-8"}}
     if html:
@@ -339,5 +402,116 @@ async def send_feedback_reply_email(*, to: str, label: str, original: str, respo
             paragraphs=[response, f"You wrote: “{quoted}”"] if quoted else [response],
             cta_label="See your feedback",
             cta_url=link,
+        ),
+    )
+
+
+async def send_proposal_signed_email(
+    *,
+    to: str,
+    agency_name: str,
+    title: str,
+    signer_names: str,
+    pdf: bytes,
+    pdf_name: str,
+    view_url: str,
+) -> None:
+    """The fully signed record, sent to each party once every signature is
+    in, with the signed PDF attached. One recipient per message, like every
+    email here, so nobody sees another party's address."""
+    await send_email(
+        to=to,
+        subject=f"Signed: {title}",
+        body=(
+            f"“{title}” from {agency_name} has been signed by {signer_names}.\n\n"
+            "The signed record is attached as a PDF: the proposal exactly as it was sent, "
+            "each signature, and the audit trail. Keep it for your records.\n\n"
+            f"View it online: {view_url}"
+        ),
+        html=render_html(
+            heading=f"Signed: {title}",
+            paragraphs=[
+                f"“{title}” from {agency_name} has been signed by {signer_names}.",
+                "The signed record is attached as a PDF: the proposal exactly as it was sent, "
+                "each signature, and the audit trail. Keep it for your records.",
+            ],
+            cta_label="View the signing certificate",
+            cta_url=view_url,
+        ),
+        attachments=[EmailAttachment(file_name=pdf_name, content=pdf, mime_type="application/pdf")],
+    )
+
+
+async def send_proposal_code_email(*, to: str, agency_name: str, title: str, code: str, minutes: int) -> None:
+    """The code that opens a proposal its agency protected with one. Only
+    ever sent to the proposal's own recipient address."""
+    await send_email(
+        to=to,
+        subject=f"Your code for “{title}”: {code}",
+        body=(
+            f"Use this code to open “{title}” from {agency_name}:\n\n{code}\n\n"
+            f"It works once, for the next {minutes} minutes. If you didn't ask for it, you can ignore this email."
+        ),
+        html=render_html(
+            heading=code,
+            paragraphs=[
+                f"Use this code to open “{title}” from {agency_name}.",
+                f"It works once, for the next {minutes} minutes. If you didn't ask for it, you can ignore this email.",
+            ],
+        ),
+    )
+
+
+async def send_proposal_accepted_email(
+    *, to: str, agency_name: str, title: str, accept_url: str, deposit_text: str | None
+) -> None:
+    """Sent to a proposal's signer once it's complete and they've been set up
+    as a client: their invitation into the agency's client portal, and the
+    deposit waiting there, if any. The link carries a one-time invitation
+    token, same as a normal portal invite."""
+    next_step = (
+        f"Your deposit invoice for {deposit_text} is waiting in the portal; work starts once it's paid."
+        if deposit_text
+        else "Your project, files and messages with the team will all be there."
+    )
+    await send_email(
+        to=to,
+        subject=f"Welcome aboard, {agency_name}'s client portal is ready",
+        body=(
+            f"Thanks for signing “{title}”. {agency_name} has set you up with a client portal.\n\n"
+            f"{next_step}\n\n"
+            f"Open your portal: {accept_url}\n\n"
+            "This link is just for you and expires in 7 days."
+        ),
+        html=render_html(
+            heading="Welcome aboard",
+            paragraphs=[
+                f"Thanks for signing “{title}”. {agency_name} has set you up with a client portal.",
+                next_step,
+                "This link is just for you and expires in 7 days.",
+            ],
+            cta_label="Open your portal",
+            cta_url=accept_url,
+        ),
+    )
+
+
+async def send_lead_portal_reply_email(
+    *, to: str, agency_name: str, replier_name: str, body: str, portal_url: str
+) -> None:
+    """A reply from the agency to a question asked in a lead portal, with a
+    link back to the conversation."""
+    await send_email(
+        to=to,
+        subject=f"{replier_name} from {agency_name} replied",
+        body=(
+            f"{replier_name} from {agency_name} replied to your question:\n\n{body}\n\n"
+            f"Reply or review your proposal: {portal_url}"
+        ),
+        html=render_html(
+            heading=f"{replier_name} replied",
+            paragraphs=[f"{replier_name} from {agency_name} replied to your question:", body],
+            cta_label="Open the conversation",
+            cta_url=portal_url,
         ),
     )

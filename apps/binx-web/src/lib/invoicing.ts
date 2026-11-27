@@ -110,6 +110,8 @@ export interface LineItemInput {
   description: string;
   quantity: string;
   unitPriceCents: number;
+  /** The catalog service the line was picked from, if any. */
+  serviceId?: string | null;
 }
 
 export interface InvoiceInput {
@@ -283,6 +285,7 @@ function toInvoicePayload(input: InvoiceInput) {
       description: item.description,
       quantity: item.quantity,
       unit_price_cents: item.unitPriceCents,
+      service_id: item.serviceId ?? null,
     })),
   };
 }

@@ -26,6 +26,7 @@ from binx_api.modules.activity.models import (
     CATEGORY_INVOICING,
     CATEGORY_PROJECTS,
     CATEGORY_PROPOSALS,
+    CATEGORY_SETTINGS,
     CATEGORY_TEAM,
     VISIBILITY_ADMIN,
 )
@@ -44,7 +45,9 @@ AnyMember = Annotated[
     Depends(require_agency_role(ROLE_OWNER, ROLE_ADMIN, ROLE_MEMBER, during_hold=(ROLE_OWNER,))),
 ]
 
-ExportKind = Literal["clients", "team", "leads", "projects", "tasks", "time_entries", "invoices", "proposals"]
+ExportKind = Literal[
+    "clients", "team", "leads", "projects", "tasks", "time_entries", "invoices", "proposals", "services"
+]
 FileFormat = Literal["csv", "xlsx"]
 
 _NOUNS: dict[str, str] = {
@@ -56,6 +59,7 @@ _NOUNS: dict[str, str] = {
     "time_entries": "time entries",
     "invoices": "invoices",
     "proposals": "proposals",
+    "services": "services",
 }
 _ACTIVITY_CATEGORY: dict[str, str] = {
     "clients": CATEGORY_CLIENTS,
@@ -66,6 +70,7 @@ _ACTIVITY_CATEGORY: dict[str, str] = {
     "time_entries": CATEGORY_PROJECTS,
     "invoices": CATEGORY_INVOICING,
     "proposals": CATEGORY_PROPOSALS,
+    "services": CATEGORY_SETTINGS,
 }
 
 # One illustrative row per import template, in FIELDS_BY_KIND order.
@@ -94,6 +99,7 @@ _TEMPLATE_EXAMPLES: dict[str, list[str]] = {
     "projects": ["Website redesign", "Acme Co", "active", "New marketing site", "2026-01-05", "2026-03-31", "150"],
     "tasks": ["Website redesign", "Write homepage copy", "To Do", "First draft for review", "2026-01-20", ""],
     "time_entries": ["2026-01-12", "1.5", "Website redesign", "Write homepage copy", "", "Copy draft", "yes", ""],
+    "services": ["Design retainer", "Up to 20 hours of design a month", "Monthly", "2000", "1", "Active"],
 }
 
 

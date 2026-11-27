@@ -94,7 +94,7 @@ describe("InvoiceForm", () => {
       "a1",
       expect.objectContaining({
         clientId: "c1",
-        lineItems: [{ description: "Retainer", quantity: "1", unitPriceCents: 200000 }],
+        lineItems: [{ description: "Retainer", quantity: "1", unitPriceCents: 200000, serviceId: null }],
       }),
     );
     expect(mockPush).toHaveBeenCalledWith("/invoices/inv-1");
@@ -107,5 +107,44 @@ describe("InvoiceForm", () => {
     expect(screen.getByRole("button", { name: /create draft/i })).toBeDisabled();
     await user.click(screen.getByRole("button", { name: /create draft/i }));
     expect(mockedCreate).not.toHaveBeenCalled();
+  });
+
+  it("adds a catalog service as a line, copying only name, quantity and price", async () => {
+    mockedCreate.mockResolvedValueOnce({ invoice: { id: "inv-1" } as never });
+    const user = userEvent.setup();
+    const services = [
+      {
+        id: "svc-1",
+        agency_id: "a1",
+        name: "Design retainer",
+        description: "Shown on proposals only",
+        pricing_type: "monthly",
+        unit_price_cents: 200000,
+        default_quantity: "1.00",
+        is_archived: false,
+        created_at: "2026-11-01T00:00:00Z",
+      },
+    ];
+    render(
+      <InvoiceForm
+        agencyId="a1"
+        clients={[{ id: "c1", name: "Acme" }]}
+        projects={[]}
+        billingSettings={settings}
+        services={services}
+      />,
+    );
+
+    expect(screen.getByRole("option", { name: /Design retainer · \$2,000\.00 \/ mo/ })).toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText("Add from services"), "svc-1");
+    expect(screen.getByLabelText("Line 1 description")).toHaveValue("Design retainer");
+    await user.click(screen.getByRole("button", { name: /create draft/i }));
+
+    expect(mockedCreate).toHaveBeenCalledWith(
+      "a1",
+      expect.objectContaining({
+        lineItems: [{ description: "Design retainer", quantity: "1", unitPriceCents: 200000, serviceId: "svc-1" }],
+      }),
+    );
   });
 });

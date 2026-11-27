@@ -15,7 +15,7 @@ import { ChevronRight, FileSignature } from "lucide-react";
 import { formatMoneyCents } from "@/lib/money";
 import { getPortalProposals, type PortalProposal } from "@/lib/portal";
 import { formatDay, isAwaitingDecision } from "@/lib/portal-insights";
-import { proposalStatusLabel } from "@/lib/proposals-client";
+import { proposalPriceLabel, proposalStatusLabel } from "@/lib/proposals-client";
 import PortalPageHeader from "@/components/portal/PortalPageHeader/PortalPageHeader";
 import PageEnter from "@/components/ui/PageEnter/PageEnter";
 
@@ -41,7 +41,7 @@ const ProposalRow = ({ proposal }: { proposal: PortalProposal }) => (
         {proposalStatusLabel(proposal.display_status)}
       </span>
       <span className={styles.amount}>
-        {formatMoneyCents(proposal.total_cents, proposal.currency)}
+        {proposalPriceLabel(proposal, (cents) => formatMoneyCents(cents, proposal.currency))}
       </span>
       <ChevronRight className={styles.chevron} aria-hidden="true" />
     </Link>

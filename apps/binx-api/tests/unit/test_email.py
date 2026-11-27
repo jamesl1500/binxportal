@@ -11,6 +11,7 @@ the real SES path, mocked, and its fail-soft behavior on a delivery error.
 
 from __future__ import annotations
 
+import json
 import logging
 from types import SimpleNamespace
 from unittest.mock import MagicMock
@@ -97,6 +98,31 @@ class TestSendEmail:
         await email.send_email(to="x@example.com", subject="Hi", body="Body")
 
         client_factory.assert_not_called()
+
+    async def test_the_dev_outbox_keeps_each_email_when_ses_is_off(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path
+    ) -> None:
+        monkeypatch.setattr(email.settings, "ses_from_email", None)
+        monkeypatch.setattr(email.settings, "email_outbox_dir", str(tmp_path / "outbox"))
+
+        await email.send_email(to="a@example.com", subject="First", body="One")
+        await email.send_email(to="b@example.com", subject="Second", body="Two")
+
+        files = sorted((tmp_path / "outbox").iterdir())
+        assert [json.loads(f.read_text(encoding="utf-8")) for f in files] == [
+            {"to": "a@example.com", "subject": "First", "body": "One"},
+            {"to": "b@example.com", "subject": "Second", "body": "Two"},
+        ]
+
+    async def test_the_dev_outbox_is_ignored_when_ses_is_on(self, monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+        monkeypatch.setattr(email.settings, "ses_from_email", "Binx <noreply@mail.binxportal.com>")
+        monkeypatch.setattr(email.settings, "ses_allowed_recipients", None)
+        monkeypatch.setattr(email.settings, "email_outbox_dir", str(tmp_path / "outbox"))
+        monkeypatch.setattr(email, "_get_ses_client", MagicMock())
+
+        await email.send_email(to="a@example.com", subject="Hi", body="Body")
+
+        assert not (tmp_path / "outbox").exists()
 
     async def test_configured_from_email_calls_ses_with_the_right_shape(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(email.settings, "ses_from_email", "Binx <noreply@mail.binxportal.com>")
@@ -192,3 +218,36 @@ class TestSendEmail:
 
         assert "Failed to send email" in caplog.text
         assert captured == [error]  # reported to Sentry + the admin error log
+
+
+async def test_attachments_go_out_as_a_raw_mime_message(monkeypatch: pytest.MonkeyPatch) -> None:
+    """SES SendEmail can't carry files, so a message with attachments is sent
+    raw: text + HTML alternatives and the file, to the one recipient."""
+    import email as stdlib_email
+
+    monkeypatch.setattr(email.settings, "ses_from_email", "Binx <noreply@mail.binxportal.com>")
+    monkeypatch.setattr(email.settings, "ses_allowed_recipients", None)
+    fake_client = SimpleNamespace(send_raw_email=MagicMock(), send_email=MagicMock())
+    monkeypatch.setattr(email, "_get_ses_client", lambda: fake_client)
+
+    await email.send_proposal_signed_email(
+        to="jane@example.com",
+        agency_name="Northlight",
+        title="Brand refresh",
+        signer_names="Jane Prospect",
+        pdf=b"%PDF-1.7 fake",
+        pdf_name="Brand refresh - signed.pdf",
+        view_url="https://app.example/proposals/public/certificate?token=t",
+    )
+
+    fake_client.send_email.assert_not_called()
+    kwargs = fake_client.send_raw_email.call_args.kwargs
+    assert kwargs["Destinations"] == ["jane@example.com"]
+    message = stdlib_email.message_from_bytes(kwargs["RawMessage"]["Data"])
+    assert message["Subject"] == "Signed: Brand refresh"
+    assert message["To"] == "jane@example.com"
+    parts = {part.get_content_type(): part for part in message.walk()}
+    assert {"text/plain", "text/html", "application/pdf"} <= set(parts)
+    pdf_part = parts["application/pdf"]
+    assert pdf_part.get_filename() == "Brand refresh - signed.pdf"
+    assert pdf_part.get_payload(decode=True) == b"%PDF-1.7 fake"

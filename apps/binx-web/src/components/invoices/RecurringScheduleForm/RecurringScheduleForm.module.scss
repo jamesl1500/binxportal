@@ -146,8 +146,14 @@
   }
 }
 
+.lineTools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: t.$space-3;
+}
+
 .addRow {
-  align-self: flex-start;
   display: inline-flex;
   align-items: center;
   gap: t.$space-2;

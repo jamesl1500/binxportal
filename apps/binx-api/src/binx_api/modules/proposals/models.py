@@ -9,7 +9,7 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, Text, Uuid
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, Text, Uuid
 from sqlalchemy.orm import Mapped, mapped_column
 
 from binx_api.core.database import Base
@@ -24,6 +24,17 @@ proposal_statuses: list[str] = [STATUS_DRAFT, STATUS_SENT, STATUS_VIEWED, STATUS
 # Once in one of these, a proposal is closed — no more edits, no more status
 # transitions except what got it there.
 PROPOSAL_CLOSED_STATUSES: set[str] = {STATUS_SIGNED, STATUS_DECLINED}
+
+# Attachments per proposal — enough for a contract, a deck and a few
+# references without turning a proposal into a file share.
+MAX_PROPOSAL_ATTACHMENTS = 10
+
+# How a line is billed. One-time lines make up the proposal's total (and its
+# deposit); monthly lines are a retainer, totalled separately per month and
+# billed by a recurring schedule once the proposal is accepted.
+BILLING_ONE_TIME = "one_time"
+BILLING_MONTHLY = "monthly"
+LINE_BILLINGS: tuple[str, ...] = (BILLING_ONE_TIME, BILLING_MONTHLY)
 
 
 # One proposal document. Optionally tied to a Lead (the common case — sent
@@ -61,6 +72,11 @@ class Proposal(Base):
     subtotal_cents: Mapped[int] = mapped_column(Integer, default=0)
     tax_cents: Mapped[int] = mapped_column(Integer, default=0)
     total_cents: Mapped[int] = mapped_column(Integer, default=0)
+    # The monthly lines' totals, per month (same tax rate). Zero when the
+    # proposal has none.
+    monthly_subtotal_cents: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    monthly_tax_cents: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    monthly_total_cents: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 
     # Signing after this date is refused (display-only "expired" state,
     # computed the same way invoicing's "overdue" is — see service.py's
@@ -72,6 +88,72 @@ class Proposal(Base):
     decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
     decline_reason: Mapped[str | None] = mapped_column(String(1024), default=None)
 
+    # The document as sent, frozen: a canonical JSON snapshot of everything the
+    # recipient is agreeing to (text, lines, totals, each attachment's sha256)
+    # and the SHA-256 of that snapshot. Set when the proposal is sent (see
+    # signing.py); a signature records the hash it was given, so what was
+    # signed can always be proven. Null on drafts.
+    document_snapshot: Mapped[str | None] = mapped_column(Text, default=None)
+    document_hash: Mapped[str | None] = mapped_column(String(64), default=None)
+
+    # When on, the agency countersigns after the client does (an owner or
+    # admin, see service.countersign_proposal), and the proposal is only
+    # complete once both have signed.
+    requires_countersign: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    # Every required signature is in: the client's, plus the agency's when
+    # requires_countersign. This is the moment the agreement is binding, and
+    # what accepting a proposal (converting a lead to a client) keys off.
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    # What completing it sets off (acceptance, then the signed record by
+    # email) runs after the signing request has answered (completion.py).
+    # Claimed by whoever runs it, so it runs once; processed once done. A
+    # claim left behind by a crash is picked up again by the sweep.
+    completion_claimed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    completion_processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+
+    # Ask for a code emailed to the recipient before showing the proposal on
+    # its share link (access.py): only someone with that inbox can open it.
+    # The code is stored hashed, single-use, and short-lived; sends are
+    # capped per day (the window), so it can't be guessed by brute force.
+    require_email_code: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    access_code_hash: Mapped[str | None] = mapped_column(String(64), default=None)
+    access_code_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    access_code_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    access_code_attempts: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    access_code_window_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    access_code_window_sends: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+
+    # What accepting it sets in motion (acceptance.py), chosen on the draft:
+    # a deposit invoice for this share of the total, and a project (with a
+    # kickoff questionnaire from a template) for the work. With a deposit,
+    # the project waits until the deposit is paid.
+    deposit_percent: Mapped[Decimal | None] = mapped_column(Numeric(6, 3), default=None)
+    create_project_on_accept: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    kickoff_template_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("kickoff_templates.id", ondelete="SET NULL"), default=None
+    )
+
+
+# Packages: a proposal can offer two to four alternatives ("Essential",
+# "Complete") for the recipient to choose one of before signing. Lines that
+# belong to a package only count when it's the chosen one; lines without a
+# package are in every option. Exactly one package is selected at any time
+# (the recommended one until the recipient picks).
+MAX_PROPOSAL_PACKAGES = 4
+
+
+class ProposalPackage(Base):
+    __tablename__ = "proposal_packages"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    proposal_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("proposals.id", ondelete="CASCADE"), index=True)
+    position: Mapped[int] = mapped_column(Integer, default=0)
+    name: Mapped[str] = mapped_column(String(120))
+    description: Mapped[str | None] = mapped_column(Text, default=None)
+    # The agency's pick, shown with a badge and selected until the recipient chooses.
+    recommended: Mapped[bool] = mapped_column(Boolean, default=False)
+    selected: Mapped[bool] = mapped_column(Boolean, default=False)
+
 
 class ProposalLineItem(Base):
     __tablename__ = "proposal_line_items"
@@ -80,9 +162,49 @@ class ProposalLineItem(Base):
     proposal_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("proposals.id", ondelete="CASCADE"), index=True)
     position: Mapped[int] = mapped_column(Integer, default=0)
     description: Mapped[str] = mapped_column(String(1024))
+    # Longer copy shown under the line — what the service actually includes.
+    # Copied from Service.description when the line comes from the catalog.
+    details: Mapped[str | None] = mapped_column(Text, default=None)
     quantity: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=Decimal("1"))
     unit_price_cents: Mapped[int] = mapped_column(Integer, default=0)
     amount_cents: Mapped[int] = mapped_column(Integer, default=0)
+    # one_time | monthly (see LINE_BILLINGS). A monthly line's amount is per month.
+    billing: Mapped[str] = mapped_column(String(20), default=BILLING_ONE_TIME, server_default=BILLING_ONE_TIME)
+    # The package this line is part of (None: in every option).
+    package_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("proposal_packages.id", ondelete="CASCADE"), default=None, index=True
+    )
+    # An optional add-on the recipient can tick or untick before signing;
+    # selected is whether it's in (the agency sets the starting state).
+    # Required lines are always selected.
+    optional: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    selected: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
+    # Which catalog service this line was made from, if any. Provenance only:
+    # the values above are a copy and never follow later catalog edits.
+    service_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("services.id", ondelete="SET NULL"), default=None, index=True
+    )
+
+
+# A document attached to a proposal (a contract PDF, a portfolio, a brief).
+# Added and removed only while the proposal is a draft, so what the recipient
+# saw is what was sent. sha256 is the bytes' digest at upload time: the
+# record a binding signature will point at. Bytes live in the "agencies"
+# storage area under {agency_id}/proposals/{proposal_id}/, which the agency
+# purge already sweeps.
+class ProposalAttachment(Base):
+    __tablename__ = "proposal_attachments"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    proposal_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("proposals.id", ondelete="CASCADE"), index=True)
+    uploaded_by_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), default=None)
+    position: Mapped[int] = mapped_column(Integer, default=0)
+
+    file_name: Mapped[str] = mapped_column(String(255))
+    storage_path: Mapped[str] = mapped_column(String(1024))
+    mime_type: Mapped[str] = mapped_column(String(255))
+    size: Mapped[int] = mapped_column(Integer)
+    sha256: Mapped[str] = mapped_column(String(64))
 
 
 # A signed proposal's one signature — one-to-one, created only by
@@ -104,3 +226,113 @@ class ProposalSignature(Base):
     signature_text: Mapped[str] = mapped_column(String(255))
     ip_address: Mapped[str | None] = mapped_column(String(64), default=None)
     signed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    # What makes the signature hold up (ESIGN/UETA): the browser it came from,
+    # how it was signed, the exact consent wording the signer accepted, and
+    # the fingerprint of the document they were shown. Null on signatures
+    # made before these were recorded.
+    user_agent: Mapped[str | None] = mapped_column(String(512), default=None)
+    signed_via: Mapped[str | None] = mapped_column(String(20), default=None)  # link | portal
+    consent_version: Mapped[str | None] = mapped_column(String(32), default=None)
+    consent_text: Mapped[str | None] = mapped_column(Text, default=None)
+    document_hash: Mapped[str | None] = mapped_column(String(64), default=None)
+
+
+EVENT_SENT = "sent"
+EVENT_VIEWED = "viewed"
+EVENT_SIGNED = "signed"
+EVENT_COUNTERSIGNED = "countersigned"
+EVENT_DECLINED = "declined"
+# The recipient chose a package or add-ons (the document is re-frozen).
+EVENT_OPTIONS_CHOSEN = "options_chosen"
+# The recipient opened a code-protected proposal with the code emailed to them.
+EVENT_EMAIL_VERIFIED = "email_verified"
+# Acceptance (acceptance.py), after the proposal is complete.
+EVENT_CLIENT_CREATED = "client_created"
+EVENT_PORTAL_INVITED = "portal_invited"
+EVENT_DEPOSIT_INVOICED = "deposit_invoiced"
+EVENT_DEPOSIT_PAID = "deposit_paid"
+EVENT_PROJECT_CREATED = "project_created"
+EVENT_KICKOFF_SENT = "kickoff_sent"
+EVENT_RETAINER_SCHEDULED = "retainer_scheduled"
+EVENT_ACCEPTANCE_BLOCKED = "acceptance_blocked"
+
+ACCEPTANCE_IN_PROGRESS = "in_progress"
+ACCEPTANCE_AWAITING_DEPOSIT = "awaiting_deposit"
+ACCEPTANCE_DONE = "done"
+ACCEPTANCE_BLOCKED = "blocked"
+
+
+# What accepting a completed proposal did: the client it landed on (a lead
+# converted, or the proposal's existing client), the signer's portal
+# invitation, the deposit invoice, and the project and kickoff. One row per
+# proposal; every step is idempotent, so a blocked acceptance (a plan limit,
+# say) can be retried and picks up where it stopped.
+class ProposalAcceptance(Base):
+    __tablename__ = "proposal_acceptances"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    proposal_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("proposals.id", ondelete="CASCADE"), unique=True, index=True
+    )
+    status: Mapped[str] = mapped_column(String(20), default=ACCEPTANCE_IN_PROGRESS)
+    # Why it stopped, when status is blocked, in words for the agency.
+    blocked_reason: Mapped[str | None] = mapped_column(String(1024), default=None)
+    client_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("agency_clients.id", ondelete="SET NULL"), default=None, index=True
+    )
+    # True when this acceptance converted the proposal's lead into the client.
+    converted_lead: Mapped[bool] = mapped_column(Boolean, default=False)
+    invited_email: Mapped[str | None] = mapped_column(String(255), default=None)
+    deposit_invoice_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("invoices.id", ondelete="SET NULL"), default=None, index=True
+    )
+    deposit_paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    project_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("projects.id", ondelete="SET NULL"), default=None)
+    kickoff_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("kickoffs.id", ondelete="SET NULL"), default=None)
+    kickoff_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    # The recurring schedule billing the proposal's monthly lines.
+    retainer_schedule_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("recurring_invoice_schedules.id", ondelete="SET NULL"), default=None
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+
+
+# The agency's signature on a proposal that requires one, made by an owner or
+# admin after the client has signed. Same evidence as the client's signature,
+# plus who on the team it was.
+class ProposalCountersignature(Base):
+    __tablename__ = "proposal_countersignatures"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    proposal_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("proposals.id", ondelete="CASCADE"), unique=True, index=True
+    )
+    user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), default=None)
+    signer_name: Mapped[str] = mapped_column(String(255))
+    signer_email: Mapped[str] = mapped_column(String(255))
+    signature_text: Mapped[str] = mapped_column(String(255))
+    ip_address: Mapped[str | None] = mapped_column(String(64), default=None)
+    user_agent: Mapped[str | None] = mapped_column(String(512), default=None)
+    signed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    consent_version: Mapped[str] = mapped_column(String(32))
+    consent_text: Mapped[str] = mapped_column(Text)
+    document_hash: Mapped[str] = mapped_column(String(64))
+
+
+# The audit trail behind a signature: one row per thing that happened to a
+# sent proposal, with where it came from. Append-only, written by
+# signing.record_event.
+class ProposalEvent(Base):
+    __tablename__ = "proposal_events"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    proposal_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("proposals.id", ondelete="CASCADE"), index=True)
+    kind: Mapped[str] = mapped_column(String(30))
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    actor_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), default=None)
+    # Who it was, as known at the time ("Olivia Owner", "jane@example.com",
+    # "Share link"): kept as text so it survives the user being deleted.
+    actor_label: Mapped[str | None] = mapped_column(String(255), default=None)
+    ip_address: Mapped[str | None] = mapped_column(String(64), default=None)
+    user_agent: Mapped[str | None] = mapped_column(String(512), default=None)
+    detail: Mapped[str | None] = mapped_column(String(1024), default=None)

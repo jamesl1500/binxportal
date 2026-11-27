@@ -16,7 +16,8 @@ export type ImportKind =
   | "leads"
   | "projects"
   | "tasks"
-  | "time_entries";
+  | "time_entries"
+  | "services";
 
 /** Everything that can be downloaded — the import kinds plus two export-only ones. */
 export type ExportKind = ImportKind | "invoices" | "proposals";
@@ -30,6 +31,7 @@ export const IMPORT_KINDS: readonly ImportKind[] = [
   "projects",
   "tasks",
   "time_entries",
+  "services",
 ];
 
 export const EXPORT_KINDS: readonly ExportKind[] = [

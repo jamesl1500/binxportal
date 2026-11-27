@@ -383,6 +383,11 @@ async def accept_client_invitation(
         target_id=client.id,
         target_name=client.name,
     )
+    # An accepted proposal's kickoff waits for the client's first portal
+    # contact; this is that moment.
+    from binx_api.modules.proposals import acceptance
+
+    await acceptance.on_contact_joined(db, invitation.client_id)
     return agency, client, contact
 
 

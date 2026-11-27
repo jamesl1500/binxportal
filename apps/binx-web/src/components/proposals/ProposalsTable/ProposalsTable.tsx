@@ -18,7 +18,7 @@ import Link from "next/link";
 import { ArrowDown, ArrowUp, ChevronsUpDown } from "lucide-react";
 
 import type { Proposal } from "@/lib/proposals";
-import { proposalStatusLabel } from "@/lib/proposals-client";
+import { proposalPriceLabel, proposalStatusLabel } from "@/lib/proposals-client";
 import { formatMoneyCents } from "@/lib/money";
 
 import styles from "./ProposalsTable.module.scss";
@@ -219,7 +219,7 @@ const ProposalsTable = ({
                   <td className={styles.cell}>{recipientLabel(proposal)}</td>
                 )}
                 <td className={`${styles.cell} ${styles.amount}`}>
-                  {formatMoneyCents(proposal.total_cents, proposal.currency)}
+                  {proposalPriceLabel(proposal, (cents) => formatMoneyCents(cents, proposal.currency))}
                 </td>
                 <td className={styles.cell}>
                   <span

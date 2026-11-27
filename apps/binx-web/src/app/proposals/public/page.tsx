@@ -3,7 +3,9 @@
  *
  * The unauthenticated, token-scoped page a proposal's recipient opens from
  * their share link: `/proposals/public?token=...`. Renders the proposal
- * read-only, plus a sign/decline form while it's still awaiting a decision.
+ * read-only (each line's details and any attached documents included), plus
+ * a sign/decline form while it's still awaiting a decision. Documents
+ * download through `/api/proposals/public/{token}/attachments/{id}`.
  * Not under `(app)` or `(auth)` — it needs no session at all, the opaque
  * token alone scopes the request (see `lib/proposals.ts#getPublicProposal`).
  *
@@ -11,10 +13,15 @@
  * @author Binx Portal
  */
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { getPublicProposal } from "@/lib/proposals";
-import { proposalStatusLabel } from "@/lib/proposals-client";
+import { ProposalCodeRequired } from "@/lib/proposal-access";
+import { PER_MONTH, proposalStatusLabel, proposalTotalRows } from "@/lib/proposals-client";
 import { formatMoneyCents } from "@/lib/money";
+import ProposalAttachmentList from "@/components/proposals/ProposalAttachmentList/ProposalAttachmentList";
+import ProposalCodeGate from "@/components/proposals/ProposalCodeGate/ProposalCodeGate";
+import ProposalLines from "@/components/proposals/ProposalLines/ProposalLines";
 import PublicProposalActions from "@/components/proposals/PublicProposalActions/PublicProposalActions";
 
 import styles from "./page.module.scss";
@@ -36,11 +43,6 @@ function formatDate(iso: string): string {
   });
 }
 
-function quantityLabel(quantity: string): string {
-  const n = Number.parseFloat(quantity);
-  return Number.isInteger(n) ? String(n) : quantity;
-}
-
 const PublicProposalPage = async ({
   searchParams,
 }: PublicProposalPageProps) => {
@@ -48,6 +50,7 @@ const PublicProposalPage = async ({
 
   let proposal: Awaited<ReturnType<typeof getPublicProposal>> | null = null;
   let tokenError: string | null = null;
+  let gate: ProposalCodeRequired | null = null;
 
   if (!token) {
     tokenError = "This proposal link is missing its token.";
@@ -55,11 +58,27 @@ const PublicProposalPage = async ({
     try {
       proposal = await getPublicProposal(token);
     } catch (error) {
+      if (error instanceof ProposalCodeRequired) gate = error;
       tokenError =
         error instanceof Error
           ? error.message
           : "This proposal link is invalid or has expired.";
     }
+  }
+
+  if (token && gate) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.card}>
+          <ProposalCodeGate
+            token={token}
+            agencyName={gate.agencyName}
+            title={gate.title}
+            emailHint={gate.emailHint}
+          />
+        </div>
+      </div>
+    );
   }
 
   if (!token || !proposal) {
@@ -104,51 +123,34 @@ const PublicProposalPage = async ({
           <p className={styles.content}>{proposal.content}</p>
         )}
 
-        <div className={styles.tableScroll}>
-          <table className={styles.lineTable}>
-            <thead>
-              <tr>
-                <th>Description</th>
-                <th className={styles.numCol}>Qty</th>
-                <th className={styles.numCol}>Unit price</th>
-                <th className={styles.numCol}>Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {proposal.line_items.map((item) => (
-                <tr key={item.id}>
-                  <td>{item.description}</td>
-                  <td className={styles.numCol}>
-                    {quantityLabel(item.quantity)}
-                  </td>
-                  <td className={styles.numCol}>
-                    {formatMoneyCents(item.unit_price_cents, currency)}
-                  </td>
-                  <td className={styles.numCol}>
-                    {formatMoneyCents(item.amount_cents, currency)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ProposalLines
+          currency={currency}
+          lineItems={proposal.line_items}
+          packages={proposal.packages}
+          choose={awaitingDecision ? { token } : undefined}
+        />
 
         <dl className={styles.totals}>
-          <div>
-            <dt>Subtotal</dt>
-            <dd>{formatMoneyCents(proposal.subtotal_cents, currency)}</dd>
-          </div>
-          {proposal.tax_cents > 0 && (
-            <div>
-              <dt>Tax ({Number.parseFloat(proposal.tax_rate_percent)}%)</dt>
-              <dd>{formatMoneyCents(proposal.tax_cents, currency)}</dd>
+          {proposalTotalRows(proposal).map((row) => (
+            <div key={`${row.label}-${row.perMonth}`} className={row.grand ? styles.grandTotal : undefined}>
+              <dt>{row.label}</dt>
+              <dd>
+                {formatMoneyCents(row.cents, currency)}
+                {row.perMonth ? PER_MONTH : ""}
+              </dd>
             </div>
-          )}
-          <div className={styles.grandTotal}>
-            <dt>Total</dt>
-            <dd>{formatMoneyCents(proposal.total_cents, currency)}</dd>
-          </div>
+          ))}
         </dl>
+
+        {proposal.attachments.length > 0 && (
+          <section className={styles.documents}>
+            <h2 className={styles.documentsTitle}>Documents</h2>
+            <ProposalAttachmentList
+              attachments={proposal.attachments}
+              hrefBase={`/api/proposals/public/${encodeURIComponent(token)}/attachments`}
+            />
+          </section>
+        )}
 
         {proposal.signature && (
           <div className={styles.decision}>
@@ -159,7 +161,30 @@ const PublicProposalPage = async ({
               {proposal.signature.signer_email} ·{" "}
               {formatDate(proposal.signature.signed_at)}
             </p>
+            {proposal.countersignature ? (
+              <p className={styles.decisionLine}>
+                Countersigned by {proposal.countersignature.signer_name} for{" "}
+                {proposal.agency_name} ·{" "}
+                {formatDate(proposal.countersignature.signed_at)}
+              </p>
+            ) : (
+              proposal.requires_countersign && (
+                <p className={styles.decisionLine}>
+                  {proposal.agency_name} will countersign next. You&apos;ll
+                  get the signed PDF by email once they have.
+                </p>
+              )
+            )}
           </div>
+        )}
+
+        {proposal.status === "signed" && (
+          <Link
+            href={`/proposals/public/certificate?token=${encodeURIComponent(token)}`}
+            className={styles.certificateLink}
+          >
+            View the signing certificate →
+          </Link>
         )}
 
         {proposal.status === "declined" && (
@@ -182,6 +207,8 @@ const PublicProposalPage = async ({
             <PublicProposalActions
               token={token}
               recipientName={proposal.recipient_name}
+              consentText={proposal.consent_text}
+              documentHash={proposal.document_hash}
             />
           </div>
         )}

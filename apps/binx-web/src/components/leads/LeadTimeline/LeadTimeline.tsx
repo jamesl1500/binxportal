@@ -14,6 +14,7 @@ import { useState, useTransition } from "react";
 import {
   ArrowRightLeft,
   FileText,
+  MessageCircle,
   RefreshCw,
   Sparkles,
   StickyNote,
@@ -39,6 +40,8 @@ const ICONS: Record<LeadEvent["kind"], typeof StickyNote> = {
   converted: RefreshCw,
   analyzed: Sparkles,
   created: FileText,
+  // A question the lead asked in their lead portal.
+  portal_message: MessageCircle,
 };
 
 function timestamp(iso: string): string {

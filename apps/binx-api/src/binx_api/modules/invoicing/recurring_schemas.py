@@ -9,6 +9,9 @@ class RecurringLineItemInput(BaseModel):
     description: str = Field(min_length=1, max_length=1024)
     quantity: Decimal = Field(gt=0, max_digits=12, decimal_places=2)
     unit_price_cents: int = Field(ge=0)
+    # Set when the line was picked from the services catalog; carried onto
+    # every invoice the schedule generates.
+    service_id: uuid.UUID | None = None
 
 
 class RecurringLineItemRead(BaseModel):
@@ -17,6 +20,7 @@ class RecurringLineItemRead(BaseModel):
     description: str
     quantity: Decimal
     unit_price_cents: int
+    service_id: uuid.UUID | None = None
 
 
 class RecurringScheduleCreate(BaseModel):

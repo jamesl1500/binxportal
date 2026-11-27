@@ -1,0 +1,75 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.panel {
+  @include m.card-base;
+  margin-top: t.$space-6;
+  padding: t.$space-6;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-4;
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: t.$space-4;
+  flex-wrap: wrap;
+}
+
+.title {
+  margin: 0 0 t.$space-1;
+  font-family: var(--font-heading);
+  font-size: t.$font-size-lg;
+  color: t.$color-ink;
+}
+
+.subtitle {
+  margin: 0;
+  max-width: 34rem;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+}
+
+.upload {
+  @include m.button-base;
+  position: relative;
+  background: t.$color-surface;
+  border-color: t.$color-border;
+  color: t.$color-ink;
+
+  svg {
+    width: 0.9rem;
+    height: 0.9rem;
+  }
+
+  &:hover:not([data-disabled]) {
+    border-color: t.$color-border-strong;
+  }
+
+  &[data-disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:focus-within {
+    @include m.focus-ring;
+  }
+}
+
+// Visually hidden but still focusable through its label.
+.input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+}
+
+.empty,
+.note {
+  margin: 0;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-faint;
+}

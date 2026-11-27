@@ -104,10 +104,13 @@ from binx_api.modules.feedback import models as _feedback_models  # noqa: E402,F
 from binx_api.modules.files import models as _file_models  # noqa: E402,F401
 from binx_api.modules.invoicing import models as _invoicing_models  # noqa: E402,F401
 from binx_api.modules.kickoffs import models as _kickoffs_models  # noqa: E402,F401
+from binx_api.modules.lead_portal import models as _lead_portal_models  # noqa: E402,F401
 from binx_api.modules.leads import models as _leads_models  # noqa: E402,F401
 from binx_api.modules.messaging import models as _messaging_models  # noqa: E402,F401
 from binx_api.modules.projects import models as _project_models  # noqa: E402,F401
+from binx_api.modules.proposals import completion as _proposal_completion  # noqa: E402
 from binx_api.modules.proposals import models as _proposals_models  # noqa: E402,F401
+from binx_api.modules.services import models as _services_models  # noqa: E402,F401
 from binx_api.modules.time_tracking import models as _time_tracking_models  # noqa: E402,F401
 from binx_api.modules.timeline import models as _timeline_models  # noqa: E402,F401
 from binx_api.modules.users import models as _user_models  # noqa: E402,F401
@@ -185,10 +188,14 @@ async def db_session(engine, _schema) -> AsyncGenerator[AsyncSession]:
     _error_store.session_factory = lambda: AsyncSession(
         bind=connection, expire_on_commit=False, join_transaction_mode="create_savepoint"
     )
+    # Same for the work a signature sets off after its response.
+    default_completion_sessions = _proposal_completion.session_factory
+    _proposal_completion.session_factory = _error_store.session_factory
     try:
         yield session
     finally:
         _error_store.session_factory = default_error_sessions
+        _proposal_completion.session_factory = default_completion_sessions
         await session.close()
         await transaction.rollback()
         await connection.close()
@@ -369,8 +376,8 @@ def email_outbox(monkeypatch: pytest.MonkeyPatch) -> list[SimpleNamespace]:
     """
     outbox: list[SimpleNamespace] = []
 
-    async def _capture(*, to: str, subject: str, body: str, html: str | None = None) -> None:
-        outbox.append(SimpleNamespace(to=to, subject=subject, body=body, html=html))
+    async def _capture(*, to: str, subject: str, body: str, html: str | None = None, attachments=None) -> None:
+        outbox.append(SimpleNamespace(to=to, subject=subject, body=body, html=html, attachments=attachments or []))
 
     monkeypatch.setattr("binx_api.core.email.send_email", _capture)
     return outbox

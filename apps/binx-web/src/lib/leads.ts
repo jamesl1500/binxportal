@@ -118,7 +118,8 @@ export interface LeadEvent {
     | "status_changed"
     | "owner_changed"
     | "converted"
-    | "analyzed";
+    | "analyzed"
+    | "portal_message";
   body: string;
   actor_name: string | null;
   created_at: string;

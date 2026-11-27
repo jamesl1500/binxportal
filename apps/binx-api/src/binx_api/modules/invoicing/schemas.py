@@ -47,6 +47,8 @@ class LineItemInput(BaseModel):
     description: str = Field(min_length=1, max_length=1024)
     quantity: Decimal = Field(gt=0, max_digits=12, decimal_places=2)
     unit_price_cents: int = Field(ge=0)
+    # Set when the line was picked from the services catalog.
+    service_id: uuid.UUID | None = None
 
 
 class LineItemRead(BaseModel):
@@ -56,6 +58,7 @@ class LineItemRead(BaseModel):
     quantity: Decimal
     unit_price_cents: int
     amount_cents: int
+    service_id: uuid.UUID | None = None
 
 
 # --- Discount / tax (shared by create + update) -----------------------

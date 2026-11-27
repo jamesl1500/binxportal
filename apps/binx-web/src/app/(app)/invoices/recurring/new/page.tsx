@@ -15,6 +15,7 @@ import { getCurrentAgencyContext } from "@/lib/agencies";
 import { getAgencyClients } from "@/lib/clients";
 import { getBillingSettings } from "@/lib/invoicing";
 import { getAgencyProjects } from "@/lib/projects";
+import { getServices } from "@/lib/services";
 import RecurringScheduleForm from "@/components/invoices/RecurringScheduleForm/RecurringScheduleForm";
 
 import styles from "../../page.module.scss";
@@ -28,10 +29,11 @@ const NewRecurringInvoicePage = async () => {
     redirect("/onboarding/two");
   }
 
-  const [clients, projects, settings] = await Promise.all([
+  const [clients, projects, settings, services] = await Promise.all([
     getAgencyClients(currentAgency.id),
     getAgencyProjects(currentAgency.id),
     getBillingSettings(currentAgency.id),
+    getServices(currentAgency.id),
   ]);
 
   return (
@@ -57,6 +59,7 @@ const NewRecurringInvoicePage = async () => {
         <div className={styles.formCard}>
           <RecurringScheduleForm
             agencyId={currentAgency.id}
+            services={services}
             clients={clients.map((client) => ({
               id: client.id,
               name: client.name,

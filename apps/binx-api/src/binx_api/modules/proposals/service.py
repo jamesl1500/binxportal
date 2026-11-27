@@ -9,14 +9,18 @@ once issued" shape as an Invoice.
 
 from __future__ import annotations
 
+import hashlib
+import mimetypes
 import uuid
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import ROUND_HALF_UP, Decimal
 
 from fastapi import HTTPException, status
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from binx_api.core import storage
 from binx_api.core.config import get_settings
 from binx_api.core.security import generate_opaque_token
 from binx_api.modules.activity import service as activity_service
@@ -27,7 +31,15 @@ from binx_api.modules.leads import service as leads_service
 from binx_api.modules.leads.models import Lead
 from binx_api.modules.notifications import service as notifications_service
 from binx_api.modules.notifications.models import CATEGORY_INVOICING as NOTIFY_CATEGORY_PROPOSALS
+from binx_api.modules.proposals import access, completion, options, signing
 from binx_api.modules.proposals.models import (
+    BILLING_MONTHLY,
+    EVENT_COUNTERSIGNED,
+    EVENT_DECLINED,
+    EVENT_OPTIONS_CHOSEN,
+    EVENT_SENT,
+    EVENT_SIGNED,
+    MAX_PROPOSAL_ATTACHMENTS,
     PROPOSAL_CLOSED_STATUSES,
     STATUS_DECLINED,
     STATUS_DRAFT,
@@ -35,13 +47,31 @@ from binx_api.modules.proposals.models import (
     STATUS_SIGNED,
     STATUS_VIEWED,
     Proposal,
+    ProposalAttachment,
+    ProposalCountersignature,
     ProposalLineItem,
+    ProposalPackage,
     ProposalSignature,
 )
-from binx_api.modules.proposals.schemas import ProposalLineItemInput
+from binx_api.modules.proposals.schemas import ProposalLineItemInput, ProposalPackageInput
+from binx_api.modules.services import service as services_service
 from binx_api.modules.users.models import User
 
 settings = get_settings()
+
+SIGNED_VIA_LINK = "link"
+SIGNED_VIA_PORTAL = "portal"
+
+
+@dataclass(frozen=True)
+class Visitor:
+    """Who is acting on a proposal and from where, for the audit trail: the
+    share-link recipient (no account) or a signed-in portal contact."""
+
+    ip_address: str | None
+    user_agent: str | None
+    label: str
+    user_id: uuid.UUID | None = None
 
 
 def _round_cents(value: Decimal) -> int:
@@ -52,18 +82,34 @@ def _line_amount(quantity: Decimal, unit_price_cents: int) -> int:
     return _round_cents(Decimal(quantity) * Decimal(unit_price_cents))
 
 
-def _recalculate(proposal: Proposal, line_items: list[ProposalLineItem]) -> None:
-    subtotal = sum(item.amount_cents for item in line_items)
-    tax = _round_cents(Decimal(subtotal) * Decimal(proposal.tax_rate_percent) / Decimal(100))
-    proposal.subtotal_cents = subtotal
-    proposal.tax_cents = tax
-    proposal.total_cents = subtotal + tax
+def _tax(subtotal: int, rate: Decimal) -> int:
+    return _round_cents(Decimal(subtotal) * Decimal(rate) / Decimal(100))
+
+
+def _recalculate(
+    proposal: Proposal, line_items: list[ProposalLineItem], packages: list[ProposalPackage] | None = None
+) -> None:
+    """One-time lines make the total; monthly lines a separate per-month
+    total, taxed at the same rate. Only the lines in the deal count: those
+    in every option or the chosen package, and the ticked add-ons."""
+    line_items = options.included_lines(line_items, packages or [])
+    one_time = sum(item.amount_cents for item in line_items if item.billing != BILLING_MONTHLY)
+    monthly = sum(item.amount_cents for item in line_items if item.billing == BILLING_MONTHLY)
+    proposal.subtotal_cents = one_time
+    proposal.tax_cents = _tax(one_time, proposal.tax_rate_percent)
+    proposal.total_cents = one_time + proposal.tax_cents
+    proposal.monthly_subtotal_cents = monthly
+    proposal.monthly_tax_cents = _tax(monthly, proposal.tax_rate_percent)
+    proposal.monthly_total_cents = monthly + proposal.monthly_tax_cents
 
 
 def display_status(proposal: Proposal, *, now: datetime | None = None) -> str:
     now = now or datetime.now(UTC)
     if proposal.status in (STATUS_SENT, STATUS_VIEWED) and proposal.valid_until and proposal.valid_until < now:
         return "expired"
+    if proposal.status == STATUS_SIGNED and proposal.completed_at is None:
+        # The client has signed; the agency's countersignature is still due.
+        return "awaiting_countersign"
     return proposal.status
 
 
@@ -100,33 +146,71 @@ async def get_proposal_by_token_or_404(db: AsyncSession, raw_token: str) -> Prop
 
 
 async def list_line_items(db: AsyncSession, proposal_id: uuid.UUID) -> list[ProposalLineItem]:
-    result = await db.execute(
-        select(ProposalLineItem).where(ProposalLineItem.proposal_id == proposal_id).order_by(ProposalLineItem.position)
-    )
-    return list(result.scalars().all())
+    return await options.list_lines(db, proposal_id)
 
 
 async def _replace_line_items(
-    db: AsyncSession, proposal: Proposal, line_items: list[ProposalLineItemInput]
-) -> list[ProposalLineItem]:
+    db: AsyncSession,
+    proposal: Proposal,
+    line_items: list[ProposalLineItemInput],
+    packages: list[ProposalPackageInput] | None = None,
+) -> tuple[list[ProposalLineItem], list[ProposalPackage]]:
+    """Replaces the lines and packages wholesale (the input is already
+    validated to hang together, see ProposalCreate). The recommended
+    package, else the first, starts selected."""
+    await services_service.validate_service_ids(db, proposal.agency_id, (item.service_id for item in line_items))
     await db.execute(
         delete(ProposalLineItem)
         .where(ProposalLineItem.proposal_id == proposal.id)
         .execution_options(synchronize_session=False)
     )
+    await db.execute(
+        delete(ProposalPackage)
+        .where(ProposalPackage.proposal_id == proposal.id)
+        .execution_options(synchronize_session=False)
+    )
+    package_rows: list[ProposalPackage] = []
+    ids: dict[str, uuid.UUID] = {}
+    packages = packages or []
+    starting = next((p.key for p in packages if p.recommended), packages[0].key if packages else None)
+    for position, package in enumerate(packages):
+        package_row = ProposalPackage(
+            id=uuid.uuid4(),
+            proposal_id=proposal.id,
+            position=position,
+            name=package.name.strip(),
+            description=(package.description or "").strip() or None,
+            recommended=package.recommended,
+            selected=package.key == starting,
+        )
+        ids[package.key] = package_row.id
+        db.add(package_row)
+        package_rows.append(package_row)
+    if package_rows:
+        await db.flush()
     rows: list[ProposalLineItem] = []
     for position, item in enumerate(line_items):
         row = ProposalLineItem(
             proposal_id=proposal.id,
             position=position,
             description=item.description,
+            details=(item.details or "").strip() or None,
             quantity=item.quantity,
             unit_price_cents=item.unit_price_cents,
             amount_cents=_line_amount(item.quantity, item.unit_price_cents),
+            service_id=item.service_id,
+            billing=item.billing,
+            package_id=ids.get(item.package_key) if item.package_key else None,
+            optional=item.optional,
+            selected=item.selected or not item.optional,
         )
         db.add(row)
         rows.append(row)
-    return rows
+    return rows, package_rows
+
+
+async def list_packages(db: AsyncSession, proposal_id: uuid.UUID) -> list[ProposalPackage]:
+    return await options.list_packages(db, proposal_id)
 
 
 async def get_signature(db: AsyncSession, proposal_id: uuid.UUID) -> ProposalSignature | None:
@@ -134,7 +218,107 @@ async def get_signature(db: AsyncSession, proposal_id: uuid.UUID) -> ProposalSig
     return result.scalar_one_or_none()
 
 
+# ---- Attachments -----------------------------------------------------------
+
+
+async def list_attachments(db: AsyncSession, proposal_id: uuid.UUID) -> list[ProposalAttachment]:
+    result = await db.execute(
+        select(ProposalAttachment)
+        .where(ProposalAttachment.proposal_id == proposal_id)
+        .order_by(ProposalAttachment.position, ProposalAttachment.created_at)
+    )
+    return list(result.scalars().all())
+
+
+async def get_attachment_or_404(
+    db: AsyncSession, proposal_id: uuid.UUID, attachment_id: uuid.UUID
+) -> ProposalAttachment:
+    result = await db.execute(
+        select(ProposalAttachment).where(
+            ProposalAttachment.id == attachment_id, ProposalAttachment.proposal_id == proposal_id
+        )
+    )
+    attachment = result.scalar_one_or_none()
+    if attachment is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Attachment not found")
+    return attachment
+
+
+def _clean_file_name(raw: str | None) -> str:
+    """The name shown to people and used for the download. Path parts are
+    dropped (some browsers prefix a fake Windows path); the storage key
+    never uses it, so this is about display, not safety."""
+    name = (raw or "").replace("\\", "/").rsplit("/", 1)[-1].strip()
+    name = "".join(ch for ch in name if ch.isprintable())
+    return (name or "attachment")[:255]
+
+
+async def add_attachment(
+    db: AsyncSession,
+    proposal: Proposal,
+    *,
+    uploaded_by: User,
+    file_name: str | None,
+    content: bytes,
+    mime_type: str | None,
+) -> ProposalAttachment:
+    _require_draft(proposal)
+    if not content:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "That file is empty")
+    if len(content) > settings.proposal_upload_max_bytes:
+        max_mb = settings.proposal_upload_max_bytes // (1024 * 1024)
+        raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, f"Files must be {max_mb}MB or smaller")
+    count = (await db.execute(select(func.count()).where(ProposalAttachment.proposal_id == proposal.id))).scalar_one()
+    if count >= MAX_PROPOSAL_ATTACHMENTS:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT, f"A proposal can have at most {MAX_PROPOSAL_ATTACHMENTS} attachments"
+        )
+
+    name = _clean_file_name(file_name)
+    generic = "application/octet-stream"
+    sent_type = mime_type if mime_type and mime_type != generic else None
+    resolved_type = sent_type or mimetypes.guess_type(name)[0] or generic
+    # The key is ours alone, so no part of a client-supplied name ever reaches
+    # a filesystem path or an S3 key.
+    storage_path = await storage.save(
+        "agencies",
+        f"{proposal.agency_id}/proposals/{proposal.id}/{uuid.uuid4().hex}",
+        content,
+        content_type=resolved_type,
+    )
+    attachment = ProposalAttachment(
+        proposal_id=proposal.id,
+        uploaded_by_id=uploaded_by.id,
+        position=count,
+        file_name=name,
+        storage_path=storage_path,
+        mime_type=resolved_type,
+        size=len(content),
+        sha256=hashlib.sha256(content).hexdigest(),
+    )
+    db.add(attachment)
+    await db.commit()
+    await db.refresh(attachment)
+    return attachment
+
+
+async def remove_attachment(db: AsyncSession, proposal: Proposal, attachment: ProposalAttachment) -> None:
+    _require_draft(proposal)
+    storage_path = attachment.storage_path
+    await db.delete(attachment)
+    await db.commit()
+    await storage.delete(storage_path)
+
+
 # ---- Create / update -----------------------------------------------------
+
+
+async def _check_kickoff_template(db: AsyncSession, agency_id: uuid.UUID, template_id: uuid.UUID | None) -> None:
+    if template_id is None:
+        return
+    from binx_api.modules.kickoffs import service as kickoffs_service
+
+    await kickoffs_service.get_template_or_404(db, agency_id, template_id)
 
 
 async def create_proposal(
@@ -152,12 +336,19 @@ async def create_proposal(
     tax_rate_percent: Decimal,
     valid_until: datetime | None,
     line_items: list[ProposalLineItemInput],
+    packages: list[ProposalPackageInput] | None = None,
+    requires_countersign: bool = False,
+    require_email_code: bool = False,
+    deposit_percent: Decimal | None = None,
+    create_project_on_accept: bool = False,
+    kickoff_template_id: uuid.UUID | None = None,
 ) -> Proposal:
     lead: Lead | None = None
     if lead_id is not None:
         lead = await leads_service.get_lead_or_404(db, agency.id, lead_id)
     if client_id is not None:
         await agencies_service.get_client_or_404(db, agency.id, client_id)
+    await _check_kickoff_template(db, agency.id, kickoff_template_id)
 
     proposal = Proposal(
         agency_id=agency.id,
@@ -172,13 +363,18 @@ async def create_proposal(
         content=content,
         tax_rate_percent=tax_rate_percent,
         valid_until=valid_until,
+        requires_countersign=requires_countersign,
+        require_email_code=require_email_code,
+        deposit_percent=deposit_percent,
+        create_project_on_accept=create_project_on_accept,
+        kickoff_template_id=kickoff_template_id,
         status=STATUS_DRAFT,
     )
     db.add(proposal)
     await db.flush()
 
-    rows = await _replace_line_items(db, proposal, line_items)
-    _recalculate(proposal, rows)
+    rows, package_rows = await _replace_line_items(db, proposal, line_items, packages)
+    _recalculate(proposal, rows, package_rows)
     await db.commit()
     await db.refresh(proposal)
 
@@ -210,12 +406,19 @@ async def update_proposal(
     tax_rate_percent: Decimal,
     valid_until: datetime | None,
     line_items: list[ProposalLineItemInput],
+    packages: list[ProposalPackageInput] | None = None,
+    requires_countersign: bool = False,
+    require_email_code: bool = False,
+    deposit_percent: Decimal | None = None,
+    create_project_on_accept: bool = False,
+    kickoff_template_id: uuid.UUID | None = None,
 ) -> Proposal:
     _require_draft(proposal)
     if lead_id is not None:
         await leads_service.get_lead_or_404(db, proposal.agency_id, lead_id)
     if client_id is not None:
         await agencies_service.get_client_or_404(db, proposal.agency_id, client_id)
+    await _check_kickoff_template(db, proposal.agency_id, kickoff_template_id)
 
     proposal.lead_id = lead_id
     proposal.client_id = client_id
@@ -226,9 +429,14 @@ async def update_proposal(
     proposal.currency = currency
     proposal.tax_rate_percent = tax_rate_percent
     proposal.valid_until = valid_until
+    proposal.requires_countersign = requires_countersign
+    proposal.require_email_code = require_email_code
+    proposal.deposit_percent = deposit_percent
+    proposal.create_project_on_accept = create_project_on_accept
+    proposal.kickoff_template_id = kickoff_template_id
 
-    rows = await _replace_line_items(db, proposal, line_items)
-    _recalculate(proposal, rows)
+    rows, package_rows = await _replace_line_items(db, proposal, line_items, packages)
+    _recalculate(proposal, rows, package_rows)
     await db.commit()
     await db.refresh(proposal)
     return proposal
@@ -266,8 +474,11 @@ async def delete_proposal(db: AsyncSession, proposal: Proposal, *, actor: User |
         raise HTTPException(status.HTTP_409_CONFLICT, "Only a draft proposal can be deleted")
     agency_id = proposal.agency_id
     title = proposal.title
+    storage_paths = [attachment.storage_path for attachment in await list_attachments(db, proposal.id)]
     await db.delete(proposal)
     await db.commit()
+    for storage_path in storage_paths:
+        await storage.delete(storage_path)
 
     await activity_service.log_agency_activity(
         db,
@@ -291,7 +502,8 @@ async def send_proposal(
 ) -> Proposal:
     if proposal.status in PROPOSAL_CLOSED_STATUSES:
         raise HTTPException(status.HTTP_409_CONFLICT, "This proposal has already been decided")
-    if (await list_line_items(db, proposal.id)) == []:
+    lines = await list_line_items(db, proposal.id)
+    if not lines:
         raise HTTPException(status.HTTP_409_CONFLICT, "Add at least one line item before sending")
     if recipient_email:
         proposal.recipient_email = recipient_email
@@ -300,6 +512,17 @@ async def send_proposal(
 
     proposal.status = STATUS_SENT
     proposal.sent_at = datetime.now(UTC)
+    # Frozen now, with the final recipient and sent date in it: this is the
+    # document a signature will point at (see signing.py).
+    await signing.freeze_document(db, proposal, lines=lines)
+    signing.record_event(
+        db,
+        proposal.id,
+        EVENT_SENT,
+        actor_user_id=sent_by.id,
+        actor_label=sent_by.full_name,
+        detail=f"Sent to {proposal.recipient_email}",
+    )
     await db.commit()
     await db.refresh(proposal)
 
@@ -317,13 +540,113 @@ async def send_proposal(
     return proposal
 
 
-async def record_view(db: AsyncSession, proposal: Proposal) -> Proposal:
-    """Called from the public GET — first view only flips sent -> viewed."""
+async def record_view(db: AsyncSession, proposal: Proposal, visitor: Visitor | None = None) -> Proposal:
+    """Called when the recipient opens it (share link or portal). The first
+    view flips sent -> viewed; each view from a new browser (or after the
+    dedupe window) adds a "viewed" row to the audit trail."""
+    changed = first_view = False
     if proposal.status == STATUS_SENT:
         proposal.status = STATUS_VIEWED
         proposal.viewed_at = datetime.now(UTC)
+        changed = first_view = True
+    if visitor is not None:
+        changed = (
+            await signing.record_view(
+                db,
+                proposal.id,
+                actor_user_id=visitor.user_id,
+                actor_label=visitor.label,
+                ip_address=visitor.ip_address,
+                user_agent=visitor.user_agent,
+            )
+            or changed
+        )
+    if changed:
         await db.commit()
-        await db.refresh(proposal)
+        # Only an update to the proposal row leaves server-set columns
+        # (updated_at) to reload; a new trail row alone doesn't touch it.
+        if first_view:
+            await db.refresh(proposal)
+    return proposal
+
+
+def _choice_summary(chosen: ProposalPackage | None, add_ons: list[ProposalLineItem]) -> str:
+    names = [line.description for line in add_ons]
+    listed = ", ".join(names[:-1]) + f" and {names[-1]}" if len(names) > 1 else (names[0] if names else "")
+    if chosen is None:
+        return f"Chose the add-ons {listed}" if names else "Chose no add-ons"
+    return f"Chose the {chosen.name} package" + (f", with {listed}" if names else ", no add-ons")
+
+
+async def choose_options(
+    db: AsyncSession,
+    proposal: Proposal,
+    *,
+    package_id: uuid.UUID | None,
+    add_on_ids: list[uuid.UUID],
+    visitor: Visitor | None = None,
+) -> Proposal:
+    """The recipient picks a package and the add-ons they want, before
+    signing. The totals follow, and the document is frozen again with the
+    choice in it, so the fingerprint they sign is of exactly what they chose.
+    Add-ons that belong to other packages keep their state, so switching
+    back finds them as they were."""
+    if proposal.status in PROPOSAL_CLOSED_STATUSES:
+        raise HTTPException(status.HTTP_409_CONFLICT, "This proposal has already been decided")
+    if proposal.status == STATUS_DRAFT:
+        raise HTTPException(status.HTTP_409_CONFLICT, "This proposal hasn't been sent yet")
+    if display_status(proposal) == "expired":
+        raise HTTPException(status.HTTP_409_CONFLICT, "This proposal has expired — ask the agency to resend it")
+
+    packages = await options.list_packages(db, proposal.id)
+    lines = await list_line_items(db, proposal.id)
+    chosen: ProposalPackage | None = None
+    if packages:
+        chosen = next((package for package in packages if package.id == package_id), None)
+        if chosen is None:
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Choose one of the packages")
+    elif package_id is not None:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "This proposal doesn't offer packages")
+    chosen_id = chosen.id if chosen else None
+
+    wanted = set(add_on_ids)
+    add_ons = {line.id: line for line in lines if line.optional}
+    if wanted - add_ons.keys():
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "That add-on isn't on this proposal")
+    for line_id in wanted:
+        if not options.available(add_ons[line_id], chosen_id):
+            raise HTTPException(
+                status.HTTP_422_UNPROCESSABLE_CONTENT,
+                f"“{add_ons[line_id].description}” isn't part of the {chosen.name if chosen else 'chosen'} package",
+            )
+
+    changed = False
+    for package in packages:
+        if package.selected != (package.id == chosen_id):
+            package.selected = package.id == chosen_id
+            changed = True
+    for line in add_ons.values():
+        if options.available(line, chosen_id) and line.selected != (line.id in wanted):
+            line.selected = line.id in wanted
+            changed = True
+    if not changed:
+        return proposal
+
+    _recalculate(proposal, lines, packages)
+    await signing.freeze_document(db, proposal, lines=lines, packages=packages)
+    picked = [line for line in lines if line.optional and options.is_included(line, chosen_id)]
+    signing.record_event(
+        db,
+        proposal.id,
+        EVENT_OPTIONS_CHOSEN,
+        actor_user_id=visitor.user_id if visitor else None,
+        actor_label=visitor.label if visitor else None,
+        ip_address=visitor.ip_address if visitor else None,
+        user_agent=visitor.user_agent if visitor else None,
+        detail=_choice_summary(chosen, picked),
+    )
+    await db.commit()
+    await db.refresh(proposal)
     return proposal
 
 
@@ -334,11 +657,30 @@ async def sign_proposal(
     signer_name: str,
     signer_email: str,
     ip_address: str | None,
+    user_agent: str | None = None,
+    signed_via: str = SIGNED_VIA_LINK,
+    consent: bool = False,
+    document_hash: str | None = None,
+    actor_user_id: uuid.UUID | None = None,
 ) -> Proposal:
+    """A binding e-signature needs the signer's consent to sign
+    electronically and must be tied to the exact document they saw: the
+    request carries the fingerprint they were shown, and anything else is
+    refused (see signing.py)."""
     if proposal.status in PROPOSAL_CLOSED_STATUSES:
         raise HTTPException(status.HTTP_409_CONFLICT, "This proposal has already been decided")
     if display_status(proposal) == "expired":
         raise HTTPException(status.HTTP_409_CONFLICT, "This proposal has expired — ask the agency to resend it")
+    if not consent:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT, "Agree to sign electronically before signing this proposal"
+        )
+    await signing.ensure_document_record(db, proposal)
+    if not document_hash or document_hash != proposal.document_hash:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            "This isn't the version of the proposal you were sent. Reload the page and sign again.",
+        )
 
     now = datetime.now(UTC)
     db.add(
@@ -349,20 +691,43 @@ async def sign_proposal(
             signature_text=signer_name,
             ip_address=ip_address,
             signed_at=now,
+            user_agent=user_agent,
+            signed_via=signed_via,
+            consent_version=signing.CONSENT_VERSION,
+            consent_text=signing.CONSENT_TEXT,
+            document_hash=proposal.document_hash,
         )
+    )
+    signing.record_event(
+        db,
+        proposal.id,
+        EVENT_SIGNED,
+        actor_user_id=actor_user_id,
+        actor_label=f"{signer_name} <{signer_email}>",
+        ip_address=ip_address,
+        user_agent=user_agent,
+        detail=f"Signed via {'the client portal' if signed_via == SIGNED_VIA_PORTAL else 'the share link'}",
+        occurred_at=now,
     )
     proposal.status = STATUS_SIGNED
     proposal.decided_at = now
+    if not proposal.requires_countersign:
+        completion.mark_complete(db, proposal, now)
     await db.commit()
     await db.refresh(proposal)
 
     if proposal.created_by_id is not None:
+        awaiting = proposal.completed_at is None
         await notifications_service.notify(
             db,
             user_id=proposal.created_by_id,
             category=NOTIFY_CATEGORY_PROPOSALS,
-            event_type="proposal_signed",
-            title=f"{signer_name} signed “{proposal.title}”",
+            event_type="proposal_awaiting_countersign" if awaiting else "proposal_signed",
+            title=(
+                f"{signer_name} signed “{proposal.title}”. It's ready for your countersignature"
+                if awaiting
+                else f"{signer_name} signed “{proposal.title}”"
+            ),
             body=f"Signed by {signer_name} ({signer_email}).",
             link=f"/proposals/{proposal.id}",
             agency_id=proposal.agency_id,
@@ -377,16 +742,109 @@ async def sign_proposal(
         target_id=proposal.id,
         target_name=proposal.title,
     )
+    # When that completed it, the caller schedules completion.process to
+    # run after the response (completion.schedule).
     return proposal
 
 
-async def decline_proposal(db: AsyncSession, proposal: Proposal, *, reason: str | None) -> Proposal:
+async def get_countersignature(db: AsyncSession, proposal_id: uuid.UUID) -> ProposalCountersignature | None:
+    return await db.scalar(select(ProposalCountersignature).where(ProposalCountersignature.proposal_id == proposal_id))
+
+
+async def countersign_proposal(
+    db: AsyncSession,
+    proposal: Proposal,
+    *,
+    user: User,
+    ip_address: str | None,
+    user_agent: str | None,
+    consent: bool,
+    document_hash: str | None,
+) -> Proposal:
+    """The agency's signature, after the client's, on a proposal that
+    requires one. Same rules as the client's: consent to sign electronically
+    and the fingerprint of the exact version, which is the one the client
+    signed. Completes the proposal."""
+    if not proposal.requires_countersign:
+        raise HTTPException(status.HTTP_409_CONFLICT, "This proposal doesn't need a countersignature")
+    if proposal.status != STATUS_SIGNED:
+        raise HTTPException(status.HTTP_409_CONFLICT, "The client hasn't signed this proposal yet")
+    if proposal.completed_at is not None:
+        raise HTTPException(status.HTTP_409_CONFLICT, "This proposal has already been countersigned")
+    if not consent:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Agree to sign electronically before countersigning")
+    if not document_hash or document_hash != proposal.document_hash:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            "This isn't the version the client signed. Reload the page and countersign again.",
+        )
+
+    now = datetime.now(UTC)
+    db.add(
+        ProposalCountersignature(
+            proposal_id=proposal.id,
+            user_id=user.id,
+            signer_name=user.full_name,
+            signer_email=user.email,
+            signature_text=user.full_name,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            signed_at=now,
+            consent_version=signing.CONSENT_VERSION,
+            consent_text=signing.CONSENT_TEXT,
+            document_hash=proposal.document_hash,
+        )
+    )
+    signing.record_event(
+        db,
+        proposal.id,
+        EVENT_COUNTERSIGNED,
+        actor_user_id=user.id,
+        actor_label=f"{user.full_name} <{user.email}>",
+        ip_address=ip_address,
+        user_agent=user_agent,
+        detail="Countersigned for the agency",
+        occurred_at=now,
+    )
+    completion.mark_complete(db, proposal, now)
+    await db.commit()
+    await db.refresh(proposal)
+
+    await activity_service.log_agency_activity(
+        db,
+        proposal.agency_id,
+        category=ACTIVITY_CATEGORY_PROPOSALS,
+        event_type="proposal_countersigned",
+        summary=f"{user.full_name} countersigned the proposal “{proposal.title}”",
+        actor=user,
+        target_type="proposal",
+        target_id=proposal.id,
+        target_name=proposal.title,
+    )
+    # The caller schedules completion.process to run after the response.
+    return proposal
+
+
+async def decline_proposal(
+    db: AsyncSession, proposal: Proposal, *, reason: str | None, visitor: Visitor | None = None
+) -> Proposal:
     if proposal.status in PROPOSAL_CLOSED_STATUSES:
         raise HTTPException(status.HTTP_409_CONFLICT, "This proposal has already been decided")
 
     proposal.status = STATUS_DECLINED
     proposal.decided_at = datetime.now(UTC)
     proposal.decline_reason = reason
+    signing.record_event(
+        db,
+        proposal.id,
+        EVENT_DECLINED,
+        actor_user_id=visitor.user_id if visitor else None,
+        actor_label=visitor.label if visitor else None,
+        ip_address=visitor.ip_address if visitor else None,
+        user_agent=visitor.user_agent if visitor else None,
+        detail=reason,
+        occurred_at=proposal.decided_at,
+    )
     await db.commit()
     await db.refresh(proposal)
 
@@ -414,14 +872,28 @@ async def decline_proposal(db: AsyncSession, proposal: Proposal, *, reason: str 
     return proposal
 
 
-async def get_public_proposal(db: AsyncSession, raw_token: str) -> tuple[Proposal, Agency]:
-    proposal = await get_proposal_by_token_or_404(db, raw_token)
+async def get_public_proposal(
+    db: AsyncSession, raw_token: str, visitor: Visitor | None = None, access_token: str | None = None
+) -> tuple[Proposal, Agency]:
+    # The proposal and its agency in one round trip (an agency on its
+    # deletion hold has no public links).
+    row = (
+        await db.execute(
+            select(Proposal, Agency)
+            .join(Agency, Agency.id == Proposal.agency_id)
+            .where(Proposal.share_token == raw_token, Agency.deletion_scheduled_for.is_(None))
+        )
+    ).one_or_none()
+    if row is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Proposal not found")
+    proposal, agency = row
     if proposal.status == STATUS_DRAFT:
         # Never reachable via a real link (drafts have no valid share yet in
         # spirit, even though the token exists from creation) — treat as 404
         # rather than leaking draft content.
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Proposal not found")
-    agency = await db.get(Agency, proposal.agency_id)
-    assert agency is not None
-    proposal = await record_view(db, proposal)
+    # Before anything is shown or a view recorded (access.py).
+    access.require_access(proposal, access_token, agency.name)
+    await signing.ensure_document_record(db, proposal)
+    proposal = await record_view(db, proposal, visitor)
     return proposal, agency

@@ -22,6 +22,7 @@ import uuid
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, time, timedelta
+from decimal import Decimal, InvalidOperation
 
 from fastapi import HTTPException, status
 from pydantic import ValidationError
@@ -32,7 +33,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from binx_api.modules.activity import service as activity_service
-from binx_api.modules.activity.models import CATEGORY_CLIENTS, CATEGORY_PROJECTS, CATEGORY_TEAM
+from binx_api.modules.activity.models import CATEGORY_CLIENTS, CATEGORY_PROJECTS, CATEGORY_SETTINGS, CATEGORY_TEAM
 from binx_api.modules.agencies import service as agencies_service
 from binx_api.modules.agencies.models import (
     INVITATION_PENDING,
@@ -46,13 +47,14 @@ from binx_api.modules.agencies.models import (
 )
 from binx_api.modules.agencies.schemas import AgencyClientCreate
 from binx_api.modules.billing import service as billing_service
-from binx_api.modules.imports.fields import CLIENT_FIELDS, LEAD_FIELDS, PROJECT_FIELDS
+from binx_api.modules.imports.fields import CLIENT_FIELDS, LEAD_FIELDS, PROJECT_FIELDS, SERVICE_FIELDS
 from binx_api.modules.imports.schemas import (
     ClientImportRow,
     ImportResultRead,
     ImportRowResult,
     LeadImportRow,
     ProjectImportRow,
+    ServiceImportRow,
     TaskImportRow,
     TeamImportRow,
     TimeEntryImportRow,
@@ -80,6 +82,8 @@ from binx_api.modules.projects.models import (
     project_statuses,
 )
 from binx_api.modules.projects.schemas import ProjectCreate
+from binx_api.modules.services.models import PRICING_FIXED, PRICING_HOURLY, PRICING_MONTHLY, Service
+from binx_api.modules.services.schemas import ServiceCreate
 from binx_api.modules.time_tracking import service as time_service
 from binx_api.modules.time_tracking.models import TimeEntry
 from binx_api.modules.users.models import User
@@ -969,3 +973,150 @@ async def import_time_entries(
 
     plan_name = (await billing_service.get_plan_limits(db, agency.id)).name
     return _result(results, dry_run=dry_run, plan_name=plan_name, limit=None, remaining=None)
+
+
+# ---- Services ---------------------------------------------------------------
+
+_SERVICE_LABELS = {field.key: field.label for field in SERVICE_FIELDS} | {
+    "unit_price_cents": "Price",
+    "pricing_type": "Pricing",
+}
+
+# What people write for each pricing type, normalized like headers are
+# (lowercase, letters and digits only). The export writes the labels
+# ("Fixed price", "Hourly", "Monthly"), so a downloaded file re-imports.
+_PRICING_WORDS: dict[str, str] = {
+    **dict.fromkeys(
+        ("fixed", "fixedprice", "flat", "flatfee", "flatrate", "project", "oneoff", "onetime", "once", "each"),
+        PRICING_FIXED,
+    ),
+    **dict.fromkeys(("hourly", "hour", "hr", "hrs", "perhour", "perhr", "hours"), PRICING_HOURLY),
+    **dict.fromkeys(
+        ("monthly", "month", "mo", "permonth", "permo", "retainer", "monthlyretainer", "subscription"),
+        PRICING_MONTHLY,
+    ),
+}
+_NON_ALNUM_RE = re.compile(r"[^a-z0-9]+")
+
+
+def _service_pricing(value: str | None) -> str:
+    if value is None:
+        return PRICING_FIXED
+    pricing = _PRICING_WORDS.get(_NON_ALNUM_RE.sub("", value.lower()))
+    if pricing is None:
+        raise ValueError(f"Pricing: \u201c{value}\u201d must be fixed, hourly or monthly")
+    return pricing
+
+
+def _service_archived(value: str | None) -> bool:
+    if value is None:
+        return False
+    text = value.strip().casefold()
+    if text in ("active", "live", "current"):
+        return False
+    if text in ("archived", "inactive", "retired"):
+        return True
+    raise ValueError(f"Status: \u201c{value}\u201d must be Active or Archived")
+
+
+def _service_quantity(value: str) -> Decimal:
+    try:
+        quantity = Decimal(value.replace(",", "").strip())
+    except InvalidOperation:
+        raise ValueError("isn't a number") from None
+    if not quantity.is_finite() or quantity <= 0:
+        raise ValueError("must be more than zero")
+    return quantity.quantize(Decimal("0.01"))
+
+
+def _service_row(data: dict[str, str | None]) -> tuple[ServiceCreate, bool]:
+    archived = _service_archived(data["status"])
+    created = ServiceCreate.model_validate(
+        {
+            "name": data["name"],
+            "description": data["description"],
+            "pricing_type": _service_pricing(data["pricing"]),
+            "unit_price_cents": _typed("Price", parse_money_cents, data["price"]),
+            "default_quantity": _typed("Default quantity", _service_quantity, data["default_quantity"]) or Decimal("1"),
+        }
+    )
+    return created, archived
+
+
+async def _service_names(db: AsyncSession, agency_id: uuid.UUID) -> tuple[set[str], set[str]]:
+    """(active names, all names), casefolded."""
+    existing = await db.execute(select(Service.name, Service.is_archived).where(Service.agency_id == agency_id))
+    active: set[str] = set()
+    every: set[str] = set()
+    for name, is_archived in existing.all():
+        every.add(name.casefold())
+        if not is_archived:
+            active.add(name.casefold())
+    return active, every
+
+
+async def import_services(
+    db: AsyncSession, agency: Agency, *, rows: list[ServiceImportRow], actor: User, dry_run: bool
+) -> ImportResultRead:
+    """The catalog has no plan cap. A row is a duplicate when an active
+    service (or an earlier row) already has its name; an archived row is a
+    duplicate when any service has its name, so re-importing an export never
+    piles up copies of retired services."""
+    limits = await billing_service.get_plan_limits(db, agency.id)
+    active_names, all_names = await _service_names(db, agency.id)
+
+    seen: dict[str, int] = {}
+    results: list[ImportRowResult] = []
+    to_create: list[tuple[ServiceCreate, bool]] = []
+
+    for row in rows:
+        data = {key: _clean(value) for key, value in row.model_dump(exclude={"row"}).items()}
+        label = data["name"] or f"Row {row.row}"
+        missing = "Service name" if not data["name"] else "Price" if not data["price"] else None
+        if missing:
+            results.append(_invalid(row.row, label, f"{missing} is required"))
+            continue
+        try:
+            created, archived = _service_row(data)
+        except ValueError as error:
+            results.append(_invalid(row.row, label, _row_error(error, _SERVICE_LABELS)))
+            continue
+
+        name = created.name.strip()
+        key = name.casefold()
+        if key in (all_names if archived else active_names):
+            results.append(_duplicate(row.row, label, f"You already have a service named \u201c{name}\u201d"))
+            continue
+        if key in seen:
+            results.append(_duplicate(row.row, label, f"Same service name as row {seen[key]}"))
+            continue
+        seen[key] = row.row
+        to_create.append((created, archived))
+        results.append(ImportRowResult(row=row.row, label=label, status="ok"))
+
+    if not dry_run and to_create:
+        db.add_all(
+            Service(
+                agency_id=agency.id,
+                created_by_id=actor.id,
+                name=created.name.strip(),
+                description=(created.description or "").strip() or None,
+                pricing_type=created.pricing_type,
+                unit_price_cents=created.unit_price_cents,
+                default_quantity=created.default_quantity,
+                is_archived=archived,
+            )
+            for created, archived in to_create
+        )
+        await db.commit()
+        count = len(to_create)
+        await activity_service.log_agency_activity(
+            db,
+            agency.id,
+            category=CATEGORY_SETTINGS,
+            event_type="services_imported",
+            summary=f"{actor.full_name} imported {count} service{'' if count == 1 else 's'}",
+            actor=actor,
+        )
+
+    return _result(results, dry_run=dry_run, plan_name=limits.name, limit=None, remaining=None)

@@ -1,16 +1,17 @@
 """Integration tests for binx_api.modules.invoicing.recurring_service — the
 date-advancement math (monthly with day-of-month clamping, weekly), the
-catch-up-on-read generation, and auto_issue."""
+catch-up-on-read generation, auto_issue, and the background job (one period
+per schedule per run, deletion holds, claims handed back on failure)."""
 
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 
 import pytest
 
 from binx_api.modules.invoicing import recurring_service as service
-from binx_api.modules.invoicing.models import STATUS_DRAFT, STATUS_SENT
+from binx_api.modules.invoicing.models import STATUS_DRAFT, STATUS_SENT, RecurringInvoiceSchedule
 from binx_api.modules.invoicing.recurring_schemas import RecurringLineItemInput
 from tests.factories import make_agency, make_client, make_user
 
@@ -179,3 +180,84 @@ class TestGeneration:
         assert updated.next_run_date == original_next_run
         line_items = await service.list_line_items(db_session, schedule.id)
         assert line_items[0].unit_price_cents == 600_000
+
+
+class TestBackgroundJob:
+    """The job that bills schedules on their date, across every agency."""
+
+    async def test_bills_every_agency_and_one_period_per_schedule_per_run(self, db_session, ctx) -> None:
+        owner, agency, client = ctx
+        other_owner = await make_user(db_session, full_name="Other owner")
+        other_agency = await make_agency(db_session, owner=other_owner, name="Other Agency")
+        other_client = await make_client(db_session, agency=other_agency)
+        behind = await _make_schedule(db_session, agency, owner, client, day_of_month=1, start_date=date(2026, 1, 1))
+        await _make_schedule(
+            db_session, other_agency, other_owner, other_client, day_of_month=1, start_date=date(2026, 3, 1)
+        )
+
+        # As of March 1st the first schedule owes Jan, Feb and Mar; one run
+        # bills only its oldest period, and the other agency's schedule too.
+        first = await service._run_due(db_session, as_of=date(2026, 3, 1), agency_id=None)
+        assert sorted(invoice.issue_date for invoice in first) == [date(2026, 1, 1), date(2026, 3, 1)]
+        await db_session.refresh(behind)
+        assert behind.next_run_date == date(2026, 2, 1)
+
+        second = await service._run_due(db_session, as_of=date(2026, 3, 1), agency_id=None)
+        assert [invoice.issue_date for invoice in second] == [date(2026, 2, 1)]
+        third = await service._run_due(db_session, as_of=date(2026, 3, 1), agency_id=None)
+        assert [invoice.issue_date for invoice in third] == [date(2026, 3, 1)]
+        assert await service._run_due(db_session, as_of=date(2026, 3, 1), agency_id=None) == []
+
+    async def test_skips_agencies_on_their_deletion_hold(self, db_session, ctx) -> None:
+        owner, agency, client = ctx
+        await _make_schedule(db_session, agency, owner, client, day_of_month=1, start_date=date(2026, 1, 1))
+        agency.deletion_scheduled_for = datetime(2026, 2, 1, tzinfo=UTC)
+        await db_session.commit()
+        assert await service._run_due(db_session, as_of=date(2026, 1, 1), agency_id=None) == []
+
+    async def test_a_failed_invoice_hands_the_period_back(self, db_session, ctx, monkeypatch) -> None:
+        owner, agency, client = ctx
+        schedule = await _make_schedule(db_session, agency, owner, client, day_of_month=1, start_date=date(2026, 1, 1))
+        schedule_id = schedule.id
+        reported: list[dict] = []
+
+        async def _capture(exc, **kwargs):
+            reported.append(kwargs)
+
+        async def _boom(*_args, **_kwargs):
+            raise RuntimeError("invoice numbering unavailable")
+
+        monkeypatch.setattr(service, "capture_error", _capture)
+        with monkeypatch.context() as patch:
+            patch.setattr(service.invoicing_service, "create_invoice", _boom)
+            assert await service._run_due(db_session, as_of=date(2026, 1, 1), agency_id=None) == []
+
+        assert reported[0]["context"]["recurring_schedule_id"] == str(schedule_id)
+        refreshed = await db_session.get(RecurringInvoiceSchedule, schedule_id, populate_existing=True)
+        assert refreshed.next_run_date == date(2026, 1, 1)  # not skipped
+
+        # The next run bills that same period.
+        retried = await service._run_due(db_session, as_of=date(2026, 1, 1), agency_id=None)
+        assert [invoice.issue_date for invoice in retried] == [date(2026, 1, 1)]
+
+    async def test_generate_due_invoices_uses_its_own_session(self, db_session, ctx, monkeypatch) -> None:
+        owner, agency, client = ctx
+        await _make_schedule(db_session, agency, owner, client, day_of_month=1, start_date=date(2026, 1, 1))
+
+        class _Session:
+            async def __aenter__(self):
+                return db_session
+
+            async def __aexit__(self, *_exc):
+                return False
+
+        monkeypatch.setattr(service, "async_session_factory", _Session)
+        assert await service.generate_due_invoices(as_of=date(2026, 1, 1)) == 1
+        assert await service.generate_due_invoices(as_of=date(2026, 1, 1)) == 0
+
+    async def test_run_now_claims_the_period_so_the_job_does_not_bill_it_again(self, db_session, ctx) -> None:
+        owner, agency, client = ctx
+        schedule = await _make_schedule(db_session, agency, owner, client, day_of_month=1, start_date=date(2026, 1, 1))
+        invoice = await service.run_schedule_now(db_session, schedule)
+        assert invoice.issue_date == date(2026, 1, 1)
+        assert await service._run_due(db_session, as_of=date(2026, 1, 1), agency_id=None) == []

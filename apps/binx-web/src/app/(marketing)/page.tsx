@@ -15,9 +15,11 @@ import Link from "next/link";
 import {
   ArrowRight,
   CheckCheck,
+  DoorOpen,
   FileSignature,
   LayoutDashboard,
   LayoutGrid,
+  Library,
   Newspaper,
   PanelsTopLeft,
   Radar,
@@ -49,7 +51,7 @@ const FLOW = [
   {
     index: "02",
     title: "Send the proposal",
-    text: "Line items, tax and a valid-until date, pre-filled from the lead or client. They review and sign from a link.",
+    text: "Build it from your services, attach the paperwork and share it in a lead portal. Once they sign, they're set up as a client.",
   },
   {
     index: "03",
@@ -70,9 +72,21 @@ const NEW_FEATURES = [
     text: "Describe your ideal client and Binx searches for real businesses that match. Save searches and rerun them whenever the pipeline runs low.",
   },
   {
+    icon: DoorOpen,
+    title: "Lead portals",
+    text: "Give each prospect a branded page with their proposal and a thread for questions. When they sign, they become a client: portal invite, deposit invoice, project and kickoff.",
+    href: "/client-onboarding",
+  },
+  {
     icon: FileSignature,
-    title: "Proposals with e-sign",
-    text: "Build a priced proposal, send one link, and see when it's viewed. Clients sign or decline online, and it's filed on their client record and in their portal.",
+    title: "Proposals with binding e-sign",
+    text: "Clients sign online with consent and a fingerprint of exactly what they saw. Countersign for the agency, and every party gets the signed record as a PDF.",
+    href: "/proposal-software",
+  },
+  {
+    icon: Library,
+    title: "A services catalog",
+    text: "Write each service once, with fixed, hourly or monthly pricing, then add it to proposals, invoices and retainers in a click, or import your price list.",
   },
   {
     icon: PanelsTopLeft,
@@ -102,12 +116,12 @@ const CAPABILITIES = [
   {
     icon: Radar,
     title: "Leads & AI prospecting",
-    text: "Find prospects, track the pipeline, and turn a won lead into a client without re-typing a thing.",
+    text: "Find prospects, give them a lead portal, and let a signed proposal turn them into a client without re-typing a thing.",
   },
   {
     icon: FileSignature,
     title: "Proposals",
-    text: "Priced, signable proposals that live on the client record and follow them into the portal.",
+    text: "Proposals built from your services, with documents attached, binding e-signatures and a signed PDF for both sides.",
   },
   {
     icon: Users,
@@ -133,7 +147,9 @@ const CAPABILITIES = [
 
 const FEATURE_LIST = [
   "AI lead prospecting with saved searches",
-  "Proposals with online e-signature",
+  "Proposals with binding e-signature, countersign and signed PDF",
+  "Lead portals that turn a signed proposal into a client",
+  "Services catalog for proposals, invoices and retainers",
   "Client portal",
   "Visual project canvas with columns, nested boards, links and files",
   "To-do lists on the canvas synced with project tasks",
@@ -169,10 +185,10 @@ const HomePage = () => {
 
         <div className={styles.container}>
           <div className={styles.heroInner}>
-            <Link href="/client-approvals" className={styles.announce}>
+            <Link href="/client-onboarding" className={styles.announce}>
               <span className={styles.announceDot} aria-hidden="true" />
               <span className={styles.announceTag}>New</span>
-              Client approvals, right on the canvas
+              Lead portals: one signature, one new client
               <ArrowRight aria-hidden="true" />
             </Link>
             <h1 className={`${styles.h1} ${styles.heroTitle}`}>
@@ -207,7 +223,7 @@ const HomePage = () => {
             </h1>
             <p className={`${styles.lead} ${styles.heroLead}`}>
               {SITE.name} takes you from the first lead to the final invoice.
-              Find prospects with AI, send proposals clients sign online, run
+              Find prospects with AI, send proposals they sign online, run
               projects they approve in a live portal, and get paid, all in one
               workspace.
             </p>
@@ -366,6 +382,36 @@ const HomePage = () => {
 
           <div className={`${styles.split} ${styles.splitAlt}`}>
             <div className={styles.splitBody}>
+              <span className={styles.eyebrow}>Lead portals</span>
+              <h2 className={styles.h3}>One signature, and they&apos;re a client.</h2>
+              <p className={styles.cardText}>
+                Send a lead their own branded portal: your welcome note, their
+                proposal and a thread for questions. They sign with a binding
+                e-signature, and {SITE.name} does the onboarding: the client
+                record, their portal invite, the deposit invoice, then the
+                project and kickoff.
+              </p>
+              <ul className={styles.splitList}>
+                <li>Questions answered before they sign</li>
+                <li>Deposit invoiced the moment they do</li>
+                <li>
+                  <Link href="/client-onboarding">How onboarding works →</Link>
+                </li>
+              </ul>
+            </div>
+            <div className={styles.splitMedia}>
+              <Image
+                src="/marketing/lead-portal.webp"
+                alt="A lead portal: the agency's welcome note, a proposal to review and sign, and a question the agency has answered."
+                width={1600}
+                height={1138}
+                sizes="(min-width: 900px) 32rem, 100vw"
+              />
+            </div>
+          </div>
+
+          <div className={styles.split}>
+            <div className={styles.splitBody}>
               <span className={styles.eyebrow}>Visual canvas</span>
               <h2 className={styles.h3}>Plan the project the way you think.</h2>
               <p className={styles.cardText}>
@@ -394,7 +440,7 @@ const HomePage = () => {
             </div>
           </div>
 
-          <div className={styles.split}>
+          <div className={`${styles.split} ${styles.splitAlt}`}>
             <div className={styles.splitBody}>
               <span className={styles.eyebrow}>Client approvals</span>
               <h2 className={styles.h3}>Client sign-off, made seamless.</h2>
@@ -423,7 +469,7 @@ const HomePage = () => {
             </div>
           </div>
 
-          <div className={`${styles.split} ${styles.splitAlt}`}>
+          <div className={styles.split}>
             <div className={styles.splitBody}>
               <span className={styles.eyebrow}>Dashboard</span>
               <h2 className={styles.h3}>
@@ -453,7 +499,7 @@ const HomePage = () => {
             </div>
           </div>
 
-          <div className={styles.split}>
+          <div className={`${styles.split} ${styles.splitAlt}`}>
             <div className={styles.splitBody}>
               <span className={styles.eyebrow}>Invoicing</span>
               <h2 className={styles.h3}>Bill without leaving the workspace.</h2>

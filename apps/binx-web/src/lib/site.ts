@@ -36,7 +36,7 @@ export const SITE = {
   tagline: "Run the whole agency from one place.",
   /** ~155 chars — default meta description. */
   description:
-    "AI lead prospecting, proposals, a visual project canvas, client approvals, invoicing and a branded client portal: one calm workspace for creative agencies.",
+    "AI lead prospecting, e-signed proposals, a visual project canvas, client approvals, invoicing and a branded client portal for creative agencies.",
   url: SITE_URL,
   ogImageAlt: "Binx Portal — the operating system for creative agencies",
   twitter: "@binxhq",
@@ -55,6 +55,9 @@ export const SITE = {
     "agency invoicing",
     "studio management",
     "proposal software for agencies",
+    "proposal software with e-signature",
+    "client onboarding software",
+    "lead portal",
     "AI lead generation",
     "client approval workflow",
     "client approval software",
@@ -72,7 +75,7 @@ export const SITE = {
  * `lastModified`. A per-request `new Date()` tells crawlers every page
  * changes on every fetch, which teaches them to ignore lastmod entirely.
  */
-export const MARKETING_LAST_UPDATED = new Date("2026-11-23");
+export const MARKETING_LAST_UPDATED = new Date("2026-11-26");
 
 /** Shared pricing tiers — rendered on /pricing and summarised in JSON-LD offers. */
 export const PLANS = [
@@ -86,6 +89,7 @@ export const PLANS = [
       "25 leads",
       "3 team members",
       "Client portal, proposals & invoicing",
+      "E-signatures & automatic client setup",
       "$10/mo of AI usage",
     ],
     cta: "Get started",
@@ -99,6 +103,7 @@ export const PLANS = [
       "Everything in Free",
       "2 agency workspaces",
       "Custom portal subdomain",
+      "Lead portals",
       "15 clients & 25 active projects",
       "250 leads",
       "10 team members",
@@ -233,6 +238,8 @@ export const SEO_LANDING_PAGES = [
  * comparison pages in the sitemap.
  */
 export const FEATURE_PAGES = [
+  { href: "/proposal-software", label: "Proposals & e-sign" },
+  { href: "/client-onboarding", label: "Lead portals & onboarding" },
   { href: "/client-approvals", label: "Client approvals" },
   { href: "/visual-canvas", label: "Visual canvas" },
 ] as const;

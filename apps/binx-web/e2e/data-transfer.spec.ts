@@ -33,7 +33,7 @@ test.describe("import & export", () => {
   test("the page lists every kind; invoices and proposals are export-only", async ({ staffPage }) => {
     await staffPage.goto("/data");
     await expect(staffPage.getByRole("heading", { level: 1, name: "Import & export" })).toBeVisible();
-    for (const label of ["Clients", "Team", "Leads", "Projects", "Tasks", "Time entries", "Invoices", "Proposals"]) {
+    for (const label of ["Clients", "Team", "Leads", "Projects", "Tasks", "Time entries", "Services", "Invoices", "Proposals"]) {
       await expect(staffPage.getByRole("heading", { level: 2, name: label, exact: true })).toBeVisible();
     }
     await expect(staffPage.getByRole("link", { name: "Import invoices" })).toHaveCount(0);

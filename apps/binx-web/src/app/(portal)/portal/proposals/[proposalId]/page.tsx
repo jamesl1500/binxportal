@@ -66,9 +66,24 @@ const PortalProposalDetailPage = async ({
         }
       />
 
-      <ProposalView proposal={proposal} />
+      <ProposalView
+        proposal={proposal}
+        attachmentHrefBase={`/api/portal/proposals/${proposal.id}/attachments`}
+        certificateHref={
+          proposal.status === "signed"
+            ? `/portal/proposals/${proposal.id}/certificate`
+            : undefined
+        }
+        choose={awaitingDecision ? { proposalId: proposal.id } : undefined}
+      />
 
-      {awaitingDecision && <PortalProposalActions proposalId={proposal.id} />}
+      {awaitingDecision && (
+        <PortalProposalActions
+          proposalId={proposal.id}
+          consentText={proposal.consent_text}
+          documentHash={proposal.document_hash}
+        />
+      )}
     </div>
   );
 };

@@ -4544,6 +4544,20 @@
         "title": "Body_post_message_portal_conversations__conversation_id__messages_post",
         "type": "object"
       },
+      "Body_upload_attachment_agencies__agency_id__proposals__proposal_id__attachments_post": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_attachment_agencies__agency_id__proposals__proposal_id__attachments_post",
+        "type": "object"
+      },
       "Body_upload_avatar_users_me_avatar_put": {
         "properties": {
           "file": {
@@ -4736,6 +4750,180 @@
           "leads"
         ],
         "title": "BulkAnalyzeRead",
+        "type": "object"
+      },
+      "CertificateAttachmentRead": {
+        "properties": {
+          "file_name": {
+            "title": "File Name",
+            "type": "string"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          },
+          "size": {
+            "title": "Size",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "file_name",
+          "size",
+          "sha256"
+        ],
+        "title": "CertificateAttachmentRead",
+        "type": "object"
+      },
+      "CertificateLineRead": {
+        "properties": {
+          "add_on": {
+            "default": false,
+            "title": "Add On",
+            "type": "boolean"
+          },
+          "amount_cents": {
+            "title": "Amount Cents",
+            "type": "integer"
+          },
+          "billing": {
+            "default": "one_time",
+            "title": "Billing",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "details": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details"
+          },
+          "quantity": {
+            "title": "Quantity",
+            "type": "string"
+          },
+          "unit_price_cents": {
+            "title": "Unit Price Cents",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "description",
+          "details",
+          "quantity",
+          "unit_price_cents",
+          "amount_cents"
+        ],
+        "title": "CertificateLineRead",
+        "type": "object"
+      },
+      "CertificateSignatureRead": {
+        "properties": {
+          "consent_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consent Text"
+          },
+          "consent_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consent Version"
+          },
+          "document_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Hash"
+          },
+          "ip_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ip Address"
+          },
+          "signature_text": {
+            "title": "Signature Text",
+            "type": "string"
+          },
+          "signed_at": {
+            "format": "date-time",
+            "title": "Signed At",
+            "type": "string"
+          },
+          "signed_via": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed Via"
+          },
+          "signer_email": {
+            "title": "Signer Email",
+            "type": "string"
+          },
+          "signer_name": {
+            "title": "Signer Name",
+            "type": "string"
+          },
+          "user_agent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Agent"
+          }
+        },
+        "required": [
+          "signer_name",
+          "signer_email",
+          "signature_text",
+          "signed_at",
+          "ip_address",
+          "user_agent",
+          "signed_via",
+          "consent_version",
+          "consent_text",
+          "document_hash"
+        ],
+        "title": "CertificateSignatureRead",
         "type": "object"
       },
       "ChangePasswordRequest": {
@@ -5720,6 +5908,30 @@
           }
         },
         "title": "ConversationUpdate",
+        "type": "object"
+      },
+      "CountersignRequest": {
+        "description": "An owner or admin countersigning: their consent and the fingerprint\nof the version they're signing (the one the client signed).",
+        "properties": {
+          "consent": {
+            "default": false,
+            "title": "Consent",
+            "type": "boolean"
+          },
+          "document_hash": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Hash"
+          }
+        },
+        "title": "CountersignRequest",
         "type": "object"
       },
       "DashboardLayoutRead": {
@@ -9757,6 +9969,134 @@
         "title": "LeadOwnerUpdate",
         "type": "object"
       },
+      "LeadPortalMessageCreate": {
+        "properties": {
+          "body": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Body",
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "title": "LeadPortalMessageCreate",
+        "type": "object"
+      },
+      "LeadPortalMessageRead": {
+        "properties": {
+          "author_kind": {
+            "title": "Author Kind",
+            "type": "string"
+          },
+          "author_name": {
+            "title": "Author Name",
+            "type": "string"
+          },
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "author_kind",
+          "author_name",
+          "body",
+          "created_at"
+        ],
+        "title": "LeadPortalMessageRead",
+        "type": "object"
+      },
+      "LeadPortalRead": {
+        "description": "The staff view of a lead's portal.",
+        "properties": {
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "last_viewed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Viewed At"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/LeadPortalMessageRead"
+            },
+            "title": "Messages",
+            "type": "array"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "welcome_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Welcome Message"
+          }
+        },
+        "required": [
+          "enabled",
+          "url",
+          "welcome_message",
+          "last_viewed_at",
+          "messages"
+        ],
+        "title": "LeadPortalRead",
+        "type": "object"
+      },
+      "LeadPortalUpdate": {
+        "description": "Turn the portal on (or keep it on) and set its welcome note.",
+        "properties": {
+          "welcome_message": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Welcome Message"
+          }
+        },
+        "title": "LeadPortalUpdate",
+        "type": "object"
+      },
       "LeadRead": {
         "properties": {
           "agency_id": {
@@ -10470,6 +10810,18 @@
             ],
             "title": "Quantity"
           },
+          "service_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Service Id"
+          },
           "unit_price_cents": {
             "minimum": 0.0,
             "title": "Unit Price Cents",
@@ -10506,6 +10858,18 @@
           "quantity": {
             "title": "Quantity",
             "type": "string"
+          },
+          "service_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Service Id"
           },
           "unit_price_cents": {
             "title": "Unit Price Cents",
@@ -12569,6 +12933,30 @@
         "title": "PortalProjectRead",
         "type": "object"
       },
+      "PortalProposalSignRequest": {
+        "description": "The portal knows who's signing; it still needs consent and the\nfingerprint of what they saw.",
+        "properties": {
+          "consent": {
+            "default": false,
+            "title": "Consent",
+            "type": "boolean"
+          },
+          "document_hash": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Hash"
+          }
+        },
+        "title": "PortalProposalSignRequest",
+        "type": "object"
+      },
       "PortalTaskListRead": {
         "properties": {
           "id": {
@@ -13703,6 +14091,503 @@
         "title": "ProjectUpdate",
         "type": "object"
       },
+      "ProposalAcceptanceRead": {
+        "description": "What accepting the proposal did (staff only).",
+        "properties": {
+          "blocked_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blocked Reason"
+          },
+          "client_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Id"
+          },
+          "client_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Name"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "converted_lead": {
+            "title": "Converted Lead",
+            "type": "boolean"
+          },
+          "deposit_invoice_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deposit Invoice Id"
+          },
+          "deposit_invoice_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deposit Invoice Number"
+          },
+          "deposit_invoice_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deposit Invoice Status"
+          },
+          "deposit_paid_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deposit Paid At"
+          },
+          "invited_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invited Email"
+          },
+          "kickoff_sent_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kickoff Sent At"
+          },
+          "project_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project Id"
+          },
+          "project_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project Name"
+          },
+          "retainer_next_run_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retainer Next Run Date"
+          },
+          "retainer_schedule_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retainer Schedule Id"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "blocked_reason",
+          "client_id",
+          "client_name",
+          "converted_lead",
+          "invited_email",
+          "deposit_invoice_id",
+          "deposit_invoice_number",
+          "deposit_invoice_status",
+          "deposit_paid_at",
+          "project_id",
+          "project_name",
+          "kickoff_sent_at",
+          "completed_at"
+        ],
+        "title": "ProposalAcceptanceRead",
+        "type": "object"
+      },
+      "ProposalAccessRead": {
+        "description": "Opens a code-protected proposal: send it back in the\nX-Proposal-Access header on share-link requests.",
+        "properties": {
+          "access_token": {
+            "title": "Access Token",
+            "type": "string"
+          },
+          "expires_in_seconds": {
+            "title": "Expires In Seconds",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "access_token",
+          "expires_in_seconds"
+        ],
+        "title": "ProposalAccessRead",
+        "type": "object"
+      },
+      "ProposalAttachmentRead": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "file_name": {
+            "title": "File Name",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "mime_type": {
+            "title": "Mime Type",
+            "type": "string"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          },
+          "size": {
+            "title": "Size",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "file_name",
+          "mime_type",
+          "size",
+          "sha256",
+          "created_at"
+        ],
+        "title": "ProposalAttachmentRead",
+        "type": "object"
+      },
+      "ProposalCertificateRead": {
+        "description": "The record of a signed proposal: the document exactly as it was sent\n(read from the frozen snapshot, not today's rows), the signature with its\nevidence, and the audit trail.",
+        "properties": {
+          "agency_name": {
+            "title": "Agency Name",
+            "type": "string"
+          },
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/CertificateAttachmentRead"
+            },
+            "title": "Attachments",
+            "type": "array"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content"
+          },
+          "countersignature": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CertificateSignatureRead"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "document_hash": {
+            "title": "Document Hash",
+            "type": "string"
+          },
+          "document_intact": {
+            "title": "Document Intact",
+            "type": "boolean"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/ProposalEventRead"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "line_items": {
+            "items": {
+              "$ref": "#/components/schemas/CertificateLineRead"
+            },
+            "title": "Line Items",
+            "type": "array"
+          },
+          "monthly_subtotal_cents": {
+            "default": 0,
+            "title": "Monthly Subtotal Cents",
+            "type": "integer"
+          },
+          "monthly_tax_cents": {
+            "default": 0,
+            "title": "Monthly Tax Cents",
+            "type": "integer"
+          },
+          "monthly_total_cents": {
+            "default": 0,
+            "title": "Monthly Total Cents",
+            "type": "integer"
+          },
+          "package_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Package Name"
+          },
+          "proposal_id": {
+            "format": "uuid",
+            "title": "Proposal Id",
+            "type": "string"
+          },
+          "recipient_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recipient Email"
+          },
+          "recipient_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recipient Name"
+          },
+          "requires_countersign": {
+            "title": "Requires Countersign",
+            "type": "boolean"
+          },
+          "sent_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sent At"
+          },
+          "signature": {
+            "$ref": "#/components/schemas/CertificateSignatureRead"
+          },
+          "signature_matches_document": {
+            "title": "Signature Matches Document",
+            "type": "boolean"
+          },
+          "subtotal_cents": {
+            "title": "Subtotal Cents",
+            "type": "integer"
+          },
+          "tax_cents": {
+            "title": "Tax Cents",
+            "type": "integer"
+          },
+          "tax_rate_percent": {
+            "title": "Tax Rate Percent",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "total_cents": {
+            "title": "Total Cents",
+            "type": "integer"
+          },
+          "valid_until": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid Until"
+          }
+        },
+        "required": [
+          "proposal_id",
+          "agency_name",
+          "title",
+          "recipient_name",
+          "recipient_email",
+          "content",
+          "currency",
+          "tax_rate_percent",
+          "subtotal_cents",
+          "tax_cents",
+          "total_cents",
+          "valid_until",
+          "sent_at",
+          "line_items",
+          "attachments",
+          "document_hash",
+          "document_intact",
+          "signature_matches_document",
+          "signature",
+          "requires_countersign",
+          "countersignature",
+          "completed_at",
+          "events",
+          "generated_at"
+        ],
+        "title": "ProposalCertificateRead",
+        "type": "object"
+      },
+      "ProposalCodeSentRead": {
+        "description": "Where the code went, masked (\"j\u2022\u2022\u2022@fjord.example\").",
+        "properties": {
+          "email_hint": {
+            "title": "Email Hint",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email_hint"
+        ],
+        "title": "ProposalCodeSentRead",
+        "type": "object"
+      },
+      "ProposalCodeVerifyRequest": {
+        "properties": {
+          "code": {
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "title": "ProposalCodeVerifyRequest",
+        "type": "object"
+      },
       "ProposalCreate": {
         "properties": {
           "client_id": {
@@ -13729,11 +14614,44 @@
             ],
             "title": "Content"
           },
+          "create_project_on_accept": {
+            "default": false,
+            "title": "Create Project On Accept",
+            "type": "boolean"
+          },
           "currency": {
             "default": "USD",
             "pattern": "^[A-Za-z]{3}$",
             "title": "Currency",
             "type": "string"
+          },
+          "deposit_percent": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 100.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deposit Percent"
+          },
+          "kickoff_template_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kickoff Template Id"
           },
           "lead_id": {
             "anyOf": [
@@ -13752,6 +14670,14 @@
               "$ref": "#/components/schemas/ProposalLineItemInput"
             },
             "title": "Line Items",
+            "type": "array"
+          },
+          "packages": {
+            "items": {
+              "$ref": "#/components/schemas/ProposalPackageInput"
+            },
+            "maxItems": 4,
+            "title": "Packages",
             "type": "array"
           },
           "recipient_email": {
@@ -13777,6 +14703,16 @@
               }
             ],
             "title": "Recipient Name"
+          },
+          "require_email_code": {
+            "default": false,
+            "title": "Require Email Code",
+            "type": "boolean"
+          },
+          "requires_countersign": {
+            "default": false,
+            "title": "Requires Countersign",
+            "type": "boolean"
           },
           "tax_rate_percent": {
             "anyOf": [
@@ -13837,10 +14773,27 @@
       },
       "ProposalDetailRead": {
         "properties": {
+          "acceptance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProposalAcceptanceRead"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "agency_id": {
             "format": "uuid",
             "title": "Agency Id",
             "type": "string"
+          },
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/ProposalAttachmentRead"
+            },
+            "title": "Attachments",
+            "type": "array"
           },
           "client_id": {
             "anyOf": [
@@ -13865,6 +14818,26 @@
             ],
             "title": "Client Name"
           },
+          "completed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "consent_text": {
+            "title": "Consent Text",
+            "type": "string"
+          },
+          "consent_version": {
+            "title": "Consent Version",
+            "type": "string"
+          },
           "content": {
             "anyOf": [
               {
@@ -13875,6 +14848,21 @@
               }
             ],
             "title": "Content"
+          },
+          "countersignature": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProposalSignatureRead"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "create_project_on_accept": {
+            "default": false,
+            "title": "Create Project On Accept",
+            "type": "boolean"
           },
           "created_at": {
             "format": "date-time",
@@ -13908,14 +14896,48 @@
             ],
             "title": "Decline Reason"
           },
+          "deposit_percent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deposit Percent"
+          },
           "display_status": {
             "title": "Display Status",
             "type": "string"
+          },
+          "document_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Hash"
           },
           "id": {
             "format": "uuid",
             "title": "Id",
             "type": "string"
+          },
+          "kickoff_template_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kickoff Template Id"
           },
           "lead_id": {
             "anyOf": [
@@ -13947,6 +14969,28 @@
             "title": "Line Items",
             "type": "array"
           },
+          "monthly_subtotal_cents": {
+            "default": 0,
+            "title": "Monthly Subtotal Cents",
+            "type": "integer"
+          },
+          "monthly_tax_cents": {
+            "default": 0,
+            "title": "Monthly Tax Cents",
+            "type": "integer"
+          },
+          "monthly_total_cents": {
+            "default": 0,
+            "title": "Monthly Total Cents",
+            "type": "integer"
+          },
+          "packages": {
+            "items": {
+              "$ref": "#/components/schemas/ProposalPackageRead"
+            },
+            "title": "Packages",
+            "type": "array"
+          },
           "recipient_email": {
             "anyOf": [
               {
@@ -13968,6 +15012,15 @@
               }
             ],
             "title": "Recipient Name"
+          },
+          "require_email_code": {
+            "default": false,
+            "title": "Require Email Code",
+            "type": "boolean"
+          },
+          "requires_countersign": {
+            "title": "Requires Countersign",
+            "type": "boolean"
           },
           "sent_at": {
             "anyOf": [
@@ -14070,18 +15123,130 @@
           "decline_reason",
           "share_url",
           "line_items",
-          "signature"
+          "attachments",
+          "signature",
+          "document_hash",
+          "consent_text",
+          "consent_version",
+          "requires_countersign",
+          "countersignature",
+          "completed_at"
         ],
         "title": "ProposalDetailRead",
         "type": "object"
       },
+      "ProposalEventRead": {
+        "properties": {
+          "actor_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor Label"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "ip_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ip Address"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "user_agent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Agent"
+          }
+        },
+        "required": [
+          "kind",
+          "occurred_at",
+          "actor_label",
+          "ip_address",
+          "user_agent",
+          "detail"
+        ],
+        "title": "ProposalEventRead",
+        "type": "object"
+      },
       "ProposalLineItemInput": {
         "properties": {
+          "billing": {
+            "default": "one_time",
+            "enum": [
+              "one_time",
+              "monthly"
+            ],
+            "title": "Billing",
+            "type": "string"
+          },
           "description": {
             "maxLength": 1024,
             "minLength": 1,
             "title": "Description",
             "type": "string"
+          },
+          "details": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details"
+          },
+          "optional": {
+            "default": false,
+            "title": "Optional",
+            "type": "boolean"
+          },
+          "package_key": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Package Key"
           },
           "quantity": {
             "anyOf": [
@@ -14094,6 +15259,23 @@
               }
             ],
             "title": "Quantity"
+          },
+          "selected": {
+            "default": true,
+            "title": "Selected",
+            "type": "boolean"
+          },
+          "service_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Service Id"
           },
           "unit_price_cents": {
             "minimum": 0.0,
@@ -14115,14 +15297,52 @@
             "title": "Amount Cents",
             "type": "integer"
           },
+          "billing": {
+            "default": "one_time",
+            "title": "Billing",
+            "type": "string"
+          },
           "description": {
             "title": "Description",
             "type": "string"
+          },
+          "details": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details"
           },
           "id": {
             "format": "uuid",
             "title": "Id",
             "type": "string"
+          },
+          "included": {
+            "default": true,
+            "title": "Included",
+            "type": "boolean"
+          },
+          "optional": {
+            "default": false,
+            "title": "Optional",
+            "type": "boolean"
+          },
+          "package_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Package Id"
           },
           "position": {
             "title": "Position",
@@ -14131,6 +15351,23 @@
           "quantity": {
             "title": "Quantity",
             "type": "string"
+          },
+          "selected": {
+            "default": true,
+            "title": "Selected",
+            "type": "boolean"
+          },
+          "service_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Service Id"
           },
           "unit_price_cents": {
             "title": "Unit Price Cents",
@@ -14141,11 +15378,136 @@
           "id",
           "position",
           "description",
+          "details",
           "quantity",
           "unit_price_cents",
-          "amount_cents"
+          "amount_cents",
+          "service_id"
         ],
         "title": "ProposalLineItemRead",
+        "type": "object"
+      },
+      "ProposalOptionsRequest": {
+        "description": "The recipient's choice before signing: one of the packages (required\nwhen there are any), and the add-ons they want. Add-ons left out are\nunticked.",
+        "properties": {
+          "add_on_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 200,
+            "title": "Add On Ids",
+            "type": "array"
+          },
+          "package_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Package Id"
+          }
+        },
+        "title": "ProposalOptionsRequest",
+        "type": "object"
+      },
+      "ProposalPackageInput": {
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "key": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Key",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "recommended": {
+            "default": false,
+            "title": "Recommended",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "key",
+          "name"
+        ],
+        "title": "ProposalPackageInput",
+        "type": "object"
+      },
+      "ProposalPackageRead": {
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "monthly_price_cents": {
+            "title": "Monthly Price Cents",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "position": {
+            "title": "Position",
+            "type": "integer"
+          },
+          "price_cents": {
+            "title": "Price Cents",
+            "type": "integer"
+          },
+          "recommended": {
+            "title": "Recommended",
+            "type": "boolean"
+          },
+          "selected": {
+            "title": "Selected",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "position",
+          "name",
+          "description",
+          "recommended",
+          "selected",
+          "price_cents",
+          "monthly_price_cents"
+        ],
+        "title": "ProposalPackageRead",
         "type": "object"
       },
       "ProposalPublicRead": {
@@ -14153,6 +15515,33 @@
         "properties": {
           "agency_name": {
             "title": "Agency Name",
+            "type": "string"
+          },
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/ProposalAttachmentRead"
+            },
+            "title": "Attachments",
+            "type": "array"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "consent_text": {
+            "title": "Consent Text",
+            "type": "string"
+          },
+          "consent_version": {
+            "title": "Consent Version",
             "type": "string"
           },
           "content": {
@@ -14166,6 +15555,16 @@
             ],
             "title": "Content"
           },
+          "countersignature": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProposalSignatureRead"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "currency": {
             "title": "Currency",
             "type": "string"
@@ -14174,11 +15573,44 @@
             "title": "Display Status",
             "type": "string"
           },
+          "document_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Hash"
+          },
           "line_items": {
             "items": {
               "$ref": "#/components/schemas/ProposalLineItemRead"
             },
             "title": "Line Items",
+            "type": "array"
+          },
+          "monthly_subtotal_cents": {
+            "default": 0,
+            "title": "Monthly Subtotal Cents",
+            "type": "integer"
+          },
+          "monthly_tax_cents": {
+            "default": 0,
+            "title": "Monthly Tax Cents",
+            "type": "integer"
+          },
+          "monthly_total_cents": {
+            "default": 0,
+            "title": "Monthly Total Cents",
+            "type": "integer"
+          },
+          "packages": {
+            "items": {
+              "$ref": "#/components/schemas/ProposalPackageRead"
+            },
+            "title": "Packages",
             "type": "array"
           },
           "recipient_name": {
@@ -14191,6 +15623,10 @@
               }
             ],
             "title": "Recipient Name"
+          },
+          "requires_countersign": {
+            "title": "Requires Countersign",
+            "type": "boolean"
           },
           "signature": {
             "anyOf": [
@@ -14253,7 +15689,14 @@
           "total_cents",
           "valid_until",
           "line_items",
-          "signature"
+          "attachments",
+          "signature",
+          "document_hash",
+          "consent_text",
+          "consent_version",
+          "requires_countersign",
+          "countersignature",
+          "completed_at"
         ],
         "title": "ProposalPublicRead",
         "type": "object"
@@ -14328,6 +15771,21 @@
               }
             ],
             "title": "Lead Name"
+          },
+          "monthly_subtotal_cents": {
+            "default": 0,
+            "title": "Monthly Subtotal Cents",
+            "type": "integer"
+          },
+          "monthly_tax_cents": {
+            "default": 0,
+            "title": "Monthly Tax Cents",
+            "type": "integer"
+          },
+          "monthly_total_cents": {
+            "default": 0,
+            "title": "Monthly Total Cents",
+            "type": "integer"
           },
           "recipient_email": {
             "anyOf": [
@@ -14421,6 +15879,23 @@
       },
       "ProposalSignRequest": {
         "properties": {
+          "consent": {
+            "default": false,
+            "title": "Consent",
+            "type": "boolean"
+          },
+          "document_hash": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Hash"
+          },
           "signer_email": {
             "format": "email",
             "title": "Signer Email",
@@ -14446,6 +15921,17 @@
             "format": "date-time",
             "title": "Signed At",
             "type": "string"
+          },
+          "signed_via": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed Via"
           },
           "signer_email": {
             "title": "Signer Email",
@@ -14491,11 +15977,44 @@
             ],
             "title": "Content"
           },
+          "create_project_on_accept": {
+            "default": false,
+            "title": "Create Project On Accept",
+            "type": "boolean"
+          },
           "currency": {
             "default": "USD",
             "pattern": "^[A-Za-z]{3}$",
             "title": "Currency",
             "type": "string"
+          },
+          "deposit_percent": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 100.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deposit Percent"
+          },
+          "kickoff_template_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kickoff Template Id"
           },
           "lead_id": {
             "anyOf": [
@@ -14514,6 +16033,14 @@
               "$ref": "#/components/schemas/ProposalLineItemInput"
             },
             "title": "Line Items",
+            "type": "array"
+          },
+          "packages": {
+            "items": {
+              "$ref": "#/components/schemas/ProposalPackageInput"
+            },
+            "maxItems": 4,
+            "title": "Packages",
             "type": "array"
           },
           "recipient_email": {
@@ -14539,6 +16066,16 @@
               }
             ],
             "title": "Recipient Name"
+          },
+          "require_email_code": {
+            "default": false,
+            "title": "Require Email Code",
+            "type": "boolean"
+          },
+          "requires_countersign": {
+            "default": false,
+            "title": "Requires Countersign",
+            "type": "boolean"
           },
           "tax_rate_percent": {
             "anyOf": [
@@ -14650,6 +16187,197 @@
           "name"
         ],
         "title": "ProspectRead",
+        "type": "object"
+      },
+      "PublicLeadPortalMessageCreate": {
+        "properties": {
+          "author_name": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author Name"
+          },
+          "body": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Body",
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "title": "PublicLeadPortalMessageCreate",
+        "type": "object"
+      },
+      "PublicLeadPortalProposal": {
+        "properties": {
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "display_status": {
+            "title": "Display Status",
+            "type": "string"
+          },
+          "monthly_total_cents": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": 0,
+            "title": "Monthly Total Cents"
+          },
+          "sent_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sent At"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "total_cents": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Cents"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          },
+          "valid_until": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid Until"
+          }
+        },
+        "required": [
+          "title",
+          "display_status",
+          "currency",
+          "total_cents",
+          "valid_until",
+          "sent_at",
+          "url"
+        ],
+        "title": "PublicLeadPortalProposal",
+        "type": "object"
+      },
+      "PublicLeadPortalRead": {
+        "description": "What the lead sees. Nothing internal: no ids beyond what the page\nneeds, no other leads, no staff names beyond who replied.",
+        "properties": {
+          "agency_name": {
+            "title": "Agency Name",
+            "type": "string"
+          },
+          "brand_color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand Color"
+          },
+          "contact_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Name"
+          },
+          "has_logo": {
+            "title": "Has Logo",
+            "type": "boolean"
+          },
+          "is_client": {
+            "title": "Is Client",
+            "type": "boolean"
+          },
+          "lead_name": {
+            "title": "Lead Name",
+            "type": "string"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/LeadPortalMessageRead"
+            },
+            "title": "Messages",
+            "type": "array"
+          },
+          "portal_login_url": {
+            "title": "Portal Login Url",
+            "type": "string"
+          },
+          "proposals": {
+            "items": {
+              "$ref": "#/components/schemas/PublicLeadPortalProposal"
+            },
+            "title": "Proposals",
+            "type": "array"
+          },
+          "welcome_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Welcome Message"
+          }
+        },
+        "required": [
+          "agency_name",
+          "brand_color",
+          "has_logo",
+          "lead_name",
+          "contact_name",
+          "welcome_message",
+          "proposals",
+          "messages",
+          "is_client",
+          "portal_login_url"
+        ],
+        "title": "PublicLeadPortalRead",
         "type": "object"
       },
       "QualificationsUpdate": {
@@ -14786,6 +16514,18 @@
             ],
             "title": "Quantity"
           },
+          "service_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Service Id"
+          },
           "unit_price_cents": {
             "minimum": 0.0,
             "title": "Unit Price Cents",
@@ -14818,6 +16558,18 @@
           "quantity": {
             "title": "Quantity",
             "type": "string"
+          },
+          "service_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Service Id"
           },
           "unit_price_cents": {
             "title": "Unit Price Cents",
@@ -15377,6 +17129,312 @@
           }
         },
         "title": "SendProposalRequest",
+        "type": "object"
+      },
+      "ServiceCreate": {
+        "properties": {
+          "default_quantity": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "default": "1",
+            "title": "Default Quantity"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "name": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "pricing_type": {
+            "default": "fixed",
+            "pattern": "^(fixed|hourly|monthly)$",
+            "title": "Pricing Type",
+            "type": "string"
+          },
+          "unit_price_cents": {
+            "minimum": 0.0,
+            "title": "Unit Price Cents",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "unit_price_cents"
+        ],
+        "title": "ServiceCreate",
+        "type": "object"
+      },
+      "ServiceImportRequest": {
+        "properties": {
+          "dry_run": {
+            "default": true,
+            "title": "Dry Run",
+            "type": "boolean"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ServiceImportRow"
+            },
+            "maxItems": 500,
+            "minItems": 1,
+            "title": "Rows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "title": "ServiceImportRequest",
+        "type": "object"
+      },
+      "ServiceImportRow": {
+        "properties": {
+          "default_quantity": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Quantity"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "pricing": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pricing"
+          },
+          "row": {
+            "minimum": 1.0,
+            "title": "Row",
+            "type": "integer"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "required": [
+          "row"
+        ],
+        "title": "ServiceImportRow",
+        "type": "object"
+      },
+      "ServiceRead": {
+        "properties": {
+          "agency_id": {
+            "format": "uuid",
+            "title": "Agency Id",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "default_quantity": {
+            "title": "Default Quantity",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "is_archived": {
+            "title": "Is Archived",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "pricing_type": {
+            "title": "Pricing Type",
+            "type": "string"
+          },
+          "unit_price_cents": {
+            "title": "Unit Price Cents",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "agency_id",
+          "name",
+          "description",
+          "pricing_type",
+          "unit_price_cents",
+          "default_quantity",
+          "is_archived",
+          "created_at"
+        ],
+        "title": "ServiceRead",
+        "type": "object"
+      },
+      "ServiceUpdate": {
+        "description": "Partial update \u2014 only the fields sent change.",
+        "properties": {
+          "default_quantity": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Quantity"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "is_archived": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Archived"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "pricing_type": {
+            "anyOf": [
+              {
+                "pattern": "^(fixed|hourly|monthly)$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pricing Type"
+          },
+          "unit_price_cents": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Price Cents"
+          }
+        },
+        "title": "ServiceUpdate",
         "type": "object"
       },
       "SignupRequest": {
@@ -23695,7 +25753,8 @@
                 "tasks",
                 "time_entries",
                 "invoices",
-                "proposals"
+                "proposals",
+                "services"
               ],
               "title": "Kind",
               "type": "string"
@@ -23931,6 +25990,64 @@
         ]
       }
     },
+    "/agencies/{agency_id}/imports/services": {
+      "post": {
+        "operationId": "import_services_agencies__agency_id__imports_services_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServiceImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResultRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Import Services",
+        "tags": [
+          "imports"
+        ]
+      }
+    },
     "/agencies/{agency_id}/imports/tasks": {
       "post": {
         "operationId": "import_tasks_agencies__agency_id__imports_tasks_post",
@@ -24120,7 +26237,8 @@
                 "leads",
                 "projects",
                 "tasks",
-                "time_entries"
+                "time_entries",
+                "services"
               ],
               "title": "Kind",
               "type": "string"
@@ -24195,7 +26313,8 @@
                 "leads",
                 "projects",
                 "tasks",
-                "time_entries"
+                "time_entries",
+                "services"
               ],
               "title": "Kind",
               "type": "string"
@@ -26686,6 +28805,305 @@
         "summary": "Assign Owner",
         "tags": [
           "leads"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/leads/{lead_id}/portal": {
+      "delete": {
+        "operationId": "disable_portal_agencies__agency_id__leads__lead_id__portal_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lead_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Lead Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Disable Portal",
+        "tags": [
+          "lead-portal"
+        ]
+      },
+      "get": {
+        "operationId": "read_portal_agencies__agency_id__leads__lead_id__portal_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lead_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Lead Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadPortalRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Read Portal",
+        "tags": [
+          "lead-portal"
+        ]
+      },
+      "put": {
+        "operationId": "enable_portal_agencies__agency_id__leads__lead_id__portal_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lead_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Lead Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LeadPortalUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadPortalRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Enable Portal",
+        "tags": [
+          "lead-portal"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/leads/{lead_id}/portal/messages": {
+      "post": {
+        "operationId": "reply_agencies__agency_id__leads__lead_id__portal_messages_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lead_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Lead Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LeadPortalMessageCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadPortalMessageRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Reply",
+        "tags": [
+          "lead-portal"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/leads/{lead_id}/portal/reset-link": {
+      "post": {
+        "operationId": "reset_link_agencies__agency_id__leads__lead_id__portal_reset_link_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lead_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Lead Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadPortalRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Reset Link",
+        "tags": [
+          "lead-portal"
         ]
       }
     },
@@ -33298,6 +35716,506 @@
         ]
       }
     },
+    "/agencies/{agency_id}/proposals/{proposal_id}/acceptance/retry": {
+      "post": {
+        "description": "Re-runs a blocked acceptance (after upgrading the plan, say). Picks\nup where it stopped; finished steps aren't repeated.",
+        "operationId": "retry_acceptance_agencies__agency_id__proposals__proposal_id__acceptance_retry_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Proposal Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalDetailRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Retry Acceptance",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/proposals/{proposal_id}/attachments": {
+      "post": {
+        "operationId": "upload_attachment_agencies__agency_id__proposals__proposal_id__attachments_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Proposal Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_attachment_agencies__agency_id__proposals__proposal_id__attachments_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalAttachmentRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Upload Attachment",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/proposals/{proposal_id}/attachments/{attachment_id}": {
+      "delete": {
+        "operationId": "delete_attachment_agencies__agency_id__proposals__proposal_id__attachments__attachment_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Proposal Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "attachment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Attachment Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Attachment",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/proposals/{proposal_id}/attachments/{attachment_id}/download": {
+      "get": {
+        "operationId": "download_attachment_agencies__agency_id__proposals__proposal_id__attachments__attachment_id__download_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Proposal Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "attachment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Attachment Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Download Attachment",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/proposals/{proposal_id}/certificate": {
+      "get": {
+        "operationId": "proposal_certificate_agencies__agency_id__proposals__proposal_id__certificate_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Proposal Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalCertificateRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Proposal Certificate",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/proposals/{proposal_id}/certificate.pdf": {
+      "get": {
+        "operationId": "proposal_certificate_pdf_agencies__agency_id__proposals__proposal_id__certificate_pdf_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Proposal Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Proposal Certificate Pdf",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/proposals/{proposal_id}/countersign": {
+      "post": {
+        "description": "The agency's signature, after the client's. Owners and admins only:\nit binds the agency.",
+        "operationId": "countersign_proposal_agencies__agency_id__proposals__proposal_id__countersign_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Proposal Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CountersignRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalDetailRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Countersign Proposal",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/proposals/{proposal_id}/events": {
+      "get": {
+        "description": "The audit trail: sent, every view, signed or declined, with where\neach came from. Staff only.",
+        "operationId": "list_proposal_events_agencies__agency_id__proposals__proposal_id__events_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Proposal Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProposalEventRead"
+                  },
+                  "title": "Response List Proposal Events Agencies  Agency Id  Proposals  Proposal Id  Events Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Proposal Events",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
     "/agencies/{agency_id}/proposals/{proposal_id}/send": {
       "post": {
         "operationId": "send_proposal_agencies__agency_id__proposals__proposal_id__send_post",
@@ -33827,6 +36745,241 @@
         "summary": "Restore Agency Endpoint",
         "tags": [
           "agencies"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/services": {
+      "get": {
+        "operationId": "list_services_agencies__agency_id__services_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_archived",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Archived",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ServiceRead"
+                  },
+                  "title": "Response List Services Agencies  Agency Id  Services Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Services",
+        "tags": [
+          "services"
+        ]
+      },
+      "post": {
+        "operationId": "create_service_agencies__agency_id__services_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServiceCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Service",
+        "tags": [
+          "services"
+        ]
+      }
+    },
+    "/agencies/{agency_id}/services/{service_id}": {
+      "delete": {
+        "operationId": "delete_service_agencies__agency_id__services__service_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "service_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Service Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Service",
+        "tags": [
+          "services"
+        ]
+      },
+      "patch": {
+        "operationId": "update_service_agencies__agency_id__services__service_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "service_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Service Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "agency_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agency Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServiceUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Service",
+        "tags": [
+          "services"
         ]
       }
     },
@@ -35982,6 +39135,140 @@
         "summary": "Health Check",
         "tags": [
           "files"
+        ]
+      }
+    },
+    "/lead-portal/{token}": {
+      "get": {
+        "operationId": "read_public_portal_lead_portal__token__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicLeadPortalRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Public Portal",
+        "tags": [
+          "lead-portal"
+        ]
+      }
+    },
+    "/lead-portal/{token}/logo": {
+      "get": {
+        "operationId": "public_logo_lead_portal__token__logo_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Public Logo",
+        "tags": [
+          "lead-portal"
+        ]
+      }
+    },
+    "/lead-portal/{token}/messages": {
+      "post": {
+        "operationId": "ask_lead_portal__token__messages_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicLeadPortalMessageCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadPortalMessageRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ask",
+        "tags": [
+          "lead-portal"
         ]
       }
     },
@@ -38555,6 +41842,156 @@
         ]
       }
     },
+    "/portal/proposals/{proposal_id}/attachments/{attachment_id}": {
+      "get": {
+        "operationId": "download_portal_proposal_attachment_portal_proposals__proposal_id__attachments__attachment_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Proposal Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "attachment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Attachment Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Download Portal Proposal Attachment",
+        "tags": [
+          "client-portal"
+        ]
+      }
+    },
+    "/portal/proposals/{proposal_id}/certificate": {
+      "get": {
+        "operationId": "portal_proposal_certificate_portal_proposals__proposal_id__certificate_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Proposal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalCertificateRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Portal Proposal Certificate",
+        "tags": [
+          "client-portal"
+        ]
+      }
+    },
+    "/portal/proposals/{proposal_id}/certificate.pdf": {
+      "get": {
+        "operationId": "portal_proposal_certificate_pdf_portal_proposals__proposal_id__certificate_pdf_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Proposal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Portal Proposal Certificate Pdf",
+        "tags": [
+          "client-portal"
+        ]
+      }
+    },
     "/portal/proposals/{proposal_id}/decline": {
       "post": {
         "operationId": "decline_portal_proposal_portal_proposals__proposal_id__decline_post",
@@ -38613,6 +42050,65 @@
         ]
       }
     },
+    "/portal/proposals/{proposal_id}/options": {
+      "put": {
+        "description": "The contact's package and add-ons, before signing.",
+        "operationId": "choose_portal_proposal_options_portal_proposals__proposal_id__options_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Proposal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposalOptionsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalDetailRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Choose Portal Proposal Options",
+        "tags": [
+          "client-portal"
+        ]
+      }
+    },
     "/portal/proposals/{proposal_id}/sign": {
       "post": {
         "description": "Signs with the signed-in contact's own name/email \u2014 unlike the public\ntoken flow, the portal already knows who this is.",
@@ -38629,6 +42125,16 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PortalProposalSignRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "content": {
@@ -38780,6 +42286,233 @@
         ]
       }
     },
+    "/proposals/public/{token}/attachments/{attachment_id}": {
+      "get": {
+        "operationId": "download_public_attachment_proposals_public__token__attachments__attachment_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "attachment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Attachment Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Download Public Attachment",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
+    "/proposals/public/{token}/certificate": {
+      "get": {
+        "operationId": "public_certificate_proposals_public__token__certificate_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalCertificateRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Public Certificate",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
+    "/proposals/public/{token}/certificate.pdf": {
+      "get": {
+        "operationId": "public_certificate_pdf_proposals_public__token__certificate_pdf_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Public Certificate Pdf",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
+    "/proposals/public/{token}/code": {
+      "post": {
+        "description": "Emails a code to the proposal's recipient (only ever them).",
+        "operationId": "send_public_proposal_code_proposals_public__token__code_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalCodeSentRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Send Public Proposal Code",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
+    "/proposals/public/{token}/code/verify": {
+      "post": {
+        "operationId": "verify_public_proposal_code_proposals_public__token__code_verify_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposalCodeVerifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalAccessRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Verify Public Proposal Code",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
     "/proposals/public/{token}/decline": {
       "post": {
         "operationId": "decline_public_proposal_proposals_public__token__decline_post",
@@ -38827,6 +42560,59 @@
           }
         },
         "summary": "Decline Public Proposal",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
+    "/proposals/public/{token}/options": {
+      "put": {
+        "description": "The recipient's package and add-ons, before signing. The response\ncarries the new document fingerprint to sign against.",
+        "operationId": "choose_public_proposal_options_proposals_public__token__options_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposalOptionsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalPublicRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Choose Public Proposal Options",
         "tags": [
           "proposals"
         ]

@@ -30,6 +30,8 @@ from binx_api.modules.invoicing import service as invoicing_service
 from binx_api.modules.leads import service as leads_service
 from binx_api.modules.projects.models import Project, ProjectTask, ProjectTaskList
 from binx_api.modules.proposals import service as proposals_service
+from binx_api.modules.services import service as services_service
+from binx_api.modules.services.models import PRICING_TYPE_LABELS
 from binx_api.modules.time_tracking.models import TimeEntry
 from binx_api.modules.users.models import User, UserPrivacySettings
 
@@ -324,6 +326,7 @@ async def export_proposals(db: AsyncSession, agency_id: uuid.UUID, *, viewer_is_
             _label(proposal.status),
             proposal.currency,
             _money(proposal.total_cents),
+            _money(proposal.monthly_total_cents),
             proposal.sent_at,
             proposal.viewed_at,
             proposal.decided_at,
@@ -341,6 +344,7 @@ async def export_proposals(db: AsyncSession, agency_id: uuid.UUID, *, viewer_is_
         "Status",
         "Currency",
         "Total",
+        "Monthly total",
         "Sent",
         "Viewed",
         "Decided",
@@ -348,6 +352,26 @@ async def export_proposals(db: AsyncSession, agency_id: uuid.UUID, *, viewer_is_
         "Created",
     ]
     return ExportTable(headers, rows, "Proposals")
+
+
+async def export_services(db: AsyncSession, agency_id: uuid.UUID, *, viewer_is_admin: bool) -> ExportTable:
+    """The whole catalog, archived services included (marked in Status), so
+    the file re-imports as the same catalog."""
+    services = await services_service.list_services(db, agency_id, include_archived=True)
+    rows: list[list[Cell]] = [
+        [
+            item.name,
+            item.description,
+            PRICING_TYPE_LABELS.get(item.pricing_type, _label(item.pricing_type)),
+            _money(item.unit_price_cents),
+            item.default_quantity,
+            "Archived" if item.is_archived else "Active",
+            item.created_at,
+        ]
+        for item in services
+    ]
+    headers = ["Service name", "Description", "Pricing", "Price", "Default quantity", "Status", "Added"]
+    return ExportTable(headers, rows, "Services")
 
 
 Exporter = Callable[..., Awaitable[ExportTable]]
@@ -361,4 +385,5 @@ EXPORTERS: dict[str, Exporter] = {
     "time_entries": export_time_entries,
     "invoices": export_invoices,
     "proposals": export_proposals,
+    "services": export_services,
 }

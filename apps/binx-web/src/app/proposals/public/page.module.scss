@@ -85,6 +85,10 @@
     color: #b45309;
     background: rgba(180, 83, 9, 0.1);
   }
+  &[data-status="awaiting_countersign"] {
+    color: #b45309;
+    background: rgba(180, 83, 9, 0.1);
+  }
 }
 
 .content {
@@ -95,35 +99,17 @@
   line-height: 1.6;
 }
 
-.tableScroll {
-  @include m.table-scroll;
-  border-radius: t.$radius-sm;
+.documents {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
 }
 
-.lineTable {
-  width: 100%;
-  border-collapse: collapse;
-
-  th {
-    padding: t.$space-2 t.$space-3;
-    @include m.mono-label;
-    font-size: 0.5625rem;
-    color: t.$color-ink-faint;
-    text-align: left;
-    border-bottom: 1px solid t.$color-border;
-  }
-
-  td {
-    padding: t.$space-3;
-    font-size: t.$font-size-sm;
-    color: t.$color-ink;
-    border-bottom: 1px solid t.$color-border;
-  }
-}
-
-.numCol {
-  text-align: right !important;
-  white-space: nowrap;
+.documentsTitle {
+  margin: 0;
+  @include m.mono-label;
+  font-size: 0.5625rem;
+  color: t.$color-ink-faint;
 }
 
 .totals {
@@ -191,4 +177,41 @@
   background: rgba(220, 38, 38, 0.08);
   border: 1px solid rgba(220, 38, 38, 0.2);
   border-radius: t.$radius-sm;
+}
+
+.certificateWrap {
+  width: 100%;
+  max-width: 56rem;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-4;
+}
+
+.backLink {
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+  text-decoration: none;
+
+  &:hover {
+    color: t.$color-ink;
+  }
+}
+
+.certificateLink {
+  align-self: flex-start;
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  color: t.$color-ink;
+  text-underline-offset: 2px;
+}
+
+@media print {
+  .page {
+    padding: 0;
+    background: none;
+  }
+
+  .backLink {
+    display: none;
+  }
 }

@@ -2,8 +2,11 @@
  * ProposalView.tsx
  *
  * The read layout for a proposal: title, status, recipient info, the
- * line-item table, totals, the content block, and — once decided —
- * signature details or a decline reason.
+ * line-item table (with each line's details), totals, the content block,
+ * attached documents, and — once decided — signature details or a decline
+ * reason. Shared by staff and the client portal; each passes the
+ * `attachmentHrefBase` for its own download route. Without it the documents
+ * section is left out (the staff draft page manages them separately).
  *
  * @module apps/binx-web/src/components/proposals/ProposalView/ProposalView.tsx
  * @author Binx Portal
@@ -11,13 +14,30 @@
 "use client";
 
 import type { ProposalDetail } from "@/lib/proposals";
-import { proposalStatusLabel } from "@/lib/proposals-client";
+import {
+  PER_MONTH,
+  proposalStatusLabel,
+  proposalTotalRows,
+} from "@/lib/proposals-client";
+import Link from "next/link";
+
 import { formatMoneyCents } from "@/lib/money";
+import ProposalAttachmentList from "@/components/proposals/ProposalAttachmentList/ProposalAttachmentList";
+import ProposalLines, {
+  type ChooseTarget,
+} from "@/components/proposals/ProposalLines/ProposalLines";
 
 import styles from "./ProposalView.module.scss";
 
 interface ProposalViewProps {
   proposal: ProposalDetail;
+  /** Download URL prefix for attachments (`${base}/${id}`). Omit to hide
+   * the documents section. */
+  attachmentHrefBase?: string;
+  /** Where the signing certificate is, once signed. */
+  certificateHref?: string;
+  /** Set while the recipient can still pick a package / add-ons. */
+  choose?: ChooseTarget;
 }
 
 function formatDate(iso: string): string {
@@ -28,12 +48,17 @@ function formatDate(iso: string): string {
   });
 }
 
-function quantityLabel(quantity: string): string {
-  const n = Number.parseFloat(quantity);
-  return Number.isInteger(n) ? String(n) : quantity;
-}
+const SIGNED_VIA: Record<string, string> = {
+  portal: " in the client portal",
+  link: " from the share link",
+};
 
-const ProposalView = ({ proposal }: ProposalViewProps) => {
+const ProposalView = ({
+  proposal,
+  attachmentHrefBase,
+  certificateHref,
+  choose,
+}: ProposalViewProps) => {
   const currency = proposal.currency;
 
   return (
@@ -88,58 +113,37 @@ const ProposalView = ({ proposal }: ProposalViewProps) => {
         </section>
       )}
 
-      <div className={styles.tableScroll}>
-        <table className={styles.lineTable}>
-          <thead>
-            <tr>
-              <th>Description</th>
-              <th className={styles.numCol}>Qty</th>
-              <th className={styles.numCol}>Unit price</th>
-              <th className={styles.numCol}>Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            {proposal.line_items.map((item) => (
-              <tr key={item.id}>
-                <td>{item.description}</td>
-                <td className={styles.numCol}>
-                  {quantityLabel(item.quantity)}
-                </td>
-                <td className={styles.numCol}>
-                  {formatMoneyCents(item.unit_price_cents, currency)}
-                </td>
-                <td className={styles.numCol}>
-                  {formatMoneyCents(item.amount_cents, currency)}
-                </td>
-              </tr>
-            ))}
-            {proposal.line_items.length === 0 && (
-              <tr>
-                <td colSpan={4} className={styles.noLines}>
-                  No line items yet.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <ProposalLines
+        currency={currency}
+        lineItems={proposal.line_items}
+        packages={proposal.packages}
+        choose={choose}
+      />
 
       <dl className={styles.totals}>
-        <div>
-          <dt>Subtotal</dt>
-          <dd>{formatMoneyCents(proposal.subtotal_cents, currency)}</dd>
-        </div>
-        {proposal.tax_cents > 0 && (
-          <div>
-            <dt>Tax ({Number.parseFloat(proposal.tax_rate_percent)}%)</dt>
-            <dd>{formatMoneyCents(proposal.tax_cents, currency)}</dd>
+        {proposalTotalRows(proposal).map((row) => (
+          <div
+            key={`${row.label}-${row.perMonth}`}
+            className={row.grand ? styles.grandTotal : undefined}
+          >
+            <dt>{row.label}</dt>
+            <dd>
+              {formatMoneyCents(row.cents, currency)}
+              {row.perMonth ? PER_MONTH : ""}
+            </dd>
           </div>
-        )}
-        <div className={styles.grandTotal}>
-          <dt>Total</dt>
-          <dd>{formatMoneyCents(proposal.total_cents, currency)}</dd>
-        </div>
+        ))}
       </dl>
+
+      {attachmentHrefBase && proposal.attachments.length > 0 && (
+        <section>
+          <h2 className={styles.sectionLabel}>Documents</h2>
+          <ProposalAttachmentList
+            attachments={proposal.attachments}
+            hrefBase={attachmentHrefBase}
+          />
+        </section>
+      )}
 
       {proposal.signature && (
         <section className={styles.decision}>
@@ -149,7 +153,24 @@ const ProposalView = ({ proposal }: ProposalViewProps) => {
           </p>
           <p className={styles.partyLine}>
             Signed {formatDate(proposal.signature.signed_at)}
+            {SIGNED_VIA[proposal.signature.signed_via ?? ""] ?? ""}
           </p>
+          {proposal.countersignature && (
+            <p className={styles.partyLine}>
+              Countersigned by {proposal.countersignature.signer_name} for the
+              agency, {formatDate(proposal.countersignature.signed_at)}
+            </p>
+          )}
+          {proposal.requires_countersign && !proposal.countersignature && (
+            <p className={styles.partyLine}>
+              Awaiting the agency&apos;s countersignature.
+            </p>
+          )}
+          {certificateHref && (
+            <Link href={certificateHref} className={styles.certificateLink}>
+              View the signing certificate →
+            </Link>
+          )}
         </section>
       )}
 

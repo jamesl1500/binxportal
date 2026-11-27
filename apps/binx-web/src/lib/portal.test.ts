@@ -221,10 +221,10 @@ const cases: Case[] = [
   },
   {
     name: "signPortalProposal",
-    call: () => portal.signPortalProposal("p1"),
+    call: () => portal.signPortalProposal("p1", true, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
     method: "post",
     url: "/portal/proposals/p1/sign",
-    body: undefined,
+    body: { consent: true, document_hash: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" },
   },
   {
     name: "declinePortalProposal",

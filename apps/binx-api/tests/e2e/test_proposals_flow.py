@@ -69,7 +69,13 @@ class TestProposalLifecycle:
         assert body["signature"] is None
 
         sign = await client.post(
-            f"/proposals/public/{token}/sign", json={"signer_name": "Jane Prospect", "signer_email": "jane@example.com"}
+            f"/proposals/public/{token}/sign",
+            json={
+                "signer_name": "Jane Prospect",
+                "signer_email": "jane@example.com",
+                "consent": True,
+                "document_hash": body["document_hash"],
+            },
         )
         assert sign.status_code == 200, sign.text
         assert sign.json()["status"] == "signed"
@@ -124,11 +130,22 @@ class TestSignatureIpAddress:
         )
         token = _token_from_share_url(proposal["share_url"])
 
+        sent = await client.get(f"/agencies/{agency.id}/proposals/{proposal['id']}", headers=auth_headers(owner))
         sign = await client.post(
             f"/proposals/public/{token}/sign",
-            json={"signer_name": "Jane Prospect", "signer_email": "jane@example.com"},
-            headers={"x-binx-client-ip": "203.0.113.50", "x-binx-proxy-secret": "s3cret"},
+            json={
+                "signer_name": "Jane Prospect",
+                "signer_email": "jane@example.com",
+                "consent": True,
+                "document_hash": sent.json()["document_hash"],
+            },
+            headers={
+                "x-binx-client-ip": "203.0.113.50",
+                "x-binx-client-ua": "Mozilla/5.0 (Signer)",
+                "x-binx-proxy-secret": "s3cret",
+            },
         )
         assert sign.status_code == 200, sign.text
         signature = (await db_session.execute(select(ProposalSignature))).scalars().one()
         assert signature.ip_address == "203.0.113.50"
+        assert signature.user_agent == "Mozilla/5.0 (Signer)"

@@ -19,24 +19,37 @@ import {
   declinePortalProposalAction,
   signPortalProposalAction,
 } from "@/app/(portal)/portal/proposals/actions";
+import SignatureConsent from "@/components/proposals/SignatureConsent/SignatureConsent";
 
 import styles from "./PortalProposalActions.module.scss";
 
 interface PortalProposalActionsProps {
   proposalId: string;
+  consentText: string;
+  documentHash: string | null;
 }
 
-type Mode = "choose" | "decline";
+type Mode = "choose" | "sign" | "decline";
 
-const PortalProposalActions = ({ proposalId }: PortalProposalActionsProps) => {
+const PortalProposalActions = ({
+  proposalId,
+  consentText,
+  documentHash,
+}: PortalProposalActionsProps) => {
   const [isPending, startTransition] = useTransition();
   const [mode, setMode] = useState<Mode>("choose");
   const [reason, setReason] = useState("");
+  const [consent, setConsent] = useState(false);
 
-  const handleSign = () => {
-    if (isPending) return;
+  const handleSign = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (isPending || !consent) return;
     startTransition(async () => {
-      const result = await signPortalProposalAction(proposalId);
+      const result = await signPortalProposalAction(
+        proposalId,
+        consent,
+        documentHash,
+      );
       if (result.error) {
         toast.error(result.error);
         return;
@@ -66,9 +79,9 @@ const PortalProposalActions = ({ proposalId }: PortalProposalActionsProps) => {
           type="button"
           className={styles.primary}
           disabled={isPending}
-          onClick={handleSign}
+          onClick={() => setMode("sign")}
         >
-          {isPending ? "Signing…" : "Sign this proposal"}
+          Sign this proposal
         </button>
         <button
           type="button"
@@ -79,6 +92,36 @@ const PortalProposalActions = ({ proposalId }: PortalProposalActionsProps) => {
           Decline
         </button>
       </div>
+    );
+  }
+
+  if (mode === "sign") {
+    return (
+      <form className={styles.form} onSubmit={handleSign}>
+        <SignatureConsent
+          consentText={consentText}
+          documentHash={documentHash}
+          checked={consent}
+          onChange={setConsent}
+        />
+        <div className={styles.formActions}>
+          <button
+            type="button"
+            className={styles.ghost}
+            disabled={isPending}
+            onClick={() => setMode("choose")}
+          >
+            Back
+          </button>
+          <button
+            type="submit"
+            className={styles.primary}
+            disabled={isPending || !consent}
+          >
+            {isPending ? "Signing…" : "Sign proposal"}
+          </button>
+        </div>
+      </form>
     );
   }
 

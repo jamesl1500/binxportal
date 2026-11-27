@@ -53,7 +53,7 @@ const FAQ = [
   },
   {
     q: "Does Binx handle proposals and contracts?",
-    a: "Proposals, yes. Build a priced proposal with line items and tax, send it as a link, and the client signs or declines online. Once it's signed, the same client record carries on into the project, the portal and the invoice.",
+    a: "Yes. Build a proposal from your services catalog, attach the contract or statement of work, and the client signs online with a binding e-signature that you can countersign. Every party gets a signed PDF, and signing can set the lead up as a client, invoice the deposit and start the project.",
   },
   {
     q: "What does the Free plan actually include?",

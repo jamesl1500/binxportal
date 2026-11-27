@@ -2,9 +2,9 @@
  * page.tsx - Import (any kind)
  *
  * The bulk import wizard for one kind of data (clients, team, leads,
- * projects, tasks, time entries), reached from the Import & export page.
- * Unknown kinds 404; the team import is owners/admins only (binx-api
- * enforces it too).
+ * projects, tasks, time entries, services), reached from the Import & export
+ * page. Unknown kinds 404; the team and services imports are owners/admins
+ * only (binx-api enforces it too).
  *
  * @module apps/binx-web/src/app/(app)/data/import/[kind]/page.tsx
  */
@@ -34,6 +34,7 @@ const DONE_LINKS: Record<string, { href: string; label: string }> = {
   projects: { href: "/projects", label: "View projects" },
   tasks: { href: "/projects", label: "View projects" },
   time_entries: { href: "/data", label: "Back to import & export" },
+  services: { href: "/settings/services", label: "View services" },
 };
 
 const ImportKindPage = async ({ params }: PageProps) => {

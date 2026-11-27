@@ -1,6 +1,6 @@
 """
-Bulk import of clients, team invitations, leads, projects, tasks and time
-entries from .csv / .xlsx.
+Bulk import of clients, team invitations, leads, projects, tasks, time
+entries and services from .csv / .xlsx.
 
 Two calls per import, both stateless:
 1. ``POST /{kind}/parse`` (multipart) — read the file, return its columns,
@@ -8,9 +8,9 @@ Two calls per import, both stateless:
 2. ``POST /clients`` or ``POST /team`` (JSON) — the mapped rows, with
    ``dry_run=true`` for the Review step, then ``false`` to import.
 
-Each kind follows the permission of adding one by hand: team invites are
-owners/admins only; everything else is open to any member, and a member can
-import only their own time entries.
+Each kind follows the permission of adding one by hand: team invites and
+services (the agency's prices) are owners/admins only; everything else is
+open to any member, and a member can import only their own time entries.
 """
 
 from __future__ import annotations
@@ -37,6 +37,7 @@ from binx_api.modules.imports.schemas import (
     ImportResultRead,
     LeadImportRequest,
     ProjectImportRequest,
+    ServiceImportRequest,
     TaskImportRequest,
     TeamImportRequest,
     TimeEntryImportRequest,
@@ -63,6 +64,8 @@ async def parse_import_file(
     _agency, role = agency_and_role
     if kind == "team" and role == ROLE_MEMBER:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Only owners and admins can invite people")
+    if kind == "services" and role == ROLE_MEMBER:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Only owners and admins can change services")
 
     content = await file.read()
     try:
@@ -156,3 +159,16 @@ async def import_time_entries(
     return await service.import_time_entries(
         db, agency, rows=data.rows, actor=current_user, role=role, dry_run=data.dry_run
     )
+
+
+@router.post("/services", response_model=ImportResultRead)
+@limiter.limit("120/hour")
+async def import_services(
+    request: Request,
+    db: DbSession,
+    data: ServiceImportRequest,
+    current_user: CurrentUser,
+    agency_and_role: AdminOrOwner,
+) -> ImportResultRead:
+    agency, _role = agency_and_role
+    return await service.import_services(db, agency, rows=data.rows, actor=current_user, dry_run=data.dry_run)

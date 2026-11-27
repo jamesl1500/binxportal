@@ -112,6 +112,14 @@ const COPY: Record<
     done: (n) => `Imported ${n} time ${n === 1 ? "entry" : "entries"}`,
     limitNoun: "time entries",
   },
+  services: {
+    labelHeading: "Service",
+    noun: "services",
+    maxRows: 500,
+    action: (n) => `Import ${n} ${n === 1 ? "service" : "services"}`,
+    done: (n) => `Imported ${n} ${n === 1 ? "service" : "services"}`,
+    limitNoun: "services",
+  },
 };
 
 const STATUS_LABELS: Record<

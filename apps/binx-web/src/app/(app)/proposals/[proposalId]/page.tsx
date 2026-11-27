@@ -1,8 +1,9 @@
 /**
  * page.tsx - Proposal Detail
  *
- * A single proposal: the status-aware action bar and the read view. A bad
- * :proposalId 404s.
+ * A single proposal: the status-aware action bar, the read view, and — while
+ * it's a draft — the documents panel for attaching files. Once sent, the
+ * read view lists the documents instead. A bad :proposalId 404s.
  *
  * @module apps/binx-web/src/app/(app)/proposals/[proposalId]/page.tsx
  * @author Binx Portal
@@ -11,10 +12,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
-import { AuthApiError } from "@/lib/auth";
+import { AuthApiError, getCurrentUser } from "@/lib/auth";
 import { getCurrentAgencyContext } from "@/lib/agencies";
-import { getProposal } from "@/lib/proposals";
+import { formatMoneyCents } from "@/lib/money";
+import { getProposal, getProposalEvents } from "@/lib/proposals";
+import { PER_MONTH } from "@/lib/proposals-client";
 import ProposalActions from "@/components/proposals/ProposalActions/ProposalActions";
+import ProposalAttachmentsManager from "@/components/proposals/ProposalAttachmentsManager/ProposalAttachmentsManager";
+import ProposalAuditTrail from "@/components/proposals/ProposalAuditTrail/ProposalAuditTrail";
+import CountersignPanel from "@/components/proposals/CountersignPanel/CountersignPanel";
+import AcceptancePanel from "@/components/proposals/AcceptancePanel/AcceptancePanel";
 import ProposalView from "@/components/proposals/ProposalView/ProposalView";
 
 import styles from "../page.module.scss";
@@ -63,7 +70,66 @@ const ProposalPage = async ({ params }: ProposalPageProps) => {
 
       <ProposalActions agencyId={currentAgency.id} proposal={proposal} />
 
-      <ProposalView proposal={proposal} />
+      {proposal.acceptance && (
+        <AcceptancePanel
+          agencyId={currentAgency.id}
+          proposalId={proposal.id}
+          acceptance={proposal.acceptance}
+          depositPercent={proposal.deposit_percent ?? null}
+          createsProject={proposal.create_project_on_accept ?? false}
+          monthlyLabel={
+            proposal.monthly_total_cents
+              ? `${formatMoneyCents(proposal.monthly_total_cents, proposal.currency)}${PER_MONTH}`
+              : null
+          }
+        />
+      )}
+
+      {proposal.display_status === "awaiting_countersign" && (
+        <CountersignPanel
+          agencyId={currentAgency.id}
+          proposalId={proposal.id}
+          clientName={
+            proposal.signature?.signer_name ??
+            proposal.recipient_name ??
+            "The client"
+          }
+          consentText={proposal.consent_text}
+          documentHash={proposal.document_hash}
+          canSign={
+            currentAgency.role === "owner" || currentAgency.role === "admin"
+          }
+          signerName={(await getCurrentUser())?.full_name ?? "you"}
+        />
+      )}
+
+      {proposal.status === "draft" ? (
+        <>
+          <ProposalView proposal={proposal} />
+          <ProposalAttachmentsManager
+            agencyId={currentAgency.id}
+            proposalId={proposal.id}
+            attachments={proposal.attachments}
+          />
+        </>
+      ) : (
+        <ProposalView
+          proposal={proposal}
+          attachmentHrefBase={`/api/proposals/${currentAgency.id}/${proposal.id}/attachments`}
+          certificateHref={
+            proposal.status === "signed"
+              ? `/proposals/${proposal.id}/certificate`
+              : undefined
+          }
+        />
+      )}
+
+      {proposal.status !== "draft" && (
+        <ProposalAuditTrail
+          events={await getProposalEvents(currentAgency.id, proposal.id)}
+          documentHash={proposal.document_hash}
+        />
+      )}
     </div>
   );
 };

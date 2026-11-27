@@ -1,0 +1,251 @@
+@use "../../../styles/tokens" as t;
+@use "../../../styles/mixins" as m;
+
+.manager {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-4;
+  max-width: 52rem;
+}
+
+.primary {
+  @include m.button-base;
+  @include m.button-sheen;
+  align-self: flex-start;
+  background: t.$color-accent;
+  color: t.$color-accent-foreground;
+
+  svg {
+    width: 0.9rem;
+    height: 0.9rem;
+  }
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, t.$color-accent 85%, white);
+  }
+}
+
+.secondary {
+  @include m.button-base;
+  background: t.$color-surface;
+  border-color: t.$color-border;
+  color: t.$color-ink;
+
+  &:hover:not(:disabled) {
+    border-color: t.$color-border-strong;
+  }
+}
+
+.formCard {
+  @include m.card-base;
+  padding: t.$space-5;
+  list-style: none;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-4;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: t.$space-4;
+
+  @media (max-width: 760px) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.nameField {
+  @media (max-width: 760px) {
+    grid-column: 1 / -1;
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-1;
+}
+
+.label {
+  font-size: t.$font-size-xs;
+  font-weight: 600;
+  color: t.$color-ink-soft;
+}
+
+.input {
+  @include m.input-base;
+}
+
+.textarea {
+  @include m.input-base;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: t.$space-3;
+}
+
+.empty {
+  margin: 0;
+  padding: t.$space-6;
+  font-size: t.$font-size-sm;
+  color: t.$color-ink-soft;
+  border: 1px dashed t.$color-border-strong;
+  border-radius: t.$radius-md;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+}
+
+.item {
+  @include m.card-base;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: t.$space-4;
+  align-items: center;
+  padding: t.$space-4 t.$space-5;
+
+  &[data-archived] {
+    background: t.$color-paper;
+
+    .itemName,
+    .price {
+      color: t.$color-ink-soft;
+    }
+  }
+
+  @media (max-width: 560px) {
+    grid-template-columns: 1fr auto;
+
+    .itemActions {
+      grid-column: 1 / -1;
+      justify-content: flex-start;
+    }
+  }
+}
+
+.itemMain {
+  min-width: 0;
+}
+
+.itemName {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  color: t.$color-ink;
+}
+
+.archivedTag {
+  @include m.mono-label;
+  font-size: 0.5625rem;
+  padding: 0.1rem 0.4rem;
+  border: 1px solid t.$color-border-strong;
+  border-radius: t.$radius-sm;
+  color: t.$color-ink-soft;
+}
+
+.itemDescription {
+  margin: t.$space-1 0 0;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+  white-space: pre-line;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.itemPrice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+}
+
+.price {
+  font-size: t.$font-size-sm;
+  font-weight: 600;
+  white-space: nowrap;
+  color: t.$color-ink;
+}
+
+.pricing {
+  @include m.mono-label;
+  font-size: 0.5625rem;
+  color: t.$color-ink-faint;
+}
+
+.itemActions {
+  display: flex;
+  gap: t.$space-1;
+  justify-content: flex-end;
+}
+
+.iconButton {
+  @include m.touch-target;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: t.$space-2;
+  background: none;
+  border: 1px solid t.$color-border;
+  border-radius: t.$radius-sm;
+  color: t.$color-ink-soft;
+  cursor: pointer;
+
+  svg {
+    width: 0.85rem;
+    height: 0.85rem;
+  }
+
+  &:hover:not(:disabled) {
+    color: t.$color-ink;
+    border-color: t.$color-border-strong;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+}
+
+.danger:hover:not(:disabled) {
+  color: t.$color-danger;
+}
+
+.toggle {
+  align-self: flex-start;
+  padding: 0;
+  background: none;
+  border: none;
+  font-size: t.$font-size-xs;
+  color: t.$color-ink-soft;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+
+  &:hover {
+    color: t.$color-ink;
+  }
+}

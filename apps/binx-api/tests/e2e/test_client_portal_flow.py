@@ -759,7 +759,11 @@ class TestPortalProposals:
         )
         sent = await _create_and_send_proposal(client, s["agency"].id, s["client"].id, s["owner"])
 
-        signed = await client.post(f"/portal/proposals/{sent['id']}/sign", headers=auth_headers(contact_user))
+        signed = await client.post(
+            f"/portal/proposals/{sent['id']}/sign",
+            json={"consent": True, "document_hash": sent["document_hash"]},
+            headers=auth_headers(contact_user),
+        )
         assert signed.status_code == 200, signed.text
         body = signed.json()
         assert body["status"] == "signed"

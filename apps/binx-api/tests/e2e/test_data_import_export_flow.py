@@ -190,7 +190,7 @@ class TestTimeEntryImport:
 
 class TestExports:
     @pytest.mark.parametrize(
-        "kind", ["clients", "team", "leads", "projects", "tasks", "time_entries", "invoices", "proposals"]
+        "kind", ["clients", "team", "leads", "projects", "tasks", "time_entries", "invoices", "proposals", "services"]
     )
     async def test_every_kind_exports_as_csv_and_xlsx(self, client, user, agency, kind: str) -> None:
         for file_format, media_type in (("csv", "text/csv"), ("xlsx", "spreadsheetml")):
@@ -265,7 +265,7 @@ class TestExports:
 
 
 class TestTemplates:
-    @pytest.mark.parametrize("kind", ["clients", "team", "leads", "projects", "tasks", "time_entries"])
+    @pytest.mark.parametrize("kind", ["clients", "team", "leads", "projects", "tasks", "time_entries", "services"])
     async def test_templates_auto_map_every_field(self, client, user, agency, kind: str) -> None:
         template = await client.get(
             f"/agencies/{agency.id}/imports/{kind}/template?format=xlsx", headers=auth_headers(user)
