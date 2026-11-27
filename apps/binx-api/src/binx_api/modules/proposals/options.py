@@ -55,12 +55,12 @@ def included_lines(lines: Iterable[ProposalLineItem], packages: Sequence[Proposa
     return [line for line in lines if is_included(line, chosen_id)]
 
 
+async def list_lines(db: AsyncSession, proposal_id: uuid.UUID) -> list[ProposalLineItem]:
+    result = await db.execute(
+        select(ProposalLineItem).where(ProposalLineItem.proposal_id == proposal_id).order_by(ProposalLineItem.position)
+    )
+    return list(result.scalars().all())
+
+
 async def list_included_lines(db: AsyncSession, proposal_id: uuid.UUID) -> list[ProposalLineItem]:
-    lines = (
-        await db.execute(
-            select(ProposalLineItem)
-            .where(ProposalLineItem.proposal_id == proposal_id)
-            .order_by(ProposalLineItem.position)
-        )
-    ).scalars()
-    return included_lines(lines, await list_packages(db, proposal_id))
+    return included_lines(await list_lines(db, proposal_id), await list_packages(db, proposal_id))

@@ -6,7 +6,7 @@ there is one. Plan limits block it with a reason it can be retried from."""
 from __future__ import annotations
 
 import dataclasses
-from datetime import date
+from datetime import UTC, date, datetime
 from urllib.parse import parse_qs, urlparse
 
 import pytest
@@ -23,6 +23,10 @@ from tests.factories import make_agency, make_client, make_client_contact, make_
 pytestmark = pytest.mark.e2e
 
 CHROME = {"user-agent": "Mozilla/5.0 (Chrome)"}
+
+
+def _utc_today() -> date:
+    return datetime.now(UTC).date()
 
 
 def _token(share_url: str) -> str:
@@ -388,12 +392,13 @@ class TestMonthlyLines:
 
         acceptance = (await _staff(client, agency, owner, sent["id"]))["acceptance"]
         assert acceptance["status"] == "done"
-        assert acceptance["retainer_next_run_date"] == date.today().isoformat()
+        # Schedules run on UTC dates, like the recurring job.
+        assert acceptance["retainer_next_run_date"] == _utc_today().isoformat()
         schedule = await db_session.get(RecurringInvoiceSchedule, acceptance["retainer_schedule_id"])
         assert str(schedule.client_id) == acceptance["client_id"]
         assert str(schedule.project_id) == acceptance["project_id"]
         assert (schedule.interval, schedule.interval_count, schedule.auto_issue) == ("monthly", 1, True)
-        assert schedule.day_of_month == min(date.today().day, 28)
+        assert schedule.day_of_month == min(_utc_today().day, 28)
         assert schedule.tax_rate_percent == 10
         rows = await db_session.execute(
             select(RecurringInvoiceLineItem).where(RecurringInvoiceLineItem.schedule_id == schedule.id)

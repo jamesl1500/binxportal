@@ -120,3 +120,29 @@ export async function clickUntilVisible(trigger: Locator, effect: Locator): Prom
     await baseExpect(effect).toBeVisible({ timeout: 5_000 });
   }).toPass({ timeout: 45_000 });
 }
+
+/**
+ * Where binx-api writes each email when SES is off (its EMAIL_OUTBOX_DIR;
+ * CI sets it for both the API and this suite). Unset: tests that need a
+ * real emailed code or link skip.
+ */
+export const EMAIL_OUTBOX = process.env.E2E_EMAIL_OUTBOX ?? process.env.EMAIL_OUTBOX_DIR ?? "";
+
+export interface OutboxEmail {
+  to: string;
+  subject: string;
+  body: string;
+}
+
+/** The newest email to `to` whose subject matches, waiting for it to land. */
+export async function readEmail(to: string, subject: RegExp): Promise<OutboxEmail> {
+  let found: OutboxEmail | undefined;
+  await baseExpect(async () => {
+    const names = fs.existsSync(EMAIL_OUTBOX) ? fs.readdirSync(EMAIL_OUTBOX).sort().reverse() : [];
+    found = names
+      .map((name) => JSON.parse(fs.readFileSync(path.join(EMAIL_OUTBOX, name), "utf8")) as OutboxEmail)
+      .find((mail) => mail.to === to && subject.test(mail.subject));
+    baseExpect(found, `an email to ${to} matching ${subject}`).toBeTruthy();
+  }).toPass({ timeout: 15_000 });
+  return found!;
+}

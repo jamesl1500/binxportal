@@ -341,3 +341,73 @@ class TestPortalAndAcceptance:
         events = await client.get(f"/agencies/{agency.id}/proposals/{sent['id']}/events", headers=auth_headers(owner))
         chose = next(event for event in events.json() if event["kind"] == "options_chosen")
         assert chose["actor_label"].startswith("Dana Client")
+
+
+class TestEdges:
+    async def test_the_deposit_is_a_share_of_what_was_chosen(self, client, ctx) -> None:
+        agency, owner = ctx
+        lead = (
+            await client.post(
+                f"/agencies/{agency.id}/leads",
+                json={"name": "Fjord & Field", "contact_name": "Jane", "contact_email": "jane@fjord.example"},
+                headers=auth_headers(owner),
+            )
+        ).json()
+        sent = await _sent(client, agency, owner, lead_id=lead["id"], deposit_percent="50")
+        chosen = (await _choose(client, sent, "Essential", "SEO setup")).json()
+        assert chosen["total_cents"] == 880_000
+        assert (await _sign(client, sent, chosen["document_hash"])).status_code == 200
+
+        staff = await client.get(f"/agencies/{agency.id}/proposals/{sent['id']}", headers=auth_headers(owner))
+        invoice_id = staff.json()["acceptance"]["deposit_invoice_id"]
+        invoice = await client.get(f"/agencies/{agency.id}/invoices/{invoice_id}", headers=auth_headers(owner))
+        assert invoice.json()["total_cents"] == 440_000
+
+    async def test_choosing_the_original_again_gives_the_original_fingerprint(self, client, ctx) -> None:
+        agency, owner = ctx
+        sent = await _sent(client, agency, owner)
+        changed = (await _choose(client, sent, "Essential")).json()
+        assert changed["document_hash"] != sent["document_hash"]
+        back = (await _choose(client, sent, "Complete", "Copywriting")).json()
+        assert back["document_hash"] == sent["document_hash"]
+        assert back["total_cents"] == sent["total_cents"]
+
+    async def test_an_expired_proposal_cant_be_changed(self, client, ctx) -> None:
+        agency, owner = ctx
+        sent = await _sent(client, agency, owner, valid_until="2020-01-01T00:00:00Z")
+        resp = await _choose(client, sent, "Essential")
+        assert resp.status_code == 409
+        assert "expired" in resp.json()["detail"]
+
+    async def test_another_clients_contact_cant_choose(self, client, ctx, db_session) -> None:
+        agency, owner = ctx
+        mine = await make_client(db_session, agency=agency, name="Acme")
+        theirs = await make_client(db_session, agency=agency, name="Globex")
+        stranger = await make_user(db_session, email="gil@globex.example", full_name="Gil Globex")
+        await make_client_contact(db_session, agency=agency, client=theirs, user=stranger)
+        sent = await _sent(client, agency, owner, client_id=str(mine.id))
+        resp = await client.put(
+            f"/portal/proposals/{sent['id']}/options",
+            json={"package_id": _package(sent, "Essential")["id"], "add_on_ids": []},
+            headers=auth_headers(stranger),
+        )
+        assert resp.status_code == 404
+
+    async def test_the_countersignature_is_on_the_chosen_version(self, client, ctx) -> None:
+        agency, owner = ctx
+        sent = await _sent(client, agency, owner, requires_countersign=True)
+        chosen = (await _choose(client, sent, "Essential")).json()
+        assert (await _sign(client, sent, chosen["document_hash"])).status_code == 200
+        # Once the client has signed, the choice is locked for everyone.
+        assert (await _choose(client, sent, "Complete")).status_code == 409
+
+        countersigned = await client.post(
+            f"/agencies/{agency.id}/proposals/{sent['id']}/countersign",
+            json={"consent": True, "document_hash": chosen["document_hash"]},
+            headers=auth_headers(owner),
+        )
+        assert countersigned.status_code == 200, countersigned.text
+        certificate = (await client.get(f"/proposals/public/{_token(sent['share_url'])}/certificate")).json()
+        assert certificate["package_name"] == "Essential"
+        assert certificate["countersignature"]["document_hash"] == chosen["document_hash"]
+        assert certificate["document_intact"] is True

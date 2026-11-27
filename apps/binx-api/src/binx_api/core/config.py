@@ -180,6 +180,10 @@ class Settings(BaseSettings):
     # anyone else is logged instead of sent (see core/email.py). Unset (the
     # default — production, staging) means no restriction.
     ses_allowed_recipients: str | None = None
+    # Dev and E2E only: when SES isn't configured (ses_from_email unset), each
+    # email is also written as a JSON file in this folder, so end-to-end tests
+    # can read the codes and links that were sent. Ignored when SES is on.
+    email_outbox_dir: str | None = None
     # Explicit rather than relying on boto3's IMDS region auto-detection,
     # which isn't guaranteed across botocore versions/configs.
     aws_region: str = "us-east-2"

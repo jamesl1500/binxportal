@@ -26,6 +26,7 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
+from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -43,6 +44,8 @@ from binx_api.modules.proposals.models import (
     ProposalAttachment,
     ProposalCountersignature,
     ProposalEvent,
+    ProposalLineItem,
+    ProposalPackage,
     ProposalSignature,
 )
 from binx_api.modules.proposals.schemas import (
@@ -80,14 +83,25 @@ def _iso(value: datetime | None) -> str | None:
     return value.astimezone(UTC).isoformat() if value else None
 
 
-async def build_snapshot(db: AsyncSession, proposal: Proposal) -> str:
+async def build_snapshot(
+    db: AsyncSession,
+    proposal: Proposal,
+    *,
+    lines: Sequence[ProposalLineItem] | None = None,
+    packages: Sequence[ProposalPackage] | None = None,
+) -> str:
     """The canonical JSON of everything a recipient agrees to. Keys are
     sorted and numbers are strings or integers, so the same proposal always
-    produces the same bytes (and the same hash)."""
+    produces the same bytes (and the same hash). A caller that already has
+    the proposal's lines (in position order) and packages passes them, which
+    saves the round trips."""
     agency = await db.get(Agency, proposal.agency_id)
-    packages = await options.list_packages(db, proposal.id)
+    if packages is None:
+        packages = await options.list_packages(db, proposal.id)
+    if lines is None:
+        lines = await options.list_lines(db, proposal.id)
     chosen = options.chosen_package(packages)
-    lines = await options.list_included_lines(db, proposal.id)
+    lines = options.included_lines(lines, packages)
     attachments = (
         await db.execute(
             select(ProposalAttachment)
@@ -138,9 +152,15 @@ async def build_snapshot(db: AsyncSession, proposal: Proposal) -> str:
     )
 
 
-async def freeze_document(db: AsyncSession, proposal: Proposal) -> None:
+async def freeze_document(
+    db: AsyncSession,
+    proposal: Proposal,
+    *,
+    lines: Sequence[ProposalLineItem] | None = None,
+    packages: Sequence[ProposalPackage] | None = None,
+) -> None:
     """Records the snapshot and its hash on the proposal (the caller commits)."""
-    snapshot = await build_snapshot(db, proposal)
+    snapshot = await build_snapshot(db, proposal, lines=lines, packages=packages)
     proposal.document_snapshot = snapshot
     proposal.document_hash = hash_snapshot(snapshot)
 

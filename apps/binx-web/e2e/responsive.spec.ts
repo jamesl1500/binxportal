@@ -192,3 +192,63 @@ test.describe("authenticated pages @ phone width", () => {
     await context.close();
   });
 });
+
+// A proposal's share link at phone width: the package cards, the add-on
+// ticks, and the email-code page (made through the API as Harbor Lane).
+test.describe("proposal share links @ phone width", () => {
+  test.use({ viewport: PHONE });
+
+  async function shareLinks(request: import("@playwright/test").APIRequestContext) {
+    const fs = await import("node:fs");
+    const api = process.env.E2E_API_URL ?? "http://localhost:8000";
+    const state = JSON.parse(fs.readFileSync(path.join(AUTH_DIR, "sales.json"), "utf8"));
+    const token = state.cookies.find((c: { name: string }) => c.name === "binx_access_token").value;
+    const headers = { Authorization: `Bearer ${token}` };
+    const agencies = await (await request.get(`${api}/agencies/mine`, { headers })).json();
+    const agency = agencies.find((a: { name: string }) => a.name === DEMO.sales.agency);
+    const make = async (data: object) => {
+      const draft = await (await request.post(`${api}/agencies/${agency.id}/proposals`, { headers, data })).json();
+      const sent = await (
+        await request.post(`${api}/agencies/${agency.id}/proposals/${draft.id}/send`, { headers, data: {} })
+      ).json();
+      const url = new URL(sent.share_url);
+      return `${url.pathname}${url.search}`;
+    };
+    const base = { recipient_email: "phone@example.com" };
+    return {
+      packages: await make({
+        ...base,
+        title: "A proposal with packages and a rather long title to wrap",
+        packages: [
+          { key: "a", name: "Essential", description: "The site, done well." },
+          { key: "b", name: "Complete", description: "Everything, with the brand.", recommended: true },
+        ],
+        line_items: [
+          { description: "Discovery workshop with your whole team", quantity: "1", unit_price_cents: 200_000 },
+          { description: "Five-page website", quantity: "1", unit_price_cents: 600_000, package_key: "a" },
+          { description: "Ten-page website", quantity: "1", unit_price_cents: 1_200_000, package_key: "b" },
+          { description: "Care plan", quantity: "1", unit_price_cents: 30_000, optional: true, billing: "monthly" },
+        ],
+      }),
+      gated: await make({
+        ...base,
+        title: "Protected pricing",
+        require_email_code: true,
+        line_items: [{ description: "Retainer", quantity: "1", unit_price_cents: 100_000 }],
+      }),
+    };
+  }
+
+  test("packages, add-ons and the email-code page fit a phone", async ({ page, request }) => {
+    const links = await shareLinks(request);
+
+    await page.goto(links.packages);
+    await expect(page.getByRole("group", { name: "Choose a package" })).toBeVisible();
+    await expect(page.getByRole("checkbox", { name: /Care plan/ })).toBeVisible();
+    await expectNoHorizontalScroll(page);
+
+    await page.goto(links.gated);
+    await expect(page.getByRole("button", { name: "Email me a code" })).toBeVisible();
+    await expectNoHorizontalScroll(page);
+  });
+});

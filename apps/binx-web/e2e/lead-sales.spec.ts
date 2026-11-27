@@ -13,7 +13,7 @@ import path from "node:path";
 
 import type { Browser, Page } from "@playwright/test";
 
-import { AUTH_DIR, clickUntilVisible, DEMO, expect, test } from "./fixtures";
+import { AUTH_DIR, clickUntilVisible, DEMO, EMAIL_OUTBOX, expect, readEmail, test } from "./fixtures";
 
 const API_URL = process.env.E2E_API_URL ?? "http://localhost:8000";
 const RUN = Date.now().toString(36);
@@ -264,17 +264,28 @@ test.describe("email code", () => {
   }) => {
     const agencyId = await salesAgencyId(salesPage);
     const lead = await createLead(salesPage, agencyId, `Heron ${RUN}`);
+    const portal = await api(salesPage, "put", `/agencies/${agencyId}/leads/${lead.id}/portal`, {
+      welcome_message: null,
+    });
+    const title = `Pricing for Heron ${RUN}`;
     const draft = await api(salesPage, "post", `/agencies/${agencyId}/proposals`, {
-      title: `Pricing for Heron ${RUN}`,
+      title,
       lead_id: lead.id,
       require_email_code: true,
       line_items: [{ description: "Confidential retainer", quantity: "1", unit_price_cents: 4_200_000 }],
     });
     const sent = await api(salesPage, "post", `/agencies/${agencyId}/proposals/${draft.id}/send`, {});
 
+    // The lead portal lists it without its price.
+    const leadPortal = await asTheLead(browser, portal.url);
+    await expect(leadPortal.page.getByText(title)).toBeVisible();
+    await expect(leadPortal.page.getByText("Price on the proposal")).toBeVisible();
+    await expect(leadPortal.page.getByText("$42,000.00")).toHaveCount(0);
+    await leadPortal.close();
+
     const lead_ = await asTheLead(browser, sent.share_url);
     const page = lead_.page;
-    await expect(page.getByRole("heading", { name: `Pricing for Heron ${RUN}` })).toBeVisible();
+    await expect(page.getByRole("heading", { name: title })).toBeVisible();
     await expect(page.getByText("a•••@northwind.example.com")).toBeVisible();
     await expect(page.getByText("Confidential retainer")).toHaveCount(0);
     await expect(page.getByText("$42,000.00")).toHaveCount(0);
@@ -287,6 +298,77 @@ test.describe("email code", () => {
     await page.getByRole("button", { name: "Open", exact: true }).click();
     await expect(page.getByText(/That code isn.t right/)).toBeVisible();
     await expect(page.getByText("Confidential retainer")).toHaveCount(0);
+
+    // With the real code (read from the API's outbox), it opens and stays open.
+    test.skip(!EMAIL_OUTBOX, "Set EMAIL_OUTBOX_DIR for the API and this suite to read the emailed code");
+    const mail = await readEmail(`alex+${RUN}@northwind.example.com`, new RegExp(title));
+    const code = /\b(\d{6})\b/.exec(mail.body)![1];
+    await page.getByLabel("Code from the email").fill(code);
+    await page.getByRole("button", { name: "Open", exact: true }).click();
+    await expect(page.getByText("Confidential retainer")).toBeVisible();
+    await expect(page.getByText("$42,000.00").first()).toBeVisible();
+    await page.reload();
+    await expect(page.getByText("Confidential retainer")).toBeVisible();
+
+    // Signing works through the gate, and the history shows the check.
+    await clickUntilVisible(page.getByRole("button", { name: "Sign this proposal" }), page.getByLabel("Your email"));
+    await page.getByLabel("Your email").fill(`alex+${RUN}@northwind.example.com`);
+    await page.getByRole("checkbox", { name: /sign this proposal electronically/i }).check();
+    await page.getByRole("button", { name: "Sign proposal" }).click();
+    await page.getByRole("link", { name: /view the signing certificate/i }).click();
+    await expect(page.getByText("Opened with the code emailed to a•••@northwind.example.com")).toBeVisible();
     await lead_.close();
+  });
+});
+
+test.describe("packages in the client portal", () => {
+  test("a client contact picks a package and an add-on in their portal, then signs", async ({
+    salesPage,
+    buyerPage,
+  }) => {
+    const agencyId = await salesAgencyId(salesPage);
+    const clients = await api(salesPage, "get", `/agencies/${agencyId}/clients`);
+    const pine = clients.find((c: { name: string }) => c.name === DEMO.sales.clientName);
+    const title = `Phase two for Pine ${RUN}`;
+    const draft = await api(salesPage, "post", `/agencies/${agencyId}/proposals`, {
+      title,
+      client_id: pine.id,
+      recipient_email: DEMO.sales.buyer.email,
+      packages: [
+        { key: "s", name: "Starter", description: "The basics." },
+        { key: "g", name: "Growth", description: "More of everything.", recommended: true },
+      ],
+      line_items: [
+        { description: "Kickoff call", quantity: "1", unit_price_cents: 50_000 },
+        { description: "Three pages", quantity: "1", unit_price_cents: 300_000, package_key: "s" },
+        { description: "Eight pages", quantity: "1", unit_price_cents: 700_000, package_key: "g" },
+        { description: "Photography day", quantity: "1", unit_price_cents: 120_000, optional: true, selected: false },
+      ],
+    });
+    await api(salesPage, "post", `/agencies/${agencyId}/proposals/${draft.id}/send`, {});
+
+    await buyerPage.goto(`/portal/proposals/${draft.id}`);
+    await expect(buyerPage.getByRole("group", { name: "Choose a package" })).toBeVisible();
+    await expect(buyerPage.getByRole("radio", { name: /Growth/ })).toBeChecked();
+    // Kickoff + Starter = $3,500; with photography, $4,700.
+    await expect(async () => {
+      await buyerPage.getByRole("radio", { name: /Starter/ }).check();
+      await expect(buyerPage.getByText("$3,500.00").first()).toBeVisible({ timeout: 3_000 });
+    }).toPass({ timeout: 20_000 });
+    await buyerPage.getByRole("checkbox", { name: /Photography day/ }).check();
+    await expect(buyerPage.getByText("$4,700.00").first()).toBeVisible();
+
+    await clickUntilVisible(
+      buyerPage.getByRole("button", { name: "Sign this proposal" }),
+      buyerPage.getByRole("button", { name: "Sign proposal" }),
+    );
+    await buyerPage.getByRole("checkbox", { name: /sign this proposal electronically/i }).check();
+    await buyerPage.getByRole("button", { name: "Sign proposal" }).click();
+    await expect(buyerPage.getByRole("link", { name: /view the signing certificate/i })).toBeVisible();
+
+    // The agency sees the choice and the price it came to.
+    const staff = await api(salesPage, "get", `/agencies/${agencyId}/proposals/${draft.id}`);
+    expect(staff.total_cents).toBe(470_000);
+    expect(staff.packages.find((p: { selected: boolean }) => p.selected).name).toBe("Starter");
   });
 });

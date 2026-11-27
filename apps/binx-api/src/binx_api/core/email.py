@@ -1,7 +1,11 @@
 import asyncio
+import json
 import logging
+import time
+import uuid
 from dataclasses import dataclass
 from email.message import EmailMessage
+from pathlib import Path
 
 import boto3
 from botocore.exceptions import ClientError
@@ -62,6 +66,20 @@ def _raw_message(*, to: str, subject: str, body: str, html: str | None, attachme
     return message.as_bytes()
 
 
+def _write_outbox(*, to: str, subject: str, body: str) -> None:
+    """Dev/E2E only (settings.email_outbox_dir, with SES off): one JSON file
+    per email, named so they sort by time."""
+    if not settings.email_outbox_dir:
+        return
+    folder = Path(settings.email_outbox_dir)
+    try:
+        folder.mkdir(parents=True, exist_ok=True)
+        name = f"{time.time_ns()}-{uuid.uuid4().hex[:8]}.json"
+        (folder / name).write_text(json.dumps({"to": to, "subject": subject, "body": body}), encoding="utf-8")
+    except OSError:
+        logger.warning("Couldn't write the email outbox file in %s", folder)
+
+
 async def send_email(
     *, to: str, subject: str, body: str, html: str | None = None, attachments: list[EmailAttachment] | None = None
 ) -> None:
@@ -92,6 +110,7 @@ async def send_email(
     """
     if not settings.ses_from_email:
         logger.info("EMAIL to=%s subject=%s\n%s", to, subject, body)
+        _write_outbox(to=to, subject=subject, body=body)
         return
     if not _recipient_allowed(to):
         logger.info("EMAIL (not in SES_ALLOWED_RECIPIENTS, not sent) to=%s subject=%s\n%s", to, subject, body)

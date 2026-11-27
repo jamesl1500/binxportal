@@ -11,6 +11,7 @@ the real SES path, mocked, and its fail-soft behavior on a delivery error.
 
 from __future__ import annotations
 
+import json
 import logging
 from types import SimpleNamespace
 from unittest.mock import MagicMock
@@ -97,6 +98,31 @@ class TestSendEmail:
         await email.send_email(to="x@example.com", subject="Hi", body="Body")
 
         client_factory.assert_not_called()
+
+    async def test_the_dev_outbox_keeps_each_email_when_ses_is_off(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path
+    ) -> None:
+        monkeypatch.setattr(email.settings, "ses_from_email", None)
+        monkeypatch.setattr(email.settings, "email_outbox_dir", str(tmp_path / "outbox"))
+
+        await email.send_email(to="a@example.com", subject="First", body="One")
+        await email.send_email(to="b@example.com", subject="Second", body="Two")
+
+        files = sorted((tmp_path / "outbox").iterdir())
+        assert [json.loads(f.read_text(encoding="utf-8")) for f in files] == [
+            {"to": "a@example.com", "subject": "First", "body": "One"},
+            {"to": "b@example.com", "subject": "Second", "body": "Two"},
+        ]
+
+    async def test_the_dev_outbox_is_ignored_when_ses_is_on(self, monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+        monkeypatch.setattr(email.settings, "ses_from_email", "Binx <noreply@mail.binxportal.com>")
+        monkeypatch.setattr(email.settings, "ses_allowed_recipients", None)
+        monkeypatch.setattr(email.settings, "email_outbox_dir", str(tmp_path / "outbox"))
+        monkeypatch.setattr(email, "_get_ses_client", MagicMock())
+
+        await email.send_email(to="a@example.com", subject="Hi", body="Body")
+
+        assert not (tmp_path / "outbox").exists()
 
     async def test_configured_from_email_calls_ses_with_the_right_shape(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(email.settings, "ses_from_email", "Binx <noreply@mail.binxportal.com>")

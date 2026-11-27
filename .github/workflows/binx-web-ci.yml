@@ -114,6 +114,9 @@ jobs:
       # The E2E suite logs in and out many times from one IP — the auth rate
       # limiter (its own pytest coverage lives in binx-api) would make it flaky.
       RATE_LIMIT_ENABLED: "false"
+      # SES is off here, so the API writes each email to this folder and the
+      # suite reads emailed codes and links from it (e2e/fixtures.ts readEmail).
+      EMAIL_OUTBOX_DIR: /tmp/binx-email-outbox
     steps:
       - uses: actions/checkout@v4
 

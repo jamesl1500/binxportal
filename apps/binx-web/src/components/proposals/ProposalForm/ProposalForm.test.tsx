@@ -457,4 +457,24 @@ describe("ProposalForm", () => {
     expect(screen.queryByLabelText("Line 1 package")).not.toBeInTheDocument();
     expect(screen.getByText("Total").nextSibling).toHaveTextContent("$13,000.00");
   });
+
+  it("asks for an email code when that's ticked, and loads it back", async () => {
+    mockedCreate.mockResolvedValueOnce({ proposal: { id: "p1" } as never });
+    const user = userEvent.setup();
+    const { unmount } = render(<ProposalForm agencyId="a1" clients={clients} />);
+
+    await user.type(screen.getByLabelText(/^Title$/), "Pricing");
+    await user.type(screen.getByLabelText("Line 1 description"), "Retainer");
+    await user.type(screen.getByLabelText("Line 1 unit price"), "1000");
+    const gate = screen.getByRole("checkbox", { name: /ask for an email code/i });
+    expect(gate).not.toBeChecked();
+    await user.click(gate);
+    await user.click(screen.getByRole("button", { name: /create draft/i }));
+    expect(mockedCreate.mock.calls[0][1]).toEqual(expect.objectContaining({ requireEmailCode: true }));
+    unmount();
+
+    const draft = { id: "p1", title: "Pricing", currency: "USD", tax_rate_percent: "0", line_items: [], require_email_code: true } as never;
+    render(<ProposalForm agencyId="a1" clients={clients} proposal={draft} />);
+    expect(screen.getByRole("checkbox", { name: /ask for an email code/i })).toBeChecked();
+  });
 });

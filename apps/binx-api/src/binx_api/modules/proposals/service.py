@@ -146,10 +146,7 @@ async def get_proposal_by_token_or_404(db: AsyncSession, raw_token: str) -> Prop
 
 
 async def list_line_items(db: AsyncSession, proposal_id: uuid.UUID) -> list[ProposalLineItem]:
-    result = await db.execute(
-        select(ProposalLineItem).where(ProposalLineItem.proposal_id == proposal_id).order_by(ProposalLineItem.position)
-    )
-    return list(result.scalars().all())
+    return await options.list_lines(db, proposal_id)
 
 
 async def _replace_line_items(
@@ -505,7 +502,8 @@ async def send_proposal(
 ) -> Proposal:
     if proposal.status in PROPOSAL_CLOSED_STATUSES:
         raise HTTPException(status.HTTP_409_CONFLICT, "This proposal has already been decided")
-    if (await list_line_items(db, proposal.id)) == []:
+    lines = await list_line_items(db, proposal.id)
+    if not lines:
         raise HTTPException(status.HTTP_409_CONFLICT, "Add at least one line item before sending")
     if recipient_email:
         proposal.recipient_email = recipient_email
@@ -516,7 +514,7 @@ async def send_proposal(
     proposal.sent_at = datetime.now(UTC)
     # Frozen now, with the final recipient and sent date in it: this is the
     # document a signature will point at (see signing.py).
-    await signing.freeze_document(db, proposal)
+    await signing.freeze_document(db, proposal, lines=lines)
     signing.record_event(
         db,
         proposal.id,
@@ -546,11 +544,11 @@ async def record_view(db: AsyncSession, proposal: Proposal, visitor: Visitor | N
     """Called when the recipient opens it (share link or portal). The first
     view flips sent -> viewed; each view from a new browser (or after the
     dedupe window) adds a "viewed" row to the audit trail."""
-    changed = False
+    changed = first_view = False
     if proposal.status == STATUS_SENT:
         proposal.status = STATUS_VIEWED
         proposal.viewed_at = datetime.now(UTC)
-        changed = True
+        changed = first_view = True
     if visitor is not None:
         changed = (
             await signing.record_view(
@@ -565,7 +563,10 @@ async def record_view(db: AsyncSession, proposal: Proposal, visitor: Visitor | N
         )
     if changed:
         await db.commit()
-        await db.refresh(proposal)
+        # Only an update to the proposal row leaves server-set columns
+        # (updated_at) to reload; a new trail row alone doesn't touch it.
+        if first_view:
+            await db.refresh(proposal)
     return proposal
 
 
@@ -632,7 +633,7 @@ async def choose_options(
         return proposal
 
     _recalculate(proposal, lines, packages)
-    await signing.freeze_document(db, proposal)
+    await signing.freeze_document(db, proposal, lines=lines, packages=packages)
     picked = [line for line in lines if line.optional and options.is_included(line, chosen_id)]
     signing.record_event(
         db,
@@ -874,14 +875,23 @@ async def decline_proposal(
 async def get_public_proposal(
     db: AsyncSession, raw_token: str, visitor: Visitor | None = None, access_token: str | None = None
 ) -> tuple[Proposal, Agency]:
-    proposal = await get_proposal_by_token_or_404(db, raw_token)
+    # The proposal and its agency in one round trip (an agency on its
+    # deletion hold has no public links).
+    row = (
+        await db.execute(
+            select(Proposal, Agency)
+            .join(Agency, Agency.id == Proposal.agency_id)
+            .where(Proposal.share_token == raw_token, Agency.deletion_scheduled_for.is_(None))
+        )
+    ).one_or_none()
+    if row is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Proposal not found")
+    proposal, agency = row
     if proposal.status == STATUS_DRAFT:
         # Never reachable via a real link (drafts have no valid share yet in
         # spirit, even though the token exists from creation) — treat as 404
         # rather than leaking draft content.
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Proposal not found")
-    agency = await db.get(Agency, proposal.agency_id)
-    assert agency is not None
     # Before anything is shown or a view recorded (access.py).
     access.require_access(proposal, access_token, agency.name)
     await signing.ensure_document_record(db, proposal)

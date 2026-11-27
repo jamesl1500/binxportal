@@ -266,3 +266,34 @@ class TestLimits:
         assert draft["require_email_code"] is True
         resp = await client.post(f"/proposals/public/{_token(draft['share_url'])}/code")
         assert resp.status_code == 404
+
+
+class TestAccessTokens:
+    async def test_an_expired_access_token_no_longer_opens_it(self, client, ctx, db_session) -> None:
+        agency, owner = ctx
+        sent = await _sent(client, agency, owner)
+        row = await db_session.get(Proposal, sent["id"])
+        stale = access.issue_access_token(row, now=datetime.now(UTC) - access.ACCESS_TTL - timedelta(minutes=1))
+        fresh = access.issue_access_token(row)
+        base = f"/proposals/public/{_token(sent['share_url'])}"
+        assert (await client.get(base, headers={access.ACCESS_HEADER: stale})).status_code == 403
+        assert (await client.get(base, headers={access.ACCESS_HEADER: fresh})).status_code == 200
+
+    async def test_a_staff_login_token_is_not_an_access_token(self, client, ctx) -> None:
+        agency, owner = ctx
+        sent = await _sent(client, agency, owner)
+        staff_jwt = auth_headers(owner)["Authorization"].removeprefix("Bearer ")
+        resp = await client.get(
+            f"/proposals/public/{_token(sent['share_url'])}", headers={access.ACCESS_HEADER: staff_jwt}
+        )
+        assert resp.status_code == 403
+
+    async def test_the_recipient_can_decline_once_verified(self, client, ctx, email_outbox) -> None:
+        agency, owner = ctx
+        sent = await _sent(client, agency, owner)
+        headers = await _unlock(client, sent, email_outbox)
+        resp = await client.post(
+            f"/proposals/public/{_token(sent['share_url'])}/decline", json={"reason": "Too much"}, headers=headers
+        )
+        assert resp.status_code == 200
+        assert resp.json()["status"] == "declined"
